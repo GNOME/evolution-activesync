@@ -1,0 +1,17 @@
+dnl -*- mode: Autoconf; -*-
+dnl Invoke autogen.sh to produce a configure script.
+
+# BACKEND_CPPFLAGS="$BACKEND_CPPFLAGS ..."
+
+AC_ARG_ENABLE_BACKEND(calexchange,
+                      calexchange,
+                      AS_HELP_STRING([--enable-calexchange],
+                                     [enable support for Exchange Calendar storage]),
+		      [enable_calexchange="$enableval"],
+                      [enable_calexchange="no"]
+                      )
+
+if test "$enable_calexchange" = "yes"; then
+        AC_DEFINE(ENABLE_CALEXCHANGE, 1, [CalExchange available])
+        PKG_CHECK_MODULES(CALEXCHANGE, libmkcal libkcalcoren)
+fi
