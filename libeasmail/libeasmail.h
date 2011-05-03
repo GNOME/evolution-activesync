@@ -10,21 +10,20 @@ A draft API for the EAS mail client library which clients will use to get email 
 
 struct EasFolder {
 	gchar *parent__id;
-	gchar *server_id;		// from AS server
+	gchar *server_id;		// from AS server. string up to 64 characters
 	gchar *display_name;
 };
 
 struct EasEmail {
 {
 	gchar *server_id;		// from AS server
-	gchar *mime_headers;		// for created email will be a string of mime headers separated by crlfs. 
-	GSLIst *attachment_ids;		
-	gboolean read;
+	gchar *mime_headers;		// for created email will be a string of mime headers separated by crlfs. Immutable
+	GSLIst *attachment_ids;		// list of attachments this email has. AS calls id the 'file reference' 
+	guint8	flags;			// bitmap. read, answered, forwarded
 	GSLIst *categories;		// array of category strings
 };
 
-
-//
+// pulls down changes in folder structure (folders added/deleted/updated)
 gboolean SyncFolderHierarchy(gchar *sync_key, 	
 			GSList **folders_created,
 			GSList **folders_updated,
@@ -32,22 +31,26 @@ gboolean SyncFolderHierarchy(gchar *sync_key,
 			GError **error);
 
 
-// sync emails in a folder (no bodies retrieved)
+/* sync emails in a folder (no bodies retrieved). Returns lists of EasEmails. 
+In the case of created emails all fields are filled in.
+In the case of deleted emails only the serverids are filled in. 
+In the case of updated emails only the serverids, flags and categories are filled in.
+*/
 gboolean FolderSync(guint max_entries,
 	gboolean *more_available,
 	GSList **emails_created,
-	GSList **emails_updated,		// updated read/unread or categories
+	GSList **emails_updated,		// updated flags or categories
 	GSList **emails_deleted,
-	guint	max_changes,			// max changes we want from server. need to support now? AS calls window_size
-	guint	time_filter,			// AS calls filter_type. Eg "sync back 3 days"
+	guint	max_changes,			// max changes we want from server 0..512. AS calls window_size. 
+	guint	time_filter,			// AS calls filter_type. Eg "sync back 3 days". Required now?
 	gboolean *more_available,
 	GError **error);
 
 
 // get the entire email body for listed emails
+// each email body will be written to a file with the emailid as its name
 gboolean FetchEmailBodies(const GSList *email_ids, 		// serverids for emails to fetch
 		const gchar *mime_directory,
-		GSList **emails,				// list of filenames? or we could make filenames == email ids
 		GError **error);
 
 
@@ -58,12 +61,11 @@ gboolean FetchEmailBodyPreviews(const GSList *email_ids, 		// serverids for emai
 		guint preview;					// max characters (0..255)
 		GError **error);
 
-// allow retrieval of attachments for multiple emails at once?
-gboolean FetchEmailAttachments(const GSList *attachment_ids, 		// email we want attachments for
-		GSList **attachments,				// list of filenames?
+// 
+gboolean FetchEmailAttachments(const GSList *attachment_ids, 	// attachments to fetch
 		guint max_size,					// max bytes to download for each email
 		gboolean allornone;				// whether to retrieve at all if email exceeds max size
-		const gchar *mime_directory,
+		const gchar *mime_directory,			// directory to put attachment files
 		GError **error);
 
 
@@ -74,11 +76,12 @@ gboolean DeleteEmails(const GSList *email_ids,
 gboolean DeleteFolderContents(const gchar *folder_id,
 			GError **error);
 
-gboolean UpdateEmailRead(const GSList *email_ids, gboolean read,
-		GError **error);
-
-gboolean UpdateEmailImportance(const GSList *email_ids, guint importance,
-		GError **error);
+/* 
+push email updates to server
+Note that the only valid changes are to flags / categories (other changes ignored)
+*/
+gboolean UpdateEmails(GSList *update_emails,
+				GError **error);
 
 // supported on AS?
 /*
@@ -91,13 +94,6 @@ gboolean UpdateEmailJunk(const GSList *email_ids, gboolean junk,
 gboolean UpdateEmailFollowup(const GSList *email_ids, gboolean followup,
 		GError **error);
 */
-
-// 'Label' in Evolution
-// 
-UpdateEmailCategories(const GSList *email_ids, 
-		const gchar** categories, 		// array of strings for categories to add email to	
-		GError **error);
-
 
 SendEmail(const gchar *email_id,	// supplied by client in this case
 	const gchar *mime_file,		// the full path to the email (mime) to be sent
@@ -120,8 +116,8 @@ CopyToFolder((const GSList *email_ids,
 
 Outstanding issues:
 How do drafts work (AS docs say email can't be added to server using sync command with add)?
-How do we implement 'junk' / 'followup' in AS?
-
+How do we implement 'junk' / 'followup' in AS (do we need to)?
+How does AS expose 'answered' / 'forwarded'? investigate email2:ConversationIndex (timestamps are added when email replied to/forwarded but not clear how to distinguish between those two things?
 */
 
 #endif
