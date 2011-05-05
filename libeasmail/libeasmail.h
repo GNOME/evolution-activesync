@@ -54,7 +54,8 @@ In the case of created emails all fields are filled in.
 In the case of deleted emails only the serverids are valid. 
 In the case of updated emails only the serverids, flags and categories are valid.
 */
-gboolean FolderSync(gchar *folder_id,	// folder to sync
+gboolean FolderSync(gchar *sync_key,
+    gchar *folder_id,	// folder to sync
 	GSList **emails_created,
 	GSList **emails_updated,	
 	GSList **emails_deleted,
