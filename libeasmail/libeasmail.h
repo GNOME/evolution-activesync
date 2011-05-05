@@ -7,8 +7,11 @@ A draft API for the EAS mail client library which clients will use to get email 
 
 #include <glib-object.h>
 
+typedef struct _EasFolder EasFolder;
+typedef struct _EasEmail EasEmail;
+typedef struct _EasAttachment EasAttachment;
 
-struct EasFolder {
+struct _EasFolder {
 	gchar *parent_id;
 	gchar *server_id;		// from AS server. string up to 64 characters
 	gchar *display_name;
@@ -18,8 +21,7 @@ struct EasFolder {
 #define EAS_EMAIL_ANSWERED	0x00000002		// not clear how AS supports answered/forwarded! Read-only
 #define EAS_EMAIL_FORWARDED	0x00000004		// Read-only
 
-struct EasEmail {
-{
+struct _EasEmail {
 	gchar *server_id;		// from AS server
 	gchar *mime_headers;		// for created email will be a string of mime headers separated by crlfs. Immutable
 	GSList *attachments;		// list of EasAttachments this email has. AS calls id the 'file reference'. Immutable
@@ -27,13 +29,16 @@ struct EasEmail {
 	GSList *categories;		// list of categories (strings) that the email belongs to 
 };
 
-struct EasAttachment {
+struct _EasAttachment {
 	gchar *file_reference;		
 	guint	estimated_size;
 	gchar *display_name;
 	// method;
 	// inline;
 };
+
+
+gboolean DBus_Init();
 
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean SyncFolderHierarchy(gchar *sync_key, 	
@@ -69,13 +74,13 @@ gboolean FetchEmailBodies(const GSList *email_ids, 		// emails to fetch. List of
 // get a preview of the email body (up to specified number of characters
 gboolean FetchEmailBodyPreviews(const GSList *email_ids, 		// emails to fetch. List of EasEmails
 		const gchar *mime_directory,
-		guint preview;					// max characters (0..255)
+		guint preview,				// max characters (0..255)
 		GError **error);
 
 // 
 gboolean FetchEmailAttachments(const GSList *attachments, 	// attachments to fetch - list of file references
 		guint max_size,					// max bytes to download for each email
-		gboolean allornone;				// whether to retrieve at all if it exceeds max size
+		gboolean allornone,				// whether to retrieve at all if it exceeds max size
 		const gchar *mime_directory,			// directory to put attachment files. Filenames will match names in supplied file references 
 		GError **error);
 
@@ -96,24 +101,24 @@ gboolean UpdateEmails(GSList *update_emails,		// List of EasEmails to update
 				GError **error);
 
 
-SendEmail(const gchar *client_email_id,	// unique message identifier supplied by client
+gboolean SendEmail(const gchar *client_email_id,	// unique message identifier supplied by client
 	const gchar *mime_file,		// the full path to the email (mime) to be sent
 	const gchar *email_account,
 	gboolean save_in_sent_folder,
 	GError **error);
 
-ForwardEmail(const gchar *server_folder_id;	// id of the original email's folder (if not INBOX)
-	const gchar *server_original_email_id;	// id of the original email
-	gboolean edited_inline;		// if true, server will not include the original email text. AS calls 'ReplaceMime'
+gboolean ForwardEmail(const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
+	const gchar *server_original_email_id,	// id of the original email
+	gboolean edited_inline,		// if true, server will not include the original email text. AS calls 'ReplaceMime'
 	const gchar *client_email_id,	// unique message identifier supplied by client for the forwarded email
 	const gchar *mime_file,		// the full path to the email (mime) to be forwarded
 	const gchar *email_account,
 	gboolean save_in_sent_folder,
 	GError **error);
 
-ReplyToEmail(const gchar *server_folder_id;	// id of the original email's folder (if not INBOX)
-	const gchar *server_email_id;	// id of the original email
-	gboolean edited_inline;		// if true, server will not include the original email text. AS calls 'ReplaceMime'
+gboolean ReplyToEmail(const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
+	const gchar *server_email_id,	// id of the original email
+	gboolean edited_inline,		// if true, server will not include the original email text. AS calls 'ReplaceMime'
 	const gchar *client_email_id,	// unique message identifier supplied by client
 	const gchar *mime_file,		// the full path to the email (mime) to be sent as reply
 	const gchar *email_account,
@@ -121,14 +126,14 @@ ReplyToEmail(const gchar *server_folder_id;	// id of the original email's folder
 	GError **error);
 
 
-MoveToFolder(const GSList *email_ids,
-	const gchar *src_folder_id
+gboolean MoveToFolder(const GSList *email_ids,
+	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error);
 
 // How supported in AS?
-CopyToFolder((const GSList *email_ids,
-	const gchar *src_folder_id
+gboolean CopyToFolder(const GSList *email_ids,
+	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error);
 
