@@ -7,9 +7,38 @@ A draft API for the EAS mail client library which clients will use to get email 
 
 #include <glib-object.h>
 
+G_BEGIN_DECLS
+
+#define EAS_TYPE_CONNECTION_HANDLER             (eas_connection_handler_get_type ())
+#define EAS_CONNECTION_HANDLER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_CONNECTION_HANDLER, EasConnectionHandler))
+#define EAS_CONNECTION_HANDLER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_CONNECTION_HANDLER, EasConnectionHandlerClass))
+#define EAS_IS_CONNECTION_HANDLER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_CONNECTION_HANDLER))
+#define EAS_IS_CONNECTION_HANDLER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_CONNECTION_HANDLER))
+#define EAS_CONNECTION_HANDLER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_CONNECTION_HANDLER, EasConnectionHandlerClass))
+
+typedef struct _EasConnectionHandlerClass EasConnectionHandlerClass;
+typedef struct _EasConnectionHandler EasConnectionHandler;
+typedef struct _EasConnectionHandlerPrivate EasConnectionHandlerPrivate;
+
+struct _EasConnectionHandlerClass
+{
+	GObjectClass parent_class;
+};
+
+struct _EasConnectionHandler
+{
+	GObject parent_instance;
+	EasConnectionHandlerPrivate *priv;
+};
+
+GType eas_connection_handler_get_type (void) G_GNUC_CONST;
+
+
+
 typedef struct _EasFolder EasFolder;
 typedef struct _EasEmail EasEmail;
 typedef struct _EasAttachment EasAttachment;
+
 
 struct _EasFolder {
 	gchar *parent_id;
@@ -37,11 +66,10 @@ struct _EasAttachment {
 	// inline;
 };
 
-
-gboolean DBus_Init();
+EasConnectionHandler *easConnectionNew();
 
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
-gboolean SyncFolderHierarchy(gchar *sync_key, 	
+gboolean syncFolderHierarchy(EasConnectionHandler* cnc, gchar *sync_key, 	
 			GSList **folders_created,	
 			GSList **folders_updated,
 			GSList **folders_deleted,
@@ -54,7 +82,8 @@ In the case of created emails all fields are filled in.
 In the case of deleted emails only the serverids are valid. 
 In the case of updated emails only the serverids, flags and categories are valid.
 */
-gboolean FolderSync(gchar *sync_key,
+gboolean folderSync(EasConnectionHandler* cnc, 
+    gchar *sync_key,
     gchar *folder_id,	// folder to sync
 	GSList **emails_created,
 	GSList **emails_updated,	
@@ -67,19 +96,22 @@ gboolean FolderSync(gchar *sync_key,
 
 // get the entire email body for listed emails
 // each email body will be written to a file with the emailid as its name
-gboolean FetchEmailBodies(const GSList *email_ids, 		// emails to fetch. List of EasEmails
+gboolean fetchEmailBodies(EasConnectionHandler* cnc, 
+        const GSList *email_ids, 		// emails to fetch. List of EasEmails
 		const gchar *mime_directory,
 		GError **error);
 
 
 // get a preview of the email body (up to specified number of characters
-gboolean FetchEmailBodyPreviews(const GSList *email_ids, 		// emails to fetch. List of EasEmails
+gboolean fetchEmailBodyPreviews(EasConnectionHandler* cnc, 
+        const GSList *email_ids, 		// emails to fetch. List of EasEmails
 		const gchar *mime_directory,
 		guint preview,				// max characters (0..255)
 		GError **error);
 
 // 
-gboolean FetchEmailAttachments(const GSList *attachments, 	// attachments to fetch - list of file references
+gboolean fetchEmailAttachments(EasConnectionHandler* cnc, 
+        const GSList *attachments, 	// attachments to fetch - list of file references
 		guint max_size,					// max bytes to download for each email
 		gboolean allornone,				// whether to retrieve at all if it exceeds max size
 		const gchar *mime_directory,			// directory to put attachment files. Filenames will match names in supplied file references 
@@ -87,28 +119,33 @@ gboolean FetchEmailAttachments(const GSList *attachments, 	// attachments to fet
 
 
 // Delete specified emails 
-gboolean DeleteEmails(const GSList *emails,		// List of EasEmails to delete
+gboolean deleteEmails(EasConnectionHandler* cnc, 
+        const GSList *emails,		// List of EasEmails to delete
 		GError **error);
 
 
-gboolean DeleteFolderContents(const gchar *folder_id,
+gboolean deleteFolderContents(EasConnectionHandler* cnc, 
+            const gchar *folder_id,
 			GError **error);
 
 /* 
 push email updates to server
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
 */
-gboolean UpdateEmails(GSList *update_emails,		// List of EasEmails to update
+gboolean updateEmails(EasConnectionHandler* cnc, 
+                GSList *update_emails,		// List of EasEmails to update
 				GError **error);
 
 
-gboolean SendEmail(const gchar *client_email_id,	// unique message identifier supplied by client
+gboolean sendEmail(EasConnectionHandler* cnc, 
+    const gchar *client_email_id,	// unique message identifier supplied by client
 	const gchar *mime_file,		// the full path to the email (mime) to be sent
 	const gchar *email_account,
 	gboolean save_in_sent_folder,
 	GError **error);
 
-gboolean ForwardEmail(const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
+gboolean forwardEmail(EasConnectionHandler* cnc, 
+    const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
 	const gchar *server_original_email_id,	// id of the original email
 	gboolean edited_inline,		// if true, server will not include the original email text. AS calls 'ReplaceMime'
 	const gchar *client_email_id,	// unique message identifier supplied by client for the forwarded email
@@ -117,7 +154,8 @@ gboolean ForwardEmail(const gchar *server_folder_id,	// id of the original email
 	gboolean save_in_sent_folder,
 	GError **error);
 
-gboolean ReplyToEmail(const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
+gboolean replyToEmail(EasConnectionHandler* cnc, 
+    const gchar *server_folder_id,	// id of the original email's folder (if not INBOX)
 	const gchar *server_email_id,	// id of the original email
 	gboolean edited_inline,		// if true, server will not include the original email text. AS calls 'ReplaceMime'
 	const gchar *client_email_id,	// unique message identifier supplied by client
@@ -127,13 +165,15 @@ gboolean ReplyToEmail(const gchar *server_folder_id,	// id of the original email
 	GError **error);
 
 
-gboolean MoveToFolder(const GSList *email_ids,
+gboolean moveToFolder(EasConnectionHandler* cnc, 
+    const GSList *email_ids,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error);
 
 // How supported in AS?
-gboolean CopyToFolder(const GSList *email_ids,
+gboolean copyToFolder(EasConnectionHandler* cnc, 
+    const GSList *email_ids,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error);
@@ -143,7 +183,6 @@ Outstanding issues:
 How do drafts work (AS docs say email can't be added to server using sync command with add)?
 How does AS expose 'answered' / 'forwarded'? investigate email2:ConversationIndex (timestamps are added when email replied to/forwarded but not clear how to distinguish between those two things?
 In order to support answered/forwarded metadata we believe that it's necessary to use SmartReply/SmartForward rather than SendMail.
-
 */
 
 /* 
@@ -152,6 +191,6 @@ Do we need the ability to get multiple attachements at once?
 Do we need the ability to sync ALL email folders at once? Assuming not.
 */
 
-
+G_END_DECLS
 
 #endif
