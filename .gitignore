@@ -22,10 +22,15 @@ libtool
 stamp-h1
 eas-daemon/src/activesyncd
 eas-daemon/tests/activesyncd-test-001
+libeasmail/tests/libeasmail_test
 
 # Folders to ignore
 config/*
 m4/*
+eas-daemon/config/*
+eas-daemon/m4/*
+libeasmail/config/*
+libeasmail/m4/*
 
 # File paterns to ignore
 *.m4
@@ -33,4 +38,5 @@ m4/*
 *.lo
 *.la
 *stub.h
+*~
 
