@@ -1,0 +1,36 @@
+# Specific files to ignore
+AUTHORS
+COPYING
+ChangeLog
+INSTALL
+Makefile
+Makefile.in
+NEWS
+README
+config.h
+config.h.in
+config.log
+config.status
+configure
+autom4te.cache
+check_tests/check_eas
+check_tests/eas-daemon_test.log
+check_tests/eas-daemon_test.xml
+.deps
+.libs
+libtool
+stamp-h1
+eas-daemon/src/activesyncd
+eas-daemon/tests/activesyncd-test-001
+
+# Folders to ignore
+config/*
+m4/*
+
+# File paterns to ignore
+*.m4
+*.o
+*.lo
+*.la
+*stub.h
+
