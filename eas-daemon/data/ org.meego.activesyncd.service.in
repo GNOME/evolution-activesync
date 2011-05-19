@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.meego.activesyncd
+Exec=@bindir@/activesyncd

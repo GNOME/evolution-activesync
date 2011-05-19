@@ -1,0 +1,509 @@
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/*
+ * eas-daemon
+ * Copyright (C)  2011 <>
+ * 
+ * eas-daemon is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * eas-daemon is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "eas-connection.h"
+#include <libsoup/soup.h>
+
+#include <libwbxml-1.0/wbxml/wbxml.h>
+#include <libedataserver/e-flag.h>
+#include <libxml/xmlreader.h> // xmlDoc
+
+#include "eas-request-base.h"
+
+#include "eas-sync-folder-hierarchy.h"
+
+struct _EasConnectionPrivate
+{
+	SoupSession* soup_session;
+	GThread* soup_thread;
+	GMainLoop* soup_loop;
+	GMainContext* soup_context;
+	
+	gchar* server_uri;
+	gchar* username;
+	gchar* password;
+
+	gchar* device_type;
+	gchar* device_id;
+
+	gchar* policy_key;
+};
+
+#define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
+
+static void connection_authenticate (SoupSession *sess, SoupMessage *msg, 
+                                     SoupAuth *auth, gboolean retrying, 
+                                     gpointer data);
+static gpointer eas_soup_thread (gpointer user_data);
+static void handle_provision_stage1(SoupSession *session, SoupMessage *msg, 
+                                    gpointer data);
+static void handle_provision_stage2(SoupSession *session, SoupMessage *msg, 
+                                    gpointer data);
+static void handle_folder_sync(SoupSession *session, SoupMessage *msg, 
+                                    gpointer data);
+static void eas_connection_parse_fs_add(EasConnection *cnc, xmlNode *node); 
+
+G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
+
+static void
+eas_connection_init (EasConnection *self)
+{
+	EasConnectionPrivate *priv;
+	self->priv = priv = EAS_CONNECTION_PRIVATE(self);
+
+    priv->soup_context = g_main_context_new ();
+    priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
+
+    priv->soup_thread = g_thread_create (eas_soup_thread, priv, TRUE, NULL);
+    
+    /* create the SoupSession for this connection */
+    priv->soup_session = 
+        soup_session_async_new_with_options (SOUP_SESSION_USE_NTLM, 
+                                             TRUE, 
+                                             SOUP_SESSION_ASYNC_CONTEXT, 
+                                             priv->soup_context, 
+                                             NULL);
+
+    g_signal_connect (priv->soup_session, 
+                      "authenticate", 
+                      G_CALLBACK(connection_authenticate), 
+                      self);
+
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
+        SoupLogger *logger;
+        logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
+        soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE(logger));
+    }
+
+	// TODO Fetch the Device Type and Id from where ever it is stored.
+	priv->device_type = g_strdup ("FakeDevice");
+	priv->device_id = g_strdup ("1234567890");
+
+	priv->server_uri = NULL;
+	priv->username = NULL;
+	priv->password = NULL;
+
+	priv->policy_key = NULL;
+}
+
+static void
+eas_connection_finalize (GObject *object)
+{
+	EasConnection *cnc = (EasConnection *)object;
+	EasConnectionPrivate *priv = cnc->priv;
+
+    g_signal_handlers_disconnect_by_func (priv->soup_session, 
+                                          connection_authenticate, 
+                                          cnc);
+
+    if (priv->soup_session) {
+        g_object_unref (priv->soup_session);
+        priv->soup_session = NULL;
+
+        g_main_loop_quit(priv->soup_loop);
+        g_thread_join(priv->soup_thread);
+        priv->soup_thread = NULL;
+
+        g_main_loop_unref(priv->soup_loop);
+        priv->soup_loop = NULL;
+        g_main_context_unref(priv->soup_context);
+        priv->soup_context = NULL;
+    }
+
+	// g_free can handle NULL
+    g_free (priv->server_uri);
+    g_free (priv->username);
+    g_free (priv->password);
+
+    g_free (priv->device_type);
+    g_free (priv->device_id);
+	
+    g_free (priv->policy_key);
+
+	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
+}
+
+static void
+eas_connection_class_init (EasConnectionClass *klass)
+{
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+
+	g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
+
+	object_class->finalize = eas_connection_finalize;
+}
+
+static void 
+connection_authenticate (SoupSession *sess, 
+                         SoupMessage *msg, 
+                         SoupAuth *auth, 
+                         gboolean retrying, 
+                         gpointer data)
+{
+    EasConnection* cnc = (EasConnection *)data;
+
+    soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+}
+
+static gpointer 
+eas_soup_thread (gpointer user_data)
+{
+    EasConnectionPrivate *priv = user_data;
+
+    g_main_context_push_thread_default (priv->soup_context);
+    g_main_loop_run (priv->soup_loop);
+    g_main_context_pop_thread_default (priv->soup_context);
+    return NULL;
+}
+
+static void 
+eas_connection_send_msg (EasConnection* cnc,
+                         const gchar* cmd, 
+       					 const gchar* device_id,
+                         const gchar* device_type,
+					     const xmlDoc *xml_doc, 
+					     SoupSessionCallback cb, 
+					     gpointer cb_data)
+{
+	EasConnectionPrivate *priv = cnc->priv;
+    SoupMessage *msg = NULL;
+    WB_UTINY *wbxml = NULL;
+    WB_ULONG wbxml_len = 0;
+    gchar* uri = NULL;
+    WBXMLError ret = WBXML_OK;
+//    gchar* tmp = NULL;
+    xmlChar* dataptr = NULL;
+    int data_len = 0;
+    WBXMLConvXML2WBXML *conv = NULL;
+
+    ret = wbxml_create_conv_xml2wbxml(&conv);
+    if (ret != WBXML_OK) {
+        printf("%s\n", wbxml_errors_string(ret));
+        return;
+    }
+
+    uri = g_strconcat (priv->server_uri,
+                       "?Cmd=", cmd,
+                       "&User=", priv->username,
+                       "&DeviceID=", device_id,
+                       "&DeviceType=", device_type, 
+                       NULL);
+    
+    msg = soup_message_new("POST", uri);
+    g_free(uri);
+
+    soup_message_headers_append(msg->request_headers, 
+                                "MS-ASProtocolVersion",
+                                "14.0");
+    
+    soup_message_headers_append(msg->request_headers, 
+                                "User-Agent",
+                                "libeas");
+
+    soup_message_headers_append(msg->request_headers, 
+                                "X-MS-PolicyKey",
+                                (priv->policy_key?priv->policy_key:"0"));
+
+    xmlDocDumpFormatMemoryEnc((xmlDoc*)xml_doc, &dataptr, &data_len, (gchar*)"utf-8",1);
+    wbxml_conv_xml2wbxml_disable_public_id(conv);
+    ret = wbxml_run_conv_xml2wbxml(conv, dataptr, data_len, &wbxml, &wbxml_len);
+
+#if 0	
+    cout << "wbxml_len = " << wbxml_len << endl;
+    tmp = g_strndup((gchar*)dataptr, data_len);
+    cout << "wbxml_run_conv_xml2wbxml [Ret: " << wbxml_errors_string(ret) << "]" << endl;
+    cout <<"=== XML Input ===" << endl << endl;
+    cout << tmp << endl;
+    cout <<"=== XML Input ===" << endl << endl;
+    
+    if (tmp) 
+    {
+        g_free(tmp);
+        tmp = NULL;
+    }
+#endif
+	
+    if (dataptr) {
+        xmlFree(dataptr);
+        dataptr = NULL;
+    }
+
+    if (WBXML_OK == ret)
+    {
+#if 0		
+        // DEBUG START
+        {
+            WB_UTINY *_xml = NULL;
+            WB_ULONG _xml_len = 0;
+            WBXMLConvWBXML2XML *_conv = NULL;
+            gchar* _tmp = NULL;
+
+            ret = wbxml_create_conv_wbxml2xml(&_conv);
+            wbxml_conv_wbxml2xml_set_language(_conv, WBXML_LANG_ACTIVESYNC);
+            wbxml_conv_wbxml2xml_set_indent(_conv, 1);
+            ret = wbxml_run_conv_wbxml2xml(_conv, wbxml, wbxml_len, &_xml, &_xml_len);
+
+            _tmp = g_strndup((gchar*)_xml, _xml_len);
+
+            cout << "xml -> wbxml -> xml: " << wbxml_errors_string(ret) << endl;
+            cout <<"=== XML -> WBXML -> XML ===" << endl << endl;
+            cout << _tmp << endl;
+            cout <<"=== XML -> WBXML -> XML ===" << endl << endl;
+
+            if (_tmp) g_free(tmp);
+            if (_conv) wbxml_destroy_conv_wbxml2xml(_conv);
+            free(_xml);
+        }
+        // DEBUG END
+#endif
+        soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
+    
+        soup_message_set_request(msg, 
+                                 "application/vnd.ms-sync.wbxml",
+                                 SOUP_MEMORY_COPY,
+                                 (gchar*)wbxml,
+                                 wbxml_len);
+    
+        soup_session_queue_message(priv->soup_session, msg, cb, cb_data);
+    }
+    
+    if (wbxml) free(wbxml);
+    if (conv) wbxml_destroy_conv_xml2wbxml(conv);
+}
+
+
+static gboolean 
+isResponseValid(SoupMessage *msg) 
+{
+    const gchar *content_type = NULL;
+    goffset header_content_length = 0;
+	
+    if (200 != msg->status_code) 
+	{
+        printf ("Failed with status [%d] : %s\n", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
+        return FALSE;
+    }
+
+	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
+    if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
+    {
+		printf ("Failed: Content-Type did not match WBXML\n");
+        return FALSE;
+    }
+
+    if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding(msg->response_headers))
+    {
+		printf("Failed: Content-Length was not found\n");
+        return FALSE;
+    }
+
+    header_content_length = soup_message_headers_get_content_length(msg->response_headers);
+    if (header_content_length != msg->response_body->length)
+    {
+        printf ("Failed: Header[%ld] and Body[%ld] Content-Length do not match\n", 
+                (long)header_content_length, (long)msg->response_body->length);
+        return FALSE;
+    }
+	
+	return TRUE;
+}
+
+
+/**
+ * Converts from Microsoft Exchange Server protocol WBXML to XML
+ * @param wbxml input buffer
+ * @param wbxml_len input buffer length
+ * @param xml output buffer [full transfer]
+ * @param xml_len length of the output buffer in bytes
+ */
+static void 
+wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
+{
+    WBXMLConvWBXML2XML *conv = NULL;
+    WBXMLError ret = WBXML_OK;
+
+    *xml = NULL;
+    *xml_len = 0;
+    
+    ret = wbxml_create_conv_wbxml2xml(&conv);
+    
+    if (ret != WBXML_OK)
+    {
+		printf ("Failed to create conv! %s\n", wbxml_errors_string(ret));
+        return;
+    }
+
+    if (NULL == wbxml)
+    {
+		printf ("wbxml is NULL!\n");
+        goto failed;
+    }
+
+    if (0 == wbxml_len)
+    {
+        printf("wbxml_len is 0!\n");
+        goto failed;
+    }
+
+    wbxml_conv_wbxml2xml_set_language(conv, WBXML_LANG_ACTIVESYNC);
+    wbxml_conv_wbxml2xml_set_indent(conv, 1);
+    
+    ret = wbxml_run_conv_wbxml2xml(conv,
+                                   wbxml,
+                                   wbxml_len,
+                                   xml, 
+                                   xml_len);
+
+    if (WBXML_OK != ret) 
+	{
+        printf ("wbxml2xml Ret = %s", wbxml_errors_string(ret));
+    }
+
+failed:
+    if (conv) wbxml_destroy_conv_wbxml2xml(conv);
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Public functions
+//
+////////////////////////////////////////////////////////////////////////////////
+
+void
+eas_connection_autodiscover (const gchar* email, 
+                             const gchar* username, 
+                             const gchar* password, 
+                             gchar** serverUri, 
+                             GError** error)
+{
+	/* TODO: Add public function implementation here */
+}
+
+EasConnection* eas_connection_new(const gchar* serverUri,
+                                  const gchar* username,
+                                  const gchar* password,
+                                  GError** error)
+{
+	EasConnection *cnc = NULL;
+
+	*error = NULL; 
+
+    cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
+    
+    cnc->priv->username = g_strdup (username);
+    cnc->priv->password = g_strdup (password);
+    cnc->priv->server_uri = g_strdup (serverUri);
+
+    // May need to allow a connection to set its own authentication
+
+    return cnc;
+}
+#if 0
+static void 
+eas_connection_provision(EasConnection *cnc,
+                         GError** error)
+{
+	EasConnectionPrivate *priv = cnc->priv;
+	xmlDoc *doc = build_provision_as_xml(NULL, NULL);
+
+	eas_connection_send_msg(cnc, 
+	                        "Provision", 
+	                        priv->device_id, 
+	                        priv->device_type, 
+	                        doc, 
+	                        handle_provision_stage1, 
+	                        cnc);
+	
+	if (doc) xmlFreeDoc(doc);
+}
+#endif
+
+static void 
+handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
+{
+	EasRequestBase *req = (EasRequestBase *)data;
+	xmlDoc *doc = NULL;
+    WB_UTINY *xml = NULL;
+    WB_ULONG xml_len = 0;
+	
+	if (FALSE == isResponseValid(msg)) {
+		return;
+	}
+
+    wbxml2xml ((WB_UTINY*)msg->response_body->data,
+               msg->response_body->length,
+               &xml,
+               &xml_len);
+
+    doc = xmlReadMemory ((const char*)xml, 
+                         xml_len,
+                         "sync.xml", 
+                         NULL, 
+                         0);
+	if (xml) free(xml);
+
+	if (req) {
+		EasRequestType request_type = eas_request_base_GetRequestType(req);
+		
+		switch (request_type) {
+			default:
+			{
+				printf("Unknown RequestType [%d]\n", request_type);
+			}
+			break;
+				
+			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
+			{
+				eas_sync_folder_hierarchy_MessageComplete((EasSyncFolderHierarchy*)req, doc);
+			}
+			break;
+		}
+	}
+}
+
+
+#if 0
+void
+eas_connection_folder_sync(EasConnection* cnc, GError** error)
+{
+	EasConnectionPrivate *priv = cnc->priv;
+
+	printf("eas_connection_folder_sync\n");
+
+	if (!priv->policy_key)
+	{
+		GError *provision_error = NULL;
+		priv->provision_eflag = e_flag_new ();
+
+		eas_connection_provision (cnc, &provision_error);
+		
+		e_flag_wait (priv->provision_eflag);
+		e_flag_free (priv->provision_eflag);
+		
+		if (provision_error) {
+			// TODO dump the error and free
+		}
+	}
+}
+
+#endif

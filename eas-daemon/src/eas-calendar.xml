@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node>
+<!--
+  <interface name="org.meego.Eas">
+-->
+  <interface name="org.meego.activesyncd.EasCalendar">
+
+  <!-- TODO: This is just an example exposed API use as a test - -->
+    <method name="start_sync">
+      <arg type="i" name="new_value" direction="in"/>
+    </method>
+
+
+  <!-- TODO: Insert your calendar exposed APIs here -->
+
+  </interface>
+</node>
+

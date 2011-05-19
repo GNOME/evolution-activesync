@@ -1,0 +1,52 @@
+
+#ifndef _EAS_REQUEST_BASE_H_
+#define _EAS_REQUEST_BASE_H_
+
+#include <glib-object.h>
+#include <libxml/xmlreader.h> // xmlDoc
+
+G_BEGIN_DECLS
+
+#define EAS_TYPE_REQUEST_BASE             (eas_request_base_get_type ())
+#define EAS_REQUEST_BASE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_REQUEST_BASE, EasRequestBase))
+#define EAS_REQUEST_BASE_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_REQUEST_BASE, EasRequestBaseClass))
+#define EAS_IS_REQUEST_BASE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_REQUEST_BASE))
+#define EAS_IS_REQUEST_BASE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_REQUEST_BASE))
+#define EAS_REQUEST_BASE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_REQUEST_BASE, EasRequestBaseClass))
+
+typedef struct _EasRequestBaseClass EasRequestBaseClass;
+typedef struct _EasRequestBase EasRequestBase;
+typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
+
+struct _EasRequestBaseClass
+{
+	GObjectClass parent_class;
+};
+
+struct _EasRequestBase
+{
+	GObject parent_instance;
+	
+	EasRequestBasePrivate* priv;
+};
+
+typedef enum {
+	EAS_REQ_BASE = 0,
+    EAS_REQ_PROVISION,
+	EAS_REQ_SYNC_FOLDER_HIERARCHY,
+	EAS_REQ_FOLDER_SYNC,
+	//TODO: add all other requests here
+	
+	EAS_REQ_LAST
+} EasRequestType;
+
+GType eas_request_base_get_type (void) G_GNUC_CONST;
+
+void eas_request_base_Activate (EasRequestBase *self);
+void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc);
+
+EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
+
+G_END_DECLS
+
+#endif /* _EAS_REQUEST_BASE_H_ */
