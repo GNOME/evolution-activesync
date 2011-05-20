@@ -45,14 +45,10 @@ gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConn
 /*
 	sync the entire email folder hierarchy 
 */                            
-gboolean eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj, 
-                                            guint64 account_uid,
-											const gchar* sync_key, 
-											gchar **ret_sync_key,  
-											gchar **ret_created_folders_array,
-											gchar **ret_updated_folders_array,
-											gchar **ret_deleted_folders_array,
-											GError** error);
+void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
+                                          guint64 account_uid,
+                                          const gchar* sync_key,
+                                          DBusGMethodInvocation* context);
 
 /*
 	synchronize an email folder. Gets email headers only, not bodies

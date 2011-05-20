@@ -54,10 +54,12 @@ eas_sync_folder_hierarchy_class_init (EasSyncFolderHierarchyClass *klass)
 
 
 void
-eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, gchar* syncKey, guint64 accountId)
+eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* syncKey, guint64 accountId, EFlag *flag)
 {
 	EasSyncFolderHierarchyPrivate* priv = self->priv;
 	xmlDoc *doc;
+
+	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	//create syn folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, accountId);
@@ -84,4 +86,13 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 
 	// Decide if to send another message, or if to inform the daemon this
 	// request is now complete.
+	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+}
+
+void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
+                                                gchar** ret_sync_key,
+												GSList** added_folders,
+												GSList** updated_folders,
+												GSList** deleted_folders)
+{
 }

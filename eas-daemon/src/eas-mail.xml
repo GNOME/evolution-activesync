@@ -20,26 +20,13 @@
  EAS only allows sync of entire hierarchy (inc email, contacts...) so daemon will need to filter to ‘email’ type folders
  will use AS FolderSync command	
 -->
+
     <method name="sync_email_folder_hierarchy">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
       <arg type="s" name="sync_key" direction="in"/>
-      <arg type="s" name="ret_sync_key" direction="out"/>
-      <!--
-	created folders
-      -->
-      <arg type="as" name="ret_created_folder_array" direction="out"/>
-
-      <!--
-	deleted folders
-      -->
-      <arg type="as" name="ret_deleted_folder_array" direction="out"/>
-
-      <!--
-	updated folders
-      -->
-      <arg type="as" name="ret_updated_folder_array" direction="out"/> 
-
     </method>
+
 
 <!--
  2-way sync of specified email folder. This will sync email headers only, not bodies
