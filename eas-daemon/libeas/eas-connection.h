@@ -21,6 +21,8 @@
 #define _EAS_CONNECTION_H_
 
 #include <glib-object.h>
+#include <libxml/xmlreader.h>
+#include "eas-request-base.h"
 
 G_BEGIN_DECLS
 
@@ -32,8 +34,9 @@ G_BEGIN_DECLS
 #define EAS_CONNECTION_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_CONNECTION, EasConnectionClass))
 
 typedef struct _EasConnectionClass EasConnectionClass;
-typedef struct _EasConnection EasConnection;
 typedef struct _EasConnectionPrivate EasConnectionPrivate;
+typedef struct _EasConnection EasConnection;
+
 
 struct _EasConnectionClass
 {
@@ -48,22 +51,18 @@ struct _EasConnection
 };
 
 GType eas_connection_get_type (void) G_GNUC_CONST;
+
 void eas_connection_autodiscover (const gchar* email, const gchar* username, const gchar* password, gchar** serverUri, GError** error);
 
 EasConnection* eas_connection_new (const gchar* serverUri, const gchar* username, const gchar* password, GError** error);
-#if 0
-void eas_connection_folder_sync(EasConnection* cnc, 
-                                            guint64 account_uid,
-											const gchar* sync_key, 
-											gchar **ret_sync_key,  
-											gchar **ret_created_folders_array,
-											gchar **ret_updated_folders_array,
-											gchar **ret_deleted_folders_array,
-                            				GError** error);
-#endif
 
-void eas_connection_sync_folder_items (EasConnection* cnc, gchar** syncKey, gchar* collectionId, GError** error);
-void eas_connection_get_items (EasConnection* cnc, gchar** itemIdList, GError** error);
+// Provisioning APIs
+void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey);
+void eas_connection_resume_request(EasConnection* self);
+
+void eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request);
+
+
 
 G_END_DECLS
 

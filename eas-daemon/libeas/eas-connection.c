@@ -24,9 +24,9 @@
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
-#include "eas-request-base.h"
-
+// List of includes for each request type
 #include "eas-sync-folder-hierarchy.h"
+#include "eas-provision-req.h"
 
 struct _EasConnectionPrivate
 {
@@ -43,6 +43,10 @@ struct _EasConnectionPrivate
 	gchar* device_id;
 
 	gchar* policy_key;
+
+	gchar* request_cmd;
+	xmlDoc* request_doc;
+	EasRequestBase* request;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -51,13 +55,8 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      SoupAuth *auth, gboolean retrying, 
                                      gpointer data);
 static gpointer eas_soup_thread (gpointer user_data);
-static void handle_provision_stage1(SoupSession *session, SoupMessage *msg, 
-                                    gpointer data);
-static void handle_provision_stage2(SoupSession *session, SoupMessage *msg, 
-                                    gpointer data);
-static void handle_folder_sync(SoupSession *session, SoupMessage *msg, 
-                                    gpointer data);
-static void eas_connection_parse_fs_add(EasConnection *cnc, xmlNode *node); 
+static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
+
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -66,6 +65,8 @@ eas_connection_init (EasConnection *self)
 {
 	EasConnectionPrivate *priv;
 	self->priv = priv = EAS_CONNECTION_PRIVATE(self);
+
+	g_print("eas_connection_init++\n");
 
     priv->soup_context = g_main_context_new ();
     priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
@@ -100,6 +101,12 @@ eas_connection_init (EasConnection *self)
 	priv->password = NULL;
 
 	priv->policy_key = NULL;
+
+	priv->request_cmd = NULL;
+	priv->request_doc = NULL;
+	priv->request = NULL;
+
+	g_print("eas_connection_init--\n");
 }
 
 static void
@@ -135,6 +142,19 @@ eas_connection_finalize (GObject *object)
     g_free (priv->device_id);
 	
     g_free (priv->policy_key);
+
+	g_free(priv->request_cmd);
+
+	if (priv->request_doc) {
+		xmlFree(priv->request_doc);
+	}
+
+	if (priv->request) {
+		// TODO - @@WARNING Check this is a valid thing to do.
+		// It might only call the base gobject class finalize method not the
+		// correct method. Not sure if gobjects are properly polymorphic.
+		g_object_unref(priv->request);
+	}
 
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
 }
@@ -173,37 +193,94 @@ eas_soup_thread (gpointer user_data)
     return NULL;
 }
 
-static void 
-eas_connection_send_msg (EasConnection* cnc,
-                         const gchar* cmd, 
-       					 const gchar* device_id,
-                         const gchar* device_type,
-					     const xmlDoc *xml_doc, 
-					     SoupSessionCallback cb, 
-					     gpointer cb_data)
+void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey)
 {
-	EasConnectionPrivate *priv = cnc->priv;
+	EasConnectionPrivate *priv = self->priv;
+
+	g_free(priv->policy_key);
+	priv->policy_key = g_strdup(policyKey);
+}
+
+void eas_connection_resume_request(EasConnection* self) 
+{
+	EasConnectionPrivate *priv = self->priv;
+	gchar *_cmd;
+	EasRequestBase *_request;
+	xmlDoc *_doc;
+
+	g_print("eas_connection_resume_request++\n");
+
+	// If these aren't set it's all gone horribly wrong
+	g_assert(priv->request_cmd);
+	g_assert(priv->request);
+	g_assert(priv->request_doc);
+
+	_cmd = priv->request_cmd;
+	_request = priv->request;
+	_doc = priv->request_doc;
+
+	priv->request_cmd = NULL;
+	priv->request = NULL;
+	priv->request_doc = NULL;
+		
+	eas_connection_send_request(self, _cmd, _doc, _request);
+	g_free(_cmd);
+}
+
+/**
+ * WBXML encode the message and send to exchange server via libsoup.
+ * May also be required to temporarily hold the request message whilst 
+ * provisioning with the server occurs.
+ *
+ * @param self the EasConnection GObject
+ * @param cmd ActiveSync command string [no transfer]
+ * @param doc the message xml body [full transfer]
+ * @param request the request GObject
+ */
+void 
+eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request)
+{
+	EasConnectionPrivate *priv = self->priv;
     SoupMessage *msg = NULL;
+	gchar* uri = NULL;
     WB_UTINY *wbxml = NULL;
     WB_ULONG wbxml_len = 0;
-    gchar* uri = NULL;
     WBXMLError ret = WBXML_OK;
-//    gchar* tmp = NULL;
+    WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
-    WBXMLConvXML2WBXML *conv = NULL;
+
+	g_print("eas_connection_send_request++\n");
+	// If not the provision request, store the request
+	if (g_strcmp0(cmd,"Provision"))
+	{
+		priv->request_cmd = g_strdup(cmd);
+		priv->request_doc = doc;
+		priv->request = request;
+	}
+
+	// If we need to provision, and not the provisioning msg
+	if (!priv->policy_key && g_strcmp0(cmd,"Provision"))
+	{
+		g_print("  eas_connection_send_request - Provisioning required\n");
+		
+		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
+		eas_request_base_SetConnection (&req->parent_instance, self);
+		eas_provision_req_Activate (req);
+		return;
+	}
 
     ret = wbxml_create_conv_xml2wbxml(&conv);
     if (ret != WBXML_OK) {
-        printf("%s\n", wbxml_errors_string(ret));
+        g_print("%s\n", wbxml_errors_string(ret));
         return;
     }
-
+	
     uri = g_strconcat (priv->server_uri,
                        "?Cmd=", cmd,
                        "&User=", priv->username,
-                       "&DeviceID=", device_id,
-                       "&DeviceType=", device_type, 
+                       "&DeviceID=", priv->device_id,
+                       "&DeviceType=", priv->device_type, 
                        NULL);
     
     msg = soup_message_new("POST", uri);
@@ -221,24 +298,21 @@ eas_connection_send_msg (EasConnection* cnc,
                                 "X-MS-PolicyKey",
                                 (priv->policy_key?priv->policy_key:"0"));
 
-    xmlDocDumpFormatMemoryEnc((xmlDoc*)xml_doc, &dataptr, &data_len, (gchar*)"utf-8",1);
+	// Convert doc into a flat xml string
+    xmlDocDumpFormatMemoryEnc(doc, &dataptr, &data_len, (gchar*)"utf-8",1);
     wbxml_conv_xml2wbxml_disable_public_id(conv);
     ret = wbxml_run_conv_xml2wbxml(conv, dataptr, data_len, &wbxml, &wbxml_len);
 
-#if 0	
-    cout << "wbxml_len = " << wbxml_len << endl;
-    tmp = g_strndup((gchar*)dataptr, data_len);
-    cout << "wbxml_run_conv_xml2wbxml [Ret: " << wbxml_errors_string(ret) << "]" << endl;
-    cout <<"=== XML Input ===" << endl << endl;
-    cout << tmp << endl;
-    cout <<"=== XML Input ===" << endl << endl;
-    
-    if (tmp) 
-    {
-        g_free(tmp);
-        tmp = NULL;
-    }
-#endif
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) 
+	{
+		gchar* tmp = g_strndup((gchar*)dataptr, data_len);
+		g_print("=== XML Input ===\n");
+		g_print("\n%s\n", tmp);
+		g_print("=== XML Input ===\n\n");
+		g_free(tmp);
+
+		g_print("wbxml_run_conv_xml2wbxml [Ret:%s],  wbxml_len = [%d]\n", wbxml_errors_string(ret), wbxml_len);
+	}
 	
     if (dataptr) {
         xmlFree(dataptr);
@@ -247,77 +321,57 @@ eas_connection_send_msg (EasConnection* cnc,
 
     if (WBXML_OK == ret)
     {
-#if 0		
-        // DEBUG START
-        {
-            WB_UTINY *_xml = NULL;
-            WB_ULONG _xml_len = 0;
-            WBXMLConvWBXML2XML *_conv = NULL;
-            gchar* _tmp = NULL;
-
-            ret = wbxml_create_conv_wbxml2xml(&_conv);
-            wbxml_conv_wbxml2xml_set_language(_conv, WBXML_LANG_ACTIVESYNC);
-            wbxml_conv_wbxml2xml_set_indent(_conv, 1);
-            ret = wbxml_run_conv_wbxml2xml(_conv, wbxml, wbxml_len, &_xml, &_xml_len);
-
-            _tmp = g_strndup((gchar*)_xml, _xml_len);
-
-            cout << "xml -> wbxml -> xml: " << wbxml_errors_string(ret) << endl;
-            cout <<"=== XML -> WBXML -> XML ===" << endl << endl;
-            cout << _tmp << endl;
-            cout <<"=== XML -> WBXML -> XML ===" << endl << endl;
-
-            if (_tmp) g_free(tmp);
-            if (_conv) wbxml_destroy_conv_wbxml2xml(_conv);
-            free(_xml);
-        }
-        // DEBUG END
-#endif
         soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
-    
+
         soup_message_set_request(msg, 
                                  "application/vnd.ms-sync.wbxml",
                                  SOUP_MEMORY_COPY,
                                  (gchar*)wbxml,
                                  wbxml_len);
     
-        soup_session_queue_message(priv->soup_session, msg, cb, cb_data);
+        soup_session_queue_message(priv->soup_session, 
+                                   msg, 
+                                   handle_server_response, 
+                                   self);
     }
     
     if (wbxml) free(wbxml);
     if (conv) wbxml_destroy_conv_xml2wbxml(conv);
+	g_print("eas_connection_send_request--\n");
 }
 
 
 static gboolean 
-isResponseValid(SoupMessage *msg) 
+isResponseValid(SoupMessage *msg)
 {
     const gchar *content_type = NULL;
     goffset header_content_length = 0;
 	
+	g_print("eas_connection - isResponseValid\n");
+	
     if (200 != msg->status_code) 
 	{
-        printf ("Failed with status [%d] : %s\n", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
+        g_print ("Failed with status [%d] : %s\n", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
         return FALSE;
     }
 
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
-		printf ("Failed: Content-Type did not match WBXML\n");
+		g_print ("Failed: Content-Type did not match WBXML\n");
         return FALSE;
     }
 
     if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding(msg->response_headers))
     {
-		printf("Failed: Content-Length was not found\n");
+		g_print("Failed: Content-Length was not found\n");
         return FALSE;
     }
 
     header_content_length = soup_message_headers_get_content_length(msg->response_headers);
     if (header_content_length != msg->response_body->length)
     {
-        printf ("Failed: Header[%ld] and Body[%ld] Content-Length do not match\n", 
+        g_print ("Failed: Header[%ld] and Body[%ld] Content-Length do not match\n", 
                 (long)header_content_length, (long)msg->response_body->length);
         return FALSE;
     }
@@ -339,6 +393,8 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     WBXMLConvWBXML2XML *conv = NULL;
     WBXMLError ret = WBXML_OK;
 
+	g_print("eas_connection - wbxml2xml\n");
+	
     *xml = NULL;
     *xml_len = 0;
     
@@ -346,19 +402,19 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     
     if (ret != WBXML_OK)
     {
-		printf ("Failed to create conv! %s\n", wbxml_errors_string(ret));
+		g_print ("Failed to create conv! %s\n", wbxml_errors_string(ret));
         return;
     }
 
     if (NULL == wbxml)
     {
-		printf ("wbxml is NULL!\n");
+		g_print ("wbxml is NULL!\n");
         goto failed;
     }
 
     if (0 == wbxml_len)
     {
-        printf("wbxml_len is 0!\n");
+        g_print("wbxml_len is 0!\n");
         goto failed;
     }
 
@@ -373,7 +429,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
 
     if (WBXML_OK != ret) 
 	{
-        printf ("wbxml2xml Ret = %s", wbxml_errors_string(ret));
+        g_print ("wbxml2xml Ret = %s", wbxml_errors_string(ret));
     }
 
 failed:
@@ -418,33 +474,20 @@ EasConnection* eas_connection_new(const gchar* serverUri,
 
     return cnc;
 }
-#if 0
-static void 
-eas_connection_provision(EasConnection *cnc,
-                         GError** error)
-{
-	EasConnectionPrivate *priv = cnc->priv;
-	xmlDoc *doc = build_provision_as_xml(NULL, NULL);
 
-	eas_connection_send_msg(cnc, 
-	                        "Provision", 
-	                        priv->device_id, 
-	                        priv->device_type, 
-	                        doc, 
-	                        handle_provision_stage1, 
-	                        cnc);
-	
-	if (doc) xmlFreeDoc(doc);
-}
-#endif
-
-static void 
+void 
 handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 {
 	EasRequestBase *req = (EasRequestBase *)data;
+	EasConnection *self = (EasConnection *)eas_request_base_GetConnection (req);
+	EasConnectionPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
     WB_UTINY *xml = NULL;
     WB_ULONG xml_len = 0;
+	gboolean isProvisioningRequired = FALSE;
+
+	g_print("eas_connection - handle_server_response self[%x]\n", self);
+	g_print("eas_connection - handle_server_response priv[%x]\n", self->priv);
 	
 	if (FALSE == isResponseValid(msg)) {
 		return;
@@ -455,6 +498,8 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
                &xml,
                &xml_len);
 
+	g_print("handle_server_response - pre-xmlReadMemory\n");
+	
     doc = xmlReadMemory ((const char*)xml, 
                          xml_len,
                          "sync.xml", 
@@ -462,48 +507,61 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
                          0);
 	if (xml) free(xml);
 
-	if (req) {
+	// TODO Pre-process response status to see if provisioning is required
+	// isProvisioningRequired = ????
+	
+	if (!isProvisioningRequired)
+	{
+		g_print("handle_server_response - no parsed provisioning required\n");
+
+		g_print("handle_server_response - %s\n", priv->request_cmd);
+
+		// Clean up request data
+		g_free(priv->request_cmd);
+		g_print("handle_server_response - 0\n");
+		priv->request_cmd = NULL;
+
+		g_print("handle_server_response - 1\n");
+
+		xmlFree(priv->request_doc);
+		g_print("handle_server_response - 2\n");
+		priv->request_doc = NULL;
+		g_print("handle_server_response - 3\n");
+
+		priv->request = NULL;
+		g_print("handle_server_response - 4\n");
+
 		EasRequestType request_type = eas_request_base_GetRequestType(req);
+
+		g_print("handle_server_response - Handling request [%d]\n", request_type);
 		
-		switch (request_type) {
+		switch (request_type) 
+		{
 			default:
 			{
-				printf("Unknown RequestType [%d]\n", request_type);
+				g_print("Unknown RequestType [%d]\n", request_type);
+			}
+			break;
+
+			case EAS_REQ_PROVISION:
+			{
+				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc);
 			}
 			break;
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_MessageComplete((EasSyncFolderHierarchy*)req, doc);
+				eas_sync_folder_hierarchy_MessageComplete((EasSyncFolderHierarchy *)req, doc);
 			}
 			break;
 		}
 	}
-}
-
-
-#if 0
-void
-eas_connection_folder_sync(EasConnection* cnc, GError** error)
-{
-	EasConnectionPrivate *priv = cnc->priv;
-
-	printf("eas_connection_folder_sync\n");
-
-	if (!priv->policy_key)
+	else
 	{
-		GError *provision_error = NULL;
-		priv->provision_eflag = e_flag_new ();
-
-		eas_connection_provision (cnc, &provision_error);
+		g_print("handle_server_response - parsed provisioning required\n");
 		
-		e_flag_wait (priv->provision_eflag);
-		e_flag_free (priv->provision_eflag);
-		
-		if (provision_error) {
-			// TODO dump the error and free
-		}
+		// Don't delete this request and create a provisioning request.
+		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
+		eas_provision_req_Activate (req);
 	}
 }
-
-#endif

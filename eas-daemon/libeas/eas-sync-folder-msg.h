@@ -37,12 +37,13 @@ struct _EasSyncFolderMsg
 };
 
 GType eas_sync_folder_msg_get_type (void) G_GNUC_CONST;
-EasSyncFolderMsg* eas_sync_folder_msg_new (gchar* syncKey, gint accountId);
+EasSyncFolderMsg* eas_sync_folder_msg_new (const gchar* syncKey, gint accountId);
 xmlDoc* eas_sync_folder_msg_build_message (EasSyncFolderMsg* self);
 void eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc);
 GSList* eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);
+gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
 
 G_END_DECLS
 

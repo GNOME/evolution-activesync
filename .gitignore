@@ -23,10 +23,12 @@ stamp-h1
 eas-daemon/src/activesyncd
 eas-daemon/tests/activesyncd-test-001
 libeasmail/tests/libeasmail_test
+TODO.tasks
 
 # Folders to ignore
 config/*
 m4/*
+.anjuta/*
 eas-daemon/config/*
 eas-daemon/m4/*
 libeasmail/config/*
@@ -38,5 +40,6 @@ libeasmail/m4/*
 *.lo
 *.la
 *stub.h
-*~
+*.anjuta*
+*.*~
 

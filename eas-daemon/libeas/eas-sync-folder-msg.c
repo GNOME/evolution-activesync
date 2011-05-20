@@ -26,12 +26,16 @@ G_DEFINE_TYPE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
 static void
 eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 {
+	g_print("eas_sync_folder_msg_init++\n");
+
 	EasSyncFolderMsgPrivate *priv;
 
 	object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE(object);
 	
 	priv->sync_key = NULL;
 	priv->account_id = -1;
+	g_print("eas_sync_folder_msg_init--\n");
+
 }
 
 static void
@@ -48,17 +52,20 @@ eas_sync_folder_msg_finalize (GObject *object)
 static void
 eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
+	g_print("eas_sync_folder_msg_class_init++\n");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
 
 	g_type_class_add_private (klass, sizeof (EasSyncFolderMsgPrivate));
 
 	object_class->finalize = eas_sync_folder_msg_finalize;
+	g_print("eas_sync_folder_msg_class_init--\n");
+
 }
 
 
 EasSyncFolderMsg*
-eas_sync_folder_msg_new (gchar* syncKey, gint accountId)
+eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
 {
 	EasSyncFolderMsg* msg = NULL;
 	EasSyncFolderMsgPrivate *priv = NULL;
@@ -163,7 +170,6 @@ GSList*
 eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
-	/* TODO: Add public function implementation here */
 	return priv->updated_folders;
 }
 
@@ -171,8 +177,14 @@ GSList*
 eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
-	/* TODO: Add public function implementation here */
 	return priv->deleted_folders;
+}
+
+gchar* 
+eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->sync_key;
 }
 
 #if 0
