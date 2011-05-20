@@ -36,7 +36,7 @@ GType eas_mail_handler_get_type (void) G_GNUC_CONST;
 // This object is required to be passed to all subsiquent calls to this interface to identify the
 // account and facilitate the interface to the daemon.
 // Note: the account_uid is not validated against accounts provisioned on the device as part of 
-// this call.  This level of validation will be done on subsiquent calls that take EasEmailHandler
+// this call.  This level of validation will be done on subsequent calls that take EasEmailHandler
 // as an argument
 EasEmailHandler *eas_mail_handler_new(guint64 account_uid);
 
@@ -49,7 +49,7 @@ EasEmailHandler *eas_mail_handler_new(guint64 account_uid);
  * params: 
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
- *                              from exchange server for subsiquent sync requests
+ *                              from exchange server for subsequent sync requests
  * GSList **folders_created (out): returns a list of EasFolder structs that describe
  *                              created folders.  If there are no new created folders
  *                              this parameter will be unchanged.
@@ -61,7 +61,7 @@ EasEmailHandler *eas_mail_handler_new(guint64 account_uid);
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propogated
+ *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
 gboolean eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this, 
@@ -97,7 +97,7 @@ gboolean eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this,
  *                              Otherwise FALSE.
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propogated
+ *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
 gboolean eas_mail_handler_sync_folder_email_info(EasEmailHandler* this, 
@@ -127,7 +127,7 @@ gboolean eas_mail_handler_sync_folder_email_info(EasEmailHandler* this,
  *                              to a binary file.  Filename will match name supplied in server_id.  
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propogated
+ *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
 
@@ -145,14 +145,14 @@ gboolean eas_mail_handler_fetch_email_body(EasEmailHandler* this,
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()         
- * const gchar *file_reference (in): this value identifies the attachement to 
+ * const gchar *file_reference (in): this value identifies the attachment to 
  *                              fetch.  Use the EasAttachment->file_reference
  *                              in the EasAttachment 
  * const gchar *mime_directory (in): directory to put attachment into. Filename 
  *                              will match name supplied in file reference
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propogated
+ *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */ 
 gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this, 
@@ -160,12 +160,27 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
                                                 const gchar *mime_directory,	 
                                                 GError **error);
 
-/* 
+/* function name:               eas_mail_handler_delete_email
+ * function description:        delete the email described by the EasEmailInfo struct.
+ *                              If this method is called on an email not in the "Deleted Items"
+ *                              folder then the email is moved to the "Deleted Items" folder.  If
+ *                              this method is called on an email in the "Deleted Items" folder
+ *                              then the email will be permanently deleted
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * gchar *sync_key (in / out):  use value returned from exchange server from previous requests
+ * const EasEmailInfo *email (in): identifies the specific email to delete.  This information is 
+ *                              returned in a list from the eas_mail_handler_sync_folder_email_info
+ *                              call
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
 */
-// Delete specified emails 
 gboolean eas_mail_handler_delete_email(EasEmailHandler* this, 
 										gchar *sync_key,                                        
-                                        const EasEmailInfo *email,		// List of EasEmails to delete
+                                        const EasEmailInfo *email,
 	                                    GError **error);
 
 
