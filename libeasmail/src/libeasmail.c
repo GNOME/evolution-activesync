@@ -252,63 +252,6 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	
 	g_print("eas_mail_handler_sync_folder_hierarchy--\n");
 	return ret;
-	
-	/* asynch call
-	EFlag *eflag = e_flag_new();
-
-	g_assert(eflag);
-	
-	DBusGProxyCall* call =   dbus_g_proxy_begin_call(proxy, "sync_email_folder_hierarchy", 
-	                         sync_email_folder_hierarchy_completed, 
-	                         eflag, 				
-	                         NULL, 						// destroy notification 
-	                         G_TYPE_UINT64, 
-	                         this_g->priv->account_uid, 
-	                         G_TYPE_STRING, 
-	                         sync_key, 
-	                         G_TYPE_INVALID);
-
-	g_assert(call);
-	
-	// wait for callback to complete before returning
-	e_flag_wait(eflag);
-	e_flag_free(eflag);	
-
-	gchar **created_folder_array = NULL;
-	gchar **deleted_folder_array = NULL;
-	gchar **updated_folder_array = NULL;
-
-	// retreive the result:
-	ret = dbus_g_proxy_end_call (proxy, 
-	                       call, 
-	                       error, 
-	                       G_TYPE_STRING, 
-	                       &sync_key, 
-	                       G_TYPE_STRV, 
-	                       created_folder_array, 
-	                       G_TYPE_STRV, 
-	                       updated_folder_array, 
-	                       G_TYPE_STRV, 
-	                       deleted_folder_array, 
-	                       G_TYPE_INVALID);
-
-	if(ret)
-	{	
-		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_folder_list((const gchar **)created_folder_array, *folders_created);
-		if(ret)
-		{
-			ret = build_folder_list((const gchar **)updated_folder_array, *folders_updated);
-		}
-		if(ret)
-		{
-			ret = build_folder_list((const gchar **)deleted_folder_array, *folders_deleted);
-		}
-	}
-
-	g_print("eas_mail_handler_sync_folder_hierarchy--\n");	
-	return ret;
-	*/
 }
 
 
@@ -439,7 +382,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
-								const EasEmailInfo *email,		// List of EasEmails to delete
+								const EasEmailInfo *email,		// List of EasEmailInfos to delete
 								GError **error)
 {
 	gboolean ret = TRUE;	
@@ -459,7 +402,7 @@ Note that the only valid changes are to the read flag and to categories (other c
 gboolean 
 eas_mail_handler_update_emails(EasEmailHandler* this_g, 
 								gchar *sync_key,            // sync_key for the folder containing the emails                   
-								GSList *update_emails,		// List of EasEmails to update
+								GSList *update_emails,		// List of EasEmailInfos to update
 								GError **error)
 {
 	gboolean ret = TRUE;	

@@ -85,16 +85,19 @@ eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 	return TRUE;
 }	
 
-void 
+gboolean 
 eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 {
+	// TODO - error handling (get_next_field can fail)
 	g_print("eas_attachment_deserialise++\n");
 
+	gboolean ret = TRUE;
+	
 	g_assert(attachment);
 	g_assert(data);
 	
 	gchar *from = (gchar*)data;
-	gchar *est_size;
+	gchar *est_size = NULL;
 
 	// file_reference
 	if(attachment->file_reference != NULL)   //just in case
@@ -122,7 +125,7 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 	
 	g_print("eas_attachment_deserialise--\n");	
 
-	return;	
+	return ret;	
 }	
 
 
@@ -133,11 +136,11 @@ eas_attachment_serialised_length(EasAttachment *attachment)
 
 	// file_reference:
 	g_assert(attachment->file_reference);
-	len += strlen(attachment->file_reference);	// null-terminate allows for separator
+	len += strlen(attachment->file_reference) + 1;	// null-terminate allows for separator
 	// display_name:
 	if(attachment->display_name)	// optional field
 	{
-		len += strlen(attachment->display_name);
+		len += strlen(attachment->display_name) + 1;
 	}
 	else
 	{
@@ -148,9 +151,9 @@ eas_attachment_serialised_length(EasAttachment *attachment)
 	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";				
 	snprintf(est_size, sizeof(est_size)/sizeof(est_size[0]), "%d", attachment->estimated_size);	
 
-	len += strlen(est_size);		// no separator at end, allows for null terminate
+	len += strlen(est_size) +1;		// no separator at end, allows for null terminate
 
-	g_print("eas_attachment_serialised_length returning %d", len);
+	g_print("eas_attachment_serialised_length returning %d\n", len);
 	return len;
 	
 }

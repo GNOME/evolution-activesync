@@ -109,9 +109,11 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 
 
 // populate the folder object from a null terminated string eg ",1,,,". 
-void 
+gboolean 
 eas_folder_deserialise(EasFolder* folder, const gchar *data)
 {
+	gboolean ret = TRUE;
+	// TODO error handling (get_next_field can fail)
 	g_print("eas_folder_deserialise++\n");
 
 	g_assert(folder);
@@ -157,7 +159,7 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 	
 	g_print("eas_folder_deserialise--\n");	
 
-	return;
+	return ret;
 }
 
 
@@ -166,7 +168,7 @@ eas_attachment_folder_length(EasFolder *attachment)
 {
 	guint len = 0;
 
-	// TODO rip from serialise code and change serialise code to expect caller to allocate memory
+	// TODO rip from serialise code and change serialise code to expect caller to allocate memory?
 	
 	return len;
 }

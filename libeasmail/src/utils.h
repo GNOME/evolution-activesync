@@ -7,7 +7,8 @@
 
 #include <glib-object.h>
 
-#define MAX_LEN_OF_INT32_AS_STRING	12
+#define MAX_LEN_OF_INT32_AS_STRING	12		// inc null terminator
+#define MAX_LEN_OF_UINT8_AS_STRING	4		// inc null terminator
 
 // creates a new string and populates with next 'field' from provided data (a field being the data between separators). 
 // moves the data ptr to the start of the next field (or null terminator)

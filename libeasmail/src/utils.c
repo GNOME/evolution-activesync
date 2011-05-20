@@ -12,19 +12,13 @@ get_next_field(gchar **data, const gchar *separator)
 	gchar *result = NULL, *to = *data;
 	guint len = 0;  // length of string 
 
-	//g_assert((*to == NULL) || (*to == *separator));
-
-	//move past separator
-	//to++;
-
 	while(*to && (*to != *separator))
 	{
 		to++;
 	}
 	len = (to - *data);
-	g_print("len = %d", len);
 
-	result = (gchar*)g_malloc0(((len * sizeof(gchar)) + 1 ));	// allow for null terminate
+	result = (gchar*)g_malloc0((len * sizeof(gchar)) + 1 );	// allow for null terminate
 	if(result)
 	{
 		strncpy(result, (*data), len);

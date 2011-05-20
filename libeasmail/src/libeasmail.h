@@ -81,15 +81,15 @@ gboolean eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this,
  * const gchar *folder_id (in): this value identifies the folder to get the email info from.
  * 								Use the EasFolder->folder_id value in the EasFolder structs
  *                              returned from the eas_mail_handler_sync_folder_hierarchy() call.
- * GSList **emails_created (out): returns a list of EasEmails structs that describe
+ * GSList **emails_created (out): returns a list of EasEmailInfos structs that describe
  *                              created mails.  If there are no new created mails
  *                              this parameter will be unchanged.  In the case of created emails 
  *                              all fields are filled in
- * GSList **emails_updated (out): returns a list of EasEmails structs that describe
+ * GSList **emails_updated (out): returns a list of EasEmailInfos structs that describe
  *                              updated mails.  If there are no new updated mails
  *                              this parameter will be unchanged.  In the case of updated emails 
  *                              only the serverids, flags and categories are valid
- * GSList **emails_deleted (out): returns a list of EasEmails structs that describe
+ * GSList **emails_deleted (out): returns a list of EasEmailInfos structs that describe
  *                              deleted mails.  If there are no new deleted mails
  *                              this parameter will be unchanged.  In the case of deleted emails 
  *                              only the serverids are valid
@@ -165,7 +165,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
 // Delete specified emails 
 gboolean eas_mail_handler_delete_email(EasEmailHandler* this, 
 										gchar *sync_key,                                        
-                                        const EasEmailInfo *email,		// List of EasEmails to delete
+                                        const EasEmailInfo *email,		// List of EasEmailInfos to delete
 	                                    GError **error);
 
 
@@ -175,7 +175,7 @@ Note that the only valid changes are to the read flag and to categories (other c
 */
 gboolean eas_mail_handler_update_emails(EasEmailHandler* this, 
                                         gchar *sync_key,
-                                        GSList *update_emails,		// List of EasEmails to update
+                                        GSList *update_emails,		// List of EasEmailInfos to update
 				                        GError **error);
 
 

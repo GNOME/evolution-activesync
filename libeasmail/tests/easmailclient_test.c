@@ -88,7 +88,7 @@ main(int argc, char** argv) {
 	attachment->file_reference = g_strdup("\\my\\mime\\path");	
 	attachment->display_name = g_strdup("myattachment.txt");// TODO - test where this is an empty string or NULL!
 	//attachment->display_name = NULL;
-	attachment->estimated_size = 23456789;	//EAS_FOLDER_TYPE_DEFAULT_INBOX
+	attachment->estimated_size = 23456789;	
 
 	if(!eas_attachment_serialise(attachment, &serialised))
 	{
@@ -105,7 +105,7 @@ main(int argc, char** argv) {
 
 	eas_attachment_deserialise(attachment2, serialised);
 
-	g_print("result from serialise:\n");
+	g_print("result from deserialise:\n");
 	g_print("file_reference = %s\n", attachment2->file_reference);
 	g_print("display name = %s\n", attachment2->display_name);
 	g_print("estimated size = %d\n", attachment2->estimated_size);
@@ -115,6 +115,88 @@ main(int argc, char** argv) {
 	g_free(serialised);	
 	*/
 
+	// temp - test attachment 'serialisation'/'deserialisation':
+	// build the email info object:
+	//headers
+	EasEmailHeader header1;
+	EasEmailHeader header2;
+
+	header1.name = g_strdup("To");
+	header1.value = g_strdup("Lorna");
+	header2.name = g_strdup("From");
+	header2.value = g_strdup("Tori");	
+
+	GSList *headers = NULL;
+
+	headers = g_slist_append(headers, &header1);
+	headers = g_slist_append(headers, &header2);
+
+	//attachments
+	GSList *attachments = NULL;
+	EasAttachment *attachment = eas_attachment_new();
+
+	attachment->file_reference = g_strdup("fileref");	
+	attachment->display_name = g_strdup("myattachment.txt");// TODO - test where this is an empty string or NULL!
+	attachment->estimated_size = 12345;	
+
+	attachments = g_slist_append(attachments, attachment);
+
+	//categories
+	GSList *categories = NULL;
+
+	gchar *category = g_strdup("personal");
+	categories = g_slist_append(categories, category);
+	category = g_strdup("work");
+	categories = g_slist_append(categories, category);
+	
+	EasEmailInfo *email_info = eas_email_info_new ();
+	email_info->headers = headers;
+	email_info->attachments = attachments;
+	email_info->categories = categories;
+	email_info->flags = EAS_EMAIL_READ | EAS_EMAIL_ANSWERED;
+	email_info->server_id = g_strdup("5:3");
+	
+	gchar *serialised = NULL;
+	if(!eas_email_info_serialise(email_info, &serialised))
+	{
+		g_print("call to eas_email_info_serialise failed!");
+	}
+	else
+	{
+		g_print("result from serialise: %s\n", serialised);
+	}
+
+	EasEmailInfo *email_info_2 = eas_email_info_new ();
+	eas_email_info_deserialise(email_info_2, serialised);
+
+	g_print("result from deserialise:\n");
+	GSList *l = email_info_2->attachments;
+	EasAttachment *attachment_out = l->data;
+	g_print("file reference = %s\n", attachment_out->file_reference);
+	
+	l = email_info_2->headers;
+	l = g_slist_next(l);
+	EasEmailHeader *header_out;
+	header_out = l->data;
+	g_print("header 2 value = %s\n", header_out->value);
+
+	l = email_info_2->categories;
+	gchar *cat_out = l->data;
+	g_print("first category = %s\n", cat_out);
+	
+	// free everything: TODO
+	g_print("test: free everything");
+	//g_slist_foreach(categories, (GFunc)g_free, NULL);
+	//g_slist_free(categories);
+	//g_object_unref(attachment);
+	//g_slist_free(attachments);
+	
+	//g_object_unref(email_info);
+	//g_object_unref(email_info_2);
+	//g_free(serialised);
+	
+	
+	/*
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
     GSList *deleted = NULL;    
@@ -140,7 +222,7 @@ main(int argc, char** argv) {
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
-
+	*/
 	
     return 0;
 }

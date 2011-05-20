@@ -66,7 +66,7 @@ gboolean eas_folder_serialise(EasFolder* folder, gchar **result);
 /*
 populate the object from a string
 */
-void eas_folder_deserialise(EasFolder* folder, const gchar *data);
+gboolean eas_folder_deserialise(EasFolder* folder, const gchar *data);
 
 /* 
  returns the length of the serialised object NOT including the null terminate

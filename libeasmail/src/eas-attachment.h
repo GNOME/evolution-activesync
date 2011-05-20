@@ -66,7 +66,7 @@ gboolean eas_attachment_serialise(EasAttachment *attachment, gchar **result);
 /*
 populate the object from a null terminated string
 */
-void eas_attachment_deserialise(EasAttachment *attachment, const gchar *data);
+gboolean eas_attachment_deserialise(EasAttachment *attachment, const gchar *data);
 
 /*
 returns the length of the data when serialised (including null terminator)
