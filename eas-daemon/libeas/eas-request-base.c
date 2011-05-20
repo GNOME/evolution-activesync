@@ -6,7 +6,7 @@ struct _EasRequestBasePrivate
 	guint64 requestId;
 	gint requestType;
 	guint64 accountId;
-	GObject* connection;
+	struct _EasConnection* connection;
 	gpointer result;
     EFlag *flag;
 };
@@ -72,7 +72,7 @@ eas_request_base_GetRequestType(EasRequestBase* self)
     return priv->requestType;
 }
 
-GObject* 
+struct _EasConnection* 
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
