@@ -66,8 +66,7 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, gchar* syncKey
 	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
 
 	// TODO
-	// eas_connection_send_request(cnc, doc, self);
-	xmlFree(doc);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
 }
 
 /**

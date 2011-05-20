@@ -5,6 +5,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
+
 G_BEGIN_DECLS
 
 #define EAS_TYPE_REQUEST_BASE             (eas_request_base_get_type ())
@@ -17,6 +18,7 @@ G_BEGIN_DECLS
 typedef struct _EasRequestBaseClass EasRequestBaseClass;
 typedef struct _EasRequestBase EasRequestBase;
 typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
+typedef struct _EasConnection EasConnection;
 
 struct _EasRequestBaseClass
 {
@@ -46,6 +48,7 @@ void eas_request_base_Activate (EasRequestBase *self);
 void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc);
 
 EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
+EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 
 G_END_DECLS
 

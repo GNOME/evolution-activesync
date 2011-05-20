@@ -1,12 +1,13 @@
 
 #include "eas-request-base.h"
+#include "eas-connection.h"
 
 struct _EasRequestBasePrivate
 {
 	guint64 requestId;
 	gint requestType;
 	guint64 accountId;
-//	Connection* connection;
+	EasConnection* connection;
 	gpointer result;
 };
 
@@ -19,7 +20,9 @@ G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
 static void
 eas_request_base_init (EasRequestBase *object)
 {
-	/* TODO: Add initialization code here */
+    EasRequestBasePrivate *priv = object->priv;
+
+	priv->connection = NULL;
 }
 
 static void
@@ -67,4 +70,12 @@ eas_request_base_GetRequestType(EasRequestBase* self)
     EasRequestBasePrivate *priv = self->priv;
 
     return priv->requestType;
+}
+
+EasConnection* 
+eas_request_base_GetConnection(EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->connection;
 }

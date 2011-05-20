@@ -22,7 +22,8 @@ INCLUDES = -I/usr/include/dbus-1.0 \
 	  -I/usr/lib/dbus-1.0/include \
 	  -I/usr/include/glib-2.0 \
 	  -I/usr/lib/glib-2.0/include \
-	  -I/usr/include/libsoup-2.4 
+	  -I/usr/include/libsoup-2.4 \
+	  -I/usr/include/libxml2
 
 LIBS =  -L/usr/lib \
 	-ldbus-1 \

@@ -89,9 +89,13 @@ eas_provision_req_Activate (EasProvisionReq* self)
 
 	doc = eas_provision_msg_build_message (priv->msg);
 
+
+	
 	// TODO
-//	eas_connection_send_request(priv->cnc, doc, self);
-	xmlFree(doc);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Provision", 
+	                            doc, 
+	                            self);
 }
 
 /**
@@ -121,7 +125,8 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 			eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
 			eas_provision_msg_set_policy_key (msg, eas_provision_msg_get_policy_key (priv->msg));
 
-//			eas_connection_set_policy_key(cnc, eas_provision_msg_get_policy_key (priv->msg));
+			eas_connection_set_policy_key(eas_request_base_GetConnection (&self->parent_instance), 
+			                              eas_provision_msg_get_policy_key (priv->msg));
 
 			g_object_unref(priv->msg);
 			priv->msg = msg;
@@ -137,8 +142,9 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 		// from the daemon that triggered the provisioning to proceed.
 		case EasProvisionStep2:
 		{
-		//	eas_connection_set_policy_key(cnc, eas_provision_msg_get_policy_key (priv->msg));
-		// eas_continue_original_request(cnc);
+		 eas_connection_set_policy_key(eas_request_base_GetConnection (&self->parent_instance), 
+		                               eas_provision_msg_get_policy_key (priv->msg));
+		 eas_connection_resume_request(eas_request_base_GetConnection (&self->parent_instance));
 		}
 		break;
 	}

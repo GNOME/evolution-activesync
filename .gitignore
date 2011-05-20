@@ -22,10 +22,12 @@ libtool
 stamp-h1
 eas-daemon/src/activesyncd
 eas-daemon/tests/activesyncd-test-001
+TODO.tasks
 
 # Folders to ignore
 config/*
 m4/*
+.anjuta/*
 
 # File paterns to ignore
 *.m4
@@ -33,4 +35,5 @@ m4/*
 *.lo
 *.la
 *stub.h
-
+*.anjuta*
+*.*~
