@@ -32,9 +32,11 @@ eas_sync_folder_hierarchy_init (EasSyncFolderHierarchy *object)
 
 	object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_PRIVATE(object);
 
+	g_print("eas_sync_folder_hierarchy_init++\n");
 	priv->syncFolderMsg = NULL;
 	priv->state = EasSyncFolderHierarchyStep1;
 	priv->accountID= -1;
+	g_print("eas_sync_folder_hierarchy_init--\n");
 }
 
 static void
@@ -57,8 +59,10 @@ eas_sync_folder_hierarchy_class_init (EasSyncFolderHierarchyClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
 
+	g_print("eas_sync_folder_hierarchy_class_init++\n");
 	g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyPrivate));
 	object_class->finalize = eas_sync_folder_hierarchy_finalize;
+	g_print("eas_sync_folder_hierarchy_class_init--\n");
 }
 
 
@@ -68,13 +72,16 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* s
 	EasSyncFolderHierarchyPrivate* priv = self->priv;
 	xmlDoc *doc;
 
+	g_print("eas_sync_folder_hierarchy_activate++\n");
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	priv->accountID = accountId;
-	
+
+	g_print("eas_sync_folder_hierarchy_activate - new Sync Folder mesg\n");
 	//create syn folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, accountId);
 
+	g_print("eas_sync_folder_hierarchy_activate - build messsage\n");
 	//build request msg
 	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
 	
@@ -85,8 +92,10 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* s
 		priv->state = EasSyncFolderHierarchyStep2;
 	}
 
+	g_print("eas_sync_folder_hierarchy_activate - send message\n");
 	// TODO
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
+	g_print("eas_sync_folder_hierarchy_activate--\n");
 }
 
 /**

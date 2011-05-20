@@ -116,17 +116,24 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 	  
         // Create the request
         EasSyncFolderHierarchy *folderHierarchyObj =NULL;
+
+        g_print("eas_mail_sync_email_folder_hierarchy++\n");
         folderHierarchyObj = g_object_new(EAS_TYPE_SYNC_FOLDER_HIERARCHY , NULL);
 
+        eas_request_base_SetConnection (&folderHierarchyObj->parent_instance, 
+                                        easMailObj->easConnection);
+
+        g_print("eas_mail_sync_email_folder_hierarchy - new req\n");
 	    // Start the request
         eas_sync_folder_hierarchy_Activate (folderHierarchyObj, 
                                             sync_key,
                                             account_uid,
                                             eflag);
-
+        g_print("eas_mail_sync_email_folder_hierarchy - activate req\n");
 	    // Set flag to wait for response
 	    e_flag_wait(eflag);
 
+        g_print("eas_mail_sync_email_folder_hierarchy - get results\n");
          eas_sync_folder_hierarchy_Activate_Finish (folderHierarchyObj,
                                                     &ret_sync_key,
                                                     &added_folders,
@@ -134,7 +141,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
                                                     &deleted_folders);
          
          e_flag_free (eflag);
-         
+         g_print("eas_mail_sync_email_folder_hierarchy - serialise objects\n");
          //serialise the folder objects from GSList* to char** and populate  :
          // ret_created_folders_array
          // ret_updated_folders_array
@@ -154,6 +161,8 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 						            ret_updated_folders_array,
 						            ret_deleted_folders_array);
         }
+
+    g_print("eas_mail_sync_email_folder_hierarchy--\n");
 
 }
 

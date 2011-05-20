@@ -20,9 +20,13 @@ G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
 static void
 eas_request_base_init (EasRequestBase *object)
 {
-    EasRequestBasePrivate *priv = object->priv;
+    EasRequestBasePrivate *priv;
 
+	object->priv = priv = EAS_REQUEST_BASE_PRIVATE(object);
+
+    g_print("eas_request_base_init++\n");
 	priv->connection = NULL;
+    g_print("eas_request_base_init--\n");
 }
 
 static void
@@ -39,6 +43,7 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
+    g_print("eas_request_base_class_init++\n");
 	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
 
 	object_class->finalize = eas_request_base_finalize;
@@ -76,9 +81,19 @@ struct _EasConnection*
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-
+    g_print("eas_request_base_GetConnection++ %x\n", priv->connection );
     return priv->connection;
 }
+
+void
+eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_print("eas_request_base_SetConnection++\n");
+    priv->connection = connection;
+    g_print("eas_request_base_SetConnection--\n");
+}
+
 
 EFlag *
 eas_request_base_GetFlag(EasRequestBase* self)

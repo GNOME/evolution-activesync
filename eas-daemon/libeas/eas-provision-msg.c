@@ -25,6 +25,8 @@ eas_provision_msg_init (EasProvisionMsg *object)
 	EasProvisionMsgPrivate *priv;
 	object->priv = priv = EAS_PROVISION_MSG_PRIVATE(object);
 
+	g_print("eas_provision_msg_init++\n");
+	
 	priv->policy_key = NULL;
 	priv->policy_status = NULL;
 }
@@ -48,6 +50,8 @@ eas_provision_msg_class_init (EasProvisionMsgClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
 
+	g_print("eas_provision_msg_class_init++\n");
+
 	g_type_class_add_private (klass, sizeof (EasProvisionMsgPrivate));
 
 	object_class->finalize = eas_provision_msg_finalize;
@@ -64,6 +68,8 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
 	        *child = NULL, 
 	        *grandchild = NULL;
     xmlNs *ns = NULL;
+	
+	g_print("eas_provision_msg_build_message++\n");
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     node = xmlNewDocNode(doc, NULL, (xmlChar*)"Provision", NULL);
@@ -98,6 +104,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
 	gboolean found_status = FALSE, 
 	         found_policy_key = FALSE;
 
+	g_print("eas_provision_msg_parse_response++\n");
 
 	g_free(priv->policy_key);
 	g_free(priv->policy_status);
@@ -178,6 +185,8 @@ EasProvisionMsg*
 eas_provision_msg_new (void)
 {
 	EasProvisionMsg* msg = NULL;
+	
+	g_print("eas_provision_msg_new++\n");
 
 	msg = g_object_new (EAS_TYPE_PROVISION_MSG, NULL);
 
@@ -188,6 +197,8 @@ gchar*
 eas_provision_msg_get_policy_key (EasProvisionMsg* self)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
+	g_print("eas_provision_msg_get_policy_key++\n");
+
 	return priv->policy_key;
 }
 
@@ -195,6 +206,7 @@ gchar*
 eas_provision_msg_get_policy_status (EasProvisionMsg* self)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
+	g_print("eas_provision_msg_get_policy_status++\n");
 	return priv->policy_status;
 }
 
@@ -207,6 +219,8 @@ void
 eas_provision_msg_set_policy_key (EasProvisionMsg* self, gchar* policyKey)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
+	
+	g_print("eas_provision_msg_set_policy_key++\n");
 
 	// g_xxx functions can handle NULL
 	g_free(priv->policy_key);
@@ -222,6 +236,8 @@ void
 eas_provision_msg_set_policy_status (EasProvisionMsg* self, gchar* policyStatus)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
+	
+	g_print("eas_provision_msg_set_policy_status++\n");
 
 	// g_xxx functions can handle NULL
 	g_free(priv->policy_status);

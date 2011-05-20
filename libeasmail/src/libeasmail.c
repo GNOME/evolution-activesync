@@ -195,6 +195,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
+    g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy ok\n");
+    
 	g_assert(g_slist_length(*folders_created) == 0);
 	g_assert(g_slist_length(*folders_updated) == 0);
 	g_assert(g_slist_length(*folders_deleted) == 0);
@@ -217,6 +219,9 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
 
+    g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy called\n");
+    g_printerr(" Error: %s\n", (*error)->message);
+    
 	if(ret)
 	{
 		g_print("sync_email_folder_hierarchy called successfully\n");
