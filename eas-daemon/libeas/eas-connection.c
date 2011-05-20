@@ -24,9 +24,6 @@
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
-#include "eas-request-base.h"
-
-// TODO - Consider prototype forward declarations?
 // List of includes for each request type
 #include "eas-sync-folder-hierarchy.h"
 #include "eas-provision-req.h"
@@ -467,7 +464,7 @@ void
 handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 {
 	EasRequestBase *req = (EasRequestBase *)data;
-	EasConnection *self = eas_request_base_GetConnection (req);
+	EasConnection *self = (EasConnection *)eas_request_base_GetConnection (req);
 	EasConnectionPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
     WB_UTINY *xml = NULL;

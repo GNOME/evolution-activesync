@@ -63,10 +63,12 @@ eas_sync_folder_hierarchy_class_init (EasSyncFolderHierarchyClass *klass)
 
 
 void
-eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, gchar* syncKey, guint64 accountId)
+eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* syncKey, guint64 accountId, EFlag *flag)
 {
 	EasSyncFolderHierarchyPrivate* priv = self->priv;
 	xmlDoc *doc;
+
+	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	priv->accountID = accountId;
 	
@@ -134,11 +136,18 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 		//we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
 		case EasSyncFolderHierarchyStep2:
 		{
-		
-
+			e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 		}
 		break;
 	}
 
-	
+}
+
+void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
+                                                gchar** ret_sync_key,
+												GSList** added_folders,
+												GSList** updated_folders,
+												GSList** deleted_folders)
+{
+
 }

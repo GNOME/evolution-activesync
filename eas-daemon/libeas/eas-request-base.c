@@ -1,14 +1,14 @@
 
 #include "eas-request-base.h"
-#include "eas-connection.h"
 
 struct _EasRequestBasePrivate
 {
 	guint64 requestId;
 	gint requestType;
 	guint64 accountId;
-	EasConnection* connection;
+	GObject* connection;
 	gpointer result;
+    EFlag *flag;
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
@@ -72,10 +72,25 @@ eas_request_base_GetRequestType(EasRequestBase* self)
     return priv->requestType;
 }
 
-EasConnection* 
+GObject* 
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
 
     return priv->connection;
+}
+
+EFlag *
+eas_request_base_GetFlag(EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->flag;
+}
+
+void
+eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    priv->flag = flag;
 }
