@@ -43,6 +43,7 @@ void eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc);
 GSList* eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);
+gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
 
 G_END_DECLS
 

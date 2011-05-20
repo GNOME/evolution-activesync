@@ -13,9 +13,16 @@ G_DEFINE_TYPE (EasSyncFolderHierarchy, eas_sync_folder_hierarchy, EAS_TYPE_REQUE
 
 #define EAS_SYNC_FOLDER_HIERARCHY_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_HIERARCHY, EasSyncFolderHierarchyPrivate))
 
+typedef enum {
+	EasSyncFolderHierarchyStep1 = 0,
+	EasSyncFolderHierarchyStep2
+} EasSyncFolderHierarchyState;
+
 
 struct _EasSyncFolderHierarchyPrivate {
 	EasSyncFolderMsg* syncFolderMsg;
+	EasSyncFolderHierarchyState state;
+	guint64 accountID;
 };
 
 static void
@@ -26,6 +33,8 @@ eas_sync_folder_hierarchy_init (EasSyncFolderHierarchy *object)
 	object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_PRIVATE(object);
 
 	priv->syncFolderMsg = NULL;
+	priv->state = EasSyncFolderHierarchyStep1;
+	priv->accountID= -1;
 }
 
 static void
@@ -59,11 +68,20 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, gchar* syncKey
 	EasSyncFolderHierarchyPrivate* priv = self->priv;
 	xmlDoc *doc;
 	
+	priv->accountID = accountId;
+	
 	//create syn folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, accountId);
 
 	//build request msg
 	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+	
+	//if syncKey is not 0, then we are not doing a first time sync and only need to send one message
+	// so we  move state machine forward.
+	if (!g_strcmp0(syncKey,"0"))
+	{
+		priv->state = EasSyncFolderHierarchyStep2;
+	}
 
 	// TODO
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
@@ -80,8 +98,47 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc);
 
 	xmlFree(doc);
-	/* TODO: Add public function implementation here */
+	
+		switch (priv->state) {
+		default:
+		{
+			g_assert(0);
+		}
+		break;
 
-	// Decide if to send another message, or if to inform the daemon this
-	// request is now complete.
+		//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
+		case EasSyncFolderHierarchyStep1:
+		{
+		    //get syncKey
+		    gchar* syncKey = g_strdup(eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
+			
+			//clean up old message
+			if (priv->syncFolderMsg) {
+				g_object_unref(priv->syncFolderMsg);
+			}
+			
+			//create new message with new syncKey
+			priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
+
+			//build request msg
+			doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+			
+			//move to new state
+			priv->state = EasSyncFolderHierarchyStep2;	
+			
+			eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
+
+		}
+		break;
+
+		//we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
+		case EasSyncFolderHierarchyStep2:
+		{
+		
+
+		}
+		break;
+	}
+
+	
 }
