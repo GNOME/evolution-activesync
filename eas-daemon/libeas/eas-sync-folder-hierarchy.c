@@ -149,5 +149,10 @@ void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
 												GSList** updated_folders,
 												GSList** deleted_folders)
 {
+	EasSyncFolderHierarchyPrivate *priv = self->priv;
 
+	*ret_sync_key    = g_strdup(eas_sync_folder_msg_get_syncKey(priv->syncFolderMsg));
+	*added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
+	*updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
+	*deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 }

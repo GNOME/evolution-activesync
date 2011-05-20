@@ -39,7 +39,11 @@ GType eas_sync_folder_hierarchy_get_type (void) G_GNUC_CONST;
 
 void eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy *self, const gchar* syncKey, guint64 accountId, EFlag *flag);
 void eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy *self, xmlDoc* doc);
-void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self, gchar**ret_sync_key, GSList** added_folders, GSList** updated_folders, GSList** deleted_folders);
+void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self, 
+                                                gchar** ret_sync_key, 
+                                                GSList** added_folders, 
+                                                GSList** updated_folders, 
+                                                GSList** deleted_folders);
 
 G_END_DECLS
 
