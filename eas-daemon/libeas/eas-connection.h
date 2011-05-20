@@ -35,6 +35,8 @@ G_BEGIN_DECLS
 
 typedef struct _EasConnectionClass EasConnectionClass;
 typedef struct _EasConnectionPrivate EasConnectionPrivate;
+typedef struct _EasConnection EasConnection;
+
 
 struct _EasConnectionClass
 {

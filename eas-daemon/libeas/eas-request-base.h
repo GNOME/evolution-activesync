@@ -4,6 +4,7 @@
 
 #include <glib-object.h>
 #include <libxml/xmlreader.h> // xmlDoc
+#include <libedataserver/e-flag.h>
 
 
 G_BEGIN_DECLS
@@ -18,7 +19,7 @@ G_BEGIN_DECLS
 typedef struct _EasRequestBaseClass EasRequestBaseClass;
 typedef struct _EasRequestBase EasRequestBase;
 typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
-typedef struct _EasConnection EasConnection;
+
 
 struct _EasRequestBaseClass
 {
@@ -48,7 +49,11 @@ void eas_request_base_Activate (EasRequestBase *self);
 void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc);
 
 EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
-EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
+struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
+
+EFlag *eas_request_base_GetFlag (EasRequestBase* self);
+void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);
+
 
 G_END_DECLS
 

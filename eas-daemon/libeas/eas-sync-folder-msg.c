@@ -58,7 +58,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 
 
 EasSyncFolderMsg*
-eas_sync_folder_msg_new (gchar* syncKey, gint accountId)
+eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
 {
 	EasSyncFolderMsg* msg = NULL;
 	EasSyncFolderMsgPrivate *priv = NULL;
@@ -163,7 +163,6 @@ GSList*
 eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
-	/* TODO: Add public function implementation here */
 	return priv->updated_folders;
 }
 
@@ -171,8 +170,14 @@ GSList*
 eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
-	/* TODO: Add public function implementation here */
 	return priv->deleted_folders;
+}
+
+gchar* 
+eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->sync_key;
 }
 
 #if 0
