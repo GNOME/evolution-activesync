@@ -47,7 +47,7 @@ eas_folder_class_init (EasFolderClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
-		// TODO better way to get rid of warnings about above 2 lines?
+	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
 	
@@ -74,10 +74,11 @@ eas_folder_new()
 // take the contents of the object and turn it into a null terminated string
 // fields are separated by a separator (eg ',') and there is a trailing separator
 // empty fields included, eg "5,1,Inbox,2," or ",1,,,"
-// TODO - change so that caller allocates memory for result
 gboolean 
 eas_folder_serialise(EasFolder* folder, gchar **result)
 {
+	gboolean ret = TRUE;
+	
 	g_print("eas_folder_serialise++\n");  
 	gchar type[4] = "";		
 
@@ -93,18 +94,16 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 
 	*result = strconcatwithseparator(strings, sizeof(strings)/sizeof(strings[0]), folder_separator);
 
-	// TODO remove debug prints
 	g_print("serialise result: \n");
 	g_print("%s", *result);
 	
 	if(!*result)
 	{
-		g_print("eas_folder_serialise--\n");
-		return FALSE;
+		ret = FALSE;
 	}
 
 	g_print("eas_folder_serialise--\n");	
-	return TRUE;
+	return (*result? TRUE : FALSE);
 }
 
 
@@ -113,7 +112,7 @@ gboolean
 eas_folder_deserialise(EasFolder* folder, const gchar *data)
 {
 	gboolean ret = TRUE;
-	// TODO error handling (get_next_field can fail)
+	
 	g_print("eas_folder_deserialise++\n");
 
 	g_assert(folder);
@@ -127,7 +126,12 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 	{
 		g_free(folder->parent_id);
 	}
-	folder->parent_id = get_next_field(&from, folder_separator);	
+	folder->parent_id = get_next_field(&from, folder_separator);
+	if(!folder->parent_id)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
 
 	// server_id
 	if(folder->folder_id != NULL)
@@ -135,6 +139,11 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 		g_free(folder->folder_id);
 	}	
 	folder->folder_id = get_next_field(&from, folder_separator);
+	if(!folder->folder_id)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}	
 	
 	// display_name
 	if(folder->display_name != NULL)
@@ -142,13 +151,35 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 		g_free(folder->display_name);
 	}	
 	folder->display_name = get_next_field(&from, folder_separator);
+	if(!folder->display_name)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}	
 	
 	//type
 	type = get_next_field(&from, folder_separator);
+	if(!type)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
 	if(strlen(type))
 	{
 		folder->type = atoi(type);
+		g_free(type);
 	}
+
+cleanup:
+	if(!ret)
+		{
+			g_free(folder->parent_id);
+			folder->parent_id = NULL;
+			g_free(folder->folder_id);
+			folder->folder_id = NULL;
+			g_free(folder->display_name);
+			folder->display_name = NULL;
+		}
 
 	// TODO remove debug prints
 	g_print("deserialise result:\n");
@@ -162,13 +193,3 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 	return ret;
 }
 
-
-guint 
-eas_attachment_folder_length(EasFolder *attachment)
-{
-	guint len = 0;
-
-	// TODO rip from serialise code and change serialise code to expect caller to allocate memory?
-	
-	return len;
-}

@@ -37,7 +37,7 @@ enum{
 	EAS_FOLDER_TYPE_DEFAULT_NOTES,
 	EAS_FOLDER_TYPE_DEFAULT_JOURNAL,
 	EAS_FOLDER_TYPE_DEFAULT_USER_CREATED_MAIL,
-	//TODO finish filling these in according to MS-ASCMD?	
+	//TODO finish filling these in according to MS-ASCMD
 	
 	EAS_FOLDER_TYPE_MAX
 };
@@ -68,10 +68,6 @@ populate the object from a string
 */
 gboolean eas_folder_deserialise(EasFolder* folder, const gchar *data);
 
-/* 
- returns the length of the serialised object NOT including the null terminate
-*/
-guint eas_attachment_folder_length(EasFolder *attachment);
 
 G_END_DECLS
 

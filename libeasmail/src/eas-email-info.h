@@ -45,7 +45,7 @@ struct _EasEmailInfo{
 	/*
 	conversation_id
     conversation_index
-
+	...
 	TODO which, if any, of the other fields supplied by exchange should be included?
 	*/
 };
@@ -67,10 +67,6 @@ populate the object from a string
 */
 gboolean eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data);
 
-/*
-returns the length of the data when serialised (including null terminator)
-*/
-guint eas_email_info_serialised_length(EasEmailInfo *this_g);
 
 G_END_DECLS
 

@@ -28,15 +28,17 @@ LIBS =  -L/usr/lib \
 
 libeasmail_la_SOURCES =		\
         libeasmail.h		\
-        libeasmail.c	    \
+        libeasmail.c		\
         eas-folder.h		\
         eas-folder.c		\
-		eas-email-info.h	\
+	eas-email-info.h	\
         eas-email-info.c	\
-		eas-attachment.h	\
+	eas-attachment.h	\
         eas-attachment.c	\
-        utils.h				\
-		utils.c
+	eas-mail-errors.c	\
+	eas-mail-errors.h	\
+        utils.h			\
+	utils.c
         
 interface_xml =  ../../eas-daemon/src/eas-mail.xml
 

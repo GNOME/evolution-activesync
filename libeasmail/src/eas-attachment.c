@@ -39,7 +39,7 @@ eas_attachment_class_init (EasAttachmentClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
-	// TODO better way to get rid of warnings about above 2 lines?
+	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
 	
@@ -60,7 +60,7 @@ eas_attachment_new()
 	return object;
 }
 
-// TODO - change so that caller allocates memory for result
+
 gboolean 
 eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 {
@@ -88,7 +88,6 @@ eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 gboolean 
 eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 {
-	// TODO - error handling (get_next_field can fail)
 	g_print("eas_attachment_deserialise++\n");
 
 	gboolean ret = TRUE;
@@ -105,6 +104,11 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 		g_free(attachment->file_reference);
 	}
 	attachment->file_reference = get_next_field(&from, attachment_separator);	
+	if(!attachment->file_reference)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
 	g_print("file_reference = %s\n", attachment->file_reference);
 	
 	// display_name
@@ -113,15 +117,36 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 		g_free(attachment->display_name);
 	}	
 	attachment->display_name = get_next_field(&from, attachment_separator);
+	if(!attachment->display_name)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}	
 	g_print("display name = %s\n", attachment->display_name);
 	
 	//estimated_size
 	est_size = get_next_field(&from, attachment_separator);
+	if(!est_size)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}	
 	if(strlen(est_size))
 	{
 		attachment->estimated_size = atoi(est_size);
+		g_free(est_size);
 	}
 	g_print("estimated_size = %d\n", attachment->estimated_size);
+
+cleanup:
+	if(!ret)
+		{
+			g_free(attachment->file_reference);
+			attachment->file_reference = NULL;
+			g_free(attachment->display_name);
+			attachment->display_name = NULL;
+			attachment->estimated_size = 0;
+		}
 	
 	g_print("eas_attachment_deserialise--\n");	
 
