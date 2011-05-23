@@ -82,6 +82,70 @@ eas_email_info_new()
 	return object;
 }
 
+
+//returns the length of the data when serialised (including null terminator)
+static guint 
+eas_email_info_serialised_length(EasEmailInfo *this_g)
+{
+	g_print("eas_email_info_serialised_length++\n");
+	// calculate the total length:
+	guint total_len = 0;
+	guint list_len = 0;
+	gchar list_size[MAX_LEN_OF_INT32_AS_STRING] = "";
+	GSList *l = NULL;	
+	EasEmailHeader *header = NULL;
+	
+	// server id
+	total_len += strlen(this_g->server_id) + 1;	// allow for separator
+	g_print("total_len = %d\n", total_len);
+
+	//headers
+	// serialised length of headers list allowing for list size at front
+	list_len = g_slist_length(this_g->headers);
+	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
+	total_len += strlen(list_size) + 1;
+
+	for (l = this_g->headers; l != NULL; l = g_slist_next (l))
+	{
+		header = l->data;
+		total_len += eas_mail_info_header_serialised_length(header);
+	}
+
+//attachments
+	list_len = g_slist_length(this_g->attachments);
+	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
+	total_len += strlen(list_size) + 1;
+	
+	EasAttachment *attachment = NULL;
+	for (l = this_g->attachments; l != NULL; l = g_slist_next (l))
+	{
+		attachment = l->data;
+		total_len += eas_attachment_serialised_length(attachment);
+	}
+
+//flags
+	gchar flags_as_string[MAX_LEN_OF_UINT8_AS_STRING] = "";
+	snprintf(flags_as_string, sizeof(flags_as_string)/sizeof(flags_as_string[0]), "%d", this_g->flags);
+	total_len += strlen(flags_as_string) + 1;
+
+//categories	
+	list_len = g_slist_length(this_g->categories);
+	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
+	total_len += strlen(list_size) + 1;
+
+	gchar *category = NULL;
+	for (l = this_g->categories; l != NULL; l = g_slist_next (l))
+	{
+		category = l->data;
+		total_len += strlen(category) + 1;
+	}
+
+	g_print("total_len = %d\n", total_len);
+	
+	g_print("eas_email_info_serialised_length--\n");	
+	return total_len;
+}	
+
 gboolean 
 eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 {
@@ -91,7 +155,7 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 	guint list_len = 0;
 	GSList *l = NULL;
 	
-// TODO turn EasEmailInfo object into a null terminated string
+	// turn EasEmailInfo object into a null terminated string
 	guint total_len = eas_email_info_serialised_length(this_g);
 
 	g_print("total length of serialised email info = %d\n", total_len);
@@ -190,6 +254,7 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 	g_print("eas_email_info_serialise--");
 	return ret;
 }
+	
 
 gboolean 
 eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
@@ -209,8 +274,7 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 	g_assert(data);
 	
 	gchar *from = (gchar*)data;
-// TODO turn string into object
-	
+	// turn string into object
 	// server_id
 	if(this_g->server_id != NULL)   //just in case
 	{
@@ -313,64 +377,3 @@ cleanup:
 	return ret;
 }
 
-guint 
-eas_email_info_serialised_length(EasEmailInfo *this_g)
-{
-	g_print("eas_email_info_serialised_length++\n");
-	// calculate the total length:
-	guint total_len = 0;
-	guint list_len = 0;
-	gchar list_size[MAX_LEN_OF_INT32_AS_STRING] = "";
-	GSList *l = NULL;	
-	EasEmailHeader *header = NULL;
-	
-	// server id
-	total_len += strlen(this_g->server_id) + 1;	// allow for separator
-	g_print("total_len = %d\n", total_len);
-
-	//headers
-	// serialised length of headers list allowing for list size at front
-	list_len = g_slist_length(this_g->headers);
-	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
-	total_len += strlen(list_size) + 1;
-
-	for (l = this_g->headers; l != NULL; l = g_slist_next (l))
-	{
-		header = l->data;
-		total_len += eas_mail_info_header_serialised_length(header);
-	}
-
-//attachments
-	list_len = g_slist_length(this_g->attachments);
-	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
-	total_len += strlen(list_size) + 1;
-	
-	EasAttachment *attachment = NULL;
-	for (l = this_g->attachments; l != NULL; l = g_slist_next (l))
-	{
-		attachment = l->data;
-		total_len += eas_attachment_serialised_length(attachment);
-	}
-
-//flags
-	gchar flags_as_string[MAX_LEN_OF_UINT8_AS_STRING] = "";
-	snprintf(flags_as_string, sizeof(flags_as_string)/sizeof(flags_as_string[0]), "%d", this_g->flags);
-	total_len += strlen(flags_as_string) + 1;
-
-//categories	
-	list_len = g_slist_length(this_g->categories);
-	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
-	total_len += strlen(list_size) + 1;
-
-	gchar *category = NULL;
-	for (l = this_g->categories; l != NULL; l = g_slist_next (l))
-	{
-		category = l->data;
-		total_len += strlen(category) + 1;
-	}
-
-	g_print("total_len = %d\n", total_len);
-	
-	g_print("eas_email_info_serialised_length--\n");	
-	return total_len;
-}

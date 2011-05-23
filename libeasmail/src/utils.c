@@ -6,6 +6,7 @@
 
 #include "utils.h"
 
+// returns a pointer to the next field. If field is empty will pass back an empty string. Only returns NULL in case of error
 gchar* 
 get_next_field(gchar **data, const gchar *separator)
 {

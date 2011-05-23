@@ -115,7 +115,8 @@ main(int argc, char** argv) {
 	g_free(serialised);	
 	*/
 
-	// temp - test attachment 'serialisation'/'deserialisation':
+	/*
+	// temp - test email 'serialisation'/'deserialisation':
 	// build the email info object:
 	//headers
 	EasEmailHeader header1;
@@ -194,9 +195,9 @@ main(int argc, char** argv) {
 	//g_object_unref(email_info);
 	//g_object_unref(email_info_2);
 	//g_free(serialised);
+	*/
 	
 	
-	/*
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
     GSList *deleted = NULL;    
@@ -222,7 +223,6 @@ main(int argc, char** argv) {
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
-	*/
 	
     return 0;
 }

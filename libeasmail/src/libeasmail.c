@@ -15,6 +15,7 @@
 #include "libeasmail.h"
 #include "eas-mail-client-stub.h"
 #include "eas-folder.h"
+#include "eas-mail-errors.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
@@ -62,7 +63,7 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
-	// TODO better way to get rid of warnings about above 2 lines?
+	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
 	
@@ -124,7 +125,7 @@ eas_mail_handler_new(guint64 account_uid)
 
 // takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
 static gboolean 
-build_folder_list(const gchar **serialised_folder_array, GSList *folder_list)
+build_folder_list(const gchar **serialised_folder_array, GSList *folder_list, GError **error)
 {
 	gboolean ret = TRUE;
 	guint i = 0;
@@ -136,24 +137,34 @@ build_folder_list(const gchar **serialised_folder_array, GSList *folder_list)
 		EasFolder *folder = eas_folder_new();
 		if(folder)
 		{
-			eas_folder_deserialise(folder, serialised_folder_array[i]);
-			folder_list = g_slist_append(folder_list, folder);
+			folder_list = g_slist_append(folder_list, folder);	// add it to the list first to aid cleanup
 			if(!folder_list)
 			{
+				g_free(folder);
 				ret = FALSE;
-				break;
+				goto cleanup;
+			}				
+			if(!eas_folder_deserialise(folder, serialised_folder_array[i]))
+			{
+				ret = FALSE;
+				goto cleanup;
 			}
 		}
 		else
 		{
 			ret = FALSE;
-			break;
+			goto cleanup;
 		}
 		i++;
 	}
 
+cleanup:
 	if(!ret)
 	{
+		// set the error
+		g_set_error (error, EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
 		// clean up on error
 		g_slist_foreach(folder_list,(GFunc)g_free, NULL);
 		g_slist_free(folder_list);
@@ -161,6 +172,59 @@ build_folder_list(const gchar **serialised_folder_array, GSList *folder_list)
 	
 	return ret;
 }
+
+
+// takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
+static gboolean 
+build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList *emailinfo_list, GError **error)
+{
+	gboolean ret = TRUE;
+	guint i = 0;
+
+	g_assert(g_slist_length(emailinfo_list) == 0);
+	
+	while(serialised_emailinfo_array[i])
+	{
+		EasEmailInfo *emailinfo = eas_email_info_new ();
+		if(emailinfo)
+		{
+			emailinfo_list = g_slist_append(emailinfo_list, emailinfo);
+			if(!emailinfo_list)
+			{
+				g_free(emailinfo);
+				ret = FALSE;
+				goto cleanup;
+			}			
+			if(!eas_email_info_deserialise(emailinfo, serialised_emailinfo_array[i]))
+			{
+				ret = FALSE;
+				goto cleanup;
+			}
+		}
+		else
+		{
+			ret = FALSE;
+			goto cleanup;
+		}
+		i++;
+	}
+
+cleanup:
+	if(!ret)
+	{
+		// set the error
+		g_set_error (error, EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));		
+		// clean up on error
+		g_slist_foreach(emailinfo_list,(GFunc)g_free, NULL);
+		g_slist_free(emailinfo_list);
+		emailinfo_list = NULL;
+	}
+	
+	return ret;
+}
+				
 
 // 
 static void 
@@ -175,8 +239,6 @@ free_string_array(gchar **array)
 	g_free(array);
 
 }
-
-// TODO proper error handling - create an eas error domain and errors (possibly only 'out of memory')
 
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean 
@@ -227,17 +289,17 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		g_print("sync_email_folder_hierarchy called successfully\n");
 		
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_folder_list((const gchar **)created_folder_array, *folders_created);
+		ret = build_folder_list((const gchar **)created_folder_array, *folders_created, error);
 		if(ret)
 		{
-			ret = build_folder_list((const gchar **)deleted_folder_array, *folders_deleted);
+			ret = build_folder_list((const gchar **)deleted_folder_array, *folders_deleted, error);
 		}
-		if(ret)
+		if(ret)	
 		{
-			ret = build_folder_list((const gchar **)updated_folder_array, *folders_updated);
+			ret = build_folder_list((const gchar **)updated_folder_array, *folders_updated, error);
 		}
 	}
-
+	
 	free_string_array(created_folder_array);
 	free_string_array(updated_folder_array);
 	free_string_array(deleted_folder_array);
@@ -261,7 +323,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 
 
 /* sync emails in a specified folder (no bodies retrieved). 
-Returns lists of EasEmails. 
+Returns lists of EasEmailInfos. 
 Max changes in one sync = 100 (configurable via a config api)
 In the case of created emails all fields are filled in.
 In the case of deleted emails only the serverids are valid. 
@@ -271,9 +333,9 @@ gboolean
 eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g, 
     gchar *sync_key,
     const gchar *collection_id,	// folder to sync
-	GSList **emails_created,
-	GSList **emails_updated,	
-	GSList **emails_deleted,
+	GSList **emailinfos_created,
+	GSList **emailinfos_updated,	
+	GSList **emailinfos_deleted,
 	gboolean *more_available,	// if there are more changes to sync (window_size exceeded)
 	GError **error)
 {
@@ -287,9 +349,9 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
-	gchar **created_email_array = NULL;
-	gchar **deleted_email_array = NULL;
-	gchar **updated_email_array = NULL;
+	gchar **created_emailinfo_array = NULL;
+	gchar **deleted_emailinfo_array = NULL;
+	gchar **updated_emailinfo_array = NULL;
 	
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
@@ -302,14 +364,44 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 							G_TYPE_INVALID, 
 							G_TYPE_STRING, &sync_key,
 							G_TYPE_BOOLEAN, more_available,
-							G_TYPE_STRV, &created_email_array,
-							G_TYPE_STRV, &deleted_email_array,  
-							G_TYPE_STRV, &updated_email_array,
+							G_TYPE_STRV, &created_emailinfo_array,
+							G_TYPE_STRV, &deleted_emailinfo_array,  
+							G_TYPE_STRV, &updated_emailinfo_array,
 							G_TYPE_INVALID);
-
-	// TODO - what does updated email look like!?
-	// TODO convert created/deleted/updated email arrays into lists of email objects (deserialise results)
 	
+	// convert created/deleted/updated emailinfo arrays into lists of emailinfo objects (deserialise results)
+	if(ret)
+	{
+		g_print("sync_email_folder_hierarchy called successfully\n");
+		
+		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, *emailinfos_created, error);
+		if(ret)
+		{
+			ret = build_emailinfo_list((const gchar **)deleted_emailinfo_array, *emailinfos_deleted, error);
+		}
+		if(ret)
+		{
+			ret = build_emailinfo_list((const gchar **)updated_emailinfo_array, *emailinfos_updated, error);
+		}
+	}
+
+	free_string_array(created_emailinfo_array);
+	free_string_array(updated_emailinfo_array);
+	free_string_array(deleted_emailinfo_array);
+	
+	if(!ret)	// failed - cleanup lists
+	{
+		g_slist_foreach(*emailinfos_created, (GFunc)g_free, NULL);
+		g_free(*emailinfos_created);
+		*emailinfos_created = NULL;
+		g_slist_foreach(*emailinfos_updated, (GFunc)g_free, NULL);
+		g_free(*emailinfos_updated);
+		*emailinfos_updated = NULL;
+		g_slist_foreach(*emailinfos_deleted, (GFunc)g_free, NULL);
+		g_free(*emailinfos_deleted);
+		*emailinfos_deleted = NULL;
+	}	
 	g_print("eas_mail_handler_sync_folder_email_info--\n");
 
 	
@@ -346,6 +438,8 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);
 
+	// nothing else to do 
+	
 	g_print("eas_mail_handler_fetch_email_bodies--\n");
 
 	return ret;
@@ -376,6 +470,8 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);
+
+	// nothing else to do 	
 	
 	g_print("eas_mail_handler_fetch_email_attachments--\n");
 
