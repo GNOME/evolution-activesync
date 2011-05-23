@@ -502,9 +502,9 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
 */
 gboolean 
-eas_mail_handler_update_emails(EasEmailHandler* this_g, 
+eas_mail_handler_update_email(EasEmailHandler* this_g, 
 								gchar *sync_key,            // sync_key for the folder containing the emails                   
-								GSList *update_emails,		// List of EasEmailInfos to update
+								EasEmailInfo *update_email,		// EasEmailInfo to update
 								GError **error)
 {
 	gboolean ret = TRUE;	
@@ -532,7 +532,7 @@ eas_mail_handler_send_email(EasEmailHandler* this_g,
 
 gboolean 
 eas_mail_handler_move_to_folder(EasEmailHandler* this_g, 
-    const GSList *email_ids,
+    EasEmailInfo *email,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error)
