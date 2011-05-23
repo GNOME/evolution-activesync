@@ -19,6 +19,8 @@ G_BEGIN_DECLS
 
 typedef struct _EasMailClass EasMailClass;
 typedef struct _EasMail EasMail;
+typedef struct _EasMailPrivate EasMailPrivate;
+
 
 struct _EasMailClass
 {
@@ -28,24 +30,29 @@ struct _EasMailClass
 struct _EasMail
 {
 	GObject parent_instance;
-  	EasConnection* easConnection;
+	
+  	EasMailPrivate* _priv;
 };
 
 GType eas_mail_get_type (void) G_GNUC_CONST;
 
 /* TODO:Insert your Mail Interface APIS here*/
 //START - Test interfaces
-gboolean eas_mail_start_sync(EasMail* obj, gint valueIn, GError** error);
-void eas_mail_test_001(EasMail* obj, DBusGMethodInvocation* context);
+gboolean eas_mail_start_sync(EasMail* self, gint valueIn, GError** error);
+void eas_mail_test_001(EasMail* self, DBusGMethodInvocation* context);
 //END - Test interfaces
 
-//gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EEasConnection* easConnObj, GError** error);
-gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConnObj);
+
+EasMail* eas_mail_new(void);
+
+void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj);
+
+EasConnection*  eas_mail_get_eas_connection(EasMail* self);
 
 /*
 	sync the entire email folder hierarchy 
 */                            
-void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
+void eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                           guint64 account_uid,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
@@ -53,7 +60,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 /*
 	synchronize an email folder. Gets email headers only, not bodies
 */                            
-gboolean eas_mail_sync_folder_email(EasMail* easMailObj, 
+gboolean eas_mail_sync_folder_email(EasMail* self, 
                                     guint64 account_uid,
 									const gchar* sync_key,   
                                     gboolean get_server_changes,
@@ -71,7 +78,7 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 	fetch an email body or attachment
 */
 gboolean
-eas_mail_fetch (EasMail* easMailObj, 
+eas_mail_fetch (EasMail* self, 
                 guint64 account_uid, 
                 const gchar *server_id, 
                 const gchar *collection_id, 
@@ -82,7 +89,7 @@ eas_mail_fetch (EasMail* easMailObj,
 /*
 	send an email
 */						
-gboolean eas_mail_send_email(EasMail* easMailObj, 
+gboolean eas_mail_send_email(EasMail* self, 
                              	guint64 account_uid,
 								const gchar* clientid,
 								const gchar* accountid,

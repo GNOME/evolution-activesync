@@ -98,32 +98,19 @@ int main(int argc, char** argv) {
     }
 
     g_print("Creating mail  gobject.\n");
-    EasMailObj = g_object_new(EAS_TYPE_MAIL , NULL);
+    EasMailObj = eas_mail_new ();
     if (EasMailObj == NULL) {
         g_print("Error: Failed to create common  instance\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-/*
-    g_print("Initialise EEasConnection GObject.\n");
-    gboolean ret = FALSE;
-    gint valueIn =-99;
-    GError** err = NULL;
-   eas_connection_setup(EasConnObj, valueIn, err);
-    //TODO: Error Handling
-*/
-
     g_print("Pass a EasConnection handle to the exposed GObjects\n");
     //ret = eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
     //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
-   if( !eas_mail_set_eas_connection(EasMailObj, EasConnObj) ){
-       g_print("Error: eas_mail_set_eas_connection ()\n");
-       g_main_loop_quit (mainloop);
-       exit(EXIT_FAILURE);
-   }
-
+   eas_mail_set_eas_connection(EasMailObj, EasConnObj);
+   
     g_print("Connecting to the session DBus\n");
     bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
     if (error != NULL) {
