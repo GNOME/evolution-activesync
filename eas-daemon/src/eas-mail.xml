@@ -6,6 +6,9 @@
 -->
   <interface name="org.meego.activesyncd.EasMail">
 
+<!--
+  Start:Interfaces for testing only 
+-->
     <method name="start_sync">
       <arg type="i" name="new_value" direction="in"/>
     </method>
@@ -14,6 +17,10 @@
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="ret_str" direction="out" />
     </method>
+<!--
+  End:Interfaces for testing only 
+-->
+
 
 <!--
  sync entire EMAIL folder hierarchy (folder structure only, not contents)
