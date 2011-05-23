@@ -40,7 +40,7 @@ struct _EasMsgBase
 typedef enum {
 	EAS_MSG_BASE = 0, // Not actually valid.
 	EAS_SYNC_FOLDER_HIERARCHY,
-	EAS_FOLDER_SYNC,
+	EAS_SYNC,
 
 	// Etc
 	

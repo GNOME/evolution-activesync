@@ -64,7 +64,11 @@ libeas_la_SOURCES =		\
         eas-request-base.h \
         eas-request-base.c \
         eas-sync-folder-hierarchy.h \
-        eas-sync-folder-hierarchy.c
+        eas-sync-folder-hierarchy.c \
+        eas-sync-req.h \
+        eas-sync-req.c \
+        eas-sync-msg.h \
+        eas-sync-msg.c
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)
