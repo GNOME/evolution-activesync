@@ -6,6 +6,7 @@
  */
 
 #include "eas-sync-folder-msg.h"
+#include "../../libeasmail/src/eas-folder.h"
 
 struct _EasSyncFolderMsgPrivate
 {
@@ -22,6 +23,9 @@ struct _EasSyncFolderMsgPrivate
 
 
 G_DEFINE_TYPE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
+
+static void eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node);
+
 
 static void
 eas_sync_folder_msg_init (EasSyncFolderMsg *object)
@@ -150,48 +154,29 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
 		}
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
-			// eas_connection_parse_fs_add(cnc, node);
-			/* TODO: Add public function implementation here */
+			eas_connection_parse_fs_add(self, node);
+			continue;
+		}
+		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+			// TODO Parse deleted folders
+			g_assert(0);
+			continue;
+		}
+		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
+			// TODO Parse updated folders
+			g_assert(0);
 			continue;
 		}
 	}
 	
 }
 
-GSList*
-eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self)
-{
-	EasSyncFolderMsgPrivate *priv = self->priv;
-	/* TODO: Add public function implementation here */
-	return priv->added_folders;
-}
-
-GSList*
-eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self)
-{
-	EasSyncFolderMsgPrivate *priv = self->priv;
-	return priv->updated_folders;
-}
-
-GSList*
-eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self)
-{
-	EasSyncFolderMsgPrivate *priv = self->priv;
-	return priv->deleted_folders;
-}
-
-gchar* 
-eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self)
-{
-	EasSyncFolderMsgPrivate *priv = self->priv;
-	return priv->sync_key;
-}
-
-#if 0
 static void
-eas_connection_parse_fs_add(EasSyncFolderMsg *cnc, xmlNode *node) 
+eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node) 
 {
-	EasSyncFolderMsgPrivate *priv = cnc->priv;
+	EasSyncFolderMsgPrivate *priv = self->priv;
 
 	if (!node) return;
     if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) 
@@ -221,20 +206,9 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *cnc, xmlNode *node)
 			}
 		}
 		if (serverId && parentId && displayName && type) {
-			EasFolderListItem *item = NULL, *leaf = NULL;
 			EasFolder *f = NULL;
 
-			item = g_malloc0(sizeof(EasFolderListItem));
-
-			if (!item) {
-				return;
-			}
-			                 
-//			f = eas_folder_new ();
-			if (!f) {
-				g_free (item);
-				return;
-			}
+			f = eas_folder_new ();
 			
 			// Memory ownership given to EasFolder
 			f->parent_id = g_strdup (parentId);
@@ -242,17 +216,40 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *cnc, xmlNode *node)
 			f->display_name = g_strdup (displayName);
 			f->type = atoi(type);
 
-			item->folder = f;
-			item->next = NULL;
-
-			// Move to the end of the linked list
-			for (leaf = priv->created_folder_head; leaf; leaf = leaf->next);
-
-			leaf = item;
+			priv->added_folders = g_slist_append(priv->added_folders, f);
 		}
 		else {
 			g_print("Failed to parse folderSync Add\n");
 		}
 	}
 }
-#endif
+
+
+GSList*
+eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->added_folders;
+}
+
+GSList*
+eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->updated_folders;
+}
+
+GSList*
+eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->deleted_folders;
+}
+
+gchar* 
+eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self)
+{
+	EasSyncFolderMsgPrivate *priv = self->priv;
+	return priv->sync_key;
+}
+

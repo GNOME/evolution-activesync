@@ -183,6 +183,9 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
         // ret_deleted_folders_array
          //TODO:
 
+        g_print("  Data: %s, %x, %x, %x\n", 
+                ret_sync_key, added_folders, updated_folders, deleted_folders);
+
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
 		{
 			if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
