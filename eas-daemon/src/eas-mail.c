@@ -5,7 +5,7 @@
 #include <libedataserver/e-flag.h>
 #include "eas-mail.h"
 #include "eas-mail-stub.h"
-
+#include "eas-folder.h"
 #include "eas-sync-folder-hierarchy.h"
 
 
@@ -94,6 +94,41 @@ gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConn
   return ret;
 }
 
+// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
+static gboolean 
+build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *folder_list, GError **error)
+{ 
+	gboolean ret = TRUE;
+	g_assert(*serialised_folder_array == NULL);
+	g_assert(folder_list != NULL);
+
+	guint array_len = g_slist_length((GSList*)folder_list);	//cast away const to avoid warning
+	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
+	GSList *l = (GSList*)folder_list;
+	guint i = 0;
+	for(i = 0; i < array_len; i++)
+	{
+		g_assert(l != NULL);
+		gchar *serialised;
+		EasFolder *folder;
+		folder = l->data;
+		if(!eas_folder_serialise(folder, &serialised))
+		{
+			ret = FALSE;
+			goto cleanup;
+		}
+		*serialised_folder_array[i] = serialised;		
+		l = g_slist_next (l);		
+	}
+	
+cleanup:
+	if(!ret)
+	{
+		// TODO cleanup strings and array and set error
+	}
+	
+	return ret;
+}
 
 void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
                                           guint64 account_uid,
@@ -106,9 +141,9 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
         GSList* deleted_folders  = NULL;
 
         gchar* ret_sync_key = NULL;
-        char** ret_created_folders_array = NULL;
-        char** ret_updated_folders_array = NULL;
-        char** ret_deleted_folders_array = NULL;
+        gchar** ret_created_folders_array = NULL;
+        gchar** ret_updated_folders_array = NULL;
+        gchar** ret_deleted_folders_array = NULL;
 
         EFlag * eflag =NULL;
         
@@ -147,6 +182,14 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
          // ret_updated_folders_array
         // ret_deleted_folders_array
          //TODO:
+
+		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
+		{
+			if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
+			{
+				build_serialised_folder_array(&ret_deleted_folders_array, deleted_folders, &error);
+			}
+		}
          
          // Return the error or the requested data to the mail client
         if (error) {

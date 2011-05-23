@@ -25,7 +25,8 @@ INCLUDES = -I/usr/include/dbus-1.0 \
 	  -I/usr/include/libsoup-2.4 \
 	  -I/usr/include/libxml2 \
 	  -I/usr/include/evolution-data-server-2.28 \
-	  -I../libeas
+	  -I../libeas \
+	  -I../../libeasmail/src  
 
 
 LIBS =  -L/usr/lib \
@@ -35,7 +36,7 @@ LIBS =  -L/usr/lib \
 	-lglib-2.0 \
 	-ldbus-glib-1 \
 	-lgobject-2.0 \
-	-lgthread-2.0 
+	-lgthread-2.0
 
 
 AM_CFLAGS = $(INTI_CFLAGS)
@@ -54,7 +55,7 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-mail.h \
 		      eas-mail.c
 
-activesyncd_LDADD = ../libeas/libeas.la $(INTI_LIBS)
+activesyncd_LDADD = ../libeas/libeas.la ../../libeasmail/src/libeasmail.la $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 
