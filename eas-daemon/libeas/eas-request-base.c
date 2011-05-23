@@ -77,11 +77,21 @@ eas_request_base_GetRequestType(EasRequestBase* self)
     return priv->requestType;
 }
 
+void 
+eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    priv->requestType = type;
+}
+
+
+
 struct _EasConnection* 
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_print("eas_request_base_GetConnection++ %x\n", priv->connection );
+    g_print("eas_request_base_GetConnection++ %x\n", (unsigned int)priv->connection );
     return priv->connection;
 }
 
@@ -99,7 +109,7 @@ EFlag *
 eas_request_base_GetFlag(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-
+    g_print("eas_request_base_GetFlag+-\n");
     return priv->flag;
 }
 
@@ -107,5 +117,7 @@ void
 eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag)
 {
     EasRequestBasePrivate *priv = self->priv;
+    g_print("eas_request_base_SetFlag++\n");
     priv->flag = flag;
+    g_print("eas_request_base_SetFlag--\n");
 }

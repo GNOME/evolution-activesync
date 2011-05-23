@@ -36,7 +36,9 @@ eas_provision_msg_init (EasProvisionMsg *object)
 static void
 eas_provision_msg_finalize (GObject *object)
 {
-	EasProvisionMsgPrivate *priv;
+	EasProvisionMsg *msg = (EasProvisionMsg *)object;
+	EasProvisionMsgPrivate *priv = msg->priv;
+	
 	g_print("eas_provision_msg_finalize++\n");
 
 	// g_free ignores NULL

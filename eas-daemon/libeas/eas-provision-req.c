@@ -36,6 +36,8 @@ eas_provision_req_init (EasProvisionReq *object)
 
 	priv->msg = NULL;
 	priv->state = EasProvisionStep1;
+
+	eas_request_base_SetRequestType (&object->parent_instance, EAS_REQ_PROVISION);
 }
 
 static void
@@ -106,6 +108,8 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 {
 	EasProvisionReqPrivate *priv = self->priv;
 
+	g_print("eas_provision_req_MessageComplete++\n");
+
 	eas_provision_msg_parse_response (priv->msg, doc);
 
 	switch (priv->state) {
@@ -120,6 +124,8 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 		case EasProvisionStep1:
 		{
 			EasProvisionMsg *msg = NULL;
+			
+			g_print("eas_provision_req_MessageComplete - EasProvisionStep1\n");
 			
 			msg = eas_provision_msg_new ();
 			eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
@@ -142,6 +148,8 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 		// from the daemon that triggered the provisioning to proceed.
 		case EasProvisionStep2:
 		{
+		g_print("eas_provision_req_MessageComplete - EasProvisionStep2\n");
+
 		 eas_connection_set_policy_key(eas_request_base_GetConnection (&self->parent_instance), 
 		                               eas_provision_msg_get_policy_key (priv->msg));
 		 eas_connection_resume_request(eas_request_base_GetConnection (&self->parent_instance));
@@ -150,6 +158,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 	}
 
 	xmlFree(doc);
+	g_print("eas_provision_req_MessageComplete--\n");
 }
 
 gchar*
