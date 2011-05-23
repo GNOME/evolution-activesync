@@ -36,6 +36,10 @@ eas_sync_folder_hierarchy_init (EasSyncFolderHierarchy *object)
 	priv->syncFolderMsg = NULL;
 	priv->state = EasSyncFolderHierarchyStep1;
 	priv->accountID= -1;
+
+	eas_request_base_SetRequestType (&object->parent_instance, 
+	                                 EAS_REQ_SYNC_FOLDER_HIERARCHY);
+
 	g_print("eas_sync_folder_hierarchy_init--\n");
 }
 

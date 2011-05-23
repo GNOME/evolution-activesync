@@ -88,7 +88,7 @@ eas_connection_init (EasConnection *self)
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
         SoupLogger *logger;
-        logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
+        logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE(logger));
     }
 
@@ -351,7 +351,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
         soup_session_queue_message(priv->soup_session, 
                                    msg, 
                                    handle_server_response, 
-                                   self);
+                                   request);
     }
     
     if (wbxml) free(wbxml);
@@ -457,8 +457,27 @@ failed:
     if (conv) wbxml_destroy_conv_wbxml2xml(conv);
 }
 
+/**
+ * @param wbxml binary XML to be dumped
+ * @param wbxml_len length of the binary
+ */
+static void 
+dump_wbxml_response(WB_UTINY *wbxml, WB_LONG wbxml_len)
+{
+    WB_UTINY *xml = NULL;
+    WB_ULONG xml_len = 0;
+    gchar* tmp = NULL;
 
-
+    wbxml2xml(wbxml, wbxml_len, &xml, &xml_len);
+    
+    tmp = g_strndup((gchar*)xml, xml_len);
+    g_print("=== dump start: xml_len [%d] ===\n",xml_len);
+    g_print("%s\n",tmp);
+    g_print("=== dump end ===\n");
+	
+    if (tmp) g_free(tmp);
+    if (xml) free(xml);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -521,6 +540,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		return;
 	}
 
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
+		dump_wbxml_response(msg->response_body->data, 
+		                    msg->response_body->length);
+	}
+
     wbxml2xml ((WB_UTINY*)msg->response_body->data,
                msg->response_body->length,
                &xml,
@@ -540,29 +564,23 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	
 	if (!isProvisioningRequired)
 	{
-		g_print("  handle_server_response - no parsed provisioning required\n");
-
-		g_print("  handle_server_response - %s\n", priv->request_cmd);
-
-		// Clean up request data
-		g_free(priv->request_cmd);
-		g_print("  handle_server_response - 0\n");
-		priv->request_cmd = NULL;
-
-		g_print("  handle_server_response - 1\n");
-
-		xmlFree(priv->request_doc);
-		g_print("  handle_server_response - 2\n");
-		priv->request_doc = NULL;
-		g_print("  handle_server_response - 3\n");
-
-		priv->request = NULL;
-		g_print("  handle_server_response - 4\n");
-
 		EasRequestType request_type = eas_request_base_GetRequestType(req);
 
+		g_print("  handle_server_response - no parsed provisioning required\n");
 		g_print("  handle_server_response - Handling request [%d]\n", request_type);
-		
+
+		if (request_type != EAS_REQ_PROVISION) 
+		{
+			// Clean up request data
+			g_free(priv->request_cmd);
+			priv->request_cmd = NULL;
+
+			xmlFree(priv->request_doc);
+			priv->request_doc = NULL;
+
+			priv->request = NULL;
+		}
+
 		switch (request_type) 
 		{
 			default:

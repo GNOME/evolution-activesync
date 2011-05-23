@@ -49,6 +49,8 @@ void eas_request_base_Activate (EasRequestBase *self);
 void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc);
 
 EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
+void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
+
 struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
 
