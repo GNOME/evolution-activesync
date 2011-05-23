@@ -1,12 +1,6 @@
 # Specific files to ignore
-AUTHORS
-COPYING
-ChangeLog
-INSTALL
 Makefile
 Makefile.in
-NEWS
-README
 config.h
 config.h.in
 config.log
