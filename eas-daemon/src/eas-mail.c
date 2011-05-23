@@ -11,10 +11,20 @@
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
+struct _EasMailPrivate
+{
+    EasConnection* connection;
+};
+
+#define EAS_MAIL_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
+
+
 static void
 eas_mail_init (EasMail *object)
 {
-	/* TODO: Add initialization code here */
+    EasMail *priv;
+	object->_priv = priv = EAS_MAIL_PRIVATE(object);                    
+	priv->_priv->connection = NULL;
 }
 
 static void
@@ -33,12 +43,31 @@ eas_mail_class_init (EasMailClass *klass)
 
 	object_class->finalize = eas_mail_finalize;
 	
+	g_type_class_add_private (klass, sizeof (EasMailPrivate));
+	
 	 /* Binding to GLib/D-Bus" */ 
     dbus_g_object_type_install_info(EAS_TYPE_MAIL,
                                             &dbus_glib_eas_mail_object_info);
 }
 
+EasMail* eas_mail_new(void)
+{
+	EasMail* easMail = NULL;
+	easMail = g_object_new(EAS_TYPE_MAIL, NULL);
+	return easMail;
+}
 
+void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj)
+{
+   EasMailPrivate* priv = self->_priv;
+   priv->connection = easConnObj;
+}
+
+EasConnection*  eas_mail_get_eas_connection(EasMail* self)
+{
+    EasMailPrivate* priv = self->_priv;
+    return priv->connection;
+}
 
 gboolean eas_mail_start_sync(EasMail* easMailObj, gint valueIn, GError** error)
 {
@@ -83,16 +112,6 @@ void eas_mail_test_001(EasMail* obj, DBusGMethodInvocation* context)
         g_free (ok_str);
 }
 
-gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConnObj)
-{
-  gboolean ret= FALSE;
-
-  if(easConnObj != NULL){
-  	easMailObj->easConnection = easConnObj;
-	ret= TRUE;
-  }
-  return ret;
-}
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
@@ -165,7 +184,8 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
         folderHierarchyObj = g_object_new(EAS_TYPE_SYNC_FOLDER_HIERARCHY , NULL);
 
         eas_request_base_SetConnection (&folderHierarchyObj->parent_instance, 
-                                        easMailObj->easConnection);
+                                        eas_mail_get_eas_connection(easMailObj));
+                                        
 
         g_print("eas_mail_sync_email_folder_hierarchy - new req\n");
 	    // Start the request
