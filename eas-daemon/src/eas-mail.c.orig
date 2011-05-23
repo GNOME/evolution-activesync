@@ -113,6 +113,11 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
         (*serialised_folder_array)[i] = NULL;
     
 	GSList *l = (GSList*)folder_list;
+<<<<<<< HEAD
+=======
+	guint i = 0;
+	g_print("array_len = %d\n", array_len -1);
+>>>>>>> 8f4192af40a91555e37f6163d3ebf7f7c3734d10
 	for(i = 0; i < array_len - 1; i++)
 	{
 		g_assert(l != NULL);
