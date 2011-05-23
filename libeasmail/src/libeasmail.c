@@ -487,8 +487,14 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 								const EasEmailInfo *email,		// List of EasEmailInfos to delete
 								GError **error)
 {
-	gboolean ret = TRUE;	
 	g_print("eas_mail_handler_delete_emails++\n");
+	gboolean ret = TRUE;	
+	
+	g_assert(this_g);
+	g_assert(sync_key);	
+	g_assert(email);
+		
+	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
 	/* TODO call dbus "sync" api with appropriate params */
 	
