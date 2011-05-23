@@ -188,24 +188,89 @@ gboolean eas_mail_handler_delete_email(EasEmailHandler* this,
 'push' email updates to server
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
 */
-gboolean eas_mail_handler_update_emails(EasEmailHandler* this, 
+/* function name:               eas_mail_handler_update_emails
+ * function description:        allows the user to update the status of specific meta information
+ *                              related to an email.  The information that can be modified is limited
+ *                              by the flags supported on this interface, currently this is:                        
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * gchar *sync_key (in / out):  use value returned from exchange server from previous requests
+ * const EasEmailInfo *email (in): identifies the specific email to update.  
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+ gboolean eas_mail_handler_update_email(EasEmailHandler* this, 
                                         gchar *sync_key,
-                                        GSList *update_emails,		// List of EasEmailInfos to update
+                                        EasEmailInfo *update_email,		
 				                        GError **error);
 
 
+/* function name:               eas_mail_handler_send_email
+ * function description:        this method takes an email in the form of a MIME file and sync's it 
+ *                              to the exchange server.  The email is then sent by the exchange server
+ *                              in accordance with the information (To, CC etc) encapsulated by the 
+ *                              MIME file.
+ *                              note: users of this method should not attempt to save the sent email to
+ *                              sent item folders or even assume that the send is successfull.  Confirmation
+ *                              of a successfull send and organisation of email into sent folders should
+ *                              be done through a subsiquent call to eas_mail_handler_sync_folder_hierarchy
+ *                              and eas_mail_handler_sync_folder_email_info.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * const gchar *client_email_id (in):  use a unique message identifier supplied by 
+ *                              client of up to 40 chars.
+ * const gchar *mime_file (in): the full path to the email (mime) to be sent.  
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
 gboolean eas_mail_handler_send_email(EasEmailHandler* this, 
-                                    const gchar *client_email_id,	// unique message identifier supplied by client
-                                    const gchar *mime_file,			// the full path to the email (mime) to be sent
+                                    const gchar *client_email_id,	 
+                                    const gchar *mime_file,	
                                     GError **error);
 
+
+/* function name:               eas_mail_handler_move_to_folder
+ * function description:        this method allows the user to move an email from one 
+ *                              folder to another.  It is required that the destination
+ *                              folder already exists.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * EasEmailInfo *email (in):    identifies the email to be moved
+ * const gchar *src_folder_id (in): folder id of the folder from which the email will be moved  
+ * const gchar *dest_folder_id (in): folder id of the folder to which the email will be moved
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
 gboolean eas_mail_handler_move_to_folder(EasEmailHandler* this, 
-                                            const GSList *email_ids,
+                                            EasEmailInfo *email,
 	                                        const gchar *src_folder_id,
 	                                        const gchar *dest_folder_id,
 	                                        GError **error);
 
-// How supported in AS?
+/* function name:               eas_mail_handler_copy_to_folder
+ * function description:        this method allows the user to copy an email from one 
+ *                              folder to another.  It is required that the destination
+ *                              folder already exists.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * EasEmailInfo *email (in):    identifies the email to be copied
+ * const gchar *src_folder_id (in): folder id of the folder from which the email will be copied  
+ * const gchar *dest_folder_id (in): folder id of the folder to which the email will be copied
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
 gboolean eas_mail_handler_copy_to_folder(EasEmailHandler* this, 
                                         const GSList *email_ids,
                                         const gchar *src_folder_id,
@@ -213,11 +278,6 @@ gboolean eas_mail_handler_copy_to_folder(EasEmailHandler* this,
                                         GError **error);
 
 
-/*
-Assumptions:
-when a directory is supplied for putting files into, the directory already exists
-no requirement for a method to sync ALL email folders at once.
-*/
 
 
 /*
@@ -228,7 +288,6 @@ How does AS expose 'answered' / 'forwarded'? investigate email2:ConversationInde
 
 /* 
 API Questions / todos:
-Should MIME files (with email bodies) be unicode?
 
 // TODO define an 'email config' API (for, eg, window_size, filtertype etc rather than passing those options over DBus with each sync...)
 */
