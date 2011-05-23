@@ -32,6 +32,10 @@
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
       <arg type="s" name="sync_key" direction="in"/>
+      <arg type="s" name="ret_sync_key" direction="out"/>
+      <arg type="as" name="ret_created_folder_array" direction="out"/>
+      <arg type="as" name="ret_deleted_folder_array" direction="out"/>
+      <arg type="as" name="ret_updated_folder_array" direction="out"/>
     </method>
 
 

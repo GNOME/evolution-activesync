@@ -41,7 +41,7 @@ main(int argc, char** argv) {
 
 	g_print("dbus initialised\n");
 
-	/*
+	
 	// temp - test folder 'serialisation'/'deserialisation':
  	gchar *serialised = NULL;
 	EasFolder *folder = eas_folder_new();
@@ -78,7 +78,7 @@ main(int argc, char** argv) {
 	g_object_unref(folder2); // these don't have to be freed!
 
 	g_free(serialised);
-	*/
+	
 
 	/*
 // temp - test attachment 'serialisation'/'deserialisation':
@@ -197,7 +197,7 @@ main(int argc, char** argv) {
 	//g_free(serialised);
 	*/
 	
-	
+	/*
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
     GSList *deleted = NULL;    
@@ -223,6 +223,7 @@ main(int argc, char** argv) {
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+	*/
 	
     return 0;
 }

@@ -47,7 +47,7 @@ strconcatwithseparator(gchar **strings, guint num, const gchar *sep)
 		}
 		len = len + strlen(sep);
 	}
-
+	
 	out = (gchar*)g_malloc0((len * sizeof(gchar)));
 	
 	if(out)
@@ -59,7 +59,7 @@ strconcatwithseparator(gchar **strings, guint num, const gchar *sep)
 				g_print("strcat %s to %s\n", strings[i], out);
 				strcat(out, strings[i]);
 			}
-			if(i<num)
+			if(i<num - 1)
 			{
 				strcat(out, sep);
 			}

@@ -24,6 +24,7 @@ struct _EasEmailHandlerPrivate{
     guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 };
 
+// TODO - how much verification of args should happen 
 
 static void
 eas_mail_handler_init (EasEmailHandler *cnc)
@@ -271,18 +272,20 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
 				  G_TYPE_UINT64, 
-	              this_g->priv->account_uid,                   
+	              this_g->priv->account_uid,
 		          G_TYPE_STRING,
 		          sync_key,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,				
+		          G_TYPE_STRING, &sync_key,
 		          G_TYPE_STRV, &created_folder_array,
-		          G_TYPE_STRV, &deleted_folder_array,  
+		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
 
     g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy called\n");
-    g_printerr(" Error: %s\n", (*error)->message);
+    if (*error) {
+        g_printerr(" Error: %s\n", (*error)->message);
+    }
     
 	if(ret)
 	{
@@ -501,9 +504,9 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
 */
 gboolean 
-eas_mail_handler_update_emails(EasEmailHandler* this_g, 
+eas_mail_handler_update_email(EasEmailHandler* this_g, 
 								gchar *sync_key,            // sync_key for the folder containing the emails                   
-								GSList *update_emails,		// List of EasEmailInfos to update
+								EasEmailInfo *update_email,		// EasEmailInfo to update
 								GError **error)
 {
 	gboolean ret = TRUE;	
@@ -531,7 +534,7 @@ eas_mail_handler_send_email(EasEmailHandler* this_g,
 
 gboolean 
 eas_mail_handler_move_to_folder(EasEmailHandler* this_g, 
-    const GSList *email_ids,
+    EasEmailInfo *email,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
 	GError **error)
