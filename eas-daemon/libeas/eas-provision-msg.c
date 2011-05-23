@@ -112,13 +112,13 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
 	priv->policy_key = priv->policy_status = NULL;
 
     if (!doc) {
-        printf ("Failed to parse provision response XML\n");
+        g_print ("Failed to parse provision response XML\n");
         return;
     }
 	
     node = xmlDocGetRootElement(doc);
     if (strcmp((char *)node->name, "Provision")) {
-        printf("Failed to find <Provision> element\n");
+        g_print("Failed to find <Provision> element\n");
         return;
     }
 
@@ -126,12 +126,12 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            printf ("Provision Status:[%s]\n", provision_status);
+            g_print ("Provision Status:[%s]\n", provision_status);
             break;
         }
     }
     if (!node) {
-        printf ("Failed to find <Status> element\n");
+        g_print ("Failed to find <Status> element\n");
         return;
     }
 
@@ -141,7 +141,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             break;
     }
     if (!node) {
-        printf("Failed to find <Policies> element\n");
+        g_print("Failed to find <Policies> element\n");
         return;
     }
 
@@ -151,7 +151,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             break;
     }
     if (!node) {
-        printf ("Failed to find <Policy> element\n");
+        g_print ("Failed to find <Policy> element\n");
         return;
     }
 
@@ -163,7 +163,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             if (priv->policy_status) 
             {
                 found_status = TRUE;
-                printf("Policy Status:[%s]\n", priv->policy_status);
+                g_print("Policy Status:[%s]\n", priv->policy_status);
                 continue;
             }
         }
@@ -173,7 +173,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             if (priv->policy_key) 
             {
                 found_policy_key = TRUE;
-                printf ("Provisioned PolicyKey:[%s]\n", priv->policy_key);
+                g_print ("Provisioned PolicyKey:[%s]\n", priv->policy_key);
             }
         }
 
@@ -267,7 +267,7 @@ handle_provision_stage1(SoupSession *session, SoupMessage *msg, gpointer data)
 
     if (!xml) 
     {
-        printf("Failed: Unable to decode the WBXML to XML\n");
+        g_print("Failed: Unable to decode the WBXML to XML\n");
 		return;
     }
 
@@ -306,7 +306,7 @@ handle_provision_stage2(SoupSession *session, SoupMessage *msg, gpointer data)
 
     if (!xml) 
     {
-        printf("Failed: Unable to decode the WBXML to XML\n");
+        g_print("Failed: Unable to decode the WBXML to XML\n");
 		return;
     }
 

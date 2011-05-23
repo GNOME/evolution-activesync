@@ -111,25 +111,25 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
 	xmlNode *node = NULL;
 	
     if (!doc) {
-        printf ("Failed to parse folder_sync response XML\n");
+        g_print ("Failed to parse folder_sync response XML\n");
         return;
     }
     node = xmlDocGetRootElement(doc);
     if (strcmp((char *)node->name, "FolderSync")) {
-        printf("Failed to find <FolderSync> element\n");
+        g_print("Failed to find <FolderSync> element\n");
         return;
     }
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            printf ("FolderSync Status:[%s]\n", provision_status);
+            g_print ("FolderSync Status:[%s]\n", provision_status);
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
         {
             priv->sync_key = g_strdup(xmlNodeGetContent(node));
-            printf ("FolderSync syncKey:[%s]\n", priv->sync_key);
+            g_print ("FolderSync syncKey:[%s]\n", priv->sync_key);
             continue;
         }
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Changes")) 
@@ -138,7 +138,7 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
 		}
     }
     if (!node) {
-        printf ("Failed to find Changes element\n");
+        g_print ("Failed to find Changes element\n");
         return;
     }
 	
@@ -251,7 +251,7 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *cnc, xmlNode *node)
 			leaf = item;
 		}
 		else {
-			printf("Failed to parse folderSync Add\n");
+			g_print("Failed to parse folderSync Add\n");
 		}
 	}
 }
