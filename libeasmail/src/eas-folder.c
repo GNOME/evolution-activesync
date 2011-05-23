@@ -95,7 +95,7 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 	*result = strconcatwithseparator(strings, sizeof(strings)/sizeof(strings[0]), folder_separator);
 
 	g_print("serialise result: \n");
-	g_print("%s", *result);
+	g_print("%s\n", *result);
 	
 	if(!*result)
 	{
