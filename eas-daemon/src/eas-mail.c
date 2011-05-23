@@ -101,7 +101,7 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 { 
 	gboolean ret = TRUE;
 	g_assert(*serialised_folder_array == NULL);
-	g_assert(folder_list != NULL);
+	//g_assert(folder_list != NULL);
 
 	guint array_len = g_slist_length((GSList*)folder_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
@@ -184,9 +184,6 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
          e_flag_free (eflag);
          g_print("eas_mail_sync_email_folder_hierarchy - serialise objects\n");
          //serialise the folder objects from GSList* to char** and populate  :
-         // ret_created_folders_array
-         // ret_updated_folders_array
-        // ret_deleted_folders_array
 
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
 		{
