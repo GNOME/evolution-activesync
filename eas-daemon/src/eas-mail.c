@@ -22,9 +22,11 @@ struct _EasMailPrivate
 static void
 eas_mail_init (EasMail *object)
 {
-    EasMail *priv;
+ 	g_print("++ eas_mail_init()\n");
+    EasMailPrivate *priv =NULL;
 	object->_priv = priv = EAS_MAIL_PRIVATE(object);                    
-	priv->_priv->connection = NULL;
+	priv->connection = NULL;
+	 	g_print("-- eas_mail_init()\n");
 }
 
 static void
@@ -38,16 +40,18 @@ eas_mail_finalize (GObject *object)
 static void
 eas_mail_class_init (EasMailClass *klass)
 {
+ 	g_print("++ eas_mail_class_init ()\n");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = eas_mail_finalize;
-	
+		g_print(">>eas_mail_class_init 01\n");	
 	g_type_class_add_private (klass, sizeof (EasMailPrivate));
-	
+			g_print(">>eas_mail_class_init 02\n");	
 	 /* Binding to GLib/D-Bus" */ 
     dbus_g_object_type_install_info(EAS_TYPE_MAIL,
                                             &dbus_glib_eas_mail_object_info);
+    g_print("-- eas_mail_class_init ()\n");
 }
 
 EasMail* eas_mail_new(void)
