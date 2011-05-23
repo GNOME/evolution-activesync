@@ -55,6 +55,8 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	
+	g_type_class_add_private (klass, sizeof (EasSyncMsgPrivate));
 
 	object_class->finalize = eas_sync_msg_finalize;
 }
@@ -76,12 +78,13 @@ eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
 }
 
 xmlDoc*
-eas_sync_msg_build_message (EasSyncMsg* self)
+eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
 {
 	EasSyncMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
     xmlNode *node  = NULL, 
-	        *child = NULL;
+	        *child = NULL,
+	        *grandchild = NULL;
     xmlNs   *ns    = NULL;
 
 	//TODO: this is taken from foldersync message - needs to be properly created
@@ -94,8 +97,18 @@ eas_sync_msg_build_message (EasSyncMsg* self)
                        (xmlChar*)"-//MICROSOFT//DTD ActiveSync//EN", 
                        (xmlChar*)"http://www.microsoft.com/");
 
-    ns = xmlNewNs (node, (xmlChar *)"FolderHierarchy:",NULL);
-    child = xmlNewChild(node, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
+    ns = xmlNewNs (node, (xmlChar *)"AirSync:",NULL);
+     xmlNewNs (node, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
+    child = xmlNewChild(node, NULL, (xmlChar *)"Collections", NULL);
+   grandchild = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
+   xmlNewChild(grandchild, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
+   xmlNewChild(grandchild, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
+   if(getChanges){
+   	   xmlNewChild(grandchild, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
+   	   xmlNewChild(grandchild, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
+   }
+    xmlNewChild(grandchild, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
+    
 
     return doc;
 }
@@ -103,6 +116,7 @@ eas_sync_msg_build_message (EasSyncMsg* self)
 void
 eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 {
+    g_print ("eas_sync_msg_parse_response ++\n");
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
 	
@@ -112,60 +126,51 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
     }
     node = xmlDocGetRootElement(doc);
     
-    /*TODO: parse respone correctly
-    *
-    if (strcmp((char *)node->name, "FolderSync")) {
-        g_print("Failed to find <FolderSync> element\n");
+    //TODO: parse response correctly
+    
+    if (strcmp((char *)node->name, "Sync")) {
+        g_print("Failed to find <Sync> element\n");
         return;
     }
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+    
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collections")) 
         {
-            gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            g_print ("FolderSync Status:[%s]\n", provision_status);
-            continue;
+               g_print ("Collections:\n");
+               break;
         }
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
-        {
-            priv->sync_key = g_strdup(xmlNodeGetContent(node));
-            g_print ("FolderSync syncKey:[%s]\n", priv->sync_key);
-            continue;
-        }
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Changes")) 
-		{
-			break;
-		}
+
     }
     if (!node) {
-        g_print ("Failed to find Changes element\n");
+        g_print ("Failed to find Collections element\n");
+        return;
+    }
+    
+    for (node = node->children; node; node = node->next) {
+    
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collection")) 
+        {
+               g_print ("Collection:\n");
+               break;
+        }
+
+    }
+    if (!node) {
+        g_print ("Failed to find Collection element\n");
         return;
     }
 	
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Count"))
+        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey"))
 		{
-			gchar *count = (gchar *)xmlNodeGetContent(node);
+			priv->sync_key = (gchar *)xmlNodeGetContent(node);
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
-			eas_connection_parse_fs_add(self, node);
-			continue;
-		}
-		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
-			// TODO Parse deleted folders
-			g_assert(0);
-			continue;
-		}
-		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
-			// TODO Parse updated folders
-			g_assert(0);
-			continue;
-		}
 	}
-	*/
+	
+	g_print ("eas_sync_msg_parse_response --\n");
+
 }
 
 GSList*
@@ -192,6 +197,7 @@ eas_sync_msg_get_deleted_items (EasSyncMsg* self)
 gchar* 
 eas_sync_msg_get_syncKey(EasSyncMsg* self)
 {
+    g_print ("eas_sync_msg_getSyncKey ++\n");
 	EasSyncMsgPrivate *priv = self->priv;
 	return priv->sync_key;
 }

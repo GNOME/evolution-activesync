@@ -97,16 +97,21 @@ eas_sync_req_Activate (EasSyncReq *self,gchar* syncKey, guint64 accountID, EFlag
 	//create sync  msg type
 	priv->syncMsg = eas_sync_msg_new (syncKey, accountID, folderId);
 
+    g_print("eas_sync_req_activate- syncKey = %s\n", syncKey);
+
+    //if syncKey is not 0, then we are not doing a first time sync and only need to send one message
+	// so we  move state machine forward.
+	/*if (!g_strcmp0(syncKey,"0"))
+	{
+		g_print("switching state\n");
+		priv->state = EasSyncReqStep2;
+	}*/
+	
 	g_print("eas_sync_req_activate - build messsage\n");
 	//build request msg
-	doc = eas_sync_msg_build_message (priv->syncMsg);
+	doc = eas_sync_msg_build_message (priv->syncMsg, FALSE);
 	
-	//if syncKey is not 0, then we are not doing a first time sync and only need to send one message
-	// so we  move state machine forward.
-	if (!g_strcmp0(syncKey,"0"))
-	{
-		priv->state = EasSyncReqStep2;
-	}
+	
 
 	g_print("eas_sync_req_activate - send message\n");
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
@@ -120,7 +125,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 	
 	g_print("eas_sync_req_MessageComplete++\n");
 
-	//eas_sync_msg_parse_reponse (priv->syncMsg, doc);
+	eas_sync_msg_parse_reponse (priv->syncMsg, doc);
 
 	xmlFree(doc);
 	
@@ -134,8 +139,11 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 		//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
 		case EasSyncReqStep1:
 		{
+			g_print("eas_sync_req_MessageComplete step 1\n");
 		    //get syncKey
 		    gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
+			
+			g_print("eas_sync_req synckey = %s\n", syncKey);
 			
 			//clean up old message
 			if (priv->syncMsg) {
@@ -146,7 +154,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 			priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID);
 
 			//build request msg
-			doc = eas_sync_msg_build_message (priv->syncMsg);
+			doc = eas_sync_msg_build_message (priv->syncMsg, TRUE);
 			
 			//move to new state
 			priv->state = EasSyncReqStep2;	
@@ -159,6 +167,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 		//we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
 		case EasSyncReqStep2:
 		{
+		    g_print("eas_sync_req_MessageComplete step 2\n");
 			e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 		}
 		break;
