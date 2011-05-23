@@ -109,9 +109,6 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
     
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 
-    for (i = 0; i<array_len; i++)
-        (*serialised_folder_array)[i] = NULL;
-    
 	GSList *l = (GSList*)folder_list;
 	for(i = 0; i < array_len - 1; i++)
 	{
@@ -129,7 +126,6 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 
 		l = g_slist_next (l);
 	}
-	(*serialised_folder_array)[i] = NULL;
 	
 cleanup:
 	if(!ret)
