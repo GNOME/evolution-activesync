@@ -98,42 +98,49 @@ gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConn
 // null terminates the array
 static gboolean 
 build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *folder_list, GError **error)
-{ 
+{
 	gboolean ret = TRUE;
-	g_assert(*serialised_folder_array == NULL);
-	//g_assert(folder_list != NULL);
+	guint i = 0;
+
+    g_assert(serialised_folder_array);
+    g_assert(*serialised_folder_array == NULL);
 
 	guint array_len = g_slist_length((GSList*)folder_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+    
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
+
+    for (i = 0; i<array_len; i++)
+        (*serialised_folder_array)[i] = NULL;
+    
 	GSList *l = (GSList*)folder_list;
-	guint i = 0;
 	for(i = 0; i < array_len - 1; i++)
 	{
 		g_assert(l != NULL);
 		gchar *serialised;
 		EasFolder *folder;
 		folder = l->data;
-		if(!eas_folder_serialise(folder, &serialised))
+
+		if(!eas_folder_serialise(folder, &(*serialised_folder_array)[i]))
 		{
 			ret = FALSE;
 			goto cleanup;
 		}
-		*serialised_folder_array[i] = serialised;		
-		l = g_slist_next (l);		
+
+		l = g_slist_next (l);
 	}
-	*serialised_folder_array[i] = NULL;
+	(*serialised_folder_array)[i] = NULL;
 	
 cleanup:
 	if(!ret)
 	{
 		for(i = 0; i < array_len - 1; i++)
 		{
-			g_free(serialised_folder_array[i]);
+			g_free((*serialised_folder_array)[i]);
 		}
-		g_free(serialised_folder_array);
+		g_free(*serialised_folder_array);
 		// TODO cleanup strings and array and set error
 	}
-	
+
 	return ret;
 }
 

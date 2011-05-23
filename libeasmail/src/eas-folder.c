@@ -80,9 +80,13 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 	gboolean ret = TRUE;
 	
 	g_print("eas_folder_serialise++\n");  
-	gchar type[4] = "";		
+	gchar type[4] = "";
 
-	g_assert(folder->type < EAS_FOLDER_TYPE_MAX);
+    g_assert(result);
+    g_assert(*result == NULL);
+
+    // Bad assert these numbers can change based on server whim
+//	g_assert(folder->type < EAS_FOLDER_TYPE_MAX);
 	
 	if(folder->type)
 	{

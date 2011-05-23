@@ -272,18 +272,20 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
 				  G_TYPE_UINT64, 
-	              this_g->priv->account_uid,                   
+	              this_g->priv->account_uid,
 		          G_TYPE_STRING,
 		          sync_key,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,				
+		          G_TYPE_STRING, &sync_key,
 		          G_TYPE_STRV, &created_folder_array,
-		          G_TYPE_STRV, &deleted_folder_array,  
+		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
 
     g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy called\n");
-    g_printerr(" Error: %s\n", (*error)->message);
+    if (*error) {
+        g_printerr(" Error: %s\n", (*error)->message);
+    }
     
 	if(ret)
 	{
