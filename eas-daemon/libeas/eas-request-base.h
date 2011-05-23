@@ -37,11 +37,21 @@ typedef enum {
 	EAS_REQ_BASE = 0,
     EAS_REQ_PROVISION,
 	EAS_REQ_SYNC_FOLDER_HIERARCHY,
-	EAS_REQ_FOLDER_SYNC,
+	EAS_REQ_SYNC,
 	//TODO: add all other requests here
 	
 	EAS_REQ_LAST
 } EasRequestType;
+
+typedef enum {
+	EAS_ITEM_FOLDER=0,
+	EAS_ITEM_MAIL,
+	EAS_ITEM_CALENDAR,
+	EAS_ITEM_CONTACT,
+	//TODO: add all other items here
+	
+	EAS_ITEM_LAST
+}EasItemType;
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
 
