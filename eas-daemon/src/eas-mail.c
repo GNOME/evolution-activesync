@@ -107,6 +107,7 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 	GSList *l = (GSList*)folder_list;
 	guint i = 0;
+	g_print("array_len = %d\n", array_len -1);
 	for(i = 0; i < array_len - 1; i++)
 	{
 		g_assert(l != NULL);
@@ -115,6 +116,7 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 		folder = l->data;
 		if(!eas_folder_serialise(folder, &serialised))
 		{
+			g_print("failed!");
 			ret = FALSE;
 			goto cleanup;
 		}
