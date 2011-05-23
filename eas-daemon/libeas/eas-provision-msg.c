@@ -23,25 +23,28 @@ static void
 eas_provision_msg_init (EasProvisionMsg *object)
 {
 	EasProvisionMsgPrivate *priv;
-	object->priv = priv = EAS_PROVISION_MSG_PRIVATE(object);
-
 	g_print("eas_provision_msg_init++\n");
 	
+	object->priv = priv = EAS_PROVISION_MSG_PRIVATE(object);
+
 	priv->policy_key = NULL;
 	priv->policy_status = NULL;
+	
+	g_print("eas_provision_msg_init--\n");
 }
 
 static void
 eas_provision_msg_finalize (GObject *object)
 {
 	EasProvisionMsgPrivate *priv;
-	/* TODO: Add deinitalization code here */
+	g_print("eas_provision_msg_finalize++\n");
 
 	// g_free ignores NULL
 	g_free(priv->policy_key);
 	g_free(priv->policy_status);
 
 	G_OBJECT_CLASS (eas_provision_msg_parent_class)->finalize (object);
+	g_print("eas_provision_msg_finalize--\n");
 }
 
 static void
@@ -55,6 +58,8 @@ eas_provision_msg_class_init (EasProvisionMsgClass *klass)
 	g_type_class_add_private (klass, sizeof (EasProvisionMsgPrivate));
 
 	object_class->finalize = eas_provision_msg_finalize;
+	
+	g_print("eas_provision_msg_class_init--\n");
 }
 
 
@@ -92,6 +97,8 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
     if (priv->policy_status) {
         xmlNewChild(grandchild, ns, (xmlChar*)"Status",(xmlChar*)priv->policy_status);
     }
+                             
+	g_print("eas_provision_msg_build_message--\n");
 
     return doc;
 }
@@ -112,13 +119,13 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
 	priv->policy_key = priv->policy_status = NULL;
 
     if (!doc) {
-        g_print ("Failed to parse provision response XML\n");
+        g_print ("  Failed to parse provision response XML\n");
         return;
     }
 	
     node = xmlDocGetRootElement(doc);
     if (strcmp((char *)node->name, "Provision")) {
-        g_print("Failed to find <Provision> element\n");
+        g_print("  Failed to find <Provision> element\n");
         return;
     }
 
@@ -126,12 +133,12 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            g_print ("Provision Status:[%s]\n", provision_status);
+            g_print ("  Provision Status:[%s]\n", provision_status);
             break;
         }
     }
     if (!node) {
-        g_print ("Failed to find <Status> element\n");
+        g_print ("  Failed to find <Status> element\n");
         return;
     }
 
@@ -141,7 +148,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             break;
     }
     if (!node) {
-        g_print("Failed to find <Policies> element\n");
+        g_print("  Failed to find <Policies> element\n");
         return;
     }
 
@@ -151,7 +158,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
             break;
     }
     if (!node) {
-        g_print ("Failed to find <Policy> element\n");
+        g_print ("  Failed to find <Policy> element\n");
         return;
     }
 
@@ -179,6 +186,8 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
 
         if (found_status && found_policy_key) break;
     }
+	
+	g_print("eas_provision_msg_parse_response--\n");
 }
 
 EasProvisionMsg*
@@ -190,6 +199,8 @@ eas_provision_msg_new (void)
 
 	msg = g_object_new (EAS_TYPE_PROVISION_MSG, NULL);
 
+	g_print("eas_provision_msg_new--\n");
+	
 	return msg;
 }
 
@@ -197,7 +208,7 @@ gchar*
 eas_provision_msg_get_policy_key (EasProvisionMsg* self)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
-	g_print("eas_provision_msg_get_policy_key++\n");
+	g_print("eas_provision_msg_get_policy_key+-\n");
 
 	return priv->policy_key;
 }
@@ -206,7 +217,7 @@ gchar*
 eas_provision_msg_get_policy_status (EasProvisionMsg* self)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
-	g_print("eas_provision_msg_get_policy_status++\n");
+	g_print("eas_provision_msg_get_policy_status+-\n");
 	return priv->policy_status;
 }
 
@@ -225,6 +236,8 @@ eas_provision_msg_set_policy_key (EasProvisionMsg* self, gchar* policyKey)
 	// g_xxx functions can handle NULL
 	g_free(priv->policy_key);
 	priv->policy_key = g_strdup(policyKey);
+	
+	g_print("eas_provision_msg_set_policy_key--\n");
 }
 
 /**
@@ -242,6 +255,8 @@ eas_provision_msg_set_policy_status (EasProvisionMsg* self, gchar* policyStatus)
 	// g_xxx functions can handle NULL
 	g_free(priv->policy_status);
 	priv->policy_status = g_strdup(policyStatus);
+	
+	g_print("eas_provision_msg_set_policy_status--\n");
 }
 
 #if 0

@@ -46,11 +46,14 @@ eas_sync_folder_hierarchy_finalize (GObject *object)
 	EasSyncFolderHierarchyPrivate *priv = req->priv;
 	/* TODO: Add deinitalization code here */
 
+	g_print("eas_sync_folder_hierarchy_finalize++\n");
+	
 	if (priv->syncFolderMsg) {
 		g_object_unref(priv->syncFolderMsg);
 	}
 
 	G_OBJECT_CLASS (eas_sync_folder_hierarchy_parent_class)->finalize (object);
+	g_print("eas_sync_folder_hierarchy_finalize--\n");
 }
 
 static void
@@ -105,6 +108,8 @@ void
 eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc* doc)
 {
 	EasSyncFolderHierarchyPrivate *priv = self->priv;
+	
+	g_print("eas_sync_folder_hierarchy_MessageComplete++\n");
 
 	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc);
 
@@ -149,7 +154,7 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 		}
 		break;
 	}
-
+	g_print("eas_sync_folder_hierarchy_MessageComplete--\n");
 }
 
 void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
@@ -159,9 +164,13 @@ void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
 												GSList** deleted_folders)
 {
 	EasSyncFolderHierarchyPrivate *priv = self->priv;
+	
+	g_print("eas_sync_folder_hierarchy_Activate_Finish++\n");
 
 	*ret_sync_key    = g_strdup(eas_sync_folder_msg_get_syncKey(priv->syncFolderMsg));
 	*added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 	*updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 	*deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
+	
+	g_print("eas_sync_folder_hierarchy_Activate_Finish--\n");
 }

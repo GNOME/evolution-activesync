@@ -114,6 +114,8 @@ eas_connection_finalize (GObject *object)
 {
 	EasConnection *cnc = (EasConnection *)object;
 	EasConnectionPrivate *priv = cnc->priv;
+	
+	g_print("eas_connection_finalize++\n");
 
     g_signal_handlers_disconnect_by_func (priv->soup_session, 
                                           connection_authenticate, 
@@ -157,6 +159,8 @@ eas_connection_finalize (GObject *object)
 	}
 
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
+	
+	g_print("eas_connection_finalize--\n");
 }
 
 static void
@@ -165,9 +169,13 @@ eas_connection_class_init (EasConnectionClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
+	g_print("eas_connection_class_init++\n");
+	
 	g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
 
 	object_class->finalize = eas_connection_finalize;
+	
+	g_print("eas_connection_class_init--\n");
 }
 
 static void 
@@ -178,27 +186,36 @@ connection_authenticate (SoupSession *sess,
                          gpointer data)
 {
     EasConnection* cnc = (EasConnection *)data;
-
+	g_print("  eas_connection - connection_authenticate++\n");
     soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+	g_print("  eas_connection - connection_authenticate--\n");
 }
 
 static gpointer 
 eas_soup_thread (gpointer user_data)
 {
     EasConnectionPrivate *priv = user_data;
-
+	
+	g_print("  eas_connection - eas_soup_thread++\n");
+	
     g_main_context_push_thread_default (priv->soup_context);
     g_main_loop_run (priv->soup_loop);
     g_main_context_pop_thread_default (priv->soup_context);
+	
+	g_print("  eas_connection - eas_soup_thread--\n");
     return NULL;
 }
 
 void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey)
 {
 	EasConnectionPrivate *priv = self->priv;
+	
+	g_print("eas_connection_set_policy_key++\n");
 
 	g_free(priv->policy_key);
 	priv->policy_key = g_strdup(policyKey);
+	
+	g_print("eas_connection_set_policy_key--\n");
 }
 
 void eas_connection_resume_request(EasConnection* self) 
@@ -225,6 +242,8 @@ void eas_connection_resume_request(EasConnection* self)
 		
 	eas_connection_send_request(self, _cmd, _doc, _request);
 	g_free(_cmd);
+	
+	g_print("eas_connection_resume_request--\n");
 }
 
 /**
@@ -347,7 +366,7 @@ isResponseValid(SoupMessage *msg)
     const gchar *content_type = NULL;
     goffset header_content_length = 0;
 	
-	g_print("eas_connection - isResponseValid\n");
+	g_print("eas_connection - isResponseValid++\n");
 	
     if (200 != msg->status_code) 
 	{
@@ -358,24 +377,26 @@ isResponseValid(SoupMessage *msg)
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
-		g_print ("Failed: Content-Type did not match WBXML\n");
+		g_print ("  Failed: Content-Type did not match WBXML\n");
         return FALSE;
     }
 
     if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding(msg->response_headers))
     {
-		g_print("Failed: Content-Length was not found\n");
+		g_print("  Failed: Content-Length was not found\n");
         return FALSE;
     }
 
     header_content_length = soup_message_headers_get_content_length(msg->response_headers);
     if (header_content_length != msg->response_body->length)
     {
-        g_print ("Failed: Header[%ld] and Body[%ld] Content-Length do not match\n", 
+        g_print ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match\n", 
                 (long)header_content_length, (long)msg->response_body->length);
         return FALSE;
     }
-	
+
+	g_print("eas_connection - isResponseValid--\n");
+
 	return TRUE;
 }
 
@@ -393,7 +414,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     WBXMLConvWBXML2XML *conv = NULL;
     WBXMLError ret = WBXML_OK;
 
-	g_print("eas_connection - wbxml2xml\n");
+	g_print("eas_connection - wbxml2xml++\n");
 	
     *xml = NULL;
     *xml_len = 0;
@@ -402,19 +423,19 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     
     if (ret != WBXML_OK)
     {
-		g_print ("Failed to create conv! %s\n", wbxml_errors_string(ret));
+		g_print ("  Failed to create conv! %s\n", wbxml_errors_string(ret));
         return;
     }
 
     if (NULL == wbxml)
     {
-		g_print ("wbxml is NULL!\n");
+		g_print ("  wbxml is NULL!\n");
         goto failed;
     }
 
     if (0 == wbxml_len)
     {
-        g_print("wbxml_len is 0!\n");
+        g_print("  wbxml_len is 0!\n");
         goto failed;
     }
 
@@ -429,7 +450,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
 
     if (WBXML_OK != ret) 
 	{
-        g_print ("wbxml2xml Ret = %s", wbxml_errors_string(ret));
+        g_print ("  wbxml2xml Ret = %s", wbxml_errors_string(ret));
     }
 
 failed:
@@ -453,6 +474,8 @@ eas_connection_autodiscover (const gchar* email,
                              GError** error)
 {
 	/* TODO: Add public function implementation here */
+	g_print("eas_connection_autodiscover++\n");
+	g_print("eas_connection_autodiscover--\n");
 }
 
 EasConnection* eas_connection_new(const gchar* serverUri,
@@ -461,6 +484,8 @@ EasConnection* eas_connection_new(const gchar* serverUri,
                                   GError** error)
 {
 	EasConnection *cnc = NULL;
+	
+	g_print("eas_connection_new++\n");
 
 	*error = NULL; 
 
@@ -472,6 +497,7 @@ EasConnection* eas_connection_new(const gchar* serverUri,
 
     // May need to allow a connection to set its own authentication
 
+	g_print("eas_connection_new--\n");
     return cnc;
 }
 
@@ -486,8 +512,10 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
     WB_ULONG xml_len = 0;
 	gboolean isProvisioningRequired = FALSE;
 
-	g_print("eas_connection - handle_server_response self[%x]\n", self);
-	g_print("eas_connection - handle_server_response priv[%x]\n", self->priv);
+	g_print("eas_connection - handle_server_response++\n");
+
+	g_print("  eas_connection - handle_server_response self[%x]\n", (unsigned int)self);
+	g_print("  eas_connection - handle_server_response priv[%x]\n", (unsigned int)self->priv);
 	
 	if (FALSE == isResponseValid(msg)) {
 		return;
@@ -498,7 +526,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
                &xml,
                &xml_len);
 
-	g_print("handle_server_response - pre-xmlReadMemory\n");
+	g_print("  handle_server_response - pre-xmlReadMemory\n");
 	
     doc = xmlReadMemory ((const char*)xml, 
                          xml_len,
@@ -512,34 +540,34 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	
 	if (!isProvisioningRequired)
 	{
-		g_print("handle_server_response - no parsed provisioning required\n");
+		g_print("  handle_server_response - no parsed provisioning required\n");
 
-		g_print("handle_server_response - %s\n", priv->request_cmd);
+		g_print("  handle_server_response - %s\n", priv->request_cmd);
 
 		// Clean up request data
 		g_free(priv->request_cmd);
-		g_print("handle_server_response - 0\n");
+		g_print("  handle_server_response - 0\n");
 		priv->request_cmd = NULL;
 
-		g_print("handle_server_response - 1\n");
+		g_print("  handle_server_response - 1\n");
 
 		xmlFree(priv->request_doc);
-		g_print("handle_server_response - 2\n");
+		g_print("  handle_server_response - 2\n");
 		priv->request_doc = NULL;
-		g_print("handle_server_response - 3\n");
+		g_print("  handle_server_response - 3\n");
 
 		priv->request = NULL;
-		g_print("handle_server_response - 4\n");
+		g_print("  handle_server_response - 4\n");
 
 		EasRequestType request_type = eas_request_base_GetRequestType(req);
 
-		g_print("handle_server_response - Handling request [%d]\n", request_type);
+		g_print("  handle_server_response - Handling request [%d]\n", request_type);
 		
 		switch (request_type) 
 		{
 			default:
 			{
-				g_print("Unknown RequestType [%d]\n", request_type);
+				g_print("  Unknown RequestType [%d]\n", request_type);
 			}
 			break;
 
@@ -558,10 +586,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	else
 	{
-		g_print("handle_server_response - parsed provisioning required\n");
+		g_print("  handle_server_response - parsed provisioning required\n");
 		
 		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		eas_provision_req_Activate (req);
 	}
+	g_print("eas_connection - handle_server_response--\n");
 }

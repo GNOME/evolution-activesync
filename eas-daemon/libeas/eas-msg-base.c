@@ -22,17 +22,20 @@ static void
 eas_msg_base_init (EasMsgBase *object)
 {
 	EasMsgBasePrivate *priv;
+	g_print("eas_msg_base_init++\n");
 	object->priv = priv = EAS_MSG_BASE_PRIVATE(object);
 
-	/* TODO: Add initialization code here */
+	g_print("eas_msg_base_init--\n");
 }
 
 static void
 eas_msg_base_finalize (GObject *object)
 {
 	/* TODO: Add deinitalization code here */
-
+	
+	g_print("eas_msg_base_finalize++\n");
 	G_OBJECT_CLASS (eas_msg_base_parent_class)->finalize (object);
+	g_print("eas_msg_base_finalize--\n");
 }
 
 static void
@@ -40,8 +43,14 @@ eas_msg_base_class_init (EasMsgBaseClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	
+	g_print("eas_msg_base_class_init++\n");
+	
+	g_type_class_add_private (klass, sizeof (EasMsgBasePrivate));
 
 	object_class->finalize = eas_msg_base_finalize;
+	
+	g_print("eas_msg_base_class_init--\n");
 }
 
 /**
