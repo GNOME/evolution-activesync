@@ -95,6 +95,7 @@ gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConn
 }
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
+// null terminates the array
 static gboolean 
 build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *folder_list, GError **error)
 { 
@@ -102,11 +103,11 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 	g_assert(*serialised_folder_array == NULL);
 	g_assert(folder_list != NULL);
 
-	guint array_len = g_slist_length((GSList*)folder_list);	//cast away const to avoid warning
+	guint array_len = g_slist_length((GSList*)folder_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 	GSList *l = (GSList*)folder_list;
 	guint i = 0;
-	for(i = 0; i < array_len; i++)
+	for(i = 0; i < array_len - 1; i++)
 	{
 		g_assert(l != NULL);
 		gchar *serialised;
@@ -120,10 +121,16 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 		*serialised_folder_array[i] = serialised;		
 		l = g_slist_next (l);		
 	}
+	*serialised_folder_array[i] = NULL;
 	
 cleanup:
 	if(!ret)
 	{
+		for(i = 0; i < array_len - 1; i++)
+		{
+			g_free(serialised_folder_array[i]);
+		}
+		g_free(serialised_folder_array);
 		// TODO cleanup strings and array and set error
 	}
 	
@@ -174,14 +181,12 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
                                                     &added_folders,
                                                     &updated_folders,
                                                     &deleted_folders);
-         
          e_flag_free (eflag);
          g_print("eas_mail_sync_email_folder_hierarchy - serialise objects\n");
          //serialise the folder objects from GSList* to char** and populate  :
          // ret_created_folders_array
          // ret_updated_folders_array
         // ret_deleted_folders_array
-         //TODO:
 
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
 		{

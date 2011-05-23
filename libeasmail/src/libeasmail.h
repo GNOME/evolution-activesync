@@ -195,7 +195,7 @@ gboolean eas_mail_handler_update_emails(EasEmailHandler* this,
 
 
 gboolean eas_mail_handler_send_email(EasEmailHandler* this, 
-                                    const gchar *client_email_id,	// unique message identifier supplied by client
+                                    const gchar *client_email_id,	// unique message identifier supplied by client. up to 40 characters in length
                                     const gchar *mime_file,			// the full path to the email (mime) to be sent
                                     GError **error);
 

@@ -24,6 +24,7 @@ struct _EasEmailHandlerPrivate{
     guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 };
 
+// TODO - how much verification of args should happen 
 
 static void
 eas_mail_handler_init (EasEmailHandler *cnc)
