@@ -35,20 +35,20 @@ int main(int argc, char** argv) {
 	// program using G types
   mainloop = g_main_loop_new(NULL, FALSE);
   if (mainloop == NULL) {
-    g_printerr("Error: Failed to create the mainloop");
+    g_error("Error: Failed to create the mainloop");
     exit(EXIT_FAILURE);
   }
   
 
-  g_print("Connecting to Session D-Bus.\n");
+  g_debug("Connecting to Session D-Bus.\n");
   // get an interface to the standard DBus messaging daemon
   bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
   if (bus == NULL) {
-    g_printerr("Error: Couldn't connect to the Session bus (%s) \n", error->message);
+    g_error("Error: Couldn't connect to the Session bus (%s) \n", error->message);
     exit(EXIT_FAILURE);
   }
 
-  g_print("Creating a GLib proxy object for EasMail.\n");
+  g_debug("Creating a GLib proxy object for EasMail.\n");
   // create object to the EasMail object that will be exposed over the DBus 
   // interface and return a pointer to this object on the activesyncd 
   remoteEasMail = dbus_g_proxy_new_for_name(bus,
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
                               EAS_SERVICE_MAIL_OBJECT_PATH /*EAS_SERVICE_OBJECT_PATH*/,
                               EAS_SERVICE_MAIL_INTERFACE   /*EAS_SERVICE_INTERFACE*/);
   if (remoteEasMail == NULL) {
-    g_printerr("Error: Couldn't create the proxy object\n");
+    g_error("Error: Couldn't create the proxy object\n");
     exit(EXIT_FAILURE);
   }
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
   GError* err = NULL;
   gboolean ret = FALSE;
 
-  g_print("making the call...\n");
+  g_debug("making the call...\n");
   ret = dbus_g_proxy_call(remoteEasMail,  // name of interface object
                           "test_001",   //  name of method on interface object
 			  &err,
@@ -75,11 +75,11 @@ int main(int argc, char** argv) {
 
  if(ret){
 	//no error check the return string
-	g_print("the srting return = %s\n", sync_key );
+	g_debug("the srting return = %s\n", sync_key );
  }
 else{
      //there is an error check the its message
-     g_printerr(" Error: %s\n", err->message);
+     g_error(" Error: %s\n", err->message);
      g_main_loop_quit (mainloop);
   }
 

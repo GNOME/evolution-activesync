@@ -18,11 +18,11 @@
 static void 
 EasFolderDisplay(EasFolder *folder)
 {
-    g_print("EasFolderDisplay++");
-    g_print("%s", folder->parent_id);
-    g_print("%s", folder->folder_id);
-    g_print("%s", folder->display_name);
-    g_print("EasFolderDisplay--");
+    g_debug("EasFolderDisplay++");
+    g_debug("%s", folder->parent_id);
+    g_debug("%s", folder->folder_id);
+    g_debug("%s", folder->display_name);
+    g_debug("EasFolderDisplay--");
 }
 
 
@@ -39,7 +39,7 @@ main(int argc, char** argv) {
 
     g_assert(email_handler != NULL);
 
-	g_print("dbus initialised\n");
+	g_debug("dbus initialised\n");
 
 	
 	// temp - test folder 'serialisation'/'deserialisation':
@@ -55,11 +55,11 @@ main(int argc, char** argv) {
 
 	if(!eas_folder_serialise(folder, &serialised))
 	{
-		g_print("call to eas_folder_serialise failed!");
+		g_debug("call to eas_folder_serialise failed!");
 	}
 	else
 	{
-		g_print("result from serialise: %s\n", serialised);
+		g_debug("result from serialise: %s\n", serialised);
 	}
 
 	g_object_unref(folder); // these don't have to be freed!
@@ -69,11 +69,11 @@ main(int argc, char** argv) {
 
 	eas_folder_deserialise(folder2, serialised);
 
-	g_print("result from serialise:\n");
-	g_print("parent_id = %s\n", folder2->parent_id);
-	g_print("folder_id = %s\n", folder2->folder_id);
-	g_print("display name = %s\n", folder2->display_name);
-	g_print("type = %d\n", folder2->type);
+	g_debug("result from serialise:\n");
+	g_debug("parent_id = %s\n", folder2->parent_id);
+	g_debug("folder_id = %s\n", folder2->folder_id);
+	g_debug("display name = %s\n", folder2->display_name);
+	g_debug("type = %d\n", folder2->type);
 
 	g_object_unref(folder2); // these don't have to be freed!
 
@@ -92,11 +92,11 @@ main(int argc, char** argv) {
 
 	if(!eas_attachment_serialise(attachment, &serialised))
 	{
-		g_print("call to eas_attachment_serialise failed!");
+		g_debug("call to eas_attachment_serialise failed!");
 	}
 	else
 	{
-		g_print("result from serialise: %s\n", serialised);
+		g_debug("result from serialise: %s\n", serialised);
 	}
 
 	g_object_unref(attachment); 
@@ -105,10 +105,10 @@ main(int argc, char** argv) {
 
 	eas_attachment_deserialise(attachment2, serialised);
 
-	g_print("result from deserialise:\n");
-	g_print("file_reference = %s\n", attachment2->file_reference);
-	g_print("display name = %s\n", attachment2->display_name);
-	g_print("estimated size = %d\n", attachment2->estimated_size);
+	g_debug("result from deserialise:\n");
+	g_debug("file_reference = %s\n", attachment2->file_reference);
+	g_debug("display name = %s\n", attachment2->display_name);
+	g_debug("estimated size = %d\n", attachment2->estimated_size);
 
 	g_object_unref(attachment2); // these don't have to be freed!
 	
@@ -160,33 +160,33 @@ main(int argc, char** argv) {
 	gchar *serialised = NULL;
 	if(!eas_email_info_serialise(email_info, &serialised))
 	{
-		g_print("call to eas_email_info_serialise failed!");
+		g_debug("call to eas_email_info_serialise failed!");
 	}
 	else
 	{
-		g_print("result from serialise: %s\n", serialised);
+		g_debug("result from serialise: %s\n", serialised);
 	}
 
 	EasEmailInfo *email_info_2 = eas_email_info_new ();
 	eas_email_info_deserialise(email_info_2, serialised);
 
-	g_print("result from deserialise:\n");
+	g_debug("result from deserialise:\n");
 	GSList *l = email_info_2->attachments;
 	EasAttachment *attachment_out = l->data;
-	g_print("file reference = %s\n", attachment_out->file_reference);
+	g_debug("file reference = %s\n", attachment_out->file_reference);
 	
 	l = email_info_2->headers;
 	l = g_slist_next(l);
 	EasEmailHeader *header_out;
 	header_out = l->data;
-	g_print("header 2 value = %s\n", header_out->value);
+	g_debug("header 2 value = %s\n", header_out->value);
 
 	l = email_info_2->categories;
 	gchar *cat_out = l->data;
-	g_print("first category = %s\n", cat_out);
+	g_debug("first category = %s\n", cat_out);
 	
 	// free everything: TODO
-	g_print("test: free everything");
+	g_debug("test: free everything");
 	//g_slist_foreach(categories, (GFunc)g_free, NULL);
 	//g_slist_free(categories);
 	//g_object_unref(attachment);
@@ -211,7 +211,7 @@ main(int argc, char** argv) {
 	        &deleted,
 	        &error);
 	          
-    g_print("new sync key = %s\n", sync_key);
+    g_debug("new sync key = %s\n", sync_key);
     
     g_slist_foreach(created, (GFunc)EasFolderDisplay, NULL);
 

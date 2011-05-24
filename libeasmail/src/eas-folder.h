@@ -18,7 +18,6 @@ G_BEGIN_DECLS
 
 typedef struct _EasFolderClass EasFolderClass;
 typedef struct _EasFolder EasFolder;
-typedef struct _EasFolderPrivate EasFolderPrivate;
 
 struct _EasFolderClass{
 	GObjectClass parent_class;
@@ -44,7 +43,6 @@ enum{
 
 struct _EasFolder{
 	GObject parent_instance;
-	EasFolderPrivate *priv; //private data
 	
 	gchar *parent_id;
 	gchar *folder_id;		// from AS server. string up to 64 characters
