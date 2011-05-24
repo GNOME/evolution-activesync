@@ -79,7 +79,7 @@ eas_accounts_get_server_uri (EasAccounts* self, guint64 accountId)
 
 int eas_accounts_read_accounts_info(EasAccounts* self)
 {
-	printf("eas_accounts_read_accounts_info ++\n");	 
+	g_debug("eas_accounts_read_accounts_info ++\n");	 
 	FILE *myfile =NULL;
 	myfile = fopen("../../eas-daemon/data/accounts.cfg","r");
    if(myfile==NULL)
@@ -93,17 +93,17 @@ int eas_accounts_read_accounts_info(EasAccounts* self)
 						      &self->_priv->accountId, 	self->_priv->serverUri, self->_priv->username, self->_priv->password);
   if (status != 4)
    {
-   	    fprintf(stderr, "Error reading data from file accounts.cfg!\n");
+   	    g_debug(stderr, "Error reading data from file accounts.cfg!\n");
    	    fclose (myfile);
 		return 2;
    }
 
-	printf("account=%lld\nserverUri=%s\nusername=%s\npassword=%s\n",
+	g_debug("account=%lld\nserverUri=%s\nusername=%s\npassword=%s\n",
 							    self->_priv->accountId, 	self->_priv->serverUri, self->_priv->username, self->_priv->password);
 
 
 	 fclose (myfile);
-	printf("eas_accounts_read_accounts_info --\n");	 
+	g_debug("eas_accounts_read_accounts_info --\n");	 
 	return 0;
 }
 
