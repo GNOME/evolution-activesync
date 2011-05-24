@@ -42,4 +42,6 @@ libeasmail/m4/*
 *stub.h
 *.anjuta*
 *.*~
+*.orig
+
 

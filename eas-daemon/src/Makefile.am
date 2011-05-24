@@ -26,7 +26,11 @@ INCLUDES = -I/usr/include/dbus-1.0 \
 	  -I/usr/include/libxml2 \
 	  -I/usr/include/evolution-data-server-2.28 \
 	  -I../libeas \
-	  -I../../libeasmail/src  
+	  -I../../libeasmail/src \
+          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
+          -I/usr/include/evolution-data-server-2.32
+
+
 
 
 LIBS =  -L/usr/lib \

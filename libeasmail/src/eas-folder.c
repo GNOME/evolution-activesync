@@ -16,19 +16,19 @@ const gchar *folder_separator = ",";
 static void
 eas_folder_init (EasFolder *object)
 {
-	g_debug("eas_folder_init++\n");
+	g_debug("eas_folder_init++");
 	/* initialization code */
 	object->parent_id = NULL;
 	object->folder_id = NULL;
 	object->display_name = NULL;
 	
-	g_debug("eas_folder_init--\n");
+	g_debug("eas_folder_init--");
 }
 
 static void
 eas_folder_finalize (GObject *object)
 {
-	g_debug("eas_folder_finalize++\n");
+	g_debug("eas_folder_finalize++");
 	/* deinitalization code here */
 	EasFolder *this_g = (EasFolder *) object;
 
@@ -38,7 +38,7 @@ eas_folder_finalize (GObject *object)
 
 	G_OBJECT_CLASS (eas_folder_parent_class)->finalize (object);
 
-	g_debug("eas_folder_finalize--\n");
+	g_debug("eas_folder_finalize--");
 }
 
 static void
@@ -60,13 +60,13 @@ eas_folder_class_init (EasFolderClass *klass)
 EasFolder *
 eas_folder_new()
 {
-	g_debug("eas_folder_new++\n");	
+	g_debug("eas_folder_new++");	
 	
 	EasFolder *object = NULL;
 
 	object = g_object_new (EAS_TYPE_FOLDER , NULL);
 
-	g_debug("eas_folder_new--\n");	
+	g_debug("eas_folder_new--");	
 	
 	return object;
 }
@@ -79,7 +79,7 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 {
 	gboolean ret = TRUE;
 	
-	g_debug("eas_folder_serialise++\n");  
+	g_debug("eas_folder_serialise++");  
 	gchar type[4] = "";
 
     g_assert(result);
@@ -98,15 +98,15 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 
 	*result = strconcatwithseparator(strings, sizeof(strings)/sizeof(strings[0]), folder_separator);
 
-	g_debug("serialise result: \n");
-	g_debug("%s\n", *result);
+	g_debug("serialise result: ");
+	g_debug("%s", *result);
 	
 	if(!*result)
 	{
 		ret = FALSE;
 	}
 
-	g_debug("eas_folder_serialise--\n");	
+	g_debug("eas_folder_serialise--");	
 	return (*result? TRUE : FALSE);
 }
 
@@ -117,7 +117,7 @@ eas_folder_deserialise(EasFolder* folder, const gchar *data)
 {
 	gboolean ret = TRUE;
 	
-	g_debug("eas_folder_deserialise++\n");
+	g_debug("eas_folder_deserialise++");
 
 	g_assert(folder);
 	g_assert(data);
@@ -186,13 +186,13 @@ cleanup:
 		}
 
 	// TODO remove debug prints
-	g_debug("deserialise result:\n");
-	g_debug("parent_id = %s\n", folder->parent_id);
-	g_debug("folder_id = %s\n", folder->folder_id);
-	g_debug("display name = %s\n", folder->display_name);
-	g_debug("type = %d\n", folder->type);
+	g_debug("deserialise result:");
+	g_debug("parent_id = %s", folder->parent_id);
+	g_debug("folder_id = %s", folder->folder_id);
+	g_debug("display name = %s", folder->display_name);
+	g_debug("type = %d", folder->type);
 	
-	g_debug("eas_folder_deserialise--\n");	
+	g_debug("eas_folder_deserialise--");	
 
 	return ret;
 }

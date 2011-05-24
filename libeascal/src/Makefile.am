@@ -10,7 +10,10 @@ INCLUDES =  -I/usr/include/libsoup-2.4 \
             -I/usr/include/glib-2.0/gio \
             -I/usr/include/evolution-data-server-2.28 \
             -I/usr/include/dbus-1.0 \
-            -I/usr/lib/dbus-1.0/include 
+            -I/usr/lib/dbus-1.0/include \
+            -I/usr/lib/i386-linux-gnu/glib-2.0/include \
+            -I/usr/include/evolution-data-server-2.32
+
 
 #lrm: TODO remove unnecessary libs	  
 LIBS =  -L/usr/lib \

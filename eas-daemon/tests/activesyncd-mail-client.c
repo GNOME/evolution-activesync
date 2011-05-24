@@ -22,17 +22,17 @@
 static void start_sync_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer userData) {
   GError* error = NULL;
 
-  g_debug("start_sync Completed\n");
+  g_debug("start_sync Completed");
 
 	// check to see if any errors have been reported
   if (!dbus_g_proxy_end_call(proxy,
                              call,
                              &error,
                              G_TYPE_INVALID)) {
-    g_error(" Error: %s\n", error->message);
+    g_error(" Error: %s", error->message);
     g_error_free(error);
   } else {
-    g_debug("start_sync Success \n");
+    g_debug("start_sync Success ");
   }
 }
 
@@ -60,15 +60,15 @@ int main(int argc, char** argv) {
   }
   
 
-  g_debug("Connecting to Session D-Bus.\n");
+  g_debug("Connecting to Session D-Bus.");
   // get an interface to the standard DBus messaging daemon
   bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
   if (bus == NULL) {
-    g_error("Error: Couldn't connect to the Session bus (%s) \n", error->message);
+    g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
     exit(EXIT_FAILURE);
   }
 
-  g_debug("Creating a GLib proxy object for EasMail.\n");
+  g_debug("Creating a GLib proxy object for EasMail.");
   // create object to the EasMail object that will be exposed over the DBus 
   // interface and return a pointer to this object on the activesyncd 
   remoteEasMail = dbus_g_proxy_new_for_name(bus,
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
                               EAS_SERVICE_MAIL_OBJECT_PATH /*EAS_SERVICE_OBJECT_PATH*/,
                               EAS_SERVICE_MAIL_INTERFACE   /*EAS_SERVICE_INTERFACE*/);
   if (remoteEasMail == NULL) {
-    g_error("Error: Couldn't create the proxy object\n");
+    g_error("Error: Couldn't create the proxy object");
     exit(EXIT_FAILURE);
   }
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
                           testValue,  // value passed to the start_sync method
                           G_TYPE_INVALID);  // ?
 
-  g_debug("start_sync launched\n");
+  g_debug("start_sync launched");
 
 	// start the mainloop
   g_main_loop_run(mainloop);
