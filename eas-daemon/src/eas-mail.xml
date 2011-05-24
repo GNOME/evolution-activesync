@@ -173,7 +173,11 @@
     </method>
 
   <!-- TODO: MoveItem -->
-
+	<method name="delete_email">
+      <arg type="t" name="account_uid" direction="in"/>
+      <arg type="s" name="sync_key" direction="in"/>
+      <arg type="s" name="server_id" direction="in"/>		
+	</method>
 
   </interface>
 </node>

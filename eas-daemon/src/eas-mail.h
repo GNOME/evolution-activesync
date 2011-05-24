@@ -66,7 +66,13 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 									gchar **ret_deleted_email_array,
 									gchar **ret_changed_email_array,	
 									GError** error);
-
+/*
+    delete an email 
+*/
+gboolean eas_mail_delete_email(EasMail* easMailObj,
+                                    const gchar* sync_key, 
+                                    const gchar *server_id,
+                                    GError **error);
 /*
 	fetch an email body or attachment
 */

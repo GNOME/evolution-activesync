@@ -241,6 +241,15 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
   return TRUE;											
 }
 
+gboolean eas_mail_delete_email(EasMail* easMailObj,
+                                    const gchar* sync_key, 
+                                    const gchar *server_id,
+                                    GError **error)
+{
+    g_print("eas_mail_delete_email++\n");
+    g_print("eas_mail_delete_email--\n");
+	return TRUE;
+}
 
 gboolean
 eas_mail_fetch (EasMail* easMailObj, 
