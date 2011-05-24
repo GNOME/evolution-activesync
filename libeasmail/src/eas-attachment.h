@@ -28,7 +28,7 @@ struct _EasAttachment{
 
 	gchar *file_reference;			// specifies the location of an item on the server to retrieve
 	gchar *display_name;			//
-	guint32 estimated_size;			// in bytes
+	guint estimated_size;			// in bytes
 /*
 	guint8  method;					//eg EAS_ATTACHMENT_METHOD_NORMAL
     gchar *content_id
