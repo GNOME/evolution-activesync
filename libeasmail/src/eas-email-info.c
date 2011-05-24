@@ -71,13 +71,13 @@ eas_mail_info_header_serialised_length(EasEmailHeader *header)
 EasEmailInfo *
 eas_email_info_new()
 {
-	g_debug("eas_email_info_new++\n");	
+	g_debug("eas_email_info_new++");	
 	
 	EasEmailInfo *object = NULL;
 
 	object = g_object_new (EAS_TYPE_EMAIL_INFO , NULL);
 
-	g_debug("eas_email_info_new--\n");	
+	g_debug("eas_email_info_new--");	
 	
 	return object;
 }
@@ -87,7 +87,7 @@ eas_email_info_new()
 static guint 
 eas_email_info_serialised_length(EasEmailInfo *this_g)
 {
-	g_debug("eas_email_info_serialised_length++\n");
+	g_debug("eas_email_info_serialised_length++");
 	// calculate the total length:
 	guint total_len = 0;
 	guint list_len = 0;
@@ -97,7 +97,7 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 	
 	// server id
 	total_len += strlen(this_g->server_id) + 1;	// allow for separator
-	g_debug("total_len = %d\n", total_len);
+	g_debug("total_len = %d", total_len);
 
 	//headers
 	// serialised length of headers list allowing for list size at front
@@ -140,9 +140,9 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 		total_len += strlen(category) + 1;
 	}
 
-	g_debug("total_len = %d\n", total_len);
+	g_debug("total_len = %d", total_len);
 	
-	g_debug("eas_email_info_serialised_length--\n");	
+	g_debug("eas_email_info_serialised_length--");	
 	return total_len;
 }	
 
@@ -158,12 +158,12 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 	// turn EasEmailInfo object into a null terminated string
 	guint total_len = eas_email_info_serialised_length(this_g);
 
-	g_debug("total length of serialised email info = %d\n", total_len);
+	g_debug("total length of serialised email info = %d", total_len);
 	// allocate the memory to hold the serialised object:
 	*result = (gchar*)g_malloc0((total_len * sizeof(gchar)));
 	if(!(*result))
 	{
-		g_debug("memory allocation failure!\n");
+		g_debug("memory allocation failure!");
 		ret = FALSE;
 	}
 	else
@@ -172,12 +172,12 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 	
 		// serialise everything:
 		//server_id
-		g_debug("serialising serverid\n");
+		g_debug("serialising serverid");
 		out = g_stpcpy(out, this_g->server_id);	//g_stpcpy copies a nul-terminated string into the dest buffer, include the trailing nul, and return a pointer to the trailing nul byte
 		out = g_stpcpy(out, sep);
 		
 		//headers
-		g_debug("serialising headers\n");
+		g_debug("serialising headers");
 		list_len = g_slist_length(this_g->headers);
 		snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
 		out = g_stpcpy(out, list_size);
@@ -193,7 +193,7 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 			out = g_stpcpy(out, sep);
 		}	
 		//attachments
-		g_debug("serialising attachments\n");
+		g_debug("serialising attachments");
 		list_len = g_slist_length(this_g->attachments);
 		snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
 		out = g_stpcpy(out, list_size);
@@ -220,13 +220,13 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 			}
 		}	
 		//flags
-		g_debug("serialising flags\n");		
+		g_debug("serialising flags");		
 		gchar flags_as_string[MAX_LEN_OF_UINT8_AS_STRING] = "";
 		snprintf(flags_as_string, sizeof(flags_as_string)/sizeof(flags_as_string[0]), "%d", this_g->flags);		
 		out = g_stpcpy(out, flags_as_string);
 		out = g_stpcpy(out, sep);		
 		//categories
-		g_debug("serialising categories\n");		
+		g_debug("serialising categories");		
 		list_len = g_slist_length(this_g->categories);
 
 		snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
@@ -246,7 +246,7 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 
 	if(!ret)
 	{
-		g_debug("failed!\n");
+		g_debug("failed!");
 		g_free(*result);
 		*result = NULL;
 	}
@@ -260,7 +260,7 @@ gboolean
 eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 {
 	// TODO proper error handling - eg deal with get_next_field returning null
-	g_debug("eas_email_info_deserialise++\n");
+	g_debug("eas_email_info_deserialise++");
 	gboolean ret = TRUE;
 	guint list_len = 0, i = 0;
 	gchar *list_len_as_string = NULL;
@@ -286,13 +286,13 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 		ret = FALSE;
 		goto cleanup;
 	}
-	g_debug("server_id = %s\n", this_g->server_id);
+	g_debug("server_id = %s", this_g->server_id);
 
 	//headers
 	list_len_as_string = get_next_field(&from, sep);
 	list_len = atoi(list_len_as_string);
 	
-	g_debug("%d headers\n", list_len);
+	g_debug("%d headers", list_len);
 
 	for(i = 0; i < list_len; i++)
 	{
@@ -321,7 +321,7 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 		goto cleanup;
 	}
 	list_len = atoi(list_len_as_string);
-	g_debug("%d attachments\n", list_len);
+	g_debug("%d attachments", list_len);
 	for(i = 0; i < list_len; i++)
 	{
 		attachment = g_malloc0(sizeof(EasAttachment));
@@ -347,12 +347,12 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 	{
 		this_g->flags = atoi(flags_as_string);
 	}
-	g_debug("flags = %d\n", this_g->flags);	
+	g_debug("flags = %d", this_g->flags);	
 	
 	//categories
 	list_len_as_string = get_next_field(&from, sep);
 	list_len = atoi(list_len_as_string);
-	g_debug("%d categories\n", list_len);	
+	g_debug("%d categories", list_len);	
 
 	for(i = 0; i < list_len; i++)
 	{
@@ -373,7 +373,7 @@ cleanup:
 		//TODO cleanup
 	}
 
-	g_debug("eas_email_info_deserialise--\n");
+	g_debug("eas_email_info_deserialise--");
 	return ret;
 }
 

@@ -27,7 +27,7 @@ get_next_field(gchar **data, const gchar *separator)
 		*data += len + 1;
 	}
 	
-	g_debug("get_next_field result = %s\n", result);
+	g_debug("get_next_field result = %s", result);
 	return result;
 }
 
@@ -56,7 +56,7 @@ strconcatwithseparator(gchar **strings, guint num, const gchar *sep)
 		{
 			if(strings[i])
 			{
-				g_debug("strcat %s to %s\n", strings[i], out);
+				g_debug("strcat %s to %s", strings[i], out);
 				strcat(out, strings[i]);
 			}
 			if(i<num - 1)

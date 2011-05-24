@@ -26,7 +26,7 @@ G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
 static void
 eas_sync_msg_init (EasSyncMsg *object)
 {
-	g_debug("eas_sync_msg_init++\n");
+	g_debug("eas_sync_msg_init++");
 
 	EasSyncMsgPrivate *priv;
 
@@ -35,7 +35,7 @@ eas_sync_msg_init (EasSyncMsg *object)
 	priv->sync_key = NULL;
 	priv->folderID = NULL;
 	priv->account_id = -1;
-	g_debug("eas_sync_msg_init--\n");
+	g_debug("eas_sync_msg_init--");
 }
 
 static void
@@ -116,12 +116,12 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
 void
 eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 {
-    g_debug ("eas_sync_msg_parse_response ++\n");
+    g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
 	
     if (!doc) {
-        g_debug ("Failed to parse sync response XML\n");
+        g_debug ("Failed to parse sync response XML");
         return;
     }
     node = xmlDocGetRootElement(doc);
@@ -129,20 +129,20 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
     //TODO: parse response correctly
     
     if (strcmp((char *)node->name, "Sync")) {
-        g_debug("Failed to find <Sync> element\n");
+        g_debug("Failed to find <Sync> element");
         return;
     }
     for (node = node->children; node; node = node->next) {
     
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collections")) 
         {
-               g_debug ("Collections:\n");
+               g_debug ("Collections:");
                break;
         }
 
     }
     if (!node) {
-        g_debug ("Failed to find Collections element\n");
+        g_debug ("Failed to find Collections element");
         return;
     }
     
@@ -150,13 +150,13 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
     
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collection")) 
         {
-               g_debug ("Collection:\n");
+               g_debug ("Collection:");
                break;
         }
 
     }
     if (!node) {
-        g_debug ("Failed to find Collection element\n");
+        g_debug ("Failed to find Collection element");
         return;
     }
 	
@@ -169,7 +169,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 		
 	}
 	
-	g_debug ("eas_sync_msg_parse_response --\n");
+	g_debug ("eas_sync_msg_parse_response --");
 
 }
 
@@ -197,7 +197,7 @@ eas_sync_msg_get_deleted_items (EasSyncMsg* self)
 gchar* 
 eas_sync_msg_get_syncKey(EasSyncMsg* self)
 {
-    g_debug ("eas_sync_msg_getSyncKey ++\n");
+    g_debug ("eas_sync_msg_getSyncKey ++");
 	EasSyncMsgPrivate *priv = self->priv;
 	return priv->sync_key;
 }
