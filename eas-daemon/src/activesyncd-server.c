@@ -7,8 +7,6 @@
  */
 
 //system include
-//#include <signal.h>
-//#include <bits/signum.h>
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <stdlib.h>
@@ -19,6 +17,7 @@
 //user include
 #include "activesyncd-common-defs.h"
 #include "../libeas/eas-connection.h"
+#include "../libeas/eas-accounts.h"
 #include "eas-calendar.h" 
 #include "eas-common.h"
 #include "eas-contact.h" 
@@ -58,13 +57,26 @@ int main(int argc, char** argv) {
 
     //Creating all the GObjects
     g_print("Creating EEasConnection GObject.\n");
-    //EasConnObj = g_object_new(EAS_TYPE_CONNECTION , NULL);
 
-    const gchar* serverUri = "https://cstylianou.com/Microsoft-Server-ActiveSync";
-    const gchar* username = "tez";
-    const gchar* password = "M0bica!";
-    GError* cnc_error = NULL;
-   
+   GError* cnc_error = NULL;
+   EasAccounts* account = eas_accounts_new ();
+   g_print("eas_accounts_read_accounts_info\n");   
+    int err = eas_accounts_read_accounts_info(account);
+    if (err !=0)
+    {
+        g_print("Error reading data from file accounts.cfg\n");
+        g_main_loop_quit (mainloop);
+        exit(err);    
+    }
+
+   g_print("getting data from EasAccounts object\n");       
+    guint64 accountId;
+   accountId =1234567890;
+   gchar* username = eas_accounts_get_user_id (account, accountId);
+   gchar* password = eas_accounts_get_password (account, accountId);
+   gchar* serverUri = eas_accounts_get_server_uri (account, accountId);
+
+    g_print("Creating EEasConnection GObject.\n");
     EasConnObj = eas_connection_new(serverUri, username, password, &cnc_error);
     if (EasConnObj == NULL) {
         g_print("Error: Failed to create EEasConnection instance\n");
