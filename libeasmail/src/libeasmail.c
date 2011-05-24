@@ -489,7 +489,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 								const EasEmailInfo *email,		// List of EasEmailInfos to delete
 								GError **error)
 {
-	g_print("eas_mail_handler_delete_emails++\n");
+	g_debug("eas_mail_handler_delete_emails++\n");
 	gboolean ret = TRUE;	
 	
 	g_assert(this_g);
