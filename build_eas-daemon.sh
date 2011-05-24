@@ -10,7 +10,7 @@
 #   libexpat1-dev
 #   libsoup2.4-dev
 #	cmake
-# 	libwbxml (must use 0.11.beta4 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta4/)
+# 	libwbxml (must use 0.11.beta5 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta5/)
 
 export GLIB_GENMARSHAL=glib-genmarshal
 clear
