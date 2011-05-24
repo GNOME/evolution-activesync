@@ -49,13 +49,13 @@ eas_attachment_class_init (EasAttachmentClass *klass)
 EasAttachment *
 eas_attachment_new()
 {
-	g_debug("eas_attachment_new++\n");	
+	g_debug("eas_attachment_new++");	
 	
 	EasAttachment *object = NULL;
 
 	object = g_object_new (EAS_TYPE_ATTACHMENT , NULL);
 
-	g_debug("eas_attachment_new--\n");	
+	g_debug("eas_attachment_new--");	
 	
 	return object;
 }
@@ -64,7 +64,7 @@ eas_attachment_new()
 gboolean 
 eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 {
-	g_debug("eas_attachment_serialise++\n");  
+	g_debug("eas_attachment_serialise++");  
 	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";			
 	
 	g_assert(attachment->estimated_size);	
@@ -77,18 +77,18 @@ eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 	
 	if(!*result)
 	{
-		g_debug("eas_attachment_serialise--\n");
+		g_debug("eas_attachment_serialise--");
 		return FALSE;
 	}
 
-	g_debug("eas_attachment_serialise--\n");	
+	g_debug("eas_attachment_serialise--");	
 	return TRUE;
 }	
 
 gboolean 
 eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 {
-	g_debug("eas_attachment_deserialise++\n");
+	g_debug("eas_attachment_deserialise++");
 
 	gboolean ret = TRUE;
 	
@@ -109,7 +109,7 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 		ret = FALSE;
 		goto cleanup;
 	}
-	g_debug("file_reference = %s\n", attachment->file_reference);
+	g_debug("file_reference = %s", attachment->file_reference);
 	
 	// display_name
 	if(attachment->display_name != NULL)
@@ -122,7 +122,7 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 		ret = FALSE;
 		goto cleanup;
 	}	
-	g_debug("display name = %s\n", attachment->display_name);
+	g_debug("display name = %s", attachment->display_name);
 	
 	//estimated_size
 	est_size = get_next_field(&from, attachment_separator);
@@ -136,7 +136,7 @@ eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 		attachment->estimated_size = atoi(est_size);
 		g_free(est_size);
 	}
-	g_debug("estimated_size = %d\n", attachment->estimated_size);
+	g_debug("estimated_size = %d", attachment->estimated_size);
 
 cleanup:
 	if(!ret)
@@ -148,7 +148,7 @@ cleanup:
 			attachment->estimated_size = 0;
 		}
 	
-	g_debug("eas_attachment_deserialise--\n");	
+	g_debug("eas_attachment_deserialise--");	
 
 	return ret;	
 }	
@@ -178,7 +178,7 @@ eas_attachment_serialised_length(EasAttachment *attachment)
 
 	len += strlen(est_size) +1;		// no separator at end, allows for null terminate
 
-	g_debug("eas_attachment_serialised_length returning %d\n", len);
+	g_debug("eas_attachment_serialised_length returning %d", len);
 	return len;
 	
 }

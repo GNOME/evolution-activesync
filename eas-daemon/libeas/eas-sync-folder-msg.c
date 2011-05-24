@@ -30,7 +30,7 @@ static void eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node);
 static void
 eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 {
-	g_debug("eas_sync_folder_msg_init++\n");
+	g_debug("eas_sync_folder_msg_init++");
 
 	EasSyncFolderMsgPrivate *priv;
 
@@ -38,7 +38,7 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 	
 	priv->sync_key = NULL;
 	priv->account_id = -1;
-	g_debug("eas_sync_folder_msg_init--\n");
+	g_debug("eas_sync_folder_msg_init--");
 
 }
 
@@ -56,14 +56,14 @@ eas_sync_folder_msg_finalize (GObject *object)
 static void
 eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
-	g_debug("eas_sync_folder_msg_class_init++\n");
+	g_debug("eas_sync_folder_msg_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
 
 	g_type_class_add_private (klass, sizeof (EasSyncFolderMsgPrivate));
 
 	object_class->finalize = eas_sync_folder_msg_finalize;
-	g_debug("eas_sync_folder_msg_class_init--\n");
+	g_debug("eas_sync_folder_msg_class_init--");
 
 }
 
@@ -115,25 +115,25 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
 	xmlNode *node = NULL;
 	
     if (!doc) {
-        g_debug ("Failed to parse folder_sync response XML\n");
+        g_debug ("Failed to parse folder_sync response XML");
         return;
     }
     node = xmlDocGetRootElement(doc);
     if (strcmp((char *)node->name, "FolderSync")) {
-        g_debug("Failed to find <FolderSync> element\n");
+        g_debug("Failed to find <FolderSync> element");
         return;
     }
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("FolderSync Status:[%s]\n", provision_status);
+            g_debug ("FolderSync Status:[%s]", provision_status);
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
         {
             priv->sync_key = g_strdup(xmlNodeGetContent(node));
-            g_debug ("FolderSync syncKey:[%s]\n", priv->sync_key);
+            g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;
         }
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Changes")) 
@@ -142,7 +142,7 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
 		}
     }
     if (!node) {
-        g_debug ("Failed to find Changes element\n");
+        g_debug ("Failed to find Changes element");
         return;
     }
 	
@@ -219,7 +219,7 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node)
 			priv->added_folders = g_slist_append(priv->added_folders, f);
 		}
 		else {
-			g_debug("Failed to parse folderSync Add\n");
+			g_debug("Failed to parse folderSync Add");
 		}
 	}
 }

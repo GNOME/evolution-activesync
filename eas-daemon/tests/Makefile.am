@@ -9,7 +9,10 @@ commondefs = ../src/activesyncd-common-defs.h
 INCLUDES = -I/usr/include/dbus-1.0 \
 	  -I/usr/lib/dbus-1.0/include \
 	  -I/usr/include/glib-2.0 \
-	  -I/usr/lib/glib-2.0/include
+	  -I/usr/lib/glib-2.0/include \
+          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
+          -I/usr/include/evolution-data-server-2.32
+
 
 LIBS =  -L/usr/lib \
 	-ldbus-1 \
