@@ -58,6 +58,7 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-contact.c \
 		      eas-mail.h \
 		      eas-mail.c
+		      
 
 activesyncd_LDADD = ../libeas/libeas.la ../../libeasmail/src/libeasmail.la $(INTI_LIBS)
 

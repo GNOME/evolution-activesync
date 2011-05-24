@@ -12,7 +12,7 @@ G_DEFINE_TYPE (EasAccounts, eas_accounts, G_TYPE_OBJECT);
 struct	_EasAccountsPrivate
 {
 	 gint64 accountId;
-	 gchar serverUri[64];
+	 gchar serverUri[128];
 	 gchar username[64];
 	 gchar password[64]; 
 };
@@ -80,21 +80,22 @@ eas_accounts_get_server_uri (EasAccounts* self, guint64 accountId)
 int eas_accounts_read_accounts_info(EasAccounts* self)
 {
 	g_debug("eas_accounts_read_accounts_info ++\n");	 
-	FILE *myfile =NULL;
-	myfile = fopen("../../eas-daemon/data/accounts.cfg","r");
-   if(myfile==NULL)
+	FILE *file =NULL;
+	
+	file = fopen("/usr/local/etc/accounts.cfg","r");	
+   if(file==NULL)
    {
-	    fprintf(stderr, "Can't open input file accounts.cfg!\n");
+	    g_debug("Can't find config file - need to copy data/accounts.cfg to /usr/local/etc\n");
  		 return 1;   
    }
    	
 	int status = 0;
-	status = fscanf(myfile, "accountId=%lld\nserverUri=%s\nusername=%s\npassword=%s\n",
+	status = fscanf(file, "accountId=%lld\nserverUri=%s\nusername=%s\npassword=%s\n",
 						      &self->_priv->accountId, 	self->_priv->serverUri, self->_priv->username, self->_priv->password);
   if (status != 4)
    {
-   	    g_debug(stderr, "Error reading data from file accounts.cfg!\n");
-   	    fclose (myfile);
+   	    g_debug("Error reading data from file accounts.cfg!\n");
+   	    fclose (file);
 		return 2;
    }
 
@@ -102,7 +103,7 @@ int eas_accounts_read_accounts_info(EasAccounts* self)
 							    self->_priv->accountId, 	self->_priv->serverUri, self->_priv->username, self->_priv->password);
 
 
-	 fclose (myfile);
+	 fclose (file);
 	g_debug("eas_accounts_read_accounts_info --\n");	 
 	return 0;
 }
