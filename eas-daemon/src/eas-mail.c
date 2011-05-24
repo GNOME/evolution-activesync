@@ -176,16 +176,15 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
         GSList* added_folders = NULL;
         GSList* updated_folders  = NULL;
         GSList* deleted_folders  = NULL;
+        EFlag * eflag = NULL;
 
         gchar* ret_sync_key = NULL;
         gchar** ret_created_folders_array = NULL;
         gchar** ret_updated_folders_array = NULL;
         gchar** ret_deleted_folders_array = NULL;
 
-        EFlag * eflag =NULL;
-        
         eflag = e_flag_new ();
-	  
+
         // Create the request
         EasSyncFolderHierarchy *folderHierarchyObj =NULL;
 
@@ -215,9 +214,6 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
          e_flag_free (eflag);
          g_debug("eas_mail_sync_email_folder_hierarchy - serialise objects");
          //serialise the folder objects from GSList* to char** and populate  :
-
-        g_debug("  Data: %s, %x, %x, %x", 
-                ret_sync_key, (guint)added_folders, (guint)updated_folders, (guint)deleted_folders);
 
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
 		{
@@ -253,29 +249,78 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
  * @param[in]     collection_id             identifer for the folder to be sync'ed
  * @param[in]     deleted_email_array       list of email ids to be deleted
  * @param[in]     changed_email_array       list of changes to existing emails
- * @param[out]    ret_sync_key              updated sync_key from the server response
- * @param[out]    ret_more_available        TRUE if further sync data is available on the server
- * @param[out]    ret_added_email_array     serialised list of added emails
- * @param[out]    ret_deleted_email_array   serialised list of deleted email ids
- * @param[out]    ret_changed_email_array   serialsed list of changes to existing emails
- * @param[out]    error                     NULL if no error, otherwise a GLib GError
+ * @param[in]     context                   dbus context
  */
-gboolean eas_mail_sync_folder_email(EasMail* easMailObj, 
+gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
                                     guint64 account_uid,
-									const gchar* sync_key,   
+									const gchar* sync_key,
                                     gboolean get_server_changes,
-									const gchar *collection_id,	//folder to sync
+									const gchar *collection_id,
 									const gchar* deleted_email_array,
-									const gchar* changed_email_array,                                    
-									gchar *ret_sync_key,                                    
-									gboolean *ret_more_available,
-									gchar **ret_added_email_array,
-									gchar **ret_deleted_email_array,
-									gchar **ret_changed_email_array,	
-									GError** error)
+									const gchar* changed_email_array,
+                                    DBusGMethodInvocation* context)
 {
-	// TODO
-  return TRUE;											
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    // TODO
+    g_debug("eas_mail_sync_folder_email++");
+
+    flag = e_flag_new ();
+
+    // TODO Create Request
+#if 0
+    EasSyncFolderEmailReq *req = eas_sync_folder_email_req_new();
+    eas_request_base_SetConnection (&req->parent_instance, 
+                                    eas_mail_get_eas_connection(easMailObj));
+
+    
+    // Activate Request
+    eas_sync_folder_email_req_Activate(req,
+                                       sync_key,
+                                       get_server_changes,
+                                       collection_id,
+                                       deleted_email_array,
+                                       changed_email_array,
+                                       flag);
+#endif
+    // Wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
+
+    gchar *ret_sync_key = NULL;
+    gboolean ret_more_available = FALSE;
+    gchar** ret_added_email_array = NULL;
+    gchar** ret_deleted_email_array = NULL;
+    gchar** ret_changed_email_array = NULL;
+
+#if 0
+    // Fetch the serialised response for transmission over DBusresponse
+    eas_sync_folder_email_req_ActivateFinish(req,
+                                             &ret_sync_key,
+                                             &ret_more_available,
+                                             &ret_add_email_array,
+                                             &ret_deleted_email_array,
+                                             &ret_changed_email_array,
+                                             &error);
+#endif
+    
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context,
+                              ret_sync_key,
+                              ret_more_available,
+                              ret_added_email_array,
+                              ret_deleted_email_array,
+                              ret_changed_email_array);
+    }
+
+    g_debug("eas_mail_sync_folder_email--");
+    return TRUE;
 }
 
 gboolean eas_mail_delete_email(EasMail* easMailObj,
@@ -298,6 +343,8 @@ eas_mail_fetch (EasMail* easMailObj,
                 GError **error)
 {
 	// TODO
+    g_debug("eas_mail_fetch++");
+    g_debug("eas_mail_fetch--");
 	return TRUE;
 }
 
