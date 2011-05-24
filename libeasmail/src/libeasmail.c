@@ -29,7 +29,7 @@ struct _EasEmailHandlerPrivate{
 static void
 eas_mail_handler_init (EasEmailHandler *cnc)
 {
-	g_print("eas_mail_handler_init++\n");
+	g_debug("eas_mail_handler_init++\n");
     EasEmailHandlerPrivate *priv;
     
 	/* allocate internal structure */
@@ -38,13 +38,13 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	priv->remoteEas = NULL;
 	priv->account_uid = 0;
 	cnc->priv = priv;	
-	g_print("eas_mail_handler_init--\n");
+	g_debug("eas_mail_handler_init--\n");
 }
 
 static void
 eas_mail_handler_finalize (GObject *object)
 {
-	g_print("eas_mail_handler_finalize++\n");
+	g_debug("eas_mail_handler_finalize++\n");
 	EasEmailHandler *cnc = (EasEmailHandler *) object;
 	EasEmailHandlerPrivate *priv;
 
@@ -54,13 +54,13 @@ eas_mail_handler_finalize (GObject *object)
 	cnc->priv = NULL;
 
 	G_OBJECT_CLASS (eas_mail_handler_parent_class)->finalize (object);
-	g_print("eas_mail_handler_finalize--\n");
+	g_debug("eas_mail_handler_finalize--\n");
 }
 
 static void
 eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 {
-	g_print("eas_mail_handler_class_init++\n");
+	g_debug("eas_mail_handler_class_init++\n");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
@@ -69,13 +69,13 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 	temp = (void*)parent_class;
 	
 	object_class->finalize = eas_mail_handler_finalize;
-	g_print("eas_mail_handler_class_init--\n");
+	g_debug("eas_mail_handler_class_init--\n");
 }
 
 EasEmailHandler *
 eas_mail_handler_new(guint64 account_uid)
 {
-	g_print("eas_mail_handler_new++\n");
+	g_debug("eas_mail_handler_new++\n");
 	DBusGConnection* bus;
 	DBusGProxy* remoteEas;
 	GMainLoop* mainloop;
@@ -87,39 +87,39 @@ eas_mail_handler_new(guint64 account_uid)
 	mainloop = g_main_loop_new(NULL, TRUE);
 
 	if (mainloop == NULL) {
-		g_printerr("Error: Failed to create the mainloop\n");
+		g_error("Error: Failed to create the mainloop\n");
 		return NULL;
 	}
 
-	g_print("Connecting to Session D-Bus.\n");
+	g_debug("Connecting to Session D-Bus.\n");
 	bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
 	if (error != NULL) {
-		g_printerr("Error: Couldn't connect to the Session bus (%s) \n", error->message);
+		g_error("Error: Couldn't connect to the Session bus (%s) \n", error->message);
 		return NULL;
 	}
 
-	g_print("Creating a GLib proxy object for Eas.\n");
+	g_debug("Creating a GLib proxy object for Eas.\n");
 	remoteEas =  dbus_g_proxy_new_for_name(bus,
 		      EAS_SERVICE_NAME,
 		      EAS_SERVICE_MAIL_OBJECT_PATH,
 		      EAS_SERVICE_MAIL_INTERFACE);
 	if (remoteEas == NULL) {
-		g_printerr("Error: Couldn't create the proxy object\n");
+		g_error("Error: Couldn't create the proxy object\n");
 		return NULL;
 	}
 
 	object = g_object_new (EAS_TYPE_EMAIL_HANDLER , NULL);
 
 	if(object == NULL){
-		g_printerr("Error: Couldn't create mail\n");
-		g_print("eas_mail_handler_new--\n");
+		g_error("Error: Couldn't create mail\n");
+		g_debug("eas_mail_handler_new--\n");
 		return NULL;  
 	}
 
 	object->priv->remoteEas = remoteEas; 
 	object->priv->account_uid = account_uid;
 
-	g_print("eas_mail_handler_new--\n");
+	g_debug("eas_mail_handler_new--\n");
 	return object;
 
 }
@@ -250,7 +250,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
                                                 GSList **folders_deleted,
                                                 GError **error)
 {
-	g_print("eas_mail_handler_sync_folder_hierarchy++\n");
+	g_debug("eas_mail_handler_sync_folder_hierarchy++\n");
 
 	g_assert(this_g);
 	g_assert(sync_key);
@@ -258,7 +258,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
-    g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy ok\n");
+    g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy ok\n");
     
 	g_assert(g_slist_length(*folders_created) == 0);
 	g_assert(g_slist_length(*folders_updated) == 0);
@@ -282,14 +282,14 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
 
-    g_print("eas_mail_handler_sync_folder_hierarch - dbus proxy called\n");
+    g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy called\n");
     if (*error) {
-        g_printerr(" Error: %s\n", (*error)->message);
+        g_error(" Error: %s\n", (*error)->message);
     }
     
 	if(ret)
 	{
-		g_print("sync_email_folder_hierarchy called successfully\n");
+		g_debug("sync_email_folder_hierarchy called successfully\n");
 		
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_folder_list((const gchar **)created_folder_array, *folders_created, error);
@@ -320,7 +320,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		*folders_deleted = NULL;
 	}
 	
-	g_print("eas_mail_handler_sync_folder_hierarchy--\n");
+	g_debug("eas_mail_handler_sync_folder_hierarchy--\n");
 	return ret;
 }
 
@@ -342,7 +342,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gboolean *more_available,	// if there are more changes to sync (window_size exceeded)
 	GError **error)
 {
-	g_print("eas_mail_handler_sync_folder_email_info++\n");
+	g_debug("eas_mail_handler_sync_folder_email_info++\n");
 
 	g_assert(this_g);
 	g_assert(sync_key);
@@ -375,7 +375,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	// convert created/deleted/updated emailinfo arrays into lists of emailinfo objects (deserialise results)
 	if(ret)
 	{
-		g_print("sync_email_folder_hierarchy called successfully\n");
+		g_debug("sync_email_folder_hierarchy called successfully\n");
 		
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, *emailinfos_created, error);
@@ -405,7 +405,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		g_free(*emailinfos_deleted);
 		*emailinfos_deleted = NULL;
 	}	
-	g_print("eas_mail_handler_sync_folder_email_info--\n");
+	g_debug("eas_mail_handler_sync_folder_email_info--\n");
 
 	
 	return ret;
@@ -421,7 +421,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 		const gchar *mime_directory,
 		GError **error)
 {
-	g_print("eas_mail_handler_fetch_email_bodies++\n");
+	g_debug("eas_mail_handler_fetch_email_bodies++\n");
 
 	g_assert(this_g);
 	g_assert(folder_id);
@@ -443,7 +443,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 
 	// nothing else to do 
 	
-	g_print("eas_mail_handler_fetch_email_bodies--\n");
+	g_debug("eas_mail_handler_fetch_email_bodies--\n");
 
 	return ret;
 }
@@ -455,7 +455,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 		const gchar *mime_directory,	
 		GError **error)
 {
-	g_print("eas_mail_handler_fetch_email_attachment++\n");
+	g_debug("eas_mail_handler_fetch_email_attachment++\n");
 
 	g_assert(this_g);
 	g_assert(file_reference);	
@@ -476,7 +476,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 
 	// nothing else to do 	
 	
-	g_print("eas_mail_handler_fetch_email_attachments--\n");
+	g_debug("eas_mail_handler_fetch_email_attachments--\n");
 
 	return ret;
 }
@@ -490,11 +490,11 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 								GError **error)
 {
 	gboolean ret = TRUE;	
-	g_print("eas_mail_handler_delete_emails++\n");
+	g_debug("eas_mail_handler_delete_emails++\n");
 
 	/* TODO call dbus "sync" api with appropriate params */
 	
-	g_print("eas_mail_handler_delete_emails--\n");	
+	g_debug("eas_mail_handler_delete_emails--\n");	
 	return ret;
 }
 
@@ -510,9 +510,9 @@ eas_mail_handler_update_email(EasEmailHandler* this_g,
 								GError **error)
 {
 	gboolean ret = TRUE;	
-	g_print("eas_mail_handler_update_emails++\n");
+	g_debug("eas_mail_handler_update_emails++\n");
 	/* TODO */
-	g_print("eas_mail_handler_update_emails--\n");	
+	g_debug("eas_mail_handler_update_emails--\n");	
 
 	return ret;
 }
@@ -525,8 +525,8 @@ eas_mail_handler_send_email(EasEmailHandler* this_g,
 	GError **error)
 {
 	gboolean ret = TRUE;	
-	g_print("eas_mail_handler_send_email++\n");
-	g_print("eas_mail_handler_send_email--\n");	
+	g_debug("eas_mail_handler_send_email++\n");
+	g_debug("eas_mail_handler_send_email--\n");	
 /* TODO */
 	return ret;
 }
@@ -540,8 +540,8 @@ eas_mail_handler_move_to_folder(EasEmailHandler* this_g,
 	GError **error)
 {
 	gboolean ret = TRUE;
-	g_print("eas_mail_handler_move_to_folder++\n");
-	g_print("eas_mail_handler_move_to_folder--\n");	
+	g_debug("eas_mail_handler_move_to_folder++\n");
+	g_debug("eas_mail_handler_move_to_folder--\n");	
 /* TODO */
 	return ret;
 }
@@ -555,8 +555,8 @@ eas_mail_handler_copy_to_folder(EasEmailHandler* this_g,
 	GError **error)
 {
 	gboolean ret = TRUE;
-	g_print("eas_mail_handler_copy_to_folder++\n");
-	g_print("eas_mail_handler_copy_to_folder--\n");	
+	g_debug("eas_mail_handler_copy_to_folder++\n");
+	g_debug("eas_mail_handler_copy_to_folder--\n");	
 
 	return ret;
 /* TODO */

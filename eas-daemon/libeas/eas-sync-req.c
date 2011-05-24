@@ -36,7 +36,7 @@ eas_sync_req_init (EasSyncReq *object)
 
 	object->priv = priv = EAS_SYNC_REQ_PRIVATE(object);
 
-	g_print("eas_sync_req_init++\n");
+	g_debug("eas_sync_req_init++\n");
 	priv->syncMsg = NULL;
 	priv->state = EasSyncReqStep1;
 	priv->accountID= -1;
@@ -45,13 +45,13 @@ eas_sync_req_init (EasSyncReq *object)
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SYNC);
 
-	g_print("eas_sync_req_init--\n");
+	g_debug("eas_sync_req_init--\n");
 }
 
 static void
 eas_sync_req_finalize (GObject *object)
 {
-	g_print("eas_sync_req_finalize++\n");
+	g_debug("eas_sync_req_finalize++\n");
 
     EasSyncReq *req = (EasSyncReq*)object;
 	EasSyncReqPrivate *priv = req->priv;
@@ -64,7 +64,7 @@ eas_sync_req_finalize (GObject *object)
 
 	G_OBJECT_CLASS (eas_sync_req_parent_class)->finalize (object);
 	
-	g_print("eas_sync_req_finalize--\n");
+	g_debug("eas_sync_req_finalize--\n");
 
 }
 
@@ -86,36 +86,36 @@ eas_sync_req_Activate (EasSyncReq *self,gchar* syncKey, guint64 accountID, EFlag
 	EasSyncReqPrivate* priv = self->priv;
 	xmlDoc *doc;
 
-	g_print("eas_sync_req_activate++\n");
+	g_debug("eas_sync_req_activate++\n");
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	priv->accountID = accountID;
 	
 	priv->folderID = g_strdup(folderId);
 	
-	g_print("eas_sync_req_activate - new Sync  mesg\n");
+	g_debug("eas_sync_req_activate - new Sync  mesg\n");
 	//create sync  msg type
 	priv->syncMsg = eas_sync_msg_new (syncKey, accountID, folderId);
 
-    g_print("eas_sync_req_activate- syncKey = %s\n", syncKey);
+    g_debug("eas_sync_req_activate- syncKey = %s\n", syncKey);
 
     //if syncKey is not 0, then we are not doing a first time sync and only need to send one message
 	// so we  move state machine forward.
 	/*if (!g_strcmp0(syncKey,"0"))
 	{
-		g_print("switching state\n");
+		g_debug("switching state\n");
 		priv->state = EasSyncReqStep2;
 	}*/
 	
-	g_print("eas_sync_req_activate - build messsage\n");
+	g_debug("eas_sync_req_activate - build messsage\n");
 	//build request msg
 	doc = eas_sync_msg_build_message (priv->syncMsg, FALSE);
 	
 	
 
-	g_print("eas_sync_req_activate - send message\n");
+	g_debug("eas_sync_req_activate - send message\n");
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
-	g_print("eas_sync_req_activate--\n");
+	g_debug("eas_sync_req_activate--\n");
 }
 
 void
@@ -123,7 +123,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 {
 	EasSyncReqPrivate *priv = self->priv;
 	
-	g_print("eas_sync_req_MessageComplete++\n");
+	g_debug("eas_sync_req_MessageComplete++\n");
 
 	eas_sync_msg_parse_reponse (priv->syncMsg, doc);
 
@@ -139,11 +139,11 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 		//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
 		case EasSyncReqStep1:
 		{
-			g_print("eas_sync_req_MessageComplete step 1\n");
+			g_debug("eas_sync_req_MessageComplete step 1\n");
 		    //get syncKey
 		    gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
 			
-			g_print("eas_sync_req synckey = %s\n", syncKey);
+			g_debug("eas_sync_req synckey = %s\n", syncKey);
 			
 			//clean up old message
 			if (priv->syncMsg) {
@@ -167,12 +167,12 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 		//we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
 		case EasSyncReqStep2:
 		{
-		    g_print("eas_sync_req_MessageComplete step 2\n");
+		    g_debug("eas_sync_req_MessageComplete step 2\n");
 			e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 		}
 		break;
 	}
-	g_print("eas_sync_req_MessageComplete--\n");
+	g_debug("eas_sync_req_MessageComplete--\n");
 }
 
 void
@@ -184,12 +184,12 @@ eas_sync_req_Activate_Finish (EasSyncReq* self,
 {
 	EasSyncReqPrivate *priv = self->priv;
 	
-	g_print("eas_sync_req_Activate_Finish++\n");
+	g_debug("eas_sync_req_Activate_Finish++\n");
 
 	*ret_sync_key    = g_strdup(eas_sync_msg_get_syncKey(priv->syncMsg));
 	*added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
 	*updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
 	*deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);
 	
-	g_print("eas_sync_req_Activate_Finish--\n");
+	g_debug("eas_sync_req_Activate_Finish--\n");
 }
