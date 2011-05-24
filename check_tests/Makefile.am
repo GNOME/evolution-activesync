@@ -23,9 +23,11 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_libeasmail_tests.c \
                     eas_libeascal_tests.c \
                     eas_main_tests.c \
-                    $(top_builddir)/libeasmail/src/libeasmail.h 
+                    $(top_builddir)/libeasmail/src/libeasmail.h \
+                    $(top_builddir)/libeascal/src/libeascal.h 
 check_eas_CFLAGS = @CHECK_CFLAGS@
 check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
+                        $(top_builddir)/libeascal/src/libeascal.la \
                     @CHECK_LIBS@
 
 #eas_daemon_tests.c eas_daemon_tests.h 

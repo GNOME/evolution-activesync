@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Creating calendar  gobject.");
-    EasCalendarObj = g_object_new(EAS_TYPE_CALENDAR , NULL);
+    EasCalendarObj = eas_calendar_new();
     if (EasCalendarObj == NULL) {
         g_debug("Error: Failed to create calendar  instance");
         g_main_loop_quit (mainloop);
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Pass a EasConnection handle to the exposed GObjects");
-    //ret = eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
+    eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
     //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
    eas_mail_set_eas_connection(EasMailObj, EasConnObj);

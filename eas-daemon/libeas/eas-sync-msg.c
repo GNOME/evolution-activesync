@@ -165,7 +165,8 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey"))
 		{
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
-			continue;
+			g_debug ("Got SyncKey = %s", priv->sync_key);
+			return;
 		}
 		
 	}
