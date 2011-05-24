@@ -49,7 +49,7 @@ eas_email_info_translator_class_init (EasEmailInfoTranslatorClass *klass)
 }
 
 EasEmailInfoTranslator *
-eas_email_info_new()
+eas_email_info_translator_new()
 {
 	g_debug("eas_email_info_new++");	
 	
@@ -222,14 +222,14 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 		// serialise the emailinfo
 		if(!eas_email_info_serialise(email_info, &result))
 		{
-			g_warning("Failed to serialise email info\n");
+			g_warning("Failed to serialise email info");
 		}
 		
 		g_object_unref(email_info);
 	}
 	else
 	{
-		g_error("Failed! Expected ApplicationData node at root\n");
+		g_error("Failed! Expected ApplicationData node at root");
 	}
 
 	return result;
@@ -284,7 +284,7 @@ eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *
 	}
 	else
 	{
-		g_error("Failed! Expected ApplicationData node at root\n");
+		g_error("Failed! Expected ApplicationData node at root");
 	}
 	return result;
 }
@@ -306,14 +306,14 @@ eas_delete_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *
 		
 		if(!eas_email_info_serialise(email_info, &result))
 		{
-			g_warning("Failed to serialise email info\n");
+			g_warning("Failed to serialise email info");
 		}
 		
 		g_object_unref(email_info);
 	}
 	else
 	{
-		g_error("Failed! Expected ApplicationData node at root\n");
+		g_error("Failed! Expected ApplicationData node at root");
 	}
 
 	return result;
