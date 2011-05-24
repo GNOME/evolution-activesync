@@ -11,10 +11,22 @@
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
+struct _EasMailPrivate
+{
+    EasConnection* connection;
+};
+
+#define EAS_MAIL_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
+
+
 static void
 eas_mail_init (EasMail *object)
 {
-	/* TODO: Add initialization code here */
+ 	g_debug("++ eas_mail_init()\n");
+    EasMailPrivate *priv =NULL;
+	object->_priv = priv = EAS_MAIL_PRIVATE(object);                    
+	priv->connection = NULL;
+	 	g_debug("-- eas_mail_init()\n");
 }
 
 static void
@@ -28,17 +40,38 @@ eas_mail_finalize (GObject *object)
 static void
 eas_mail_class_init (EasMailClass *klass)
 {
+ 	g_debug("++ eas_mail_class_init ()\n");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = eas_mail_finalize;
-	
+		g_debug(">>eas_mail_class_init 01\n");	
+	g_type_class_add_private (klass, sizeof (EasMailPrivate));
+			g_debug(">>eas_mail_class_init 02\n");	
 	 /* Binding to GLib/D-Bus" */ 
     dbus_g_object_type_install_info(EAS_TYPE_MAIL,
                                             &dbus_glib_eas_mail_object_info);
+    g_debug("-- eas_mail_class_init ()\n");
 }
 
+EasMail* eas_mail_new(void)
+{
+	EasMail* easMail = NULL;
+	easMail = g_object_new(EAS_TYPE_MAIL, NULL);
+	return easMail;
+}
 
+void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj)
+{
+   EasMailPrivate* priv = self->_priv;
+   priv->connection = easConnObj;
+}
+
+EasConnection*  eas_mail_get_eas_connection(EasMail* self)
+{
+    EasMailPrivate* priv = self->_priv;
+    return priv->connection;
+}
 
 gboolean eas_mail_start_sync(EasMail* easMailObj, gint valueIn, GError** error)
 {
@@ -66,33 +99,23 @@ eas_connection_folder_sync(easMailObj->easConnection,
 void eas_mail_test_001(EasMail* obj, DBusGMethodInvocation* context)
 {
 
- 	g_print(">> eas_mail_test_001()\n");
+ 	g_debug(">> eas_mail_test_001()\n");
         GError *error = NULL;
         gchar *ok_str = g_strdup ("OK");
          // ...
 
         if (error) {
-		g_print(">> eas_mail_test_001 -error-\n");
+		g_debug(">> eas_mail_test_001 -error-\n");
                 dbus_g_method_return_error (context, error);
                 g_error_free (error);
         } else{
-		g_print(">> eas_mail_test_001 -No error-\n");
+		g_debug(">> eas_mail_test_001 -No error-\n");
                 dbus_g_method_return (context, ok_str);
 	}
 
         g_free (ok_str);
 }
 
-gboolean eas_mail_set_eas_connection(EasMail* easMailObj, EasConnection* easConnObj)
-{
-  gboolean ret= FALSE;
-
-  if(easConnObj != NULL){
-  	easMailObj->easConnection = easConnObj;
-	ret= TRUE;
-  }
-  return ret;
-}
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
@@ -109,9 +132,6 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
     
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 
-    for (i = 0; i<array_len; i++)
-        (*serialised_folder_array)[i] = NULL;
-    
 	GSList *l = (GSList*)folder_list;
 	for(i = 0; i < array_len - 1; i++)
 	{
@@ -122,14 +142,13 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 
 		if(!eas_folder_serialise(folder, &(*serialised_folder_array)[i]))
 		{
-			g_print("failed!");
+			g_debug("failed!");
 			ret = FALSE;
 			goto cleanup;
 		}
 
 		l = g_slist_next (l);
 	}
-	(*serialised_folder_array)[i] = NULL;
 	
 cleanup:
 	if(!ret)
@@ -167,33 +186,34 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
         // Create the request
         EasSyncFolderHierarchy *folderHierarchyObj =NULL;
 
-        g_print("eas_mail_sync_email_folder_hierarchy++\n");
+        g_debug("eas_mail_sync_email_folder_hierarchy++\n");
         folderHierarchyObj = g_object_new(EAS_TYPE_SYNC_FOLDER_HIERARCHY , NULL);
 
         eas_request_base_SetConnection (&folderHierarchyObj->parent_instance, 
-                                        easMailObj->easConnection);
+                                        eas_mail_get_eas_connection(easMailObj));
+                                        
 
-        g_print("eas_mail_sync_email_folder_hierarchy - new req\n");
+        g_debug("eas_mail_sync_email_folder_hierarchy - new req\n");
 	    // Start the request
         eas_sync_folder_hierarchy_Activate (folderHierarchyObj, 
                                             sync_key,
                                             account_uid,
                                             eflag);
-        g_print("eas_mail_sync_email_folder_hierarchy - activate req\n");
+        g_debug("eas_mail_sync_email_folder_hierarchy - activate req\n");
 	    // Set flag to wait for response
 	    e_flag_wait(eflag);
 
-        g_print("eas_mail_sync_email_folder_hierarchy - get results\n");
+        g_debug("eas_mail_sync_email_folder_hierarchy - get results\n");
          eas_sync_folder_hierarchy_Activate_Finish (folderHierarchyObj,
                                                     &ret_sync_key,
                                                     &added_folders,
                                                     &updated_folders,
                                                     &deleted_folders);
          e_flag_free (eflag);
-         g_print("eas_mail_sync_email_folder_hierarchy - serialise objects\n");
+         g_debug("eas_mail_sync_email_folder_hierarchy - serialise objects\n");
          //serialise the folder objects from GSList* to char** and populate  :
 
-        g_print("  Data: %s, %x, %x, %x\n", 
+        g_debug("  Data: %s, %x, %x, %x\n", 
                 ret_sync_key, added_folders, updated_folders, deleted_folders);
 
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
@@ -206,11 +226,11 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
          
          // Return the error or the requested data to the mail client
         if (error) {
-		        g_print(">> Daemon : Error \n");
+		        g_debug(">> Daemon : Error \n");
                 dbus_g_method_return_error (context, error);
                 g_error_free (error);
         } else{
-		        g_print(">> Daemon : Success-\n");
+		        g_debug(">> Daemon : Success-\n");
                 dbus_g_method_return (context,
                                  	ret_sync_key,
                                   	ret_created_folders_array,
@@ -218,7 +238,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 						            ret_deleted_folders_array);
         }
 
-    g_print("eas_mail_sync_email_folder_hierarchy--\n");
+    g_debug("eas_mail_sync_email_folder_hierarchy--\n");
 
 }
 

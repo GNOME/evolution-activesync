@@ -22,17 +22,17 @@
 static void start_sync_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer userData) {
   GError* error = NULL;
 
-  g_print("start_sync Completed\n");
+  g_debug("start_sync Completed\n");
 
 	// check to see if any errors have been reported
   if (!dbus_g_proxy_end_call(proxy,
                              call,
                              &error,
                              G_TYPE_INVALID)) {
-    g_printerr(" Error: %s\n", error->message);
+    g_error(" Error: %s\n", error->message);
     g_error_free(error);
   } else {
-    g_print("start_sync Success \n");
+    g_debug("start_sync Success \n");
   }
 }
 
@@ -55,20 +55,20 @@ int main(int argc, char** argv) {
 	// program using G types
   mainloop = g_main_loop_new(NULL, FALSE);
   if (mainloop == NULL) {
-    g_printerr("Error: Failed to create the mainloop");
+    g_error("Error: Failed to create the mainloop");
     exit(EXIT_FAILURE);
   }
   
 
-  g_print("Connecting to Session D-Bus.\n");
+  g_debug("Connecting to Session D-Bus.\n");
   // get an interface to the standard DBus messaging daemon
   bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
   if (bus == NULL) {
-    g_printerr("Error: Couldn't connect to the Session bus (%s) \n", error->message);
+    g_error("Error: Couldn't connect to the Session bus (%s) \n", error->message);
     exit(EXIT_FAILURE);
   }
 
-  g_print("Creating a GLib proxy object for EasMail.\n");
+  g_debug("Creating a GLib proxy object for EasMail.\n");
   // create object to the EasMail object that will be exposed over the DBus 
   // interface and return a pointer to this object on the activesyncd 
   remoteEasMail = dbus_g_proxy_new_for_name(bus,
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
                               EAS_SERVICE_MAIL_OBJECT_PATH /*EAS_SERVICE_OBJECT_PATH*/,
                               EAS_SERVICE_MAIL_INTERFACE   /*EAS_SERVICE_INTERFACE*/);
   if (remoteEasMail == NULL) {
-    g_printerr("Error: Couldn't create the proxy object\n");
+    g_error("Error: Couldn't create the proxy object\n");
     exit(EXIT_FAILURE);
   }
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
                           testValue,  // value passed to the start_sync method
                           G_TYPE_INVALID);  // ?
 
-  g_print("start_sync launched\n");
+  g_debug("start_sync launched\n");
 
 	// start the mainloop
   g_main_loop_run(mainloop);

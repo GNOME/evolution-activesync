@@ -25,7 +25,7 @@
 #include "eas-mail.h"
 
 #ifdef DISABLE_EAS_DAEMON
-#define dbg(fmtstr, args...) (g_print(":%s: " fmtstr "\n", __func__, ##args))
+#define dbg(fmtstr, args...) (g_debug(":%s: " fmtstr "\n", __func__, ##args))
 #else
 #define dbg(dummy...)
 #endif
@@ -52,12 +52,12 @@ int main(int argc, char** argv) {
 
     mainloop = g_main_loop_new(NULL, FALSE);
     if (mainloop == NULL) {
-        g_print("Error: Couldn't create GMainLoop\n");
+        g_debug("Error: Couldn't create GMainLoop\n");
         exit(EXIT_FAILURE);
     }
 
     //Creating all the GObjects
-    g_print("Creating EEasConnection GObject.\n");
+    g_debug("Creating EEasConnection GObject.\n");
     //EasConnObj = g_object_new(EAS_TYPE_CONNECTION , NULL);
 
     const gchar* serverUri = "https://cstylianou.com/Microsoft-Server-ActiveSync";
@@ -67,85 +67,72 @@ int main(int argc, char** argv) {
    
     EasConnObj = eas_connection_new(serverUri, username, password, &cnc_error);
     if (EasConnObj == NULL) {
-        g_print("Error: Failed to create EEasConnection instance\n");
+        g_debug("Error: Failed to create EEasConnection instance\n");
         g_clear_error (&error);
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-    g_print("Creating calendar  gobject.\n");
+    g_debug("Creating calendar  gobject.\n");
     EasCalendarObj = g_object_new(EAS_TYPE_CALENDAR , NULL);
     if (EasCalendarObj == NULL) {
-        g_print("Error: Failed to create calendar  instance\n");
+        g_debug("Error: Failed to create calendar  instance\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-    g_print("Creating common  gobject.\n");
+    g_debug("Creating common  gobject.\n");
     EasCommonObj = g_object_new(EAS_TYPE_COMMON , NULL);
     if (EasCommonObj == NULL) {
-        g_print("Error: Failed to create common  instance\n");
+        g_debug("Error: Failed to create common  instance\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-    g_print("Creating contact  gobject.\n");
+    g_debug("Creating contact  gobject.\n");
     EasContactObj = g_object_new(EAS_TYPE_CONTACT , NULL);
     if (EasContactObj == NULL) {
-        g_print("Error: Failed to create common  instance\n");
+        g_debug("Error: Failed to create common  instance\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-    g_print("Creating mail  gobject.\n");
-    EasMailObj = g_object_new(EAS_TYPE_MAIL , NULL);
+    g_debug("Creating mail  gobject.\n");
+    EasMailObj = eas_mail_new ();
     if (EasMailObj == NULL) {
-        g_print("Error: Failed to create common  instance\n");
+        g_debug("Error: Failed to create common  instance\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-/*
-    g_print("Initialise EEasConnection GObject.\n");
-    gboolean ret = FALSE;
-    gint valueIn =-99;
-    GError** err = NULL;
-   eas_connection_setup(EasConnObj, valueIn, err);
-    //TODO: Error Handling
-*/
-
-    g_print("Pass a EasConnection handle to the exposed GObjects\n");
+    g_debug("Pass a EasConnection handle to the exposed GObjects\n");
     //ret = eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
     //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
-   if( !eas_mail_set_eas_connection(EasMailObj, EasConnObj) ){
-       g_print("Error: eas_mail_set_eas_connection ()\n");
-       g_main_loop_quit (mainloop);
-       exit(EXIT_FAILURE);
-   }
-
-    g_print("Connecting to the session DBus\n");
+   eas_mail_set_eas_connection(EasMailObj, EasConnObj);
+   
+    g_debug("Connecting to the session DBus\n");
     bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
     if (error != NULL) {
-        g_print("Error: Connecting to the session DBus (%s)\n", error->message);
+        g_debug("Error: Connecting to the session DBus (%s)\n", error->message);
         g_clear_error (&error);
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
 
-    g_print("Registering the well-known name (%s)\n", EAS_SERVICE_NAME);
+    g_debug("Registering the well-known name (%s)\n", EAS_SERVICE_NAME);
     busProxy = dbus_g_proxy_new_for_name(bus,
                                        DBUS_SERVICE_DBUS,
                                        DBUS_PATH_DBUS,
                                        DBUS_INTERFACE_DBUS);
     if (busProxy == NULL) {
-        g_print("Error: Failed to get a proxy for D-Bus\n");
+        g_debug("Error: Failed to get a proxy for D-Bus\n");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
   }
 
   /* register the well-known name.*/
-    g_print("D-Bus RequestName RPC \n");
+    g_debug("D-Bus RequestName RPC \n");
     if (!dbus_g_proxy_call(busProxy,
                          "RequestName",
                          &error,
@@ -157,21 +144,21 @@ int main(int argc, char** argv) {
                          G_TYPE_UINT,
                          &result,
                          G_TYPE_INVALID)) {
-   g_print("Error: D-Bus RequestName RPC failed (%s)\n", error->message);
+   g_debug("Error: D-Bus RequestName RPC failed (%s)\n", error->message);
    g_main_loop_quit (mainloop);
    exit(EXIT_FAILURE);
   }
 
-    g_print("RequestName returned %d\n", result);
+    g_debug("RequestName returned %d\n", result);
     if (result != 1) {
-        g_print("Error: Failed to get the primary well-known name\n");
+        g_debug("Error: Failed to get the primary well-known name\n");
        exit(EXIT_FAILURE);
   }
 
 
 /*
  //we don't want EasConnObj to be exposed on DBus Interface anymore
-    g_print("Registering Gobjects on the D-Bus.\n");
+    g_debug("Registering Gobjects on the D-Bus.\n");
     dbus_g_connection_register_g_object(bus,
                                       EAS_SERVICE_OBJECT_PATH,
                                       G_OBJECT(EasConnObj));
@@ -199,14 +186,14 @@ int main(int argc, char** argv) {
                                       G_OBJECT(EasMailObj));
 
 
-    g_print("Ready to serve requests\n");
+    g_debug("Ready to serve requests\n");
 
 #ifndef DISABLE_EAS_DAEMON
     if (daemon(0, 0) != 0) {
-        g_print("Failed to daemonize\n");
+        g_debug("Failed to daemonize\n");
   }
 #else
-    g_print("Not daemonizing (built with DISABLE_EAS_DAEMON)\n");
+    g_debug("Not daemonizing (built with DISABLE_EAS_DAEMON)\n");
 #endif
 
     g_main_loop_run(mainloop);
