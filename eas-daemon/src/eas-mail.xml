@@ -39,11 +39,13 @@
     </method>
 
 
+
 <!--
  2-way sync of specified email folder. This will sync email headers only, not bodies
  will use AS 'Sync' command
 -->
     <method name="sync_folder_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="b" name="get_server_changes" direction="in"/>
