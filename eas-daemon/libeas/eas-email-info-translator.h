@@ -49,6 +49,9 @@ struct _EasEmailInfoTranslator
 
 GType eas_email_info_translator_get_type (void) G_GNUC_CONST;
 
+// C'tor
+EasEmailInfoTranslator *eas_email_info_new();
+
 // parses the email ApplicationData for an add
 gchar *eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id);
 

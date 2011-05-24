@@ -28,13 +28,13 @@ G_DEFINE_TYPE (EasEmailInfoTranslator, eas_email_info_translator, G_TYPE_OBJECT)
 static void
 eas_email_info_translator_init (EasEmailInfoTranslator *object)
 {
-	/* TODO: Add initialization code here */
+	/* initialization code */
 }
 
 static void
 eas_email_info_translator_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
+	/* deinitalization code */
 
 	G_OBJECT_CLASS (eas_email_info_translator_parent_class)->finalize (object);
 }
@@ -48,6 +48,19 @@ eas_email_info_translator_class_init (EasEmailInfoTranslatorClass *klass)
 	object_class->finalize = eas_email_info_translator_finalize;
 }
 
+EasEmailInfoTranslator *
+eas_email_info_new()
+{
+	g_debug("eas_email_info_new++");	
+	
+	EasEmailInfoTranslator *object = NULL;
+
+	object = g_object_new (EAS_TYPE_EMAIL_INFO_TRANSLATOR, NULL);
+
+	g_debug("eas_email_info_new--");	
+	
+	return object;
+}
 
 gchar * 
 eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
