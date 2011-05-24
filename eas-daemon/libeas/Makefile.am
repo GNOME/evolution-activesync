@@ -73,7 +73,11 @@ libeas_la_SOURCES =		\
         eas-sync-msg.h \
         eas-sync-msg.c \
         eas-email-info-translator.h \
-        eas-email-info-translator.c
+        eas-email-info-translator.c \
+        eas-send-email-req.h \
+        eas-send-email-req.c \
+        eas-send-email-msg.h \
+        eas-send-email-msg.c               
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)
