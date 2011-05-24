@@ -24,9 +24,9 @@ eas_request_base_init (EasRequestBase *object)
 
 	object->priv = priv = EAS_REQUEST_BASE_PRIVATE(object);
 
-    g_debug("eas_request_base_init++\n");
+    g_debug("eas_request_base_init++");
 	priv->connection = NULL;
-    g_debug("eas_request_base_init--\n");
+    g_debug("eas_request_base_init--");
 }
 
 static void
@@ -43,7 +43,7 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
-    g_debug("eas_request_base_class_init++\n");
+    g_debug("eas_request_base_class_init++");
 	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
 
 	object_class->finalize = eas_request_base_finalize;
@@ -91,7 +91,7 @@ struct _EasConnection*
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_GetConnection++ %x\n", (unsigned int)priv->connection );
+    g_debug("eas_request_base_GetConnection++ %x", (unsigned int)priv->connection );
     return priv->connection;
 }
 
@@ -99,9 +99,9 @@ void
 eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_SetConnection++\n");
+    g_debug("eas_request_base_SetConnection++");
     priv->connection = connection;
-    g_debug("eas_request_base_SetConnection--\n");
+    g_debug("eas_request_base_SetConnection--");
 }
 
 
@@ -109,7 +109,7 @@ EFlag *
 eas_request_base_GetFlag(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_GetFlag+-\n");
+    g_debug("eas_request_base_GetFlag+-");
     return priv->flag;
 }
 
@@ -117,7 +117,7 @@ void
 eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_SetFlag++\n");
+    g_debug("eas_request_base_SetFlag++");
     priv->flag = flag;
-    g_debug("eas_request_base_SetFlag--\n");
+    g_debug("eas_request_base_SetFlag--");
 }

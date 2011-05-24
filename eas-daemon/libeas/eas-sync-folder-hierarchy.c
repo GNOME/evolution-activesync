@@ -32,7 +32,7 @@ eas_sync_folder_hierarchy_init (EasSyncFolderHierarchy *object)
 
 	object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_PRIVATE(object);
 
-	g_debug("eas_sync_folder_hierarchy_init++\n");
+	g_debug("eas_sync_folder_hierarchy_init++");
 	priv->syncFolderMsg = NULL;
 	priv->state = EasSyncFolderHierarchyStep1;
 	priv->accountID= -1;
@@ -40,7 +40,7 @@ eas_sync_folder_hierarchy_init (EasSyncFolderHierarchy *object)
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SYNC_FOLDER_HIERARCHY);
 
-	g_debug("eas_sync_folder_hierarchy_init--\n");
+	g_debug("eas_sync_folder_hierarchy_init--");
 }
 
 static void
@@ -50,14 +50,14 @@ eas_sync_folder_hierarchy_finalize (GObject *object)
 	EasSyncFolderHierarchyPrivate *priv = req->priv;
 	/* TODO: Add deinitalization code here */
 
-	g_debug("eas_sync_folder_hierarchy_finalize++\n");
+	g_debug("eas_sync_folder_hierarchy_finalize++");
 	
 	if (priv->syncFolderMsg) {
 		g_object_unref(priv->syncFolderMsg);
 	}
 
 	G_OBJECT_CLASS (eas_sync_folder_hierarchy_parent_class)->finalize (object);
-	g_debug("eas_sync_folder_hierarchy_finalize--\n");
+	g_debug("eas_sync_folder_hierarchy_finalize--");
 }
 
 static void
@@ -66,10 +66,10 @@ eas_sync_folder_hierarchy_class_init (EasSyncFolderHierarchyClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
 
-	g_debug("eas_sync_folder_hierarchy_class_init++\n");
+	g_debug("eas_sync_folder_hierarchy_class_init++");
 	g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyPrivate));
 	object_class->finalize = eas_sync_folder_hierarchy_finalize;
-	g_debug("eas_sync_folder_hierarchy_class_init--\n");
+	g_debug("eas_sync_folder_hierarchy_class_init--");
 }
 
 
@@ -79,16 +79,16 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* s
 	EasSyncFolderHierarchyPrivate* priv = self->priv;
 	xmlDoc *doc;
 
-	g_debug("eas_sync_folder_hierarchy_activate++\n");
+	g_debug("eas_sync_folder_hierarchy_activate++");
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	priv->accountID = accountId;
 
-	g_debug("eas_sync_folder_hierarchy_activate - new Sync Folder mesg\n");
+	g_debug("eas_sync_folder_hierarchy_activate - new Sync Folder mesg");
 	//create syn folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, accountId);
 
-	g_debug("eas_sync_folder_hierarchy_activate - build messsage\n");
+	g_debug("eas_sync_folder_hierarchy_activate - build messsage");
 	//build request msg
 	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
 	
@@ -99,10 +99,10 @@ eas_sync_folder_hierarchy_Activate (EasSyncFolderHierarchy* self, const gchar* s
 		priv->state = EasSyncFolderHierarchyStep2;
 	}
 
-	g_debug("eas_sync_folder_hierarchy_activate - send message\n");
+	g_debug("eas_sync_folder_hierarchy_activate - send message");
 	// TODO
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
-	g_debug("eas_sync_folder_hierarchy_activate--\n");
+	g_debug("eas_sync_folder_hierarchy_activate--");
 }
 
 /**
@@ -113,7 +113,7 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 {
 	EasSyncFolderHierarchyPrivate *priv = self->priv;
 	
-	g_debug("eas_sync_folder_hierarchy_MessageComplete++\n");
+	g_debug("eas_sync_folder_hierarchy_MessageComplete++");
 
 	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc);
 
@@ -158,7 +158,7 @@ eas_sync_folder_hierarchy_MessageComplete (EasSyncFolderHierarchy* self, xmlDoc*
 		}
 		break;
 	}
-	g_debug("eas_sync_folder_hierarchy_MessageComplete--\n");
+	g_debug("eas_sync_folder_hierarchy_MessageComplete--");
 }
 
 void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
@@ -169,12 +169,12 @@ void eas_sync_folder_hierarchy_Activate_Finish (EasSyncFolderHierarchy* self,
 {
 	EasSyncFolderHierarchyPrivate *priv = self->priv;
 	
-	g_debug("eas_sync_folder_hierarchy_Activate_Finish++\n");
+	g_debug("eas_sync_folder_hierarchy_Activate_Finish++");
 
 	*ret_sync_key    = g_strdup(eas_sync_folder_msg_get_syncKey(priv->syncFolderMsg));
 	*added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 	*updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 	*deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 	
-	g_debug("eas_sync_folder_hierarchy_Activate_Finish--\n");
+	g_debug("eas_sync_folder_hierarchy_Activate_Finish--");
 }
