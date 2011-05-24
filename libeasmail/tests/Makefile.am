@@ -4,7 +4,11 @@ bin_PROGRAMS = libeasmail_test
 commondefs = 
 
 INCLUDES = -I/usr/include/glib-2.0 \
-	  -I/usr/lib/glib-2.0/include
+	  -I/usr/lib/glib-2.0/include \
+          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
+          -I/usr/include/evolution-data-server-2.32
+
+
 
 LIBS =  -L/usr/lib
 
