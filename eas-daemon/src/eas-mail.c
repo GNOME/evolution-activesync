@@ -44,6 +44,10 @@ eas_mail_class_init (EasMailClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
+	// get rid of warnings about above 2 lines
+	void *temp = (void*)object_class;
+	temp = (void*)parent_class;
+	
 	object_class->finalize = eas_mail_finalize;
 		g_debug(">>eas_mail_class_init 01");	
 	g_type_class_add_private (klass, sizeof (EasMailPrivate));
@@ -136,7 +140,6 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 	for(i = 0; i < array_len - 1; i++)
 	{
 		g_assert(l != NULL);
-		gchar *serialised;
 		EasFolder *folder;
 		folder = l->data;
 
@@ -158,7 +161,7 @@ cleanup:
 			g_free((*serialised_folder_array)[i]);
 		}
 		g_free(*serialised_folder_array);
-		// TODO cleanup strings and array and set error
+		// TODO set error
 	}
 
 	return ret;
@@ -214,7 +217,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
          //serialise the folder objects from GSList* to char** and populate  :
 
         g_debug("  Data: %s, %x, %x, %x", 
-                ret_sync_key, added_folders, updated_folders, deleted_folders);
+                ret_sync_key, (guint)added_folders, (guint)updated_folders, (guint)deleted_folders);
 
 		if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
 		{
@@ -298,16 +301,19 @@ eas_mail_fetch (EasMail* easMailObj,
 	return TRUE;
 }
 
-// TODO - finalise this API
+// 
 gboolean eas_mail_send_email(EasMail* easMailObj, 
 								guint64 account_uid,                             
 								const gchar* clientid,
-								const gchar* accountid,
-								gboolean save_in_sent_items,
-								const gchar *mime,
+								const gchar *mime_file,
 								GError** error)
 {
-  return TRUE;								
+	g_debug("eas_mail_send_email++");
+	
+	// TODO
+
+	g_debug("eas_mail_send_email--");
+	return TRUE;								
 }
 
 

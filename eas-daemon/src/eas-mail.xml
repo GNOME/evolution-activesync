@@ -164,11 +164,11 @@
       <!-- client's unique message ID (MID) -->
       <arg type="s" name="clientid" direction="in"/>
       <!-- account from which an e-mail is sent -->
-      <arg type="s" name="accountid" direction="in"/>
+      <!-- <arg type="s" name="accountid" direction="in"/> --> <!-- not currently supported-->
       <!-- whether a copy of the message will be stored in the Sent Items folder -->
-      <arg type="b" name="save_in_sent_items" direction="in"/>
-      <!-- the MIME-encoded message TODO - put in file? -->
-      <arg type="s" name="mime" direction="in"/>
+      <!-- <arg type="b" name="save_in_sent_items" direction="in"/> --> <!-- hardcoded to true for now, will be configurable on config api -->
+      <!-- path to the file containing MIME-encoded message -->
+      <arg type="s" name="mime_file" direction="in"/>
 
     </method>
 
