@@ -238,7 +238,7 @@ eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *
 		
 		for (n = n->children; n; n = n->next)
 		{
-			// TODO - pull out other potentially updated data (flags/categories):
+			// TODO - figure out if/where other flags are stored (eg replied to)
 			//Read  
 			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Read")) 
 			{
