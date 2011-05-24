@@ -290,7 +290,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		return;
 	}
 
-    ret = wbxml_create_conv_xml2wbxml(&conv);
+    ret = wbxml_conv_xml2wbxml_create(&conv);
     if (ret != WBXML_OK) {
         g_debug("%s\n", wbxml_errors_string(ret));
         return;
@@ -321,7 +321,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 	// Convert doc into a flat xml string
     xmlDocDumpFormatMemoryEnc(doc, &dataptr, &data_len, (gchar*)"utf-8",1);
     wbxml_conv_xml2wbxml_disable_public_id(conv);
-    ret = wbxml_run_conv_xml2wbxml(conv, dataptr, data_len, &wbxml, &wbxml_len);
+    ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) 
 	{
@@ -331,7 +331,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		g_debug("=== XML Input ===\n\n");
 		g_free(tmp);
 
-		g_debug("wbxml_run_conv_xml2wbxml [Ret:%s],  wbxml_len = [%d]\n", wbxml_errors_string(ret), wbxml_len);
+		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]\n", wbxml_errors_string(ret), wbxml_len);
 	}
 	
     if (dataptr) {
@@ -356,7 +356,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
     }
     
     if (wbxml) free(wbxml);
-    if (conv) wbxml_destroy_conv_xml2wbxml(conv);
+    if (conv) wbxml_conv_xml2wbxml_destroy(conv);
 	g_debug("eas_connection_send_request--\n");
 }
 
@@ -420,7 +420,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     *xml = NULL;
     *xml_len = 0;
     
-    ret = wbxml_create_conv_wbxml2xml(&conv);
+    ret = wbxml_conv_wbxml2xml_create(&conv);
     
     if (ret != WBXML_OK)
     {
@@ -443,7 +443,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     wbxml_conv_wbxml2xml_set_language(conv, WBXML_LANG_ACTIVESYNC);
     wbxml_conv_wbxml2xml_set_indent(conv, 1);
     
-    ret = wbxml_run_conv_wbxml2xml(conv,
+    ret = wbxml_conv_wbxml2xml_run(conv,
                                    wbxml,
                                    wbxml_len,
                                    xml, 
@@ -455,7 +455,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     }
 
 failed:
-    if (conv) wbxml_destroy_conv_wbxml2xml(conv);
+    if (conv) wbxml_conv_wbxml2xml_destroy(conv);
 }
 
 /**
