@@ -71,7 +71,9 @@ libeas_la_SOURCES =		\
         eas-sync-req.h \
         eas-sync-req.c \
         eas-sync-msg.h \
-        eas-sync-msg.c
+        eas-sync-msg.c \
+        eas-email-info-translator.h \
+        eas-email-info-translator.c
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)

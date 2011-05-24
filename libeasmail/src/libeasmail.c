@@ -486,7 +486,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
-								const EasEmailInfo *email,		// List of EasEmailInfos to delete
+								const gchar *server_id,		// email to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -494,7 +494,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	
 	g_assert(this_g);
 	g_assert(sync_key);	
-	g_assert(email);
+	g_assert(server_id);
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 

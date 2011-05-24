@@ -1,47 +1,72 @@
 /*
-A draft API for the EAS mail client library which clients will use to get email data from Exchange Active Sync
-*/
+ *  Filename: libeascal.h
+ */
 
-#ifndef EAS_MAIL_H
-#define EAS_MAIL_H
+#ifndef EAS_CAL_H
+#define EAS_CAL_H
 
 #include <glib-object.h>
 
 
-gboolean DBus_Init();
+G_BEGIN_DECLS
 
-/* sync items in a specified folder 
-Returns lists of Calendar Items. 
-Max changes in one sync = 100 (configurable somewhere?)
-In the case of created items all fields are filled in.
-In the case of deleted items only the serverids are valid. 
-In the case of updated items only the serverids, flags and categories are valid.
+#define EAS_TYPE_CAL_HANDLER             (eas_cal_handler_get_type ())
+#define EAS_CAL_HANDLER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_CAL_HANDLER, EasCalHandler))
+#define EAS_CAL_HANDLER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_EMAIL_HANDLER, EasCalHandlerClass))
+#define EAS_IS_CAL_HANDLER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_CAL_HANDLER))
+#define EAS_IS_CAL_HANDLER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_CAL_HANDLER))
+#define EAS_CAL_HANDLER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_CAL_HANDLER, EasCalHandlerClass))
+
+typedef struct _EasCalHandlerClass EasCalHandlerClass;
+typedef struct _EasCalHandler EasCalHandler;
+typedef struct _EasCalHandlerPrivate EasCalHandlerPrivate;
+
+struct _EasCalHandlerClass{
+	GObjectClass parent_class;
+};
+
+struct _EasCalHandler{
+	GObject parent_instance;
+	EasCalHandlerPrivate *priv;
+};
+
+GType eas_cal_handler_get_type (void) G_GNUC_CONST;
+// This method is called once by clients of the libeas plugin for each account.  The method
+// takes an ID that identifies the account and returns a pointer to an EasCalHandler object.
+// This object is required to be passed to all subsiquent calls to this interface to identify the
+// account and facilitate the interface to the daemon.
+// Note: the account_uid is not validated against accounts provisioned on the device as part of 
+// this call.  This level of validation will be done on subsequent calls that take EasCalHandler
+// as an argument
+EasCalHandler *eas_cal_handler_new(guint64 account_uid);
+
+/* function name:               eas_cal_handler_sync_folder_hierarchy
+ * function description:        pulls down changes in calendar folder
+ * return value:                TRUE if function success, FALSE if error
+ * params: 
+ * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
+ * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
+ *                              from exchange server for subsequent sync requests
+ * GSList **items_created (out): returns a list of EasFolder structs that describe
+ *                              created folders.  If there are no new created folders
+ *                              this parameter will be unchanged.
+ * GSList **items_updated (out): returns a list of EasFolder structs that describe
+ *                              updated folders.  If there are no new updated folders
+ *                              this parameter will be unchanged.
+ * GSList **items_deleted (out): returns a list of EasFolder structs that describe
+ *                              deleted folders.  If there are no new deleted folders
+ *                              this parameter will be unchanged.
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
 */
-gboolean getLatest(gchar *sync_key,
-    gchar *folder_id,	// folder to sync
-	GSList **created,
-	GSList **updated,	
-	GSList **deleted,
-	// guint	window_size,	// max changes we want from server 0..512. AS defaults to 100
-	guint	time_filter,		// AS calls filter_type. Eg "sync back 3 days". Required on API?
-	gboolean *more_available,	// if there are more changes to sync (window_size exceeded)
-	GError **error);
-
-
-// Delete specified items 
-gboolean deleteItems(gchar *sync_key,	// in/out parameter to keep sync in track
-		const GSList *items,	// List of guids to delete
-		gchar *folder_id,	// folder to sync
-		GError **error);
-
-/* 
-push updates to server
-Note that the only valid changes are to the read flag and to categories (other changes ignored)
-*/
-gboolean UpdateItems((gchar *sync_key,	// in/out parameter to keep sync in track
-		const GSList *items,	// List of guids to delete
-		gchar *folder_id,	// folder to sync
-		GError **error);
+gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this, 
+                                                 gchar *sync_key, 
+                                                 GSList **items_created,	
+                                                 GSList **items_updated,
+                                                 GSList **items_deleted,
+                                                 GError **error);
 
 
 #endif
