@@ -38,6 +38,7 @@ typedef enum {
     EAS_REQ_PROVISION,
 	EAS_REQ_SYNC_FOLDER_HIERARCHY,
 	EAS_REQ_SYNC,
+	EAS_REQ_SEND_EMAIL,
 	//TODO: add all other requests here
 	
 	EAS_REQ_LAST
