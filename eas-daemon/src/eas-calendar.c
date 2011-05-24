@@ -35,9 +35,30 @@ eas_calendar_class_init (EasCalendarClass *klass)
 }
 
 
-gboolean eas_calendar_start_sync(EasCalendar* obj, gint valueIn, GError** error)
+void 
+eas_calendar_get_latest_calendar_items(EasCalendar* self,
+                                          guint64 account_uid,
+                                          const gchar* sync_key,
+                                          DBusGMethodInvocation* context)
 {
-  return TRUE;
+}
+
+gboolean 
+eas_calendar_delete_calendar_items(EasCalendar* self,
+                                    const gchar* sync_key, 
+                                    const gchar **server_id,
+                                    GError **error)
+{
+	return TRUE;
+}
+
+gboolean 
+eas_calendar_update_calendar_items(EasCalendar* self,
+                                    const gchar* sync_key, 
+                                    const gchar **calendar_items,
+                                    GError **error)
+{
+	return TRUE;
 }
 
 
