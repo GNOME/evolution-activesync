@@ -245,13 +245,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
  * @param[in]     collection_id             identifer for the folder to be sync'ed
  * @param[in]     deleted_email_array       list of email ids to be deleted
  * @param[in]     changed_email_array       list of changes to existing emails
-
- * @param[out]    ret_sync_key              updated sync_key from the server response
- * @param[out]    ret_more_available        TRUE if further sync data is available on the server
- * @param[out]    ret_added_email_array     serialised list of added emails
- * @param[out]    ret_deleted_email_array   serialised list of deleted email ids
- * @param[out]    ret_changed_email_array   serialsed list of changes to existing emails
- * @param[out]    error                     NULL if no error, otherwise a GLib GError
+ * @param[in]     context                   dbus context
  */
 gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
                                     guint64 account_uid,
@@ -269,12 +263,22 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 
     flag = e_flag_new ();
 
-    // Create Request
-    // eas_xxx_req_new();
+    // TODO Create Request
+#if 0
+    EasSyncFolderEmailReq *req = eas_sync_folder_email_req_new();
+    eas_request_base_SetConnection (&req->parent_instance, 
+                                    eas_mail_get_eas_connection(easMailObj));
+
     
     // Activate Request
-    // eas_xxx_req_Activate();
-    
+    eas_sync_folder_email_req_Activate(req,
+                                       sync_key,
+                                       get_server_changes,
+                                       collection_id,
+                                       deleted_email_array,
+                                       changed_email_array,
+                                       flag);
+#endif
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
@@ -284,11 +288,19 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
     gchar** ret_added_email_array = NULL;
     gchar** ret_deleted_email_array = NULL;
     gchar** ret_changed_email_array = NULL;
-    // Fetch response data
-    // eas_xxx_req_Activate_Finish
 
-    // Serialise the response for transmission over DBus
-    if (error) 
+#if 0
+    // Fetch the serialised response for transmission over DBusresponse
+    eas_sync_folder_email_req_ActivateFinish(req,
+                                             &ret_sync_key,
+                                             &ret_more_available,
+                                             &ret_add_email_array,
+                                             &ret_deleted_email_array,
+                                             &ret_changed_email_array,
+                                             &error);
+#endif
+    
+    if (error)
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
