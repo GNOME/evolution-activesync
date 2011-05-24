@@ -49,7 +49,7 @@ eas_email_info_translator_class_init (EasEmailInfoTranslatorClass *klass)
 }
 
 EasEmailInfoTranslator *
-eas_email_info_new()
+eas_email_info_translator_new()
 {
 	g_debug("eas_email_info_new++");	
 	
