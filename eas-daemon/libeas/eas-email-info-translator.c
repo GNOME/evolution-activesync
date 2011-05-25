@@ -1,20 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * code
- * Copyright (C)  2011 <>
- * 
- * code is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+
  */
 
 #include "eas-email-info-translator.h"
@@ -23,51 +9,8 @@
 #include "../../libeasmail/src/eas-email-info.h"
 
 
-G_DEFINE_TYPE (EasEmailInfoTranslator, eas_email_info_translator, G_TYPE_OBJECT);
-
-static void
-eas_email_info_translator_init (EasEmailInfoTranslator *object)
-{
-	/* initialization code */
-}
-
-static void
-eas_email_info_translator_finalize (GObject *object)
-{
-	/* deinitalization code */
-
-	G_OBJECT_CLASS (eas_email_info_translator_parent_class)->finalize (object);
-}
-
-static void
-eas_email_info_translator_class_init (EasEmailInfoTranslatorClass *klass)
-{
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-	// get rid of warnings about above 2 lines
-	void *temp = (void*)object_class;
-	temp = (void*)parent_class;
-	
-	object_class->finalize = eas_email_info_translator_finalize;
-}
-
-EasEmailInfoTranslator *
-eas_email_info_translator_new()
-{
-	g_debug("eas_email_info_new++");	
-	
-	EasEmailInfoTranslator *object = NULL;
-
-	object = g_object_new (EAS_TYPE_EMAIL_INFO_TRANSLATOR, NULL);
-
-	g_debug("eas_email_info_new--");	
-	
-	return object;
-}
-
 gchar * 
-eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	
@@ -240,7 +183,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 }
 
 gchar * 
-eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	
@@ -295,7 +238,7 @@ eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *
 
 
 gchar * 
-eas_delete_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	

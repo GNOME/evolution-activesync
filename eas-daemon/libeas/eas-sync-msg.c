@@ -6,6 +6,7 @@
  */
 
 #include "eas-sync-msg.h"
+#include "eas-email-info-translator.h"
 
 struct _EasSyncMsgPrivate
 {
@@ -135,7 +136,10 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 {
     g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;
-	xmlNode *node = NULL;
+	xmlNode *node = NULL,
+					*appData = NULL;
+					
+	gchar *item_server_id = NULL;
 	
     if (!doc) {
         g_debug ("Failed to parse sync response XML");
@@ -199,6 +203,27 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
      for (node = node->children; node; node = node->next) {
 	
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+			appData = node;
+			
+			for (appData = appData->children; appData; appData = appData->next) {
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					item_server_id = (gchar *)xmlNodeGetContent(appData);
+					g_debug ("Found serverID for Item = %s", item_server_id);
+					continue;
+				}
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+					gchar *flatItem = NULL;
+					g_debug ("Found AppliicationData - about to parse and flatten");
+					//TODO: switch and add other translators
+					flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+					g_debug ("FlatItem = %s", flatItem);
+					if(flatItem){
+						g_slist_append(priv->added_items, flatItem);
+					}
+						
+					continue;
+				}
+			}
 			eas_sync_parse_item_add(self, node);
 			continue;
 		}
