@@ -11,6 +11,9 @@
 struct _EasGetEmailBodyReqPrivate
 {
 	EasGetEmailBodyMsg* emailBodyMsg;
+	guint64 accountUid;
+	gchar* serverId;
+	gchar* mimeDirectory;
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -42,6 +45,9 @@ eas_get_email_body_req_finalize (GObject *object)
 		g_object_unref(priv->emailBodyMsg);
 	}
 
+	g_free(priv->serverId);
+	g_free(priv->mimeDirectory);
+
 	G_OBJECT_CLASS (eas_get_email_body_req_parent_class)->finalize (object);
 }
 
@@ -58,11 +64,19 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 
 
 EasGetEmailBodyReq*
-eas_get_email_body_req_new (void)
+eas_get_email_body_req_new (const guint64 account_uid, 
+                            const gchar *server_id, 
+                            const gchar *mime_directory)
 {
 	EasGetEmailBodyReq* req = NULL;
+	EasGetEmailBodyReqPrivate *priv = NULL;
 
 	req = g_object_new(EAS_TYPE_GET_EMAIL_BODY_REQ, NULL);
+	priv = req->priv;
+
+	priv->accountUid = account_uid;
+	priv->serverId = g_strdup(server_id);
+	priv->mimeDirectory = g_strdup(mime_directory);
 	
 	return req;
 }
@@ -75,10 +89,10 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self)
 	
 	/* TODO: Add public function implementation here */
 
-	priv->emailBodyMsg = eas_get_email_body_msg_new ("syncKey", "email_id");
+	priv->emailBodyMsg = eas_get_email_body_msg_new (priv->serverId);
 	doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "ItemOperations", doc, self);
 }
 
 void
@@ -94,7 +108,7 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc)
 }
 
 void
-eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self)
+eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
 {
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	/* TODO: Add public function implementation here */

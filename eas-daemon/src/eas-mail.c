@@ -9,6 +9,7 @@
 
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-req.h"
+#include "eas-get-email-body-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -23,11 +24,13 @@ struct _EasMailPrivate
 static void
 eas_mail_init (EasMail *object)
 {
- 	g_debug("eas_mail_init++");
-    EasMailPrivate *priv =NULL;
-	object->_priv = priv = EAS_MAIL_PRIVATE(object);
-	priv->connection = NULL;
-	 	g_debug("eas_mail_init--");
+    EasMailPrivate *priv;
+	g_debug("eas_mail_init++");
+	object->priv = priv = EAS_MAIL_PRIVATE(object);
+
+    priv->connection = NULL;
+
+    g_debug("eas_mail_init--");
 }
 
 static void
@@ -68,13 +71,13 @@ EasMail* eas_mail_new(void)
 
 void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj)
 {
-   EasMailPrivate* priv = self->_priv;
+   EasMailPrivate* priv = self->priv;
    priv->connection = easConnObj;
 }
 
 EasConnection*  eas_mail_get_eas_connection(EasMail* self)
 {
-    EasMailPrivate* priv = self->_priv;
+    EasMailPrivate* priv = self->priv;
     return priv->connection;
 }
 
@@ -168,11 +171,13 @@ cleanup:
 	return ret;
 }
 
-void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
+void eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                           guint64 account_uid,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context)
 {
+    EasMailPrivate* priv = self->priv;
+
     GError *error = NULL;
     GSList* added_folders = NULL;
     GSList* updated_folders  = NULL;
@@ -189,10 +194,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     
     g_debug("eas_mail_sync_email_folder_hierarchy++");
 
-    if(easMailObj->_priv->connection)
-    {
-        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
-    }
+    eas_connection_set_account(priv->connection, account_uid);
 
     g_debug("eas_mail_sync_email_folder_hierarchy++ 1");
     
@@ -202,7 +204,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     g_debug("eas_mail_sync_email_folder_hierarchy++ 2");
     
     eas_request_base_SetConnection (&req->parent_instance, 
-                                    eas_mail_get_eas_connection(easMailObj));
+                                    priv->connection);
                                     
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
@@ -247,25 +249,25 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     }
 
     g_debug("eas_mail_sync_email_folder_hierarchy--");
-
 }
 
 /**
  * Get email header information from the exchange server for the folder 
  * identified by the collection_id.
  *
- * @param[in,out] easMailObj                the instance of the GObject
+ * @param[in,out] self                      the instance of the GObject
  * @param[in]     account_uid               the exchange server account UID
  * @param[in]     sync_key                  the current sync_key
  * @param[in]     collection_id             identifer for the target folder
  * @param[in]     context                   dbus context
  */
-gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
+gboolean eas_mail_sync_folder_email(EasMail* self,
                                     guint64 account_uid,
                                     const gchar* sync_key,
                                     const gchar *collection_id,
                                     DBusGMethodInvocation* context)
 {
+    EasMailPrivate* priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
 
@@ -273,11 +275,13 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 
     flag = e_flag_new ();
 
+    // Set the account Id into the connection
+    eas_connection_set_account(priv->connection, account_uid);
+
     // Create Request
     EasSyncReq *req = g_object_new(EAS_TYPE_SYNC_REQ, NULL);
-    
-    eas_request_base_SetConnection (&req->parent_instance, 
-                                    eas_mail_get_eas_connection(easMailObj));
+
+    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
     // Activate Request
     eas_sync_req_Activate (req,
@@ -348,19 +352,58 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
 }
 
 /**
- * 
+ * Fetches the email body identified by the server_id from the exchange server 
+ * in MIME format and writes it as a file named 'server_id' in the directory
+ * specified by the path in 'mime_directory'.
+ *
+ * @param[in,out] self            the instance of the GObject
+ * @param[in]     account_uid     the exchange server account UID
+ * @param[in]     server_id       email id on the server - this forms the name of the mime file to be created
+ * @param[in]     mime_directory  full path to directory on the client where the mime email is to be stored
+ * @param[in]     context         dbus context
  */
 gboolean
-eas_mail_fetch_email_body (EasMail* easMailObj, 
-                            guint64 account_uid, 
-                            const gchar *server_id, 
-                            const gchar *mime_directory, 
-                            DBusGMethodInvocation* context)
+eas_mail_fetch_email_body (EasMail* self, 
+                           guint64 account_uid, 
+                           const gchar *server_id, 
+                           const gchar *mime_directory, 
+                           DBusGMethodInvocation* context)
 {
-	// TODO
+    EasMailPrivate *priv = self->priv;
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    
     g_debug("eas_mail_fetch_email_body++");
 
-    // EasGetEmailBodyReq
+    flag = e_flag_new ();
+    
+    // Set the account Id into the connection
+    eas_connection_set_account(priv->connection, account_uid);
+
+    // Create Request
+    EasGetEmailBodyReq *req = eas_get_email_body_req_new (account_uid,
+                                                          server_id,
+                                                          mime_directory);
+
+    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+
+    eas_get_email_body_req_Activate (req);
+
+    // Wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
+
+    eas_get_email_body_req_ActivateFinish (req, &error);
+
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context);
+    }
     
     g_debug("eas_mail_fetch_email_body--");
 	return TRUE;

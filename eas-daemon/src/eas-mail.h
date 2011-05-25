@@ -31,7 +31,7 @@ struct _EasMail
 {
 	GObject parent_instance;
 	
-  	EasMailPrivate* _priv;
+  	EasMailPrivate* priv;
 };
 
 GType eas_mail_get_type (void) G_GNUC_CONST;

@@ -37,7 +37,7 @@ struct _EasGetEmailBodyMsg
 };
 
 GType eas_get_email_body_msg_get_type (void) G_GNUC_CONST;
-EasGetEmailBodyMsg* eas_get_email_body_msg_new (const gchar* sync_key, const gchar* email_id);
+EasGetEmailBodyMsg* eas_get_email_body_msg_new (const gchar* serverUid);
 xmlDoc* eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self);
 void eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc* doc);
 
