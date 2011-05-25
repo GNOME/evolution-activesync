@@ -186,21 +186,27 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     gchar** ret_deleted_folders_array = NULL;
 
     eflag = e_flag_new ();
+    
+    g_debug("eas_mail_sync_email_folder_hierarchy++");
 
     if(easMailObj->_priv->connection)
-            eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    }
 
-
-    eas_request_base_SetConnection (&req->parent_instance, 
-                                    eas_mail_get_eas_connection(easMailObj));
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 1");
+    
     // Create the request
-    g_debug("eas_mail_sync_email_folder_hierarchy++");
     req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);
 
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 2");
+    
     eas_request_base_SetConnection (&req->parent_instance, 
                                     eas_mail_get_eas_connection(easMailObj));
                                     
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
+    
     // Activate the request
     eas_sync_folder_hierarchy_req_Activate (req);
     e_flag_wait(eflag);
