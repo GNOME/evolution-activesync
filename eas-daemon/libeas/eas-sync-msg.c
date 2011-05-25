@@ -214,8 +214,22 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
 					gchar *flatItem = NULL;
 					g_debug ("Found AppliicationData - about to parse and flatten");
-					//TODO: switch and add other translators
-					flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+					//choose translator based on data type
+					switch(priv->ItemType)
+					{
+						default:
+						{
+							g_debug ("Unknown Data Type  %d", priv->ItemType);
+						}
+						break;
+						case EAS_ITEM_MAIL:
+						{
+							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+						}
+						
+					}		
+					
+					
 					g_debug ("FlatItem = %s", flatItem);
 					if(flatItem){
 						g_slist_append(priv->added_items, flatItem);
