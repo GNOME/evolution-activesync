@@ -30,6 +30,7 @@ INCLUDES =  -I/usr/include/libsoup-2.4 \
             -I/usr/include/evolution-data-server-2.32
 
 
+
 	  
 LIBS =  -L/usr/lib \
 	-lsoup-2.4 \
@@ -73,7 +74,11 @@ libeas_la_SOURCES =		\
         eas-sync-msg.h \
         eas-sync-msg.c \
         eas-email-info-translator.h \
-        eas-email-info-translator.c
+        eas-email-info-translator.c \
+        eas-send-email-req.h \
+        eas-send-email-req.c \
+        eas-send-email-msg.h \
+        eas-send-email-msg.c               
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)

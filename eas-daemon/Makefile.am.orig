@@ -1,6 +1,10 @@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = libeas src tests docs
+<<<<<<< HEAD
 #SUBDIRS = data libeas src tests docs
 
+=======
+#SUBDIRS =  data
+>>>>>>> 3971e029beca53d23d9daa7387742edb1c65d208
 
 EXTRA_DIST = autogen.sh
