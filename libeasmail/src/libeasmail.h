@@ -161,7 +161,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
                                                 GError **error);
 
 /* function name:               eas_mail_handler_delete_email
- * function description:        delete the email described by the EasEmailInfo struct.
+ * function description:        delete the email with the specified server id.
  *                              If this method is called on an email not in the "Deleted Items"
  *                              folder then the email is moved to the "Deleted Items" folder.  If
  *                              this method is called on an email in the "Deleted Items" folder
@@ -170,7 +170,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in / out):  use value returned from exchange server from previous requests
- * const EasEmailInfo *email (in): identifies the specific email to delete.  This information is 
+ * const gchar *server_id (in): identifies the specific email to delete.  This information is 
  *                              returned in a list from the eas_mail_handler_sync_folder_email_info
  *                              call
  * GError **error (out):        returns error information if an error occurs.  If no
@@ -180,7 +180,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
 */
 gboolean eas_mail_handler_delete_email(EasEmailHandler* this, 
 										gchar *sync_key,                                        
-                                        const EasEmailInfo *email,
+                                        const gchar *server_id,
 	                                    GError **error);
 
 
@@ -191,7 +191,8 @@ Note that the only valid changes are to the read flag and to categories (other c
 /* function name:               eas_mail_handler_update_emails
  * function description:        allows the user to update the status of specific meta information
  *                              related to an email.  The information that can be modified is limited
- *                              by the flags supported on this interface, currently this is:                        
+ *                              by the flags supported on this interface, currently this is: read/unread, 
+ *								and the categories
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()

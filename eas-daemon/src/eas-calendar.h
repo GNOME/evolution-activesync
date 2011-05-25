@@ -7,6 +7,8 @@
 #define _EAS_CALENDAR_H_
 
 #include <glib-object.h>
+#include <dbus/dbus-glib.h>
+#include "../libeas/eas-connection.h"
 
 G_BEGIN_DECLS
 
@@ -19,6 +21,7 @@ G_BEGIN_DECLS
 
 typedef struct _EasCalendarClass EasCalendarClass;
 typedef struct _EasCalendar EasCalendar;
+typedef struct _EasCalendarPrivate EasCalendarPrivate;
 
 struct _EasCalendarClass
 {
@@ -28,12 +31,33 @@ struct _EasCalendarClass
 struct _EasCalendar
 {
 	GObject parent_instance;
+
+	EasCalendarPrivate* _priv;
 };
 
 GType eas_calendar_get_type (void) G_GNUC_CONST;
 
+EasCalendar* eas_calendar_new(void);
+
+EasConnection*  eas_calendar_get_eas_connection(EasCalendar* self);
+void eas_calendar_set_eas_connection(EasCalendar* self, EasConnection* easConnObj);
+
+
 /* TODO:Insert your Calendar Interface APIS here*/
-gboolean eas_calendar_start_sync(EasCalendar* obj, gint valueIn, GError** error) ;
+void eas_calendar_get_latest_calendar_items(EasCalendar* self,
+                                          guint64 account_uid,
+                                          const gchar* sync_key,
+                                          DBusGMethodInvocation* context);
+
+gboolean eas_calendar_delete_calendar_items(EasCalendar* self,
+                                    const gchar* sync_key, 
+                                    const gchar **server_id,
+                                    GError **error);
+
+gboolean eas_calendar_update_calendar_items(EasCalendar* self,
+                                    const gchar* sync_key, 
+                                    const gchar **calendar_items,
+                                    GError **error);
 
 G_END_DECLS
 

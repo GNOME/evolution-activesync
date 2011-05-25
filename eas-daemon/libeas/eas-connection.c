@@ -25,7 +25,7 @@
 #include <libxml/xmlreader.h> // xmlDoc
 
 // List of includes for each request type
-#include "eas-sync-folder-hierarchy.h"
+#include "eas-sync-folder-hierarchy-req.h"
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
 
@@ -598,7 +598,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_MessageComplete((EasSyncFolderHierarchy *)req, doc);
+				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc);
 			}
 			break;
 			

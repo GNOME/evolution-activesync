@@ -244,11 +244,11 @@ free_string_array(gchar **array)
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean 
 eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g, 
-                                                gchar *sync_key, 	
-                                                GSList **folders_created,	
-                                                GSList **folders_updated,
-                                                GSList **folders_deleted,
-                                                GError **error)
+                                       gchar *sync_key, 	
+                                       GSList **folders_created,	
+                                       GSList **folders_updated,
+                                       GSList **folders_deleted,
+                                       GError **error)
 {
 	g_debug("eas_mail_handler_sync_folder_hierarchy++");
 
@@ -486,7 +486,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
-								const EasEmailInfo *email,		// List of EasEmailInfos to delete
+								const gchar *server_id,		// email to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -494,7 +494,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	
 	g_assert(this_g);
 	g_assert(sync_key);	
-	g_assert(email);
+	g_assert(server_id);
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
@@ -527,13 +527,30 @@ eas_mail_handler_update_email(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_send_email(EasEmailHandler* this_g, 
     const gchar *client_email_id,	// unique message identifier supplied by client
-	const gchar *mime_file,		// the full path to the email (mime) to be sent
+	const gchar *mime_file,			// the full path to the email (mime) to be sent
 	GError **error)
 {
 	gboolean ret = TRUE;	
 	g_debug("eas_mail_handler_send_email++");
+
+	g_assert(this_g);
+	g_assert(client_email_id);	
+	g_assert(mime_file);	
+	
+	DBusGProxy *proxy = this_g->priv->remoteEas; 
+
+	// call dbus api
+	ret = dbus_g_proxy_call(proxy, "send_email", error,
+	                        G_TYPE_UINT64, this_g->priv->account_uid, 		
+	                        G_TYPE_STRING, client_email_id,		
+	                        G_TYPE_STRING, mime_file,
+	                        G_TYPE_INVALID,
+	                        G_TYPE_INVALID);	// no out params
+
+	// nothing else to do  
+	
 	g_debug("eas_mail_handler_send_email--");	
-/* TODO */
+
 	return ret;
 }
 

@@ -31,13 +31,15 @@ libeascal_la_SOURCES =		\
         libeascal.h			\
         libeascal.c	
         
-interface_xml =  ../../eas-daemon/libeas/eas-daemon-interface.xml
+interface_xml =  ../../eas-daemon/src/eas-calendar.xml
 
 #Rule to generate the binding headers
-eas-mail-client-stub.h: $(interface_xml)
+eas-calendar-client-stub.h: $(interface_xml)
 	dbus-binding-tool --prefix=eas_object --mode=glib-client $< > $@
 	       
-BUILT_SOURCES = eas-mail-client-stub.h
+BUILT_SOURCES = eas-calendar-client-stub.h
+AM_CFLAGS = $(INTI_CFLAGS)
+AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 
 # Correctly clean the generated headers, but keep the xml description
 CLEANFILES = $(BUILT_SOURCES)

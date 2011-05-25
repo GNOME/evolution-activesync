@@ -21,6 +21,7 @@ G_BEGIN_DECLS
 
 typedef struct _EasAccountsClass EasAccountsClass;
 typedef struct _EasAccounts EasAccounts;
+typedef struct _EasAccountsPrivate EasAccountsPrivate;
 
 struct _EasAccountsClass
 {
@@ -30,10 +31,13 @@ struct _EasAccountsClass
 struct _EasAccounts
 {
 	GObject parent_instance;
+	
+	EasAccountsPrivate* _priv;
 };
 
 GType eas_accounts_get_type (void) G_GNUC_CONST;
 EasAccounts* eas_accounts_new (void);
+int eas_accounts_read_accounts_info(EasAccounts* self);
 gchar* eas_accounts_get_user_id (EasAccounts* self, guint64 accountId);
 gchar* eas_accounts_get_password (EasAccounts* self, guint64 accountId);
 gchar* eas_accounts_get_server_uri (EasAccounts* self, guint64 accountId);

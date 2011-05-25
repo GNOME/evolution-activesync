@@ -16,12 +16,16 @@ struct _EasSyncMsgPrivate
 	gchar* sync_key;
 	gchar* folderID;
 	gint   account_id;
+	
+	EasItemType ItemType;
 };
 
 #define EAS_SYNC_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_MSG, EasSyncMsgPrivate))
 
 
 G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
+
+static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node);
 
 static void
 eas_sync_msg_init (EasSyncMsg *object)
@@ -62,7 +66,7 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 }
 
 EasSyncMsg*
-eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
+eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID, EasItemType type)
 {
 	EasSyncMsg* msg = NULL;
 	EasSyncMsgPrivate *priv = NULL;
@@ -73,6 +77,7 @@ eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
 	priv->sync_key = g_strdup(syncKey);
 	priv->account_id = accountId;
 	priv->folderID = g_strdup(folderID);
+	priv->ItemType = type;
 
 	return msg;
 }
@@ -84,10 +89,11 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
     xmlDoc  *doc   = NULL;
     xmlNode *node  = NULL, 
 	        *child = NULL,
-	        *grandchild = NULL;
+	        *collection = NULL,
+	        *options = NULL,
+	        *body_pref = NULL;
     xmlNs   *ns    = NULL;
 
-	//TODO: this is taken from foldersync message - needs to be properly created
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     node = xmlNewDocNode (doc, NULL, (xmlChar*)"Sync", NULL);
     xmlDocSetRootElement (doc, node);
@@ -97,18 +103,29 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
                        (xmlChar*)"-//MICROSOFT//DTD ActiveSync//EN", 
                        (xmlChar*)"http://www.microsoft.com/");
 
-    ns = xmlNewNs (node, (xmlChar *)"AirSync:",NULL);
-     xmlNewNs (node, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
-    child = xmlNewChild(node, NULL, (xmlChar *)"Collections", NULL);
-   grandchild = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
-   xmlNewChild(grandchild, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
-   xmlNewChild(grandchild, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
-   if(getChanges){
-   	   xmlNewChild(grandchild, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
-   	   xmlNewChild(grandchild, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
-   }
-    xmlNewChild(grandchild, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
-    
+	ns = xmlNewNs (node, (xmlChar *)"AirSync:",NULL);
+	xmlNewNs (node, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
+	child = xmlNewChild(node, NULL, (xmlChar *)"Collections", NULL);
+	collection = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
+	xmlNewChild(collection, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
+	xmlNewChild(collection, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
+	if(getChanges){
+		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
+   
+		if(priv->ItemType = EAS_ITEM_MAIL){
+        
+        options = xmlNewChild(collection, NULL, (xmlChar *)"Options", NULL);
+            xmlNewChild(options, NULL, (xmlChar *)"FilterType", (xmlChar*)"0");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMESupport", (xmlChar*)"2");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"0");
+
+            body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4"); // Plain text 1, HTML 2, MIME 4
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*)"200000");
+		}
+    }    
 
     return doc;
 }
@@ -164,12 +181,49 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey"))
 		{
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
+			g_debug ("Got SyncKey = %s", priv->sync_key);
+			continue;
+		}		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")) 
+        {
+               g_debug ("Commands:\n");
+               break;
+        }		
+	}
+
+    if (!node) {
+        g_debug ("Failed to find Commands element\n");
+        return;
+    }
+    
+     for (node = node->children; node; node = node->next) {
+	
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+			eas_sync_parse_item_add(self, node);
 			continue;
 		}
 		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+			// TODO Parse deleted folders
+			g_assert(0);
+			continue;
+		}
+		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
+			// TODO Parse updated folders
+			g_assert(0);
+			continue;
+		}
 	}
 	
 	g_debug ("eas_sync_msg_parse_response --");
+
+}
+
+static void
+eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node) 
+{
+	EasSyncMsgPrivate *priv = self->priv;
 
 }
 

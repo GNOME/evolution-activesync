@@ -60,19 +60,11 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
 /*
 	synchronize an email folder. Gets email headers only, not bodies
 */                            
-gboolean eas_mail_sync_folder_email(EasMail* self, 
+gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
                                     guint64 account_uid,
-									const gchar* sync_key,   
-                                    gboolean get_server_changes,
-									const gchar *collection_id,	//folder to sync
-									const gchar* deleted_email_array,
-									const gchar* changed_email_array,                                    
-									gchar *ret_sync_key,                                    
-									gboolean *ret_more_available,
-									gchar **ret_added_email_array,
-									gchar **ret_deleted_email_array,
-									gchar **ret_changed_email_array,	
-									GError** error);
+									const gchar* sync_key,
+									const gchar *collection_id,
+                                    DBusGMethodInvocation* context);
 /*
     delete an email 
 */
@@ -98,9 +90,7 @@ eas_mail_fetch (EasMail* self,
 gboolean eas_mail_send_email(EasMail* self, 
                              	guint64 account_uid,
 								const gchar* clientid,
-								const gchar* accountid,
-								gboolean save_in_sent_items,
-								const gchar *mime,
+								const gchar *mime_file,
 								GError** error);								
 											
 
