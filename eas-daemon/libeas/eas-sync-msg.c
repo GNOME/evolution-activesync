@@ -147,8 +147,9 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						break;
 						case EAS_ITEM_MAIL:
 						{
-							//TODO: call translator to get client ID and  encoded application data
+							g_error("Trying to do Add with Mail type - This is not allowed");
 						}
+						break;
 						
 					}		
 				
