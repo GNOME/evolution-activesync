@@ -244,11 +244,11 @@ free_string_array(gchar **array)
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean 
 eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g, 
-                                                gchar *sync_key, 	
-                                                GSList **folders_created,	
-                                                GSList **folders_updated,
-                                                GSList **folders_deleted,
-                                                GError **error)
+                                       gchar *sync_key, 	
+                                       GSList **folders_created,	
+                                       GSList **folders_updated,
+                                       GSList **folders_deleted,
+                                       GError **error)
 {
 	g_debug("eas_mail_handler_sync_folder_hierarchy++");
 
