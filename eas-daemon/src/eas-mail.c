@@ -333,20 +333,17 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	 
     flag = e_flag_new ();
 
-	EasDeleteEmailReq *req = NULL;
-	req = g_object_new(EAS_TYPE_DELETE_EMAIL_REQ, NULL);
 
+
+    // Create the request
+	EasDeleteEmailReq *req = NULL;
+	req = eas_delete_email_req_new (account_uid, sync_key, server_id, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    eas_mail_get_eas_connection(easMailObj));
-                                        
-
 
 	    // Start the request
-    eas_delete_email_req_Activate (req, 
-                                    sync_key,
-                                    server_id,
-                                    flag);
+    eas_delete_email_req_Activate (req);
 
 	    // Set flag to wait for response
 //    e_flag_wait(flag);

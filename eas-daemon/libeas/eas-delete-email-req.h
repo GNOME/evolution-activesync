@@ -22,6 +22,7 @@ G_BEGIN_DECLS
 
 typedef struct _EasDeleteEmailReqClass EasDeleteEmailReqClass;
 typedef struct _EasDeleteEmailReq EasDeleteEmailReq;
+typedef struct _EasDeleteEmailReqPrivate EasDeleteEmailReqPrivate;
 
 struct _EasDeleteEmailReqClass
 {
@@ -31,10 +32,13 @@ struct _EasDeleteEmailReqClass
 struct _EasDeleteEmailReq
 {
 	EasRequestBase parent_instance;
+
+	EasDeleteEmailReqPrivate* priv;	
 };
 
 GType eas_delete_email_req_get_type (void) G_GNUC_CONST;
-void eas_delete_email_req_Activate (EasDeleteEmailReq *self, const gchar *syncKey, const gchar *serverId, EFlag *flag);
+EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *serverId, EFlag *flag);
+void eas_delete_email_req_Activate (EasDeleteEmailReq *self);
 
 G_END_DECLS
 

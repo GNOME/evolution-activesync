@@ -522,8 +522,10 @@ START_TEST (test_delete_email)
 	EasEmailInfo email;
 	gboolean rtn = FALSE;
 	GError *error = NULL;
+	char synckey[9];
+	strcpy(synckey,"9");
 	    
-	rtn = eas_mail_handler_delete_email(email_handler, "9","bob",&error);
+	rtn = eas_mail_handler_delete_email(email_handler, synckey,"bob",&error);
 	if(error){
 		fail_if(rtn == FALSE,"%s",error->message);
 	}
