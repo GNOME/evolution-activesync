@@ -84,7 +84,7 @@ eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID, EasItem
 }
 
 xmlDoc*
-eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
+eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added, GSList *updated, GSList *deleted)
 {
 	EasSyncMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
@@ -110,6 +110,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
 	collection = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
 	xmlNewChild(collection, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
 	xmlNewChild(collection, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
+	//if get changes = true - means we are pulling from the server
 	if(getChanges){
 		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
 		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
@@ -125,6 +126,59 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
             body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
             xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4"); // Plain text 1, HTML 2, MIME 4
             xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*)"200000");
+		}
+    }
+    //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
+    else{
+		GSList * iterator;
+		//if any of the lists are not null we need to add commands element
+		if(added || updated || deleted)
+		{
+			xmlNode *command = xmlNewChild(collection, NULL, (xmlChar *)"Commands", NULL);
+			if(added){
+				for (iterator = added; iterator; iterator = iterator->next) {
+					//choose translator based on data type
+					switch(priv->ItemType)
+					{
+						default:
+						{
+							g_debug ("Unknown Data Type  %d", priv->ItemType);
+						}
+						break;
+						case EAS_ITEM_MAIL:
+						{
+							//TODO: call translator to get client ID and  encoded application data
+						}
+						
+					}		
+				
+				}
+			}
+			if(updated){
+				for (iterator = updated; iterator; iterator = iterator->next) {
+					//choose translator based on data type
+					switch(priv->ItemType)
+					{
+						default:
+						{
+							g_debug ("Unknown Data Type  %d", priv->ItemType);
+						}
+						break;
+						case EAS_ITEM_MAIL:
+						{
+							//TODO: call translator to get client ID and  encoded application data
+						}
+						
+					}	
+				}
+			}
+			if(deleted){
+				for (iterator = deleted; iterator; iterator = iterator->next) {
+					xmlNode *delete = xmlNewChild(command, NULL, (xmlChar *)"Delete", NULL);
+					xmlNewChild(delete, NULL, (xmlChar *)"ServerID", iterator->data);
+				}
+
+			}
 		}
     }    
 
