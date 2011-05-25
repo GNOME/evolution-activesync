@@ -77,7 +77,7 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 
 	if (node && (node->type == XML_ELEMENT_NODE) && (!strcmp((char*)(node->name), "ApplicationData")))
 	{
-		EasCalInfo* cal_info = eas_cal_info_new();
+//		EasCalInfo* cal_info = eas_cal_info_new();
 		xmlNode* n = node;
 
 		guint bufferSize = 0;
@@ -212,9 +212,10 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 		GSList* item;
 		for (item = vcalendar; item != NULL; item = item->next)
 		{
+			// Add a string per list item then destroy the list item behind us
 			vcal_buf = g_string_append(vcal_buf, (const gchar*)item->data);
+			g_free(item->data);
 		}
-		g_slist_free_full(vcalendar, g_free); // Destroy the list and all its contents
 		
 		// Now add the timezone (if there is one)
 		if ((item = vtimezone) != NULL)
@@ -222,10 +223,11 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 			vcal_buf = g_string_append(vcal_buf, "BEGIN:VTIMEZONE\n");
 			for (; item != NULL; item = item->next)
 			{
+				// Add a string per list item then destroy the list item behind us
 				vcal_buf = g_string_append(vcal_buf, (const gchar*)item->data);
+				g_free(item->data);
 			}
 			vcal_buf = g_string_append(vcal_buf, "END:VTIMEZONE\n");
-			g_slist_free_full(vtimezone, g_free); // Destroy the list and all its contents
 		}
 
 		// Now add the event
@@ -234,7 +236,9 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 			vcal_buf = g_string_append(vcal_buf, "BEGIN:VEVENT\n");
 			for (; item != NULL; item = item->next)
 			{
+				// Add a string per list item then destroy the list item behind us
 				vcal_buf = g_string_append(vcal_buf, (const gchar*)item->data);
+				g_free(item->data);
 			}
 
 			// Now add the alarm (nested inside the event)
@@ -243,17 +247,23 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 				vcal_buf = g_string_append(vcal_buf, "BEGIN:VALARM\n");
 				for (; item != NULL; item = item->next)
 				{
+					// Add a string per list item then destroy the list item behind us
 					vcal_buf = g_string_append(vcal_buf, (const gchar*)item->data);
+					g_free(item->data);
 				}
 				vcal_buf = g_string_append(vcal_buf, "END:VALARM\n");
-				g_slist_free_full(valarm, g_free); // Destroy the list and all its contents
 			}
 
 			vcal_buf = g_string_append(vcal_buf, "END:VEVENT\n");
-			g_slist_free_full(valarm, g_free); // Destroy the list and all its contents
 		}
 
-		// An finally close the VCALENDAR
+		// Delete the lists
+		g_slist_free(vcalendar);
+		g_slist_free(vtimezone);
+		g_slist_free(vevent);
+		g_slist_free(valarm);
+		                                 
+		// And finally close the VCALENDAR
 		vcal_buf = g_string_append(vcal_buf, "END:VCALENDAR\n");
 
 		result = g_string_free(vcal_buf, FALSE); // Frees the GString object and returns its buffer with ownership
