@@ -28,6 +28,7 @@
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
+#include "eas-accounts.h"
 
 struct _EasConnectionPrivate
 {
@@ -498,27 +499,47 @@ eas_connection_autodiscover (const gchar* email,
 	g_debug("eas_connection_autodiscover--");
 }
 
-EasConnection* eas_connection_new(const gchar* serverUri,
-                                  const gchar* username,
-                                  const gchar* password,
-                                  GError** error)
+EasConnection* eas_connection_new()
 {
 	EasConnection *cnc = NULL;
 	
 	g_debug("eas_connection_new++");
 
-	*error = NULL; 
-
     cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
-    
-    cnc->priv->username = g_strdup (username);
-    cnc->priv->password = g_strdup (password);
-    cnc->priv->server_uri = g_strdup (serverUri);
 
     // May need to allow a connection to set its own authentication
 
 	g_debug("eas_connection_new--");
     return cnc;
+}
+
+int eas_connection_set_account(EasConnection* self, guint64 accountId)
+{
+  g_debug("creating acounts object\n");   
+  EasAccounts* accountsObj = NULL;
+   accountsObj = eas_accounts_new ();
+   
+   g_debug("eas_accounts_read_accounts_info\n");    
+    int err = eas_accounts_read_accounts_info(accountsObj);
+    if (err !=0)
+    {
+        g_debug("Error reading data from file accounts.cfg\n");
+         return err;    
+    }
+
+   g_debug("getting data from EasAccounts object\n"); 
+   gchar* sUri = NULL;
+   gchar* uname = NULL;
+   gchar* pwd = NULL;
+   sUri = eas_accounts_get_server_uri (accountsObj, accountId);
+   uname = eas_accounts_get_user_id (accountsObj, accountId);
+   pwd = eas_accounts_get_password (accountsObj, accountId);
+
+    self->priv->username = g_strdup (uname);
+    self->priv->password = g_strdup (pwd);
+    self->priv->server_uri = g_strdup (sUri);
+
+    g_object_unref (accountsObj);
 }
 
 void 

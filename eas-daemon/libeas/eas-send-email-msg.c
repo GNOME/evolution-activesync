@@ -25,36 +25,41 @@ G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, G_TYPE_OBJECT);
 
 struct _EasSendEmailMsgPrivate
 {
-	//TODO
-	/*
-	guint64 accountID;
-	gchar* clientid; 
-	gchar* mime_file;	
-	 */
+	guint64 account_id;
+	gchar* client_id; 
+	gchar* mime_string;	//TODO remove if not needed?
 };
 
 static void
 eas_send_email_msg_init (EasSendEmailMsg *object)
 {
-	/* TODO: Add initialization code here */
+	/* initialization code: */
 	g_debug("eas_send_email_msg_init++");
 
 	EasSendEmailMsgPrivate *priv;
 
 	object->priv = priv = EAS_SEND_EMAIL_MSG_PRIVATE(object);	
 
+	priv->account_id = 0;
+	priv->client_id = NULL;
+	priv->mime_string = NULL;
+	
 	g_debug("eas_send_email_msg_init--");
 }
 
 static void
 eas_send_email_msg_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
+	/* deinitalization code: */
 	EasSendEmailMsg *msg = (EasSendEmailMsg *)object;
 	
 	EasSendEmailMsgPrivate *priv = msg->priv;	
+
+	g_free(priv->mime_string);
+	g_free(priv->client_id);
 	g_free (priv);
 	msg->priv = NULL;
+	
 	G_OBJECT_CLASS (eas_send_email_msg_parent_class)->finalize (object);
 }
 
@@ -64,6 +69,90 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
+	// get rid of warnings about above 2 lines
+	void *temp = (void*)object_class;
+	temp = (void*)parent_class;
+	
 	object_class->finalize = eas_send_email_msg_finalize;
+}
+
+EasSendEmailMsg*
+eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string)
+{
+	EasSendEmailMsg* msg = NULL;
+	EasSendEmailMsgPrivate *priv = NULL;
+
+	msg = g_object_new (EAS_TYPE_SEND_EMAIL_MSG, NULL);
+	priv = msg->priv;
+
+	priv->client_id = g_strdup(client_id);
+	priv->mime_string = g_strdup(mime_string);
+	priv->account_id = account_id;
+
+	return msg;
+}
+
+xmlDoc*
+eas_send_email_msg_build_message (EasSendEmailMsg* self)
+{
+	EasSendEmailMsgPrivate *priv = self->priv;
+    xmlDoc  *doc   = NULL;
+    xmlNode *root  = NULL, 
+	        *leaf = NULL;
+
+    doc = xmlNewDoc ( (xmlChar *) "1.0");
+    root = xmlNewDocNode (doc, NULL, (xmlChar*)"SendMail", NULL);
+    xmlDocSetRootElement (doc, root);
+    
+    xmlCreateIntSubset(doc, 
+                       (xmlChar*)"ActiveSync", 
+                       (xmlChar*)"-//MICROSOFT//DTD ActiveSync//EN", 
+                       (xmlChar*)"http://www.microsoft.com/");
+
+	// no namespaces required?
+
+	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
+   	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
+    leaf = xmlNewChild(root, NULL, (xmlChar *)"Mime", (xmlChar*)priv->mime_string);
+
+    return doc;
+}
+
+void
+eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc)
+{
+    g_debug ("eas_send_email_msg_parse_reponse++\n");
+	
+	EasSendEmailMsgPrivate *priv = self->priv;
+	xmlNode *root, *node = NULL;
+	
+    if (!doc) 
+	{
+		g_debug ("Failed: no doc supplied");
+        return;
+    }
+    root = xmlDocGetRootElement(doc);
+    if (strcmp((char *)root->name, "SendMail")) 
+	{
+        g_debug("Failed: not a SendMail response!");
+        return;
+    }
+    for (node = root->children; node; node = node->next) 
+	{
+        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        {
+            gchar *sendmail_status = (gchar *)xmlNodeGetContent(node);
+            g_debug ("SendMail Status:[%s]", sendmail_status);  //TODO - how are errors being propagated to client??
+            continue;
+        }
+    }
+    if (!node) {
+        g_debug ("Failed to find SendMail element"); 
+        return;
+    }
+	
+    g_debug ("eas_send_email_msg_parse_reponse++\n");	
+
+	
 }
 
