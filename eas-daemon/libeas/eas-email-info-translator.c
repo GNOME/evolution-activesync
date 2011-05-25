@@ -1,20 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * code
- * Copyright (C)  2011 <>
- * 
- * code is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+
  */
 
 #include "eas-email-info-translator.h"
@@ -23,52 +9,10 @@
 #include "../../libeasmail/src/eas-email-info.h"
 
 
-G_DEFINE_TYPE (EasEmailInfoTranslator, eas_email_info_translator, G_TYPE_OBJECT);
-
-static void
-eas_email_info_translator_init (EasEmailInfoTranslator *object)
-{
-	/* initialization code */
-}
-
-static void
-eas_email_info_translator_finalize (GObject *object)
-{
-	/* deinitalization code */
-
-	G_OBJECT_CLASS (eas_email_info_translator_parent_class)->finalize (object);
-}
-
-static void
-eas_email_info_translator_class_init (EasEmailInfoTranslatorClass *klass)
-{
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-	// get rid of warnings about above 2 lines
-	void *temp = (void*)object_class;
-	temp = (void*)parent_class;
-	
-	object_class->finalize = eas_email_info_translator_finalize;
-}
-
-EasEmailInfoTranslator *
-eas_email_info_translator_new()
-{
-	g_debug("eas_email_info_new++");	
-	
-	EasEmailInfoTranslator *object = NULL;
-
-	object = g_object_new (EAS_TYPE_EMAIL_INFO_TRANSLATOR, NULL);
-
-	g_debug("eas_email_info_new--");	
-	
-	return object;
-}
-
 gchar * 
-eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
+	g_debug("eas_add_email_appdata_parse_response++");
 	gchar *result = NULL;
 	
 	if (!node) return;
@@ -77,6 +21,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 	// and generate the app-specific parts of the EasEmailInfo structure
     if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "ApplicationData")) 
 	{
+		g_debug("found ApplicationData root");
 		EasEmailInfo *email_info = eas_email_info_new();
 		xmlNode *n = node;
 		GSList *headers = NULL;
@@ -87,7 +32,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 		for (n = n->children; n; n = n->next)
 		{
 			//To
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:To"))	//TODO - is it necessary to specify the namespace?
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "To"))	
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("To");
@@ -96,7 +41,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 				continue;
 			}		
 			//Cc		
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Cc")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Cc")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Cc");
@@ -105,7 +50,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 				continue;
 			}			
 			//From
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:From")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "From")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("From");
@@ -114,7 +59,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 				continue;
 			}				
 			//Subject
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Subject")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Subject")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Subject");
@@ -124,7 +69,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			}			
 			
 			//Reply-To
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:ReplyTo")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "ReplyTo")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Reply-To");	//MIME equivalent
@@ -134,7 +79,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			}				
 			
 			//Received
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:DateReceived")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DateReceived")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Received");	// MIME equivalent
@@ -146,7 +91,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			//DisplayTo	 - is there an equivalent standard email header?
 			
 			//Importance
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Importance")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Importance")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Importance");
@@ -155,7 +100,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 				continue;
 			}			
 			//Read  
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Read")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
 				if((gboolean)xmlNodeGetContent(n))
 				{
@@ -172,27 +117,28 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			//ContentClass			-   ?
 
 			//Attachments
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "airsyncbase:Attachments")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Attachments")) 
 			{ 
+				g_debug("found attachments");
 				xmlNode *s = n;
 				for (s = s->children; s; s = s->next)
 				{				
-					if (s->type == XML_ELEMENT_NODE && !strcmp((char *)s->name, "airsyncbase:Attachment"))					
+					if (s->type == XML_ELEMENT_NODE && !strcmp((char *)s->name, "Attachment"))					
 					{
 						EasAttachment *attachment = g_malloc0(sizeof(EasAttachment)); 
 						
 						//DisplayName
-						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "airsyncbase:DisplayName")) 						
+						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DisplayName")) 						
 						{
 							attachment->display_name = (gchar *)xmlNodeGetContent(n);
 						}
 						//EstimatedDataSize
-						if (n->type == XML_ELEMENT_NODE && !strcmp((guint)n->name, "airsyncbase:EstimatedDataSize")) 						
+						if (n->type == XML_ELEMENT_NODE && !strcmp((guint)n->name, "EstimatedDataSize")) 						
 						{
 							attachment->estimated_size = (guint)xmlNodeGetContent(n);
 						}
 						//FileReference
-						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "airsyncbase:FileReference")) 						
+						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "FileReference")) 						
 						{
 							attachment->file_reference = (gchar *)xmlNodeGetContent(n);
 						}						
@@ -204,8 +150,9 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			}
 			
 			//Categories
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Categories")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Categories")) 
 			{
+				g_debug("found categories");
 				xmlNode *s = n;
 				for (s = s->children; s; s = s->next)
 				{				
@@ -221,7 +168,7 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 		email_info->headers = headers;
 		email_info->attachments = attachments;
 		email_info->categories = categories;
-		email_info->flags = flags;
+		email_info->flags = flags;	
 
 		// serialise the emailinfo
 		if(!eas_email_info_serialise(email_info, &result))
@@ -229,18 +176,19 @@ eas_add_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *nod
 			g_warning("Failed to serialise email info");
 		}
 		
-		g_object_unref(email_info);
+		//g_object_unref(email_info); 
 	}
 	else
 	{
 		g_error("Failed! Expected ApplicationData node at root");
 	}
 
+	g_debug("eas_add_email_appdata_parse_response--");	
 	return result;
 }
 
 gchar * 
-eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	
@@ -295,7 +243,7 @@ eas_update_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *
 
 
 gchar * 
-eas_delete_email_appdata_parse_response (EasEmailInfoTranslator* self, xmlNode *node, gchar *server_id)
+eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	

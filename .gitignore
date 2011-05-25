@@ -43,5 +43,6 @@ libeasmail/m4/*
 *.anjuta*
 *.*~
 *.orig
+*.bak
 
 

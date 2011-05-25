@@ -126,19 +126,21 @@ eas_mail_handler_new(guint64 account_uid)
 
 // takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
 static gboolean 
-build_folder_list(const gchar **serialised_folder_array, GSList *folder_list, GError **error)
+build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, GError **error)
 {
 	gboolean ret = TRUE;
 	guint i = 0;
 
-	g_assert(g_slist_length(folder_list) == 0);
+    g_assert(folder_list);
+
+	g_assert(g_slist_length(*folder_list) == 0);
 	
 	while(serialised_folder_array[i])
 	{
 		EasFolder *folder = eas_folder_new();
 		if(folder)
 		{
-			folder_list = g_slist_append(folder_list, folder);	// add it to the list first to aid cleanup
+			*folder_list = g_slist_append(*folder_list, folder);	// add it to the list first to aid cleanup
 			if(!folder_list)
 			{
 				g_free(folder);
@@ -167,10 +169,11 @@ cleanup:
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));
 		// clean up on error
-		g_slist_foreach(folder_list,(GFunc)g_free, NULL);
-		g_slist_free(folder_list);
+		g_slist_foreach(*folder_list,(GFunc)g_free, NULL);
+		g_slist_free(*folder_list);
 	}
 	
+	g_debug("list has %d items", g_slist_length(*folder_list));
 	return ret;
 }
 
@@ -292,14 +295,14 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		g_debug("sync_email_folder_hierarchy called successfully");
 		
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_folder_list((const gchar **)created_folder_array, *folders_created, error);
+		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
 		if(ret)
 		{
-			ret = build_folder_list((const gchar **)deleted_folder_array, *folders_deleted, error);
+			ret = build_folder_list((const gchar **)deleted_folder_array, folders_deleted, error);
 		}
 		if(ret)	
 		{
-			ret = build_folder_list((const gchar **)updated_folder_array, *folders_updated, error);
+			ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
 		}
 	}
 	
@@ -309,6 +312,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	
 	if(!ret)	// failed - cleanup lists
 	{
+	   g_debug("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
 		g_slist_foreach(*folders_created, (GFunc)g_free, NULL);
 		g_free(*folders_created);
 		*folders_created = NULL;
@@ -318,6 +322,11 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		g_slist_foreach(*folders_deleted, (GFunc)g_free, NULL);
 		g_free(*folders_deleted);
 		*folders_deleted = NULL;
+	}
+	if(*folders_created ==NULL)
+	{
+	    g_debug("created list not correctly created--");
+
 	}
 	
 	g_debug("eas_mail_handler_sync_folder_hierarchy--");
@@ -344,11 +353,12 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 {
 	g_debug("eas_mail_handler_sync_folder_email_info++");
 
+
 	g_assert(this_g);
 	g_assert(sync_key);
 	g_assert(collection_id);
 	g_assert(more_available);
-	
+
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
@@ -356,14 +366,12 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **updated_emailinfo_array = NULL;
 	
+	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
 							G_TYPE_UINT64, this_g->priv->account_uid,                   
 							G_TYPE_STRING, sync_key,
-							G_TYPE_BOOLEAN, TRUE,					// want server changes
 	                        G_TYPE_STRING, collection_id,			// folder 
-							G_TYPE_STRV, NULL, 						// deleted by client
-	                        G_TYPE_STRV, NULL, 						// updated by client
 							G_TYPE_INVALID, 
 							G_TYPE_STRING, &sync_key,
 							G_TYPE_BOOLEAN, more_available,
@@ -372,6 +380,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 							G_TYPE_STRV, &updated_emailinfo_array,
 							G_TYPE_INVALID);
 	
+	g_debug("eas_mail_handler_sync_folder_email_info called proxy");
 	// convert created/deleted/updated emailinfo arrays into lists of emailinfo objects (deserialise results)
 	if(ret)
 	{
@@ -432,11 +441,9 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
 	// call dbus api
-	ret = dbus_g_proxy_call(proxy, "fetch", error,
+	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
-	                        G_TYPE_STRING, server_id,		
-	                        G_TYPE_STRING, folder_id,		
-	                        G_TYPE_STRING, NULL,		// for attachments only	
+	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);
@@ -465,11 +472,9 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
 	// call dbus api
-	ret = dbus_g_proxy_call(proxy, "fetch", error,
+	ret = dbus_g_proxy_call(proxy, "fetch_attachment", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
-	                        G_TYPE_STRING, NULL,		
-	                        G_TYPE_STRING, NULL,		
-	                        G_TYPE_STRING, file_reference,		// for attachments only	
+	                        G_TYPE_STRING, file_reference,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);

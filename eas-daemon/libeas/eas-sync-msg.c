@@ -6,6 +6,7 @@
  */
 
 #include "eas-sync-msg.h"
+#include "eas-email-info-translator.h"
 
 struct _EasSyncMsgPrivate
 {
@@ -16,6 +17,8 @@ struct _EasSyncMsgPrivate
 	gchar* sync_key;
 	gchar* folderID;
 	gint   account_id;
+	
+	EasItemType ItemType;
 };
 
 #define EAS_SYNC_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_MSG, EasSyncMsgPrivate))
@@ -64,7 +67,7 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 }
 
 EasSyncMsg*
-eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
+eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID, EasItemType type)
 {
 	EasSyncMsg* msg = NULL;
 	EasSyncMsgPrivate *priv = NULL;
@@ -75,6 +78,7 @@ eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
 	priv->sync_key = g_strdup(syncKey);
 	priv->account_id = accountId;
 	priv->folderID = g_strdup(folderID);
+	priv->ItemType = type;
 
 	return msg;
 }
@@ -86,7 +90,9 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
     xmlDoc  *doc   = NULL;
     xmlNode *node  = NULL, 
 	        *child = NULL,
-	        *grandchild = NULL;
+	        *collection = NULL,
+	        *options = NULL,
+	        *body_pref = NULL;
     xmlNs   *ns    = NULL;
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -101,15 +107,26 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
 	ns = xmlNewNs (node, (xmlChar *)"AirSync:",NULL);
 	xmlNewNs (node, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
 	child = xmlNewChild(node, NULL, (xmlChar *)"Collections", NULL);
-	grandchild = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
-	xmlNewChild(grandchild, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
-	xmlNewChild(grandchild, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
+	collection = xmlNewChild(child, NULL, (xmlChar *)"Collection", NULL);
+	xmlNewChild(collection, NULL, (xmlChar *)"SyncKey", (xmlChar*)priv->sync_key);
+	xmlNewChild(collection, NULL, (xmlChar *)"CollectionId", (xmlChar*)priv->folderID);
 	if(getChanges){
-		xmlNewChild(grandchild, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
-		xmlNewChild(grandchild, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
-	}
-    xmlNewChild(grandchild, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
-    
+		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
+   
+		if(priv->ItemType == EAS_ITEM_MAIL){
+        
+        options = xmlNewChild(collection, NULL, (xmlChar *)"Options", NULL);
+            xmlNewChild(options, NULL, (xmlChar *)"FilterType", (xmlChar*)"0");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMESupport", (xmlChar*)"2");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"0");
+
+            body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4"); // Plain text 1, HTML 2, MIME 4
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*)"200000");
+		}
+    }    
 
     return doc;
 }
@@ -119,7 +136,10 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 {
     g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;
-	xmlNode *node = NULL;
+	xmlNode *node = NULL,
+					*appData = NULL;
+					
+	gchar *item_server_id = NULL;
 	
     if (!doc) {
         g_debug ("Failed to parse sync response XML");
@@ -183,6 +203,41 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
      for (node = node->children; node; node = node->next) {
 	
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+			appData = node;
+			
+			for (appData = appData->children; appData; appData = appData->next) {
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					item_server_id = (gchar *)xmlNodeGetContent(appData);
+					g_debug ("Found serverID for Item = %s", item_server_id);
+					continue;
+				}
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+					gchar *flatItem = NULL;
+					g_debug ("Found AppliicationData - about to parse and flatten");
+					//choose translator based on data type
+					switch(priv->ItemType)
+					{
+						default:
+						{
+							g_debug ("Unknown Data Type  %d", priv->ItemType);
+						}
+						break;
+						case EAS_ITEM_MAIL:
+						{
+							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+						}
+						
+					}		
+					
+					
+					g_debug ("FlatItem = %s", flatItem);
+					if(flatItem){
+						g_slist_append(priv->added_items, flatItem);
+					}
+						
+					continue;
+				}
+			}
 			eas_sync_parse_item_add(self, node);
 			continue;
 		}

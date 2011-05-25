@@ -112,11 +112,11 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 
         g_debug("eas_calendar_get_latest_calendar_items  - get results");
         
-         eas_sync_req_Activate_Finish (syncReqObj,
-                                                    &ret_sync_key,
-                                                    &added_items,
-                                                    &updated_items,
-                                                    &deleted_items);
+         eas_sync_req_ActivateFinish (syncReqObj,
+                                      &ret_sync_key,
+                                      &added_items,
+                                      &updated_items,
+                                      &deleted_items);
          e_flag_free (eflag);
                  
          //serialise the calendar objects from GSList* to char** and populate  :

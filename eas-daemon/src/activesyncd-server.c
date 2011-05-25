@@ -36,7 +36,6 @@
 int main(int argc, char** argv) {
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
-    EasAccounts* EasAccounts = NULL;
     EasConnection* EasConnObj = NULL;
     EasCalendar* EasCalendarObj = NULL;
     EasCommon* EasCommonObj = NULL;
@@ -46,7 +45,6 @@ int main(int argc, char** argv) {
     GMainLoop* mainloop = NULL;
     guint result;
     GError* error = NULL;
-
 
     g_type_init();
 
@@ -59,38 +57,9 @@ int main(int argc, char** argv) {
     //Creating all the GObjects
     g_debug("activesyncd Daemon Started");
 
-   g_debug("creating acounts object\n");   
-   EasAccounts = eas_accounts_new ();
-   
-   g_debug("eas_accounts_read_accounts_info\n");    
-    int err = eas_accounts_read_accounts_info(EasAccounts);
-    if (err !=0)
-    {
-        g_debug("Error reading data from file accounts.cfg\n");
-        g_main_loop_quit (mainloop);
-        exit(err);    
-    }
-
-   g_debug("getting data from EasAccounts object\n"); 
-   
-    //TODO:  handling mltiple connections (connections per account)
-    guint64 accountId;
-   accountId =1234567890;
-   
-   gchar* serverUri = NULL;
-   gchar* username = NULL;
-   gchar* password = NULL;
-
-    //TODO:  handling mltiple connections (connections per account)
-   serverUri = eas_accounts_get_server_uri (EasAccounts, accountId);
-   username = eas_accounts_get_user_id (EasAccounts, accountId);
-   password = eas_accounts_get_password (EasAccounts, accountId);
-
     g_debug("Creating EEasConnection GObject.\n");
     GError* cnc_error = NULL;
-
-    //TODO:   EasConnection -no need to pass this params, they are read form config file
-    EasConnObj = eas_connection_new(serverUri, username, password, &cnc_error);
+    EasConnObj = eas_connection_new();    
     if (EasConnObj == NULL) {
         g_debug("Error: Failed to create EEasConnection instance");
         g_clear_error (&error);
@@ -134,7 +103,7 @@ int main(int argc, char** argv) {
     eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
     //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
-   eas_mail_set_eas_connection(EasMailObj, EasConnObj);
+    eas_mail_set_eas_connection(EasMailObj, EasConnObj);
    
     g_debug("Connecting to the session DBus");
     bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
