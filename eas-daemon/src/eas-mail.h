@@ -93,9 +93,7 @@ eas_mail_fetch (EasMail* self,
 gboolean eas_mail_send_email(EasMail* self, 
                              	guint64 account_uid,
 								const gchar* clientid,
-								const gchar* accountid,
-								gboolean save_in_sent_items,
-								const gchar *mime,
+								const gchar *mime_file,
 								GError** error);								
 											
 

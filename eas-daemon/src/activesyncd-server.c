@@ -7,8 +7,6 @@
  */
 
 //system include
-//#include <signal.h>
-//#include <bits/signum.h>
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <stdlib.h>
@@ -19,6 +17,7 @@
 //user include
 #include "activesyncd-common-defs.h"
 #include "../libeas/eas-connection.h"
+#include "../libeas/eas-accounts.h"
 #include "eas-calendar.h" 
 #include "eas-common.h"
 #include "eas-contact.h" 
@@ -37,6 +36,7 @@
 int main(int argc, char** argv) {
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
+    EasAccounts* EasAccounts = NULL;
     EasConnection* EasConnObj = NULL;
     EasCalendar* EasCalendarObj = NULL;
     EasCommon* EasCommonObj = NULL;
@@ -57,14 +57,39 @@ int main(int argc, char** argv) {
     }
 
     //Creating all the GObjects
-    g_debug("Creating EEasConnection GObject.");
-    //EasConnObj = g_object_new(EAS_TYPE_CONNECTION , NULL);
+    g_debug("activesyncd Daemon Started");
 
-    const gchar* serverUri = "https://cstylianou.com/Microsoft-Server-ActiveSync";
-    const gchar* username = "tez";
-    const gchar* password = "M0bica!";
-    GError* cnc_error = NULL;
+   g_debug("creating acounts object\n");   
+   EasAccounts = eas_accounts_new ();
    
+   g_debug("eas_accounts_read_accounts_info\n");    
+    int err = eas_accounts_read_accounts_info(EasAccounts);
+    if (err !=0)
+    {
+        g_debug("Error reading data from file accounts.cfg\n");
+        g_main_loop_quit (mainloop);
+        exit(err);    
+    }
+
+   g_debug("getting data from EasAccounts object\n"); 
+   
+    //TODO:  handling mltiple connections (connections per account)
+    guint64 accountId;
+   accountId =1234567890;
+   
+   gchar* serverUri = NULL;
+   gchar* username = NULL;
+   gchar* password = NULL;
+
+    //TODO:  handling mltiple connections (connections per account)
+   serverUri = eas_accounts_get_server_uri (EasAccounts, accountId);
+   username = eas_accounts_get_user_id (EasAccounts, accountId);
+   password = eas_accounts_get_password (EasAccounts, accountId);
+
+    g_debug("Creating EEasConnection GObject.\n");
+    GError* cnc_error = NULL;
+
+    //TODO:   EasConnection -no need to pass this params, they are read form config file
     EasConnObj = eas_connection_new(serverUri, username, password, &cnc_error);
     if (EasConnObj == NULL) {
         g_debug("Error: Failed to create EEasConnection instance");
@@ -74,7 +99,7 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Creating calendar  gobject.");
-    EasCalendarObj = g_object_new(EAS_TYPE_CALENDAR , NULL);
+    EasCalendarObj = eas_calendar_new();
     if (EasCalendarObj == NULL) {
         g_debug("Error: Failed to create calendar  instance");
         g_main_loop_quit (mainloop);
@@ -106,7 +131,7 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Pass a EasConnection handle to the exposed GObjects");
-    //ret = eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
+    eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
     //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
    eas_mail_set_eas_connection(EasMailObj, EasConnObj);

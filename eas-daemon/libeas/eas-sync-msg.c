@@ -165,20 +165,16 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey"))
 		{
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
+			g_debug ("Got SyncKey = %s", priv->sync_key);
 			continue;
-		}
-		
-	}
-	
-	for (node = node->children; node; node = node->next) {
-    
+		}		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")) 
         {
                g_debug ("Commands:\n");
                break;
-        }
+        }		
+	}
 
-    }
     if (!node) {
         g_debug ("Failed to find Commands element\n");
         return;
