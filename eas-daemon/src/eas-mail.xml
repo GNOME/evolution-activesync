@@ -71,7 +71,7 @@
 
       <arg type="s" name="ret_sync_key" direction="out"/>
       <!-- whether there are more changes available (ie windowsize exceeded) -->
-<!--      <arg type="b" name="ret_more_available" direction="out"/> -->
+<arg type="b" name="ret_more_available" direction="out"/> 
 
 <!--      <arg type="b" name="deletes_as_moves" direction="in"/>	not currently supporting; hardcode in daemon	-->
 <!-- 	  <arg type="b" name="conversation_mode" direction="in"/>	not currently supporting 	-->

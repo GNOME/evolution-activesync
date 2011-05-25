@@ -95,7 +95,7 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	
 	g_debug("eas_sync_req_activate - new Sync  mesg");
 	//create sync  msg type
-	priv->syncMsg = eas_sync_msg_new (syncKey, accountID, folderId);
+	priv->syncMsg = eas_sync_msg_new (syncKey, accountID, folderId, type);
 
     g_debug("eas_sync_req_activate- syncKey = %s", syncKey);
 
@@ -151,7 +151,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 			}
 			
 			//create new message with new syncKey
-			priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID);
+			priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID, priv->ItemType);
 
 			//build request msg
 			doc = eas_sync_msg_build_message (priv->syncMsg, TRUE);
