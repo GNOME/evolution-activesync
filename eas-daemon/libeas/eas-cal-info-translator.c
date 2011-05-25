@@ -51,25 +51,92 @@ gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNod
 		EasCalInfo* cal_info = eas_cal_info_new();
 		xmlNode* n = node;
 
-		GSList* iCalLines = NULL;
+		// Using separate lits to capture the data for various parts of the iCalendar document:
+		//
+		//   BEGIN VCALENDAR
+		//      [ BEGIN VTMEZONE ... END VTIMEZONE ]
+		//      BEGIN VEVENT
+		//         [ BEGIN VALARM ... END VALARM ]
+		//      END VEVENT
+		//   END VCALENDAR
+		GSList* vcalendar = NULL;
 
+		GSList* vevent = NULL;
+		GSList* valarm = NULL;
+		GSList* vtimezone = NULL;
+
+		// TODO: get all these strings into constants/#defines
+		
+		vcalendar = g_slist_append(vcalendar, g_strdup("BEGIN:VCALENDAR"));
+		// TODO: make the PRODID configurable somehow
+		vcalendar = g_slist_append(vcalendar, g_strdup("PRODID:-//Meego//ActiveSyncD 1.0//EN"));
+		vcalendar = g_slist_append(vcalendar, g_strdup("VERSION:2.0"));
+		vcalendar = g_slist_append(vcalendar, g_strdup("METHOD:PUBLISH"));
+		
 		for (n = n->children; n; n = n->next)
 		{
 			if (n->type == XML_ELEMENT_NODE)
 			{
-				const char* name = (const char*)(node->name);
+				const gchar* name = (const gchar*)(n->name);
 
-				if (strcmp(name, "calendar:DtStamp"))
+				if (g_strcmp0(name, "calendar:Subject") == 0)
 				{
-					// TODO: implement
+					vevent = g_slist_append(vevent, g_strconcat("SUMMARY:", (const gchar*)n->content));
 				}
-				else if (strcmp(name, "calendar:Subject"))
+				else if (g_strcmp0(name, "calendar:StartTime") == 0)
 				{
-					// TODO: implement
+					vevent = g_slist_append(vevent, g_strconcat("DTSTART:", (const gchar*)n->content));
 				}
-				// TODO: continue
+				else if (g_strcmp0(name, "calendar:EndTime") == 0)
+				{
+					vevent = g_slist_append(vevent, g_strconcat("DTEND:", (const gchar*)n->content));
+				}
+				else if (g_strcmp0(name, "calendar:DtStamp") == 0)
+				{
+					vevent = g_slist_append(vevent, g_strconcat("DTSTAMP:", (const gchar*)n->content));
+				}
+				else if (g_strcmp0(name, "calendar:UID") == 0)
+				{
+					vevent = g_slist_append(vevent, g_strconcat("UID:", (const gchar*)n->content));
+				}
+				else if (g_strcmp0(name, "calendar:Location") == 0)
+				{
+					vevent = g_slist_append(vevent, g_strconcat("LOCATION:", (const gchar*)n->content));
+				}
+				else if (g_strcmp0(name, "airsyncbase:Body") == 0)
+				{
+					vevent = g_slist_append(vevent, g_strconcat("DESCRIPTION:", (const gchar*)n->content));
+				}
+				else if (g_strcmp0(name, "calendar:Categories") == 0)
+				{
+					GString* categories = NULL;
+
+					xmlNode* catNode = NULL;
+					for (catNode = n->children; catNode; catNode = catNode->next)
+					{
+						if (categories->len == 0)
+						{
+							categories = g_string_new((const gchar*)catNode->content);
+						}
+						else
+						{
+							categories = g_string_append(categories, ",");
+							categories = g_string_append(categories, (const gchar*)catNode->content);
+						}
+					}
+					if (categories->len > 0)
+					{
+						vevent = g_slist_append(vevent, g_strconcat("CATEGORIES:", categories->str));
+					}
+
+					// Free the string, including the character buffer
+					g_string_free(categories, TRUE);
+				}
 			}
 		}
+
+   		vcalendar = g_slist_append(vcalendar, g_strdup("END:VEVENT"));
+
 	}
 
 	return result;
