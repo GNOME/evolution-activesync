@@ -37,7 +37,8 @@ struct _EasGetEmailBodyReq
 };
 
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
-EasGetEmailBodyReq* eas_get_email_body_req_new (void);
+
+EasGetEmailBodyReq* eas_get_email_body_req_new ();
 void eas_get_email_body_req_Activate (EasGetEmailBodyReq* self);
 void eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc);
 void eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self);

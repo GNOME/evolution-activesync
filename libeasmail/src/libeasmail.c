@@ -441,11 +441,9 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
 	// call dbus api
-	ret = dbus_g_proxy_call(proxy, "fetch", error,
+	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
-	                        G_TYPE_STRING, server_id,		
-	                        G_TYPE_STRING, folder_id,		
-	                        G_TYPE_STRING, NULL,		// for attachments only	
+	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);
@@ -474,11 +472,9 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
 	// call dbus api
-	ret = dbus_g_proxy_call(proxy, "fetch", error,
+	ret = dbus_g_proxy_call(proxy, "fetch_attachment", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
-	                        G_TYPE_STRING, NULL,		
-	                        G_TYPE_STRING, NULL,		
-	                        G_TYPE_STRING, file_reference,		// for attachments only	
+	                        G_TYPE_STRING, file_reference,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
 	                        G_TYPE_INVALID);
