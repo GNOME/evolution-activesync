@@ -114,7 +114,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges)
 		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"1");
 		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
    
-		if(priv->ItemType = EAS_ITEM_MAIL){
+		if(priv->ItemType == EAS_ITEM_MAIL){
         
         options = xmlNewChild(collection, NULL, (xmlChar *)"Options", NULL);
             xmlNewChild(options, NULL, (xmlChar *)"FilterType", (xmlChar*)"0");
