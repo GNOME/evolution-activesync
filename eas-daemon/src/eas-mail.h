@@ -63,10 +63,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
 gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
                                     guint64 account_uid,
 									const gchar* sync_key,
-                                    gboolean get_server_changes,
 									const gchar *collection_id,
-									const gchar* deleted_email_array,
-									const gchar* changed_email_array,
                                     DBusGMethodInvocation* context);
 /*
     delete an email 

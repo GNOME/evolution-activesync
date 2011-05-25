@@ -38,9 +38,9 @@ struct _EasSyncReq
 
 GType eas_sync_req_get_type (void) G_GNUC_CONST;
 
-void eas_sync_req_Activate (EasSyncReq *self,gchar* syncKey, guint64 accountID, EFlag *flag, gchar* folderId, EasItemType type);
+void eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID, EFlag *flag, const gchar* folderId, EasItemType type);
 void eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc);
-void eas_sync_req_Activate_Finish (EasSyncReq* self, gchar** ret_sync_key, GSList** added_items, GSList** updated_items, GSList** deleted_items);
+void eas_sync_req_ActivateFinish (EasSyncReq* self, gchar** ret_sync_key, GSList** added_items, GSList** updated_items, GSList** deleted_items);
 
 G_END_DECLS
 
