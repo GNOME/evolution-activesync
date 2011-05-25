@@ -187,6 +187,12 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 
     eflag = e_flag_new ();
 
+    if(easMailObj->_priv->connection)
+            eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+
+
+    eas_request_base_SetConnection (&req->parent_instance, 
+                                    eas_mail_get_eas_connection(easMailObj));
     // Create the request
     g_debug("eas_mail_sync_email_folder_hierarchy++");
     req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);

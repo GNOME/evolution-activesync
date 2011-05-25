@@ -54,7 +54,9 @@ GType eas_connection_get_type (void) G_GNUC_CONST;
 
 void eas_connection_autodiscover (const gchar* email, const gchar* username, const gchar* password, gchar** serverUri, GError** error);
 
-EasConnection* eas_connection_new (const gchar* serverUri, const gchar* username, const gchar* password, GError** error);
+//EasConnection* eas_connection_new (const gchar* serverUri, const gchar* username, const gchar* password, GError** error);
+EasConnection* eas_connection_new ();
+int eas_connection_set_account(EasConnection* self, guint64 accountId);
 
 // Provisioning APIs
 void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey);
