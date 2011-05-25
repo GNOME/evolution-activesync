@@ -332,43 +332,70 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 }
 
 gboolean eas_mail_delete_email(EasMail* easMailObj,
-                                    const gchar* sync_key, 
-                                    const gchar *server_id,
-                                    GError **error)
+                               guint64 account_uid,
+                               const gchar* sync_key, 
+                               const gchar *server_id,
+                               DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_delete_email++");
+
+    // TODO
+
+    // EasDeleteEmailReq
+    
     g_debug("eas_mail_delete_email--");
 	return TRUE;
 }
 
+/**
+ * 
+ */
 gboolean
-eas_mail_fetch (EasMail* easMailObj, 
-                guint64 account_uid, 
-                const gchar *server_id, 
-                const gchar *collection_id, 
-                const gchar *file_reference, 
-                const gchar *mime_directory, 
-                GError **error)
+eas_mail_fetch_email_body (EasMail* easMailObj, 
+                            guint64 account_uid, 
+                            const gchar *server_id, 
+                            const gchar *mime_directory, 
+                            DBusGMethodInvocation* context)
 {
 	// TODO
-    g_debug("eas_mail_fetch++");
-    g_debug("eas_mail_fetch--");
+    g_debug("eas_mail_fetch_email_body++");
+
+    // EasGetEmailBodyReq
+    
+    g_debug("eas_mail_fetch_email_body--");
 	return TRUE;
 }
 
+gboolean
+eas_mail_fetch_attachment (EasMail* easMailObj, 
+                            guint64 account_uid, 
+                            const gchar *server_id, 
+                            const gchar *file_reference, 
+                            const gchar *mime_directory, 
+                            DBusGMethodInvocation* context)
+{
+	// TODO
+    g_debug("eas_mail_fetch_attachment++");
+
+    // EasGetAttachmentReq
+    g_debug("eas_mail_fetch_attachment--");
+	return TRUE;
+}
+    
+
 // 
 gboolean eas_mail_send_email(EasMail* easMailObj, 
-								guint64 account_uid,                             
+								guint64 account_uid,
 								const gchar* clientid,
 								const gchar *mime_file,
-								GError** error)
+								DBusGMethodInvocation* context)
 {
 	g_debug("eas_mail_send_email++");
 	
 	// TODO
-
+    // EasSendMailReq
 	g_debug("eas_mail_send_email--");
-	return TRUE;								
+	return TRUE;
 }
 
 
