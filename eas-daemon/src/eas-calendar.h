@@ -8,6 +8,7 @@
 
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
+#include "../libeas/eas-connection.h"
 
 G_BEGIN_DECLS
 
@@ -35,6 +36,12 @@ struct _EasCalendar
 };
 
 GType eas_calendar_get_type (void) G_GNUC_CONST;
+
+EasCalendar* eas_calendar_new(void);
+
+EasConnection*  eas_calendar_get_eas_connection(EasCalendar* self);
+void eas_calendar_set_eas_connection(EasCalendar* self, EasConnection* easConnObj);
+
 
 /* TODO:Insert your Calendar Interface APIS here*/
 void eas_calendar_get_latest_calendar_items(EasCalendar* self,
