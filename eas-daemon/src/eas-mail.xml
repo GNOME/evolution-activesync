@@ -38,138 +38,38 @@
       <arg type="as" name="ret_updated_folder_array" direction="out"/>
     </method>
 
-
-
-<!--
- 2-way sync of specified email folder. This will sync email headers only, not bodies
- will use AS 'Sync' command
--->
+<!-- 2-way sync of specified email folder. This will sync email headers only, not bodies will use AS 'Sync' command -->
     <method name="sync_folder_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
-<!--      <arg type="b" name="get_server_changes" direction="in"/> -->
-      <!-- server id for folder to sync: -->
       <arg type="s" name="collection_id" direction="in"/>
-      <!-- max changes wanted from server (up to 512): -->
-      <!-- <arg type="u" name="window_size" direction="in"/> will be settable on the 'config api'? -->
-   <!-- from the client: -->
-      <!-- note that, according to docs, AS doesn't support the client adding emails. 
-	   however http://msdn.microsoft.com/en-us/library/ee158440%28v=EXCHG.80%29.aspx 
-           shows email application data in an add command?
-	   So how do drafts work!? 
-      -->
-      <!-- deleted -->
-<!--      <arg type="as" name="deleted_email_array" direction="in"/> -->
-      <!-- updated -->
-<!--      <arg type="as" name="changed_email_array" direction="in"/> -->
-      <!-- what does this data look like?
-                                        <xs:element ref="email:Flag"/>
-                                        <xs:element ref="email:Read"/>
-                                        <xs:element ref="email:Categories"/>
-      -->
-
       <arg type="s" name="ret_sync_key" direction="out"/>
-      <!-- whether there are more changes available (ie windowsize exceeded) -->
-<arg type="b" name="ret_more_available" direction="out"/> 
+      <arg type="b" name="ret_more_available" direction="out"/> 
 
-<!--      <arg type="b" name="deletes_as_moves" direction="in"/>	not currently supporting; hardcode in daemon	-->
-<!-- 	  <arg type="b" name="conversation_mode" direction="in"/>	not currently supporting 	-->
-<!-- 	  
-	  0 = Never send MIME data
-	  1 = Send MIME data for S/MIME messages only. Send regular body for all other messages
-	  2 = Send MIME data for all messages
-	  <arg type="b" name="MIME_support" direction="in"/>		not supporting; hardcode to 2 in daemon?		
--->
-<!-- 
-	  0 = Client object replaces server object
-	  1 = Server object replaces client object
-	  <arg type="b" name="Conflict" direction="in"/>		not supporting; hardcode in daemon?
--->
-<!-- 	  
-	  0 = Truncate all body text
-	  1 = Truncate text over 4,096 characters
-	  .
-	  .
-          8 = Do not truncate; send complete MIME data
-
-	  <arg type="u" name="MIME_truncation" direction="in"/>		not currently supporting? hardcode to 0 in daemon (we will always truncate the body)	   				
--->
-<!-- BodyPreference 			not supporting since we only return headers with sync -->
-<!-- BodyPartPreference 		not supporting since we only return headers with sync -->
-
-
-
-<!-- 	  <arg type="u" name="wait" direction="in"/>			not currently supporting?   specifies a desired server delay in minutes -->
-<!-- 	  <arg type="b" name="heartbeat_interval" direction="in"/>	not currently supporting?   specifies a desired server delay in seconds	-->
-<!-- 	  <arg type="b" name="partial" direction="in"/> 		not currently supporting?   what is this?    -->
-
-      <!-- time filter 
-	0 = No filter- synchronize all items
-	1 = 1 day back
-	2 = 3 days back
-	etc (see http://msdn.microsoft.com/en-us/library/gg709713%28v=EXCHG.80%29.aspx)
-      -->
-      <!-- <arg type="u" name="filter_type" direction="in"/> will be settable on the 'config api'?-->
-      <!-- request to fetch previously truncated -->
-      <!-- <arg type="as" name="fetch_email_serverid_array" direction="in"/>   not currently supporting; we only sync headers, full email must be retrieved using itemoperations method? -->
-	
-   <!-- commands from the AS server: -->
-      <!-- added -->
       <arg type="as" name="ret_added_email_array" direction="out"/>
-	
-      <!-- deleted -->
       <arg type="as" name="ret_deleted_email_array" direction="out"/>
-
-      <!-- updated -->
       <arg type="as" name="ret_changed_email_array" direction="out"/>
-      <!-- note that the only updateable headers are:
-		whether read
-		category	- categories this email belongs to (sequence of strings)?
-		flags		- unclear to me how this data looks
-		do we support updating categories/flags? If not this could just be an array of booleans (read/unread)
-	        perhaps for now we just support 'read' and wrap this in a 'MarkAsRead' method in the library?
-      -->
     </method>
 
 <!-- used by clients to fetch email bodies and attachments -->
-    <method name="fetch">
-      	<arg type="t" name="account_uid" direction="in"/>
-	<!-- <arg type="s" name="store" direction="in"/> --> 	<!-- hardcoded to "Mailbox" for email -->
-	<!-- from docs seems server_id AND collection_id are required for getting email body (oddly) and filereference for getting an attachment -->
+    <method name="fetch_email_body">
+   	<arg type="t" name="account_uid" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
-	<arg type="s" name="collection_id" direction="in"/> 	<!-- folder id for email to fetch body for, eg 5-->
-	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
-	<!-- 
-	following EAS elements not being used (either not applicable to email or will be fixed
-	LinkId			- not applicable to email
-	LongId			- not applicable to email
-	RemoveRightsManagementProtection
-	options
-		schema
-		range		
-		username
-		password
-	MIMESupport		-	hardcoded to 'send MIME data for all messages'
-	BodyPreference		-	type hardcoded to MIME
-	BodyPartPreference	
-	RightsManagementSupport	
-	-->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
+    </method>
 
+    <method name="fetch_attachment">
+   	<arg type="t" name="account_uid" direction="in"/>
+	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
+	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
     </method>
 
 
 <!-- used by clients to send MIME-formatted e-mail messages to the server -->
     <method name="send_email">
       <arg type="t" name="account_uid" direction="in"/>
-      <!-- client's unique message ID (MID) -->
       <arg type="s" name="clientid" direction="in"/>
-      <!-- account from which an e-mail is sent -->
-      <!-- <arg type="s" name="accountid" direction="in"/> --> <!-- not currently supported-->
-      <!-- whether a copy of the message will be stored in the Sent Items folder -->
-      <!-- <arg type="b" name="save_in_sent_items" direction="in"/> --> <!-- hardcoded to true for now, will be configurable on config api -->
-      <!-- path to the file containing MIME-encoded message -->
       <arg type="s" name="mime_file" direction="in"/>
 
     </method>
@@ -178,7 +78,7 @@
 	<method name="delete_email">
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
-      <arg type="s" name="server_id" direction="in"/>		
+      <arg type="s" name="server_id" direction="in"/>
 	</method>
 
   </interface>
