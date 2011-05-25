@@ -118,13 +118,11 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
                                                     &updated_items,
                                                     &deleted_items);
          e_flag_free (eflag);
-         g_debug("eas_mail_sync_email_folder_hierarchy - serialise objects");
-         
-         
+                 
          //serialise the calendar objects from GSList* to char** and populate  :
         //TODO: make sure this stuff is ok to go over dbus.
          
-         // Return the error or the requested data to the mail client
+         // Return the error or the requested data to the calendar client
         if (error) {
 		        g_debug(">> Daemon : Error ");
                 dbus_g_method_return_error (context, error);
@@ -138,7 +136,7 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 						            ret_deleted_items_array);
         }
 
-       g_debug("eas_mail_sync_email_folder_hierarchy--");
+       g_debug("eas_calendar_sync_get latest--");
 }
 
 gboolean 
