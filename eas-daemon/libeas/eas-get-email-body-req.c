@@ -75,7 +75,7 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self)
 	
 	/* TODO: Add public function implementation here */
 
-	priv->emailBodyMsg = eas_get_email_body_msg_new ();
+	priv->emailBodyMsg = eas_get_email_body_msg_new ("syncKey", "email_id");
 	doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);
 
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
