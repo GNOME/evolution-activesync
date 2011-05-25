@@ -74,26 +74,35 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
                                     const gchar *server_id,
                                     DBusGMethodInvocation* context);
 /*
-	fetch an email body or attachment
+	fetch an email body 
 */
 gboolean
-eas_mail_fetch (EasMail* self, 
-                guint64 account_uid, 
-                const gchar *server_id, 
-                const gchar *collection_id, 
-                const gchar *file_reference, 
-                const gchar *mime_directory, 
-                GError **error);
+eas_mail_fetch_email_body (EasMail* self, 
+                           guint64 account_uid, 
+                           const gchar *server_id, 
+                           const gchar *mime_directory, 
+                           DBusGMethodInvocation* context);
+
+/*
+	fetch an email attachment
+*/
+gboolean
+eas_mail_fetch_attachment (EasMail* self, 
+                          guint64 account_uid, 
+                          const gchar *server_id, 
+                          const gchar *file_reference,
+                          const gchar *mime_directory,
+                          DBusGMethodInvocation* context);
+
 
 /*
 	send an email
 */						
 gboolean eas_mail_send_email(EasMail* self, 
-                             	guint64 account_uid,
-								const gchar* clientid,
-								const gchar *mime_file,
-								GError** error);								
-											
+                             guint64 account_uid,
+                             const gchar* clientid,
+                             const gchar *mime_file,
+                             DBusGMethodInvocation* context);
 
 G_END_DECLS
 

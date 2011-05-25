@@ -29,7 +29,9 @@ LIBS =  -L/usr/lib \
 
 libeascal_la_SOURCES =		\
         libeascal.h			\
-        libeascal.c	
+        libeascal.c                     \
+        eas-cal-info.h                     \
+        eas-cal-info.c
         
 interface_xml =  ../../eas-daemon/src/eas-calendar.xml
 

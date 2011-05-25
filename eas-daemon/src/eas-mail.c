@@ -187,15 +187,27 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     gchar** ret_deleted_folders_array = NULL;
 
     eflag = e_flag_new ();
-
-    // Create the request
+    
     g_debug("eas_mail_sync_email_folder_hierarchy++");
+
+    if(easMailObj->_priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    }
+
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 1");
+    
+    // Create the request
     req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);
 
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 2");
+    
     eas_request_base_SetConnection (&req->parent_instance, 
                                     eas_mail_get_eas_connection(easMailObj));
                                     
+    g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
+    
     // Activate the request
     eas_sync_folder_hierarchy_req_Activate (req);
     e_flag_wait(eflag);
@@ -362,34 +374,55 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	return TRUE;
 }
 
+/**
+ * 
+ */
 gboolean
-eas_mail_fetch (EasMail* easMailObj, 
-                guint64 account_uid, 
-                const gchar *server_id, 
-                const gchar *collection_id, 
-                const gchar *file_reference, 
-                const gchar *mime_directory, 
-                GError **error)
+eas_mail_fetch_email_body (EasMail* easMailObj, 
+                            guint64 account_uid, 
+                            const gchar *server_id, 
+                            const gchar *mime_directory, 
+                            DBusGMethodInvocation* context)
 {
 	// TODO
-    g_debug("eas_mail_fetch++");
-    g_debug("eas_mail_fetch--");
+    g_debug("eas_mail_fetch_email_body++");
+
+    // EasGetEmailBodyReq
+    
+    g_debug("eas_mail_fetch_email_body--");
 	return TRUE;
 }
 
+gboolean
+eas_mail_fetch_attachment (EasMail* easMailObj, 
+                            guint64 account_uid, 
+                            const gchar *server_id, 
+                            const gchar *file_reference, 
+                            const gchar *mime_directory, 
+                            DBusGMethodInvocation* context)
+{
+	// TODO
+    g_debug("eas_mail_fetch_attachment++");
+
+    // EasGetAttachmentReq
+    g_debug("eas_mail_fetch_attachment--");
+	return TRUE;
+}
+    
+
 // 
 gboolean eas_mail_send_email(EasMail* easMailObj, 
-								guint64 account_uid,                             
+								guint64 account_uid,
 								const gchar* clientid,
 								const gchar *mime_file,
-								GError** error)
+								DBusGMethodInvocation* context)
 {
 	g_debug("eas_mail_send_email++");
 	
 	// TODO
-
+    // EasSendMailReq
 	g_debug("eas_mail_send_email--");
-	return TRUE;								
+	return TRUE;
 }
 
 

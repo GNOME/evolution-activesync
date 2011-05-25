@@ -10,7 +10,7 @@
 #   libexpat1-dev
 #   libsoup2.4-dev
 #	cmake
-# 	libwbxml (Not from Package Manager - use \\boudica\projects\INT07\Reference\Linux\libwbxml-0.11.beta4.tar.gz)
+# 	libwbxml (must use 0.11.beta5 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta5/)
 
 
 # the file accounts.cfg needs to be in your system configuration folder "/usr/local/etc"
