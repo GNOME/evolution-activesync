@@ -64,7 +64,7 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 }
 
 EasSyncMsg*
-eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *folderID)
+eas_sync_msg_new (const gchar* syncKey, gint accountId, const gchar *folderID)
 {
 	EasSyncMsg* msg = NULL;
 	EasSyncMsgPrivate *priv = NULL;

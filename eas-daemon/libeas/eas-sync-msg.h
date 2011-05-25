@@ -38,7 +38,7 @@ struct _EasSyncMsg
 
 GType eas_sync_msg_get_type (void) G_GNUC_CONST;
 
-EasSyncMsg* eas_sync_msg_new (const gchar* syncKey, gint accountId, gchar *FolderID);
+EasSyncMsg* eas_sync_msg_new (const gchar* syncKey, gint accountId, const gchar *FolderID);
 xmlDoc* eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges);
 void eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc);
 GSList* eas_sync_msg_get_added_items (EasSyncMsg* self);
