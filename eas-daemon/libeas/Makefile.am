@@ -76,7 +76,9 @@ libeas_la_SOURCES =		\
         eas-send-email-req.h \
         eas-send-email-req.c \
         eas-send-email-msg.h \
-        eas-send-email-msg.c
+        eas-send-email-msg.c \
+        eas-delete-email-req.h \
+        eas-delete-email-req.c
 
 
 

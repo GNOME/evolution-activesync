@@ -9,6 +9,7 @@
 
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-req.h"
+#include "eas-delete-email-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -319,13 +320,48 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
     return TRUE;
 }
 
-gboolean eas_mail_delete_email(EasMail* easMailObj,
-                                    const gchar* sync_key, 
+gboolean eas_mail_delete_email(EasMail *easMailObj,
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
                                     const gchar *server_id,
-                                    GError **error)
+                                    DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_delete_email++");
-    g_debug("eas_mail_delete_email--");
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    gchar* ret_sync_key = NULL;
+	 
+    flag = e_flag_new ();
+
+	EasDeleteEmailReq *req = NULL;
+	req = g_object_new(EAS_TYPE_DELETE_EMAIL_REQ, NULL);
+
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_mail_get_eas_connection(easMailObj));
+                                        
+
+
+	    // Start the request
+    eas_delete_email_req_Activate (req, 
+                                    sync_key,
+                                    server_id,
+                                    flag);
+
+	    // Set flag to wait for response
+//    e_flag_wait(flag);
+
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context,
+                              ret_sync_key);
+    }	
+	g_debug("eas_mail_delete_email--");
 	return TRUE;
 }
 

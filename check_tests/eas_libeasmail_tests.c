@@ -114,6 +114,9 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
 	// call into the daemon to get the folder hierarchy from the exchange server
 	testGetFolderHierarchy(email_handler,sync_key,&created,&updated,&deleted,&error);
 		
+    // fail the test if there is no folder information
+	fail_unless(created, "No folder information returned from exchange server");
+		
 	//  free everything!
     g_slist_foreach(created, (GFunc)g_object_unref, NULL);
     g_slist_foreach(deleted, (GFunc)g_object_unref, NULL);
@@ -508,6 +511,27 @@ START_TEST (test_eas_mail_handler_delete_email)
 END_TEST
 
 
+START_TEST (test_delete_email)
+{
+    guint64 accountuid = 123456789;
+    EasEmailHandler *email_handler = NULL;	
+	
+	// get a handle to the DBus interface 
+    testGetMailHandler(&email_handler, accountuid);
+
+	EasEmailInfo email;
+	gboolean rtn = FALSE;
+	GError *error = NULL;
+	    
+	rtn = eas_mail_handler_delete_email(email_handler, "9","bob",&error);
+	if(error){
+		fail_if(rtn == FALSE,"%s",error->message);
+	}
+	
+	
+}
+END_TEST
+
 Suite* eas_libeasmail_suite (void)
 {
   Suite* s = suite_create ("libeasmail");
@@ -515,12 +539,13 @@ Suite* eas_libeasmail_suite (void)
   /* libeasmail test case */
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
-  tcase_add_test (tc_libeasmail, test_get_mail_handler);
-  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+  //tcase_add_test (tc_libeasmail, test_get_mail_handler);
+  //tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  tcase_add_test (tc_libeasmail, test_delete_email);
 
   return s;
 }

@@ -69,9 +69,10 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
     delete an email 
 */
 gboolean eas_mail_delete_email(EasMail* easMailObj,
-                                    const gchar* sync_key, 
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
                                     const gchar *server_id,
-                                    GError **error);
+                                    DBusGMethodInvocation* context);
 /*
 	fetch an email body or attachment
 */

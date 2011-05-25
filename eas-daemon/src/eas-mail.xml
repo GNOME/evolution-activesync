@@ -176,9 +176,11 @@
 
   <!-- TODO: MoveItem -->
 	<method name="delete_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="server_id" direction="in"/>		
+      <arg type="s" name="ret_sync_key" direction="out"/> 
 	</method>
 
   </interface>

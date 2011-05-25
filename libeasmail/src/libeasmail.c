@@ -495,10 +495,22 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	g_assert(this_g);
 	g_assert(sync_key);	
 	g_assert(server_id);
+	g_debug("jba3");
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	g_debug("jba4");
+	const gchar *bob = NULL;
 
-	/* TODO call dbus "sync" api with appropriate params */
+	ret = dbus_g_proxy_call(proxy, "delete_email", error,
+				  G_TYPE_UINT64, this_g->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
+		          G_TYPE_STRING, server_id,
+		          G_TYPE_INVALID, 
+		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_INVALID);
+
+
+	g_debug("jba5");
 	
 	g_debug("eas_mail_handler_delete_emails--");	
 	return ret;
