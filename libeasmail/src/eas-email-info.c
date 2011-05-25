@@ -231,7 +231,10 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 
 		snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
 		out = g_stpcpy(out, list_size);
-		out = g_stpcpy(out, sep);	
+		if(list_len)
+		{
+			out = g_stpcpy(out, sep);	
+		}
 		gchar *category = NULL;
 		for (l = this_g->categories; l != NULL; l = g_slist_next (l))
 		{
