@@ -51,8 +51,16 @@ struct _EasSendEmailReq
 
 GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 
-void eas_send_email_req_Activate (EasSendEmailReq *self, guint64 accountID, EFlag *flag, const gchar* clientid, const gchar* mime_file, EasItemType type);
-void eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc);
+// C'tor
+EasSendEmailReq *eas_send_email_req_new();
+
+// start async request
+void eas_send_email_req_Activate(EasSendEmailReq *self, guint64 accountID, EFlag *flag, const gchar* clientid, const gchar* mime_file, EasItemType type);
+
+// async request completed
+void eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc);
+
+// no Finalise method since there are no results returned to client
 
 G_END_DECLS
 
