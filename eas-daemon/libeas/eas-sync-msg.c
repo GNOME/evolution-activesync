@@ -279,8 +279,15 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 						break;
 						case EAS_ITEM_MAIL:
 						{
-							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+							//flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
 						}
+						break;
+						case EAS_ITEM_CALENDAR:
+						{
+							flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
+						}
+						break;
+
 						
 					}		
 					
