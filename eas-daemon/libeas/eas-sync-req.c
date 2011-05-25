@@ -91,6 +91,8 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	
 	priv->accountID = accountID;
 	
+	priv->ItemType = type;
+	
 	priv->folderID = g_strdup(folderId);
 	
 	g_debug("eas_sync_req_activate - new Sync  mesg");
@@ -100,12 +102,12 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
     g_debug("eas_sync_req_activate- syncKey = %s", syncKey);
 
     //if syncKey is not 0, then we are not doing a first time sync and only need to send one message
-	// so we  move state machine forward.
-	/*if (!g_strcmp0(syncKey,"0"))
+	// so we  move state machine forward	
+	if (g_strcmp0(syncKey,"0"))
 	{
-		g_debug("switching state");
+	    g_debug("switching state");
 		priv->state = EasSyncReqStep2;
-	}*/
+	}
 	
 	g_debug("eas_sync_req_activate - build messsage");
 	//build request msg
