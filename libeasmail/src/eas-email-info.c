@@ -110,7 +110,6 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 	
 	// server id
 	total_len += strlen(this_g->server_id) + 1;	// allow for separator
-	g_debug("total_len = %d", total_len);
 
 	//headers
 	// serialised length of headers list allowing for list size at front
@@ -123,7 +122,6 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 		header = l->data;
 		total_len += eas_mail_info_header_serialised_length(header);
 	}
-
 //attachments
 	list_len = g_slist_length(this_g->attachments);
 	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
@@ -135,7 +133,6 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 		attachment = l->data;
 		total_len += eas_attachment_serialised_length(attachment);
 	}
-
 //flags
 	gchar flags_as_string[MAX_LEN_OF_UINT8_AS_STRING] = "";
 	snprintf(flags_as_string, sizeof(flags_as_string)/sizeof(flags_as_string[0]), "%d", this_g->flags);
@@ -154,7 +151,6 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 	}
 
 	g_debug("total_len = %d", total_len);
-	
 	g_debug("eas_email_info_serialised_length--");	
 	return total_len;
 }	
