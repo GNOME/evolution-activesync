@@ -44,8 +44,8 @@ static void testGetFolderHierarchy(EasEmailHandler *email_handler,
 	// the exchange server should increment the sync key and send back to the
 	// client so that the client can track where it is with regard to sync.
 	// therefore the key must not be zero as this is the seed value for this test          
-    fail_if(sync_key == 0,
-		"Sync Key not updated by call the exchange server");
+    fail_if(!g_strcmp0(sync_key, "0"),
+		"Sync Key not updated by call the exchange server %s", sync_key);
 		
 }
 
@@ -147,7 +147,8 @@ START_TEST (test_get_eas_mail_info_in_folder)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *folder_hierarchy_sync_key = "0";
+     gchar folder_hierarchy_sync_key[64];
+	strcpy(folder_hierarchy_sync_key,"0");
     GError *error = NULL;
 
 	// call into the daemon to get the folder hierarchy from the exchange server

@@ -371,6 +371,8 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **updated_emailinfo_array = NULL;
 	
+	gchar *updatedSyncKey;
+	
 	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
@@ -378,7 +380,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 							G_TYPE_STRING, sync_key,
 	                        G_TYPE_STRING, collection_id,			// folder 
 							G_TYPE_INVALID, 
-							G_TYPE_STRING, &sync_key,
+							G_TYPE_STRING, &updatedSyncKey,
 							G_TYPE_BOOLEAN, more_available,
 							G_TYPE_STRV, &created_emailinfo_array,
 							G_TYPE_STRV, &deleted_emailinfo_array,  
@@ -390,6 +392,9 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	if(ret)
 	{
 		g_debug("sync_folder_email called successfully");
+		
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
 		
 		// get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
 		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, emailinfos_created, error);
@@ -403,6 +408,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		}
 	}
 
+	g_free(updatedSyncKey);
 	free_string_array(created_emailinfo_array);
 	free_string_array(updated_emailinfo_array);
 	free_string_array(deleted_emailinfo_array);
