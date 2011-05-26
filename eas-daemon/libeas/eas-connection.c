@@ -24,11 +24,14 @@
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
+#include "eas-accounts.h"
+
 // List of includes for each request type
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
-#include "eas-accounts.h"
+#include "eas-get-email-body-req.h"
+
 
 struct _EasConnectionPrivate
 {
@@ -626,6 +629,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			case EAS_REQ_SYNC:
 			{
 				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc);
+			}
+			break;
+			case EAS_REQ_GET_EMAIL_BODY:
+			{
+				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc);
 			}
 			break;
 		}

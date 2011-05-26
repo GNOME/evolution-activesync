@@ -434,7 +434,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 
 	g_assert(this_g);
 	g_assert(folder_id);
-	g_assert(server_id);	
+	g_assert(server_id);
 	g_assert(mime_directory);
 	
 	gboolean ret = TRUE;
@@ -443,6 +443,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
+	                        G_TYPE_STRING, folder_id,
 	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,

@@ -177,7 +177,6 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                           DBusGMethodInvocation* context)
 {
     EasMailPrivate* priv = self->priv;
-
     GError *error = NULL;
     GSList* added_folders = NULL;
     GSList* updated_folders  = NULL;
@@ -358,13 +357,15 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
  *
  * @param[in,out] self            the instance of the GObject
  * @param[in]     account_uid     the exchange server account UID
+ * @param[in]     collection_id   folder id on the server
  * @param[in]     server_id       email id on the server - this forms the name of the mime file to be created
  * @param[in]     mime_directory  full path to directory on the client where the mime email is to be stored
  * @param[in]     context         dbus context
  */
 gboolean
 eas_mail_fetch_email_body (EasMail* self, 
-                           guint64 account_uid, 
+                           guint64 account_uid,
+                           const gchar* collection_id,
                            const gchar *server_id, 
                            const gchar *mime_directory, 
                            DBusGMethodInvocation* context)
@@ -372,7 +373,7 @@ eas_mail_fetch_email_body (EasMail* self,
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
-    
+
     g_debug("eas_mail_fetch_email_body++");
 
     flag = e_flag_new ();
@@ -382,8 +383,10 @@ eas_mail_fetch_email_body (EasMail* self,
 
     // Create Request
     EasGetEmailBodyReq *req = eas_get_email_body_req_new (account_uid,
+                                                          collection_id,
                                                           server_id,
-                                                          mime_directory);
+                                                          mime_directory,
+                                                          flag);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
@@ -397,14 +400,16 @@ eas_mail_fetch_email_body (EasMail* self,
 
     if (error)
     {
+        g_warning("eas_mail_fetch_email_body - failed to get data from message");
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     } 
     else
     {
+        g_debug("eas_mail_fetch_email_body - return for dbus");
         dbus_g_method_return (context);
     }
-    
+
     g_debug("eas_mail_fetch_email_body--");
 	return TRUE;
 }

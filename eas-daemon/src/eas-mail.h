@@ -79,6 +79,7 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
 gboolean
 eas_mail_fetch_email_body (EasMail* self, 
                            guint64 account_uid, 
+                           const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
                            DBusGMethodInvocation* context);
