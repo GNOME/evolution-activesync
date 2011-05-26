@@ -70,11 +70,14 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
     // if the call to the daemon returned an error, report and drop out of the test
     if((*error) != NULL){
 		fail_if(ret == FALSE,"%s",&(*error)->message);
-
+    } 
     fail_if(folder_sync_key == 0,
 		"Folder Sync Key not updated by call the exchange server");
 	fail_if(g_slist_length(*emails_created)==0, "no emails added");
-	} 
+	
+	EasEmailInfo *email1 = (*emails_created)->data;
+	fail_if(g_strcmp0((email1->server_id), "5:1"), "server_id incorrect %s", email1->server_id) ;
+	
 	
 	                                       
 }
