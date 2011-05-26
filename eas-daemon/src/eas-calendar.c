@@ -178,20 +178,22 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
                                     const gchar **server_id,
                                     GError **error)
 {
- /*       GSList* added_items = NULL;
-        GSList* updated_items  = NULL;
         GSList* deleted_items  = NULL;
         EFlag * eflag = NULL;
 
         gchar* ret_sync_key = NULL;
-        gchar** ret_created_items_array = NULL;
-        gchar** ret_updated_items_array = NULL;
-        gchar** ret_deleted_items_array = NULL;
 
         eflag = e_flag_new ();
+        guint i = 0;
+        while(server_id[i])
+	    {
+	        g_debug("deleted item = %s", (gchar*)(server_id[i]));
+	        deleted_items = g_slist_append(deleted_items, server_id[i]);
+	        i++;
+	    }
 
         // Create the request
-        EasSyncReq *syncReqObj =NULL;
+        /*EasSyncReq *syncReqObj =NULL;
 
         g_debug("eas_calendar_get_latest_calendar_items++");
         syncReqObj = g_object_new(EAS_TYPE_SYNC_REQ , NULL);
@@ -216,7 +218,7 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
                                       &updated_items,
                                       &deleted_items);
          e_flag_free (eflag);
-                 
+               
          //serialise the calendar objects from GSList* to char** and populate  :
         //TODO: make sure this stuff is ok to go over dbus.
          
@@ -233,9 +235,9 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 						            ret_updated_items_array,
 						            ret_deleted_items_array);
         }
-
+        */
        g_debug("eas_calendar_sync_get latest--");
-*/
+
 	return TRUE;
 }
 
