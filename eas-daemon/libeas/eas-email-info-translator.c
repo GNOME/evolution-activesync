@@ -151,9 +151,8 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 								g_debug("file reference = %s", attachment->file_reference);
 							}						
 							//Method			- not storing
-						
-							attachments = g_slist_append(attachments, attachment);
 						}
+						attachments = g_slist_append(attachments, attachment);						
 					}
 				}
 				continue;
