@@ -185,7 +185,7 @@ build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinf
 	gboolean ret = TRUE;
 	guint i = 0;
 
-	g_assert(g_slist_length(emailinfo_list) == 0);
+	g_assert(g_slist_length(*emailinfo_list) == 0);
 	
 	while(serialised_emailinfo_array[i])
 	{

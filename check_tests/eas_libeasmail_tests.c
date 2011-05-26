@@ -73,6 +73,7 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
 
     fail_if(folder_sync_key == 0,
 		"Folder Sync Key not updated by call the exchange server");
+	fail_if(g_slist_length(*emails_created)==0, "no emails added");
 	} 
 	
 	                                       
