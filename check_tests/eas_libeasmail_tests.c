@@ -482,7 +482,7 @@ START_TEST (test_eas_mail_handler_delete_email)
 			email = g_slist_nth(emails_created, 0);
 			
 			// delete the first mail in the folder
-			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,email,&error);
+//			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,email,&error);
 			if(error){
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
