@@ -72,6 +72,32 @@ EasConnection*
     return priv->connection;
     g_debug("eas_calendar_get_leas_connection--");
 }
+// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
+// null terminates the array
+static gboolean 
+build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error)
+{
+    g_debug("build cal arrays++");
+	gboolean ret = TRUE;
+	guint i = 0;
+
+    g_assert(serialised_cal_info_array);
+    g_assert(*serialised_cal_info_array == NULL);
+
+	guint array_len = g_slist_length((GSList*)cal_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+    
+	*serialised_cal_info_array = g_malloc0(array_len * sizeof(gchar*));
+
+	GSList *l = (GSList*)cal_list;
+	for(i = 0; i < array_len - 1; i++){
+		g_assert(l != NULL);
+		gchar *tstring = g_strdup(l->data);
+		(*serialised_cal_info_array)[i]=tstring;
+		l = g_slist_next (l);
+	}
+    
+	return ret;
+}
 
 void 
 eas_calendar_get_latest_calendar_items(EasCalendar* self,
@@ -121,6 +147,13 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
                  
          //serialise the calendar objects from GSList* to char** and populate  :
         //TODO: make sure this stuff is ok to go over dbus.
+        
+        if(build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error)){
+            if(build_serialised_calendar_info_array(&ret_updated_items_array, updated_items, &error)){
+                build_serialised_calendar_info_array(&ret_deleted_items_array, deleted_items, &error);          
+        }
+   }
+        
          
          // Return the error or the requested data to the calendar client
         if (error) {
