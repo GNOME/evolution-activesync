@@ -26,11 +26,13 @@ eas_attachment_init (EasAttachment *object)
 static void
 eas_attachment_finalize (GObject *object)
 {
+	g_debug("eas_attachment_finalize++");
 	EasAttachment *this_g = (EasAttachment*)object;
 	/* deinitalization code */
 	g_free(this_g->file_reference);
 	g_free(this_g->display_name);
 	G_OBJECT_CLASS (eas_attachment_parent_class)->finalize (object);
+	g_debug("eas_attachment_finalize--");
 }
 
 static void

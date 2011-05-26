@@ -180,20 +180,20 @@ cleanup:
 
 // takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
 static gboolean 
-build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList *emailinfo_list, GError **error)
+build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
 {
 	gboolean ret = TRUE;
 	guint i = 0;
 
-	g_assert(g_slist_length(emailinfo_list) == 0);
+	g_assert(g_slist_length(*emailinfo_list) == 0);
 	
 	while(serialised_emailinfo_array[i])
 	{
 		EasEmailInfo *emailinfo = eas_email_info_new ();
 		if(emailinfo)
 		{
-			emailinfo_list = g_slist_append(emailinfo_list, emailinfo);
-			if(!emailinfo_list)
+			*emailinfo_list = g_slist_append(*emailinfo_list, emailinfo);
+			if(!*emailinfo_list)
 			{
 				g_free(emailinfo);
 				ret = FALSE;
@@ -221,9 +221,9 @@ cleanup:
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));		
 		// clean up on error
-		g_slist_foreach(emailinfo_list,(GFunc)g_free, NULL);
-		g_slist_free(emailinfo_list);
-		emailinfo_list = NULL;
+		g_slist_foreach(*emailinfo_list,(GFunc)g_free, NULL);
+		g_slist_free(*emailinfo_list);
+		*emailinfo_list = NULL;
 	}
 	
 	return ret;
@@ -384,17 +384,17 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	// convert created/deleted/updated emailinfo arrays into lists of emailinfo objects (deserialise results)
 	if(ret)
 	{
-		g_debug("sync_email_folder_hierarchy called successfully");
+		g_debug("sync_folder_email called successfully");
 		
-		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, *emailinfos_created, error);
+		// get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
+		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, emailinfos_created, error);
 		if(ret)
 		{
-			ret = build_emailinfo_list((const gchar **)deleted_emailinfo_array, *emailinfos_deleted, error);
+			ret = build_emailinfo_list((const gchar **)deleted_emailinfo_array, emailinfos_deleted, error);
 		}
 		if(ret)
 		{
-			ret = build_emailinfo_list((const gchar **)updated_emailinfo_array, *emailinfos_updated, error);
+			ret = build_emailinfo_list((const gchar **)updated_emailinfo_array, emailinfos_updated, error);
 		}
 	}
 
@@ -434,7 +434,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 
 	g_assert(this_g);
 	g_assert(folder_id);
-	g_assert(server_id);	
+	g_assert(server_id);
 	g_assert(mime_directory);
 	
 	gboolean ret = TRUE;
@@ -443,6 +443,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
 	                        G_TYPE_UINT64, this_g->priv->account_uid, 
+	                        G_TYPE_STRING, folder_id,
 	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,

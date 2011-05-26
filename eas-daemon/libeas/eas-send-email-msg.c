@@ -27,7 +27,7 @@ struct _EasSendEmailMsgPrivate
 {
 	guint64 account_id;
 	gchar* client_id; 
-	gchar* mime_string;	//TODO remove if not needed?
+	gchar* mime_string;	
 };
 
 static void

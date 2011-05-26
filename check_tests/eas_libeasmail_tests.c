@@ -73,6 +73,7 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
 
     fail_if(folder_sync_key == 0,
 		"Folder Sync Key not updated by call the exchange server");
+	fail_if(g_slist_length(*emails_created)==0, "no emails added");
 	} 
 	
 	                                       
@@ -208,78 +209,102 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     gchar *folder_sync_key = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
-    GSList *emails_deleted = NULL;    
-    gboolean more_available = FALSE;  
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;
 	EasFolder *folder = NULL;
 	gboolean testMailFound = FALSE;
 	guint folderIndex;
-	
-	// loop through the folders in the hierarchy to find a folder with an email in it
-	for(folderIndex = 0;g_slist_length(created);folderIndex++){
-		// get the folder info for the current folderIndex
-		// since the sync id is zero only the created list will contain folders
-	    folder = g_slist_nth(created, folderIndex);
-        testGetFolderInfo(email_handler,folder_sync_key,folder->folder_id,&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
+    gboolean useFakeData = FALSE;
 
-		// if the emails_created list contains email
-    	// get body for first email in the folder and drop out of the loop
-		if(emails_created){
-			EasEmailInfo *email = NULL;
-			gboolean rtn = FALSE;
+    mark_point();
 
-    		// get body for first email in the folder
-			email = g_slist_nth(emails_created, 0);
+    testGetFolderInfo(email_handler,
+                      folder_sync_key, 
+                      "5", // Inbox
+                      &emails_created,
+                      &emails_updated,
+                      &emails_deleted,
+                      &more_available,
+                      &error);
 
-			// destination directory for the mime file
-			gchar *mime_directory = "/eastests/";
-			gchar mime_file[256];
+    if (!emails_created) 
+    {
+        useFakeData = TRUE;
+    }
 
-			strcpy(mime_file,mime_directory);
-			strcat(mime_file,email->server_id);
+    // if the emails_created list contains email
+    if (TRUE/* emails_created */)
+    {
+        EasEmailInfo *email = NULL;
+        gboolean rtn = FALSE;
 
-			// check if the email body file exists
-			FILE *hBody = NULL;
-			hBody = fopen(mime_file,"r");
-			if(hBody){
-				// if the email body file exists delete it
-				fclose(hBody);
-				hBody = NULL;
-				remove(mime_file);
-				hBody = fopen(mime_file,"r");
-				if(hBody){
-					fclose(hBody);
-					fail_if(1,"unable to clear existing body file");
-				}
-			}
+        // get body for first email in the folder
+        if (!useFakeData) 
+        {
+            email = g_slist_nth(emails_created, 0);
+        }
 
-			// call method to get body
-			rtn = eas_mail_handler_fetch_email_body(email_handler,folder->folder_id,email->server_id,mime_directory,&error);	
-			if(rtn == TRUE){		
-				// if reported success check if body file exists
-				hBody = fopen(mime_file,"r");
-				fail_if(hBody == NULL,"email body file not created in specified directory");
-				fclose(hBody);		
-			}	
-			else{
-				fail_if(1,"%s",error->message);
-			}
-			// after getting the body for the first mail, drop out of the loop
-			testMailFound = TRUE;
-			break;
-		}
-		// else, go round the loop again
-	}
-	
-	// fail the test if there is no email in the folder hierarchy as this means the 
-	// test has not exercised the code to get the email body as required by this test case
-	fail_if(testMailFound == FALSE,"no mail found in the folder hierarchy");
-		
+        // destination directory for the mime file
+        gchar *mime_directory = "/eastests/";
+        gchar mime_file[256];
+
+        strcpy(mime_file, mime_directory);
+        strcat(mime_file, (useFakeData?"5:1":email->server_id));
+
+        mark_point();
+        // check if the email body file exists
+        FILE *hBody = NULL;
+        hBody = fopen(mime_file,"r");
+        if (hBody) 
+        {
+            // if the email body file exists delete it
+            fclose(hBody);
+            hBody = NULL;
+            remove(mime_file);
+            hBody = fopen(mime_file,"r");
+            if(hBody)
+            {
+                fclose(hBody);
+                fail_if(1,"unable to clear existing body file");
+            }
+        }
+
+        mark_point();
+        // call method to get body
+        rtn = eas_mail_handler_fetch_email_body(email_handler,
+                                                "5"/*folder->folder_id*/, // Inbox
+                                                (useFakeData?"5:1":email->server_id),
+                                                mime_directory,
+                                                &error);
+        if(rtn == TRUE)
+        {
+            testMailFound = TRUE;
+            // if reported success check if body file exists
+            hBody = fopen (mime_file,"r");
+            fail_if (hBody == NULL,"email body file not created in specified directory");
+            fclose (hBody);
+        }
+        else
+        {
+            fail_if(1,"%s",error->message);
+        }
+    }
+    else
+    {
+        fail_unless(emails_created, "Emails created is NULL for fetch_email_body");
+    }
+
+
+    // fail the test if there is no email in the folder hierarchy as this means the 
+    // test has not exercised the code to get the email body as required by this test case
+    fail_if(testMailFound == FALSE,"no mail found in the folder hierarchy");
+
     //  free email objects in lists of email objects
     g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
     g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
     g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
-		                                             
-	//  free folder objects in lists of folder objects
+
+    //  free folder objects in lists of folder objects
     g_slist_foreach(created, (GFunc)g_object_unref, NULL);
     g_slist_foreach(deleted, (GFunc)g_object_unref, NULL);
     g_slist_foreach(updated, (GFunc)g_object_unref, NULL);
@@ -520,7 +545,7 @@ Suite* eas_libeasmail_suite (void)
   tcase_add_test (tc_libeasmail, test_get_mail_handler);
   tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
 
