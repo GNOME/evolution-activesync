@@ -375,27 +375,27 @@ isResponseValid(SoupMessage *msg)
 	
     if (200 != msg->status_code) 
 	{
-        g_debug ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
+        g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
         return FALSE;
     }
 
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
-		g_debug ("  Failed: Content-Type did not match WBXML");
+		g_warning ("  Failed: Content-Type did not match WBXML");
         return FALSE;
     }
 
     if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding(msg->response_headers))
     {
-		g_debug("  Failed: Content-Length was not found");
+		g_warning("  Failed: Content-Length was not found");
         return FALSE;
     }
 
     header_content_length = soup_message_headers_get_content_length(msg->response_headers);
     if (header_content_length != msg->response_body->length)
     {
-        g_debug ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match", 
+        g_warning ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match", 
                 (long)header_content_length, (long)msg->response_body->length);
         return FALSE;
     }
@@ -545,6 +545,37 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
     g_object_unref (accountsObj);
 }
 
+void parse_for_status(xmlNode *node)
+{
+	xmlNode *child = NULL;
+	xmlNode *sibling = NULL;
+
+	if (!node) return;
+	if (child = node->children) 
+	{
+		parse_for_status(child);
+	}
+
+	if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+	{
+		gchar* status = xmlNodeGetContent(node);
+		if (!strcmp(status,"1"))
+		{
+			g_message("parent_name[%s] status = [%s]",(char*)node->parent->name , status);
+		}
+		else
+		{
+			g_critical("parent_name[%s] status = [%s]",(char*)node->parent->name , status);
+		}
+		xmlFree(status);
+	}
+	
+	if (sibling = node->next)
+	{
+		parse_for_status(sibling);
+	}
+}
+
 void 
 handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 {
@@ -584,6 +615,14 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
                          0);
 	if (xml) free(xml);
 
+	if (doc) 
+	{
+		xmlNode* node = xmlDocGetRootElement(doc);
+		parse_for_status(node);
+	}
+
+
+	
 	// TODO Pre-process response status to see if provisioning is required
 	// isProvisioningRequired = ????
 	
