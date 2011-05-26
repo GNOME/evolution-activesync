@@ -9,8 +9,9 @@
 #   check
 #   libexpat1-dev
 #   libsoup2.4-dev
-#	cmake
-# 	libwbxml (must use 0.11.beta5 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta5/)
+#   cmake
+#   libwbxml (must use 0.11.beta5 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta5/)
+#   libical
 
 
 # the file accounts.cfg needs to be in your system configuration folder "/usr/local/etc"

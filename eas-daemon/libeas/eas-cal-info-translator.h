@@ -14,7 +14,10 @@
 
 
 // Parse a response message
-gchar* eas_cal_info_translator_parse_response(xmlNode* node, gchar* server_id);
+gchar* eas_cal_info_translator_parse_response(xmlNode* node, const gchar* server_id);
+
+// Parse a request message
+xmlNode* eas_cal_info_translator_parse_request(const gchar* request, gchar** server_id);
 
 G_END_DECLS
 
