@@ -11,32 +11,6 @@
 
 
 
-G_DEFINE_TYPE (EasCalInfoTranslator, eas_cal_info_translator, G_TYPE_OBJECT);
-
-static void eas_cal_info_translator_init (EasCalInfoTranslator *object)
-{
-}
-
-
-static void eas_cal_info_translator_finalize (GObject *object)
-{
-	G_OBJECT_CLASS (eas_cal_info_translator_parent_class)->finalize (object);
-}
-
-
-static void eas_cal_info_translator_class_init (EasCalInfoTranslatorClass *klass)
-{
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = eas_cal_info_translator_finalize;
-}
-
-
-// Constructor
-EasCalInfoTranslator* eas_cal_info_translator_new()
-{
-}
 
 
 /**
@@ -69,10 +43,8 @@ static void _util_append_prop_string_to_list_from_xml(GSList** list, const gchar
 
 
 // Parse a response message
-gchar* eas_cal_info_translator_parse_response(EasCalInfoTranslator* self, xmlNode* node, gchar* server_id)
+gchar* eas_cal_info_translator_parse_response( xmlNode* node, gchar* server_id)
 {
-	// TODO: does this even have to be a class? We don't seem to be using self at all!
-	
 	gchar* result = NULL;
 
 	if (node && (node->type == XML_ELEMENT_NODE) && (!strcmp((char*)(node->name), "ApplicationData")))
