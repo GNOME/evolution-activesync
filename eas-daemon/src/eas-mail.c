@@ -11,7 +11,6 @@
 #include "eas-sync-req.h"
 
 #include "eas-send-email-req.h"
-
 #include "eas-get-email-body-req.h"
 
 
@@ -482,7 +481,7 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 
     flag = e_flag_new ();
 
-    if(easMailObj->_priv->connection)
+    if(easMailObj->priv->connection)
     {
         eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
     }
