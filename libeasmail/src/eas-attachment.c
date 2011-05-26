@@ -11,7 +11,7 @@
 
 G_DEFINE_TYPE (EasAttachment, eas_attachment, G_TYPE_OBJECT);
 
-const gchar *attachment_separator = ",";
+const gchar *attachment_separator = "\n";
 
 
 static void

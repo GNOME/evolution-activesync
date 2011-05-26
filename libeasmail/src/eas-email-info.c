@@ -12,7 +12,7 @@
 
 G_DEFINE_TYPE (EasEmailInfo, eas_email_info, G_TYPE_OBJECT);
 
-const gchar *sep = ",";
+const gchar *sep = "\n";
 
 static void
 eas_email_info_init (EasEmailInfo *object)

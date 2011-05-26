@@ -186,8 +186,34 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	if(ret)
 	{
 		g_debug("get_latest_calendar_items called successfully");
+		guint i=0;
+		while(created_item_array[i])
+	    {
+	        g_debug("created item = %s", created_item_array[i]);
+	        EasCalInfo *cal = eas_cal_info_new ();
+	        eas_cal_info_deserialise(cal, created_item_array[i]);
+	         g_debug("created item server id = %s", cal->server_id);
+	        *items_created = g_slist_append(*items_created, cal);
+	        i++;
+	    }
+	    i=0;
+		while(updated_item_array[i])
+	    {
+	        g_debug("created item = %s", updated_item_array[i]);
+	        EasCalInfo *cal = eas_cal_info_new ();
+	        eas_cal_info_deserialise(cal, updated_item_array[i]);
+	         g_debug("created item server id = %s", cal->server_id);
+	        *items_updated = g_slist_append(*items_updated, cal);
+	        i++;
+	    }
+	    i=0;
+		while(deleted_item_array[i])
+	    {
+	        g_debug("deleted item = %s", deleted_item_array[i]);
+	        *items_deleted = g_slist_append(*items_deleted, deleted_item_array[i]);
+	        i++;
+	    }
 		
-		//TODO: any serialisation gubbins that it turns out we need to do.
 	}
 	
 	free_string_array(created_item_array);
@@ -206,8 +232,8 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		g_free(*items_deleted);
 		*items_deleted = NULL;
 	}
-	
-	g_debug("eas_mail_handler_sync_folder_hierarchy--");
+
+	g_debug("eas_cal_handler_get_calendar_items--");
 	return ret;
 }
 
