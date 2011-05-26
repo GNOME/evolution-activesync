@@ -1,6 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
-
+	
  */
 
 #include "eas-email-info-translator.h"
@@ -36,7 +36,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("To");
-				header->value = (gchar *)xmlNodeGetContent(n); 
+				header->value = (gchar *)xmlNodeGetContent(n);  //takes ownership of the memory
 				headers = g_slist_append(headers, header);
 				continue;
 			}		
@@ -123,27 +123,37 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				xmlNode *s = n;
 				for (s = s->children; s; s = s->next)
 				{				
-					if (s->type == XML_ELEMENT_NODE && !strcmp((char *)s->name, "Attachment"))					
+					if (s->type == XML_ELEMENT_NODE && !strcmp((gchar *)s->name, "Attachment"))					
 					{
-						EasAttachment *attachment = g_malloc0(sizeof(EasAttachment)); 
+						g_debug("found attachment");
 						
-						//DisplayName
-						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DisplayName")) 						
-						{
-							attachment->display_name = (gchar *)xmlNodeGetContent(n);
+						EasAttachment *attachment = g_malloc0(sizeof(EasAttachment)); 
+
+						xmlNode *t = s;
+						for (t = t->children; t; t = t->next)
+						{						
+							//DisplayName
+							if (t->type == XML_ELEMENT_NODE && !strcmp((gchar *)t->name, "DisplayName")) 						
+							{
+								attachment->display_name = (gchar *)xmlNodeGetContent(t);
+								g_debug("attachment name = %s", attachment->display_name);							
+							}
+							//EstimatedDataSize
+							if (t->type == XML_ELEMENT_NODE && !strcmp((guint)t->name, "EstimatedDataSize")) 						
+							{
+								attachment->estimated_size = (guint)xmlNodeGetContent(t);
+								g_debug("attachment size = %d", attachment->estimated_size);							
+							}
+							//FileReference
+							if (t->type == XML_ELEMENT_NODE && !strcmp((gchar *)t->name, "FileReference")) 						
+							{
+								attachment->file_reference = (gchar *)xmlNodeGetContent(t);
+								g_debug("file reference = %s", attachment->file_reference);
+							}						
+							//Method			- not storing
+						
+							attachments = g_slist_append(attachments, attachment);
 						}
-						//EstimatedDataSize
-						if (n->type == XML_ELEMENT_NODE && !strcmp((guint)n->name, "EstimatedDataSize")) 						
-						{
-							attachment->estimated_size = (guint)xmlNodeGetContent(n);
-						}
-						//FileReference
-						if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "FileReference")) 						
-						{
-							attachment->file_reference = (gchar *)xmlNodeGetContent(n);
-						}						
-						//Method			- not storing
-						attachments = g_slist_append(attachments, (char *)xmlNodeGetContent(s));
 					}
 				}
 				continue;
@@ -175,8 +185,8 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		{
 			g_warning("Failed to serialise email info");
 		}
-		
-		//g_object_unref(email_info); 
+
+		g_object_unref(email_info);   
 	}
 	else
 	{
@@ -269,4 +279,12 @@ eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 	}
 
 	return result;
+}
+
+// translate the other way: take the emailinfo object and convert to ApplicationData node
+// takes a flattened email_info object and passes back an xmlnode (with application data at root) and a serverid
+void
+eas_update_email_appdata_create_request_node (gchar *flat_email_info, xmlNode **node, gchar **server_id)
+{
+	// TODO (subfeature 17e)
 }
