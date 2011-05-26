@@ -271,6 +271,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	gchar **deleted_folder_array = NULL;
 	gchar **updated_folder_array = NULL;
 
+	gchar *updatedSyncKey;
+	
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
@@ -279,12 +281,12 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		          G_TYPE_STRING,
 		          sync_key,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_STRV, &created_folder_array,
 		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
-
+   
     g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
@@ -293,7 +295,9 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	if(ret)
 	{
 		g_debug("sync_email_folder_hierarchy called successfully");
-		
+
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
 		if(ret)
@@ -305,7 +309,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 			ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
 		}
 	}
-	
+
+	g_free(updatedSyncKey);
 	free_string_array(created_folder_array);
 	free_string_array(updated_folder_array);
 	free_string_array(deleted_folder_array);

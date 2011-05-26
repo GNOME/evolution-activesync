@@ -197,7 +197,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 
     g_debug("eas_mail_sync_email_folder_hierarchy++ 1");
     
-    // Create the request
+	// Create the request
     req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);
 
     g_debug("eas_mail_sync_email_folder_hierarchy++ 2");
@@ -207,13 +207,12 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
                                     
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
-    
     // Activate the request
     eas_sync_folder_hierarchy_req_Activate (req);
     e_flag_wait(eflag);
     e_flag_free (eflag);
 
-    // Fetch the response data from the message
+	// Fetch the response data from the message
     eas_sync_folder_hierarchy_req_ActivateFinish (req,
                                                   &ret_sync_key,
                                                   &added_folders,
@@ -222,7 +221,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
 
     // Serialise the response data from GSList* to char** for transmission over Dbus
 
-    if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
+	if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
     {
         if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
         {
@@ -240,7 +239,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* easMailObj,
     else
     {
         g_debug(">> Daemon : Success-");
-        dbus_g_method_return (context,
+		dbus_g_method_return (context,
                               ret_sync_key,
                               ret_created_folders_array,
                               ret_updated_folders_array,
