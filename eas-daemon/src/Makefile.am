@@ -60,7 +60,7 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-mail.c
 		      
 
-activesyncd_LDADD = ../libeas/libeas.la ../../libeasmail/src/libeasmail.la $(INTI_LIBS)
+activesyncd_LDADD = ../libeas/libeas.la ../../libeasmail/src/libeasmail.la ../../libeascal/src/libeascal.la $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 
