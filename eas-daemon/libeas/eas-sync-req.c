@@ -85,6 +85,7 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 {
 	EasSyncReqPrivate* priv = self->priv;
 	xmlDoc *doc;
+	gboolean getChanges = FALSE;
 
 	g_debug("eas_sync_req_activate++");
 	eas_request_base_SetFlag(&self->parent_instance, flag);
@@ -107,11 +108,12 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	{
 	    g_debug("switching state");
 		priv->state = EasSyncReqStep2;
+		getChanges = TRUE;
 	}
 	
 	g_debug("eas_sync_req_activate - build messsage");
 	//build request msg
-	doc = eas_sync_msg_build_message (priv->syncMsg, FALSE);
+	doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, NULL);
 	
 	
 
@@ -156,7 +158,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
 			priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID, priv->ItemType);
 
 			//build request msg
-			doc = eas_sync_msg_build_message (priv->syncMsg, TRUE);
+			doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
 			
 			//move to new state
 			priv->state = EasSyncReqStep2;	

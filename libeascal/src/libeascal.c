@@ -30,7 +30,7 @@ struct _EasCalHandlerPrivate{
 static void
 eas_cal_handler_init (EasCalHandler *cnc)
 {
-	g_print("eas_cal_handler_init++\n");
+	g_debug("eas_cal_handler_init++");
     EasCalHandlerPrivate *priv;
     
 	/* allocate internal structure */
@@ -39,13 +39,13 @@ eas_cal_handler_init (EasCalHandler *cnc)
 	priv->remoteEas = NULL;
 	priv->account_uid = 0;
 	cnc->priv = priv;	
-	g_print("eas_cal_handler_init--\n");
+	g_debug("eas_cal_handler_init--");
 }
 
 static void
 eas_cal_handler_finalize (GObject *object)
 {
-	g_print("eas_cal_handler_finalize++\n");
+	g_debug("eas_cal_handler_finalize++");
 	EasCalHandler *cnc = (EasCalHandler *) object;
 	EasCalHandlerPrivate *priv;
 
@@ -55,13 +55,13 @@ eas_cal_handler_finalize (GObject *object)
 	cnc->priv = NULL;
 
 	G_OBJECT_CLASS (eas_cal_handler_parent_class)->finalize (object);
-	g_print("eas_cal_handler_finalize--\n");
+	g_debug("eas_cal_handler_finalize--");
 }
 
 static void
 eas_cal_handler_class_init (EasCalHandlerClass *klass)
 {
-	g_print("eas_cal_handler_class_init++\n");
+	g_debug("eas_cal_handler_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
@@ -70,13 +70,13 @@ eas_cal_handler_class_init (EasCalHandlerClass *klass)
 	temp = (void*)parent_class;
 	
 	object_class->finalize = eas_cal_handler_finalize;
-	g_print("eas_cal_handler_class_init--\n");
+	g_debug("eas_cal_handler_class_init--");
 }
 
 EasCalHandler *
 eas_cal_handler_new(guint64 account_uid)
 {
-	g_print("eas_cal_handler_new++\n");
+	g_debug("eas_cal_handler_new++");
 	DBusGConnection* bus;
 	DBusGProxy* remoteEas;
 	GMainLoop* mainloop;
@@ -88,39 +88,39 @@ eas_cal_handler_new(guint64 account_uid)
 	mainloop = g_main_loop_new(NULL, TRUE);
 
 	if (mainloop == NULL) {
-		g_printerr("Error: Failed to create the mainloop\n");
+		g_printerr("Error: Failed to create the mainloop");
 		return NULL;
 	}
 
-	g_print("Connecting to Session D-Bus.\n");
+	g_debug("Connecting to Session D-Bus.");
 	bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
 	if (error != NULL) {
-		g_printerr("Error: Couldn't connect to the Session bus (%s) \n", error->message);
+		g_printerr("Error: Couldn't connect to the Session bus (%s) ", error->message);
 		return NULL;
 	}
 
-	g_print("Creating a GLib proxy object for Eas.\n");
+	g_debug("Creating a GLib proxy object for Eas.");
 	remoteEas =  dbus_g_proxy_new_for_name(bus,
 		      EAS_SERVICE_NAME,
 		      EAS_SERVICE_CALENDAR_OBJECT_PATH,
 		      EAS_SERVICE_CALENDAR_INTERFACE);
 	if (remoteEas == NULL) {
-		g_printerr("Error: Couldn't create the proxy object\n");
+		g_printerr("Error: Couldn't create the proxy object");
 		return NULL;
 	}
 
 	object = g_object_new (EAS_TYPE_CAL_HANDLER , NULL);
 
 	if(object == NULL){
-		g_printerr("Error: Couldn't create mail\n");
-		g_print("eas_cal_handler_new--\n");
+		g_printerr("Error: Couldn't create mail");
+		g_debug("eas_cal_handler_new--");
 		return NULL;  
 	}
 
 	object->priv->remoteEas = remoteEas; 
 	object->priv->account_uid = account_uid;
 
-	g_print("eas_cal_handler_new--\n");
+	g_debug("eas_cal_handler_new--");
 	return object;
 
 }
@@ -145,7 +145,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
                                                  GSList **items_deleted,
                                                  GError **error)
 {
-    g_debug("eas_cal_handler_get_calendar_items++\n");
+    g_debug("eas_cal_handler_get_calendar_items++");
 
 	g_assert(this);
 	g_assert(sync_key);
@@ -153,7 +153,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this->priv->remoteEas; 
 
-    g_debug("eas_cal_handler_sync_folder_hierarch - dbus proxy ok\n");
+    g_debug("eas_cal_handler_sync_folder_hierarch - dbus proxy ok");
     
 	g_assert(g_slist_length(*items_created) == 0);
 	g_assert(g_slist_length(*items_updated) == 0);
@@ -177,14 +177,14 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		          G_TYPE_STRV, &updated_item_array,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_get_calendar_items - dbus proxy called\n");
+    g_debug("eas_cal_handler_get_calendar_items - dbus proxy called");
     if (*error) {
-        g_error(" Error: %s\n", (*error)->message);
+        g_error(" Error: %s", (*error)->message);
     }
     
 	if(ret)
 	{
-		g_debug("get_latest_calendar_items called successfully\n");
+		g_debug("get_latest_calendar_items called successfully");
 		
 		//TODO: any serialisation gubbins that it turns out we need to do.
 	}
@@ -206,7 +206,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		*items_deleted = NULL;
 	}
 	
-	g_debug("eas_mail_handler_sync_folder_hierarchy--\n");
+	g_debug("eas_mail_handler_sync_folder_hierarchy--");
 	return ret;
 }
 
