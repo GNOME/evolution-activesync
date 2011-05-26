@@ -145,6 +145,64 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
                                     const gchar **server_id,
                                     GError **error)
 {
+ /*       GSList* added_items = NULL;
+        GSList* updated_items  = NULL;
+        GSList* deleted_items  = NULL;
+        EFlag * eflag = NULL;
+
+        gchar* ret_sync_key = NULL;
+        gchar** ret_created_items_array = NULL;
+        gchar** ret_updated_items_array = NULL;
+        gchar** ret_deleted_items_array = NULL;
+
+        eflag = e_flag_new ();
+
+        // Create the request
+        EasSyncReq *syncReqObj =NULL;
+
+        g_debug("eas_calendar_get_latest_calendar_items++");
+        syncReqObj = g_object_new(EAS_TYPE_SYNC_REQ , NULL);
+
+        eas_request_base_SetConnection (&syncReqObj->parent_instance, 
+                                        eas_calendar_get_eas_connection(self));
+                                        
+
+        g_debug("eas_calendar_get_latest_calendar_items - new req");
+	    // Start the request
+	    eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, "1", EAS_ITEM_CALENDAR);
+
+        g_debug("eas_calendar_get_latest_calendar_items  - activate req");
+	    // Set flag to wait for response
+	    e_flag_wait(eflag);
+
+        g_debug("eas_calendar_get_latest_calendar_items  - get results");
+        
+         eas_sync_req_ActivateFinish (syncReqObj,
+                                      &ret_sync_key,
+                                      &added_items,
+                                      &updated_items,
+                                      &deleted_items);
+         e_flag_free (eflag);
+                 
+         //serialise the calendar objects from GSList* to char** and populate  :
+        //TODO: make sure this stuff is ok to go over dbus.
+         
+         // Return the error or the requested data to the calendar client
+        if (error) {
+		        g_debug(">> Daemon : Error ");
+                dbus_g_method_return_error (context, error);
+                g_error_free (error);
+        } else{
+		        g_debug(">> Daemon : Success-");
+                dbus_g_method_return (context,
+                                 	ret_sync_key,
+                                  	ret_created_items_array,
+						            ret_updated_items_array,
+						            ret_deleted_items_array);
+        }
+
+       g_debug("eas_calendar_sync_get latest--");
+*/
 	return TRUE;
 }
 
