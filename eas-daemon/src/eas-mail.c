@@ -335,6 +335,7 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
 gboolean eas_mail_delete_email(EasMail *easMailObj,
                                     guint64 account_uid,
                                     const gchar *sync_key, 
+                                    const gchar *folder_id,
                                     const gchar *server_id,
                                     DBusGMethodInvocation* context)
 {
@@ -345,11 +346,15 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	 
     flag = e_flag_new ();
 
+    if(easMailObj->_priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    }
 
 
     // Create the request
 	EasDeleteEmailReq *req = NULL;
-	req = eas_delete_email_req_new (account_uid, sync_key, server_id, flag);
+	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_id, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    eas_mail_get_eas_connection(easMailObj));
@@ -358,7 +363,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
     eas_delete_email_req_Activate (req);
 
 	    // Set flag to wait for response
-//    e_flag_wait(flag);
+    e_flag_wait(flag);
 
     if (error)
     {

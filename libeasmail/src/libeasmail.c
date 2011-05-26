@@ -491,7 +491,8 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
-								const gchar *server_id,		// email to delete
+								const gchar *folder_id,		// folder that contains email to delete
+                                const gchar *server_id,		// email to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -506,6 +507,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
 				  G_TYPE_UINT64, this_g->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
+		          G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, server_id,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &sync_key,

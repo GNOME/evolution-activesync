@@ -6,14 +6,16 @@
  */
 
 #include "eas-delete-email-req.h"
-
+#include "eas-sync-msg.h"
 
 struct _EasDeleteEmailReqPrivate
 {
-//	EasSyncFolderMsg* syncFolderMsg;
+	EasSyncMsg* syncMsg;
 	guint64 accountID;
 	gchar* syncKey;
+	gchar* folder_id;
 	gchar* server_id;
+	EasItemType ItemType;
 };
 
 #define EAS_DELETE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqPrivate))
@@ -43,12 +45,12 @@ eas_delete_email_req_finalize (GObject *object)
 	EasDeleteEmailReq *req = (EasDeleteEmailReq *) object;
 	EasDeleteEmailReqPrivate *priv = req->priv;
 
-	g_debug("eas_sync_folder_hierarchy_req_finalize++");
+	g_debug("eas_delete_email_req_finalize++");
 
 	g_free(priv->syncKey);
 	g_free(priv->server_id);
 	
-	g_debug("eas_sync_folder_hierarchy_req_finalize--");
+	g_debug("eas_delete_email_req_finalize--");
 	G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
 }
 
@@ -69,10 +71,28 @@ eas_delete_email_req_class_init (EasDeleteEmailReqClass *klass)
 void
 eas_delete_email_req_Activate (EasDeleteEmailReq *self)
 {
-	/* TODO: Add public function implementation here */
+	EasDeleteEmailReqPrivate *priv = self->priv;
+	xmlDoc *doc;
+	gboolean getChanges = FALSE;
+
+	g_debug("eas_delete_email_req_Activate++");
+	//create sync  msg type
+	priv->syncMsg = eas_sync_msg_new (priv->syncKey, priv->accountID, priv->folder_id, priv->ItemType);
+
+    g_debug("eas_delete_email_req_Activate- syncKey = %s", priv->syncKey);
+
+	g_debug("eas_delete_email_req_Activate - build messsage");
+	GSList *deleteMail;
+	deleteMail = g_slist_append(deleteMail, priv->server_id);
+	//build request msg
+	doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, deleteMail);
+
+	g_debug("eas_delete_email_req_Activate - send message");
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	g_debug("eas_delete_email_req_Activate--");	
 }
 
-EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *serverId, EFlag *flag)
+EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const gchar *serverId, EFlag *flag)
 {
 	g_debug("eas_delete_email_req_new++");
 
@@ -82,9 +102,10 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 	g_assert(syncKey);
 	
 	priv->syncKey = g_strdup(syncKey);
+	priv->folder_id = g_strdup(folderId);
 	priv->server_id = g_strdup(serverId);
 	priv->accountID = accountId;
-//	eas_request_base_SetFlag(&self->parent_instance, flag);
+	eas_request_base_SetFlag(&self->parent_instance, flag);
 
 	g_debug("eas_delete_email_req_new--");
 	return self;
