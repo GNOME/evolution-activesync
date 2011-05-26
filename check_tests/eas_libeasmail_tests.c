@@ -461,8 +461,9 @@ START_TEST (test_eas_mail_handler_delete_email)
     // fail the test if there is no folder information
 	fail_unless(created, "No folder information returned from exchange server");
 
-    gchar *folder_sync_key = "0";
-    GSList *emails_created = NULL; //receives a list of EasMails
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;    
     gboolean more_available = FALSE;  
@@ -471,9 +472,9 @@ START_TEST (test_eas_mail_handler_delete_email)
 	guint folderIndex;
 
 /*
-        testGetFolderInfo(email_handler,folder_sync_key,folder->folder_id,&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
+        testGetFolderInfo(email_handler,folder_sync_key,"5",&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
 			gboolean rtn = FALSE;
-			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,folder->folder_id, email->server_id,&error);
+			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", "5:1",&error);
 			if(error){
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
@@ -548,30 +549,6 @@ START_TEST (test_eas_mail_handler_delete_email)
 }
 END_TEST
 
-
-START_TEST (test_delete_email)
-{
-    guint64 accountuid = 123456789;
-    EasEmailHandler *email_handler = NULL;	
-	
-	// get a handle to the DBus interface 
-    testGetMailHandler(&email_handler, accountuid);
-
-	EasEmailInfo email;
-	gboolean rtn = FALSE;
-	GError *error = NULL;
-	char synckey[9];
-	strcpy(synckey,"9");
-	    
-	rtn = eas_mail_handler_delete_email(email_handler, synckey,"bob", "bert",&error);
-	if(error){
-		fail_if(rtn == FALSE,"%s",error->message);
-	}
-	
-	
-}
-END_TEST
-
 Suite* eas_libeasmail_suite (void)
 {
   Suite* s = suite_create ("libeasmail");
@@ -585,7 +562,6 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
-  //tcase_add_test (tc_libeasmail, test_delete_email);
 
   return s;
 }
