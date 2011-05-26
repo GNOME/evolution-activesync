@@ -111,8 +111,9 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *sync_key = "0";
-    
+    gchar sync_key[64];
+	strcpy(sync_key,"0");
+	
     GError *error = NULL;
 
 	mark_point();
@@ -547,8 +548,8 @@ Suite* eas_libeasmail_suite (void)
   suite_add_tcase (s, tc_libeasmail);
   tcase_add_test (tc_libeasmail, test_get_mail_handler);
   tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+  //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
 
