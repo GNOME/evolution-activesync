@@ -11,7 +11,7 @@
 
 G_DEFINE_TYPE (EasFolder, eas_folder, G_TYPE_OBJECT);
 
-const gchar *folder_separator = ",";
+const gchar *folder_separator = "\n";
 
 static void
 eas_folder_init (EasFolder *object)
