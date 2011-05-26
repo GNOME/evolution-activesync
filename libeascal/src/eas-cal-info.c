@@ -74,7 +74,7 @@ gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 }
 
 
-gboolean eas_email_info_deserialise(EasCalInfo* self, const gchar* data)
+gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 {
 	gboolean separator_found = FALSE;
 	

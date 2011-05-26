@@ -51,7 +51,7 @@ gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result);
 /*
 populate the object from a string
 */
-gboolean eas_email_info_deserialise(EasCalInfo* self, const gchar* data);
+gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data);
 
 
 G_END_DECLS

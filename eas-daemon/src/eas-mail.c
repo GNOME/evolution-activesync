@@ -171,6 +171,34 @@ cleanup:
 	return ret;
 }
 
+// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
+// null terminates the array
+static gboolean 
+build_serialised_email_info_array(gchar ***serialised_email_info_array, const GSList *email_list, GError **error)
+{
+    g_debug("build email arrays++");
+	gboolean ret = TRUE;
+	guint i = 0;
+
+    g_assert(serialised_email_info_array);
+    g_assert(*serialised_email_info_array == NULL);
+
+	guint array_len = g_slist_length((GSList*)email_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+    
+	*serialised_email_info_array = g_malloc0(array_len * sizeof(gchar*));
+
+	GSList *l = (GSList*)email_list;
+	for(i = 0; i < array_len - 1; i++){
+		g_assert(l != NULL);
+		gchar *tstring = g_strdup(l->data);
+		(*serialised_email_info_array)[i]=tstring;
+		l = g_slist_next (l);
+	}
+    
+	return ret;
+}
+
+
 void eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                           guint64 account_uid,
                                           const gchar* sync_key,
@@ -313,8 +341,13 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
                                 &c /* &ret_deleted_email_array */
                                 /*, &error */);
 
-    g_warning("TODO Serialisation to be performed for sync_folder_email");
-    
+
+   if(build_serialised_email_info_array(&ret_added_email_array, a, &error)){
+        if(build_serialised_email_info_array(&ret_changed_email_array, b, &error)){
+            build_serialised_email_info_array(&ret_deleted_email_array, c, &error);          
+        }
+   }
+
     if (error)
     {
         dbus_g_method_return_error (context, error);

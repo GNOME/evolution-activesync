@@ -294,13 +294,13 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 					
 					g_debug ("FlatItem = %s", flatItem);
 					if(flatItem){
-						g_slist_append(priv->added_items, flatItem);
+					    g_debug ("appending to added_items");
+						priv->added_items = g_slist_append(priv->added_items, flatItem);
 					}
 						
 					continue;
 				}
 			}
-			eas_sync_parse_item_add(self, node);
 			continue;
 		}
 		
@@ -321,17 +321,12 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 
 }
 
-static void
-eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node) 
-{
-	EasSyncMsgPrivate *priv = self->priv;
-
-}
 
 GSList*
 eas_sync_msg_get_added_items (EasSyncMsg* self)
 {
 	EasSyncMsgPrivate *priv = self->priv;
+	g_debug("eas added items list size = %d", g_slist_length(priv->added_items));
 	return priv->added_items;
 }
 

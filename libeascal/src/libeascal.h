@@ -40,7 +40,7 @@ GType eas_cal_handler_get_type (void) G_GNUC_CONST;
 // as an argument
 EasCalHandler *eas_cal_handler_new(guint64 account_uid);
 
-/* function name:               eas_cal_handler_sync_folder_hierarchy
+/* function name:               eas_cal_handler_get calendar_items
  * function description:        pulls down changes in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
@@ -66,6 +66,26 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
+                                                 GError **error);
+                                                 
+/* function name:               eas_cal_handler_delete_items
+ * function description:        delete items in calendar folder
+ * return value:                TRUE if function success, FALSE if error
+ * params: 
+ * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
+ * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
+ *                              from exchange server for subsequent sync requests
+ * GSList *items_deleted (in): provides a list of EasFolder structs that describe
+ *                              deleted folders.  If there are no new deleted folders
+ *                              this parameter will be unchanged.
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+gboolean eas_cal_handler_delete_items(EasCalHandler* this, 
+                                                 gchar *sync_key, 
+                                                 GSList *items_deleted,
                                                  GError **error);
 
 
