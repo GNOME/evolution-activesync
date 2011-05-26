@@ -381,7 +381,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	 
     flag = e_flag_new ();
 
-    if(easMailObj->_priv->connection)
+    if(easMailObj->priv->connection)
     {
         eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
     }
