@@ -127,7 +127,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 					{
 						g_debug("found attachment");
 						
-						EasAttachment *attachment = g_malloc0(sizeof(EasAttachment)); 
+						EasAttachment *attachment = eas_attachment_new(); 
 
 						xmlNode *t = s;
 						for (t = t->children; t; t = t->next)
