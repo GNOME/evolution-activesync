@@ -31,7 +31,7 @@ struct _EasMail
 {
 	GObject parent_instance;
 	
-  	EasMailPrivate* _priv;
+  	EasMailPrivate* priv;
 };
 
 GType eas_mail_get_type (void) G_GNUC_CONST;
@@ -80,6 +80,7 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
 gboolean
 eas_mail_fetch_email_body (EasMail* self, 
                            guint64 account_uid, 
+                           const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
                            DBusGMethodInvocation* context);

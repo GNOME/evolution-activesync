@@ -13,6 +13,8 @@
 #include <string.h>
 
 
+const gchar SERVER_ID_SEPARATOR = '\n';
+
 
 G_DEFINE_TYPE (EasCalInfo, eas_cal_info, G_TYPE_OBJECT);
 
@@ -64,15 +66,35 @@ EasCalInfo* eas_cal_info_new ()
 
 gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 {
-	// Temporary
-	// TODO: complete
-	return FALSE;
+	GString* str = g_string_new(self->server_id);
+	str = g_string_append_c(str, SERVER_ID_SEPARATOR);
+	str = g_string_append(str, self->icalendar);
+	*result = g_string_free(str, FALSE); // Destroy the GString but not the buffer (which is returned with ownership)
+	return TRUE;
 }
 
 
-gboolean eas_email_info_deserialise(EasCalInfo* self, const gchar* data)
+gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 {
-	// Temporary
-	// TODO: complete
-	return FALSE;
+	gboolean separator_found = FALSE;
+	
+	// Look for the separator character
+	guint i = 0;
+	for (; data[i]; i++)
+	{
+		if (data[i] == SERVER_ID_SEPARATOR)
+		{
+			separator_found = TRUE;
+			break;
+		}
+	}
+
+	if (separator_found)
+	{
+		self->server_id = g_strndup(data, i);
+		self->icalendar = g_strdup(data[i + 1]);
+	}
+	
+	return separator_found;
 }
+

@@ -54,12 +54,15 @@
 
 <!-- used by clients to fetch email bodies and attachments -->
     <method name="fetch_email_body">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
    	<arg type="t" name="account_uid" direction="in"/>
+	<arg type="s" name="collection_id" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
     </method>
 
     <method name="fetch_attachment">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
    	<arg type="t" name="account_uid" direction="in"/>
 	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
@@ -68,6 +71,7 @@
 
 <!-- used by clients to send MIME-formatted e-mail messages to the server -->
     <method name="send_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="clientid" direction="in"/>
       <arg type="s" name="mime_file" direction="in"/>
