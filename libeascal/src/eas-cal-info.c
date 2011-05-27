@@ -77,7 +77,7 @@ gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 {
 	gboolean separator_found = FALSE;
-	
+	g_debug("eas_cal_info_deserialise++");	
 	// Look for the separator character
 	guint i = 0;
 	for (; data[i]; i++)
@@ -92,7 +92,7 @@ gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 	if (separator_found)
 	{
 		self->server_id = g_strndup(data, i);
-		self->icalendar = g_strdup(data[i + 1]);
+		self->icalendar = g_strdup(data+(i + 1));
 	}
 	
 	return separator_found;

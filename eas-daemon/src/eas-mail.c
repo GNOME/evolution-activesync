@@ -9,6 +9,7 @@
 
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-req.h"
+#include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
@@ -225,7 +226,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
 
     g_debug("eas_mail_sync_email_folder_hierarchy++ 1");
     
-    // Create the request
+	// Create the request
     req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);
 
     g_debug("eas_mail_sync_email_folder_hierarchy++ 2");
@@ -235,13 +236,12 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                     
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
-    
     // Activate the request
     eas_sync_folder_hierarchy_req_Activate (req);
     e_flag_wait(eflag);
     e_flag_free (eflag);
 
-    // Fetch the response data from the message
+	// Fetch the response data from the message
     eas_sync_folder_hierarchy_req_ActivateFinish (req,
                                                   &ret_sync_key,
                                                   &added_folders,
@@ -250,7 +250,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
 
     // Serialise the response data from GSList* to char** for transmission over Dbus
 
-    if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
+	if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
     {
         if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
         {
@@ -268,7 +268,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     else
     {
         g_debug(">> Daemon : Success-");
-        dbus_g_method_return (context,
+		dbus_g_method_return (context,
                               ret_sync_key,
                               ret_created_folders_array,
                               ret_updated_folders_array,
@@ -367,19 +367,50 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     return TRUE;
 }
 
-gboolean eas_mail_delete_email(EasMail* easMailObj,
-                               guint64 account_uid,
-                               const gchar* sync_key, 
-                               const gchar *server_id,
-                               DBusGMethodInvocation* context)
+gboolean eas_mail_delete_email(EasMail *easMailObj,
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
+                                    const gchar *folder_id,
+                                    const gchar *server_id,
+                                    DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_delete_email++");
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    gchar* ret_sync_key = NULL;
+	 
+    flag = e_flag_new ();
 
-    // TODO
+    if(easMailObj->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    }
 
-    // EasDeleteEmailReq
-    
-    g_debug("eas_mail_delete_email--");
+
+    // Create the request
+	EasDeleteEmailReq *req = NULL;
+	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_id, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_mail_get_eas_connection(easMailObj));
+
+	    // Start the request
+    eas_delete_email_req_Activate (req);
+
+	    // Set flag to wait for response
+    e_flag_wait(flag);
+
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context,
+                              ret_sync_key);
+    }	
+	g_debug("eas_mail_delete_email--");
 	return TRUE;
 }
 

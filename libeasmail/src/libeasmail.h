@@ -170,6 +170,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in / out):  use value returned from exchange server from previous requests
+ * const gchar *folder_id (in): identifies the folder to delete the email from
  * const gchar *server_id (in): identifies the specific email to delete.  This information is 
  *                              returned in a list from the eas_mail_handler_sync_folder_email_info
  *                              call
@@ -180,6 +181,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
 */
 gboolean eas_mail_handler_delete_email(EasEmailHandler* this, 
 										gchar *sync_key,                                        
+                                        const gchar *folder_id,
                                         const gchar *server_id,
 	                                    GError **error);
 

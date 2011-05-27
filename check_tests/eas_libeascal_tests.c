@@ -4,6 +4,7 @@
 #include <check.h>
 
 #include "../libeascal/src/libeascal.h"
+#include "../libeascal/src/eas-cal-info.h"
 
 
 static void testGetCalendarHandler(EasCalHandler **cal_handler, guint64 accountuid){
@@ -40,8 +41,9 @@ static void testGetLatestCalendar(EasCalHandler *cal_handler,
 	// the exchange server should increment the sync key and send back to the
 	// client so that the client can track where it is with regard to sync.
 	// therefore the key must not be zero as this is the seed value for this test          
-    fail_if(sync_key == 0,
-		"Sync Key not updated by call the exchange server");
+    fail_if(sync_key == 0,"Sync Key not updated by call the exchange server");
+	fail_if(g_slist_length(*created)==0,"list length =0");
+	EasCalInfo *cal = (*created)->data;
 	
 }
 
@@ -82,7 +84,8 @@ START_TEST (test_get_latest_calendar_items)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *sync_key = "0";
+    gchar sync_key[64];
+	strcpy(sync_key,"0");
     
     GError *error = NULL;
 

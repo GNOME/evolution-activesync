@@ -44,8 +44,8 @@ static void testGetFolderHierarchy(EasEmailHandler *email_handler,
 	// the exchange server should increment the sync key and send back to the
 	// client so that the client can track where it is with regard to sync.
 	// therefore the key must not be zero as this is the seed value for this test          
-    fail_if(sync_key == 0,
-		"Sync Key not updated by call the exchange server");
+    fail_if(!g_strcmp0(sync_key, "0"),
+		"Sync Key not updated by call the exchange server %s", sync_key);
 		
 }
 
@@ -70,11 +70,14 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
     // if the call to the daemon returned an error, report and drop out of the test
     if((*error) != NULL){
 		fail_if(ret == FALSE,"%s",&(*error)->message);
-
+    } 
     fail_if(folder_sync_key == 0,
 		"Folder Sync Key not updated by call the exchange server");
 	fail_if(g_slist_length(*emails_created)==0, "no emails added");
-	} 
+	
+	EasEmailInfo *email1 = (*emails_created)->data;
+	fail_if(g_strcmp0((email1->server_id), "5:1"), "server_id incorrect %s", email1->server_id) ;
+	
 	
 	                                       
 }
@@ -108,8 +111,9 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *sync_key = "0";
-    
+    gchar sync_key[64];
+	strcpy(sync_key,"0");
+	
     GError *error = NULL;
 
 	mark_point();
@@ -143,7 +147,8 @@ START_TEST (test_get_eas_mail_info_in_folder)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *folder_hierarchy_sync_key = "0";
+     gchar folder_hierarchy_sync_key[64];
+	strcpy(folder_hierarchy_sync_key,"0");
     GError *error = NULL;
 
 	// call into the daemon to get the folder hierarchy from the exchange server
@@ -482,7 +487,7 @@ START_TEST (test_eas_mail_handler_delete_email)
 			email = g_slist_nth(emails_created, 0);
 			
 			// delete the first mail in the folder
-			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,email,&error);
+//			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,email,&error);
 			if(error){
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
@@ -544,8 +549,8 @@ Suite* eas_libeasmail_suite (void)
   suite_add_tcase (s, tc_libeasmail);
   tcase_add_test (tc_libeasmail, test_get_mail_handler);
   tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+  //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
 

@@ -39,6 +39,7 @@ typedef enum {
 	EAS_REQ_SYNC_FOLDER_HIERARCHY,
 	EAS_REQ_SYNC,
 	EAS_REQ_SEND_EMAIL,
+	EAS_REQ_DELETE_MAIL,
     EAS_REQ_GET_EMAIL_BODY,
 	//TODO: add all other requests here
 	
