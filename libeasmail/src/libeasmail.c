@@ -297,9 +297,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		g_debug("sync_email_folder_hierarchy called successfully");
 
 		// put the updated sync key back into the original string for tracking this
-		g_debug("Before strcpy [%s] [%s]", sync_key, updatedSyncKey);
         strcpy (sync_key, updatedSyncKey);
-		g_debug("After strcpy");
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
 		if(ret)
