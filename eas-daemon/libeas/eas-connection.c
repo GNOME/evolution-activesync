@@ -31,6 +31,7 @@
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
 #include "eas-get-email-body-req.h"
+#include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
 
 struct _EasConnectionPrivate
@@ -674,6 +675,12 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			{
 				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc);
 			}
+			break;
+			case EAS_REQ_SEND_EMAIL:
+			{
+				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+			}
+			break;				
 		}
 	}
 	else
