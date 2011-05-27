@@ -400,6 +400,8 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	    // Set flag to wait for response
     e_flag_wait(flag);
 
+	eas_delete_email_req_ActivateFinish(req, &ret_sync_key);
+		
     if (error)
     {
         dbus_g_method_return_error (context, error);

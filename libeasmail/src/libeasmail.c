@@ -371,7 +371,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **updated_emailinfo_array = NULL;
 	
-	gchar *updatedSyncKey;
+	gchar *updatedSyncKey = NULL;
 	
 	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
 	// call dbus api with appropriate params
@@ -408,7 +408,9 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		}
 	}
 
-	g_free(updatedSyncKey);
+	if(updatedSyncKey){
+	    g_free(updatedSyncKey);
+	}
 	free_string_array(created_emailinfo_array);
 	free_string_array(updated_emailinfo_array);
 	free_string_array(deleted_emailinfo_array);
@@ -516,15 +518,27 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
+	gchar *updatedSyncKey = NULL;
+
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
 				  G_TYPE_UINT64, this_g->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, server_id,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);
 
+	if(ret)
+	{
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
+	}	
+	
+	if(updatedSyncKey){
+	    g_free(updatedSyncKey);
+	}
+	
 	g_debug("eas_mail_handler_delete_emails--");	
 	return ret;
 }
