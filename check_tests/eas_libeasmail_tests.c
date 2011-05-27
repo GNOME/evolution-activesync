@@ -239,7 +239,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
         mark_point();
         // get body for first email in the folder
-        email = g_slist_nth(emails_created, 0);
+        email = g_slist_nth(emails_created, 0)->data;
         fail_if(!email, "Unable to get first email in emails_created GSList");
 
         // destination directory for the mime file
@@ -543,9 +543,9 @@ Suite* eas_libeasmail_suite (void)
   /* libeasmail test case */
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
-  tcase_add_test (tc_libeasmail, test_get_mail_handler);
-  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
+//  tcase_add_test (tc_libeasmail, test_get_mail_handler);
+//  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+//  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);
   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
