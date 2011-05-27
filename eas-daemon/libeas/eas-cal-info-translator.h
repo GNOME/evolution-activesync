@@ -11,13 +11,16 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 
+#include "../../libeascal/src/eas-cal-info.h"
+
 
 
 // Parse a response message
-gchar* eas_cal_info_translator_parse_response(xmlNode* node, const gchar* server_id);
+// TODO: this should return a gboolean too
+gchar* eas_cal_info_translator_parse_response(xmlNode* application_data, const gchar* server_id);
 
 // Parse a request message
-xmlNode* eas_cal_info_translator_parse_request(const gchar* request, gchar** server_id);
+gboolean eas_cal_info_translator_parse_request(xmlDoc* doc, xmlNode* application_data, EasCalInfo* cal_info);
 
 G_END_DECLS
 

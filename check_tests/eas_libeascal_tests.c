@@ -5,6 +5,56 @@
 
 #include "../libeascal/src/libeascal.h"
 #include "../libeascal/src/eas-cal-info.h"
+#include "../eas-daemon/libeas/eas-cal-info-translator.h"
+
+
+const char* TEST_VCALENDAR = "BEGIN:VCALENDAR \
+PRODID:-//Microsoft Corporation//Outlook 14.0 MIMEDIR//EN \
+VERSION:2.0 \
+METHOD:PUBLISH \
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE \
+BEGIN:VTIMEZONE \
+TZID:GMT Standard Time \
+BEGIN:STANDARD \
+DTSTART:16011028T020000 \
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10 \
+TZOFFSETFROM:+0100 \
+TZOFFSETTO:-0000 \
+END:STANDARD \
+BEGIN:DAYLIGHT \
+DTSTART:16010325T010000 \
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3 \
+TZOFFSETFROM:-0000 \
+TZOFFSETTO:+0100 \
+END:DAYLIGHT \
+END:VTIMEZONE \
+BEGIN:VEVENT \
+CLASS:PUBLIC \
+CREATED:20110527T100028Z \
+DTEND;TZID=\"GMT Standard Time\":20110525T203000 \
+DTSTAMP:20110527T100028Z \
+DTSTART;TZID=\"GMT Standard Time\":20110525T190000 \
+LAST-MODIFIED:20110527T100028Z \
+LOCATION:Town Hall \
+PRIORITY:5 \
+SEQUENCE:0 \
+SUMMARY:Music recital \
+TRANSP:OPAQUE \
+UID:040000008200E00074C5B7101A82E0080000000080AC475E870ACC01000000000000000 \
+	010000000D3EAF3B001E09E42B0EC9A435026826E \
+X-MICROSOFT-CDO-BUSYSTATUS:BUSY \
+X-MICROSOFT-CDO-IMPORTANCE:1 \
+X-MICROSOFT-DISALLOW-COUNTER:FALSE \
+X-MS-OLK-ALLOWEXTERNCHECK:TRUE \
+X-MS-OLK-AUTOFILLLOCATION:FALSE \
+X-MS-OLK-CONFTYPE:0 \
+BEGIN:VALARM \
+TRIGGER:-PT2880M \
+ACTION:DISPLAY \
+DESCRIPTION:Reminder \
+END:VALARM \
+END:VEVENT \
+END:VCALENDAR";
 
 
 static void testGetCalendarHandler(EasCalHandler **cal_handler, guint64 accountuid){
@@ -104,6 +154,23 @@ START_TEST (test_get_latest_calendar_items)
 }
 END_TEST
 
+START_TEST(test_translate_ical_to_xml)
+{
+	EasCalInfo* cal_info = eas_cal_info_new();
+	cal_info->icalendar = TEST_VCALENDAR;
+	cal_info->server_id = "1.0 (test value)";
+
+	xmlDocPtr doc = xmlNewDoc("1.0");
+	xmlNodePtr node = xmlNewDocNode(doc, NULL, "ApplicationData", NULL);
+
+	fail_if(!eas_cal_info_translator_parse_request(doc, node, cal_info),
+	        "Calendar translation failed (iCal => XML)");
+
+	g_object_unref(cal_info);
+	xmlFree(doc); // TODO: need to explicitly free the node too??
+}
+END_TEST
+
 
 Suite* eas_libeascal_suite (void)
 {
@@ -116,6 +183,7 @@ Suite* eas_libeascal_suite (void)
   
   tcase_add_test (tc_libeascal, test_get_cal_handler);
   tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
+  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
 
   return s;
 }

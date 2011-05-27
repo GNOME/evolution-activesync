@@ -1,5 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 INCLUDES = -I/usr/include/dbus-1.0 \
+            -I/usr/include/libxml2 \
 	  -I/usr/lib/dbus-1.0/include \
 	  -I/usr/include/glib-2.0 \
 	  -I/usr/lib/glib-2.0/include \
@@ -28,6 +29,7 @@ check_eas_SOURCES = eas_daemon_tests.c \
 check_eas_CFLAGS = @CHECK_CFLAGS@
 check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
                         $(top_builddir)/libeascal/src/libeascal.la \
+                        $(top_builddir)/eas-daemon/libeas/libeas.la \
                     @CHECK_LIBS@
 
 #eas_daemon_tests.c eas_daemon_tests.h 

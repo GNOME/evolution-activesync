@@ -7,7 +7,6 @@
 
 
 #include "eas-cal-info-translator.h"
-#include "../../libeascal/src/eas-cal-info.h"
 
 #include <icalparser.h>
 #include <icalcomponent.h>
@@ -323,7 +322,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNode* node, const gchar* server
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
 		EasCalInfo* cal_info = eas_cal_info_new();
 		cal_info->icalendar = g_string_free(ical_buf, FALSE); // Destroy the GString object and pass its buffer (with ownership) to cal_info
-		cal_info->server_id = server_id;
+		cal_info->server_id = (gchar*)server_id;
 		if (!eas_cal_info_serialise(cal_info, &result))
 		{
 			// TODO: log error
@@ -338,45 +337,56 @@ gchar* eas_cal_info_translator_parse_response(xmlNode* node, const gchar* server
 
 
 /**
- * \brief Converts a calendar request object (a serialised EasCalInfo, contaning an iCalendar
- *        and a server ID) into an Active Sync <ApplicationData> object, ready to send as a request.
  *
- * \param request     The serialised EasCalInfo object
- * \param server_id   Pointer to a buffer to contain the server ID
  */
-xmlNode* eas_cal_info_translator_parse_request(const gchar* request, gchar** server_id)
+gboolean eas_cal_info_translator_parse_request(xmlDoc* doc, xmlNode* application_data, EasCalInfo* cal_info)
 {
-	EasCalInfo* cal_info = eas_cal_info_new();
+	gboolean success = FALSE;
 
-	if (eas_cal_info_deserialise(cal_info, request))
+	icalcomponent* ical;
+	if ((application_data != NULL) &&
+	    (cal_info != NULL) &&
+	    (ical = icalparser_parse_string(cal_info->icalendar)) &&
+	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
-		// Copy the server ID
-		*server_id = g_strdup(cal_info->server_id);
-
-		icalcomponent* ical = icalparser_parse_string(request);
-		icalcomponent* c;
-
-		for (c = icalcomponent_get_first_component(ical, ICAL_ANY_COMPONENT);
-		     c != NULL;
-		     c = icalcomponent_get_next_component(ical, ICAL_ANY_COMPONENT))
+		icalproperty* prop;
+		for (prop = icalcomponent_get_first_property(ical, ICAL_ANY_PROPERTY);
+		     prop;
+		     prop = icalcomponent_get_next_property(ical, ICAL_ANY_PROPERTY))
 		{
-			icalcomponent_kind kind = icalcomponent_isa(c);
+			const icalproperty_kind prop_type = icalproperty_isa(prop);
 
-			switch (kind)
+			const char* value = NULL;
+			switch (prop_type)
 			{
-				case ICAL_VCALENDAR_COMPONENT:
+				case ICAL_SUMMARY_PROPERTY:
+					value = icalproperty_get_summary(prop);
+					xmlNewTextChild(application_data, NULL, "calendar:Subject", value);
 					break;
-				case ICAL_VTIMEZONE_COMPONENT:
-					break;
-				case ICAL_VEVENT_COMPONENT:
-					break;
-				case ICAL_VALARM_COMPONENT:
-					break;
-				// TODO: any others we need to support
+					
+				// TODO: all the rest :)
+
 				default:
 					break;
 			}
 		}
+		
+		success = TRUE;
 	}
+
+	if (ical)
+	{
+		icalcomponent_free(ical);
+	}
+
+	// DEBUG output
+	xmlChar* dump_buffer;
+	int dump_buffer_size;
+	xmlIndentTreeOutput = 1;
+	xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+	g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+	xmlFree(dump_buffer);
+
+	return success;
 }
 
