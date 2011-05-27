@@ -39,6 +39,8 @@ struct _EasDeleteEmailReq
 GType eas_delete_email_req_get_type (void) G_GNUC_CONST;
 EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const gchar *serverId, EFlag *flag);
 void eas_delete_email_req_Activate (EasDeleteEmailReq *self);
+void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key);
+void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc);
 
 G_END_DECLS
 

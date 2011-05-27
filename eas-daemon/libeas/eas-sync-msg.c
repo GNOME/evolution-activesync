@@ -185,7 +185,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 			if(deleted){
 				for (iterator = deleted; iterator; iterator = iterator->next) {
 					xmlNode *delete = xmlNewChild(command, NULL, (xmlChar *)"Delete", NULL);
-					xmlNewChild(delete, NULL, (xmlChar *)"ServerID", iterator->data);
+					xmlNewChild(delete, NULL, (xmlChar *)"ServerId", iterator->data);
 				}
 
 			}
@@ -315,13 +315,61 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
 			// TODO Parse deleted folders
-			g_assert(0);
+			for (appData = appData->children; appData; appData = appData->next) {
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					item_server_id = (gchar *)xmlNodeGetContent(appData);
+					g_debug ("Found serverID for Item = %s", item_server_id);
+					priv->added_items = g_slist_append(priv->added_items, item_server_id);
+					continue;
+				}
+			}
 			continue;
 		}
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
 			// TODO Parse updated folders
-			g_assert(0);
+			appData = node;
+			
+			for (appData = appData->children; appData; appData = appData->next) {
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					item_server_id = (gchar *)xmlNodeGetContent(appData);
+					g_debug ("Found serverID for Item = %s", item_server_id);
+					continue;
+				}
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+					gchar *flatItem = NULL;
+					g_debug ("Found AppliicationData - about to parse and flatten");
+					//choose translator based on data type
+					switch(priv->ItemType)
+					{
+						default:
+						{
+							g_debug ("Unknown Data Type  %d", priv->ItemType);
+						}
+						break;
+						case EAS_ITEM_MAIL:
+						{
+							flatItem = eas_update_email_appdata_parse_response(appData, item_server_id); 
+						}
+						break;
+						case EAS_ITEM_CALENDAR:
+						{
+							flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
+						}
+						break;
+						
+					}		
+					
+					
+					g_debug ("FlatItem = %s", flatItem);
+					if(flatItem){
+					    g_debug ("appending to added_items");
+						priv->added_items = g_slist_append(priv->added_items, flatItem);
+					}
+						
+					continue;
+				}
+			}
 			continue;
 		}
 	}

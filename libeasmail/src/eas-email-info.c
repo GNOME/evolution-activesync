@@ -43,10 +43,11 @@ eas_email_info_finalize (GObject *object)
 	/* deinitalization code */
 	g_free(this_g->server_id);	
 	
-	g_slist_foreach(this_g->headers, (GFunc) eas_email_free_header, NULL); 
+	g_slist_foreach(this_g->headers, (GFunc)eas_email_free_header, NULL); 
 	g_slist_free(this_g->headers);
-	
-	g_slist_foreach(this_g->attachments, (GFunc) g_object_unref, NULL);
+
+	g_slist_foreach(this_g->attachments, (GFunc)g_object_unref, NULL);
+
 	g_slist_free(this_g->attachments);  // list of EasAttachments
 	
 	g_slist_foreach(this_g->categories, (GFunc) g_free, NULL);
@@ -122,7 +123,7 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 		header = l->data;
 		total_len += eas_mail_info_header_serialised_length(header);
 	}
-//attachments
+	//attachments
 	list_len = g_slist_length(this_g->attachments);
 	snprintf(list_size, sizeof(list_size)/sizeof(list_size[0]), "%d", list_len);
 	total_len += strlen(list_size) + 1;
@@ -339,7 +340,7 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 	g_debug("%d attachments", list_len);
 	for(i = 0; i < list_len; i++)
 	{
-		attachment = g_malloc0(sizeof(EasAttachment));
+		attachment = eas_attachment_new ();
 		if(!eas_attachment_deserialise(attachment, from))
 		{
 			ret = FALSE;

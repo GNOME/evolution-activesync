@@ -11,6 +11,7 @@ struct _EasGetEmailBodyMsgPrivate
 {
 	gchar* serverUid;
 	gchar* collectionId;
+	gchar* directoryPath;
 };
 
 #define EAS_GET_EMAIL_BODY_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_MSG, EasGetEmailBodyMsgPrivate))
@@ -43,6 +44,7 @@ eas_get_email_body_msg_finalize (GObject *object)
 
 	g_free(priv->serverUid);
 	g_free(priv->collectionId);
+	g_free(priv->directoryPath);
 	
 	G_OBJECT_CLASS (eas_get_email_body_msg_parent_class)->finalize (object);
 	g_debug("eas_get_email_body_msg_finalize--");
@@ -63,7 +65,7 @@ eas_get_email_body_msg_class_init (EasGetEmailBodyMsgClass *klass)
 
 
 EasGetEmailBodyMsg*
-eas_get_email_body_msg_new (const gchar* serverUid, const gchar* collectionId)
+eas_get_email_body_msg_new (const gchar* serverUid, const gchar* collectionId, const char* directoryPath)
 {
 	EasGetEmailBodyMsg* self = NULL;
 	EasGetEmailBodyMsgPrivate* priv = NULL;
@@ -74,6 +76,7 @@ eas_get_email_body_msg_new (const gchar* serverUid, const gchar* collectionId)
 
 	priv->serverUid  = g_strdup (serverUid);
 	priv->collectionId  = g_strdup (collectionId);
+	priv->directoryPath = g_strdup (directoryPath);
 
 	g_debug("eas_get_email_body_msg_new--");
 
@@ -128,5 +131,142 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc)
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
 	g_debug("eas_get_email_body_msg_parse_response++");
 	/* TODO: Add public function implementation here */
+
+	xmlNode *node = NULL;
+	
+    if (!doc) 
+    {
+        g_warning ("No XML Doc to parse");
+        return;
+    }
+    node = xmlDocGetRootElement(doc);
+    if (strcmp((char *)node->name, "ItemOperations")) {
+        g_debug("Failed to find <ItemOperations> element");
+        return;
+    }
+
+    for (node = node->children; node; node = node->next) 
+	{
+        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        {
+            gchar *status = (gchar *)xmlNodeGetContent(node);
+            g_debug ("ItemOperations Status:[%s]", status);
+			xmlFree(status);
+            continue;
+        }
+        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Response"))
+		{
+			break;
+		}
+	}
+	if (!node)
+	{
+		g_warning("Could not find Response node");
+		return;
+	}
+
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Fetch"))
+		{
+			break;
+		}
+	}
+	if (!node)
+	{
+		g_warning("Could not find Fetch node");
+		return;
+	}
+
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+		{
+            gchar *status = (gchar *)xmlNodeGetContent(node);
+            g_debug ("Fetch Status:[%s]", status);
+			xmlFree(status);
+            continue;
+		}
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "CollectionId"))
+		{
+			continue;
+		}
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "ServerID"))
+		{
+			gchar *xmlTmp = xmlNodeGetContent(node);
+			priv->serverUid = g_strdup(xmlTmp);
+			xmlFree(xmlTmp);
+			continue;
+		}
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Class"))
+		{
+			continue;
+		}
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Properties"))
+		{
+			break;
+		}
+	}
+
+	if (!node)
+	{
+		g_warning("Failed to find Properties node");
+		return;
+	}
+
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Body"))
+		{
+			break;
+		}
+	}
+
+		if (!node)
+	{
+		g_warning("Failed to find Body node");
+		return;
+	}
+
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Type"))
+		{
+			gchar *xmlTmp = xmlNodeGetContent(node);
+			if (strcmp(xmlTmp,"4"))
+			{
+				g_critical("Email type returned by server is not MIME");
+				xmlFree(xmlTmp);
+				return;
+			}
+			xmlFree(xmlTmp);
+			continue;
+		}
+		
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Data"))
+		{
+			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar* fullFilePath = NULL;
+			FILE *hBody = NULL;
+
+			fullFilePath = g_strconcat(priv->directoryPath, priv->serverUid, NULL);
+			g_message("Attempting to write email to file [%s]",fullFilePath);   
+			if (hBody = fopen(fullFilePath,"wb"))
+			{
+				fputs(xmlTmp, hBody);
+				fclose(hBody);
+			}
+			else
+			{
+				g_critical("Failed to open file!");
+			}
+			g_free(fullFilePath);
+			xmlFree(xmlTmp);
+			break;
+		}
+	}
+
+	
+
 	g_debug("eas_get_email_body_msg_parse_response--");
 }

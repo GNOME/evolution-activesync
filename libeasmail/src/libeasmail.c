@@ -128,6 +128,7 @@ eas_mail_handler_new(guint64 account_uid)
 static gboolean 
 build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, GError **error)
 {
+	g_debug("build_folder_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
 
@@ -174,14 +175,16 @@ cleanup:
 	}
 	
 	g_debug("list has %d items", g_slist_length(*folder_list));
+	g_debug("build_folder_list++");
 	return ret;
 }
 
 
 // takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
 static gboolean 
-build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
+build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList ***emailinfo_list, GError **error)
 {
+	g_debug("build_emailinfo_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
 
@@ -225,7 +228,8 @@ cleanup:
 		g_slist_free(*emailinfo_list);
 		*emailinfo_list = NULL;
 	}
-	
+
+	g_debug("build_emailinfo_list++");	
 	return ret;
 }
 				
@@ -247,8 +251,8 @@ free_string_array(gchar **array)
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean 
 eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g, 
-                                       gchar *sync_key, 	
-                                       GSList **folders_created,	
+                                       gchar *sync_key, 
+                                       GSList **folders_created,
                                        GSList **folders_updated,
                                        GSList **folders_deleted,
                                        GError **error)
@@ -271,7 +275,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	gchar **deleted_folder_array = NULL;
 	gchar **updated_folder_array = NULL;
 
-	gchar *updatedSyncKey;
+	gchar *updatedSyncKey = NULL;
 	
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
@@ -287,7 +291,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
    
-    g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy called");
+    g_debug("eas_mail_handler_sync_folder_hierarchy - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -297,7 +301,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		g_debug("sync_email_folder_hierarchy called successfully");
 
 		// put the updated sync key back into the original string for tracking this
-		strcpy(sync_key,updatedSyncKey);
+        strcpy (sync_key, updatedSyncKey);
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
 		if(ret)
@@ -371,7 +375,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **updated_emailinfo_array = NULL;
 	
-	gchar *updatedSyncKey;
+	gchar *updatedSyncKey = NULL;
 	
 	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
 	// call dbus api with appropriate params
@@ -408,7 +412,9 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		}
 	}
 
-	g_free(updatedSyncKey);
+	if(updatedSyncKey){
+	    g_free(updatedSyncKey);
+	}
 	free_string_array(created_emailinfo_array);
 	free_string_array(updated_emailinfo_array);
 	free_string_array(deleted_emailinfo_array);
@@ -516,15 +522,27 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
+	gchar *updatedSyncKey = NULL;
+
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
 				  G_TYPE_UINT64, this_g->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, server_id,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);
 
+	if(ret)
+	{
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
+	}	
+	
+	if(updatedSyncKey){
+	    g_free(updatedSyncKey);
+	}
+	
 	g_debug("eas_mail_handler_delete_emails--");	
 	return ret;
 }

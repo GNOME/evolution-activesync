@@ -128,11 +128,12 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
             g_debug ("FolderSync Status:[%s]", provision_status);
+			xmlFree(provision_status);
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
         {
-            priv->sync_key = g_strdup(xmlNodeGetContent(node));
+            priv->sync_key = xmlNodeGetContent(node);
             g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;
         }
@@ -205,7 +206,9 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node)
 				continue;
 			}
 		}
-		if (serverId && parentId && displayName && type) {
+		
+		if (serverId && parentId && displayName && type) 
+		{
 			EasFolder *f = NULL;
 
 			f = eas_folder_new ();
@@ -218,9 +221,15 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node)
 
 			priv->added_folders = g_slist_append(priv->added_folders, f);
 		}
-		else {
+		else 
+		{
 			g_debug("Failed to parse folderSync Add");
 		}
+
+		xmlFree(parentId);
+		xmlFree(serverId);
+		xmlFree(displayName);
+		xmlFree(type);
 	}
 }
 
