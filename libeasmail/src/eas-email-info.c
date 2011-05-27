@@ -339,7 +339,7 @@ eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data)
 	g_debug("%d attachments", list_len);
 	for(i = 0; i < list_len; i++)
 	{
-		attachment = g_malloc0(sizeof(EasAttachment));
+		attachment = eas_attachment_new ();
 		if(!eas_attachment_deserialise(attachment, from))
 		{
 			ret = FALSE;
