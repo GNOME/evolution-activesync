@@ -137,17 +137,17 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	rewind (file);
 
 	// allocate memory to contain the whole file:
-	buffer = (gchar*) g_malloc0 (sizeof(gchar)*size);
-	if (buffer == NULL) 
+	priv->mime_string = (gchar*) g_malloc0 (sizeof(gchar)*size);
+	if (priv->mime_string == NULL) 
 	{
-	// TODO - how do we propogate errors?		
+	// TODO - propogate error		
 	}
 
 	// copy the file into the buffer:
-	result = fread (buffer,1,size,file);
+	result = fread (priv->mime_string,1,size,file);
 	if (result != size) 
 	{
-	// TODO - how do we propogate errors?
+	// TODO - propogate error
 	}
 	
 	fclose (file);

@@ -81,6 +81,7 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 EasSendEmailMsg*
 eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string)
 {
+	g_debug("eas_send_email_msg_new++");
 	EasSendEmailMsg* msg = NULL;
 	EasSendEmailMsgPrivate *priv = NULL;
 
@@ -91,6 +92,7 @@ eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar*
 	priv->mime_string = g_strdup(mime_string);
 	priv->account_id = account_id;
 
+	g_debug("eas_send_email_msg_new--");
 	return msg;
 }
 
@@ -112,6 +114,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        (xmlChar*)"http://www.microsoft.com/");
 
 	// no namespaces required?
+	xmlNewNs (root, (xmlChar *)"ComposeMail:", NULL);                       
 
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
