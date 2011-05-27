@@ -239,7 +239,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
         mark_point();
         // get body for first email in the folder
-        email = g_slist_nth(emails_created, 0);
+        email = g_slist_nth(emails_created, 0)->data;
         fail_if(!email, "Unable to get first email in emails_created GSList");
 
         // destination directory for the mime file
