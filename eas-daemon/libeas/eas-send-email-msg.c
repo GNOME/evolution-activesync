@@ -19,7 +19,7 @@
 
 #include "eas-send-email-msg.h"
 
-G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
 #define EAS_SEND_EMAIL_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_MSG, EasSendEmailMsgPrivate))
 

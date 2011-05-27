@@ -24,7 +24,7 @@
 
 
 
-G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
 
 #define EAS_SEND_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_REQ, EasSendEmailReqPrivate))
 
