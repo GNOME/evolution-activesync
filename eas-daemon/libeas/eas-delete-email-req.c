@@ -110,3 +110,14 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 	g_debug("eas_delete_email_req_new--");
 	return self;
 }
+
+void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key)
+{
+	EasDeleteEmailReqPrivate *priv = self->priv;
+	
+	g_debug("eas_delete_email_req_ActivateFinish++");
+
+	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->syncMsg));
+	
+	g_debug("eas_delete_email_req_ActivateFinish--");
+}
