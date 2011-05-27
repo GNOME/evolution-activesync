@@ -84,7 +84,8 @@ START_TEST (test_get_latest_calendar_items)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *sync_key = "0";
+    gchar sync_key[64];
+	strcpy(sync_key,"0");
     
     GError *error = NULL;
 
