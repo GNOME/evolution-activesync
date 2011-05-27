@@ -518,7 +518,11 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 	g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
 	g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
 	g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
-		                                             
+
+	g_slist_free(emails_deleted);
+    g_slist_free(emails_updated);
+    g_slist_free(emails_created);	
+
 	//  free folder objects in lists of folder objects
     g_slist_foreach(created, (GFunc)g_object_unref, NULL);
     g_slist_foreach(deleted, (GFunc)g_object_unref, NULL);
@@ -591,10 +595,14 @@ START_TEST (test_eas_mail_handler_delete_email)
 			g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
 			g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
 			g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
+
+			g_slist_free(emails_deleted);
+			g_slist_free(emails_updated);
+			g_slist_free(emails_created);	
 			
 			// get email info for the folder using the saved sync key
-/*			testGetFolderInfo(email_handler,folder_sync_key,"5",&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
-			
+			testGetFolderInfo(email_handler,folder_sync_key,"5",&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
+/*			
 			fail_if(emails_deleted,"No email reported as deleted");
 			
 			EasEmailInfo *deletedEmail = NULL;			
@@ -648,7 +656,7 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder);  //only uncomment this test if the folders returned are filtered for email only
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
 
   return s;

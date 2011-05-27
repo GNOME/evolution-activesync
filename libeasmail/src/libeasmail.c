@@ -536,7 +536,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	if(ret)
 	{
 		// put the updated sync key back into the original string for tracking this
-		strcpy(sync_key,updatedSyncKey);
+//		strcpy(sync_key,updatedSyncKey);
 	}	
 	
 	if(updatedSyncKey){
