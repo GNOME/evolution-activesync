@@ -121,3 +121,20 @@ void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_s
 	
 	g_debug("eas_delete_email_req_ActivateFinish--");
 }
+
+void
+eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc)
+{
+	EasDeleteEmailReqPrivate *priv = self->priv;
+	
+	g_debug("eas_sync_req_MessageComplete++");
+
+	eas_sync_msg_parse_reponse (priv->syncMsg, doc);
+
+	xmlFree(doc);
+	
+	g_debug("eas_delete_email_req_MessageComplete step 2");
+	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+
+	g_debug("eas_sync_req_MessageComplete--");
+}

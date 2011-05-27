@@ -185,7 +185,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 			if(deleted){
 				for (iterator = deleted; iterator; iterator = iterator->next) {
 					xmlNode *delete = xmlNewChild(command, NULL, (xmlChar *)"Delete", NULL);
-					xmlNewChild(delete, NULL, (xmlChar *)"ServerID", iterator->data);
+					xmlNewChild(delete, NULL, (xmlChar *)"ServerId", iterator->data);
 				}
 
 			}

@@ -209,7 +209,7 @@ START_TEST (test_get_eas_mail_info_in_folder)
     folder = g_slist_nth_data(created, 0);
     fail_if(folder ==NULL, "Folder is null");
     // get the folder info for the first folder returned in the hierarchy
-    testGetFolderInfo(email_handler,folder_sync_key,folder->folder_id,&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
+    testGetFolderInfo(email_handler,folder_sync_key,"5",&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
 	
 	//  free email objects in lists of email objects
     g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
@@ -641,6 +641,7 @@ Suite* eas_libeasmail_suite (void)
   /* libeasmail test case */
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
+
   tcase_add_test (tc_libeasmail, test_get_mail_handler);
   tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
