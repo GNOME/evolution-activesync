@@ -128,5 +128,16 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc)
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
 	g_debug("eas_get_email_body_msg_parse_response++");
 	/* TODO: Add public function implementation here */
+
+	xmlNode *node = NULL;
+	
+    if (!doc) 
+    {
+        g_warning ("No XML Doc to parse");
+        return;
+    }
+    node = xmlDocGetRootElement(doc);
+
+	
 	g_debug("eas_get_email_body_msg_parse_response--");
 }
