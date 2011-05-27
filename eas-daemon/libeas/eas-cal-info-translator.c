@@ -255,10 +255,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
-				else if (g_strcmp0(name, "Priority") == 0)
-				{
-					// TODO
-				}
 				
 				// TODO: handle Timezone element
 				// TODO: handle Attendees element
@@ -350,6 +346,8 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 {
 	if (vevent)
 	{
+		xmlNodePtr categories = NULL;
+		
 		icalproperty* prop;
 		for (prop = icalcomponent_get_first_property(vevent, ICAL_ANY_PROPERTY);
 			 prop;
@@ -406,6 +404,16 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
 							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "2"); // Busy
 						}
+					}
+					break;
+				case ICAL_CATEGORIES_PROPERTY:
+					{
+						if (categories == NULL)
+						{
+							categories = xmlNewChild(app_data, NULL, "calendar:Categories", NULL);
+						}
+
+						xmlNewTextChild(categories, NULL, "calendar:Category", icalproperty_get_value_as_string(prop));
 					}
 					break;
 
