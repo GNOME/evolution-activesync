@@ -17,10 +17,10 @@
 
 // Parse a response message
 // TODO: this should return a gboolean too
-gchar* eas_cal_info_translator_parse_response(xmlNode* application_data, const gchar* server_id);
+gchar* eas_cal_info_translator_parse_response(xmlNodePtr app_data, const gchar* server_id);
 
 // Parse a request message
-gboolean eas_cal_info_translator_parse_request(xmlDoc* doc, xmlNode* application_data, EasCalInfo* cal_info);
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info);
 
 G_END_DECLS
 
