@@ -31,7 +31,7 @@
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
 #include "eas-get-email-body-req.h"
-
+#include "eas-send-email-req.h"
 
 struct _EasConnectionPrivate
 {
@@ -670,6 +670,12 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc);
 			}
 			break;
+				
+			case EAS_REQ_SEND_EMAIL:
+			{
+				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+			}
+			break;				
 		}
 	}
 	else
