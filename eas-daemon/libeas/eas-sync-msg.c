@@ -127,6 +127,15 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
             xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4"); // Plain text 1, HTML 2, MIME 4
             xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*)"200000");
 		}
+		else if(priv->ItemType == EAS_ITEM_CALENDAR){
+        
+        options = xmlNewChild(collection, NULL, (xmlChar *)"Options", NULL);
+            xmlNewChild(options, NULL, (xmlChar *)"FilterType", (xmlChar*)"0");
+
+            body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"1"); // Plain text 1, HTML 2, MIME 4
+            xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*)"200000");
+		}
     }
     //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
     else{

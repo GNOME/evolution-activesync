@@ -72,6 +72,8 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
+
+	g_type_class_add_private (klass, sizeof (EasSendEmailMsgPrivate));	
 	
 	object_class->finalize = eas_send_email_msg_finalize;
 }

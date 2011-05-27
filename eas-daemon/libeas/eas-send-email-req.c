@@ -119,11 +119,12 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	file = fopen(mime_file, "r");  // mime file can be read as text (attachments will be base 64 encoded)
 	if(file == NULL)
 	{
+		g_debug("failed to open file %s", mime_file);
 		// TODO - how do we propogate errors?
 	}
 
 	// read data from the file to mime_string 
-	// ..and escape any xml characters; libxml2 may do this when we construct the xml??
+	// TODO..and escape any xml characters; libxml2 may do this when we construct the xml??
 	
 	guint64 size;
 	gchar * buffer;
@@ -162,7 +163,7 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	g_debug("send message");
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "SendMail", doc, self);
 	
-	g_debug("eas_send_email_req_Activate++");
+	g_debug("eas_send_email_req_Activate--");
 
 	return;
 }

@@ -275,6 +275,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	gchar **deleted_folder_array = NULL;
 	gchar **updated_folder_array = NULL;
 
+	gchar *updatedSyncKey;
+	
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
@@ -283,12 +285,12 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 		          G_TYPE_STRING,
 		          sync_key,
 		          G_TYPE_INVALID, 
-		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_STRV, &created_folder_array,
 		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
-
+   
     g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
@@ -297,7 +299,9 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	if(ret)
 	{
 		g_debug("sync_email_folder_hierarchy called successfully");
-		
+
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
 		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
 		if(ret)
@@ -309,7 +313,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 			ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
 		}
 	}
-	
+
+	g_free(updatedSyncKey);
 	free_string_array(created_folder_array);
 	free_string_array(updated_folder_array);
 	free_string_array(deleted_folder_array);
@@ -370,6 +375,8 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **updated_emailinfo_array = NULL;
 	
+	gchar *updatedSyncKey;
+	
 	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
@@ -377,7 +384,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 							G_TYPE_STRING, sync_key,
 	                        G_TYPE_STRING, collection_id,			// folder 
 							G_TYPE_INVALID, 
-							G_TYPE_STRING, &sync_key,
+							G_TYPE_STRING, &updatedSyncKey,
 							G_TYPE_BOOLEAN, more_available,
 							G_TYPE_STRV, &created_emailinfo_array,
 							G_TYPE_STRV, &deleted_emailinfo_array,  
@@ -389,6 +396,9 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	if(ret)
 	{
 		g_debug("sync_folder_email called successfully");
+		
+		// put the updated sync key back into the original string for tracking this
+		strcpy(sync_key,updatedSyncKey);
 		
 		// get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
 		ret = build_emailinfo_list((const gchar **)created_emailinfo_array, emailinfos_created, error);
@@ -402,6 +412,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		}
 	}
 
+	g_free(updatedSyncKey);
 	free_string_array(created_emailinfo_array);
 	free_string_array(updated_emailinfo_array);
 	free_string_array(deleted_emailinfo_array);
@@ -496,7 +507,8 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 gboolean 
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
-								const gchar *server_id,		// email to delete
+								const gchar *folder_id,		// folder that contains email to delete
+                                const gchar *server_id,		// email to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -508,8 +520,15 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
-	/* TODO call dbus "sync" api with appropriate params */
-	
+	ret = dbus_g_proxy_call(proxy, "delete_email", error,
+				  G_TYPE_UINT64, this_g->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
+		          G_TYPE_STRING, folder_id,
+		          G_TYPE_STRING, server_id,
+		          G_TYPE_INVALID, 
+		          G_TYPE_STRING, &sync_key,
+		          G_TYPE_INVALID);
+
 	g_debug("eas_mail_handler_delete_emails--");	
 	return ret;
 }
