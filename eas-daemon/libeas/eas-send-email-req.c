@@ -24,7 +24,7 @@
 
 
 
-G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
 
 #define EAS_SEND_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_REQ, EasSendEmailReqPrivate))
 
@@ -38,6 +38,7 @@ struct _EasSendEmailReqPrivate
 static void
 eas_send_email_req_init (EasSendEmailReq *object)
 {
+	g_debug("eas_send_email_req_init++");
 	/* initialization code */
 	EasSendEmailReqPrivate *priv;
 
@@ -46,8 +47,6 @@ eas_send_email_req_init (EasSendEmailReq *object)
 	priv->account_id = 0;   // assuming 0 not a valid account id
 	priv->send_email_msg = NULL;
 	priv->mime_string = NULL;
-	
-	g_debug("eas_send_email_req_init++");
 
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SEND_EMAIL);
@@ -73,14 +72,19 @@ eas_send_email_req_finalize (GObject *object)
 static void
 eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 {
+	g_debug("eas_send_email_req_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
+	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	
 	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
+
+	g_type_class_add_private (klass, sizeof (EasSendEmailReqPrivate));	
 	
 	object_class->finalize = eas_send_email_req_finalize;
+
+	g_debug("eas_send_email_req_class_init--");
 }
 
 EasSendEmailReq *
@@ -105,25 +109,47 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	xmlDoc *doc;
 	FILE *file = NULL;
 	
-	// store flag in base (nb doesn't set the flag as in signal the waiters)
+	// store flag in base (doesn't set the flag as in signal the waiters)
 	g_debug("eas_send_email_req_Activate++");
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
 	priv->account_id = account_id;
 
-	// TODO - we need to read the data from file here and populate the mime string!
-
-
 	// open file containing mime data to be sent:
-	file = fopen(mime_file, "r");
+	file = fopen(mime_file, "r");  // mime file can be read as text (attachments will be base 64 encoded)
 	if(file == NULL)
 	{
+		g_debug("failed to open file %s", mime_file);
 		// TODO - how do we propogate errors?
 	}
 
-	// read data from the file to mime_string:
+	// read data from the file to mime_string 
+	// TODO..and escape any xml characters; libxml2 may do this when we construct the xml??
+	
+	guint64 size;
+	gchar * buffer;
+	size_t result;
 
+	// obtain file size:
+	fseek (file , 0 , SEEK_END);
+	size = ftell (file);
+	g_debug("file size = %d", size);
+	rewind (file);
 
+	// allocate memory to contain the whole file:
+	priv->mime_string = (gchar*) g_malloc0 (sizeof(gchar)*size);
+	if (priv->mime_string == NULL) 
+	{
+	// TODO - propogate error		
+	}
+
+	// copy the file into the buffer:
+	result = fread (priv->mime_string,1,size,file);
+	if (result != size) 
+	{
+	// TODO - propogate error
+	}
+	
 	fclose (file);
 	
 	g_debug("create msg object");
@@ -137,7 +163,7 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	g_debug("send message");
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "SendMail", doc, self);
 	
-	g_debug("eas_send_email_req_Activate++");
+	g_debug("eas_send_email_req_Activate--");
 
 	return;
 }

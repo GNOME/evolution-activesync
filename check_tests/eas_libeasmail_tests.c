@@ -81,6 +81,46 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
 	fail_if(g_strcmp0((email1->server_id), "5:1"), "server_id incorrect %s", email1->server_id);
 }
 
+// lrm:
+
+static void testSendEmail(EasEmailHandler *email_handler,
+                                     const gchar *client_id,
+                                     const gchar *mime_file,
+                                     GError **error){
+	gboolean ret = FALSE;									 
+    ret = eas_mail_handler_send_email(email_handler, 	
+                                      client_id,
+                                      mime_file,
+	                                  &(*error));
+
+    // if the call to the daemon returned an error, report and drop out of the test
+    if((*error) != NULL){
+		fail_if(ret == FALSE,"%s",&(*error)->message);
+	}                                       
+}
+
+START_TEST (test_eas_mail_handler_send_email)
+{
+    guint64 accountuid = 123456789;
+    EasEmailHandler *email_handler = NULL;
+	const gchar *client_id = g_strdup("1");
+	const gchar *mime_file = g_strdup("/home/lorna/int07/testdata/mime_file.txt");
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetMailHandler(&email_handler, accountuid);
+
+    GError *error = NULL;
+
+	mark_point();
+	
+	// call into the daemon to send email to the exchange server
+	testSendEmail(email_handler, client_id, mime_file, &error);	
+
+	return;
+}
+END_TEST
+
 START_TEST (test_get_mail_handler)
 {
     guint64 accountuid = 123456789;
@@ -549,6 +589,7 @@ Suite* eas_libeasmail_suite (void)
   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
 
   return s;
 }

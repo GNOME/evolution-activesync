@@ -128,6 +128,7 @@ eas_mail_handler_new(guint64 account_uid)
 static gboolean 
 build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, GError **error)
 {
+	g_debug("build_folder_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
 
@@ -174,14 +175,16 @@ cleanup:
 	}
 	
 	g_debug("list has %d items", g_slist_length(*folder_list));
+	g_debug("build_folder_list++");
 	return ret;
 }
 
 
 // takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
 static gboolean 
-build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
+build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList ***emailinfo_list, GError **error)
 {
+	g_debug("build_emailinfo_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
 
@@ -225,7 +228,8 @@ cleanup:
 		g_slist_free(*emailinfo_list);
 		*emailinfo_list = NULL;
 	}
-	
+
+	g_debug("build_emailinfo_list++");	
 	return ret;
 }
 				

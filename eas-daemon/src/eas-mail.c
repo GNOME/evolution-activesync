@@ -11,6 +11,8 @@
 #include "eas-sync-req.h"
 #include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
+#include "eas-send-email-req.h"
+
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -504,8 +506,53 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 {
 	g_debug("eas_mail_send_email++");
 	
-	// TODO
-    // EasSendMailReq
+    EFlag *flag = NULL;
+    GError *error = NULL;
+
+    flag = e_flag_new ();
+
+    if(easMailObj->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+    }
+	
+    // Create Request
+    EasSendEmailReq *req = g_object_new(EAS_TYPE_SEND_EMAIL_REQ, NULL);
+
+	g_debug("request created");
+    eas_request_base_SetConnection (&req->parent_instance, 
+                                    eas_mail_get_eas_connection(easMailObj));
+
+	g_debug("connection set ");
+    // Activate Request
+    eas_send_email_req_Activate (req,
+                           account_uid,
+                           flag,
+                           clientid,
+                           mime_file,
+                           EAS_ITEM_MAIL);
+
+	g_debug ("request activated");
+	
+    // Wait for response
+    e_flag_wait (flag);
+
+	g_debug("request completed");
+	
+    e_flag_free (flag);
+
+    if (error)
+    {
+		g_debug("returning dbus error");
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+		g_debug("returning dbus");
+        dbus_g_method_return (context);
+    }	
+	
 	g_debug("eas_mail_send_email--");
 	return TRUE;
 }
