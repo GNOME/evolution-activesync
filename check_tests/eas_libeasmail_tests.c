@@ -283,10 +283,9 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
         fail_if(!email, "Unable to get first email in emails_created GSList");
 
         // destination directory for the mime file
-        gchar *mime_directory = "/eastests/";
+        gchar *mime_directory = g_strconcat(getenv("HOME"), "/mimeresponses/", NULL);
         gchar mime_file[256];
 
-        
         mark_point();
         strcpy(mime_file, mime_directory);
         fail_if(!email->server_id, "Email has no server_id!");
@@ -317,6 +316,8 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
                                                 email->server_id,
                                                 mime_directory,
                                                 &error);
+        g_free(mime_directory);
+
         if(rtn == TRUE)
         {
             testMailFound = TRUE;
