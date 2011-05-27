@@ -19,7 +19,7 @@
 
 #include "eas-send-email-msg.h"
 
-G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
 #define EAS_SEND_EMAIL_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_MSG, EasSendEmailMsgPrivate))
 
@@ -27,7 +27,7 @@ struct _EasSendEmailMsgPrivate
 {
 	guint64 account_id;
 	gchar* client_id; 
-	gchar* mime_string;	//TODO remove if not needed?
+	gchar* mime_string;	
 };
 
 static void
@@ -72,6 +72,8 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
+
+	g_type_class_add_private (klass, sizeof (EasSendEmailMsgPrivate));	
 	
 	object_class->finalize = eas_send_email_msg_finalize;
 }
@@ -79,6 +81,7 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 EasSendEmailMsg*
 eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string)
 {
+	g_debug("eas_send_email_msg_new++");
 	EasSendEmailMsg* msg = NULL;
 	EasSendEmailMsgPrivate *priv = NULL;
 
@@ -89,6 +92,7 @@ eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar*
 	priv->mime_string = g_strdup(mime_string);
 	priv->account_id = account_id;
 
+	g_debug("eas_send_email_msg_new--");
 	return msg;
 }
 
@@ -110,6 +114,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        (xmlChar*)"http://www.microsoft.com/");
 
 	// no namespaces required?
+	xmlNewNs (root, (xmlChar *)"ComposeMail:", NULL);                       
 
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
