@@ -93,7 +93,7 @@ eas_connection_init (EasConnection *self)
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
         SoupLogger *logger;
-        logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
+        logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE(logger));
     }
 
@@ -673,6 +673,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				
 			case EAS_REQ_SEND_EMAIL:
 			{
+				g_debug("EAS_REQ_SEND_EMAIL");
 				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
 			}
 			break;				
