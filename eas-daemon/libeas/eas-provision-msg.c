@@ -136,6 +136,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
             g_debug ("  Provision Status:[%s]", provision_status);
+			xmlFree(provision_status);
             break;
         }
     }
@@ -168,17 +169,22 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
     {
         if (!found_status && node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
         {
-            priv->policy_status = g_strdup(xmlNodeGetContent(node));
+			gchar *xmlTmp = xmlNodeGetContent(node);
+            priv->policy_status = g_strdup(xmlTmp);
+			xmlFree(xmlTmp);
             if (priv->policy_status) 
             {
                 found_status = TRUE;
                 g_debug("Policy Status:[%s]", priv->policy_status);
                 continue;
             }
+
         }
         if (!found_policy_key && node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "PolicyKey"))
         {
-            priv->policy_key = g_strdup(xmlNodeGetContent(node));
+			gchar *xmlTmp = xmlNodeGetContent(node);
+            priv->policy_key = g_strdup(xmlTmp);
+			xmlFree(xmlTmp);
             if (priv->policy_key) 
             {
                 found_policy_key = TRUE;
@@ -261,77 +267,3 @@ eas_provision_msg_set_policy_status (EasProvisionMsg* self, gchar* policyStatus)
 	g_debug("eas_provision_msg_set_policy_status--");
 }
 
-#if 0
-
-static void
-handle_provision_stage1(SoupSession *session, SoupMessage *msg, gpointer data)
-{
-	EasConnection *cnc = (EasConnection *)data;
-	EasConnectionPrivate *priv = cnc->priv;
-
-    xmlDoc *doc = NULL;
-    WB_UTINY *xml = NULL;
-    WB_ULONG xml_len = 0;
-
-	if (FALSE == isResponseValid(msg)) {
-		return;
-	}
-
-    wbxml2xml ((WB_UTINY*)msg->response_body->data,
-               msg->response_body->length,
-               &xml,
-               &xml_len);
-
-    if (!xml) 
-    {
-        g_debug("Failed: Unable to decode the WBXML to XML");
-		return;
-    }
-
-	eas_connection_parse_provision_xml_response (cnc, xml, xml_len);
-	if (xml) free(xml);
-
-	doc = build_provision_as_xml(priv->policy_key, priv->policy_status);
-
-	eas_connection_send_msg(cnc, 
-	                        "Provision", 
-	                        priv->device_id, 
-	                        priv->device_type, 
-	                        doc, 
-	                        handle_provision_stage2, 
-	                        cnc);
-}
-
-static void
-handle_provision_stage2(SoupSession *session, SoupMessage *msg, gpointer data)
-{
-	EasConnection *cnc = (EasConnection *)data;
-	EasConnectionPrivate *priv = cnc->priv;
-
-    xmlDoc *doc = NULL;
-    WB_UTINY *xml = NULL;
-    WB_ULONG xml_len = 0;
-
-	if (FALSE == isResponseValid(msg)) {
-		return;
-	}
-
-    wbxml2xml ((WB_UTINY*)msg->response_body->data,
-               msg->response_body->length,
-               &xml,
-               &xml_len);
-
-    if (!xml) 
-    {
-        g_debug("Failed: Unable to decode the WBXML to XML");
-		return;
-    }
-
-	eas_connection_parse_provision_xml_response (cnc, xml, xml_len);
-	if (xml) free(xml);
-
-	e_flag_set (priv->provision_eflag);
-}
-
-
-#endif

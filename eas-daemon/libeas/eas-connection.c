@@ -330,9 +330,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) 
 	{
 		gchar* tmp = g_strndup((gchar*)dataptr, data_len);
-		g_debug("=== XML Input ===");
-		g_debug("%s", tmp);
-		g_debug("=== XML Input ===");
+		g_debug("\n=== XML Input ===\n%s=== XML Input ===", tmp);
 		g_free(tmp);
 
 		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string(ret), wbxml_len);
@@ -414,7 +412,7 @@ isResponseValid(SoupMessage *msg)
  * @param xml_len length of the output buffer in bytes
  */
 static void 
-wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
+wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
 {
     WBXMLConvWBXML2XML *conv = NULL;
     WBXMLError ret = WBXML_OK;
@@ -448,7 +446,7 @@ wbxml2xml(WB_UTINY *wbxml, WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
     wbxml_conv_wbxml2xml_set_indent(conv, 1);
     
     ret = wbxml_conv_wbxml2xml_run(conv,
-                                   wbxml,
+                                   (WB_UTINY *)wbxml,
                                    wbxml_len,
                                    xml, 
                                    xml_len);
@@ -467,7 +465,7 @@ failed:
  * @param wbxml_len length of the binary
  */
 static void 
-dump_wbxml_response(WB_UTINY *wbxml, WB_LONG wbxml_len)
+dump_wbxml_response(const WB_UTINY *wbxml, const WB_LONG wbxml_len)
 {
     WB_UTINY *xml = NULL;
     WB_ULONG xml_len = 0;
@@ -476,10 +474,7 @@ dump_wbxml_response(WB_UTINY *wbxml, WB_LONG wbxml_len)
     wbxml2xml(wbxml, wbxml_len, &xml, &xml_len);
     
     tmp = g_strndup((gchar*)xml, xml_len);
-    g_debug("=== dump start: xml_len [%d] ===",xml_len);
-    g_debug("%s",tmp);
-    g_debug("=== dump end ===");
-	
+    g_debug("\n=== dump start: xml_len [%d] ===\n%s=== dump end ===",xml_len, tmp);
     if (tmp) g_free(tmp);
     if (xml) free(xml);
 }
