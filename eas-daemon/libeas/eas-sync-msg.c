@@ -315,7 +315,14 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
 			// TODO Parse deleted folders
-			g_assert(0);
+			for (appData = appData->children; appData; appData = appData->next) {
+				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					item_server_id = (gchar *)xmlNodeGetContent(appData);
+					g_debug ("Found serverID for Item = %s", item_server_id);
+					priv->added_items = g_slist_append(priv->added_items, item_server_id);
+					continue;
+				}
+			}
 			continue;
 		}
 		
