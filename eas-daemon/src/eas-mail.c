@@ -12,6 +12,7 @@
 #include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
+#include "eas-update-email-req.h"
 
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
@@ -415,6 +416,55 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
                               ret_sync_key);
     }	
 	g_debug("eas_mail_delete_email--");
+	return TRUE;
+}
+
+gboolean eas_mail_update_email(EasMail *self,
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
+                                    const gchar *folder_id,
+                                    const gchar *serialised_email,
+                                    DBusGMethodInvocation* context)
+{
+    g_debug("eas_mail_update_email++");
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    gchar* ret_sync_key = NULL;
+	 
+    flag = e_flag_new ();
+
+    if(self->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+    }
+
+    // Create the request - TODO
+	EasUpdateEmailReq *req = NULL;
+	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_mail_get_eas_connection(self));
+
+	// Start the request - TODO
+    eas_update_email_req_Activate (req);
+
+	// Set flag to wait for response
+    e_flag_wait(flag);
+
+	// TODO
+	eas_update_email_req_ActivateFinish(req, &ret_sync_key);
+		
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context,
+                              ret_sync_key);
+    }	
+	g_debug("eas_mail_update_email--");
 	return TRUE;
 }
 

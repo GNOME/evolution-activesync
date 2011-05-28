@@ -86,9 +86,9 @@ libeas_la_SOURCES =		\
         eas-cal-info-translator.h \
         eas-cal-info-translator.c \
         eas-delete-email-req.h \
-        eas-delete-email-req.c
-
-
+        eas-delete-email-req.c \
+        eas-update-email-req.h \
+        eas-update-email-req.c        
 
 #CLEANFILES = $(MARSHAL_GENERATED)
 

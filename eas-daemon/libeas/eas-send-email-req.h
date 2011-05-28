@@ -54,6 +54,7 @@ GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 // C'tor
 EasSendEmailReq *eas_send_email_req_new();
 
+// TODO - move params out of here and into c'tor:
 // start async request
 void eas_send_email_req_Activate(EasSendEmailReq *self, guint64 accountID, EFlag *flag, const gchar* clientid, const gchar* mime_file, EasItemType type);
 

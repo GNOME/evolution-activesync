@@ -280,10 +280,41 @@ eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 	return result;
 }
 
-// translate the other way: take the emailinfo object and convert to ApplicationData node
-// takes a flattened email_info object and passes back an xmlnode (with application data at root) and a serverid
-void
-eas_update_email_appdata_create_request_node (gchar *flat_email_info, xmlNode **node, gchar **server_id)
+// translate the other way: take the emailinfo object and populate the ApplicationData node
+gboolean 
+eas_email_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasEmailInfo* email_info)
 {
-	// TODO (subfeature 17e)
+	g_debug("eas_email_info_translator_parse_request++");
+	gboolean ret = FALSE;
+	
+	if (!(doc &&
+	    app_data &&
+	    email_info &&
+	    (app_data->type == XML_ELEMENT_NODE) &&
+	    (strcmp((char*)(app_data->name), "ApplicationData") == 0)))
+	{	
+		g_debug("invalid input");
+	}
+	else
+	{
+		/*
+GSList *headers;			// list of EasEmailHeaders eg To, From 
+GSList *attachments;		// list of EasAttachments this email has.
+guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED 
+GSList *categories;		
+		 */
+		// headers (& flags)
+		
+		// attachments
+/*
+	gchar *file_reference;
+	gchar *display_name;
+	guint estimated_size;
+*/
+		//categories
+
+	}
+
+	g_debug("eas_email_info_translator_parse_request--");
+	return ret;
 }
