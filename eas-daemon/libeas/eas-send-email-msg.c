@@ -121,7 +121,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
-    leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar*)priv->mime_string); // Note that Mime (with lowercase) isn't a valid WBXML tag
+    leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar*)priv->mime_string);
 
     return doc;
 }

@@ -214,7 +214,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		{
 			// TODO - figure out if/where other flags are stored (eg replied to)
 			//Read  
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Read")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
 				if((gboolean)xmlNodeGetContent(n))
 				{
@@ -223,7 +223,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				continue;
 			}			
 			//Categories 
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "email:Categories")) 
+			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Categories")) 
 			{
 				xmlNode *s = n;
 				for (s = s->children; s; s = s->next)

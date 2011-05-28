@@ -7,7 +7,11 @@
 
 
 #include "eas-cal-info-translator.h"
-#include "../../libeascal/src/eas-cal-info.h"
+
+#include <icalparser.h>
+#include <icalcomponent.h>
+#include <icaltypes.h>
+#include <icalduration.h>
 
 
 // iCalendar constants defined in RFC5545 (http://tools.ietf.org/html/rfc5545)
@@ -16,6 +20,10 @@ const guint  ICAL_LINE_TERMINATOR_LENGTH    = 2;
 const gchar* ICAL_FOLDING_SEPARATOR         = "\r\n ";   // ICAL_LINE_TERMINATOR followed by single whitespace character (space or tab)
 const guint	 ICAL_MAX_LINE_LENGTH           = 75;
 
+// Values for converting icaldurationtype into a number of minutes
+const guint MINUTES_PER_HOUR = 60;
+const guint MINUTES_PER_DAY  = 60 * 24;
+const guint MINUTES_PER_WEEK = 60 * 24 * 7;
 
 /**
  * \brief Private function to concatenate a VCALENDAR property name and value
@@ -110,14 +118,24 @@ static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line
 }
 
 
-// Parse a response message
-gchar* eas_cal_info_translator_parse_response(xmlNode* node, gchar* server_id)
+/**
+ * \brief Parse an XML-formatted calendar object received from ActiveSync and return
+ *        it as a serialised iCalendar object.
+ *
+ * \param node       ActiveSync XML <ApplicationData> object containing a calendar.
+ * \param server_id  The ActiveSync server ID from the response
+ */
+gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
 {
+	// TODO: Oops! I only found libical after I'd implemented this.
+	// We should switch to libical - it will make further development a lot easier and more robust.
+
+	
 	gchar* result = NULL;
 
 	if (node && (node->type == XML_ELEMENT_NODE) && (!strcmp((char*)(node->name), "ApplicationData")))
 	{
-		xmlNode* n = node;
+		xmlNodePtr n = node;
 
 		guint bufferSize = 0;
 
@@ -237,7 +255,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNode* node, gchar* server_id)
 					g_free(trigger);
 					xmlFree(minutes);
 				}
-
+				
 				// TODO: handle Timezone element
 				// TODO: handle Attendees element
 				// TODO: handle Recurrence element
@@ -310,7 +328,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNode* node, gchar* server_id)
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
 		EasCalInfo* cal_info = eas_cal_info_new();
 		cal_info->icalendar = g_string_free(ical_buf, FALSE); // Destroy the GString object and pass its buffer (with ownership) to cal_info
-		cal_info->server_id = server_id;
+		cal_info->server_id = (gchar*)server_id;
 		if (!eas_cal_info_serialise(cal_info, &result))
 		{
 			// TODO: log error
@@ -322,3 +340,203 @@ gchar* eas_cal_info_translator_parse_response(xmlNode* node, gchar* server_id)
 
 	return result;
 }
+
+
+static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app_data)
+{
+	if (vevent)
+	{
+		xmlNodePtr categories = NULL;
+		
+		icalproperty* prop;
+		for (prop = icalcomponent_get_first_property(vevent, ICAL_ANY_PROPERTY);
+			 prop;
+			 prop = icalcomponent_get_next_property(vevent, ICAL_ANY_PROPERTY))
+		{
+			const icalproperty_kind prop_type = icalproperty_isa(prop);
+			switch (prop_type)
+			{
+				case ICAL_SUMMARY_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:Subject", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_DTSTAMP_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:DtStamp", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_DTSTART_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:StartTime", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_DTEND_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:EndTime", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_LOCATION_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:Location", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_UID_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:UID", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_CLASS_PROPERTY:
+					{
+						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
+						if (g_strcmp0(value, "CONFIDENTIAL") == 0)
+						{
+							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "3"); // Confidential
+						}
+						else if (g_strcmp0(value, "PRIVATE") == 0)
+						{
+							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "2"); // Private
+						}
+						else // PUBLIC
+						{
+							// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
+							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "0");
+						}
+					}
+					break;
+				case ICAL_TRANSP_PROPERTY:
+					{
+						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
+						if (g_strcmp0(value, "TRANSPARENT") == 0)
+						{
+							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "0"); // Free
+						}
+						else // OPAQUE
+						{
+							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
+							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "2"); // Busy
+						}
+					}
+					break;
+				case ICAL_CATEGORIES_PROPERTY:
+					{
+						if (categories == NULL)
+						{
+							categories = xmlNewChild(app_data, NULL, "calendar:Categories", NULL);
+						}
+
+						xmlNewTextChild(categories, NULL, "calendar:Category", icalproperty_get_value_as_string(prop));
+					}
+					break;
+
+/*				case ICAL_xxx_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_xxx_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_xxx_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+					break;*/
+				// TODO: all the rest :)
+
+				default:
+					break;
+			}
+		}
+	}
+}
+
+
+static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app_data)
+{
+	if (valarm)
+	{
+		g_debug("Processing VALARM...");
+		
+		// Just need to get the TRIGGER property
+		icalproperty* prop = icalcomponent_get_first_property(valarm, ICAL_TRIGGER_PROPERTY);
+		if (prop)
+		{
+			g_debug("Processing TRIGGER...");
+			
+			struct icaltriggertype trigger = icalproperty_get_trigger(prop);
+
+			// TRIGGER can be either a period of time before the event, OR a specific date/time.
+			// calendar:Reminder only accepts a number of minutes
+
+			// For now I'm ASSUMING it'll be the former.
+			// TODO: handle the latter as well
+
+			// As ActiveSync only accepts minutes we'll ignore the seconds value altogether
+			guint minutes = trigger.duration.minutes
+				+ (trigger.duration.hours * MINUTES_PER_HOUR)
+				+ (trigger.duration.days  * MINUTES_PER_DAY)
+				+ (trigger.duration.weeks * MINUTES_PER_WEEK);
+
+			char minutes_buf[6];
+			g_snprintf(minutes_buf, 6, "%d", minutes);
+
+			xmlNewTextChild(app_data, NULL, "calendar:Reminder", minutes_buf);
+		}
+	}
+}
+
+
+static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr app_data)
+{
+	if (vtimezone)
+	{
+		icalproperty* prop;
+		for (prop = icalcomponent_get_first_property(vtimezone, ICAL_ANY_PROPERTY);
+			 prop;
+			 prop = icalcomponent_get_next_property(vtimezone, ICAL_ANY_PROPERTY))
+		{
+			const icalproperty_kind prop_type = icalproperty_isa(prop);
+			switch (prop_type)
+			{
+/*				case ICAL_xxx_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+					break;
+				case ICAL_xxx_PROPERTY:
+					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+					break;*/
+				// TODO: all the rest :)
+
+				default:
+					break;
+			}
+		}
+	}
+}
+
+
+/**
+ *
+ */
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info)
+{
+	gboolean success = FALSE;
+
+	icalcomponent* ical;
+	if (doc &&
+	    app_data &&
+	    cal_info &&
+	    (app_data->type == XML_ELEMENT_NODE) &&
+	    (strcmp((char*)(app_data->name), "ApplicationData") == 0) &&
+	    (ical = icalparser_parse_string(cal_info->icalendar)) &&
+	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
+	{
+		// Process the components of the VCALENDAR
+		icalcomponent* vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
+		_util_process_vevent_component(vevent, app_data);
+		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), app_data);
+		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
+
+		// DEBUG output
+		xmlChar* dump_buffer;
+		int dump_buffer_size;
+		xmlIndentTreeOutput = 1;
+		xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+		g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+		xmlFree(dump_buffer);
+
+		success = TRUE;
+	}
+
+	if (ical)
+	{
+		icalcomponent_free(ical);
+	}
+
+	return success;
+}
+

@@ -92,7 +92,7 @@ gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 	if (separator_found)
 	{
 		self->server_id = g_strndup(data, i);
-		self->icalendar = g_strdup(data+(i + 1));
+		self->icalendar = g_strdup(data + (i + 1));
 	}
 	
 	return separator_found;
