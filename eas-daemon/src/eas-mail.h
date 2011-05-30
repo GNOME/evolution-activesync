@@ -91,7 +91,6 @@ eas_mail_fetch_email_body (EasMail* self,
 gboolean
 eas_mail_fetch_attachment (EasMail* self, 
                           guint64 account_uid, 
-                          const gchar *server_id, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
                           DBusGMethodInvocation* context);
