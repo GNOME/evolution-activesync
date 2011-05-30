@@ -25,7 +25,7 @@ gchar *eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 gchar *eas_update_email_appdata_parse_response ( xmlNode *node, gchar *server_id);
 
 // parse a request. Populate the ApplicationData node with details from the email_info object
-gboolean eas_email_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasEmailInfo* email_info);
+gboolean eas_email_info_translator_build_update_request(xmlDocPtr doc, xmlNodePtr app_data, const EasEmailInfo* email_info);
 
 G_END_DECLS
 

@@ -185,6 +185,101 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 }
 END_TEST
 
+START_TEST (test_eas_mail_handler_update_email)
+{
+    guint64 accountuid = 123456789;
+    EasEmailHandler *email_handler = NULL;
+	
+	// get a handle to the DBus interface 
+    testGetMailHandler(&email_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;    
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be 
+    // the complete folder hierarchy rather than a delta of any changes
+    gchar folder_hierarchy_sync_key[64];
+	strcpy(folder_hierarchy_sync_key,"0");
+    GError *error = NULL;
+
+	// call into the daemon to get the folder hierarchy from the exchange server
+	testGetFolderHierarchy(email_handler, folder_hierarchy_sync_key,&created,&updated,&deleted,&error);
+
+    // fail the test if there is no folder information
+	fail_unless(created, "No folder information returned from exchange server");
+
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;    
+    gboolean more_available = FALSE;  
+	EasFolder *folder = NULL;
+	gboolean testMailFound = FALSE;
+	//guint folderIndex;
+
+	// Get folder email info for Inbox: 
+    testGetFolderInfo(email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+	// if the emails_created list contains email
+	if(emails_created)
+	{
+		EasEmailInfo *email = NULL;
+		gboolean rtn = FALSE;
+
+		// get email info for first email in the folder and see if it's been read
+		email = (g_slist_nth(emails_created, 0))->data;
+
+		// toggle the read flag:
+		if(email->flags & EAS_EMAIL_READ)
+		{
+			email->flags &= ~EAS_EMAIL_READ;
+		}
+		else
+		{
+			email->flags |= EAS_EMAIL_READ;
+		}
+
+		// TODO - something a bit more exciting than toggle of read flag
+
+		// update the first mail in the folder
+		rtn = eas_mail_handler_update_email(email_handler, folder_sync_key,"5", email, &error);
+		if(error){
+			fail_if(rtn == FALSE,"%s",error->message);
+		}
+		        
+		// free email object list before reusing
+		g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
+
+		g_slist_free(emails_deleted);
+		g_slist_free(emails_updated);
+		g_slist_free(emails_created);	
+
+		emails_deleted = NULL;
+		emails_updated = NULL;
+		emails_created = NULL;		
+	}
+		
+    //  free email objects in lists of email objects
+    g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
+		                                             
+	//  free folder objects in lists of folder objects
+    g_slist_foreach(created, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(updated, (GFunc)g_object_unref, NULL);
+    
+    g_slist_free(created);
+    g_slist_free(deleted);
+    g_slist_free(updated);	
+	
+}
+END_TEST
 
 START_TEST (test_eas_mail_handler_send_email)
 {
@@ -741,16 +836,17 @@ Suite* eas_libeasmail_suite (void)
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
 
-  tcase_add_test (tc_libeasmail, test_get_mail_handler);
-  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+  //tcase_add_test (tc_libeasmail, test_get_mail_handler);
+  //tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
-  // need an unread, high importance email with a single attachment at top of inbox for this to pass
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);	
+  // need an unread, high importance email with a single attachment at top of inbox for this to pass:
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
 
   return s;
 }

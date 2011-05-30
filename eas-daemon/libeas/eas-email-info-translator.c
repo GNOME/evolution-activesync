@@ -7,6 +7,7 @@
 #include "../../libeasmail/src/eas-folder.h"
 #include "../../libeasmail/src/eas-attachment.h"
 #include "../../libeasmail/src/eas-email-info.h"
+#include <libxml/tree.h>
 
 
 gchar * 
@@ -38,75 +39,64 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				header->name = g_strdup("To");
 				header->value = (gchar *)xmlNodeGetContent(n);  //takes ownership of the memory
 				headers = g_slist_append(headers, header);
-				continue;
 			}		
 			//Cc		
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Cc")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Cc")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Cc");
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}			
 			//From
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "From")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "From")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("From");
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}				
 			//Subject
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Subject")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Subject")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Subject");
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}			
 			
 			//Reply-To
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "ReplyTo")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "ReplyTo")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Reply-To");	//MIME equivalent
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}				
-			
 			//Received
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DateReceived")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DateReceived")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Received");	// MIME equivalent
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}			
-				
 			//DisplayTo	 - is there an equivalent standard email header?
-			
 			//Importance
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Importance")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Importance")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
 				header->name = g_strdup("Importance");
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
-				continue;
 			}			
 			//Read  
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
 				if((gboolean)xmlNodeGetContent(n))
 				{
 					flags |= EAS_EMAIL_READ;
 				}
-				continue;
 			}	
 			// TODO which if any of these other headers are standard email headers?	
 			//ThreadTopic   TODO is this where we get the answered/forwarded 'flags' from?			
@@ -117,7 +107,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			//ContentClass			-   ?
 
 			//Attachments
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Attachments")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Attachments")) 
 			{ 
 				g_debug("found attachments");
 				xmlNode *s = n;
@@ -155,11 +145,10 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 						attachments = g_slist_append(attachments, attachment);						
 					}
 				}
-				continue;
 			}
 			
 			//Categories
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Categories")) 
+			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Categories")) 
 			{
 				g_debug("found categories");
 				xmlNode *s = n;
@@ -170,9 +159,9 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 						categories = g_slist_append(categories, (char *)xmlNodeGetContent(s));
 					}
 				}
-				continue;
 			}				
 		} // end for 
+		
 		email_info->server_id = server_id;
 		email_info->headers = headers;
 		email_info->attachments = attachments;
@@ -212,7 +201,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		
 		for (n = n->children; n; n = n->next)
 		{
-			// TODO - figure out if/where other flags are stored (eg replied to)
+			// TODO - figure out if/where other flags are stored (eg replied to/forwarded in ConversationIndex?)
 			//Read  
 			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
@@ -280,9 +269,139 @@ eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 	return result;
 }
 
+/*
+static gboolean
+create_nodes_from_headerlist(xmlNode *app_data, const GSList* headers)
+{
+	gboolean ret = TRUE;
+	xmlNode *leaf;
+	GSList *l = (GSList*)headers;
+	while(l != NULL)
+	{
+		// TODO - make this more efficient 
+		// (add an enum type to the header structure to switch on)?
+		// or use the namespace param
+		EasEmailHeader *header = (EasEmailHeader *)l->data;
+		if(!strcmp(header->name, "To"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:To", (xmlChar*)header->value);			
+		}
+		else if(!strcmp(header->name, "Cc"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:Cc", (xmlChar*)header->value);			
+		}
+		else if(!strcmp(header->name, "From"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:From", (xmlChar*)header->value);			
+		}
+		else if(!strcmp(header->name, "Subject"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:Subject", (xmlChar*)header->value);			
+		}
+		else if(!strcmp(header->name, "ReplyTo"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:ReplyTo", (xmlChar*)header->value);			
+		}
+		else if(!strcmp(header->name, "DateReceived"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:DateReceived", (xmlChar*)header->value);			
+		}		
+		else if(!strcmp(header->name, "Importance"))
+		{
+			leaf = xmlNewTextChild(app_data, NULL, "email:Importance", (xmlChar*)header->value);			
+		}
+
+		if(!leaf)
+		{
+			ret = FALSE;
+		}
+		l = l->next;
+	}		
+
+	return ret;
+}
+*/
+
+static gboolean
+create_node_from_categorylist(xmlNode *app_data, const GSList* categories)
+{
+	gboolean ret = TRUE;
+	
+	xmlNode *categories_node, *leaf = NULL;		
+	if(categories)
+	{
+		g_debug("Creating Categories node");
+		// Create the categories collection node
+		// TODO - can namespace name (email) be included in name like this rather than as a xmlNsPtr param?
+		categories_node = xmlNewChild(app_data, NULL, "email:Categories", NULL);		
+	}
+
+	while(categories != NULL)
+	{
+		g_debug("Creating Categorys node for %s", (gchar *)categories->data);		
+		leaf = xmlNewTextChild(categories_node, NULL, "email:Category", (xmlChar*)categories->data);
+		if(!leaf)
+		{
+			ret = FALSE;
+		}
+		categories = categories->next;
+	}
+
+	return ret;
+}
+
+/*
+static gboolean 
+create_node_from_attachment(xmlNode *attachments_node, EasAttachment *attachment)
+{
+	gboolean ret = TRUE;
+	xmlNode *leaf;
+	g_assert(attachment->file_reference);
+	g_assert(attachment->estimated_size);
+
+	leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:FileReference", (xmlChar*)attachment->file_reference);
+	if(leaf)
+	{
+		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:EstimatedDataSize", (xmlChar*)attachment->estimated_size);	
+	}
+	if(leaf)
+	{
+		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:Method", (xmlChar*)"1");	// normal mode
+	}
+	if(leaf && attachment->display_name)
+	{
+		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:DisplayName", (xmlChar*)attachment->display_name);	// normal mode
+	}
+
+	if(!leaf)
+	{
+		ret = FALSE;
+	}
+	
+	return ret;
+}
+
+static gboolean
+create_node_from_attachmentlist(xmlNode *app_data, const GSList* attachments)
+{
+	xmlNode *attachments_node = NULL;		
+	if(attachments)
+	{
+		// Create the attachments collection node
+		attachments_node = xmlNewChild(app_data, NULL, "airsyncbase:Attachments", NULL);		
+	}		
+	while(attachments != NULL)
+	{
+		EasAttachment *attachment = (EasAttachment *)attachments->data;
+		create_node_from_attachment(attachments_node, attachment);	
+		attachments = attachments->next;
+	}		
+}
+*/
+
 // translate the other way: take the emailinfo object and populate the ApplicationData node
 gboolean 
-eas_email_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasEmailInfo* email_info)
+eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, const EasEmailInfo *email_info)
 {
 	g_debug("eas_email_info_translator_parse_request++");
 	gboolean ret = FALSE;
@@ -296,25 +415,37 @@ eas_email_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasE
 		g_debug("invalid input");
 	}
 	else
-	{
-		/*
-GSList *headers;			// list of EasEmailHeaders eg To, From 
-GSList *attachments;		// list of EasAttachments this email has.
-guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED 
-GSList *categories;		
-		 */
-		// headers (& flags)
+	{	
+		// Note that the only fields it's valid to update are flags and categories!
+		xmlNode *leaf;
 		
-		// attachments
-/*
-	gchar *file_reference;
-	gchar *display_name;
-	guint estimated_size;
-*/
-		//categories
+		// flags
+		if(email_info->flags & EAS_EMAIL_READ)
+		{
+			g_debug("setting Read to 1");
+			leaf = xmlNewChild(app_data, NULL, "Read", (xmlChar*)"1");
+		}
+		else
+		{
+			g_debug("setting Read to 0");
+			leaf = xmlNewChild(app_data, NULL, "Read", (xmlChar*)"0");
+		}	
 
+		if(ret)
+		{
+			//categories
+			ret = create_node_from_categorylist(app_data, email_info->categories);			
+		}
 	}
 
+	// DEBUG output TODO make configurable or comment out
+	xmlChar* dump_buffer;
+	int dump_buffer_size;
+	xmlIndentTreeOutput = 1;
+	xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+	g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+	xmlFree(dump_buffer);
+	
 	g_debug("eas_email_info_translator_parse_request--");
 	return ret;
 }

@@ -681,6 +681,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				g_debug("EAS_REQ_SEND_EMAIL");
 				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
 			}
+			case EAS_REQ_UPDATE_MAIL:
+			{
+				g_debug("EAS_REQ_SEND_EMAIL");
+				eas_update_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+			}
 			break;				
 		}
 	}

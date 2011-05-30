@@ -438,21 +438,24 @@ gboolean eas_mail_update_email(EasMail *self,
         eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
     }
 
-    // Create the request - TODO
+    // Create the request
+	g_debug("create request");
 	EasUpdateEmailReq *req = NULL;
 	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    eas_mail_get_eas_connection(self));
 
-	// Start the request - TODO
+	// Start the request
+	g_debug("start request");
     eas_update_email_req_Activate (req);
 
 	// Set flag to wait for response
     e_flag_wait(flag);
 
-	// TODO
-	eas_update_email_req_ActivateFinish(req, &ret_sync_key);
+	g_debug("finish");
+
+	eas_update_email_req_ActivateFinish(req, &ret_sync_key, &error);
 		
     if (error)
     {

@@ -91,6 +91,7 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 	g_debug("eas_update_email_req_class_init--");
 }
 
+// TODO - update this to take a GSList of serialised emails? rem to copy the list
 EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const gchar *serialised_email, EFlag *flag)
 {
 	g_debug("eas_update_email_req_new++");
@@ -139,11 +140,29 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self)
 
 void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc)
 {
-	// TODO
+	g_debug("eas_update_email_req_MessageComplete++");	
+
+	EasUpdateEmailReqPrivate *priv = self->priv;
+
+	eas_sync_msg_parse_reponse (priv->sync_msg, doc);
+
+	xmlFree(doc);
+	
+	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+
+	g_debug("eas_update_email_req_MessageComplete--");	
 }
 
-void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key)
+void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key, GError **error)
 {
-	// TODO
+	g_debug("eas_update_email_req_ActivateFinish++");
+	
+	EasUpdateEmailReqPrivate *priv = self->priv;
+
+	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
+
+	// lrm TODO fill in the error
+	
+	g_debug("eas_update_email_req_ActivateFinish--");	
 }
 

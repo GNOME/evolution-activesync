@@ -60,7 +60,7 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self);
 void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc);
 
 // results returned to client
-void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key);
+void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key, GError **error);
 
 G_END_DECLS
 
