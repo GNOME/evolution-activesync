@@ -72,7 +72,7 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
                                     guint64 account_uid,
                                     const gchar *sync_key, 
                                     const gchar *folder_id,
-                                    const gchar *server_id,
+                                    const GSList *server_ids_array,
                                     DBusGMethodInvocation* context);
 /*
 	fetch an email body 
@@ -91,7 +91,6 @@ eas_mail_fetch_email_body (EasMail* self,
 gboolean
 eas_mail_fetch_attachment (EasMail* self, 
                           guint64 account_uid, 
-                          const gchar *server_id, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
                           DBusGMethodInvocation* context);

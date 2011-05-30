@@ -510,7 +510,7 @@ gboolean
 eas_mail_handler_delete_email(EasEmailHandler* this_g, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
 								const gchar *folder_id,		// folder that contains email to delete
-                                const gchar *server_id,		// email to delete
+                                GSList *items_deleted,		// emails to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -518,7 +518,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	
 	g_assert(this_g);
 	g_assert(sync_key);	
-	g_assert(server_id);
+	g_assert(items_deleted);
 		
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
 
@@ -528,7 +528,7 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 				  G_TYPE_UINT64, this_g->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
-		          G_TYPE_STRING, server_id,
+		          G_TYPE_STRV, items_deleted,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);

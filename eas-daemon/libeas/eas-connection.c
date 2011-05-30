@@ -31,6 +31,7 @@
 #include "eas-provision-req.h"
 #include "eas-sync-req.h"
 #include "eas-get-email-body-req.h"
+#include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
 
@@ -379,6 +380,7 @@ isResponseValid(SoupMessage *msg)
     }
 
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
+	g_assert(content_type);
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
 		g_warning ("  Failed: Content-Type did not match WBXML");
@@ -671,6 +673,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc);
 			}
 			break;
+			case EAS_REQ_GET_EMAIL_ATTACHMENT:
+			{
+				eas_get_email_body_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
+			}
+			break;			
 			case EAS_REQ_DELETE_MAIL:
 			{
 				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc);

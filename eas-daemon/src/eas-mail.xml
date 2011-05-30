@@ -84,7 +84,7 @@
       <arg type="t" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="folder_id" direction="in"/>		
-      <arg type="s" name="server_id" direction="in"/>		
+      <arg type="as" name="server_ids_array" direction="in"/>		
       <arg type="s" name="ret_sync_key" direction="out"/> 
 	</method>
 

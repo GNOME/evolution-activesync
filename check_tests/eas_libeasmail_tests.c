@@ -761,18 +761,23 @@ START_TEST (test_eas_mail_handler_delete_email)
 
 		// if the emails_created list contains email
 		if(emails_created){
+			GSList *emailToDel = NULL;
 			EasEmailInfo *email = NULL;
 			gboolean rtn = FALSE;
 
     		// get email info for first email in the folder
 			email = (g_slist_nth(emails_created, 0))->data;
 
+			emailToDel = g_slist_append(emailToDel, email->server_id);
+
 			// delete the first mail in the folder
-			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", email->server_id,&error);
+			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", emailToDel,&error);
 			if(error){
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
-			        
+
+			g_slist_free(emailToDel);
+			
 			// free email object list before reusing
 			g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
 			g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
@@ -839,7 +844,7 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_get_mail_handler);
   //tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);

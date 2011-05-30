@@ -14,7 +14,7 @@ struct _EasDeleteEmailReqPrivate
 	guint64 accountID;
 	gchar* syncKey;
 	gchar* folder_id;
-	gchar* server_id;
+	GSList *server_ids_array;
 	EasItemType ItemType;
 };
 
@@ -48,7 +48,8 @@ eas_delete_email_req_finalize (GObject *object)
 	g_debug("eas_delete_email_req_finalize++");
 
 	g_free(priv->syncKey);
-	g_free(priv->server_id);
+	g_slist_foreach(priv->server_ids_array, (GFunc)g_object_unref, NULL);
+	g_slist_free(priv->server_ids_array);
 	
 	g_debug("eas_delete_email_req_finalize--");
 	G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
@@ -82,17 +83,15 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self)
     g_debug("eas_delete_email_req_Activate- syncKey = %s", priv->syncKey);
 
 	g_debug("eas_delete_email_req_Activate - build messsage");
-	GSList *deleteMail;
-	deleteMail = g_slist_append(deleteMail, priv->server_id);
 	//build request msg
-	doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, deleteMail);
+	doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, priv->server_ids_array);
 
 	g_debug("eas_delete_email_req_Activate - send message");
 	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
 	g_debug("eas_delete_email_req_Activate--");	
 }
 
-EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const gchar *serverId, EFlag *flag)
+EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EFlag *flag)
 {
 	g_debug("eas_delete_email_req_new++");
 
@@ -103,7 +102,15 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 	
 	priv->syncKey = g_strdup(syncKey);
 	priv->folder_id = g_strdup(folderId);
-	priv->server_id = g_strdup(serverId);
+	guint listCount;
+	guint listLen = g_slist_length(server_ids_array);
+	gchar *server_id = NULL;
+	for(listCount = 0;listCount < listLen;listCount++)
+	{
+		server_id = g_slist_nth_data(server_ids_array,listCount);
+		priv->server_ids_array = g_slist_append(priv->server_ids_array, g_strdup(server_id));
+	}
+	
 	priv->accountID = accountId;
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
