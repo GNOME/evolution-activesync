@@ -200,7 +200,7 @@ START_TEST (test_eas_mail_handler_update_email)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64];
+    gchar folder_hierarchy_sync_key[64] = "";
 	strcpy(folder_hierarchy_sync_key,"0");
     GError *error = NULL;
 
@@ -215,10 +215,7 @@ START_TEST (test_eas_mail_handler_update_email)
 	GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;    
-    gboolean more_available = FALSE;  
-	EasFolder *folder = NULL;
-	gboolean testMailFound = FALSE;
-	//guint folderIndex;
+    gboolean more_available = FALSE; 
 
 	// Get folder email info for Inbox: 
     testGetFolderInfo(email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
@@ -841,8 +838,8 @@ Suite* eas_libeasmail_suite (void)
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
 
-  //tcase_add_test (tc_libeasmail, test_get_mail_handler);
-  //tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+  tcase_add_test (tc_libeasmail, test_get_mail_handler);
+  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
@@ -851,7 +848,7 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass:
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
 
   return s;
 }
