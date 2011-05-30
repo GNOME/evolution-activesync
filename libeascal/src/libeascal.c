@@ -167,12 +167,9 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	gchar *updatedSyncKey;
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items",
-		          error,
-				  G_TYPE_UINT64, 
-	              this->priv->account_uid,
-		          G_TYPE_STRING,
-		          sync_key,
+	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_STRV, &created_item_array,
@@ -261,17 +258,12 @@ eas_cal_handler_delete_items(EasCalHandler* this,
     gchar *updatedSyncKey;
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "delete_calendar_items",
-		          error,
-				  G_TYPE_UINT64, 
-	              this->priv->account_uid,
-		          G_TYPE_STRING,
-		          sync_key,
-		          G_TYPE_INVALID, 
+	ret = dbus_g_proxy_call(proxy, "delete_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, items_deleted,
+		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
-
-
 		          G_TYPE_INVALID);
 
     g_debug("eas_cal_handler_delete_items - dbus proxy called");
@@ -282,14 +274,11 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 	if(ret)
 	{
 		g_debug("delete_calendar_items called successfully");
-		// put the updated sync key back into the original string for tracking this
-		strcpy(sync_key,updatedSyncKey);
 		g_free(updatedSyncKey);
 	}
 
 	g_debug("eas_cal_handler_delete_items--");
 	return ret;
-
 }
 
 // takes an NULL terminated array of serialised calendar items and creates a list of EasCalInfo objects
