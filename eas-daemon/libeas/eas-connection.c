@@ -379,6 +379,7 @@ isResponseValid(SoupMessage *msg)
     }
 
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
+	g_assert(content_type);
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
 		g_warning ("  Failed: Content-Type did not match WBXML");

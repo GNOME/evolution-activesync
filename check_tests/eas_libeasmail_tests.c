@@ -76,8 +76,6 @@ static void testGetFolderInfo(EasEmailHandler *email_handler,
 //		"Folder Sync Key not updated by call the exchange server");
 }
 
-// lrm:
-
 static void testSendEmail(EasEmailHandler *email_handler,
                                      const gchar *client_id,
                                      const gchar *mime_file,
@@ -92,14 +90,108 @@ static void testSendEmail(EasEmailHandler *email_handler,
     if((*error) != NULL){
 		fail_if(ret == FALSE,"%s",&(*error)->message);
 	}                                       
+	// TODO - what does success look like for sent email when automated?
 }
+
+
+START_TEST (test_eas_mail_handler_read_email_metadata)
+{
+    guint64 accountuid = 123456789;
+    EasEmailHandler *email_handler = NULL;
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetMailHandler(&email_handler, accountuid);
+
+	// TODO - send the email we're expecting to verify below rather than relying on it being created manually
+	
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;    
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be 
+    // the complete folder hierarchy rather than a delta of any changes
+    gchar folder_hierarchy_sync_key[64] = "0\0";
+    GError *error = NULL;
+
+    mark_point();
+	// call into the daemon to get the folder hierarchy from the exchange server
+	testGetFolderHierarchy(email_handler, folder_hierarchy_sync_key,&created,&updated,&deleted,&error);
+    mark_point();
+
+    // fail the test if there is no folder information
+	fail_unless(created, "No folder information returned from exchange server");
+
+    gchar folder_sync_key[64] = "0\0";
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;
+	EasFolder *folder = NULL;
+	gboolean testMailFound = FALSE;
+	guint folderIndex;
+
+    mark_point();
+    testGetFolderInfo(email_handler,
+                      folder_sync_key, 
+                      "5", // Inbox
+                      &emails_created,
+                      &emails_updated,
+                      &emails_deleted,
+                      &more_available,
+                      &error);
+    mark_point();
+
+    // if the emails_created list contains email
+    if (emails_created)
+    {
+        EasEmailInfo *email = NULL;
+        gboolean rtn = FALSE;
+
+        mark_point();
+        // inspect metadata for first email in the folder
+        email = g_slist_nth(emails_created, 0)->data;
+        fail_if(!email, "Unable to get first email in emails_created GSList");
+
+		// verify that it's unread
+		fail_if(email->flags & EAS_EMAIL_READ, "First Email in Inbox is expected to be unread");
+
+		// TODO read the expected metadata from config
+		        
+		//verify that it has a single attachment_separator
+		fail_if(! (g_slist_length(email->attachments) == 1), "First Email in Inbox is expected to have a single attachment");
+	
+		//verify that it's marked with high importance
+		GSList *headers = email->headers;
+		EasEmailHeader *header;
+		guint importance = 0;
+		for (headers = email->headers; headers != NULL; headers = headers->next)
+		{
+			header = headers->data;
+			if(!strcmp((char *)header->name, "Importance"))
+			{
+				g_debug("Importance = %d", header->name);
+				importance = atoi(header->value);
+				break;
+			}
+		}
+
+		fail_unless(importance == 2);
+		
+	}
+
+	return;
+}
+END_TEST
+
 
 START_TEST (test_eas_mail_handler_send_email)
 {
     guint64 accountuid = 123456789;
     EasEmailHandler *email_handler = NULL;
 	const gchar *client_id = g_strdup("1");
-	const gchar *mime_file = g_strdup("/home/lorna/int07/testdata/mime_file.txt");
+	const gchar *mime_file = g_strdup("/home/lorna/int07/testdata/mime_file.txt");	// TODO
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
@@ -574,18 +666,23 @@ START_TEST (test_eas_mail_handler_delete_email)
 
 		// if the emails_created list contains email
 		if(emails_created){
+			GSList *emailToDel = NULL;
 			EasEmailInfo *email = NULL;
 			gboolean rtn = FALSE;
 
     		// get email info for first email in the folder
 			email = (g_slist_nth(emails_created, 0))->data;
 
+			emailToDel = g_slist_append(emailToDel, email->server_id);
+
 			// delete the first mail in the folder
-			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", email->server_id,&error);
+			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", emailToDel,&error);
 			if(error){
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
-			        
+
+			g_slist_free(emailToDel);
+			
 			// free email object list before reusing
 			g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
 			g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
@@ -657,6 +754,8 @@ Suite* eas_libeasmail_suite (void)
  // tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
+  // need an unread, high importance email with a single attachment at top of inbox for this to pass
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);	
 
   return s;
 }
