@@ -373,7 +373,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
                                     guint64 account_uid,
                                     const gchar *sync_key, 
                                     const gchar *folder_id,
-                                    const gchar *server_id,
+                                    const GSList *server_ids_array,
                                     DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_delete_email++");
@@ -391,7 +391,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 
     // Create the request
 	EasDeleteEmailReq *req = NULL;
-	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_id, flag);
+	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    eas_mail_get_eas_connection(easMailObj));
