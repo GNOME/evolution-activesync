@@ -93,7 +93,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			//Read  
 			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
-				if((gboolean)xmlNodeGetContent(n))
+				if(strcmp(xmlNodeGetContent(n), "0"))   // not 0, therefore read
 				{
 					flags |= EAS_EMAIL_READ;
 				}
@@ -205,7 +205,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			//Read  
 			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
-				if((gboolean)xmlNodeGetContent(n))
+				if(strcmp(xmlNodeGetContent(n), "0"))   // not 0, therefore read
 				{
 					flags |= EAS_EMAIL_READ;
 				}
