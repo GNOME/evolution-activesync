@@ -551,16 +551,57 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 /* 
 'push' email updates to server
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
+TODO - should this be changed to support updating multiple emails at once?
 */
 gboolean 
-eas_mail_handler_update_email(EasEmailHandler* this_g, 
-								gchar *sync_key,            // sync_key for the folder containing the emails                   
-								EasEmailInfo *update_email,		// EasEmailInfo to update
+eas_mail_handler_update_email(EasEmailHandler* self, 
+								gchar **sync_key,            // sync_key for the folder containing the emails  
+								const gchar *folder_id,		// folder that contains email to delete                              
+								const EasEmailInfo *update_email,		// email to update
 								GError **error)
 {
 	gboolean ret = TRUE;	
 	g_debug("eas_mail_handler_update_emails++");
-	/* TODO */
+
+	g_assert(self);
+	g_assert(sync_key);	
+	g_assert(update_email);
+		
+	DBusGProxy *proxy = self->priv->remoteEas; 
+	gchar *sync_key_out = NULL;
+	
+	// serialise the email
+	gchar *serialised_email = NULL;
+
+	ret = eas_email_info_serialise(update_email, &serialised_email);
+	
+	// call dbus api
+	ret = dbus_g_proxy_call(proxy, "update_email", error,
+							G_TYPE_UINT64, self->priv->account_uid, 		
+							G_TYPE_STRING, sync_key,
+							G_TYPE_STRING, folder_id,
+							G_TYPE_STRING, serialised_email,		
+							G_TYPE_INVALID, 
+							G_TYPE_STRING, &sync_key_out,
+							G_TYPE_INVALID);	                        
+
+	if(ret)
+	{
+		// is there enough space in the current sync_key string? 
+		if(strlen(sync_key_out) <= strlen(sync_key))
+		{
+			strcpy(sync_key,sync_key_out);
+		}
+		else
+		{
+			g_free(*sync_key);
+			sync_key = strdup(sync_key_out);
+		}
+		g_free(sync_key_out);		
+	}	
+
+	g_free(serialised_email);
+
 	g_debug("eas_mail_handler_update_emails--");	
 
 	return ret;

@@ -4,9 +4,10 @@
  * Copyright (C)  2011 <>
  * 
  */
-
-#include "eas-get-email-body-req.h"
+ 
 #include "eas-get-email-body-msg.h"
+#include "eas-get-email-body-req.h"
+
 
 struct _EasGetEmailBodyReqPrivate
 {

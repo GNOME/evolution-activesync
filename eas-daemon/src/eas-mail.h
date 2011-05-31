@@ -91,7 +91,6 @@ eas_mail_fetch_email_body (EasMail* self,
 gboolean
 eas_mail_fetch_attachment (EasMail* self, 
                           guint64 account_uid, 
-                          const gchar *server_id, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
                           DBusGMethodInvocation* context);
@@ -105,6 +104,16 @@ gboolean eas_mail_send_email(EasMail* self,
                              const gchar* clientid,
                              const gchar *mime_file,
                              DBusGMethodInvocation* context);
+
+/*
+	update an email
+ */
+gboolean eas_mail_update_email(EasMail *self,
+								guint64 account_uid,
+								const gchar *sync_key, 
+								const gchar *folder_id,
+								const gchar *serialised_email,
+								DBusGMethodInvocation* context);
 
 G_END_DECLS
 

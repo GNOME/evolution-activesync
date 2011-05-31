@@ -12,7 +12,9 @@
 #include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
+#include "eas-update-email-req.h"
 
+#include "eas-get-email-attachment-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -418,6 +420,58 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	return TRUE;
 }
 
+gboolean eas_mail_update_email(EasMail *self,
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
+                                    const gchar *folder_id,
+                                    const gchar *serialised_email,
+                                    DBusGMethodInvocation* context)
+{
+    g_debug("eas_mail_update_email++");
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    gchar* ret_sync_key = NULL;
+	 
+    flag = e_flag_new ();
+
+    if(self->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+    }
+
+    // Create the request
+	g_debug("create request");
+	EasUpdateEmailReq *req = NULL;
+	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_mail_get_eas_connection(self));
+
+	// Start the request
+	g_debug("start request");
+    eas_update_email_req_Activate (req);
+
+	// Set flag to wait for response
+    e_flag_wait(flag);
+
+	g_debug("finish");
+
+	eas_update_email_req_ActivateFinish(req, &ret_sync_key, &error);
+		
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context,
+                              ret_sync_key);
+    }	
+	g_debug("eas_mail_update_email--");
+	return TRUE;
+}
+
 /**
  * Fetches the email body identified by the server_id from the exchange server 
  * in MIME format and writes it as a file named 'server_id' in the directory
@@ -483,17 +537,53 @@ eas_mail_fetch_email_body (EasMail* self,
 }
 
 gboolean
-eas_mail_fetch_attachment (EasMail* easMailObj, 
+eas_mail_fetch_attachment (EasMail* self, 
                             guint64 account_uid, 
-                            const gchar *server_id, 
                             const gchar *file_reference, 
                             const gchar *mime_directory, 
                             DBusGMethodInvocation* context)
 {
-	// TODO
     g_debug("eas_mail_fetch_attachment++");
+     
+    EasMailPrivate *priv = self->priv;
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    
+   // TODO: EasGetAttachmentReq
 
-    // EasGetAttachmentReq
+    flag = e_flag_new ();
+    
+    // Set the account Id into the connection
+    eas_connection_set_account(priv->connection, account_uid);
+
+    // Create Request
+    EasGetEmailAttachmentReq *req = eas_get_email_attachment_req_new (account_uid,
+                                                          file_reference,
+                                                          mime_directory,
+                                                          flag);
+
+    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+
+    eas_get_email_attachment_req_Activate (req);
+
+    // Wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
+
+    eas_get_email_attachment_req_ActivateFinish (req, &error);
+
+    if (error)
+    {
+        g_warning("eas_mail_fetch_email_body - failed to get data from message");
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        g_debug("eas_mail_fetch_email_body - return for dbus");
+        dbus_g_method_return (context);
+    }
+
     g_debug("eas_mail_fetch_attachment--");
 	return TRUE;
 }
