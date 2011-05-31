@@ -595,18 +595,13 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 	{
 		g_debug("sync key out = %s", sync_key_out);
 		// is there enough space in the current sync_key string? 
-		if(strlen(sync_key_out) <= strlen(sync_key))
-		{
-			strcpy(sync_key,sync_key_out);
-		}
-		else
-		{
-			g_free(*sync_key);
-			sync_key = strdup(sync_key_out);
-		}
+		strcpy(sync_key,sync_key_out);
+		
+		g_debug("free sync_key_out");
 		g_free(sync_key_out);		
 	}	
 
+	g_debug("free serialised email");
 	g_free(serialised_email);
 
 	g_debug("eas_mail_handler_update_emails--");	
