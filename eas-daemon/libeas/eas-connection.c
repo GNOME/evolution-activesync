@@ -25,6 +25,7 @@
 #include <libxml/xmlreader.h> // xmlDoc
 
 #include "eas-accounts.h"
+#include "eas-connection-errors.h"
 
 // List of includes for each request type
 #include "eas-sync-folder-hierarchy-req.h"
@@ -677,7 +678,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:
@@ -695,7 +696,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				g_debug("EAS_REQ_SEND_EMAIL");
 				eas_update_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
 			}
-			break;				
+			break;
 		}
 	}
 	else

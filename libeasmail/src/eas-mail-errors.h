@@ -9,7 +9,19 @@
 
 G_BEGIN_DECLS
 
-GQuark eas_mail_error_quark (void);
+GQuark
+eas_mail_error_quark (void)
+{
+	static GQuark quark = 0;
+
+	if (G_UNLIKELY (quark == 0)) {
+		const gchar *string = "eas-mail-error-quark";
+		quark = g_quark_from_static_string (string);
+	}
+
+	return quark;
+}
+
 #define EAS_MAIL_ERROR (eas_mail_error_quark ())
 
 enum {
@@ -17,13 +29,6 @@ enum {
 	EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 	EAS_MAIL_ERROR_UNKNOWN
 };
-
-struct EasMailErrorMap {
-	const gchar *error_id;
-	gint error_code;
-};
-
-gint eas_mail_get_error_code (const gchar *str);
 
 G_END_DECLS
 

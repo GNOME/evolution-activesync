@@ -49,8 +49,7 @@ LIBS =  -L/usr/lib \
 #        eas-marshal.c
 
 libeas_la_SOURCES =		\
-        eas-errors.h			\
-        eas-errors.c			\
+        eas-errors.h	\
         eas-connection.c \
         eas-connection.h \
         eas-msg-base.h \

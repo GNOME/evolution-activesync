@@ -39,7 +39,6 @@ libeasmail_la_SOURCES =		\
         eas-email-info.c	\
 		eas-attachment.h	\
         eas-attachment.c	\
-		eas-mail-errors.c	\
 		eas-mail-errors.h	\
         utils.h				\
 		utils.c

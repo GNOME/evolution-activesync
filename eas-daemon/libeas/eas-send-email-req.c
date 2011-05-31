@@ -90,7 +90,7 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 EasSendEmailReq *
 eas_send_email_req_new()
 {
-	g_debug("eas_send_email_req_new++");	
+	g_debug("eas_send_email_req_new++");
 	
 	EasSendEmailReq *object = NULL;
 
