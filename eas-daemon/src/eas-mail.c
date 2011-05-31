@@ -381,7 +381,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
     g_debug("eas_mail_delete_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
-    gchar* ret_sync_key = NULL;
+    gchar* ret_sync_key = NULL;	
 	 
     flag = e_flag_new ();
 
@@ -420,17 +420,16 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	return TRUE;
 }
 
-gboolean eas_mail_update_email(EasMail *self,
+gboolean eas_mail_update_emails(EasMail *self,
                                     guint64 account_uid,
                                     const gchar *sync_key, 
                                     const gchar *folder_id,
-                                    const gchar *serialised_email,
+                                    const gchar **serialised_email_array,
                                     DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_update_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
-    gchar* ret_sync_key = NULL;
 	 
     flag = e_flag_new ();
 
@@ -442,7 +441,7 @@ gboolean eas_mail_update_email(EasMail *self,
     // Create the request
 	g_debug("create request");
 	EasUpdateEmailReq *req = NULL;
-	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email, flag);
+	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    eas_mail_get_eas_connection(self));
@@ -455,8 +454,6 @@ gboolean eas_mail_update_email(EasMail *self,
     e_flag_wait(flag);
 
 	g_debug("finish");
-
-	eas_update_email_req_ActivateFinish(req, &ret_sync_key, &error);
 		
     if (error)
     {
@@ -465,8 +462,7 @@ gboolean eas_mail_update_email(EasMail *self,
     } 
     else
     {
-        dbus_g_method_return (context,
-                              ret_sync_key);
+        dbus_g_method_return (context);
     }	
 	g_debug("eas_mail_update_email--");
 	return TRUE;

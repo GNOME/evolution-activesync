@@ -139,6 +139,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     }
     //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
     else{
+		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"0");
 		GSList * iterator;
 		//if any of the lists are not null we need to add commands element
 		if(added || updated || deleted)
@@ -303,6 +305,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 						break;
 						case EAS_ITEM_MAIL:
 						{
+
 							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
 						}
 						break;
@@ -341,7 +344,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Change")) {
 			// TODO Parse updated folders
 			appData = node;
 			
@@ -364,6 +367,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 						break;
 						case EAS_ITEM_MAIL:
 						{
+							g_debug("calling email appdata translator for update");
 							flatItem = eas_update_email_appdata_parse_response(appData, item_server_id); 
 						}
 						break;
@@ -378,8 +382,8 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 					
 					g_debug ("FlatItem = %s", flatItem);
 					if(flatItem){
-					    g_debug ("appending to added_items");
-						priv->added_items = g_slist_append(priv->added_items, flatItem);
+					    g_debug ("appending to updated_items");
+						priv->updated_items = g_slist_append(priv->updated_items, flatItem);
 					}
 						
 					continue;

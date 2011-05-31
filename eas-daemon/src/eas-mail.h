@@ -108,11 +108,11 @@ gboolean eas_mail_send_email(EasMail* self,
 /*
 	update an email
  */
-gboolean eas_mail_update_email(EasMail *self,
+gboolean eas_mail_update_emails(EasMail *self,
 								guint64 account_uid,
 								const gchar *sync_key, 
 								const gchar *folder_id,
-								const gchar *serialised_email,
+								const gchar **serialised_email_array,
 								DBusGMethodInvocation* context);
 
 G_END_DECLS

@@ -207,9 +207,9 @@ Note that the only valid changes are to the read flag and to categories (other c
  *                              back through underlying layers
 */
  gboolean eas_mail_handler_update_email(EasEmailHandler* this, 
-                                        gchar **sync_key,
+                                        gchar *sync_key,
 										const gchar *folder_id,	
-                                        const EasEmailInfo *update_email,		
+                                        const GSList *update_emails,		
 				                        GError **error);
 
 

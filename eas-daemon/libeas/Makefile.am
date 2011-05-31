@@ -90,7 +90,9 @@ libeas_la_SOURCES =		\
         eas-get-email-attachment-req.h \
         eas-get-email-attachment-req.c \
         eas-get-email-attachment-msg.h \
-        eas-get-email-attachment-msg.c
+        eas-get-email-attachment-msg.c \
+        eas-utils.h \
+        eas-utils.c        
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)

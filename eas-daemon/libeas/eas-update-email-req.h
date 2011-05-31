@@ -51,7 +51,7 @@ struct _EasUpdateEmailReq
 GType eas_update_email_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const gchar *serialised_email, EFlag *flag);
+EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag);
 
 // start async request
 void eas_update_email_req_Activate(EasUpdateEmailReq *self);

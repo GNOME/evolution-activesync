@@ -27,7 +27,7 @@ get_next_field(gchar **data, const gchar *separator)
 		*data += len + 1;
 	}
 	
-	g_debug("get_next_field result = %s", result);
+	//g_debug("get_next_field result = %s", result);
 	return result;
 }
 

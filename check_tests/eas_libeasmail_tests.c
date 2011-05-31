@@ -210,8 +210,7 @@ START_TEST (test_eas_mail_handler_update_email)
     // fail the test if there is no folder information
 	fail_unless(created, "No folder information returned from exchange server");
 
-    gchar folder_sync_key[64];
-	strcpy(folder_sync_key,"0");
+    gchar folder_sync_key[64] = "0";
 	GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;    
@@ -239,13 +238,29 @@ START_TEST (test_eas_mail_handler_update_email)
 			email->flags |= EAS_EMAIL_READ;
 		}
 
-		// TODO - something a bit more exciting than toggle of read flag
+		// TODO - something a bit more exciting than toggle of read flag (add/remove a category)?		
+
+		mark_point();
+
+		GSList *emails = NULL;
+		emails = g_slist_append(emails, email);
 
 		// update the first mail in the folder
-		rtn = eas_mail_handler_update_email(email_handler, folder_sync_key,"5", email, &error);
+		rtn = eas_mail_handler_update_email(email_handler, folder_sync_key, "5", emails, &error);
 		if(error){
 			fail_if(rtn == FALSE,"%s",error->message);
 		}
+
+		mark_point();		
+
+		GSList *emails2_created = NULL;	//can't reuse emails_created since that isn't empty now
+		
+		// verify that we get updates with the next sync:
+		testGetFolderInfo(email_handler, folder_sync_key, "5", &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+		fail_if(emails2_created, "Not expecting any new emails");
+		fail_if(emails_deleted, "Not expecting any deletions");
+		fail_unless(emails_updated, "No updates from exchange server sync after we updated");		
 		        
 		// free email object list before reusing
 		g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
@@ -848,7 +863,8 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass:
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
+  // need at least one email in the inbox for this to pass:
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
 
   return s;
 }

@@ -20,5 +20,4 @@ gchar* get_next_field(gchar **data, const gchar *separator);
 // eg "a,b,c"
 gchar * strconcatwithseparator(gchar **strings, guint num, const gchar *sep);
 
-
 #endif // _EAS_MAIL_UTILS_H_

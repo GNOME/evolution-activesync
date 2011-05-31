@@ -188,12 +188,15 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 gchar * 
 eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
+	g_debug("eas_update_email_appdata_parse_response++");
 	gchar *result = NULL;
 	
 	if (!node) return;
 	
     if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "ApplicationData")) 
 	{
+		g_debug("found ApplicationData root");
+		
 		EasEmailInfo *email_info = eas_email_info_new();
 		GSList *categories = NULL;
 		guint flags = 0;
@@ -205,6 +208,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			//Read  
 			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Read")) 
 			{
+				g_debug("found read node");
 				if(strcmp(xmlNodeGetContent(n), "0"))   // not 0, therefore read
 				{
 					flags |= EAS_EMAIL_READ;
@@ -229,6 +233,12 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		email_info->server_id = server_id;
 		email_info->categories = categories;
 		email_info->flags = flags;		
+
+		// serialise the emailinfo
+		if(!eas_email_info_serialise(email_info, &result))
+		{
+			g_warning("Failed to serialise email info");
+		}
 		
 		g_object_unref(email_info);
 	}
@@ -236,6 +246,8 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 	{
 		g_error("Failed! Expected ApplicationData node at root");
 	}
+
+	g_debug("eas_update_email_appdata_parse_response--");	
 	return result;
 }
 
@@ -269,59 +281,6 @@ eas_delete_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 	return result;
 }
 
-/*
-static gboolean
-create_nodes_from_headerlist(xmlNode *app_data, const GSList* headers)
-{
-	gboolean ret = TRUE;
-	xmlNode *leaf;
-	GSList *l = (GSList*)headers;
-	while(l != NULL)
-	{
-		// TODO - make this more efficient 
-		// (add an enum type to the header structure to switch on)?
-		// or use the namespace param
-		EasEmailHeader *header = (EasEmailHeader *)l->data;
-		if(!strcmp(header->name, "To"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:To", (xmlChar*)header->value);			
-		}
-		else if(!strcmp(header->name, "Cc"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:Cc", (xmlChar*)header->value);			
-		}
-		else if(!strcmp(header->name, "From"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:From", (xmlChar*)header->value);			
-		}
-		else if(!strcmp(header->name, "Subject"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:Subject", (xmlChar*)header->value);			
-		}
-		else if(!strcmp(header->name, "ReplyTo"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:ReplyTo", (xmlChar*)header->value);			
-		}
-		else if(!strcmp(header->name, "DateReceived"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:DateReceived", (xmlChar*)header->value);			
-		}		
-		else if(!strcmp(header->name, "Importance"))
-		{
-			leaf = xmlNewTextChild(app_data, NULL, "email:Importance", (xmlChar*)header->value);			
-		}
-
-		if(!leaf)
-		{
-			ret = FALSE;
-		}
-		l = l->next;
-	}		
-
-	return ret;
-}
-*/
-
 static gboolean
 create_node_from_categorylist(xmlNode *app_data, const GSList* categories)
 {
@@ -350,54 +309,6 @@ create_node_from_categorylist(xmlNode *app_data, const GSList* categories)
 	return ret;
 }
 
-/*
-static gboolean 
-create_node_from_attachment(xmlNode *attachments_node, EasAttachment *attachment)
-{
-	gboolean ret = TRUE;
-	xmlNode *leaf;
-	g_assert(attachment->file_reference);
-	g_assert(attachment->estimated_size);
-
-	leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:FileReference", (xmlChar*)attachment->file_reference);
-	if(leaf)
-	{
-		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:EstimatedDataSize", (xmlChar*)attachment->estimated_size);	
-	}
-	if(leaf)
-	{
-		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:Method", (xmlChar*)"1");	// normal mode
-	}
-	if(leaf && attachment->display_name)
-	{
-		leaf = xmlNewTextChild(attachments_node, NULL, "airsyncbase:DisplayName", (xmlChar*)attachment->display_name);	// normal mode
-	}
-
-	if(!leaf)
-	{
-		ret = FALSE;
-	}
-	
-	return ret;
-}
-
-static gboolean
-create_node_from_attachmentlist(xmlNode *app_data, const GSList* attachments)
-{
-	xmlNode *attachments_node = NULL;		
-	if(attachments)
-	{
-		// Create the attachments collection node
-		attachments_node = xmlNewChild(app_data, NULL, "airsyncbase:Attachments", NULL);		
-	}		
-	while(attachments != NULL)
-	{
-		EasAttachment *attachment = (EasAttachment *)attachments->data;
-		create_node_from_attachment(attachments_node, attachment);	
-		attachments = attachments->next;
-	}		
-}
-*/
 
 // translate the other way: take the emailinfo object and populate the ApplicationData node
 gboolean 
