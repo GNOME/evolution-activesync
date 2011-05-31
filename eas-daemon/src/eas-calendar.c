@@ -119,6 +119,11 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
     gchar** ret_deleted_items_array = NULL;
 
     eflag = e_flag_new ();
+    
+    if(self->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+    }
 
     // Create the request
     EasSyncReq *syncReqObj =NULL;
