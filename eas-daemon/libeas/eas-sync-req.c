@@ -81,7 +81,7 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 
 
 void
-eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID, EFlag *flag, const gchar* folderId, EasItemType type)
+eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID, EFlag *flag, const gchar* folderId, EasItemType type, GError** error)
 {
 	EasSyncReqPrivate* priv = self->priv;
 	xmlDoc *doc;
@@ -123,13 +123,13 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 }
 
 void
-eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc)
+eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError** error)
 {
 	EasSyncReqPrivate *priv = self->priv;
 	
 	g_debug("eas_sync_req_MessageComplete++");
 
-	eas_sync_msg_parse_reponse (priv->syncMsg, doc);
+	eas_sync_msg_parse_reponse (priv->syncMsg, doc, error);
 
 	xmlFree(doc);
 	
@@ -184,7 +184,8 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 								gchar** ret_sync_key,
 								GSList** added_items,
 								GSList** updated_items,
-								GSList** deleted_items)
+								GSList** deleted_items, 
+								GError** error)
 {
 	EasSyncReqPrivate *priv = self->priv;
 	

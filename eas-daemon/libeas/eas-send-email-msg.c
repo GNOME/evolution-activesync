@@ -127,7 +127,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 }
 
 void
-eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc)
+eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc, GError** error)
 {
     g_debug ("eas_send_email_msg_parse_reponse++\n");
 	

@@ -7,6 +7,7 @@
 
 #include "eas-sync-msg.h"
 #include "eas-email-info-translator.h"
+#include "eas-cal-info-translator.h"
 
 struct _EasSyncMsgPrivate
 {
@@ -26,7 +27,7 @@ struct _EasSyncMsgPrivate
 
 G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
 
-static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node);
+static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node, GError** error);
 
 static void
 eas_sync_msg_init (EasSyncMsg *object)
@@ -139,6 +140,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     }
     //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
     else{
+		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
+		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"0");
 		GSList * iterator;
 		//if any of the lists are not null we need to add commands element
 		if(added || updated || deleted)
@@ -166,7 +169,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 			}
 			if(updated){
 				for (iterator = updated; iterator; iterator = iterator->next) {
-					//choose translator based on data type
+					xmlNode *update = xmlNewChild(command, NULL, (xmlChar *)"Change", NULL);
+					//choose translator based on data type					
 					switch(priv->ItemType)
 					{
 						default:
@@ -176,9 +180,40 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						break;
 						case EAS_ITEM_MAIL:
 						{
-							//TODO: call translator to get client ID and  encoded application data
+							xmlNewNs (node, (xmlChar *)"Email:", (xmlChar *)"email");	
+							
+							gchar *serialised_email = (gchar *)updated->data;					
+							EasEmailInfo *email_info = eas_email_info_new ();
+
+							if(eas_email_info_deserialise(email_info, serialised_email))
+							{
+							// create the server_id node
+							xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)email_info->server_id);								
+							xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
+							// call translator to get encoded application data
+							eas_email_info_translator_build_update_request(doc, app_data, email_info);
+							g_object_unref(email_info);
+							}
+							// TODO error handling
 						}
-						
+						break;
+						case EAS_ITEM_CALENDAR:
+						{
+							xmlNewNs (node, (xmlChar *)"Calendar:", (xmlChar *)"calendar");	
+							if(iterator->data){
+								//TODO: call translator to get client ID and  encoded application data
+								//gchar *serialised_calendar = (gchar *)iterator->data;	
+											
+								EasCalInfo *cal_info =(EasCalInfo*) iterator->data;	
+								
+								// create the server_id node
+								xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)cal_info->server_id);								
+								xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
+								// translator deals with app data
+								eas_cal_info_translator_parse_request(doc, app_data, cal_info);
+								// TODO error handling and freeing
+							}
+						}			
 					}	
 				}
 			}
@@ -196,7 +231,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 }
 
 void
-eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
+eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
     g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;
@@ -288,6 +323,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 						break;
 						case EAS_ITEM_MAIL:
 						{
+
 							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
 						}
 						break;
@@ -314,19 +350,20 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 		}
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+			appData = node;
 			// TODO Parse deleted folders
 			for (appData = appData->children; appData; appData = appData->next) {
 				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
 					item_server_id = (gchar *)xmlNodeGetContent(appData);
 					g_debug ("Found serverID for Item = %s", item_server_id);
-					priv->added_items = g_slist_append(priv->added_items, item_server_id);
+					priv->deleted_items = g_slist_append(priv->deleted_items, item_server_id);
 					continue;
 				}
 			}
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Change")) {
 			// TODO Parse updated folders
 			appData = node;
 			
@@ -349,6 +386,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 						break;
 						case EAS_ITEM_MAIL:
 						{
+							g_debug("calling email appdata translator for update");
 							flatItem = eas_update_email_appdata_parse_response(appData, item_server_id); 
 						}
 						break;
@@ -363,8 +401,8 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
 					
 					g_debug ("FlatItem = %s", flatItem);
 					if(flatItem){
-					    g_debug ("appending to added_items");
-						priv->added_items = g_slist_append(priv->added_items, flatItem);
+					    g_debug ("appending to updated_items");
+						priv->updated_items = g_slist_append(priv->updated_items, flatItem);
 					}
 						
 					continue;

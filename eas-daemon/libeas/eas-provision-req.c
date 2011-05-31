@@ -84,7 +84,7 @@ eas_provision_req_new (gchar* policy_status, gchar* policy_key)
 }
 
 void
-eas_provision_req_Activate (EasProvisionReq* self)
+eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 {
 	EasProvisionReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
@@ -104,13 +104,13 @@ eas_provision_req_Activate (EasProvisionReq* self)
  * @param doc The protocol xml to be parsed. MUST be freed with xmlFree()
  */
 void
-eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
+eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** error)
 {
 	EasProvisionReqPrivate *priv = self->priv;
 
 	g_debug("eas_provision_req_MessageComplete++");
 
-	eas_provision_msg_parse_response (priv->msg, doc);
+	eas_provision_msg_parse_response (priv->msg, doc, error);
 
 	switch (priv->state) {
 		default:
@@ -139,7 +139,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc)
 
 			priv->state = EasProvisionStep2;
 
-			eas_provision_req_Activate (self);
+			eas_provision_req_Activate (self, error);
 		}
 		break;
 

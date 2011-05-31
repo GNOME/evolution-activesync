@@ -49,12 +49,9 @@ LIBS =  -L/usr/lib \
 #        eas-marshal.c
 
 libeas_la_SOURCES =		\
-        eas-errors.h			\
-        eas-errors.c			\
+        eas-errors.h	\
         eas-connection.c \
         eas-connection.h \
-        eas-msg.c \
-        eas-msg.h \
         eas-msg-base.h \
         eas-msg-base.c \
         eas-sync-folder-msg.h \
@@ -87,10 +84,16 @@ libeas_la_SOURCES =		\
         eas-cal-info-translator.c \
         eas-delete-email-req.h \
         eas-delete-email-req.c \
+        eas-update-email-req.h \
+        eas-update-email-req.c \
         eas-get-email-attachment-req.h \
         eas-get-email-attachment-req.c \
         eas-get-email-attachment-msg.h \
-        eas-get-email-attachment-msg.c
+        eas-get-email-attachment-msg.c \
+        eas-update-calendar-req.h \
+        eas-update-calendar-req.c \
+        eas-utils.h \
+        eas-utils.c        
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)

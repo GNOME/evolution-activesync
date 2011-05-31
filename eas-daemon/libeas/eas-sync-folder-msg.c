@@ -109,7 +109,7 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
 }
 
 void
-eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc)
+eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc, GError** error)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;

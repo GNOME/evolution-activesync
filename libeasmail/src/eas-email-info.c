@@ -159,7 +159,6 @@ eas_email_info_serialised_length(EasEmailInfo *this_g)
 gboolean 
 eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 {
-	g_debug("this_g = 0x%x", this_g);
 	g_debug("eas_email_info_serialise++");
 	gboolean ret = TRUE;
 	gchar list_size[MAX_LEN_OF_INT32_AS_STRING] = "";	
@@ -264,8 +263,6 @@ eas_email_info_serialise(EasEmailInfo* this_g, gchar **result)
 		g_free(*result);
 		*result = NULL;
 	}
-
-	g_debug("this_g = 0x%x", this_g);
 	
 	g_debug("eas_email_info_serialise--");
 	return ret;

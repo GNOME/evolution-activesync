@@ -32,7 +32,7 @@ struct _EasCalendar
 {
 	GObject parent_instance;
 
-	EasCalendarPrivate* _priv;
+	EasCalendarPrivate* priv;
 };
 
 GType eas_calendar_get_type (void) G_GNUC_CONST;
@@ -50,14 +50,16 @@ void eas_calendar_get_latest_calendar_items(EasCalendar* self,
                                           DBusGMethodInvocation* context);
 
 gboolean eas_calendar_delete_calendar_items(EasCalendar* self,
+                                    guint64 account_uid,
                                     const gchar* sync_key, 
-                                    const gchar **server_id,
-                                    GError **error);
+                                    const GSList *deleted_items_array,
+                                    DBusGMethodInvocation* context);
 
 gboolean eas_calendar_update_calendar_items(EasCalendar* self,
+                                    guint64 account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
-                                    GError **error);
+                                    DBusGMethodInvocation* context);
 
 G_END_DECLS
 

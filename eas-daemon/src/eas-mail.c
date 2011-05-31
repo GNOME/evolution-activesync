@@ -12,6 +12,8 @@
 #include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
+#include "eas-update-email-req.h"
+
 #include "eas-get-email-attachment-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
@@ -239,27 +241,30 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
     // Activate the request
-    eas_sync_folder_hierarchy_req_Activate (req);
+    eas_sync_folder_hierarchy_req_Activate (req, &error);
     e_flag_wait(eflag);
     e_flag_free (eflag);
 
+    // TODO Check error
+    
 	// Fetch the response data from the message
     eas_sync_folder_hierarchy_req_ActivateFinish (req,
                                                   &ret_sync_key,
                                                   &added_folders,
                                                   &updated_folders,
-                                                  &deleted_folders);
+                                                  &deleted_folders,
+                                                  &error);
 
     // Serialise the response data from GSList* to char** for transmission over Dbus
 
-	if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
+    if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
     {
         if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
         {
             build_serialised_folder_array(&ret_deleted_folders_array, deleted_folders, &error);
         }
     }
-     
+
      // Return the error or the requested data to the mail client
     if (error) 
     {
@@ -318,11 +323,14 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
                            account_uid,
                            flag,
                            collection_id,
-                           EAS_ITEM_MAIL);
+                           EAS_ITEM_MAIL,
+                           &error);
 
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
+
+    // TODO Check error
 
     gchar *ret_sync_key = NULL;
     gboolean ret_more_available = FALSE;
@@ -340,8 +348,8 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
                                 &ret_sync_key,
                                 &a /* &ret_add_email_array     */,
                                 &b /* &ret_changed_email_array */,
-                                &c /* &ret_deleted_email_array */
-                                /*, &error */);
+                                &c /* &ret_deleted_email_array */,
+                                &error);
 
 
    if(build_serialised_email_info_array(&ret_added_email_array, a, &error)){
@@ -379,7 +387,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
     g_debug("eas_mail_delete_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
-    gchar* ret_sync_key = NULL;
+    gchar* ret_sync_key = NULL;	
 	 
     flag = e_flag_new ();
 
@@ -397,12 +405,15 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
                                    eas_mail_get_eas_connection(easMailObj));
 
 	    // Start the request
-    eas_delete_email_req_Activate (req);
+    eas_delete_email_req_Activate (req, &error);
 
 	    // Set flag to wait for response
     e_flag_wait(flag);
+    e_flag_free(flag);
 
-	eas_delete_email_req_ActivateFinish(req, &ret_sync_key);
+    // TODO check error
+
+	eas_delete_email_req_ActivateFinish(req, &ret_sync_key, &error);
 		
     if (error)
     {
@@ -413,8 +424,59 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
     {
         dbus_g_method_return (context,
                               ret_sync_key);
-    }	
+    }
 	g_debug("eas_mail_delete_email--");
+	return TRUE;
+}
+
+gboolean eas_mail_update_emails(EasMail *self,
+                                    guint64 account_uid,
+                                    const gchar *sync_key, 
+                                    const gchar *folder_id,
+                                    const gchar **serialised_email_array,
+                                    DBusGMethodInvocation* context)
+{
+    g_debug("eas_mail_update_email++");
+    EFlag *flag = NULL;
+    GError *error = NULL;
+	 
+    flag = e_flag_new ();
+
+    if(self->priv->connection)
+    {
+        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+    }
+
+    // Create the request
+	g_debug("create request");
+	EasUpdateEmailReq *req = NULL;
+	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_mail_get_eas_connection(self));
+
+	// Start the request
+	g_debug("start request");
+    eas_update_email_req_Activate (req, &error);
+
+	// Set flag to wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
+
+    // TODO check error
+
+	g_debug("finish");
+		
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+        dbus_g_method_return (context);
+    }	
+	g_debug("eas_mail_update_email--");
 	return TRUE;
 }
 
@@ -458,11 +520,13 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-    eas_get_email_body_req_Activate (req);
+    eas_get_email_body_req_Activate (req, &error);
 
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
+
+    // TODO Check
 
     eas_get_email_body_req_ActivateFinish (req, &error);
 
@@ -508,11 +572,13 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-    eas_get_email_attachment_req_Activate (req);
+    eas_get_email_attachment_req_Activate (req, &error);
 
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
+
+    // TODO check error
 
     eas_get_email_attachment_req_ActivateFinish (req, &error);
 
@@ -566,7 +632,8 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
                            flag,
                            clientid,
                            mime_file,
-                           EAS_ITEM_MAIL);
+                           EAS_ITEM_MAIL,
+                           &error);
 
 	g_debug ("request activated");
 	
@@ -592,5 +659,3 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 	g_debug("eas_mail_send_email--");
 	return TRUE;
 }
-
-

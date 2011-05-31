@@ -54,11 +54,12 @@ GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 // C'tor
 EasSendEmailReq *eas_send_email_req_new();
 
+// TODO - move params out of here and into c'tor:
 // start async request
-void eas_send_email_req_Activate(EasSendEmailReq *self, guint64 accountID, EFlag *flag, const gchar* clientid, const gchar* mime_file, EasItemType type);
+void eas_send_email_req_Activate(EasSendEmailReq *self, guint64 accountID, EFlag *flag, const gchar* clientid, const gchar* mime_file, EasItemType type, GError** error);
 
 // async request completed
-void eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc);
+void eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError** error);
 
 // no Finalise method since there are no results returned to client
 

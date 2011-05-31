@@ -264,8 +264,6 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = this_g->priv->remoteEas; 
-
-    g_debug("eas_mail_handler_sync_folder_hierarch - dbus proxy ok");
     
 	g_assert(g_slist_length(*folders_created) == 0);
 	g_assert(g_slist_length(*folders_updated) == 0);
@@ -362,7 +360,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 {
 	g_debug("eas_mail_handler_sync_folder_email_info++");
 
-
+	g_debug("sync_key = %s", sync_key);
 	g_assert(this_g);
 	g_assert(sync_key);
 	g_assert(collection_id);
@@ -432,7 +430,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 		*emailinfos_deleted = NULL;
 	}	
 	g_debug("eas_mail_handler_sync_folder_email_info--");
-
+	g_debug("sync_key = %s", sync_key);
 	
 	return ret;
 }
@@ -551,16 +549,62 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 /* 
 'push' email updates to server
 Note that the only valid changes are to the read flag and to categories (other changes ignored)
+TODO - should this be changed to support updating multiple emails at once?
 */
 gboolean 
-eas_mail_handler_update_email(EasEmailHandler* this_g, 
-								gchar *sync_key,            // sync_key for the folder containing the emails                   
-								EasEmailInfo *update_email,		// EasEmailInfo to update
+eas_mail_handler_update_email(EasEmailHandler* self, 
+								gchar *sync_key,            // sync_key for the folder containing the emails  
+								const gchar *folder_id,		// folder that contains email to delete                              
+                              	const GSList *update_emails,		// emails to update
 								GError **error)
 {
 	gboolean ret = TRUE;	
 	g_debug("eas_mail_handler_update_emails++");
-	/* TODO */
+
+	g_assert(self);
+	g_assert(sync_key);	
+	g_assert(update_emails);
+
+	g_debug("sync_key = %s", sync_key);
+	DBusGProxy *proxy = self->priv->remoteEas; 
+	
+	// serialise the emails
+	guint num_emails = g_slist_length(update_emails);
+	g_debug("%d emails to update", num_emails);
+	gchar **serialised_email_array = g_malloc0((num_emails * sizeof(gchar*)) + 1);	// null terminated array of strings
+	gchar *serialised_email = NULL;
+	guint i;
+	GSList *l = update_emails;
+	for(i = 0; i < num_emails; i++)
+	{
+		EasEmailInfo *email = l->data;
+
+		g_debug("serialising email %d", i);
+		ret = eas_email_info_serialise(email, &serialised_email);
+
+		serialised_email_array[i]= serialised_email;
+		g_debug("serialised_email_array[%d] = %s", i, serialised_email_array[i]);
+
+		l = l->next;
+	}
+	serialised_email_array[i] = NULL;
+	
+	// call dbus api
+	ret = dbus_g_proxy_call(proxy, "update_emails", error,
+							G_TYPE_UINT64, self->priv->account_uid, 		
+							G_TYPE_STRING, sync_key,
+							G_TYPE_STRING, folder_id,
+							G_TYPE_STRV, serialised_email_array,		
+							G_TYPE_INVALID, 
+							G_TYPE_INVALID);	                        
+
+	// free all strings in the array
+	for(i = 0; i < num_emails; i++)
+	{
+		g_free(serialised_email_array[i]);
+	}
+	g_free(serialised_email_array);
+
 	g_debug("eas_mail_handler_update_emails--");	
 
 	return ret;

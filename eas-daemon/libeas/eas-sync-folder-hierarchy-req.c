@@ -105,7 +105,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, guint64 accountId, EFla
 }
 
 void
-eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self)
+eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error)
 {
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	xmlDoc *doc = NULL;
@@ -122,13 +122,13 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self)
 }
 
 void
-eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc)
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError** error)
 {
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	
 	g_debug("eas_sync_folder_hierarchy_req_MessageComplete++");
 
-	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc);
+	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc, error);
 
 	xmlFree(doc);
 	
@@ -179,7 +179,8 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
                                               gchar** ret_sync_key, 
                                               GSList** added_folders, 
                                               GSList** updated_folders, 
-                                              GSList** deleted_folders)
+                                              GSList** deleted_folders, 
+                                              GError** error)
 {
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	

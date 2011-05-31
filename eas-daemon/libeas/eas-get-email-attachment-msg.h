@@ -39,7 +39,7 @@ struct _EasGetEmailAttachmentMsg
 GType eas_get_email_attachment_msg_get_type (void) G_GNUC_CONST;
 EasGetEmailAttachmentMsg* eas_get_email_attachment_msg_new (const gchar *fileReference, const gchar* directoryPath);
 xmlDoc* eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self);
-void eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc* doc);
+void eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc* doc, GError** error);
 
 gchar* eas_get_email_attachment_msg_get_syncKey(EasGetEmailAttachmentMsg* self);
 

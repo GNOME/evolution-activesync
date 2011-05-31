@@ -26,6 +26,9 @@ struct _EasCalHandlerPrivate{
     guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 };
 
+static gboolean 
+build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error);
+
 // TODO - how much verification of args should happen 
 
 static void
@@ -167,12 +170,9 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	gchar *updatedSyncKey;
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items",
-		          error,
-				  G_TYPE_UINT64, 
-	              this->priv->account_uid,
-		          G_TYPE_STRING,
-		          sync_key,
+	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_STRV, &created_item_array,
@@ -261,17 +261,12 @@ eas_cal_handler_delete_items(EasCalHandler* this,
     gchar *updatedSyncKey;
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "delete_calendar_items",
-		          error,
-				  G_TYPE_UINT64, 
-	              this->priv->account_uid,
-		          G_TYPE_STRING,
-		          sync_key,
-		          G_TYPE_INVALID, 
+	ret = dbus_g_proxy_call(proxy, "delete_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, items_deleted,
+		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
-
-
 		          G_TYPE_INVALID);
 
     g_debug("eas_cal_handler_delete_items - dbus proxy called");
@@ -282,14 +277,60 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 	if(ret)
 	{
 		g_debug("delete_calendar_items called successfully");
-		// put the updated sync key back into the original string for tracking this
-		strcpy(sync_key,updatedSyncKey);
 		g_free(updatedSyncKey);
 	}
 
 	g_debug("eas_cal_handler_delete_items--");
 	return ret;
+}
 
+gboolean 
+eas_cal_handler_update_items(EasCalHandler* this, 
+                                                 gchar *sync_key, 
+                                                 GSList *items_updated,
+                                                 GError **error)
+{
+    g_debug("eas_cal_handler_update_items++");
+
+	g_assert(this);
+	g_assert(sync_key);
+
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = this->priv->remoteEas; 
+
+    g_debug("eas_cal_handler_update_items - dbus proxy ok");
+    
+    gchar *updatedSyncKey;
+    
+   gchar **updated_item_array = NULL;
+   
+   
+   g_debug("server_id = %s", ((EasCalInfo*)(items_updated->data))->server_id);
+
+    build_serialised_calendar_info_array (&updated_item_array, items_updated, error);
+    
+	// call DBus API
+	ret = dbus_g_proxy_call(proxy, "update_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
+   		          G_TYPE_STRV, updated_item_array,
+		          G_TYPE_INVALID, 
+		          G_TYPE_STRING, &updatedSyncKey,
+		          G_TYPE_INVALID);
+
+    g_debug("eas_cal_handler_update_items - dbus proxy called");
+    if (*error) {
+        g_error(" Error: %s", (*error)->message);
+    }
+    
+	if(ret)
+	{
+		g_debug("update_calendar_items called successfully");
+		g_free(updatedSyncKey);
+	}
+
+	g_debug("eas_cal_handler_update_items--");
+	return ret;
 }
 
 // takes an NULL terminated array of serialised calendar items and creates a list of EasCalInfo objects
@@ -345,6 +386,36 @@ cleanup:
 	return ret;
 }
 
+// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
+// null terminates the array
+static gboolean 
+build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error)
+{
+    g_debug("build cal arrays++");
+	gboolean ret = TRUE;
+	guint i = 0;
+
+    g_assert(serialised_cal_info_array);
+    g_assert(*serialised_cal_info_array == NULL);
+
+	guint array_len = g_slist_length((GSList*)cal_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+    
+	*serialised_cal_info_array = g_malloc0(array_len * sizeof(gchar*));
+
+    
+	GSList *l = (GSList*)cal_list;
+
+	for(i = 0; i < array_len - 1; i++){
+		g_assert(l != NULL);
+		EasCalInfo *calInfo =l->data;
+		gchar *tstring = NULL;
+		eas_cal_info_serialise(calInfo, &tstring);
+		(*serialised_cal_info_array)[i]=tstring;
+		l = g_slist_next (l);
+	}
+    
+	return ret;
+}
 
 
 

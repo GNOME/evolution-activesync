@@ -62,7 +62,7 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId);
 void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey);
 void eas_connection_resume_request(EasConnection* self);
 
-void eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request);
+void eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error);
 
 
 

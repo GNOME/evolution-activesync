@@ -45,8 +45,8 @@ eas_get_email_body_req_new (const guint64 account_uid,
                             const gchar *mime_directory,
                             EFlag *flag);
 
-void eas_get_email_body_req_Activate (EasGetEmailBodyReq* self);
-void eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc);
+void eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error);
+void eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError** error);
 void eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError **error);
 
 G_END_DECLS

@@ -59,6 +59,30 @@ END:VEVENT\n\
 END:VCALENDAR";
 
 
+const char* TEST_VCALENDAR2 = "BEGIN:VCALENDAR\n\
+PRODID:-//Meego//ActiveSyncD 1.0//EN\n\
+VERSION:2.0\n\
+METHOD:PUBLISH\n\
+BEGIN:VEVENT\n\
+DTSTART:20110628T103000Z\n\
+SUMMARY:this is test item 1 - updated\n\
+UID:040000008200E00074C5B7101A82E008000000009A5FBE467D1FCC01000000000000000\n\
+ 0100000000B9C7DF6EBB049448E3D99B8CC68E560\n\
+LOCATION:\n\
+DTEND:20110628T113000Z\n\
+DESCRIPTION:\n\
+CLASS:PUBLIC\n\
+TRANSP:OPAQUE\n\
+BEGIN:VALARM\n\
+ACTION:DISPLAY\n\
+DESCRIPTION:Reminder\n\
+TRIGGER:-P15M\n\
+END:VALARM\n\
+END:VEVENT\n\
+END:VCALENDAR";
+
+
+
 static void testGetCalendarHandler(EasCalHandler **cal_handler, guint64 accountuid){
   	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
@@ -174,6 +198,154 @@ START_TEST(test_translate_ical_to_xml)
 }
 END_TEST
 
+START_TEST (test_eas_cal_handler_delete_cal)
+{
+    guint64 accountuid = 123456789;
+    EasCalHandler *cal_handler = NULL;
+    GError *error = NULL;
+	gboolean testCalFound = FALSE;
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetCalendarHandler(&cal_handler, accountuid);
+
+
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *calitems_created = NULL; //receives a list of EasMails
+    GSList *calitems_updated = NULL;
+    GSList *calitems_deleted = NULL;    
+
+    testGetLatestCalendar(cal_handler,
+                      folder_sync_key,
+                      &calitems_created,
+                      &calitems_updated,
+                      &calitems_deleted,
+                      &error);
+
+	// if the calitems_created list contains a calendar item
+	if(calitems_created){
+		GSList *calitemToDel = NULL;
+		EasCalInfo *calitem = NULL;
+		gboolean rtn = FALSE;
+
+		// get calendar item info for first calendar item in the folder
+		calitem = (g_slist_nth(calitems_created, 0))->data;
+
+		calitemToDel = g_slist_append(calitemToDel, calitem->server_id);
+
+		// delete the first calendar item in the folder
+		rtn = eas_cal_handler_delete_items(cal_handler, folder_sync_key, calitemToDel,&error);
+		if(error){
+			fail_if(rtn == FALSE,"%s",error->message);
+		}
+
+		g_slist_free(calitemToDel);
+		
+		// free calendar item objects list before reusing
+		g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+
+		g_slist_free(calitems_deleted);
+		g_slist_free(calitems_updated);
+		g_slist_free(calitems_created);	
+
+		calitems_deleted = NULL;
+		calitems_updated = NULL;
+		calitems_created = NULL;
+
+		testCalFound = TRUE;
+	}
+
+	// fail the test if there is no cal item as this means the 
+	// test has not exercised the code to get the email body as required by this test case
+	fail_if(testCalFound == FALSE,"no cal item found");
+		
+    //  free calendar item objects in lists of calendar items objects
+    g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+}
+END_TEST
+
+START_TEST (test_eas_cal_handler_update_cal)
+{
+    guint64 accountuid = 123456789;
+    EasCalHandler *cal_handler = NULL;
+    GError *error = NULL;
+	gboolean testCalFound = FALSE;
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetCalendarHandler(&cal_handler, accountuid);
+
+
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *calitems_created = NULL; //receives a list of EasMails
+    GSList *calitems_updated = NULL;
+    GSList *calitems_deleted = NULL;    
+
+    testGetLatestCalendar(cal_handler,
+                      folder_sync_key,
+                      &calitems_created,
+                      &calitems_updated,
+                      &calitems_deleted,
+                      &error);
+
+	// if the calitems_created list contains a calendar item
+	if(calitems_created){
+		GSList *calitemToUpdate = NULL;
+		EasCalInfo *calitem = NULL;
+		EasCalInfo *updatedcalitem = NULL;
+		gboolean rtn = FALSE;
+
+		// get calendar item info for first calendar item in the folder
+		calitem = (g_slist_nth(calitems_created, 0))->data;
+		
+		
+		updatedcalitem = eas_cal_info_new();
+		updatedcalitem->server_id = g_strdup(calitem->server_id);	
+		updatedcalitem->icalendar = g_strdup(TEST_VCALENDAR2);
+		
+		calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
+
+		// update the first calendar item in the folder
+		rtn = eas_cal_handler_update_items(cal_handler, folder_sync_key, calitemToUpdate,&error);
+		if(error){
+			fail_if(rtn == FALSE,"%s",error->message);
+		}
+
+		g_slist_free(calitemToUpdate);
+		
+		// free calendar item objects list before reusing
+		g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+
+		g_slist_free(calitems_deleted);
+		g_slist_free(calitems_updated);
+		g_slist_free(calitems_created);	
+
+		calitems_deleted = NULL;
+		calitems_updated = NULL;
+		calitems_created = NULL;
+
+		testCalFound = TRUE;
+	}
+
+	// fail the test if there is no cal item as this means the 
+	// test has not exercised the code to get the email body as required by this test case
+	fail_if(testCalFound == FALSE,"no cal item found");
+		
+    //  free calendar item objects in lists of calendar items objects
+    g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+}
+END_TEST
+
 
 Suite* eas_libeascal_suite (void)
 {
@@ -184,9 +356,11 @@ Suite* eas_libeascal_suite (void)
   suite_add_tcase (s, tc_libeascal);
   //tcase_add_test (tc_libeascal, test_cal);
   
-  //tcase_add_test (tc_libeascal, test_get_cal_handler);
- // tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
+  tcase_add_test (tc_libeascal, test_get_cal_handler);
+  tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
   tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
+  //tcase_add_test (tc_libeascal, test_eas_cal_handler_delete_cal);
+  tcase_add_test (tc_libeascal, test_eas_cal_handler_update_cal);
 
   return s;
 }
