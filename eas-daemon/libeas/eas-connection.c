@@ -34,6 +34,7 @@
 #include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
+#include "eas-update-calendar-req.h"
 
 struct _EasConnectionPrivate
 {
@@ -694,6 +695,12 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			{
 				g_debug("EAS_REQ_SEND_EMAIL");
 				eas_update_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+			}
+			break;
+			case EAS_REQ_UPDATE_CALENDAR:
+			{
+				g_debug("EAS_REQ_UPDATE_CALENDAR");
+				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc);
 			}
 			break;				
 		}

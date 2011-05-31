@@ -7,6 +7,7 @@
 
 #include "eas-sync-msg.h"
 #include "eas-email-info-translator.h"
+#include "eas-cal-info-translator.h"
 
 struct _EasSyncMsgPrivate
 {
@@ -193,7 +194,24 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 							}
 							// TODO error handling and freeing
 						}
-						
+						break;
+						case EAS_ITEM_CALENDAR:
+						{
+							xmlNewNs (node, (xmlChar *)"Calendar:", (xmlChar *)"calendar");	
+							if(iterator->data){
+								//TODO: call translator to get client ID and  encoded application data
+								//gchar *serialised_calendar = (gchar *)iterator->data;	
+											
+								EasCalInfo *cal_info =(EasCalInfo*) iterator->data;	
+								
+								// create the server_id node
+								xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)cal_info->server_id);								
+								xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
+								// translator deals with app data
+								eas_cal_info_translator_parse_request(doc, app_data, cal_info);
+								// TODO error handling and freeing
+							}
+						}			
 					}	
 				}
 			}
