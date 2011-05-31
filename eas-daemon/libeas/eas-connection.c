@@ -723,7 +723,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			case EAS_REQ_UPDATE_CALENDAR:
 			{
 				g_debug("EAS_REQ_UPDATE_CALENDAR");
-				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc);
+				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc, &error);
 			}
 			break;				
 		}

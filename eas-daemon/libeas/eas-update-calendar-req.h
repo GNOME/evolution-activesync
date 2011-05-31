@@ -45,7 +45,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(guint64 account_id, const gcha
 void eas_update_calendar_req_Activate(EasUpdateCalendarReq *self);
 
 // async request completed
-void eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self, xmlDoc* doc);
+void eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self, xmlDoc* doc, GError** error);
 
 // results returned to client
 void eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self, gchar** ret_sync_key, GError **error);
