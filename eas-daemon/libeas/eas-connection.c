@@ -25,6 +25,7 @@
 #include <libxml/xmlreader.h> // xmlDoc
 
 #include "eas-accounts.h"
+#include "eas-connection-errors.h"
 
 // List of includes for each request type
 #include "eas-sync-folder-hierarchy-req.h"
@@ -34,6 +35,7 @@
 #include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
+#include "eas-update-email-req.h"
 
 struct _EasConnectionPrivate
 {
@@ -382,7 +384,8 @@ isResponseValid(SoupMessage *msg)
     }
 
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
-	g_assert(content_type);
+	//g_assert(content_type);
+	g_debug("content_type = %s", content_type);
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
 		g_warning ("  Failed: Content-Type did not match WBXML");
@@ -677,7 +680,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:
@@ -692,10 +695,10 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			}
 			case EAS_REQ_UPDATE_MAIL:
 			{
-				g_debug("EAS_REQ_SEND_EMAIL");
-				eas_update_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+				g_debug("EAS_REQ_UPDATE_EMAIL");
+				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc);
 			}
-			break;				
+			break;
 		}
 	}
 	else

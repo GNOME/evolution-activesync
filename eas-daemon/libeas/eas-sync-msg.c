@@ -179,7 +179,6 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						{
 							xmlNewNs (node, (xmlChar *)"Email:", (xmlChar *)"email");	
 							
-							//TODO: call translator to get client ID and  encoded application data
 							gchar *serialised_email = (gchar *)updated->data;					
 							EasEmailInfo *email_info = eas_email_info_new ();
 
@@ -188,10 +187,11 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 							// create the server_id node
 							xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)email_info->server_id);								
 							xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
-							// translator deals with app data
+							// call translator to get encoded application data
 							eas_email_info_translator_build_update_request(doc, app_data, email_info);
+							g_object_unref(email_info);
 							}
-							// TODO error handling and freeing
+							// TODO error handling
 						}
 						
 					}	
