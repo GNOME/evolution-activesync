@@ -752,7 +752,7 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);	

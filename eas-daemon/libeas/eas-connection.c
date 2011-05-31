@@ -300,6 +300,8 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
         g_debug("%s", wbxml_errors_string(ret));
         return;
     }
+
+	g_assert(priv->server_uri);
 	
     uri = g_strconcat (priv->server_uri,
                        "?Cmd=", cmd,
