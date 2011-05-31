@@ -174,6 +174,77 @@ START_TEST(test_translate_ical_to_xml)
 }
 END_TEST
 
+START_TEST (test_eas_cal_handler_delete_cal)
+{
+    guint64 accountuid = 123456789;
+    EasCalHandler *cal_handler = NULL;
+    GError *error = NULL;
+	gboolean testCalFound = FALSE;
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetCalendarHandler(&cal_handler, accountuid);
+
+
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *calitems_created = NULL; //receives a list of EasMails
+    GSList *calitems_updated = NULL;
+    GSList *calitems_deleted = NULL;    
+
+    testGetLatestCalendar(cal_handler,
+                      folder_sync_key,
+                      &calitems_created,
+                      &calitems_updated,
+                      &calitems_deleted,
+                      &error);
+
+	// if the calitems_created list contains a calendar item
+	if(calitems_created){
+		GSList *calitemToDel = NULL;
+		EasCalInfo *calitem = NULL;
+		gboolean rtn = FALSE;
+
+		// get calendar item info for first calendar item in the folder
+		calitem = (g_slist_nth(calitems_created, 0))->data;
+
+		calitemToDel = g_slist_append(calitemToDel, calitem->server_id);
+
+		// delete the first calendar item in the folder
+		rtn = eas_cal_handler_delete_items(cal_handler, folder_sync_key, calitemToDel,&error);
+		if(error){
+			fail_if(rtn == FALSE,"%s",error->message);
+		}
+
+		g_slist_free(calitemToDel);
+		
+		// free calendar item objects list before reusing
+		g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+		g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+
+		g_slist_free(calitems_deleted);
+		g_slist_free(calitems_updated);
+		g_slist_free(calitems_created);	
+
+		calitems_deleted = NULL;
+		calitems_updated = NULL;
+		calitems_created = NULL;
+
+		testCalFound = TRUE;
+	}
+
+	// fail the test if there is no cal item as this means the 
+	// test has not exercised the code to get the email body as required by this test case
+	fail_if(testCalFound == FALSE,"no cal item found");
+		
+    //  free calendar item objects in lists of calendar items objects
+    g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+}
+END_TEST
+
 
 Suite* eas_libeascal_suite (void)
 {
@@ -187,6 +258,7 @@ Suite* eas_libeascal_suite (void)
   //tcase_add_test (tc_libeascal, test_get_cal_handler);
  // tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
   tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
+  tcase_add_test (tc_libeascal, test_eas_cal_handler_delete_cal);
 
   return s;
 }

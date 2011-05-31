@@ -53,8 +53,6 @@ libeas_la_SOURCES =		\
         eas-errors.c			\
         eas-connection.c \
         eas-connection.h \
-        eas-msg.c \
-        eas-msg.h \
         eas-msg-base.h \
         eas-msg-base.c \
         eas-sync-folder-msg.h \
