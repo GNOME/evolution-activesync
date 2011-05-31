@@ -38,7 +38,7 @@ struct _EasProvisionMsg
 
 GType eas_provision_msg_get_type (void) G_GNUC_CONST;
 xmlDoc* eas_provision_msg_build_message (EasProvisionMsg* self);
-void eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc);
+void eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** error);
 EasProvisionMsg* eas_provision_msg_new (void);
 gchar* eas_provision_msg_get_policy_key (EasProvisionMsg* self);
 gchar* eas_provision_msg_get_policy_status (EasProvisionMsg* self);

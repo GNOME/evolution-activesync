@@ -100,7 +100,7 @@ eas_get_email_body_req_new (const guint64 account_uid,
 }
 
 void
-eas_get_email_body_req_Activate (EasGetEmailBodyReq* self)
+eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 {
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
@@ -118,13 +118,13 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self)
 }
 
 void
-eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc)
+eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError** error)
 {
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	
 	g_debug("eas_get_email_body_req_MessageComplete++");
 
-	eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc);
+	eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, error);
 	/* TODO: Add public function implementation here */
 	
 	xmlFree(doc);

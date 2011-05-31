@@ -70,7 +70,7 @@ eas_delete_email_req_class_init (EasDeleteEmailReqClass *klass)
 }
 
 void
-eas_delete_email_req_Activate (EasDeleteEmailReq *self)
+eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
 {
 	EasDeleteEmailReqPrivate *priv = self->priv;
 	xmlDoc *doc;
@@ -118,7 +118,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 	return self;
 }
 
-void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key)
+void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key, GError** error)
 {
 	EasDeleteEmailReqPrivate *priv = self->priv;
 	
@@ -129,13 +129,13 @@ void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_s
 	g_debug("eas_delete_email_req_ActivateFinish--");
 }
 
-void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc)
+void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError** error)
 {
 	EasDeleteEmailReqPrivate *priv = self->priv;
 	
 	g_debug("eas_delete_email_req_MessageComplete++");
 
-	eas_sync_msg_parse_reponse (priv->syncMsg, doc);
+	eas_sync_msg_parse_reponse (priv->syncMsg, doc, error);
 
 	xmlFree(doc);
 	

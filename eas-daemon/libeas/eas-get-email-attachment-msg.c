@@ -119,7 +119,7 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 }
 
 void
-eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc)
+eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc, GError** error)
 {
 	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
 	g_debug("eas_get_email_attachment_msg_parse_response ++");

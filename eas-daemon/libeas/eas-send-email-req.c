@@ -90,7 +90,7 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 EasSendEmailReq *
 eas_send_email_req_new()
 {
-	g_debug("eas_send_email_req_new++");	
+	g_debug("eas_send_email_req_new++");
 	
 	EasSendEmailReq *object = NULL;
 
@@ -103,7 +103,7 @@ eas_send_email_req_new()
 
 // uses the message object to build xml and sends it to the connection object
 void 
-eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file, EasItemType type)
+eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file, EasItemType type, GError** error)
 {
 	EasSendEmailReqPrivate* priv = self->priv;
 	xmlDoc *doc;
@@ -170,13 +170,13 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 
 
 void 
-eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc)
+eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError** error)
 {
 	EasSendEmailReqPrivate *priv = self->priv;
 	
 	g_debug("eas_send_email_req_MessageComplete++");
 
-	eas_send_email_msg_parse_reponse(priv->send_email_msg, doc);
+	eas_send_email_msg_parse_reponse(priv->send_email_msg, doc, error);
 
 	xmlFree(doc);
 

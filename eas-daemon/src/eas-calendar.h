@@ -56,9 +56,10 @@ gboolean eas_calendar_delete_calendar_items(EasCalendar* self,
                                     DBusGMethodInvocation* context);
 
 gboolean eas_calendar_update_calendar_items(EasCalendar* self,
+                                    guint64 account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
-                                    GError **error);
+                                    DBusGMethodInvocation* context);
 
 G_END_DECLS
 

@@ -106,7 +106,7 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
 }
 
 void
-eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc)
+eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** error)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;

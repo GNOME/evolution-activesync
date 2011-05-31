@@ -126,7 +126,7 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 }
 
 void
-eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc)
+eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GError** error)
 {
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
 	g_debug("eas_get_email_body_msg_parse_response++");

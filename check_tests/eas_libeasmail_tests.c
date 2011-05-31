@@ -774,13 +774,15 @@ START_TEST (test_eas_mail_handler_delete_email)
 		// if the emails_created list contains email
 		if(emails_created){
 			GSList *emailToDel = NULL;
+			gchar serveridToDel[64];
 			EasEmailInfo *email = NULL;
 			gboolean rtn = FALSE;
 
     		// get email info for first email in the folder
 			email = (g_slist_nth(emails_created, 0))->data;
 
-			emailToDel = g_slist_append(emailToDel, email->server_id);
+			emailToDel = g_slist_append(emailToDel, g_strdup(email->server_id));
+			g_stpcpy(serveridToDel,email->server_id);
 
 			// delete the first mail in the folder
 			rtn = eas_mail_handler_delete_email(email_handler, folder_sync_key,"5", emailToDel,&error);
@@ -788,7 +790,6 @@ START_TEST (test_eas_mail_handler_delete_email)
 				fail_if(rtn == FALSE,"%s",error->message);
 			}
 
-			g_slist_free(emailToDel);
 			
 			// free email object list before reusing
 			g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
@@ -802,21 +803,24 @@ START_TEST (test_eas_mail_handler_delete_email)
 			emails_deleted = NULL;
 			emails_updated = NULL;
 			emails_created = NULL;
-/*			
+			
 			// get email info for the folder using the saved sync key
 			testGetFolderInfo(email_handler,folder_sync_key,"5",&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
 			
-			fail_if(emails_deleted,"No email reported as deleted");
+			fail_unless(emails_deleted,"No email reported as deleted");
 			
-			EasEmailInfo *deletedEmail = NULL;			
-			deletedEmail = (g_slist_nth(emails_deleted, 0))->data;
+			EasEmailInfo *reportedDeletedEmail = NULL;			
+			reportedDeletedEmail = (g_slist_nth(emails_deleted, 0))->data;
 			
 			// fail the test if the server_id for the mail reported as deleted 
 			// does not match the server_id of the email for which the 
 			// eas_mail_handler_delete_email call was made
-			fail_if(strcmp(email->server_id,deletedEmail->server_id), 
-			    "Deleted email not reported back by Exchange server as deleted");
-	*/		
+			fail_if(g_strcmp0(reportedDeletedEmail->server_id,serveridToDel), 
+			    "Deleted email not reported back by Exchange server as deleted. deleted id was %s and reported id was %s",
+			        reportedDeletedEmail->server_id,serveridToDel);
+
+			g_slist_free(emailToDel);
+			
 			// after getting the body for the first mail, drop out of the loop
 			testMailFound = TRUE;
 			break;
@@ -859,7 +863,7 @@ Suite* eas_libeasmail_suite (void)
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass:
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);

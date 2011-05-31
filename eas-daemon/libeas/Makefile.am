@@ -49,8 +49,7 @@ LIBS =  -L/usr/lib \
 #        eas-marshal.c
 
 libeas_la_SOURCES =		\
-        eas-errors.h			\
-        eas-errors.c			\
+        eas-errors.h	\
         eas-connection.c \
         eas-connection.h \
         eas-msg-base.h \
@@ -91,6 +90,8 @@ libeas_la_SOURCES =		\
         eas-get-email-attachment-req.c \
         eas-get-email-attachment-msg.h \
         eas-get-email-attachment-msg.c \
+        eas-update-calendar-req.h \
+        eas-update-calendar-req.c \
         eas-utils.h \
         eas-utils.c        
 

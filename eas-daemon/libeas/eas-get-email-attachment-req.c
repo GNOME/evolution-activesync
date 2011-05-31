@@ -96,7 +96,7 @@ eas_get_email_attachment_req_new (const guint64 account_uid,
 	return req;
 }
                    
-void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self)
+void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error)
 {
 	EasGetEmailAttachmentReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
@@ -113,14 +113,14 @@ void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self)
 	g_debug("eas_get_email_attachment_req_Activate--");
 }
 
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc)
+void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError** error)
 {
 
 	EasGetEmailAttachmentReqPrivate *priv = self->priv;
 	
 	g_debug("eas_get_email_attachment_req_MessageComplete++");
 
-	eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc);
+	eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc, error);
 	/* TODO: Add public function implementation here */
 	
 	xmlFree(doc);
