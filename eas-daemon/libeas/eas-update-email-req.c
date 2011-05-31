@@ -161,7 +161,7 @@ void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_s
 
 	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
 
-	// lrm TODO fill in the error
+	// TODO fill in the error
 	
 	g_debug("eas_update_email_req_ActivateFinish--");	
 }
