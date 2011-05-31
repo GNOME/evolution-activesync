@@ -117,6 +117,12 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
         gchar** ret_deleted_items_array = NULL;
 
         eflag = e_flag_new ();
+        
+        EasCalendarPrivate* priv = self->_priv;
+
+
+        // Set the account Id into the connection
+        eas_connection_set_account(priv->connection, account_uid);
 
         // Create the request
         EasSyncReq *syncReqObj =NULL;
@@ -191,6 +197,7 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 	        deleted_items = g_slist_append(deleted_items, server_id[i]);
 	        i++;
 	    }
+	    
 
         // Create the request
         /*EasSyncReq *syncReqObj =NULL;
