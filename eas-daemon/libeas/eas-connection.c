@@ -56,6 +56,9 @@ struct _EasConnectionPrivate
 	gchar* request_cmd;
 	xmlDoc* request_doc;
 	EasRequestBase* request;
+	GError **request_error;
+	
+	GError *provision_error;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -114,6 +117,9 @@ eas_connection_init (EasConnection *self)
 	priv->request_cmd = NULL;
 	priv->request_doc = NULL;
 	priv->request = NULL;
+	priv->request_error = NULL;
+
+	priv->provision_error = NULL;
 
 	g_debug("eas_connection_init--");
 }
@@ -165,6 +171,16 @@ eas_connection_finalize (GObject *object)
 		// It might only call the base gobject class finalize method not the
 		// correct method. Not sure if gobjects are properly polymorphic.
 		g_object_unref(priv->request);
+	}
+
+	if (priv->request_error && *priv->request_error)
+	{
+		g_error_free(*priv->request_error);
+	}
+
+	if (priv->provision_error)
+	{
+		g_error_free(priv->provision_error);
 	}
 
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
@@ -233,6 +249,7 @@ void eas_connection_resume_request(EasConnection* self)
 	gchar *_cmd;
 	EasRequestBase *_request;
 	xmlDoc *_doc;
+	GError **_error;
 
 	g_debug("eas_connection_resume_request++");
 
@@ -244,12 +261,14 @@ void eas_connection_resume_request(EasConnection* self)
 	_cmd = priv->request_cmd;
 	_request = priv->request;
 	_doc = priv->request_doc;
+	_error = priv->request_error;
 
 	priv->request_cmd = NULL;
 	priv->request = NULL;
 	priv->request_doc = NULL;
-		
-	eas_connection_send_request(self, _cmd, _doc, _request);
+	priv->request_error = NULL;
+	
+	eas_connection_send_request(self, _cmd, _doc, _request, _error);
 	g_free(_cmd);
 	
 	g_debug("eas_connection_resume_request--");
@@ -266,7 +285,7 @@ void eas_connection_resume_request(EasConnection* self)
  * @param request the request GObject
  */
 void 
-eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request)
+eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error)
 {
 	EasConnectionPrivate *priv = self->priv;
     SoupMessage *msg = NULL;
@@ -285,6 +304,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		priv->request_cmd = g_strdup(cmd);
 		priv->request_doc = doc;
 		priv->request = request;
+		priv->request_error = error;
 	}
 
 	// If we need to provision, and not the provisioning msg
@@ -294,7 +314,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		eas_request_base_SetConnection (&req->parent_instance, self);
-		eas_provision_req_Activate (req);
+		eas_provision_req_Activate (req, &priv->provision_error);
 		return;
 	}
 
@@ -589,6 +609,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
     WB_UTINY *xml = NULL;
     WB_ULONG xml_len = 0;
 	gboolean isProvisioningRequired = FALSE;
+	GError *error = NULL;
 
 	g_debug("eas_connection - handle_server_response++");
 
@@ -625,7 +646,6 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 
 
-	
 	// TODO Pre-process response status to see if provisioning is required
 	// isProvisioningRequired = ????
 	
@@ -644,8 +664,8 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 			xmlFree(priv->request_doc);
 			priv->request_doc = NULL;
-
 			priv->request = NULL;
+			priv->request_error = NULL;
 		}
 
 		switch (request_type) 
@@ -658,45 +678,45 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 			case EAS_REQ_PROVISION:
 			{
-				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc);
+				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);
 			}
 			break;
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc);
+				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);
 			}
 			break;
 			
 			case EAS_REQ_SYNC:
 			{
-				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc);
+				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc, &error);
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_BODY:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc);
+				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc, &error);
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:
 			{
-				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc);
+				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc, &error);
 			}
 			break;
 			case EAS_REQ_SEND_EMAIL:
 			{
 				g_debug("EAS_REQ_SEND_EMAIL");
-				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc);
+				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, &error);
 			}
 			case EAS_REQ_UPDATE_MAIL:
 			{
 				g_debug("EAS_REQ_UPDATE_EMAIL");
-				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc);
+				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc, &error);
 			}
 			break;
 		}
@@ -707,7 +727,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		
 		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
-		eas_provision_req_Activate (req);
+		eas_provision_req_Activate (req, &error);
 	}
 	g_debug("eas_connection - handle_server_response--");
 }

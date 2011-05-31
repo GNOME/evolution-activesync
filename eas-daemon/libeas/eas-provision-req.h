@@ -38,8 +38,8 @@ struct _EasProvisionReq
 
 GType eas_provision_req_get_type (void) G_GNUC_CONST;
 EasProvisionReq* eas_provision_req_new (gchar* policy_status, gchar* policy_key);
-void eas_provision_req_Activate (EasProvisionReq* self);
-void eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc);
+void eas_provision_req_Activate (EasProvisionReq* self, GError** error);
+void eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** error);
 gchar* eas_provision_req_GetPolicyKey (EasProvisionReq* self);
 
 G_END_DECLS

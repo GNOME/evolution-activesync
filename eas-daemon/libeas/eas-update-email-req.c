@@ -114,7 +114,7 @@ EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *syn
 	return self;	
 }
 
-void eas_update_email_req_Activate(EasUpdateEmailReq *self)
+void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 {
 	EasUpdateEmailReqPrivate *priv = self->priv;
 	xmlDoc *doc;
@@ -138,13 +138,13 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self)
 }
 
 
-void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc)
+void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError** error)
 {
 	g_debug("eas_update_email_req_MessageComplete++");	
 
 	EasUpdateEmailReqPrivate *priv = self->priv;
 
-	eas_sync_msg_parse_reponse (priv->sync_msg, doc);
+	eas_sync_msg_parse_reponse (priv->sync_msg, doc, error);
 
 	xmlFree(doc);
 	

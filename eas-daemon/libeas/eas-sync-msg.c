@@ -26,7 +26,7 @@ struct _EasSyncMsgPrivate
 
 G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
 
-static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node);
+static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node, GError** error);
 
 static void
 eas_sync_msg_init (EasSyncMsg *object)
@@ -211,7 +211,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 }
 
 void
-eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc)
+eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
     g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;

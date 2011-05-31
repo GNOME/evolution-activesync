@@ -42,15 +42,18 @@ EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncK
                                                              guint64 accountId,
                                                              EFlag *flag);
 
-void eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self);
+void eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error);
 
 void eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
-                                                    xmlDoc *doc);
+                                                    xmlDoc *doc, 
+                                                    GError** error);
+
 void eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self, 
                                                    gchar** ret_sync_key, 
                                                    GSList** added_folders, 
                                                    GSList** updated_folders, 
-                                                   GSList** deleted_folders);
+                                                   GSList** deleted_folders, 
+                                                   GError** error);
 
 G_END_DECLS
 

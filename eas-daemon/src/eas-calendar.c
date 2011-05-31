@@ -7,6 +7,8 @@
 #include "eas-sync-req.h"
 #include "eas-delete-email-req.h"
 
+#include "../libeas/eas-connection.h"
+
 G_DEFINE_TYPE (EasCalendar, eas_calendar, G_TYPE_OBJECT);
 
 #define EAS_CALENDAR_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CALENDAR, EasCalendarPrivate))
@@ -137,20 +139,25 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 
     g_debug("eas_calendar_get_latest_calendar_items - new req");
     // Start the request
-    eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, "1", EAS_ITEM_CALENDAR);
+    eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, "1", EAS_ITEM_CALENDAR, &error);
 
     g_debug("eas_calendar_get_latest_calendar_items  - activate req");
     // Set flag to wait for response
     e_flag_wait(eflag);
+    e_flag_free (eflag);
 
-    g_debug("eas_calendar_get_latest_calendar_items  - get results");
+    // TODO Check error
     
+    g_debug("eas_calendar_get_latest_calendar_items  - get results");
+
      eas_sync_req_ActivateFinish (syncReqObj,
                                   &ret_sync_key,
                                   &added_items,
                                   &updated_items,
-                                  &deleted_items);
-     e_flag_free (eflag);
+                                  &deleted_items,
+                                  &error);
+
+    // TODO Check Error
              
      //serialise the calendar objects from GSList* to char** and populate  :
     //TODO: make sure this stuff is ok to go over dbus.
@@ -212,12 +219,15 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
                                    eas_mail_get_eas_connection(self));
 
 	    // Start the request
-    eas_delete_email_req_Activate (req);
+    eas_delete_email_req_Activate (req, &error);
 
-	    // Set flag to wait for response
-    e_flag_wait(flag);
+    // Set flag to wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
 
-	eas_delete_email_req_ActivateFinish(req, &ret_sync_key);
+    // TODO Check error
+    
+	eas_delete_email_req_ActivateFinish(req, &ret_sync_key, &error);
 		
     if (error)
     {
