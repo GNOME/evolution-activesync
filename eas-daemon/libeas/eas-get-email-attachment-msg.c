@@ -106,13 +106,9 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 	xmlNewNs (root, (xmlChar *)"AirSync:",(xmlChar *)"airsync");
 	xmlNewNs (root, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
 
-	fetch = xmlNewChild(root, NULL, (xmlChar *)"Fetch", NULL);
-	
+	fetch = xmlNewChild(root, NULL, (xmlChar *)"Fetch", NULL);	
     leaf = xmlNewChild(fetch, NULL, (xmlChar *)"Store", (xmlChar*)"Mailbox");
     leaf = xmlNewChild(fetch, NULL, (xmlChar *)"airsyncbase:FileReference",  (xmlChar*)priv->fileReference );
-    options = xmlNewChild(fetch, NULL, (xmlChar *)"Options", NULL);
-    
-    leaf = xmlNewChild(options, NULL, (xmlChar *)"airsync:MIMESupport", (xmlChar*)"2"); // gives a protocol error in 12.1   
 
 	g_debug("eas_get_email_attachment_msg_build_message--");
 	return doc;
@@ -183,6 +179,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 		{
 			gchar *xmlTmp = xmlNodeGetContent(node);
 			priv->fileReference = g_strdup(xmlTmp);
+			g_debug ("FileReference:[%s]", priv->fileReference);			
 			xmlFree(xmlTmp);		
 			continue;
 		}

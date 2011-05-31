@@ -675,7 +675,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc);
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:

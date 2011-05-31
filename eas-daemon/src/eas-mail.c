@@ -494,8 +494,6 @@ eas_mail_fetch_attachment (EasMail* self,
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
-    
-   // TODO: EasGetAttachmentReq
 
     flag = e_flag_new ();
     
@@ -520,13 +518,13 @@ eas_mail_fetch_attachment (EasMail* self,
 
     if (error)
     {
-        g_warning("eas_mail_fetch_email_body - failed to get data from message");
+        g_warning("eas_mail_fetch_attachment - failed to get data from message");
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     } 
     else
     {
-        g_debug("eas_mail_fetch_email_body - return for dbus");
+        g_debug("eas_mail_fetch_attachment - return for dbus");
         dbus_g_method_return (context);
     }
 

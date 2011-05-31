@@ -502,6 +502,7 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_fetch_email_attachments)
 {
+
     guint64 accountuid = 123456789;
     EasEmailHandler *email_handler = NULL;
 	
@@ -516,109 +517,154 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be 
     // the complete folder hierarchy rather than a delta of any changes
-    gchar *folder_hierarchy_sync_key = "0";
+    gchar folder_hierarchy_sync_key[64] = "0\0";
     GError *error = NULL;
 
+    mark_point();
 	// call into the daemon to get the folder hierarchy from the exchange server
 	testGetFolderHierarchy(email_handler, folder_hierarchy_sync_key,&created,&updated,&deleted,&error);
+    mark_point();
 
     // fail the test if there is no folder information
 	fail_unless(created, "No folder information returned from exchange server");
 
-    gchar *folder_sync_key = "0";
+    gchar folder_sync_key[64] = "0\0";
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
-    GSList *emails_deleted = NULL;    
+    GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;
 	EasFolder *folder = NULL;
+	gboolean testMailFound = FALSE;
 	guint folderIndex;
-	gboolean attachmentFound = FALSE;
 
-	// loop through the folders in the hierarchy to find a folder with an email in it
-	for(folderIndex = 0;folderIndex < g_slist_length(created);folderIndex++){
-		// get the folder info for the current folderIndex
-		// since the sync id is zero only the created list will contain folders
-	    folder = g_slist_nth(created, folderIndex);
-        testGetFolderInfo(email_handler,folder_sync_key,folder->folder_id,&emails_created,&emails_updated,&emails_deleted,&more_available,&error);
+    mark_point();
+    testGetFolderInfo(email_handler,
+                      folder_sync_key, 
+                      "5", // Inbox
+                      &emails_created,
+                      &emails_updated,
+                      &emails_deleted,
+                      &more_available,
+                      &error);
+    mark_point();
 
-		// if the emails_created list contains email
-    	// loop through the emails in the folder untill we find a mail with attachment
-		if(emails_created){
-			EasEmailInfo *email = NULL;
-			gboolean rtn = FALSE;
-            guint mailIndex;
-            
-            for(mailIndex = 0;mailIndex <g_slist_length(emails_created);mailIndex++){
-        		// get header info for next email in the folder
-	    		email = g_slist_nth(emails_created, mailIndex);
-	    		
-	    		if(email->attachments){
-					EasAttachment *attachment = NULL;
-					attachment = g_slist_nth(email->attachments, 0);
-					
-					// destination directory for the attachment file
-					gchar *mime_directory = "/eastests/";
-					gchar attachment_file[256];
+    //Search for an attachment in emails
+    gboolean attachmentFound =FALSE;
+    if (emails_created)
+        {
+         EasEmailInfo *email = NULL;
+         gint emails_created_num = 0;
+         emails_created_num = g_slist_length(emails_created);
+         if (emails_created_num)
+	        {
+	        gint i = 0; 
+	        gint count = 0;
+	        for(i; i<emails_created_num; i++)
+	            {
+                email = g_slist_nth(emails_created, i)->data;
+                count = g_slist_length(email->attachments);
+	            if (count)
+		            {
+		            attachmentFound =TRUE;
+		            break;
+		            }
+	            }
+            }
+        }
+    
+ //TODO: dealing with multiple attachments per email
+    // if the emails_created list contains an email with attachment
+    if (emails_created && attachmentFound)
+    {
+        EasEmailInfo *email = NULL;
+    	EasAttachment *attachmentObj = NULL; 
+    	//GSList *attachmentList = NULL;
+    	gchar* file_reference = NULL;
+        gboolean rtn = FALSE;
 
-					strcpy(attachment_file,mime_directory);
-					strcat(attachment_file,attachment->file_reference);
-					
-					// check if the attachment file exists
-					FILE *hAtt = NULL;
-					hAtt = fopen(attachment_file,"r");
-					if(hAtt){
-						// if the attachment file exists delete it
-						fclose(hAtt);
-						hAtt = NULL;
-						remove(attachment_file);
-						hAtt = fopen(attachment_file,"r");
-						if(hAtt){
-							fclose(hAtt);
-							fail_if(1,"unable to clear existing attachment file");
-						}
-					}
-					// call method to get attachment
-					rtn = eas_mail_handler_fetch_email_attachment(email_handler,attachment->file_reference,mime_directory,&error);
-					if(rtn == TRUE){		
-						// if reported success check if attachment exists
-						hAtt = fopen(attachment_file,"r");
-						fail_if(hAtt == NULL,"attachment file not created in specified directory");
-						fclose(hAtt);		
-					}	
-					else{
-						fail_if(1,"%s",error->message);
-					}
-					// after getting the body for the first mail, drop out of the loop
-					attachmentFound = TRUE;
-					break;
-				}
-				if(attachmentFound)
-				    break;
-			}
-		}
-		// else, go round the loop again
-	}
-	// fail the test if there attachments in the folder hierarchy as this means the 
-	// test has not exercised the code to get an attachment as required by this test case
-	fail_if(attachmentFound == FALSE,"no mail found in the folder hierarchy");
+        mark_point();
+        // get attachments for first email in the folder
+        email = g_slist_nth(emails_created, 0)->data;
+        fail_if(!email, "Unable to get first email in emails_created GSList");
 
-	//  free email objects in lists of email objects
-	g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
-	g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
-	g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
+	//fail_if( (g_slist_length(email->attachments) == 0), "Unable to get first attachment in emails_created GSList");
 
-	g_slist_free(emails_deleted);
-    g_slist_free(emails_updated);
-    g_slist_free(emails_created);	
+	attachmentObj = g_slist_nth(email->attachments, 0)->data;
 
-	//  free folder objects in lists of folder objects
+        fail_if(attachmentObj->file_reference == NULL, "attachment has no file_reference!");
+
+        // destination directory for the mime file
+        gchar *mime_directory = g_strconcat(getenv("HOME"), "/mimeresponses/", NULL);
+        gchar mime_file[256];
+
+        mark_point();
+        strcpy(mime_file, mime_directory);
+        strcat(mime_file, attachmentObj->file_reference);
+
+        mark_point();
+        // check if the email body file exists
+        FILE *hAttachment = NULL;
+        hAttachment = fopen(mime_file,"r");
+        if (hAttachment) 
+        {
+            // if the email body file exists delete it
+            fclose(hAttachment);
+            hAttachment = NULL;
+            remove(mime_file);
+            hAttachment = fopen(mime_file,"r");
+            if(hAttachment)
+            {
+                fclose(hAttachment);
+                fail_if(1,"unable to clear existing attachment file");
+            }
+        }
+
+        mark_point();
+        // call method to get attachment
+	rtn = eas_mail_handler_fetch_email_attachment(email_handler, 
+                                                attachmentObj->file_reference, 	
+                                                mime_directory,	 // "$HOME/mimeresponses/"
+                                                &error);
+
+        g_free(mime_directory);
+
+        if(rtn == TRUE)
+        {
+            testMailFound = TRUE;
+            // if reported success check if attachment file exists
+            hAttachment = fopen (mime_file,"r");
+            fail_if (hAttachment == NULL,"email attachment file not created in specified directory");
+            fclose (hAttachment);
+        }
+        else
+        {
+            fail_if(1,"%s",error->message);
+        }
+    }
+    else
+    {
+        fail_unless(emails_created, "Emails created is NULL for fetch_email_attachments");
+    }
+
+
+    // fail the test if there is no email in the folder hierarchy as this means the 
+    // test has not exercised the code to get the email body as required by this test case
+    //fail_if(testMailFound == FALSE,"no mail found in the folder hierarchy");
+
+    //  free email objects in lists of email objects
+    g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(emails_updated, (GFunc)g_object_unref, NULL);
+    g_slist_foreach(emails_created, (GFunc)g_object_unref, NULL);
+
+    //  free folder objects in lists of folder objects
     g_slist_foreach(created, (GFunc)g_object_unref, NULL);
     g_slist_foreach(deleted, (GFunc)g_object_unref, NULL);
     g_slist_foreach(updated, (GFunc)g_object_unref, NULL);
-   
+    
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
 }
 END_TEST
 
@@ -746,13 +792,13 @@ Suite* eas_libeasmail_suite (void)
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
 
-  tcase_add_test (tc_libeasmail, test_get_mail_handler);
-  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-  //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
-  //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+//  tcase_add_test (tc_libeasmail, test_get_mail_handler); 
+//  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+//  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+//  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+    //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
+    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+//  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);	
