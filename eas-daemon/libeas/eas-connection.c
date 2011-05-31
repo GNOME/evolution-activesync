@@ -34,6 +34,7 @@
 #include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
+#include "eas-update-email-req.h"
 
 struct _EasConnectionPrivate
 {
