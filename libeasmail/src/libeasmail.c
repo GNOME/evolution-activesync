@@ -566,6 +566,8 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 	g_assert(self);
 	g_assert(sync_key);	
 	g_assert(update_email);
+
+	g_debug("Update email %s with flags %d in folder %s", update_email->server_id, update_email->flags, folder_id);
 		
 	DBusGProxy *proxy = self->priv->remoteEas; 
 	gchar *sync_key_out = NULL;
@@ -574,6 +576,10 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 	gchar *serialised_email = NULL;
 
 	ret = eas_email_info_serialise(update_email, &serialised_email);
+
+	g_debug("serialised email: %s", serialised_email);
+
+	g_debug("sync key in = %s", sync_key);
 	
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "update_email", error,
@@ -587,6 +593,7 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 
 	if(ret)
 	{
+		g_debug("sync key out = %s", sync_key_out);
 		// is there enough space in the current sync_key string? 
 		if(strlen(sync_key_out) <= strlen(sync_key))
 		{
