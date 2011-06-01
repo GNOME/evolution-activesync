@@ -191,7 +191,15 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "Body") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "DESCRIPTION", n);
+					xmlNode *subNode = NULL;
+					for (subNode = n->children; subNode; subNode = subNode->next)
+					{
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Data"))
+						{
+							_util_append_prop_string_to_list_from_xml(&vevent, "DESCRIPTION", subNode);
+							break;
+						}
+					}
 				}
 				else if (g_strcmp0(name, "Sensitivity") == 0)
 				{
