@@ -58,8 +58,7 @@ int main(int argc, char** argv) {
     g_debug("activesyncd Daemon Started");
 
     g_debug("Creating EEasConnection GObject.\n");
-    GError* cnc_error = NULL;
-    EasConnObj = eas_connection_new();    
+    EasConnObj = eas_connection_new();
     if (EasConnObj == NULL) {
         g_debug("Error: Failed to create EEasConnection instance");
         g_clear_error (&error);

@@ -94,7 +94,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(guint64 account_id, const gcha
 	
 	priv->sync_key = g_strdup(sync_key);
 	priv->folder_id = g_strdup(folder_id);
-	priv->serialised_calendar = serialised_calendar;
+	priv->serialised_calendar = (GSList *)serialised_calendar;
 	priv->account_id = account_id;
 
 	eas_request_base_SetFlag(&self->parent_instance, flag);

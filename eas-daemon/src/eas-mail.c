@@ -80,12 +80,6 @@ void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj)
    priv->connection = easConnObj;
 }
 
-EasConnection*  eas_mail_get_eas_connection(EasMail* self)
-{
-    EasMailPrivate* priv = self->priv;
-    return priv->connection;
-}
-
 gboolean eas_mail_start_sync(EasMail* easMailObj, gint valueIn, GError** error)
 {
 /*
@@ -393,7 +387,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 
     if(easMailObj->priv->connection)
     {
-        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+        eas_connection_set_account(easMailObj->priv->connection, account_uid);
     }
 
 
@@ -402,7 +396,7 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
 	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_mail_get_eas_connection(easMailObj));
+                                   easMailObj->priv->connection);
 
 	    // Start the request
     eas_delete_email_req_Activate (req, &error);
@@ -444,7 +438,7 @@ gboolean eas_mail_update_emails(EasMail *self,
 
     if(self->priv->connection)
     {
-        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+        eas_connection_set_account(self->priv->connection, account_uid);
     }
 
     // Create the request
@@ -453,7 +447,7 @@ gboolean eas_mail_update_emails(EasMail *self,
 	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_mail_get_eas_connection(self));
+                                   self->priv->connection);
 
 	// Start the request
 	g_debug("start request");
@@ -615,7 +609,7 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 
     if(easMailObj->priv->connection)
     {
-        eas_connection_set_account(eas_mail_get_eas_connection(easMailObj), account_uid);
+        eas_connection_set_account(easMailObj->priv->connection, account_uid);
     }
 	
     // Create Request
@@ -623,7 +617,7 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 
 	g_debug("request created");
     eas_request_base_SetConnection (&req->parent_instance, 
-                                    eas_mail_get_eas_connection(easMailObj));
+                                    easMailObj->priv->connection);
 
 	g_debug("connection set ");
     // Activate Request

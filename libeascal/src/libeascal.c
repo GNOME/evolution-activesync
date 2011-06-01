@@ -333,59 +333,6 @@ eas_cal_handler_update_items(EasCalHandler* this,
 	return ret;
 }
 
-// takes an NULL terminated array of serialised calendar items and creates a list of EasCalInfo objects
-static gboolean 
-build_calendar_list(const gchar **serialised_cal_array, GSList **cal_list, GError **error)
-{
-	gboolean ret = TRUE;
-	guint i = 0;
-
-    g_assert(cal_list);
-
-	g_assert(g_slist_length(*cal_list) == 0);
-	
-	while(serialised_cal_array[i])
-	{
-		EasCalInfo *calInfo = eas_cal_info_new();
-		if(calInfo)
-		{
-			*cal_list = g_slist_append(*cal_list, calInfo);	// add it to the list first to aid cleanup
-			if(!cal_list)
-			{
-				g_free(calInfo);
-				ret = FALSE;
-				goto cleanup;
-			}				
-			if(!eas_cal_info_deserialise(calInfo, serialised_cal_array[i]))
-			{
-				ret = FALSE;
-				goto cleanup;
-			}
-		}
-		else
-		{
-			ret = FALSE;
-			goto cleanup;
-		}
-		i++;
-	}
-
-cleanup:
-	if(!ret)
-	{
-		// set the error
-		//g_set_error (error, EAS_MAIL_ERROR,
-		//	     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
-		//	     ("out of memory"));
-		// clean up on error
-		g_slist_foreach(*cal_list,(GFunc)g_free, NULL);
-		g_slist_free(*cal_list);
-	}
-	
-	g_debug("list has %d items", g_slist_length(*cal_list));
-	return ret;
-}
-
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
 static gboolean 

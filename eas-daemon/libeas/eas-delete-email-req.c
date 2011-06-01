@@ -103,11 +103,11 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 	priv->syncKey = g_strdup(syncKey);
 	priv->folder_id = g_strdup(folderId);
 	guint listCount;
-	guint listLen = g_slist_length(server_ids_array);
+	guint listLen = g_slist_length((GSList*)server_ids_array);
 	gchar *server_id = NULL;
 	for(listCount = 0;listCount < listLen;listCount++)
 	{
-		server_id = g_slist_nth_data(server_ids_array,listCount);
+		server_id = g_slist_nth_data((GSList*)server_ids_array, listCount);
 		priv->server_ids_array = g_slist_append(priv->server_ids_array, g_strdup(server_id));
 	}
 	

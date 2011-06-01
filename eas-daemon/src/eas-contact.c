@@ -28,6 +28,8 @@ eas_contact_class_init (EasContactClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
+    (void)parent_class; // remove warning
+    
 	object_class->finalize = eas_contact_finalize;
 	
 	 /* Binding to GLib/D-Bus" */ 
