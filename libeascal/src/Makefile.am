@@ -43,6 +43,8 @@ BUILT_SOURCES = eas-calendar-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 
+libeascal_la_LIBADD = ../../logger/libeaslogger.la
+
 # Correctly clean the generated headers, but keep the xml description
 CLEANFILES = $(BUILT_SOURCES)
 MOSTLYCLEANFILES = libeascal.la

@@ -53,6 +53,8 @@ BUILT_SOURCES = eas-mail-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 
+libeasmail_la_LIBADD = ../../logger/libeaslogger.la
+
 # Correctly clean the generated headers, but keep the xml description
 CLEANFILES = $(BUILT_SOURCES)
 MOSTLYCLEANFILES = libeasmail.la

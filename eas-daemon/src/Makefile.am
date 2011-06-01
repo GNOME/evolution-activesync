@@ -18,7 +18,8 @@ eas-contact-stub.h: eas-contact.xml
 eas-mail-stub.h: eas-mail.xml
 	dbus-binding-tool --prefix=eas_mail --mode=glib-server $< > $@
 
-INCLUDES = -I/usr/include/dbus-1.0 \
+INCLUDES = -DG_LOG_DOMAIN=\"eas-daemon\" \
+      -I/usr/include/dbus-1.0 \
 	  -I/usr/lib/dbus-1.0/include \
 	  -I/usr/include/glib-2.0 \
 	  -I/usr/lib/glib-2.0/include \
@@ -27,8 +28,8 @@ INCLUDES = -I/usr/include/dbus-1.0 \
 	  -I/usr/include/evolution-data-server-2.28 \
 	  -I../libeas \
 	  -I../../libeasmail/src \
-          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
-          -I/usr/include/evolution-data-server-2.32
+      -I/usr/lib/i386-linux-gnu/glib-2.0/include \
+      -I/usr/include/evolution-data-server-2.32
 
 
 
@@ -60,7 +61,7 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-mail.c
 		      
 
-activesyncd_LDADD = ../libeas/libeas.la ../../libeasmail/src/libeasmail.la ../../libeascal/src/libeascal.la $(INTI_LIBS)
+activesyncd_LDADD = ../../logger/libeaslogger.la ../libeas/libeas.la ../../libeasmail/src/libeasmail.la ../../libeascal/src/libeascal.la $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 

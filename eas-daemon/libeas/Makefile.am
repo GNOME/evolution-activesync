@@ -17,7 +17,8 @@ lib_LTLIBRARIES = libeas.la
 
 AM_CXXFLAGS = $(INTI_CXXFLAGS)
 
-INCLUDES =  -I/usr/include/libsoup-2.4 \
+INCLUDES =  -DG_LOG_DOMAIN=\"libeas\" \
+            -I/usr/include/libsoup-2.4 \
             -I/usr/include/libxml2 \
             -I/usr/include/glib-2.0 \
             -I/usr/lib/glib-2.0/include \
@@ -93,7 +94,7 @@ libeas_la_SOURCES =		\
         eas-update-calendar-req.h \
         eas-update-calendar-req.c \
         eas-utils.h \
-        eas-utils.c        
+        eas-utils.c
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)
