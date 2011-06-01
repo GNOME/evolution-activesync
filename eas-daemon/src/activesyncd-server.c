@@ -23,12 +23,87 @@
 #include "eas-contact.h" 
 #include "eas-mail.h"
 
+#include "../../logger/eas-logger.h"
+
 #ifdef DISABLE_EAS_DAEMON
 #define dbg(fmtstr, args...) (g_debug(":%s: " fmtstr "", __func__, ##args))
 #else
 #define dbg(dummy...)
 #endif
+#if 0
+static GLogFunc g_default_logger = NULL;
 
+void eas_logger(const gchar *log_domain, 
+                GLogLevelFlags log_level,
+                const gchar *message,
+                gpointer user_data)
+{
+    FILE *logfile = NULL;
+    pid_t pid = getpid();
+    int envLevel = 4; 
+
+    if (getenv("EAS_DEBUG_FILE"))
+    {
+        logfile = fopen (g_getenv("EAS_DEBUG_FILE"), "a");
+    }
+    
+    if (getenv("EAS_DEBUG"))
+    {
+        envLevel = atoi (g_getenv ("EAS_DEBUG"));
+    }
+
+    if (log_level == G_LOG_LEVEL_ERROR && g_default_logger)
+    {
+        g_default_logger(log_domain, log_level, message, user_data);
+        return;
+    }
+
+    if (logfile)
+    {
+        fprintf(logfile, "(process:%d): ", pid);
+
+        if (log_domain)
+        {
+            fprintf(logfile, "%s-", log_domain);
+        }
+
+        if (envLevel > 0 && log_level == G_LOG_LEVEL_CRITICAL)
+            fprintf(logfile, "*** CRITICAL ***:%s \n", message);
+
+        if (envLevel > 1 && log_level == G_LOG_LEVEL_WARNING)
+            fprintf(logfile, "WARNING **:%s\n", message);
+
+        if (envLevel > 2 && log_level == G_LOG_LEVEL_MESSAGE)
+            fprintf(logfile, "Message:%s\n", message);
+
+        if (envLevel > 3 && log_level == G_LOG_LEVEL_DEBUG)
+            fprintf(logfile,"DEBUG:%s\n", message);
+                
+        fclose(logfile);
+    }
+    else
+    {
+        printf("(process:%d): ", pid);
+        
+        if (log_domain)
+        {
+            printf("%s-",log_domain);
+        }
+
+        if (envLevel > 0 && log_level == G_LOG_LEVEL_CRITICAL)
+            printf("*** CRITICAL ***:%s \n", message);
+
+        if (envLevel > 1 && log_level == G_LOG_LEVEL_WARNING)
+            printf("WARNING **:%s\n", message);
+
+        if (envLevel > 2 && log_level == G_LOG_LEVEL_MESSAGE)
+            printf("Message:%s\n", message);
+
+        if (envLevel > 3 && log_level == G_LOG_LEVEL_DEBUG)
+            printf("DEBUG:%s\n", message);
+    }
+}
+#endif
 
 /*
   activesyncd entry point
@@ -47,6 +122,13 @@ int main(int argc, char** argv) {
     GError* error = NULL;
 
     g_type_init();
+#if 0
+    g_log_set_handler(NULL,
+                      G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+                      eas_logger,
+                      NULL);
+#endif
+    g_log_set_default_handler(eas_logger, NULL);
 
     mainloop = g_main_loop_new(NULL, FALSE);
     if (mainloop == NULL) {

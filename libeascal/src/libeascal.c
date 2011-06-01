@@ -18,6 +18,7 @@
 #include "libeascal.h"
 #include "eas-cal-info.h"
 
+#include "../../logger/eas-logger.h"
 
 G_DEFINE_TYPE (EasCalHandler, eas_cal_handler, G_TYPE_OBJECT);
 
@@ -80,7 +81,6 @@ eas_cal_handler_class_init (EasCalHandlerClass *klass)
 EasCalHandler *
 eas_cal_handler_new(guint64 account_uid)
 {
-	g_debug("eas_cal_handler_new++");
 	DBusGConnection* bus;
 	DBusGProxy* remoteEas;
 	GMainLoop* mainloop;
@@ -89,17 +89,20 @@ eas_cal_handler_new(guint64 account_uid)
 
 	g_type_init();
 
+    g_log_set_default_handler(eas_logger, NULL);
+	g_debug("eas_cal_handler_new++");
+
 	mainloop = g_main_loop_new(NULL, TRUE);
 
 	if (mainloop == NULL) {
-		g_printerr("Error: Failed to create the mainloop");
+		g_error("Error: Failed to create the mainloop");
 		return NULL;
 	}
 
 	g_debug("Connecting to Session D-Bus.");
 	bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
 	if (error != NULL) {
-		g_printerr("Error: Couldn't connect to the Session bus (%s) ", error->message);
+		g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
 		return NULL;
 	}
 
@@ -109,15 +112,14 @@ eas_cal_handler_new(guint64 account_uid)
 		      EAS_SERVICE_CALENDAR_OBJECT_PATH,
 		      EAS_SERVICE_CALENDAR_INTERFACE);
 	if (remoteEas == NULL) {
-		g_printerr("Error: Couldn't create the proxy object");
+		g_error("Error: Couldn't create the proxy object");
 		return NULL;
 	}
 
 	object = g_object_new (EAS_TYPE_CAL_HANDLER , NULL);
 
 	if(object == NULL){
-		g_printerr("Error: Couldn't create mail");
-		g_debug("eas_cal_handler_new--");
+		g_error("Error: Couldn't create mail");
 		return NULL;  
 	}
 

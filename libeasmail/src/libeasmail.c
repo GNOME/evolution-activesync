@@ -17,6 +17,8 @@
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
 
+#include "../../logger/eas-logger.h"
+
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
 struct _EasEmailHandlerPrivate{
@@ -75,7 +77,6 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 EasEmailHandler *
 eas_mail_handler_new(guint64 account_uid)
 {
-	g_debug("eas_mail_handler_new++");
 	DBusGConnection* bus;
 	DBusGProxy* remoteEas;
 	GMainLoop* mainloop;
@@ -83,6 +84,9 @@ eas_mail_handler_new(guint64 account_uid)
 	EasEmailHandler *object = NULL;
 
 	g_type_init();
+
+    g_log_set_default_handler(eas_logger, NULL);
+	g_debug("eas_mail_handler_new++");
 
 	mainloop = g_main_loop_new(NULL, TRUE);
 

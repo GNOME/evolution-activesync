@@ -26,6 +26,16 @@ AM_GLIB_GNU_GETTEXT
 AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
-AC_CONFIG_FILES([Makefile eas-daemon/data/Makefile eas-daemon/libeas/Makefile eas-daemon/src/Makefile eas-daemon/tests/Makefile libeasmail/src/Makefile libeascal/src/Makefile check_tests/Makefile])
+AC_CONFIG_FILES([
+    Makefile 
+    eas-daemon/data/Makefile 
+    eas-daemon/libeas/Makefile 
+    eas-daemon/src/Makefile 
+    eas-daemon/tests/Makefile 
+    libeasmail/src/Makefile 
+    libeascal/src/Makefile 
+    check_tests/Makefile
+    logger/Makefile
+    ])
 
 AC_OUTPUT

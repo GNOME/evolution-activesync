@@ -358,7 +358,7 @@ Suite* eas_libeascal_suite (void)
   
   tcase_add_test (tc_libeascal, test_get_cal_handler);
   tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
-  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
+//  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
   //tcase_add_test (tc_libeascal, test_eas_cal_handler_delete_cal);
   tcase_add_test (tc_libeascal, test_eas_cal_handler_update_cal);
 

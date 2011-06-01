@@ -99,7 +99,7 @@ eas_connection_init (EasConnection *self)
                       G_CALLBACK(connection_authenticate), 
                       self);
 
-    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) {
         SoupLogger *logger;
         logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE(logger));
@@ -354,7 +354,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
     wbxml_conv_xml2wbxml_disable_public_id(conv);
     ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
 
-    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) 
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) 
 	{
 		gchar* tmp = g_strndup((gchar*)dataptr, data_len);
 		g_debug("\n=== XML Input ===\n%s=== XML Input ===", tmp);
@@ -621,7 +621,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		return;
 	}
 
-    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 2)) {
+    if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) {
 		dump_wbxml_response(msg->response_body->data, 
 		                    msg->response_body->length);
 	}
