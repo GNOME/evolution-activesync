@@ -3,7 +3,7 @@
  * git
  * Copyright (C)  2011 <>
  */
-
+#include <libwbxml-1.0/wbxml/wbxml.h>
 #include "eas-get-email-attachment-msg.h"
 
 
@@ -213,21 +213,38 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Data"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
-			gchar* fullFilePath = NULL;
-			FILE *hAttachement = NULL;
+			guchar *xmlTmp = xmlNodeGetContent(node);
+			gint  len =  strlen(xmlTmp) ;
+			g_message ("data ecoded length  =--->:[%d]",  len);
+			g_message ("data encoded   =--->:[%s]",   xmlTmp);
 
+		    unsigned char *decoded_buf = NULL;
+		    WB_LONG decoded_len = wbxml_base64_decode((const unsigned char*)xmlTmp, len, &decoded_buf);
+		    if (!decoded_len) {
+		        //TODO: Set the GError
+		         //error = WBXML_ERROR_B64_ENC;
+		        //  g_set_error();
+		        g_warning("Failed to base64_decode attachment ");
+		        return;
+		    }
+        	g_message ("data decoded   =--->:[%s]",   decoded_buf);
+  			g_message ("data decoded length =--->:[%d]",  decoded_len);      	
+
+			gchar* fullFilePath = NULL;
+			FILE *hAttachement = NULL;        			
 			fullFilePath = g_strconcat(priv->directoryPath, priv->fileReference, NULL);
 			g_message("Attempting to write attachment to file [%s]", fullFilePath);   
 			if (hAttachement = fopen(fullFilePath,"wb"))
 			{
-				fputs(xmlTmp, hAttachement);
+				fwrite((const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
 				fclose(hAttachement);
 			}
 			else
 			{
 				g_critical("Failed to open file!");
 			}
+			
+			wbxml_free(decoded_buf);
 			g_free(fullFilePath);
 			xmlFree(xmlTmp);
 			break;
