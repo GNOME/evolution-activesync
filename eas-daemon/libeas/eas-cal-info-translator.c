@@ -13,6 +13,7 @@
 #include <icaltypes.h>
 #include <icalduration.h>
 
+#include <libwbxml-1.0/wbxml/wbxml.h>
 
 // iCalendar constants defined in RFC5545 (http://tools.ietf.org/html/rfc5545)
 const gchar* ICAL_LINE_TERMINATOR           = "\r\n";
@@ -24,6 +25,28 @@ const guint	 ICAL_MAX_LINE_LENGTH           = 75;
 const guint MINUTES_PER_HOUR = 60;
 const guint MINUTES_PER_DAY  = 60 * 24;
 const guint MINUTES_PER_WEEK = 60 * 24 * 7;
+
+typedef  struct {
+	gushort wYear;
+	gushort wMonth;
+	gushort wDayOfWeek;
+	gushort wDay;
+	gushort wHour;
+	gushort wMinute;
+	gushort wSecond;
+	gushort wMilliseconds;
+} EasSystemTime;
+
+typedef struct {
+	glong Bias;
+	wchar_t StandardName[32];
+	EasSystemTime StandardDate;
+	glong StandardBias;
+	wchar_t DaylightName[32];
+	EasSystemTime DaylightDate;
+	glong DaylightBias;
+} EasTimeZone;
+	
 
 /**
  * \brief Private function to concatenate a VCALENDAR property name and value
@@ -263,8 +286,23 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
+				else if (g_strcmp0(name, "TimeZone") == 0)
+				{
+					xmlChar *timeZoneB64 = xmlNodeGetContent(n);
+					EasTimeZone tz;
+					WB_UTINY *timeZone = NULL;
+					
+					g_debug("TimeZoneB64 [%s], %d", timeZoneB64, strlen(timeZoneB64));
+
+					wbxml_base64_decode(timeZoneB64, -1, &timeZone);
+					xmlFree(timeZoneB64);
+					memcpy(&tz, timeZone, sizeof(tz));
+
+					// TODO: Copy the TimeZone Data from tz into the vcal
+					
+					g_free(timeZone);
+				}
 				
-				// TODO: handle Timezone element
 				// TODO: handle Attendees element
 				// TODO: handle Recurrence element
 				// TODO: handle Exceptions element
