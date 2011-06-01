@@ -26,6 +26,14 @@ AM_GLIB_GNU_GETTEXT
 AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
+PKG_CHECK_MODULES(GLIB, glib-2.0)
+PKG_CHECK_MODULES(EDATASERVER, libedataserver-1.2)
+PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
+PKG_CHECK_MODULES(DBUS, dbus-1)
+PKG_CHECK_MODULES(LIBXML, libxml-2.0)
+PKG_CHECK_MODULES(SOUP, libsoup-2.4 libsoup-gnome-2.4)
+PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
+
 AC_CONFIG_FILES([Makefile eas-daemon/data/Makefile eas-daemon/libeas/Makefile eas-daemon/src/Makefile eas-daemon/tests/Makefile libeasmail/src/Makefile libeascal/src/Makefile check_tests/Makefile])
 
 AC_OUTPUT

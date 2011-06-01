@@ -18,29 +18,22 @@ eas-contact-stub.h: eas-contact.xml
 eas-mail-stub.h: eas-mail.xml
 	dbus-binding-tool --prefix=eas_mail --mode=glib-server $< > $@
 
-INCLUDES = -I/usr/include/dbus-1.0 \
-	  -I/usr/lib/dbus-1.0/include \
-	  -I/usr/include/glib-2.0 \
-	  -I/usr/lib/glib-2.0/include \
-	  -I/usr/include/libsoup-2.4 \
-	  -I/usr/include/libxml2 \
-	  -I/usr/include/evolution-data-server-2.28 \
-	  -I../libeas \
-	  -I../../libeasmail/src \
-          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
-          -I/usr/include/evolution-data-server-2.32
+INCLUDES = -I../libeas \
+	  -I../../libeasmail/src
 
+activesyncd_CPPFLAGS =			\
+		$(GLIB_CFLAGS)		\
+		$(EDATASERVER_CFLAGS)	\
+		$(DBUS_CFLAGS)		\
+		$(DBUS_GLIB_CFLAGS)	\
+		$(SOUP_CFLAGS)
 
-
-
-LIBS =  -L/usr/lib \
-	-ldbus-1 \
-	-lpthread \
-	-lrt \
-	-lglib-2.0 \
-	-ldbus-glib-1 \
-	-lgobject-2.0 \
-	-lgthread-2.0
+activesyncd_LDFLAGS =			\
+		$(GLIB_LIBS)		\
+		$(EDATASERVER_LIBS)	\
+		$(DBUS_LIBS)		\
+		$(DBUS_GLIB_LIBS)	\
+		$(SOUP_LIBS)
 
 
 AM_CFLAGS = $(INTI_CFLAGS)
