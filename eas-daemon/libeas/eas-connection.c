@@ -389,8 +389,14 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 	g_debug("eas_connection_send_request--");
 }
 
+typedef enum{
+	INVALID = 0,
+	VALID_NON_EMPTY,
+	VALID_EMPTY,
+}RequestValidity;
 
-static gboolean 
+
+static RequestValidity 
 isResponseValid(SoupMessage *msg)
 {
     const gchar *content_type = NULL;
@@ -401,22 +407,13 @@ isResponseValid(SoupMessage *msg)
     if (200 != msg->status_code) 
 	{
         g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase?msg->reason_phrase:"-"));
-        return FALSE;
-    }
-
-	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
-	//g_assert(content_type);
-	g_debug("content_type = %s", content_type);
-    if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
-    {
-		g_warning ("  Failed: Content-Type did not match WBXML");
-        return FALSE;
+        return INVALID;
     }
 
     if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding(msg->response_headers))
     {
 		g_warning("  Failed: Content-Length was not found");
-        return FALSE;
+        return INVALID;
     }
 
     header_content_length = soup_message_headers_get_content_length(msg->response_headers);
@@ -424,12 +421,26 @@ isResponseValid(SoupMessage *msg)
     {
         g_warning ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match", 
                 (long)header_content_length, (long)msg->response_body->length);
-        return FALSE;
+        return INVALID;
     }
 
+	if(!header_content_length)
+	{
+		g_debug("Empty Content");
+		return VALID_EMPTY;
+	}
+	
+	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
+	
+    if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
+    {
+		g_warning ("  Failed: Content-Type did not match WBXML");
+        return INVALID;
+    }
+	
 	g_debug("eas_connection - isResponseValid--");
 
-	return TRUE;
+	return VALID_NON_EMPTY;
 }
 
 
@@ -616,8 +627,9 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 	g_debug("  eas_connection - handle_server_response self[%x]", (unsigned int)self);
 	g_debug("  eas_connection - handle_server_response priv[%x]", (unsigned int)self->priv);
-	
-	if (FALSE == isResponseValid(msg)) {
+
+	RequestValidity validity = isResponseValid(msg);
+	if (INVALID == validity) {
 		return;
 	}
 
@@ -626,24 +638,30 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		                    msg->response_body->length);
 	}
 
-    wbxml2xml ((WB_UTINY*)msg->response_body->data,
-               msg->response_body->length,
-               &xml,
-               &xml_len);
-
-	g_debug("  handle_server_response - pre-xmlReadMemory");
-	
-    doc = xmlReadMemory ((const char*)xml, 
-                         xml_len,
-                         "sync.xml", 
-                         NULL, 
-                         0);
-	if (xml) free(xml);
-
-	if (doc) 
+	if(VALID_NON_EMPTY == validity)
 	{
-		xmlNode* node = xmlDocGetRootElement(doc);
-		parse_for_status(node);
+		wbxml2xml ((WB_UTINY*)msg->response_body->data,
+		           msg->response_body->length,
+		           &xml,
+		           &xml_len);
+
+		g_debug("  handle_server_response - pre-xmlReadMemory");
+	
+		doc = xmlReadMemory ((const char*)xml, 
+		                     xml_len,
+		                     "sync.xml", 
+		                     NULL, 
+		                     0);
+
+		g_debug("  handle_server_response - post-xmlReadMemory. doc = 0x%x", doc);	
+	
+		if (xml) free(xml);
+
+		if (doc) 
+		{
+			xmlNode* node = xmlDocGetRootElement(doc);
+			parse_for_status(node);
+		}
 	}
 
 
