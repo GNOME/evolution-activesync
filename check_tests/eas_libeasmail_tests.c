@@ -298,7 +298,7 @@ START_TEST (test_eas_mail_handler_send_email)
     guint64 accountuid = 123456789;
     EasEmailHandler *email_handler = NULL;
 	const gchar *client_id = g_strdup("1");
-	const gchar *mime_file = g_strdup("/home/lorna/int07/testdata/mime_file.txt");	// TODO
+	const gchar *mime_file = g_strconcat(getenv("HOME"), "/int07/testdata/", NULL);	
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
