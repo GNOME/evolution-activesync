@@ -656,106 +656,94 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 
     //Search for an attachment in emails
     gboolean attachmentFound =FALSE;
-    if (emails_created)
+    EasEmailInfo *email = NULL;
+    gint number_of_emails_created = 0;
+    number_of_emails_created = g_slist_length(emails_created);
+    gint i = 0; 
+    for( i; i<number_of_emails_created; i++)
         {
-         EasEmailInfo *email = NULL;
-         gint emails_created_num = 0;
-         emails_created_num = g_slist_length(emails_created);
-         if (emails_created_num)
-	        {
-	        gint i = 0; 
-	        gint count = 0;
-	        for(i; i<emails_created_num; i++)
-	            {
-                email = g_slist_nth(emails_created, i)->data;
-                count = g_slist_length(email->attachments);
-	            if (count)
-		            {
-		            attachmentFound =TRUE;
-		            break;
-		            }
-	            }
-            }
-        }
-    
- //TODO: dealing with multiple attachments per email
-    // if the emails_created list contains an email with attachment
-    if (emails_created && attachmentFound)
-    {
-        EasEmailInfo *email = NULL;
-    	EasAttachment *attachmentObj = NULL; 
-    	//GSList *attachmentList = NULL;
-    	gchar* file_reference = NULL;
-        gboolean rtn = FALSE;
-
-        mark_point();
-        // get attachments for first email in the folder
-        email = g_slist_nth(emails_created, 0)->data;
-        fail_if(!email, "Unable to get first email in emails_created GSList");
-
-	//fail_if( (g_slist_length(email->attachments) == 0), "Unable to get first attachment in emails_created GSList");
-
-	attachmentObj = g_slist_nth(email->attachments, 0)->data;
-
-        fail_if(attachmentObj->file_reference == NULL, "attachment has no file_reference!");
-
-        // destination directory for the mime file
-        gchar *mime_directory = g_strconcat(getenv("HOME"), "/mimeresponses/", NULL);
-        gchar mime_file[256];
-
-        mark_point();
-        strcpy(mime_file, mime_directory);
-        strcat(mime_file, attachmentObj->file_reference);
-
-        mark_point();
-        // check if the email body file exists
-        FILE *hAttachment = NULL;
-        hAttachment = fopen(mime_file,"r");
-        if (hAttachment) 
-        {
-            // if the email body file exists delete it
-            fclose(hAttachment);
-            hAttachment = NULL;
-            remove(mime_file);
-            hAttachment = fopen(mime_file,"r");
-            if(hAttachment)
+        email = g_slist_nth(emails_created, i)->data;
+        if ( g_slist_length(email->attachments) )
             {
-                fclose(hAttachment);
-                fail_if(1,"unable to clear existing attachment file");
+            attachmentFound =TRUE;
+            break;
             }
         }
-
-        mark_point();
-        // call method to get attachment
-	rtn = eas_mail_handler_fetch_email_attachment(email_handler, 
-                                                attachmentObj->file_reference, 	
-                                                mime_directory,	 // "$HOME/mimeresponses/"
-                                                &error);
-
-        g_free(mime_directory);
-
-        if(rtn == TRUE)
-        {
-            testMailFound = TRUE;
-            // if reported success check if attachment file exists
-            hAttachment = fopen (mime_file,"r");
-            fail_if (hAttachment == NULL,"email attachment file not created in specified directory");
-            fclose (hAttachment);
-        }
-        else
-        {
-            fail_if(1,"%s",error->message);
-        }
-    }
-    else
+       
+  
+    // if the emails_created list contains an email with attachment
+    if (attachmentFound)
     {
-        fail_unless(emails_created, "Emails created is NULL for fetch_email_attachments");
+  	EasAttachment *attachmentObj = NULL; 
+ 	gchar* file_reference = NULL;
+    gboolean rtn = FALSE;
+
+    mark_point();
+    //Get all attachments for every email_created.
+    i=0;
+    for(i; i<number_of_emails_created; i++)
+        {
+        email = g_slist_nth(emails_created, i)->data;
+        //fail_if(!email, "Unable to get first email in emails_created GSList");
+        gint number_of_attachments = 0;
+        number_of_attachments = g_slist_length(email->attachments);
+        gint j =0;
+        for  (j; j< number_of_attachments; j++)
+            {
+            attachmentObj = g_slist_nth(email->attachments, j)->data;
+             fail_if(attachmentObj->file_reference == NULL, "attachment has no file_reference!");
+
+            // destination directory for the mime file
+            gchar *mime_directory = g_strconcat(getenv("HOME"), "/mimeresponses/", NULL);
+            gchar mime_file[256];
+
+            mark_point();
+            strcpy(mime_file, mime_directory);
+            strcat(mime_file, attachmentObj->file_reference);
+
+            mark_point();
+            // check if the email body file exists
+            FILE *hAttachment = NULL;
+            hAttachment = fopen(mime_file,"r");
+            if (hAttachment) 
+                {
+                    // if the email body file exists delete it
+                    fclose(hAttachment);
+                    hAttachment = NULL;
+                    remove(mime_file);
+                    hAttachment = fopen(mime_file,"r");
+                    if(hAttachment)
+                        {
+                        fclose(hAttachment);
+                        fail_if(1,"unable to clear existing attachment file");
+                        }
+                }
+
+            mark_point();
+            // call method to get attachment
+            rtn = eas_mail_handler_fetch_email_attachment(email_handler, 
+                                                    attachmentObj->file_reference, 	
+                                                    mime_directory,	 // "$HOME/mimeresponses/"
+                                                    &error);
+
+            g_free(mime_directory);
+
+            if(rtn == TRUE)
+                {
+                testMailFound = TRUE;
+                // if reported success check if attachment file exists
+                hAttachment = fopen (mime_file,"r");
+                fail_if (hAttachment == NULL,"email attachment file not created in specified directory");
+                fclose (hAttachment);
+                }
+           else
+                {
+                fail_if(1,"%s",error->message);
+                }
+                
+            } //-end of attachment loop
+        }//-end of emails_created loop
     }
-
-
-    // fail the test if there is no email in the folder hierarchy as this means the 
-    // test has not exercised the code to get the email body as required by this test case
-    //fail_if(testMailFound == FALSE,"no mail found in the folder hierarchy");
 
     //  free email objects in lists of email objects
     g_slist_foreach(emails_deleted, (GFunc)g_object_unref, NULL);
@@ -906,7 +894,7 @@ Suite* eas_libeasmail_suite (void)
   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+   // tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
   tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
   // need an unread, high importance email with a single attachment at top of inbox for this to pass:
