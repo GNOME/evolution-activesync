@@ -47,8 +47,6 @@ EasMail* eas_mail_new(void);
 
 void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj);
 
-EasConnection*  eas_mail_get_eas_connection(EasMail* self);
-
 /*
 	sync the entire email folder hierarchy 
 */                            

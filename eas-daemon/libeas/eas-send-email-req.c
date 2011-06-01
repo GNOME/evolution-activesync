@@ -133,14 +133,14 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	// obtain file size:
 	fseek (file , 0 , SEEK_END);
 	size = ftell (file);
-	g_debug("file size = %d", size);
+	g_debug("file size = %llu", size);
 	rewind (file);
 
 	// allocate memory to contain the whole file:
 	priv->mime_string = (gchar*) g_malloc0 (sizeof(gchar)*size);
 	if (priv->mime_string == NULL) 
 	{
-	// TODO - propogate error		
+	// TODO - propogate error
 	}
 
 	// copy the file into the buffer:

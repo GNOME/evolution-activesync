@@ -10,6 +10,7 @@
 #include "../../libeascal/src/eas-cal-info.h"
 
 #include "../libeas/eas-connection.h"
+#include "eas-mail.h"
 
 G_DEFINE_TYPE (EasCalendar, eas_calendar, G_TYPE_OBJECT);
 
@@ -44,6 +45,8 @@ eas_calendar_class_init (EasCalendarClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+
+    (void)parent_class; // remove warning
 
 	object_class->finalize = eas_calendar_finalize;
 
@@ -180,7 +183,7 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
     
     if(self->priv->connection)
     {
-        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+        eas_connection_set_account(self->priv->connection, account_uid);
     }
 
     // Create the request
@@ -190,7 +193,7 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
     syncReqObj = g_object_new(EAS_TYPE_SYNC_REQ , NULL);
 
     eas_request_base_SetConnection (&syncReqObj->parent_instance, 
-                                    eas_calendar_get_eas_connection(self));
+                                    self->priv->connection);
                                     
 
     g_debug("eas_calendar_get_latest_calendar_items - new req");
@@ -263,7 +266,7 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 
     if(self->priv->connection)
     {
-        eas_connection_set_account(eas_mail_get_eas_connection(self), account_uid);
+        eas_connection_set_account(self->priv->connection, account_uid);
     }
 
 
@@ -272,7 +275,7 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 	req = eas_delete_email_req_new (account_uid, sync_key, "1", deleted_items_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_mail_get_eas_connection(self));
+                                    self->priv->connection);
 
 	    // Start the request
     eas_delete_email_req_Activate (req, &error);
@@ -318,7 +321,7 @@ eas_calendar_update_calendar_items(EasCalendar* self,
         eas_connection_set_account(eas_calendar_get_eas_connection(self), account_uid);
     }
     
-    GSList *items;
+    GSList *items = NULL;
     
     build_calendar_list(calendar_items, &items, &error);
 
@@ -336,7 +339,7 @@ eas_calendar_update_calendar_items(EasCalendar* self,
 	    // Set flag to wait for response
     e_flag_wait(flag);
 
-	eas_update_calendar_req_ActivateFinish(req, &ret_sync_key, error);
+	eas_update_calendar_req_ActivateFinish(req, &ret_sync_key, &error);
 		
     if (error)
     {
