@@ -432,7 +432,6 @@ isResponseValid(SoupMessage *msg)
 	
 	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
 	
-	g_debug("content_type = %s", content_type);
     if (0 != g_strcmp0("application/vnd.ms-sync.wbxml", content_type))
     {
 		g_warning ("  Failed: Content-Type did not match WBXML");
@@ -630,7 +629,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	g_debug("  eas_connection - handle_server_response priv[%x]", (unsigned int)self->priv);
 
 	RequestValidity validity = isResponseValid(msg);
-	if (INVALID == validity || VALID_EMPTY == validity) {
+	if (INVALID == validity) {
 		return;
 	}
 
@@ -639,24 +638,30 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		                    msg->response_body->length);
 	}
 
-    wbxml2xml ((WB_UTINY*)msg->response_body->data,
-               msg->response_body->length,
-               &xml,
-               &xml_len);
-
-	g_debug("  handle_server_response - pre-xmlReadMemory");
-	
-    doc = xmlReadMemory ((const char*)xml, 
-                         xml_len,
-                         "sync.xml", 
-                         NULL, 
-                         0);
-	if (xml) free(xml);
-
-	if (doc) 
+	if(VALID_NON_EMPTY == validity)
 	{
-		xmlNode* node = xmlDocGetRootElement(doc);
-		parse_for_status(node);
+		wbxml2xml ((WB_UTINY*)msg->response_body->data,
+		           msg->response_body->length,
+		           &xml,
+		           &xml_len);
+
+		g_debug("  handle_server_response - pre-xmlReadMemory");
+	
+		doc = xmlReadMemory ((const char*)xml, 
+		                     xml_len,
+		                     "sync.xml", 
+		                     NULL, 
+		                     0);
+
+		g_debug("  handle_server_response - post-xmlReadMemory. doc = 0x%x", doc);	
+	
+		if (xml) free(xml);
+
+		if (doc) 
+		{
+			xmlNode* node = xmlDocGetRootElement(doc);
+			parse_for_status(node);
+		}
 	}
 
 
