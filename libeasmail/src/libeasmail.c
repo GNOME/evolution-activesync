@@ -182,7 +182,7 @@ cleanup:
 
 // takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
 static gboolean 
-build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList ***emailinfo_list, GError **error)
+build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
 {
 	g_debug("build_emailinfo_list++");
 	gboolean ret = TRUE;
@@ -375,7 +375,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	
 	gchar *updatedSyncKey = NULL;
 	
-	g_debug("eas_mail_handler_sync_folder_email_info abotu to call dbus proxy");
+	g_debug("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
 							G_TYPE_UINT64, this_g->priv->account_uid,                   
@@ -569,12 +569,12 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 	DBusGProxy *proxy = self->priv->remoteEas; 
 	
 	// serialise the emails
-	guint num_emails = g_slist_length(update_emails);
+	guint num_emails = g_slist_length((GSList *)update_emails);
 	g_debug("%d emails to update", num_emails);
 	gchar **serialised_email_array = g_malloc0((num_emails * sizeof(gchar*)) + 1);	// null terminated array of strings
 	gchar *serialised_email = NULL;
 	guint i;
-	GSList *l = update_emails;
+	GSList *l = (GSList *)update_emails;
 	for(i = 0; i < num_emails; i++)
 	{
 		EasEmailInfo *email = l->data;
