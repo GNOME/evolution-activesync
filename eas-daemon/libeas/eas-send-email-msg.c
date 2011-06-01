@@ -154,13 +154,8 @@ eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc, GError** e
             continue;
         }
     }
-    if (!node) {
-        g_debug ("Failed to find SendMail element"); 
-        return;
-    }
 	
     g_debug ("eas_send_email_msg_parse_reponse++\n");	
 
-	
 }
 
