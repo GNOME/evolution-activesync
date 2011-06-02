@@ -102,7 +102,8 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 	EasSendEmailMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
     xmlNode *root  = NULL, 
-	        *leaf = NULL;
+	        *leaf = NULL,
+	        *cdata = NULL;
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     root = xmlNewDocNode (doc, NULL, (xmlChar*)"SendMail", NULL);
@@ -121,7 +122,9 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
-    leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar*)priv->mime_string);
+    leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", NULL);
+    cdata = xmlNewCDataBlock(doc, (xmlChar *)priv->mime_string, strlen(priv->mime_string));
+	xmlAddChild( leaf, cdata );
 
     return doc;
 }
