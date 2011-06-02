@@ -382,7 +382,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* self,
 	g_debug("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
-							G_TYPE_UINT64, self->priv->account_uid,                   
+							G_TYPE_UINT64, self->priv->account_uid,
 							G_TYPE_STRING, sync_key,
 	                        G_TYPE_STRING, collection_id,			// folder 
 							G_TYPE_INVALID, 
@@ -516,7 +516,7 @@ eas_mail_handler_delete_email(EasEmailHandler* self,
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
-	gboolean ret = TRUE;	
+	gboolean ret = TRUE;
 	
 	g_assert(self);
 	g_assert(sync_key);	
@@ -525,15 +525,36 @@ eas_mail_handler_delete_email(EasEmailHandler* self,
 	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	gchar *updatedSyncKey = NULL;
+    gchar **deleted_items_array = NULL;
+
+    // Build string array from items_deleted GSList
+    guint list_length = g_slist_length(items_deleted);
+    deleted_items_array = g_malloc0((list_length+1) * sizeof(gchar*));
+
+    int loop = 0;
+    for (; loop < list_length; ++loop)
+    {
+        deleted_items_array[loop] = g_strdup(g_slist_nth_data(items_deleted, loop));
+        g_debug("Deleted Id: [%s]",deleted_items_array[loop]);
+    }
 
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
 				  G_TYPE_UINT64, self->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
-		          G_TYPE_STRV, items_deleted,
+		          G_TYPE_STRV, deleted_items_array,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);
+
+    // Clean up string array
+    for (loop = 0; loop < list_length; ++loop)
+    {
+        g_free(deleted_items_array[loop]);
+        deleted_items_array[loop] = NULL;
+    }
+    g_free(deleted_items_array);
+    deleted_items_array = NULL;
 
 	if(ret)
 	{

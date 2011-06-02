@@ -348,7 +348,7 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
 
    if(build_serialised_email_info_array(&ret_added_email_array, a, &error)){
         if(build_serialised_email_info_array(&ret_changed_email_array, b, &error)){
-            build_serialised_email_info_array(&ret_deleted_email_array, c, &error);          
+            build_serialised_email_info_array(&ret_deleted_email_array, c, &error);
         }
    }
 
@@ -372,17 +372,20 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
 }
 
 gboolean eas_mail_delete_email(EasMail *easMailObj,
-                                    guint64 account_uid,
-                                    const gchar *sync_key, 
-                                    const gchar *folder_id,
-                                    const GSList *server_ids_array,
-                                    DBusGMethodInvocation* context)
+                                guint64 account_uid,
+                                const gchar *sync_key, 
+                                const gchar *folder_id,
+                                const gchar **server_ids_array,
+                                DBusGMethodInvocation* context)
 {
     g_debug("eas_mail_delete_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
     gchar* ret_sync_key = NULL;	
-	 
+    GSList *server_ids_list = NULL;
+
+    g_assert(server_ids_array);
+    
     flag = e_flag_new ();
 
     if(easMailObj->priv->connection)
@@ -390,15 +393,32 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
         eas_connection_set_account(easMailObj->priv->connection, account_uid);
     }
 
+    // Convert server_ids_array into GSList
+    int index = 0;
+    const gchar* id = NULL;
+    while ( (id = server_ids_array[index++]) )
+    {
+        server_ids_list = g_slist_prepend(server_ids_list, g_strdup(id));
+    }
 
     // Create the request
 	EasDeleteEmailReq *req = NULL;
-	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_array, flag);
+	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, flag);
+
+    // Cleanup the gslist
+    GSList *item = server_ids_list;
+    for(;item; item = item->next)
+    {
+        g_free(item->data);
+        item->data = NULL;
+    }
+    g_slist_free(server_ids_list);
+
 
 	eas_request_base_SetConnection (&req->parent_instance, 
                                    easMailObj->priv->connection);
 
-	    // Start the request
+    // Start the request
     eas_delete_email_req_Activate (req, &error);
 
 	    // Set flag to wait for response
