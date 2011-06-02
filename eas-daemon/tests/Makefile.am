@@ -6,22 +6,18 @@ interface_xml =  ../src/eas-mail.xml
 commondefs = ../src/activesyncd-common-defs.h
 
 
-INCLUDES = -I/usr/include/dbus-1.0 \
-	  -I/usr/lib/dbus-1.0/include \
-	  -I/usr/include/glib-2.0 \
-	  -I/usr/lib/glib-2.0/include \
-          -I/usr/lib/i386-linux-gnu/glib-2.0/include \
-          -I/usr/include/evolution-data-server-2.32
+INCLUDES =				\
+		$(GLIB_CFLAGS)		\
+		$(EDATASERVER_CFLAGS)	\
+		$(DBUS_CFLAGS)		\
+		$(DBUS_GLIB_CFLAGS)
 
+LIBS =					\
+		$(GLIB_LIBS)		\
+		$(EDATASERVER_LIBS)	\
+		$(DBUS_LIBS)		\
+		$(DBUS_GLIB_LIBS)
 
-LIBS =  -L/usr/lib \
-	-ldbus-1 \
-	-lpthread \
-	-lrt \
-	-lglib-2.0 \
-	-ldbus-glib-1 \
-	-lgobject-2.0 \
-	-lgthread-2.0 
 
 BUILT_SOURCES = activesyncd-mail-client-stub.h
 
