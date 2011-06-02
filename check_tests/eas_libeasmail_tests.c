@@ -298,7 +298,7 @@ START_TEST (test_eas_mail_handler_send_email)
     guint64 accountuid = 123456789;
     EasEmailHandler *email_handler = NULL;
 	const gchar *client_id = g_strdup("1");
-	const gchar *mime_file = g_strdup("/home/lorna/int07/testdata/mime_file.txt");	// TODO
+	const gchar *mime_file = g_strconcat(getenv("HOME"), "/int07/testdata/mime_file.txt", NULL);	
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
@@ -889,18 +889,18 @@ Suite* eas_libeasmail_suite (void)
   TCase *tc_libeasmail = tcase_create ("core");
   suite_add_tcase (s, tc_libeasmail);
 
-//  tcase_add_test (tc_libeasmail, test_get_mail_handler);
-//  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-//  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
-  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+  tcase_add_test (tc_libeasmail, test_get_mail_handler);
+  tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+  tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
   //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-  //  tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-//  tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
-  // need an unread, high importance email with a single attachment at top of inbox for this to pass:
+  //need an unread, high importance email with a single attachment at top of inbox for this to pass:
   //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
   // need at least one email in the inbox for this to pass:
-//   tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
+  //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);		
 
   return s;
 }

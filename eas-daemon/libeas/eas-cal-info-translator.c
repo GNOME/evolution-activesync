@@ -8,10 +8,10 @@
 
 #include "eas-cal-info-translator.h"
 
-#include <icalparser.h>
-#include <icalcomponent.h>
-#include <icaltypes.h>
-#include <icalduration.h>
+#include <libical/icalparser.h>
+#include <libical/icalcomponent.h>
+#include <libical/icaltypes.h>
+#include <libical/icalduration.h>
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
 
@@ -286,6 +286,137 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
+				// TODO do these also need to be added VALARM component if there's a reminder:?
+				else if(g_strcmp0(name, "Attendees") == 0)
+				{
+					g_debug("Found attendees sequence");					
+					xmlNode* attendeeNode = NULL;
+					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
+					{
+						g_debug("Found attendee");				
+						// TODO make all this string handling more efficient if poss
+						GString* attparams = g_string_new("");
+						GString* cal_address = g_string_new("mailto:");						
+							
+						xmlNode *subNode = NULL;
+						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
+						{
+							if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Email"))
+							{
+								xmlChar* email = xmlNodeGetContent(subNode);
+								g_debug("found attendee email");
+								//mailto
+								cal_address = g_string_append(cal_address, email);
+								g_free(email);
+								g_debug("cal_address = %s", cal_address->str);
+							}								
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Name"))
+							{
+								xmlChar* name = xmlNodeGetContent(subNode);								
+								g_debug("found name");
+								//cnparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "CN=");
+								attparams = g_string_append(attparams, name);	
+								g_free(name);
+								g_debug("attparams = %s", attparams->str);
+							}
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
+							{
+								g_debug("found status");																 
+								xmlChar* status_as_string = xmlNodeGetContent(subNode);
+								gchar *status_ical;
+								guint status = atoi(status_as_string);
+								switch(status)
+								{
+									// TODO create an enum for these values
+									case 0: // Response unknown
+									case 5: // Not responded
+									{
+										status_ical = strdup("NEEDS-ACTION");
+									}
+									break;
+									case 2: // Tentative
+									{
+										status_ical = strdup("TENTATIVE");
+									}
+									break;									
+									case 3: // Accept
+									{
+										status_ical = strdup("ACCEPTED");
+									}
+									break;	
+									case 4: // Decline
+									{
+										status_ical = strdup("DECLINED");
+									}
+									break;									
+									default:
+									{
+										g_warning("unrecognised attendee status received");
+									}
+								}// end switch status
+								//partstatparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "PARTSTAT=");
+								attparams = g_string_append(attparams, status_ical);
+								g_free(status_as_string);
+								g_free(status_ical);
+								g_debug("attparams = %s", attparams->str);								
+							}
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
+							{
+								g_debug("found type");								
+								xmlChar* type_as_string = xmlNodeGetContent(subNode);
+								guint type = atoi(type_as_string);
+								gchar *type_ical;
+								switch(type)
+								{
+									// TODO create an enum for these values
+									case 1: //Required
+									{
+										type_ical = g_strdup("REQ-PARTICIPANT");
+									}
+									break;
+									case 2: //Optional
+									{
+										type_ical = g_strdup("OPT-PARTICIPANT");
+									}
+									break;
+									case 3: //Resource
+									{
+										type_ical = g_strdup("NON-PARTICIPANT");
+									}
+									break;
+									default:
+									{
+										g_warning("unrecognised attendee type received");
+									}
+								}// end switch type
+								
+								//roleparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "ROLE=");
+								attparams = g_string_append(attparams, type_ical);
+								g_free(type_as_string);
+								g_free(type_ical);
+								g_debug("attparams = %s", attparams->str);								
+							}		
+							
+						}// end for subNodes	
+
+						gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+						_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
+
+						// Free the strings, including the character buffer
+						g_string_free(attparams, TRUE);
+						g_string_free(cal_address, TRUE);
+						
+						g_debug("adding attendee %s with address %s to event list", attendee, cal_address->str);							
+					
+					}//end for (attendee)
+					
+				}// end else if (attendees)
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar *timeZoneB64 = xmlNodeGetContent(n);

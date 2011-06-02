@@ -20,7 +20,7 @@
 #include "eas-connection.h"
 #include <libsoup/soup.h>
 
-#include <libwbxml-1.0/wbxml/wbxml.h>
+#include <wbxml/wbxml.h>
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
@@ -652,8 +652,6 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		                     "sync.xml", 
 		                     NULL, 
 		                     0);
-
-		g_debug("  handle_server_response - post-xmlReadMemory. doc = 0x%x", doc);	
 	
 		if (xml) free(xml);
 
