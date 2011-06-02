@@ -2,23 +2,12 @@
 lib_LTLIBRARIES = libeaslogger.la
 
 #lrm: TODO remove unnecessary includes
-INCLUDES =  -I/usr/include/glib-2.0 \
-            -I/usr/lib/glib-2.0/include \
-            -I/usr/include/glib-2.0/glib \
-            -I/usr/include/glib-2.0/gio \
-            -I/usr/lib/i386-linux-gnu/glib-2.0/include
+libeaslogger_la_CFLAGS =		\
+		$(GLIB_CFLAGS)
 
 #lrm: TODO remove unnecessary libs	  
-LIBS =  -L/usr/lib \
-	-lsoup-2.4 \
-	-lpthread \
-	-lrt \
-	-lglib-2.0 \
-    -lgio-2.0 \
-    -lgobject-2.0 \
-    -lgmodule-2.0 \
-	-lxml2 \
-	-ledataserver-1.2
+libeaslogger_la_LDFLAGS =		\
+		$(GLIB_LIBS)
 
 libeaslogger_la_SOURCES =	\
     eas-logger.h \
