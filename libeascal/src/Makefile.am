@@ -2,30 +2,22 @@
 lib_LTLIBRARIES =  libeascal.la
 
 #lrm: TODO remove unnecessary includes
-INCLUDES =  -I/usr/include/libsoup-2.4 \
-            -I/usr/include/libxml2 \
-            -I/usr/include/glib-2.0 \
-            -I/usr/lib/glib-2.0/include \
-            -I/usr/include/glib-2.0/glib \
-            -I/usr/include/glib-2.0/gio \
-            -I/usr/include/evolution-data-server-2.28 \
-            -I/usr/include/dbus-1.0 \
-            -I/usr/lib/dbus-1.0/include \
-            -I/usr/lib/i386-linux-gnu/glib-2.0/include \
-            -I/usr/include/evolution-data-server-2.32
-
+libeascal_la_CPPFLAGS =			\
+		$(GLIB_CFLAGS)		\
+		$(EDATASERVER_CFLAGS)	\
+		$(DBUS_CFLAGS)		\
+		$(DBUS_GLIB_CFLAGS)
+		$(LIBXML_CFLAGS)	\
+		$(SOUP_CFLAGS)
 
 #lrm: TODO remove unnecessary libs	  
-LIBS =  -L/usr/lib \
-	-lsoup-2.4 \
-	-lpthread \
-	-lrt \
-	-lglib-2.0 \
-    -lgio-2.0 \
-    -lgobject-2.0 \
-    -lgmodule-2.0 \
-	-ldbus-1 \
-	-ldbus-glib-1
+libeascal_la_LDFLAGS =			\
+		$(GLIB_LIBS)		\
+		$(EDATASERVER_LIBS)	\
+		$(DBUS_LIBS)		\
+		$(DBUS_GLIB_LIBS)	\
+		$(LIBXML_LIBS)	\
+		$(SOUP_LIBS)
 
 libeascal_la_SOURCES =		\
         libeascal.h			\
