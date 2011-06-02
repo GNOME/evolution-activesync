@@ -37,16 +37,20 @@ typedef  struct {
 	gushort wMilliseconds;
 } EasSystemTime;
 
+/* From ActiveSync Protocol Doc MS-ASDTYPE
+ * The required values are Bias, which is the offset from UTC, in minutes, and 
+ * the StandardDate and DaylightDate, which are needed when the biases take 
+ * effect. For example, the bias for Pacific Time is 480.
+ */
 typedef struct {
 	glong Bias;
-	wchar_t StandardName[32];
+	gushort StandardName[32];
 	EasSystemTime StandardDate;
 	glong StandardBias;
-	wchar_t DaylightName[32];
+	gushort DaylightName[32];
 	EasSystemTime DaylightDate;
 	glong DaylightBias;
 } EasTimeZone;
-	
 
 /**
  * \brief Private function to concatenate a VCALENDAR property name and value
@@ -291,15 +295,88 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					xmlChar *timeZoneB64 = xmlNodeGetContent(n);
 					EasTimeZone tz;
 					WB_UTINY *timeZone = NULL;
-					
-					g_debug("TimeZoneB64 [%s], %d", timeZoneB64, strlen(timeZoneB64));
+					WB_LONG tz_length = 0;
 
-					wbxml_base64_decode(timeZoneB64, -1, &timeZone);
+					// Expect timeZoneB64 to be NULL terminated
+					tz_length = wbxml_base64_decode(timeZoneB64, -1, &timeZone);
 					xmlFree(timeZoneB64);
-					memcpy(&tz, timeZone, sizeof(tz));
 
-					// TODO: Copy the TimeZone Data from tz into the vcal
+					// BLOB and structure should be the same size
+					g_assert(tz_length == sizeof(tz));
 					
+					if (tz_length == sizeof(tz))
+					{
+						gchar *result = NULL;
+						memcpy(&tz, timeZone, sizeof(tz));
+
+						// @@WARNING: TZID Mandatory, but no equivalent supplied from AS
+						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(gushort)), NULL, NULL, NULL);
+						g_warning("Using TimeZone.StandardName as the mandatory iCal TZID as ActiveSync has no equivalent data field");
+						_util_append_prop_string_to_list(&vtimezone, "TZID", result);
+						g_free(result); result = NULL;
+
+						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "STANDARD");
+
+						// YEAR MONTH DAY 'T' HOUR MINUTE SECONDS
+						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u",
+												tz.StandardDate.wYear, 
+												tz.StandardDate.wMonth,
+												tz.StandardDate.wDay,
+												tz.StandardDate.wHour,
+												tz.StandardDate.wMinute,
+												tz.StandardDate.wSecond);
+
+						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // StandardDate
+						g_free(result); result = NULL;
+
+						/* The property value is a signed numeric indicating the 
+						 * number of hours and possibly minutes from UTC. Positive 
+						 * numbers represent time zones east of the prime meridian, 
+						 * or ahead of UTC. Negative numbers represent time zones 
+						 * west of the prime meridian, or behind UTC.
+						 * E.g. TZOFFSETFROM:-0500 or TZOFFSETFROM:+1345
+						 */
+						result = g_strdup_printf("%+03ld%02ld", tz.Bias/60, tz.Bias%60);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result); // Bias
+						g_free(result); result = NULL;
+
+						result = g_strdup_printf("%+03ld%02ld", tz.StandardBias/60, tz.StandardBias%60);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);   // StandardBias
+						g_free(result); result = NULL;
+
+						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(gushort)), NULL, NULL, NULL);
+						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);        // StandardName
+						g_free(result); result = NULL;
+						_util_append_prop_string_to_list(&vtimezone, "END", "STANDARD");
+
+						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "DAYLIGHT");
+						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u", 
+							                     tz.DaylightDate.wYear, 
+							                     tz.DaylightDate.wMonth,
+					                             tz.DaylightDate.wDay,
+					                             tz.DaylightDate.wHour,
+					                             tz.DaylightDate.wMinute,
+					                             tz.DaylightDate.wSecond);
+						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // DaylightDate
+						g_free(result); result = NULL;
+
+						result = g_strdup_printf("%+03ld%02ld", tz.Bias/60, tz.Bias%60);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result);  // Bias
+						g_free(result); result = NULL;
+
+						result = g_strdup_printf("%+03ld%02ld", tz.DaylightBias/60, tz.DaylightBias%60);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);    // DaylightBias
+						g_free(result); result = NULL;
+
+						result = g_utf16_to_utf8((const gunichar2 *)tz.DaylightName, (sizeof(tz.DaylightName)/sizeof(gushort)), NULL, NULL, NULL);
+						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);         // DaylightName
+						g_free(result); result = NULL;
+						_util_append_prop_string_to_list(&vtimezone, "END", "DAYLIGHT");
+					} // tz_length == sizeof(tz)
+					else
+					{
+						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
+					}
 					g_free(timeZone);
 				}
 				
