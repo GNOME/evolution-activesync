@@ -120,6 +120,9 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
     body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
     
     leaf = xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4");  // Plain text 1, HTML 2, MIME 4
+    //The TruncationSize and AllOrNone doesn't work for Type MIME 4 (uncomment these for Plain text 1 or HTML 2)
+    //leaf = xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*) "5120");  //  Set the trancation size to 5KB    
+    //leaf = xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:AllOrNone", (xmlChar*) "0");
 
 	g_debug("eas_get_email_body_msg_build_message--");
 	return doc;
