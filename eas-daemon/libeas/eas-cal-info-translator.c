@@ -263,6 +263,98 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
+				else if(g_strcmp0(name, "Attendees") == 0)// TODO do these need to be added to both VEVENT and VALARM components if there's a reminder?
+				{
+					g_debug("Found attendees sequence");					
+					xmlNode* attendeeNode = NULL;
+					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
+					{
+						g_debug("Found attendee");				
+						// TODO make all this string handling more efficient
+						GString* attparams = g_string_new("");
+						GString* cal_address = g_string_new("mailto:");						
+							
+						xmlNode *subNode = NULL;
+						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
+						{
+							if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Email"))
+							{
+								xmlChar* email = xmlNodeGetContent(subNode);
+								g_debug("found attendee email");
+								//mailto
+								cal_address = g_string_append(cal_address, email);
+								g_free(email);
+								g_debug("cal_address = %s", cal_address->str);
+							}								
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Name"))
+							{
+								xmlChar* name = xmlNodeGetContent(subNode);								
+								g_debug("found name");
+								//cnparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "CN=");
+								attparams = g_string_append(attparams, name);	
+								g_free(name);
+								g_debug("attparams = %s", attparams->str);
+							}
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
+							{
+/*
+partstat-event   = ("NEEDS-ACTION"    ; Event needs action
+                        / "ACCEPTED"         ; Event accepted
+                        / "DECLINED"         ; Event declined
+                        / "TENTATIVE"        ; Event tentatively
+                                             ; accepted
+                        / "DELEGATED"        ; Event delegated
+*/								 
+								xmlChar* status = xmlNodeGetContent(subNode);								
+								g_debug("found status");
+								//partstatparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "PARTSTAT=");
+								attparams = g_string_append(attparams, status);	// TODO - convert
+								g_free(status);
+								g_debug("attparams = %s", attparams->str);								
+							}
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
+							{
+/*
+roleparam  = "ROLE" "="
+                   ("CHAIR"             ; Indicates chair of the
+                                        ; calendar entity
+                  / "REQ-PARTICIPANT"   ; Indicates a participant whose
+                                        ; participation is required
+                  / "OPT-PARTICIPANT"   ; Indicates a participant whose
+                                        ; participation is optional
+                  / "NON-PARTICIPANT"   ; Indicates a participant who
+                                        ; is copied for information
+                                        ; purposes only
+*/
+								xmlChar* type = xmlNodeGetContent(subNode);
+								g_debug("found type");
+								//roleparam
+								attparams = g_string_append(attparams, ";");
+								attparams = g_string_append(attparams, "ROLE=");
+								attparams = g_string_append(attparams, type);// TODO - convert
+								g_free(type);
+								g_debug("attparams = %s", attparams->str);								
+							}		
+							
+						}// end for subNodes	
+
+					gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+					_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
+
+					// Free the strings, including the character buffer
+					g_string_free(attparams, TRUE);
+					g_string_free(cal_address, TRUE);
+						
+					g_debug("adding attendee %s with address %s to event list", attendee, cal_address->str);							
+					
+					}//end for (attendee)
+					
+				}// end else if (attendees)
+
 				
 				// TODO: handle Timezone element
 				// TODO: handle Attendees element
