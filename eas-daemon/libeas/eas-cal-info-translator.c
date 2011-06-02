@@ -294,7 +294,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
 					{
 						g_debug("Found attendee");				
-						// TODO make all this string handling more efficient
+						// TODO make all this string handling more efficient if poss
 						GString* attparams = g_string_new("");
 						GString* cal_address = g_string_new("mailto:");						
 							
@@ -323,29 +323,15 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							}
 							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
 							{
-								g_debug("found status");								
-/*
-0=Response unknown
-2=Tentative
-3=Accept
-4=Decline
-5=Not responded
-								 
-partstat-event   = ("NEEDS-ACTION"    ; Event needs action
-                        / "ACCEPTED"         ; Event accepted
-                        / "DECLINED"         ; Event declined
-                        / "TENTATIVE"        ; Event tentatively
-                                             ; accepted
-                        / "DELEGATED"        ; Event delegated
-*/								 
+								g_debug("found status");																 
 								xmlChar* status_as_string = xmlNodeGetContent(subNode);
 								gchar *status_ical;
 								guint status = atoi(status_as_string);
 								switch(status)
 								{
-									// TODO create an enum for these values (and constant strings?)
-									case 0: // response unknown
-									case 5: // not responded
+									// TODO create an enum for these values
+									case 0: // Response unknown
+									case 5: // Not responded
 									{
 										status_ical = strdup("NEEDS-ACTION");
 									}
@@ -381,38 +367,23 @@ partstat-event   = ("NEEDS-ACTION"    ; Event needs action
 							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
 							{
 								g_debug("found type");								
-/*
-1 = Required
-2 = Optional
-3 = Resource
-								 
-roleparam  = "ROLE" "="
-                   ("CHAIR"             ; Indicates chair of the
-                                        ; calendar entity
-                  / "REQ-PARTICIPANT"   ; Indicates a participant whose
-                                        ; participation is required
-                  / "OPT-PARTICIPANT"   ; Indicates a participant whose
-                                        ; participation is optional
-                  / "NON-PARTICIPANT"   ; Indicates a participant who
-                                        ; is copied for information
-                                        ; purposes only
-*/
 								xmlChar* type_as_string = xmlNodeGetContent(subNode);
 								guint type = atoi(type_as_string);
 								gchar *type_ical;
 								switch(type)
 								{
-									case 1:
+									// TODO create an enum for these values
+									case 1: //Required
 									{
 										type_ical = g_strdup("REQ-PARTICIPANT");
 									}
 									break;
-									case 2:
+									case 2: //Optional
 									{
 										type_ical = g_strdup("OPT-PARTICIPANT");
 									}
 									break;
-									case 3:
+									case 3: //Resource
 									{
 										type_ical = g_strdup("NON-PARTICIPANT");
 									}
@@ -426,7 +397,7 @@ roleparam  = "ROLE" "="
 								//roleparam
 								attparams = g_string_append(attparams, ";");
 								attparams = g_string_append(attparams, "ROLE=");
-								attparams = g_string_append(attparams, type_ical);// TODO - convert
+								attparams = g_string_append(attparams, type_ical);
 								g_free(type_as_string);
 								g_free(type_ical);
 								g_debug("attparams = %s", attparams->str);								
@@ -434,21 +405,18 @@ roleparam  = "ROLE" "="
 							
 						}// end for subNodes	
 
-					gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
-					_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
+						gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+						_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
 
-					// Free the strings, including the character buffer
-					g_string_free(attparams, TRUE);
-					g_string_free(cal_address, TRUE);
+						// Free the strings, including the character buffer
+						g_string_free(attparams, TRUE);
+						g_string_free(cal_address, TRUE);
 						
-					g_debug("adding attendee %s with address %s to event list", attendee, cal_address->str);							
+						g_debug("adding attendee %s with address %s to event list", attendee, cal_address->str);							
 					
 					}//end for (attendee)
 					
 				}// end else if (attendees)
-
-				
-
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar *timeZoneB64 = xmlNodeGetContent(n);
