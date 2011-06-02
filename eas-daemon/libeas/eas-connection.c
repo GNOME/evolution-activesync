@@ -20,7 +20,7 @@
 #include "eas-connection.h"
 #include <libsoup/soup.h>
 
-#include <libwbxml-1.0/wbxml/wbxml.h>
+#include <wbxml/wbxml.h>
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
 
