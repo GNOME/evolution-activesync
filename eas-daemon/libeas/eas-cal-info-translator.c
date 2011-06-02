@@ -286,7 +286,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
-				// TODO do these also need to be added VALARM component if there's a reminder:?
 				else if(g_strcmp0(name, "Attendees") == 0)
 				{
 					g_debug("Found attendees sequence");					
@@ -406,14 +405,13 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						}// end for subNodes	
 
 						gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+
+						// Adding to VEVENT. EAS doesn't appear to support EMAIL ALARMS, so not adding to VALARM
 						_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
 
 						// Free the strings, including the character buffer
 						g_string_free(attparams, TRUE);
 						g_string_free(cal_address, TRUE);
-						
-						g_debug("adding attendee %s with address %s to event list", attendee, cal_address->str);							
-					
 					}//end for (attendee)
 					
 				}// end else if (attendees)
