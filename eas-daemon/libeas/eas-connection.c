@@ -652,8 +652,6 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		                     "sync.xml", 
 		                     NULL, 
 		                     0);
-
-		g_debug("  handle_server_response - post-xmlReadMemory. doc = 0x%x", doc);	
 	
 		if (xml) free(xml);
 
