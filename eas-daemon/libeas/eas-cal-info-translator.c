@@ -403,7 +403,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 								attparams = g_string_append(attparams, type_ical);
 								g_free(type_as_string);
 								g_free(type_ical);
-								g_debug("attparams = %s", attparams->str);								
+								g_debug("attparams = %s", attparams->str);
 							}		
 							
 						}// end for subNodes	
@@ -508,8 +508,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					}
 					g_free(timeZone);
 				}
-				
-				// TODO: handle Attendees element
+
 				// TODO: handle Recurrence element
 				// TODO: handle Exceptions element
 			}
