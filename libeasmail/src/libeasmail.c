@@ -254,7 +254,7 @@ free_string_array(gchar **array)
 
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean 
-eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g, 
+eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self, 
                                        gchar *sync_key, 
                                        GSList **folders_created,
                                        GSList **folders_updated,
@@ -263,11 +263,11 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 {
 	g_debug("eas_mail_handler_sync_folder_hierarchy++");
 
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(sync_key);
 
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
     
 	g_assert(g_slist_length(*folders_created) == 0);
 	g_assert(g_slist_length(*folders_updated) == 0);
@@ -283,7 +283,7 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* this_g,
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
 				  G_TYPE_UINT64, 
-	              this_g->priv->account_uid,
+	              self->priv->account_uid,
 		          G_TYPE_STRING,
 		          sync_key,
 		          G_TYPE_INVALID, 
@@ -353,7 +353,7 @@ In the case of deleted emails only the serverids are valid.
 In the case of updated emails only the serverids, flags and categories are valid.
 */
 gboolean 
-eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g, 
+eas_mail_handler_sync_folder_email_info(EasEmailHandler* self, 
     gchar *sync_key,
     const gchar *collection_id,	// folder to sync
 	GSList **emailinfos_created,
@@ -365,13 +365,13 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	g_debug("eas_mail_handler_sync_folder_email_info++");
 
 	g_debug("sync_key = %s", sync_key);
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(sync_key);
 	g_assert(collection_id);
 	g_assert(more_available);
 
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	gchar **created_emailinfo_array = NULL;
 	gchar **deleted_emailinfo_array = NULL;
@@ -382,7 +382,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 	g_debug("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
-							G_TYPE_UINT64, this_g->priv->account_uid,                   
+							G_TYPE_UINT64, self->priv->account_uid,                   
 							G_TYPE_STRING, sync_key,
 	                        G_TYPE_STRING, collection_id,			// folder 
 							G_TYPE_INVALID, 
@@ -443,7 +443,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* this_g,
 // get the entire email body for listed emails
 // each email body will be written to a file with the emailid as its name
 gboolean 
-eas_mail_handler_fetch_email_body(EasEmailHandler* this_g, 
+eas_mail_handler_fetch_email_body(EasEmailHandler* self, 
         const gchar *folder_id, 		                                        
         const gchar *server_id, 		
 		const gchar *mime_directory,
@@ -451,17 +451,17 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 {
 	g_debug("eas_mail_handler_fetch_email_bodies++");
 
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(folder_id);
 	g_assert(server_id);
 	g_assert(mime_directory);
 	
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
-	                        G_TYPE_UINT64, this_g->priv->account_uid, 
+	                        G_TYPE_UINT64, self->priv->account_uid, 
 	                        G_TYPE_STRING, folder_id,
 	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
@@ -477,23 +477,23 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* this_g,
 
 
 gboolean 
-eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g, 
+eas_mail_handler_fetch_email_attachment(EasEmailHandler* self, 
         const gchar *file_reference, 	
 		const gchar *mime_directory,	
 		GError **error)
 {
 	g_debug("eas_mail_handler_fetch_email_attachment++");
 
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(file_reference);	
 	g_assert(mime_directory);	
 	
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_attachment", error,
-	                        G_TYPE_UINT64, this_g->priv->account_uid, 
+	                        G_TYPE_UINT64, self->priv->account_uid, 
 	                        G_TYPE_STRING, file_reference,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
@@ -509,7 +509,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* this_g,
 
 // Delete specified emails from a single folder
 gboolean 
-eas_mail_handler_delete_email(EasEmailHandler* this_g, 
+eas_mail_handler_delete_email(EasEmailHandler* self, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
 								const gchar *folder_id,		// folder that contains email to delete
                                 GSList *items_deleted,		// emails to delete
@@ -518,16 +518,16 @@ eas_mail_handler_delete_email(EasEmailHandler* this_g,
 	g_debug("eas_mail_handler_delete_emails++");
 	gboolean ret = TRUE;	
 	
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(sync_key);	
 	g_assert(items_deleted);
 		
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	gchar *updatedSyncKey = NULL;
 
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
-				  G_TYPE_UINT64, this_g->priv->account_uid,
+				  G_TYPE_UINT64, self->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
 		          G_TYPE_STRV, items_deleted,
@@ -616,7 +616,7 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 
 
 gboolean 
-eas_mail_handler_send_email(EasEmailHandler* this_g, 
+eas_mail_handler_send_email(EasEmailHandler* self, 
     const gchar *client_email_id,	// unique message identifier supplied by client
 	const gchar *mime_file,			// the full path to the email (mime) to be sent
 	GError **error)
@@ -624,15 +624,15 @@ eas_mail_handler_send_email(EasEmailHandler* this_g,
 	gboolean ret = TRUE;	
 	g_debug("eas_mail_handler_send_email++");
 
-	g_assert(this_g);
+	g_assert(self);
 	g_assert(client_email_id);	
 	g_assert(mime_file);	
 	
-	DBusGProxy *proxy = this_g->priv->remoteEas; 
+	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "send_email", error,
-	                        G_TYPE_UINT64, this_g->priv->account_uid, 		
+	                        G_TYPE_UINT64, self->priv->account_uid, 		
 	                        G_TYPE_STRING, client_email_id,		
 	                        G_TYPE_STRING, mime_file,
 	                        G_TYPE_INVALID,
@@ -647,7 +647,7 @@ eas_mail_handler_send_email(EasEmailHandler* this_g,
 
 
 gboolean 
-eas_mail_handler_move_to_folder(EasEmailHandler* this_g, 
+eas_mail_handler_move_to_folder(EasEmailHandler* self, 
     EasEmailInfo *email,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,
@@ -662,7 +662,7 @@ eas_mail_handler_move_to_folder(EasEmailHandler* this_g,
 
 // How supported in AS?
 gboolean 
-eas_mail_handler_copy_to_folder(EasEmailHandler* this_g, 
+eas_mail_handler_copy_to_folder(EasEmailHandler* self, 
     const GSList *email_ids,
 	const gchar *src_folder_id,
 	const gchar *dest_folder_id,

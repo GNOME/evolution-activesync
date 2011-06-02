@@ -60,12 +60,12 @@ EasEmailInfo *eas_email_info_new();
 /*
 take the contents of the object and turn it into a null terminated string
 */
-gboolean eas_email_info_serialise(EasEmailInfo* this_g, gchar **result);
+gboolean eas_email_info_serialise(EasEmailInfo* self, gchar **result);
 
 /*
 populate the object from a string
 */
-gboolean eas_email_info_deserialise(EasEmailInfo* this_g, const gchar *data);
+gboolean eas_email_info_deserialise(EasEmailInfo* self, const gchar *data);
 
 
 G_END_DECLS

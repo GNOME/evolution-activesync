@@ -30,11 +30,11 @@ eas_folder_finalize (GObject *object)
 {
 	g_debug("eas_folder_finalize++");
 	/* deinitalization code here */
-	EasFolder *this_g = (EasFolder *) object;
+	EasFolder *self = (EasFolder *) object;
 
-	g_free(this_g->parent_id);
-	g_free(this_g->folder_id);
-	g_free(this_g->display_name);
+	g_free(self->parent_id);
+	g_free(self->folder_id);
+	g_free(self->display_name);
 
 	G_OBJECT_CLASS (eas_folder_parent_class)->finalize (object);
 
