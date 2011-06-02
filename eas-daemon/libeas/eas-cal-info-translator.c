@@ -263,7 +263,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_free(trigger);
 					xmlFree(minutes);
 				}
-				else if(g_strcmp0(name, "Attendees") == 0)// TODO do these need to be added to both VEVENT and VALARM components if there's a reminder?
+				// TODO do these also need to be added VALARM component if there's a reminder:?
+				else if(g_strcmp0(name, "Attendees") == 0)
 				{
 					g_debug("Found attendees sequence");					
 					xmlNode* attendeeNode = NULL;
@@ -299,7 +300,14 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							}
 							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
 							{
+								g_debug("found status");								
 /*
+0=Response unknown
+2=Tentative
+3=Accept
+4=Decline
+5=Not responded
+								 
 partstat-event   = ("NEEDS-ACTION"    ; Event needs action
                         / "ACCEPTED"         ; Event accepted
                         / "DECLINED"         ; Event declined
@@ -307,18 +315,54 @@ partstat-event   = ("NEEDS-ACTION"    ; Event needs action
                                              ; accepted
                         / "DELEGATED"        ; Event delegated
 */								 
-								xmlChar* status = xmlNodeGetContent(subNode);								
-								g_debug("found status");
+								xmlChar* status_as_string = xmlNodeGetContent(subNode);
+								gchar *status_ical;
+								guint status = atoi(status_as_string);
+								switch(status)
+								{
+									// TODO create an enum for these values (and constant strings?)
+									case 0: // response unknown
+									case 5: // not responded
+									{
+										status_ical = strdup("NEEDS-ACTION");
+									}
+									break;
+									case 2: // Tentative
+									{
+										status_ical = strdup("TENTATIVE");
+									}
+									break;									
+									case 3: // Accept
+									{
+										status_ical = strdup("ACCEPTED");
+									}
+									break;	
+									case 4: // Decline
+									{
+										status_ical = strdup("DECLINED");
+									}
+									break;									
+									default:
+									{
+										g_warning("unrecognised attendee status received");
+									}
+								}// end switch status
 								//partstatparam
 								attparams = g_string_append(attparams, ";");
 								attparams = g_string_append(attparams, "PARTSTAT=");
-								attparams = g_string_append(attparams, status);	// TODO - convert
-								g_free(status);
+								attparams = g_string_append(attparams, status_ical);
+								g_free(status_as_string);
+								g_free(status_ical);
 								g_debug("attparams = %s", attparams->str);								
 							}
 							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
 							{
+								g_debug("found type");								
 /*
+1 = Required
+2 = Optional
+3 = Resource
+								 
 roleparam  = "ROLE" "="
                    ("CHAIR"             ; Indicates chair of the
                                         ; calendar entity
@@ -330,13 +374,38 @@ roleparam  = "ROLE" "="
                                         ; is copied for information
                                         ; purposes only
 */
-								xmlChar* type = xmlNodeGetContent(subNode);
-								g_debug("found type");
+								xmlChar* type_as_string = xmlNodeGetContent(subNode);
+								guint type = atoi(type_as_string);
+								gchar *type_ical;
+								switch(type)
+								{
+									case 1:
+									{
+										type_ical = g_strdup("REQ-PARTICIPANT");
+									}
+									break;
+									case 2:
+									{
+										type_ical = g_strdup("OPT-PARTICIPANT");
+									}
+									break;
+									case 3:
+									{
+										type_ical = g_strdup("NON-PARTICIPANT");
+									}
+									break;
+									default:
+									{
+										g_warning("unrecognised attendee type received");
+									}
+								}// end switch type
+								
 								//roleparam
 								attparams = g_string_append(attparams, ";");
 								attparams = g_string_append(attparams, "ROLE=");
-								attparams = g_string_append(attparams, type);// TODO - convert
-								g_free(type);
+								attparams = g_string_append(attparams, type_ical);// TODO - convert
+								g_free(type_as_string);
+								g_free(type_ical);
 								g_debug("attparams = %s", attparams->str);								
 							}		
 							
