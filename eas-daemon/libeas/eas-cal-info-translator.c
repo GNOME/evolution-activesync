@@ -8,10 +8,10 @@
 
 #include "eas-cal-info-translator.h"
 
-#include <icalparser.h>
-#include <icalcomponent.h>
-#include <icaltypes.h>
-#include <icalduration.h>
+#include <libical/icalparser.h>
+#include <libical/icalcomponent.h>
+#include <libical/icaltypes.h>
+#include <libical/icalduration.h>
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
 
