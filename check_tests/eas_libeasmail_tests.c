@@ -181,6 +181,7 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 		
 	}
 
+	g_object_unref();
 	return;
 }
 END_TEST
@@ -327,6 +328,8 @@ START_TEST (test_get_mail_handler)
     EasEmailHandler *email_handler = NULL;
   
     testGetMailHandler(&email_handler, accountuid);  
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -368,6 +371,8 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -424,6 +429,8 @@ START_TEST (test_get_eas_mail_info_in_folder)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);	
 }
 END_TEST
 
@@ -476,6 +483,9 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);	
+	
 }
 END_TEST
 
@@ -609,7 +619,9 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     
     g_slist_free(created);
     g_slist_free(deleted);
-    g_slist_free(updated);	
+	g_slist_free(updated);	
+	
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -764,6 +776,8 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -883,6 +897,8 @@ START_TEST (test_eas_mail_handler_delete_email)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);	
 	
 }
 END_TEST
