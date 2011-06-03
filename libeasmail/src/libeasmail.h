@@ -182,7 +182,7 @@ gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this,
 gboolean eas_mail_handler_delete_email(EasEmailHandler* this, 
 										gchar *sync_key,                                        
                                         const gchar *folder_id,
-                                        GSList *items_deleted,
+                                        const GSList *items_deleted,
 	                                    GError **error);
 
 

@@ -512,7 +512,7 @@ gboolean
 eas_mail_handler_delete_email(EasEmailHandler* self, 
 								gchar *sync_key,			// sync_key for the folder containing these emails
 								const gchar *folder_id,		// folder that contains email to delete
-                                GSList *items_deleted,		// emails to delete
+                                const GSList *items_deleted,		// emails to delete
 								GError **error)
 {
 	g_debug("eas_mail_handler_delete_emails++");
@@ -528,13 +528,13 @@ eas_mail_handler_delete_email(EasEmailHandler* self,
     gchar **deleted_items_array = NULL;
 
     // Build string array from items_deleted GSList
-    guint list_length = g_slist_length(items_deleted);
+    guint list_length = g_slist_length((GSList*)items_deleted);
     deleted_items_array = g_malloc0((list_length+1) * sizeof(gchar*));
 
     int loop = 0;
     for (; loop < list_length; ++loop)
     {
-        deleted_items_array[loop] = g_strdup(g_slist_nth_data(items_deleted, loop));
+        deleted_items_array[loop] = g_strdup(g_slist_nth_data((GSList*)items_deleted, loop));
         g_debug("Deleted Id: [%s]",deleted_items_array[loop]);
     }
 
