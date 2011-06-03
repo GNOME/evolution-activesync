@@ -295,9 +295,15 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_send_email)
 {
-    guint64 accountuid = 123456789;
     EasEmailHandler *email_handler = NULL;
-	const gchar *client_id = g_strdup("1");
+	const gchar client_id[21];	
+    guint64 accountuid = 123456789;
+	/* initialize random generator */
+	srand ( time(NULL) );
+	guint random_num = rand();
+
+	snprintf(client_id, sizeof(client_id)/sizeof(client_id[0]), "%d", random_num);	
+
 	const gchar *mime_file = g_strconcat(getenv("HOME"), "/int07/testdata/mime_file.txt", NULL);	
 	
 	// get a handle to the DBus interface and associate the account ID with 
