@@ -305,6 +305,7 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	list_len_as_string = get_next_field(&from, sep);
 	list_len = atoi(list_len_as_string);
 	g_free(list_len_as_string);
+	list_len_as_string = NULL;
 	g_debug("%d headers", list_len);
 
 	for(i = 0; i < list_len; i++)
@@ -335,6 +336,7 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	}
 	list_len = atoi(list_len_as_string);
 	g_free(list_len_as_string);
+	list_len_as_string = NULL;
 	g_debug("%d attachments", list_len);
 	for(i = 0; i < list_len; i++)
 	{
@@ -361,12 +363,15 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	{
 		self->flags = atoi(flags_as_string);
 	}
+	g_free(flags_as_string);
+	flags_as_string = NULL;
 	g_debug("flags = %d", self->flags);	
 	
 	//categories
 	list_len_as_string = get_next_field(&from, sep);
 	list_len = atoi(list_len_as_string);
 	g_free(list_len_as_string);
+	list_len_as_string = NULL;
 	g_debug("%d categories", list_len);	
 
 	for(i = 0; i < list_len; i++)
