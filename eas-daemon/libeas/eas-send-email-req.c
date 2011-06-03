@@ -32,7 +32,9 @@ struct _EasSendEmailReqPrivate
 {
 	EasSendEmailMsg *send_email_msg;
 	guint64 account_id;
-	gchar *mime_string;	 
+	gchar *mime_string;
+	gchar* client_id;	
+	gchar* mime_file;	
 };
 
 static void
@@ -47,6 +49,8 @@ eas_send_email_req_init (EasSendEmailReq *object)
 	priv->account_id = 0;   // assuming 0 not a valid account id
 	priv->send_email_msg = NULL;
 	priv->mime_string = NULL;
+	priv->mime_file = NULL;
+	priv->client_id = NULL;
 
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SEND_EMAIL);
@@ -62,6 +66,8 @@ eas_send_email_req_finalize (GObject *object)
 	
 	EasSendEmailReqPrivate *priv = req->priv;	
 	g_free(priv->mime_string);
+	g_free(priv->mime_file);
+	g_free(priv->client_id);	
 	g_object_unref(priv->send_email_msg);
 	g_free (priv);
 	req->priv = NULL;
@@ -88,22 +94,27 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 }
 
 EasSendEmailReq *
-eas_send_email_req_new()
+eas_send_email_req_new(guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file)
 {
 	g_debug("eas_send_email_req_new++");
 	
-	EasSendEmailReq *object = NULL;
+	EasSendEmailReq *self = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
+	EasSendEmailReqPrivate* priv = self->priv;
 
-	object = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
+	eas_request_base_SetFlag(&self->parent_instance, flag);
 
+	priv->mime_file = g_strdup(mime_file);
+	priv->account_id = account_id;	
+	priv->client_id = g_strdup(client_id);
+	
 	g_debug("eas_send_email_req_new--");	
 	
-	return object;
+	return self;
 }
 
 // uses the message object to build xml and sends it to the connection object
 void 
-eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file, EasItemType type, GError** error)
+eas_send_email_req_Activate(EasSendEmailReq *self, GError** error)
 {
 	EasSendEmailReqPrivate* priv = self->priv;
 	xmlDoc *doc;
@@ -111,15 +122,12 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	
 	// store flag in base (doesn't set the flag as in signal the waiters)
 	g_debug("eas_send_email_req_Activate++");
-	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
-	priv->account_id = account_id;
-
 	// open file containing mime data to be sent:
-	file = fopen(mime_file, "r");  // mime file can be read as text (attachments will be base 64 encoded)
+	file = fopen(priv->mime_file, "r");  // mime file can be read as text (attachments will be base 64 encoded)
 	if(file == NULL)
 	{
-		g_debug("failed to open file %s", mime_file);
+		g_debug("failed to open file %s", priv->mime_file);
 		// TODO - how do we propogate errors?
 	}
 
@@ -154,7 +162,7 @@ eas_send_email_req_Activate(EasSendEmailReq *self, guint64 account_id, EFlag *fl
 	
 	g_debug("create msg object");
 	//create msg object
-	priv->send_email_msg = eas_send_email_msg_new(account_id, client_id, priv->mime_string);	
+	priv->send_email_msg = eas_send_email_msg_new(priv->account_id, priv->client_id, priv->mime_string);	
 
 	g_debug("build messsage");
 	//build request msg

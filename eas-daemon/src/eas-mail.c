@@ -612,22 +612,16 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
         eas_connection_set_account(easMailObj->priv->connection, account_uid);
     }
 	
-    // Create Request
-    EasSendEmailReq *req = g_object_new(EAS_TYPE_SEND_EMAIL_REQ, NULL);
-
+    // Create Request                         
+	EasSendEmailReq *req = eas_send_email_req_new(account_uid, flag, clientid, mime_file);
+	
 	g_debug("request created");
     eas_request_base_SetConnection (&req->parent_instance, 
                                     easMailObj->priv->connection);
 
 	g_debug("connection set ");
     // Activate Request
-    eas_send_email_req_Activate (req,
-                           account_uid,
-                           flag,
-                           clientid,
-                           mime_file,
-                           EAS_ITEM_MAIL,
-                           &error);
+    eas_send_email_req_Activate (req,&error);
 
 	g_debug ("request activated");
 	
