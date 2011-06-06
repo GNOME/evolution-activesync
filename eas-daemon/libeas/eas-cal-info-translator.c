@@ -43,13 +43,13 @@ typedef  struct {
  * effect. For example, the bias for Pacific Time is 480.
  */
 typedef struct {
-	glong Bias;
+	gint32 Bias;
 	gushort StandardName[32];
 	EasSystemTime StandardDate;
-	glong StandardBias;
+	gint32 StandardBias;
 	gushort DaylightName[32];
 	EasSystemTime DaylightDate;
-	glong DaylightBias;
+	gint32 DaylightBias;
 } EasTimeZone;
 
 /**
