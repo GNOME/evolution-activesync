@@ -52,6 +52,7 @@ typedef struct {
 	glong DaylightBias;
 } EasTimeZone;
 
+
 /**
  * \brief Private function to concatenate a VCALENDAR property name and value
  *        and append it to a list
@@ -722,29 +723,90 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 }
 
 
-static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr app_data)
+/**
+ * Parse the STANDARD and DAYLIGHT subcomponents of VTIMEZONE.
+ * Using one function for both as their formats are identical.
+ */
+static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
 {
-	if (vtimezone)
+	if (subcomponent)
 	{
 		icalproperty* prop;
-		for (prop = icalcomponent_get_first_property(vtimezone, ICAL_ANY_PROPERTY);
+		for (prop = icalcomponent_get_first_property(subcomponent, ICAL_ANY_PROPERTY);
 			 prop;
-			 prop = icalcomponent_get_next_property(vtimezone, ICAL_ANY_PROPERTY))
+			 prop = icalcomponent_get_next_property(subcomponent, ICAL_ANY_PROPERTY))
 		{
 			const icalproperty_kind prop_type = icalproperty_isa(prop);
 			switch (prop_type)
 			{
-/*				case ICAL_xxx_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
+				case ICAL_DTSTART_PROPERTY:
+					{
+						const gchar* value = icalproperty_get_value_as_string(prop);
+						if (type == ICAL_XSTANDARD_COMPONENT)
+						{
+							// TODO: set StandardDate
+						}
+						else
+						{
+							// TODO: set DaylightDate
+						}
+					}
 					break;
-				case ICAL_xxx_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
-					break;*/
-				// TODO: all the rest :)
+
+				case ICAL_TZOFFSETFROM_PROPERTY:
+					// TODO
+					break;
+					
+				case ICAL_TZOFFSETTO_PROPERTY:
+					// TODO
+					break;
+
+				case ICAL_RRULE_PROPERTY:
+					// TODO
+					break;
 
 				default:
 					break;
 			}
+		}
+	}
+}
+
+
+/**
+ * Parse a VTIMEZONE component_data
+ */
+static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr app_data)
+{
+	if (vtimezone)
+	{
+		EasTimeZone timezone;
+
+		// Only one property in a VTIMEZONE: the TZID
+		icalproperty* prop = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
+		if (prop)
+		{
+			// Get the ASCII value from the iCal
+			const gchar* tzid8 = (const gchar*)icalproperty_get_value_as_string(prop);			// TODO: free
+
+			// Convert to Unicode, max. 32 chars (including the trailing 0)
+			gunichar2* tzid16 = g_utf8_to_utf16(tzid8, 31, NULL, NULL, NULL); // TODO: free
+
+			// Copy this into the EasTimeZone struct as both StandardName and DaylightName
+			memcpy(&(timezone.StandardName), tzid16, 64); // 32 Unicode chars = 64 bytes
+			memcpy(&(timezone.DaylightName), tzid16, 64);
+
+			g_free(tzid8);
+			g_free(tzid16);
+		}
+
+		// Now process the STANDARD and DAYLIGHT subcomponents
+		icalcomponent* subcomponent;
+		for (subcomponent = icalcomponent_get_first_component(vtimezone, ICAL_ANY_COMPONENT);
+		     subcomponent;
+		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
+		{
+			_util_process_vtimezone_subcomponent(subcomponent, &timezone, icalcomponent_isa(subcomponent));
 		}
 	}
 }
