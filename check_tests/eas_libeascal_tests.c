@@ -81,6 +81,28 @@ END:VALARM\n\
 END:VEVENT\n\
 END:VCALENDAR";
 
+const char* TEST_VCALENDAR3 = "BEGIN:VCALENDAR\n\
+PRODID:-//Meego//ActiveSyncD 1.0//EN\n\
+VERSION:2.0\n\
+METHOD:PUBLISH\n\
+BEGIN:VEVENT\n\
+DTSTART:20110628T103000Z\n\
+SUMMARY:this is test item 1 - updated\n\
+UID:040001008200E00074C5B7601A82Esdfgfd7D1FCCasdfdsfasd\n\
+ 0100000000B9C7DF6EBB049448E3D99B8CC68E560\n\
+LOCATION:\n\
+DTEND:20110628T113000Z\n\
+DESCRIPTION:\n\
+CLASS:PUBLIC\n\
+TRANSP:OPAQUE\n\
+BEGIN:VALARM\n\
+ACTION:DISPLAY\n\
+DESCRIPTION:Reminder\n\
+TRIGGER:-P15M\n\
+END:VALARM\n\
+END:VEVENT\n\
+END:VCALENDAR";
+
 
 
 static void testGetCalendarHandler(EasCalHandler **cal_handler, guint64 accountuid){
@@ -347,6 +369,63 @@ START_TEST (test_eas_cal_handler_update_cal)
 END_TEST
 
 
+START_TEST (test_eas_cal_handler_add_cal)
+{
+    guint64 accountuid = 123456789;
+    EasCalHandler *cal_handler = NULL;
+    GError *error = NULL;
+	gboolean testCalFound = FALSE;
+	
+	// get a handle to the DBus interface and associate the account ID with 
+	// this object 
+    testGetCalendarHandler(&cal_handler, accountuid);
+
+
+    gchar folder_sync_key[64];
+	strcpy(folder_sync_key,"0");
+	GSList *calitems_created = NULL; //receives a list of EasMails
+    GSList *calitems_updated = NULL;
+    GSList *calitems_deleted = NULL;    
+
+    testGetLatestCalendar(cal_handler,
+                      folder_sync_key,
+                      &calitems_created,
+                      &calitems_updated,
+                      &calitems_deleted,
+                      &error);
+
+	
+
+	GSList *calitemToUpdate = NULL;
+	EasCalInfo *updatedcalitem = NULL;
+	gboolean rtn = FALSE;
+
+
+		
+	updatedcalitem = eas_cal_info_new();
+	updatedcalitem->client_id = g_strdup("sdfasdfsdf");
+	updatedcalitem->icalendar = g_strdup(TEST_VCALENDAR3);
+		
+	calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
+
+
+	rtn = eas_cal_handler_add_items(cal_handler, folder_sync_key, calitemToUpdate,&error);
+	if(error){
+		fail_if(rtn == FALSE,"%s",error->message);
+	}
+	updatedcalitem = calitemToUpdate->data;
+	fail_if(updatedcalitem->server_id == NULL, "Not got new id for item");
+
+	g_slist_free(calitemToUpdate);
+		
+
+	testCalFound = TRUE;
+
+}
+END_TEST
+
+
+
 Suite* eas_libeascal_suite (void)
 {
   Suite* s = suite_create ("libeascal");
@@ -360,7 +439,8 @@ Suite* eas_libeascal_suite (void)
   tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
 //  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
   //tcase_add_test (tc_libeascal, test_eas_cal_handler_delete_cal);
-  tcase_add_test (tc_libeascal, test_eas_cal_handler_update_cal);
+  //tcase_add_test (tc_libeascal, test_eas_cal_handler_update_cal);
+	//tcase_add_test (tc_libeascal, test_eas_cal_handler_add_cal);
 
   return s;
 }

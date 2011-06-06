@@ -161,6 +161,24 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						{
 							g_error("Trying to do Add with Mail type - This is not allowed");
 						}
+						case EAS_ITEM_CALENDAR:
+						{
+							xmlNode *added = xmlNewChild(command, NULL, (xmlChar *)"Add", NULL);
+							xmlNewNs (node, (xmlChar *)"Calendar:", (xmlChar *)"calendar");	
+							if(iterator->data){
+								//TODO: call translator to get client ID and  encoded application data
+								//gchar *serialised_calendar = (gchar *)iterator->data;	
+											
+								EasCalInfo *cal_info =(EasCalInfo*) iterator->data;	
+								
+								// create the server_id node
+								xmlNode *server_id = xmlNewChild(added, NULL, (xmlChar *)"ClientId", (xmlChar*)cal_info->client_id);								
+								xmlNode *app_data = xmlNewChild(added, NULL, (xmlChar *)"ApplicationData", NULL);										
+								// translator deals with app data
+								eas_cal_info_translator_parse_request(doc, app_data, cal_info);
+								// TODO error handling and freeing
+							}
+						}
 						break;
 						
 					}		
@@ -239,6 +257,7 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
 					*appData = NULL;
 					
 	gchar *item_server_id = NULL;
+	gchar *item_client_id = NULL;
 	
     if (!doc) {
         g_debug ("Failed to parse sync response XML");
@@ -286,7 +305,12 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
 			g_debug ("Got SyncKey = %s", priv->sync_key);
 			continue;
-		}		
+		}
+		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Responses")) 
+        {
+               g_debug ("Responses:\n");
+               break;
+        }		
 		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")) 
         {
                g_debug ("Commands:\n");
@@ -295,120 +319,156 @@ eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	}
 
     if (!node) {
-        g_debug ("Failed to find Commands element\n");
+        g_debug ("Failed to find Commands or responses element\n");
         return;
     }
-    
-     for (node = node->children; node; node = node->next) {
+
+	if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")){
+		 for (node = node->children; node; node = node->next) {
 	
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
-			appData = node;
+			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+				appData = node;
 			
-			for (appData = appData->children; appData; appData = appData->next) {
-				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
-					item_server_id = (gchar *)xmlNodeGetContent(appData);
-					g_debug ("Found serverID for Item = %s", item_server_id);
-					continue;
-				}
-				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
-					gchar *flatItem = NULL;
-					g_debug ("Found AppliicationData - about to parse and flatten");
-					//choose translator based on data type
-					switch(priv->ItemType)
-					{
-						default:
-						{
-							g_debug ("Unknown Data Type  %d", priv->ItemType);
-						}
-						break;
-						case EAS_ITEM_MAIL:
-						{
-
-							flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
-						}
-						break;
-						case EAS_ITEM_CALENDAR:
-						{
-							flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
-						}
-						break;
-
-						
-					}		
-					
-					
-					g_debug ("FlatItem = %s", flatItem);
-					if(flatItem){
-					    g_debug ("appending to added_items");
-						priv->added_items = g_slist_append(priv->added_items, flatItem);
+				for (appData = appData->children; appData; appData = appData->next) {
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+						item_server_id = (gchar *)xmlNodeGetContent(appData);
+						g_debug ("Found serverID for Item = %s", item_server_id);
+						continue;
 					}
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+						gchar *flatItem = NULL;
+						g_debug ("Found AppliicationData - about to parse and flatten");
+						//choose translator based on data type
+						switch(priv->ItemType)
+						{
+							default:
+							{
+								g_debug ("Unknown Data Type  %d", priv->ItemType);
+							}
+							break;
+							case EAS_ITEM_MAIL:
+							{
+
+								flatItem = eas_add_email_appdata_parse_response(appData, item_server_id); 
+							}
+							break;
+							case EAS_ITEM_CALENDAR:
+							{
+								flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
+							}
+							break;
+
 						
-					continue;
+						}		
+					
+					
+						g_debug ("FlatItem = %s", flatItem);
+						if(flatItem){
+							g_debug ("appending to added_items");
+							priv->added_items = g_slist_append(priv->added_items, flatItem);
+						}
+						
+						continue;
+					}
 				}
+				continue;
 			}
-			continue;
-		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
-			appData = node;
-			// TODO Parse deleted folders
-			for (appData = appData->children; appData; appData = appData->next) {
-				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
-					item_server_id = (gchar *)xmlNodeGetContent(appData);
-					g_debug ("Found serverID for Item = %s", item_server_id);
-					priv->deleted_items = g_slist_append(priv->deleted_items, item_server_id);
-					continue;
+			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+				appData = node;
+				// TODO Parse deleted folders
+				for (appData = appData->children; appData; appData = appData->next) {
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+						item_server_id = (gchar *)xmlNodeGetContent(appData);
+						g_debug ("Found serverID for Item = %s", item_server_id);
+						priv->deleted_items = g_slist_append(priv->deleted_items, item_server_id);
+						continue;
+					}
 				}
+				continue;
 			}
-			continue;
-		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Change")) {
-			// TODO Parse updated folders
-			appData = node;
+			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Change")) {
+				// TODO Parse updated folders
+				appData = node;
 			
-			for (appData = appData->children; appData; appData = appData->next) {
-				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
-					item_server_id = (gchar *)xmlNodeGetContent(appData);
-					g_debug ("Found serverID for Item = %s", item_server_id);
-					continue;
-				}
-				if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
-					gchar *flatItem = NULL;
-					g_debug ("Found AppliicationData - about to parse and flatten");
-					//choose translator based on data type
-					switch(priv->ItemType)
-					{
-						default:
-						{
-							g_debug ("Unknown Data Type  %d", priv->ItemType);
-						}
-						break;
-						case EAS_ITEM_MAIL:
-						{
-							g_debug("calling email appdata translator for update");
-							flatItem = eas_update_email_appdata_parse_response(appData, item_server_id); 
-						}
-						break;
-						case EAS_ITEM_CALENDAR:
-						{
-							flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
-						}
-						break;
-						
-					}		
-					
-					
-					g_debug ("FlatItem = %s", flatItem);
-					if(flatItem){
-					    g_debug ("appending to updated_items");
-						priv->updated_items = g_slist_append(priv->updated_items, flatItem);
+				for (appData = appData->children; appData; appData = appData->next) {
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+						item_server_id = (gchar *)xmlNodeGetContent(appData);
+						g_debug ("Found serverID for Item = %s", item_server_id);
+						continue;
 					}
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+						gchar *flatItem = NULL;
+						g_debug ("Found AppliicationData - about to parse and flatten");
+						//choose translator based on data type
+						switch(priv->ItemType)
+						{
+							default:
+							{
+								g_debug ("Unknown Data Type  %d", priv->ItemType);
+							}
+							break;
+							case EAS_ITEM_MAIL:
+							{
+								g_debug("calling email appdata translator for update");
+								flatItem = eas_update_email_appdata_parse_response(appData, item_server_id); 
+							}
+							break;
+							case EAS_ITEM_CALENDAR:
+							{
+								flatItem = eas_cal_info_translator_parse_response(appData, item_server_id);
+							}
+							break;
 						
-					continue;
+						}		
+					
+					
+						g_debug ("FlatItem = %s", flatItem);
+						if(flatItem){
+							g_debug ("appending to updated_items");
+							priv->updated_items = g_slist_append(priv->updated_items, flatItem);
+						}
+						
+						continue;
+					}
 				}
+				continue;
 			}
-			continue;
+		}
+	}
+	else if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Responses")){
+		for (node = node->children; node; node = node->next) {
+	
+			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+				appData = node;
+				gchar *flatItem = NULL;
+				for (appData = appData->children; appData; appData = appData->next) {
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ClientId")) {
+						item_client_id = (gchar *)xmlNodeGetContent(appData);
+						g_debug ("Found clientID for Item = %s", item_server_id);
+						continue;
+					}
+					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+						item_server_id = (gchar *)xmlNodeGetContent(appData);
+						g_debug ("Found serverID for Item = %s", item_server_id);
+						continue;
+					}
+					
+				}
+				EasCalInfo *info = eas_cal_info_new ();
+				info->client_id = item_client_id;
+				info->server_id = item_server_id;
+				eas_cal_info_serialise (info, &flatItem);
+				g_object_unref (info);
+				item_client_id = NULL;
+				item_server_id = NULL;
+				if(flatItem){
+					g_debug ("appending to added_items");
+					priv->added_items = g_slist_append(priv->added_items, flatItem);
+				}
+				continue;
+			}
 		}
 	}
 	
