@@ -37,6 +37,7 @@
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
 #include "eas-update-email-req.h"
+#include "eas-add-calendar-req.h"
 
 struct _EasConnectionPrivate
 {
@@ -828,6 +829,11 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 			{
 				g_debug("EAS_REQ_UPDATE_CALENDAR");
 				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc, &error);
+			}
+			case EAS_REQ_ADD_CALENDAR:
+			{
+				g_debug("EAS_REQ_ADD_CALENDAR");
+				eas_add_calendar_req_MessageComplete ((EasAddCalendarReq *)req, doc, &error);
 			}
 			break;				
 		}

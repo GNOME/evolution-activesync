@@ -7,6 +7,7 @@
 #include "eas-sync-req.h"
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
+#include "eas-add-calendar-req.h"
 #include "../../libeascal/src/eas-cal-info.h"
 
 #include "../libeas/eas-connection.h"
@@ -295,7 +296,9 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
     } 
     else
     {
-        dbus_g_method_return (context,
+		//TODO: make sure this stuff is ok to go over dbus.
+    
+		dbus_g_method_return (context,
                               ret_sync_key);
     }	
 	g_debug("eas_calendar_delete_calendar_items--");
@@ -352,6 +355,66 @@ eas_calendar_update_calendar_items(EasCalendar* self,
                               ret_sync_key);
     }	
 	g_debug("eas_calendar_update_calendar_items--");
+	return TRUE;
+}
+
+gboolean 
+eas_calendar_add_calendar_items(EasCalendar* self,
+                                    guint64 account_uid,
+                                    const gchar* sync_key, 
+                                    const gchar **calendar_items,
+                                    DBusGMethodInvocation* context)
+{
+    GError* error = NULL;
+	g_debug("eas_calendar_add_calendar_items++");
+    EFlag *flag = NULL;
+    gchar* ret_sync_key = NULL;
+	 
+    flag = e_flag_new ();
+
+    if(self->priv->connection)
+    {
+        eas_connection_set_account(eas_calendar_get_eas_connection(self), account_uid);
+    }
+    
+    GSList *items = NULL;
+	GSList* added_items = NULL;
+	gchar** ret_created_items_array = NULL;
+	
+    build_calendar_list(calendar_items, &items, &error);
+
+
+    // Create the request
+	EasAddCalendarReq *req = NULL;
+	req = eas_add_calendar_req_new (account_uid, sync_key, "1", items, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_calendar_get_eas_connection(self));
+
+	    // Start the request
+    eas_add_calendar_req_Activate (req);
+
+	    // Set flag to wait for response
+    e_flag_wait(flag);
+
+	eas_add_calendar_req_ActivateFinish(req, 
+	                                    &ret_sync_key,
+	                                    &added_items,
+	                                    &error);
+		
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } 
+    else
+    {
+	   	build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error);
+        dbus_g_method_return (context,
+                              ret_sync_key,
+                              ret_created_items_array);
+    }	
+	g_debug("eas_calendar_add_calendar_items--");
 	return TRUE;
 }
 

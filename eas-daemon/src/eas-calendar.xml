@@ -20,6 +20,15 @@
       <arg type="as" name="ret_deleted_items_array" direction="out"/>
       <arg type="as" name="ret_updated_items_array" direction="out"/>
     </method>
+    
+    <method name="add_calendar_items">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="sync_key" direction="in"/>
+      <arg type="as" name="add_items_array" direction="in"/>
+      <arg type="s" name="ret_sync_key" direction="out"/>
+      <arg type="as" name="ret_created_items_array" direction="out"/>
+    </method>
 
     <method name="update_calendar_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
