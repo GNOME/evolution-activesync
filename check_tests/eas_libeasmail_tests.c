@@ -19,6 +19,8 @@ static void testGetMailHandler(EasEmailHandler **email_handler, guint64 accountu
     "eas_mail_handler_new returns NULL when given a valid ID");
     fail_if((*email_handler)->priv == NULL,
     "eas_mail_handler_new account ID object (EasEmailHandler *) member priv (EasEmailHandlerPrivate *) NULL"); 
+
+	g_object_unref(email_handler);
 }
 
 static void testGetFolderHierarchy(EasEmailHandler *email_handler,
