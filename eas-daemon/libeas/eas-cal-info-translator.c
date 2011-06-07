@@ -761,9 +761,13 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		
 		if (isStandardTime)
 		{
-			// Calculate the EAS bias value. This is the same as the Standard timezone offset, but inverted
-			// (as EAS bias is expressed as value to be added to a time to get to UTC, rather than the
-			// conventional offset *from* UTC: see http://msdn.microsoft.com/en-us/library/ms725481(v=vs.85).aspx).
+			// Calculate the EAS bias value. Bias represents a UTC offset, but expressed the opposite way
+			// round to the usual notation. In EAS, Bias is the offset added to the local timezone to get to
+			// UTC, whereas the conventional notation is the offset added to UTC to get to the local time.
+			// For example, Pacific Standard Time is at UTC-8 (8 hours behind UTC - deduct 8 from a UTC time to
+			// get the corresponding PST time), but in EAS that's expressed as a Bias of +480 minutes (i.e. add
+			// 8 hours to a PST time to get back to UTC). Likewise, Central European Time (UTC+1) has a Bias
+			// value of -60. See http://msdn.microsoft.com/en-us/library/ms725481(v=vs.85).aspx for more details.
 			timezone->Bias = -1 * tzOffsetToValue;
 
 			// Standard bias is always 0 (it's the Standard time's offset from the Bias)
@@ -771,17 +775,14 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		}
 		else // It's daylight time
 		{
-			// As with the bias above, this value is inverted from our usual understanding of it.
-			// e.g. If in summer time a timezone adds 1 hour, the DaylightBias value is -60.
-			// Again, it's because Bias = no of minutes to add to this timezone to get to UTC
-			// (rather than the amount to add to UTC to get to this timezone).
-			// DaylightBias and StandardBias are the additional offsets *relative to the base
-			// Bias value* (ie. not absolute offsets to UTC).
-			// We can calculate this easily as follows:
+			// As with the bias above, this value is inverted from our usual understanding of it. e.g. If a
+			// daylight saving phase adds 1 hour to the standard phase, the DaylightBias value is -60. Note
+			// that DaylightBias and StandardBias are the additional offsets *relative to the base Bias value*
+			// (rather than absolute offsets from UTC). We can calculate the daylight bias easily as follows:
 			timezone->DaylightBias = tzOffsetFromValue - tzOffsetToValue;
 		}
 
-		// Translate recurrence information
+		// Handle recurrence information if present
 		if (rrule)
 		{
 			// Assuming FREQ=YEARLY - TODO: check this is safe...
@@ -816,7 +817,9 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 			//    iCal -2 => EAS 4
 			// etc. even though 2nd-to-last isn't always 4th.
 
-			// Start by checking the value is in the range (-5..-1)(1..5)
+			// Every day occurs in a month at least 4 times (a non-leap February has 4 full weeks)
+			// and no more than 5 times (5 full weeks = 35 days, longer than any month). So the day
+			// position must be in the range +/-(1..5)
 			g_assert((-5 <= byDayPosition && byDayPosition <= -1) || (1 <= byDayPosition && byDayPosition <= 5));
 			if (byDayPosition > 0)
 			{
@@ -824,6 +827,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 			}
 			else // byDayPosition is negative
 			{
+				// Convert -1 to 5, -2 to 4, etc. (see above for reason why)
 				easTimeStruct->Day = 6 + byDayPosition;
 			}
 
