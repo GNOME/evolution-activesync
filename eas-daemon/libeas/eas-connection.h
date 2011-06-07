@@ -52,7 +52,18 @@ struct _EasConnection
 
 GType eas_connection_get_type (void) G_GNUC_CONST;
 
-void eas_connection_autodiscover (const gchar* email, const gchar* username, const gchar* password, gchar** serverUri, GError** error);
+typedef void (*EasAutoDiscoverCallback) (char* serverUri, gpointer data, GError *error);
+void eas_connection_autodiscover (EasAutoDiscoverCallback cb,
+                                  gpointer cb_data, 
+                                  const gchar* email, 
+                                  const gchar* username, 
+                                  const gchar* password);
+
+void eas_connection_set_details(EasConnection* self, 
+                                const gchar* serverUri, 
+                                const gchar* username, 
+                                const gchar* password);
+
 
 //EasConnection* eas_connection_new (const gchar* serverUri, const gchar* username, const gchar* password, GError** error);
 EasConnection* eas_connection_new ();
