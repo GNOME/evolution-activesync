@@ -181,7 +181,7 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 		
 	}
 
-	g_object_unref();
+	g_object_unref(email_handler);
 	return;
 }
 END_TEST
