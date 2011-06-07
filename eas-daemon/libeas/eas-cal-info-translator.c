@@ -27,14 +27,14 @@ const guint MINUTES_PER_DAY  = 60 * 24;
 const guint MINUTES_PER_WEEK = 60 * 24 * 7;
 
 typedef  struct {
-	gushort wYear;
-	gushort wMonth;
-	gushort wDayOfWeek;
-	gushort wDay;
-	gushort wHour;
-	gushort wMinute;
-	gushort wSecond;
-	gushort wMilliseconds;
+	gushort Year;
+	gushort Month;
+	gushort DayOfWeek;
+	gushort Day;
+	gushort Hour;
+	gushort Minute;
+	gushort Second;
+	gushort Milliseconds;
 } EasSystemTime;
 
 /* From ActiveSync Protocol Doc MS-ASDTYPE
@@ -449,12 +449,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 						// YEAR MONTH DAY 'T' HOUR MINUTE SECONDS
 						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u",
-												tz.StandardDate.wYear, 
-												tz.StandardDate.wMonth,
-												tz.StandardDate.wDay,
-												tz.StandardDate.wHour,
-												tz.StandardDate.wMinute,
-												tz.StandardDate.wSecond);
+												tz.StandardDate.Year, 
+												tz.StandardDate.Month,
+												tz.StandardDate.Day,
+												tz.StandardDate.Hour,
+												tz.StandardDate.Minute,
+												tz.StandardDate.Second);
 
 						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // StandardDate
 						g_free(result); result = NULL;
@@ -481,12 +481,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "DAYLIGHT");
 						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u", 
-							                     tz.DaylightDate.wYear, 
-							                     tz.DaylightDate.wMonth,
-					                             tz.DaylightDate.wDay,
-					                             tz.DaylightDate.wHour,
-					                             tz.DaylightDate.wMinute,
-					                             tz.DaylightDate.wSecond);
+							                     tz.DaylightDate.Year, 
+							                     tz.DaylightDate.Month,
+					                             tz.DaylightDate.Day,
+					                             tz.DaylightDate.Hour,
+					                             tz.DaylightDate.Minute,
+					                             tz.DaylightDate.Second);
 						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // DaylightDate
 						g_free(result); result = NULL;
 
@@ -731,43 +731,150 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 {
 	if (subcomponent)
 	{
-		icalproperty* prop;
-		for (prop = icalcomponent_get_first_property(subcomponent, ICAL_ANY_PROPERTY);
-			 prop;
-			 prop = icalcomponent_get_next_property(subcomponent, ICAL_ANY_PROPERTY))
+		// Determine whether we've been passed a STANDARD or DAYLIGHT component
+		// and get a pointer to the appropriate time struct
+		const gboolean isStandardTime = (type == ICAL_XSTANDARD_COMPONENT);
+		EasSystemTime* easTimeStruct = (isStandardTime ? (&(timezone->StandardDate)) : (&(timezone->DaylightDate)));
+
+		// Get the properties we're interested in. Note RRULE is optional but the rest are mandatory
+		icalproperty* dtStart = icalcomponent_get_first_property(subcomponent, ICAL_DTSTART_PROPERTY);
+		icalproperty* rrule = icalcomponent_get_first_property(subcomponent, ICAL_RRULE_PROPERTY);
+		icalproperty* tzOffsetTo = icalcomponent_get_first_property(subcomponent, ICAL_TZOFFSETTO_PROPERTY);
+		icalproperty* tzOffsetFrom = icalcomponent_get_first_property(subcomponent, ICAL_TZOFFSETFROM_PROPERTY);
+
+		// Get the values of the properties
+		const icaltimetype dtStartValue = icalproperty_get_dtstart(dtStart);
+		const int tzOffsetToValue = icalproperty_get_tzofsetto(tzOffsetTo);
+		const int tzOffsetFromValue = icalproperty_get_tzoffsetfrom(tzOffsetFrom);
+		struct icalrecurrencetype rruleValue;
+		if (rrule)
 		{
-			const icalproperty_kind prop_type = icalproperty_isa(prop);
-			switch (prop_type)
+			rruleValue = icalproperty_get_rrule(rrule);
+		}
+		else
+		{
+			icalrecurrencetype_clear(&rruleValue);
+		}
+
+		// TODO: I'm assuming that icalproperty_get_tzofsetto() and icalproperty_get_tzofsetfrom()
+		// return the offset as minutes. Check this when testing and correct if required.
+		
+		if (isStandardTime)
+		{
+			// Calculate the EAS bias value. This is the same as the Standard timezone offset, but inverted
+			// (as EAS bias is expressed as value to be added to a time to get to UTC, rather than the
+			// conventional offset *from* UTC: see http://msdn.microsoft.com/en-us/library/ms725481(v=vs.85).aspx).
+			timezone->Bias = -1 * tzOffsetToValue;
+
+			// Standard bias is always 0 (it's the Standard time's offset from the Bias)
+			timezone->StandardBias = 0; // Always zero
+		}
+		else // It's daylight time
+		{
+			// As with the bias above, this value is inverted from our usual understanding of it.
+			// e.g. If in summer time a timezone adds 1 hour, the DaylightBias value is -60.
+			// Again, it's because Bias = no of minutes to add to this timezone to get to UTC
+			// (rather than the amount to add to UTC to get to this timezone).
+			// DaylightBias and StandardBias are the additional offsets *relative to the base
+			// Bias value* (ie. not absolute offsets to UTC).
+			// We can calculate this easily as follows:
+			timezone->DaylightBias = tzOffsetFromValue - tzOffsetToValue;
+		}
+
+		// Translate recurrence information
+		if (rrule)
+		{
+			// Assuming FREQ=YEARLY - TODO: check this is safe...
+			short byMonth = rruleValue.by_month[0];
+
+			short byDayRaw = rruleValue.by_day[0];
+			icalrecurrencetype_weekday byDayWeekday = icalrecurrencetype_day_day_of_week(byDayRaw);
+			/** 0 == any of day of week. 1 == first, 2 = second, -2 == second to last, etc */
+			int byDayPosition = icalrecurrencetype_day_position(byDayRaw);
+
+			easTimeStruct->Year = 0; // Always 0 if we have recurrence
+			easTimeStruct->Month = byMonth;
+
+			// The day is the tricky bit...
+			// Both formats use this to represent nth occurrence of a day in the month
+			// (ie. it's NOT an absolute date). However, iCal supports this notation:
+			//    +1 = First of the month
+			//    +2 = 2nd in the month
+			//    -1 = Last in the month
+			//    -2 = 2nd-to-last in the month
+			//    etc.
+			//
+			// Whilst EAS uses:
+			//     1 = First in month
+			//     2 = 2nd in month
+			//     ...
+			//     5 = Last in month, even if there are only 4 occurrences
+			//
+			// In other words, EAS cannot encode "2nd-to-last in month" etc.
+			// The best we can do is to add negative iCal values to 6, so
+			//    iCal -1 => EAS 5
+			//    iCal -2 => EAS 4
+			// etc. even though 2nd-to-last isn't always 4th.
+
+			// Start by checking the value is in the range (-5..-1)(1..5)
+			g_assert((-5 <= byDayPosition && byDayPosition <= -1) || (1 <= byDayPosition && byDayPosition <= 5));
+			if (byDayPosition > 0)
 			{
-				case ICAL_DTSTART_PROPERTY:
-					{
-						const gchar* value = icalproperty_get_value_as_string(prop);
-						if (type == ICAL_XSTANDARD_COMPONENT)
-						{
-							// TODO: set StandardDate
-						}
-						else
-						{
-							// TODO: set DaylightDate
-						}
-					}
-					break;
+				easTimeStruct->Day = byDayPosition;
+			}
+			else // byDayPosition is negative
+			{
+				easTimeStruct->Day = 6 + byDayPosition;
+			}
 
-				case ICAL_TZOFFSETFROM_PROPERTY:
-					// TODO
+			// Don't want to rely on enum values in icalrecurrencetype_weekday so use a switch statement to set the DayOfWeek
+			switch (byDayWeekday)
+			{
+				case ICAL_SUNDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 0;
 					break;
-					
-				case ICAL_TZOFFSETTO_PROPERTY:
-					// TODO
+				case ICAL_MONDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 1;
 					break;
-
-				case ICAL_RRULE_PROPERTY:
-					// TODO
+				case ICAL_TUESDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 2;
 					break;
-
-				default:
+				case ICAL_WEDNESDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 3;
+					break;
+				case ICAL_THURSDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 4;
+					break;
+				case ICAL_FRIDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 5;
+					break;
+				case ICAL_SATURDAY_WEEKDAY:
+					easTimeStruct->DayOfWeek = 6;
 					break;
 			}
+
+			// Date set. Time is set below...
+		}
+		else // No recurrence information: just a one-off time change, so we set an absolute date value for EAS
+		{
+			easTimeStruct->Year = dtStartValue.year;
+			easTimeStruct->Month = dtStartValue.month; // Both use 1 (Jan) ... 12 (Dec)
+			easTimeStruct->Day = dtStartValue.day;
+			// Date set. Time is set below...
+		}
+
+		// Set the time fields
+		easTimeStruct->Hour = dtStartValue.hour;
+		easTimeStruct->Minute = dtStartValue.minute;
+		easTimeStruct->Second = dtStartValue.second;
+
+		// Destroy the property objects
+		icalproperty_free(dtStart);
+		icalproperty_free(tzOffsetFrom);
+		icalproperty_free(tzOffsetTo);
+		if (rrule)
+		{
+			icalproperty_free(rrule);
 		}
 	}
 }
@@ -783,21 +890,21 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		EasTimeZone timezone;
 
 		// Only one property in a VTIMEZONE: the TZID
-		icalproperty* prop = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
-		if (prop)
+		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
+		if (tzid)
 		{
 			// Get the ASCII value from the iCal
-			const gchar* tzid8 = (const gchar*)icalproperty_get_value_as_string(prop);			// TODO: free
+			const gchar* tzidValue8 = (const gchar*)icalproperty_get_value_as_string(tzid);			// TODO: free
 
 			// Convert to Unicode, max. 32 chars (including the trailing 0)
-			gunichar2* tzid16 = g_utf8_to_utf16(tzid8, 31, NULL, NULL, NULL); // TODO: free
+			gunichar2* tzidValue16 = g_utf8_to_utf16(tzidValue8, 31, NULL, NULL, NULL); // TODO: free
 
 			// Copy this into the EasTimeZone struct as both StandardName and DaylightName
-			memcpy(&(timezone.StandardName), tzid16, 64); // 32 Unicode chars = 64 bytes
-			memcpy(&(timezone.DaylightName), tzid16, 64);
+			memcpy(&(timezone.StandardName), tzidValue16, 64); // 32 Unicode chars = 64 bytes
+			memcpy(&(timezone.DaylightName), tzidValue16, 64);
 
-			g_free(tzid8);
-			g_free(tzid16);
+			g_free(tzidValue8);
+			g_free(tzidValue16);
 		}
 
 		// Now process the STANDARD and DAYLIGHT subcomponents
