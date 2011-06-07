@@ -521,19 +521,107 @@ dump_wbxml_response(const WB_UTINY *wbxml, const WB_LONG wbxml_len)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Autodiscover
+//
+////////////////////////////////////////////////////////////////////////////////
+ 
+static xmlDoc *
+autodiscover_as_xml(const gchar *email)
+{
+    xmlDoc *doc;
+    xmlNode *node, *child;
+    xmlNs *ns;
+
+    doc = xmlNewDoc((xmlChar *) "1.0");
+    node = xmlNewDocNode(doc, NULL, (xmlChar *)"Autodiscover", NULL);
+    xmlDocSetRootElement(doc, node);
+    ns = xmlNewNs (node, (xmlChar *)"http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestschema/2006", NULL);
+    node = xmlNewChild(node, ns, (xmlChar *)"Request", NULL);
+    child = xmlNewChild(node, ns, (xmlChar *)"EMailAddress", (xmlChar *)email);
+    child = xmlNewChild(node, ns, (xmlChar *)"AcceptableResponseSchema", 
+                        (xmlChar *)"http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006");
+
+    return doc;
+}
+
+static gchar*
+autodiscover_parse_protocol(xmlNode *node)
+{
+    for (node = node->children; node; node = node->next) {
+        if (node->type == XML_ELEMENT_NODE &&
+            !strcmp((char *)node->name, "Url")) {
+            char *asurl = (char *)xmlNodeGetContent(node);
+            if (asurl)
+                return asurl;
+        }
+    }
+    return NULL;
+}
+
+static void
+autodiscover_cb(SoupSession *session, SoupMessage *msg, gpointer data)
+{
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Public functions
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @param[in]  cb        autodiscover response callback
+ * @param[in]  cb_data   data to be passed into the callback
+ * @param[in]  email     user's exchange email address
+ * @param[in]  username  exchange username in the format DOMAIN\username
+ * @param[in]  password  exchange server account password
+ */
 void
-eas_connection_autodiscover (const gchar* email, 
-                             const gchar* username, 
-                             const gchar* password, 
-                             gchar** serverUri, 
-                             GError** error)
+eas_connection_autodiscover (EasAutoDiscoverCallback cb,
+                             gpointer cb_data,
+                             const gchar* email,
+                             const gchar* username,
+                             const gchar* password)
 {
-	/* TODO: Add public function implementation here */
+	GError *error = NULL;
+	gchar* domain = NULL;
+	EasConnection *cnc = NULL;
+	
 	g_debug("eas_connection_autodiscover++");
+
+	if (!email || !password) 
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Email and password are mandatory and must be provided");
+		goto err;
+	}
+
+	domain = strchr(email, '@');
+	if (!(domain && *domain))
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to extract domain from email address");
+		goto err;
+	}
+	++domain; // Advance past the '@'
+
+
+	// Url options
+	// 1 - https://<domain>/autodiscover/autodiscover.xml
+	// 2 - https://autodiscover.<domain>/autodiscover/autodiscover.xml
+
+	if (!cnc)
+	{
+	err:
+		cb(NULL, cb_data, error);
+		return;
+	}
+
 	g_debug("eas_connection_autodiscover--");
 }
 
