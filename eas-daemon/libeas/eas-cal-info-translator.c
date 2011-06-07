@@ -26,16 +26,21 @@ const guint MINUTES_PER_HOUR = 60;
 const guint MINUTES_PER_DAY  = 60 * 24;
 const guint MINUTES_PER_WEEK = 60 * 24 * 7;
 
+#define compile_time_assert(cond, msg) \
+	char msg[(cond)?1:-1]
+
 typedef  struct {
-	gushort wYear;
-	gushort wMonth;
-	gushort wDayOfWeek;
-	gushort wDay;
-	gushort wHour;
-	gushort wMinute;
-	gushort wSecond;
-	gushort wMilliseconds;
-} EasSystemTime;
+	guint16 wYear;
+	guint16 wMonth;
+	guint16 wDayOfWeek;
+	guint16 wDay;
+	guint16 wHour;
+	guint16 wMinute;
+	guint16 wSecond;
+	guint16 wMilliseconds;
+} __attribute__((packed)) EasSystemTime;
+
+compile_time_assert((sizeof(EasSystemTime) == 16), EasSystemTime_not_expected_size);
 
 /* From ActiveSync Protocol Doc MS-ASDTYPE
  * The required values are Bias, which is the offset from UTC, in minutes, and 
@@ -43,14 +48,16 @@ typedef  struct {
  * effect. For example, the bias for Pacific Time is 480.
  */
 typedef struct {
-	glong Bias;
-	gushort StandardName[32];
-	EasSystemTime StandardDate;
-	glong StandardBias;
-	gushort DaylightName[32];
-	EasSystemTime DaylightDate;
-	glong DaylightBias;
-} EasTimeZone;
+	gint32 Bias;					// 4
+	guint16 StandardName[32];		// 64
+	EasSystemTime StandardDate;		// 16
+	gint32 StandardBias;			// 4
+	guint16 DaylightName[32];		// 64
+	EasSystemTime DaylightDate;		// 16
+	gint32 DaylightBias;			// 4
+} __attribute__((packed)) EasTimeZone;						// 172
+
+compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size);
 
 /**
  * \brief Private function to concatenate a VCALENDAR property name and value
@@ -430,9 +437,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					tz_length = wbxml_base64_decode(timeZoneB64, -1, &timeZone);
 					xmlFree(timeZoneB64);
 
-					// BLOB and structure should be the same size
-					g_assert(tz_length == sizeof(tz));
-					
+					// TODO Check decode of timezone for endianess problems
+
 					if (tz_length == sizeof(tz))
 					{
 						gchar *result = NULL;
@@ -465,11 +471,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						 * west of the prime meridian, or behind UTC.
 						 * E.g. TZOFFSETFROM:-0500 or TZOFFSETFROM:+1345
 						 */
-						result = g_strdup_printf("%+03ld%02ld", tz.Bias/60, tz.Bias%60);
+						result = g_strdup_printf("%+03d%02d", tz.Bias/60, tz.Bias%60);
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result); // Bias
 						g_free(result); result = NULL;
 
-						result = g_strdup_printf("%+03ld%02ld", tz.StandardBias/60, tz.StandardBias%60);
+						result = g_strdup_printf("%+03d%02d", tz.StandardBias/60, tz.StandardBias%60);
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);   // StandardBias
 						g_free(result); result = NULL;
 
@@ -489,11 +495,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // DaylightDate
 						g_free(result); result = NULL;
 
-						result = g_strdup_printf("%+03ld%02ld", tz.Bias/60, tz.Bias%60);
+						result = g_strdup_printf("%+03d%02d", tz.Bias/60, tz.Bias%60);
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result);  // Bias
 						g_free(result); result = NULL;
 
-						result = g_strdup_printf("%+03ld%02ld", tz.DaylightBias/60, tz.DaylightBias%60);
+						result = g_strdup_printf("%+03d%02d", tz.DaylightBias/60, tz.DaylightBias%60);
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);    // DaylightBias
 						g_free(result); result = NULL;
 
