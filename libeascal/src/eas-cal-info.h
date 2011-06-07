@@ -31,6 +31,7 @@ struct _EasCalInfo
 {
 	GObject parent_instance;
 
+	gchar* client_id;	   // from Local app - needed for add operations
 	gchar*  server_id;		// from AS server
 	gchar*  icalendar;		// The iCalendar (RFC 5545) formatted payload
 };

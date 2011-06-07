@@ -61,6 +61,12 @@ gboolean eas_calendar_update_calendar_items(EasCalendar* self,
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context);
 
+gboolean eas_calendar_add_calendar_items(EasCalendar* self,
+                                    guint64 account_uid,
+                                    const gchar* sync_key, 
+                                    const gchar **calendar_items,
+                                    DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_CALENDAR_H_ */

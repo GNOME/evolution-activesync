@@ -108,5 +108,25 @@ gboolean eas_cal_handler_update_items(EasCalHandler* this,
                                                  GSList *items_updated,
                                                  GError **error);
 
+/* function name:               eas_cal_handler_add_items
+ * function description:        add items in calendar folder
+ * return value:                TRUE if function success, FALSE if error
+ * params: 
+ * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
+ * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
+ *                              from exchange server for subsequent sync requests
+ * GSList *items_added (in): provides a list of EasFolder structs that describe
+ *                              add items.  If there are no new updated items
+ *                              this parameter will be unchanged.
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+gboolean eas_cal_handler_add_items(EasCalHandler* this, 
+                                                 gchar *sync_key, 
+                                                 GSList *items_added,
+                                                 GError **error);
+
 
 #endif

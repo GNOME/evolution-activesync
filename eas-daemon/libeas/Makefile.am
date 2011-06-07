@@ -84,7 +84,10 @@ libeas_la_SOURCES =		\
         eas-update-calendar-req.h \
         eas-update-calendar-req.c \
         eas-utils.h \
-        eas-utils.c
+        eas-utils.c \
+        eas-add-calendar-req.h \
+        eas-add-calendar-req.c 
+
 
 
 #CLEANFILES = $(MARSHAL_GENERATED)

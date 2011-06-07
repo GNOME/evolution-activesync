@@ -23,6 +23,7 @@ static void eas_cal_info_init (EasCalInfo *object)
 {
 	g_debug("eas_cal_info_init++");
 
+	object->client_id = NULL;
 	object->server_id = NULL;
 	object->icalendar = NULL;
 }
@@ -32,6 +33,7 @@ static void eas_cal_info_finalize (GObject* object)
 {
 	EasCalInfo* self = (EasCalInfo*)object;
 
+	g_free(self->client_id);
 	g_free(self->server_id);
 	g_free(self->icalendar);
 
@@ -66,7 +68,9 @@ EasCalInfo* eas_cal_info_new ()
 
 gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 {
-	GString* str = g_string_new(self->server_id);
+	GString* str = g_string_new(self->client_id);
+	str = g_string_append_c(str, SERVER_ID_SEPARATOR);
+	str = g_string_append(str, self->server_id);
 	str = g_string_append_c(str, SERVER_ID_SEPARATOR);
 	str = g_string_append(str, self->icalendar);
 	*result = g_string_free(str, FALSE); // Destroy the GString but not the buffer (which is returned with ownership)
@@ -77,7 +81,8 @@ gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 {
 	gboolean separator_found = FALSE;
-	g_debug("eas_cal_info_deserialise++");	
+	g_debug("eas_cal_info_deserialise++");
+	gchar *tempString = NULL;
 	// Look for the separator character
 	guint i = 0;
 	for (; data[i]; i++)
@@ -91,9 +96,25 @@ gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 
 	if (separator_found)
 	{
-		self->server_id = g_strndup(data, i);
-		self->icalendar = g_strdup(data + (i + 1));
+		self->client_id = g_strndup(data, i);
+		tempString = g_strdup(data + (i + 1));
+		separator_found = FALSE;
 	}
+	i = 0;
+	for (; tempString[i]; i++)
+	{
+		if (tempString[i] == SERVER_ID_SEPARATOR)
+		{
+			separator_found = TRUE;
+			break;
+		}
+	}
+
+	if (separator_found)
+	{
+		self->server_id = g_strndup(tempString, i);
+		self->icalendar = g_strdup(data + (i + 1));
+	}		
 	
 	return separator_found;
 }
