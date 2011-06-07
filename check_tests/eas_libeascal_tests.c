@@ -159,6 +159,8 @@ START_TEST (test_get_cal_handler)
     EasCalHandler *cal_handler = NULL;
   
     testGetCalendarHandler(&cal_handler, accountuid);  
+
+	g_object_unref(cal_handler);
 }
 END_TEST
 
@@ -199,6 +201,8 @@ START_TEST (test_get_latest_calendar_items)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(cal_handler);
 }
 END_TEST
 
@@ -288,6 +292,9 @@ START_TEST (test_eas_cal_handler_delete_cal)
     g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+
+	g_object_unref(cal_handler);
+	
 }
 END_TEST
 
@@ -365,6 +372,8 @@ START_TEST (test_eas_cal_handler_update_cal)
     g_slist_foreach(calitems_deleted, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
+
+	g_object_unref(cal_handler);
 }
 END_TEST
 
@@ -421,6 +430,7 @@ START_TEST (test_eas_cal_handler_add_cal)
 
 	testCalFound = TRUE;
 
+	g_object_unref(cal_handler);
 }
 END_TEST
 
