@@ -20,7 +20,6 @@ static void testGetMailHandler(EasEmailHandler **email_handler, guint64 accountu
     fail_if((*email_handler)->priv == NULL,
     "eas_mail_handler_new account ID object (EasEmailHandler *) member priv (EasEmailHandlerPrivate *) NULL"); 
 
-	g_object_unref(email_handler);
 }
 
 static void testGetFolderHierarchy(EasEmailHandler *email_handler,
@@ -292,6 +291,8 @@ START_TEST (test_eas_mail_handler_update_email)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);
 	
 }
 END_TEST
@@ -319,6 +320,8 @@ START_TEST (test_eas_mail_handler_send_email)
 	
 	// call into the daemon to send email to the exchange server
 	testSendEmail(email_handler, client_id, mime_file, &error);	
+
+	g_object_unref(email_handler);
 
 	return;
 }
