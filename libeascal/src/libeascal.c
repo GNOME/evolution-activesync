@@ -366,6 +366,75 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 	return ret;
 }
 
+gboolean 
+eas_cal_handler_add_items(EasCalHandler* this, 
+                                                 gchar *sync_key, 
+                                                 GSList *items_added,
+                                                 GError **error)
+{
+    g_debug("eas_cal_handler_add_items++");
+
+	g_assert(this);
+	g_assert(sync_key);
+
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = this->priv->remoteEas; 
+
+    g_debug("eas_cal_handler_updaddate_items - dbus proxy ok");
+    
+    gchar *updatedSyncKey;
+    
+   gchar **added_item_array = NULL;
+
+   gchar **created_item_array = NULL;
+   
+   
+   g_debug("server_id = %s", ((EasCalInfo*)(items_added->data))->server_id);
+
+    build_serialised_calendar_info_array (&added_item_array, items_added, error);
+    
+	// call DBus API
+	ret = dbus_g_proxy_call(proxy, "add_calendar_items", error,
+				  G_TYPE_UINT64, this->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
+   		          G_TYPE_STRV, added_item_array,
+		          G_TYPE_INVALID, 
+		          G_TYPE_STRING, &updatedSyncKey,
+	              G_TYPE_STRV, &created_item_array,
+		          G_TYPE_INVALID);
+
+    g_debug("eas_cal_handler_add_items - dbus proxy called");
+    if (*error) {
+        g_error(" Error: %s", (*error)->message);
+    }
+    
+	if(ret)
+	{
+		g_debug("add_calendar_items called successfully");
+		guint i=0;
+		guint length = g_slist_length(items_added);
+		while(created_item_array[i] && i < length)
+	    {
+			
+	        g_debug("created item = %s", created_item_array[i]);
+	        EasCalInfo *cal = eas_cal_info_new ();
+			EasCalInfo *updated = g_slist_nth(items_added, i)->data;
+	        eas_cal_info_deserialise(cal, created_item_array[i]);
+	        g_debug("created item server id = %s", cal->server_id);
+			updated->server_id = g_strdup(cal->server_id);
+			g_debug("created updated server id in list = %s", cal->server_id);
+	        i++;
+	    }
+		if(i==length && created_item_array[i]){
+			g_debug("added list is not the same length as input list - problem?");
+		}
+		g_free(updatedSyncKey);
+	}
+
+	g_debug("eas_cal_handler_add_items--");
+	return ret;
+}
+
 
 
 
