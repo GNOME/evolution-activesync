@@ -605,8 +605,11 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 		goto failed;
 	}
 
-	doc = xmlReadMemory (msg->response_body->data, msg->response_body->length,
-	                     "autodiscover.xml", NULL, 0);
+	doc = xmlReadMemory (msg->response_body->data, 
+	                     msg->response_body->length,
+	                     "autodiscover.xml", 
+	                     NULL, 
+	                     XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
 
 	if (!doc)
 	{
@@ -675,15 +678,17 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	g_simple_async_result_set_op_res_gpointer (adData->simple, serverUrl, NULL);
 	g_simple_async_result_complete_in_idle (adData->simple);
 
-	g_debug("autodiscover_soup_cb--");
+	g_debug("autodiscover_soup_cb (Success)--");
 	return;
 
 failed:
+	g_warning("autodiscover_soup_cb has failed");
 	for (idx = 0; idx < 2; ++idx)
 	{
 		if (adData->msgs[idx])
 		{
 			/* Clear this error and hope the second one succeeds */
+			g_warning("First autodiscover attempt failed");
 			g_clear_error (&error);
 			return;
 		}
@@ -695,7 +700,7 @@ failed:
 	g_simple_async_result_set_from_error (adData->simple, error);
 	g_simple_async_result_complete_in_idle (adData->simple);
 	
-	g_debug("autodiscover_soup_cb--");
+	g_debug("autodiscover_soup_cb (Failed)--");
 }
 
 static void 
@@ -865,6 +870,8 @@ EasConnection* eas_connection_new()
 	EasConnection *cnc = NULL;
 	
 	g_debug("eas_connection_new++");
+
+	g_type_init();
 
     cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
 
