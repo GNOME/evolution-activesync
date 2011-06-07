@@ -48,14 +48,14 @@ compile_time_assert((sizeof(EasSystemTime) == 16), EasSystemTime_not_expected_si
  * effect. For example, the bias for Pacific Time is 480.
  */
 typedef struct {
-	gint32 Bias;					// 4
-	guint16 StandardName[32];		// 64
-	EasSystemTime StandardDate;		// 16
-	gint32 StandardBias;			// 4
-	guint16 DaylightName[32];		// 64
-	EasSystemTime DaylightDate;		// 16
-	gint32 DaylightBias;			// 4
-} __attribute__((packed)) EasTimeZone;						// 172
+	gint32 Bias;						// 4
+	guint16 StandardName[32];			// 64
+	EasSystemTime StandardDate;			// 16
+	gint32 StandardBias;				// 4
+	guint16 DaylightName[32];			// 64
+	EasSystemTime DaylightDate;			// 16
+	gint32 DaylightBias;				// 4
+} __attribute__((packed)) EasTimeZone;	// 172
 
 compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size);
 
