@@ -445,7 +445,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						memcpy(&tz, timeZone, sizeof(tz));
 
 						// @@WARNING: TZID Mandatory, but no equivalent supplied from AS
-						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(gushort)), NULL, NULL, NULL);
+						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
 						g_warning("Using TimeZone.StandardName as the mandatory iCal TZID as ActiveSync has no equivalent data field");
 						_util_append_prop_string_to_list(&vtimezone, "TZID", result);
 						g_free(result); result = NULL;
@@ -479,7 +479,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);   // StandardBias
 						g_free(result); result = NULL;
 
-						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(gushort)), NULL, NULL, NULL);
+						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
 						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);        // StandardName
 						g_free(result); result = NULL;
 						_util_append_prop_string_to_list(&vtimezone, "END", "STANDARD");
@@ -503,7 +503,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);    // DaylightBias
 						g_free(result); result = NULL;
 
-						result = g_utf16_to_utf8((const gunichar2 *)tz.DaylightName, (sizeof(tz.DaylightName)/sizeof(gushort)), NULL, NULL, NULL);
+						result = g_utf16_to_utf8((const gunichar2 *)tz.DaylightName, (sizeof(tz.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
 						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);         // DaylightName
 						g_free(result); result = NULL;
 						_util_append_prop_string_to_list(&vtimezone, "END", "DAYLIGHT");
