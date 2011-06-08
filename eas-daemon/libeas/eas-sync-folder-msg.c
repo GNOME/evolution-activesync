@@ -73,7 +73,6 @@ eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
 {
 	EasSyncFolderMsg* msg = NULL;
 	EasSyncFolderMsgPrivate *priv = NULL;
-	/* TODO: Add public function implementation here */
 
 	msg = g_object_new (EAS_TYPE_SYNC_FOLDER_MSG, NULL);
 	priv = msg->priv;

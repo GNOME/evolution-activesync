@@ -31,8 +31,6 @@ eas_msg_base_init (EasMsgBase *object)
 static void
 eas_msg_base_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
-	
 	g_debug("eas_msg_base_finalize++");
 	G_OBJECT_CLASS (eas_msg_base_parent_class)->finalize (object);
 	g_debug("eas_msg_base_finalize--");

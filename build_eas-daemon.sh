@@ -36,6 +36,7 @@ automake --add-missing
 ./configure
 
 make all
+./gen-todo-list.sh
 #make install
 ./eas-daemon/src/activesyncd &
 #./eas-daemon/src/.libs/activesyncd &

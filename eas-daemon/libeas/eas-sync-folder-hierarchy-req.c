@@ -52,7 +52,6 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 {
 	EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
 	EasSyncFolderHierarchyReqPrivate *priv = req->priv;
-	/* TODO: Add deinitalization code here */
 
 	g_debug("eas_sync_folder_hierarchy_req_finalize++");
 
