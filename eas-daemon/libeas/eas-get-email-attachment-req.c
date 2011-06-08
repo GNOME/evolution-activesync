@@ -103,8 +103,6 @@ void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GErr
 	
 	g_debug("eas_get_email_attachment_req_Activate++");
 	
-	/* TODO: Add public function implementation here */
-
 	priv->emailAttachmentMsg = eas_get_email_attachment_msg_new ( priv->fileReference, priv->mimeDirectory);
 	doc = eas_get_email_attachment_msg_build_message (priv->emailAttachmentMsg);
 
@@ -121,7 +119,6 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
 	g_debug("eas_get_email_attachment_req_MessageComplete++");
 
 	eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc, error);
-	/* TODO: Add public function implementation here */
 	
 	xmlFree(doc);
 

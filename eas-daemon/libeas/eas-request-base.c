@@ -32,8 +32,6 @@ eas_request_base_init (EasRequestBase *object)
 static void
 eas_request_base_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
-
 	G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
 }
 
@@ -84,7 +82,7 @@ eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type)
     EasRequestBasePrivate *priv = self->priv;
 
     priv->requestType = type;
-	g_debug("eas_request_base_SetRequestType--");	        
+	g_debug("eas_request_base_SetRequestType--");
 }
 
 
