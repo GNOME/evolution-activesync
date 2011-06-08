@@ -215,33 +215,35 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 	{
 		byDayNth = -1;
 	}
-	gchar byDayName[3]; // 2 characters plus a trailing 0
+	gchar* byDayName = NULL;
 	switch (weekday)
 	{
 		case G_DATE_MONDAY:
-			g_stpcpy(&byDayName, "MO");
+			byDayName = g_strdup("MO");
 			break;
 		case G_DATE_TUESDAY:
-			g_stpcpy(&byDayName, "TU");
+			byDayName = g_strdup("TU");
 			break;
 		case G_DATE_WEDNESDAY:
-			g_stpcpy(&byDayName, "WE");
+			byDayName = g_strdup("WE");
 			break;
 		case G_DATE_THURSDAY:
-			g_stpcpy(&byDayName, "TH");
+			byDayName = g_strdup("TH");
 			break;
 		case G_DATE_FRIDAY:
-			g_stpcpy(&byDayName, "FR");
+			byDayName = g_strdup("FR");
 			break;
 		case G_DATE_SATURDAY:
-			g_stpcpy(&byDayName, "SA");
+			byDayName = g_strdup("SA");
 			break;
 		case G_DATE_SUNDAY:
-			g_stpcpy(&byDayName, "SU");
+			byDayName = g_strdup("SU");
 			break;
 	}
 	
 	*rruleValue = g_strdup_printf("FREQ=YEARLY;BYDAY=%d%s;BYMONTH=%d", byDayNth, byDayName, date->Month);
+	g_free(byDayName);
+	byDayName = NULL;
 
 	// Finally, we can set the day in the SYSTEMTIME struct to be the start day of the
 	// recurrence sequence.
@@ -334,7 +336,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "StartTime") == 0)
 				{
 					gchar* propertyName = g_strdup("DTSTART");
-					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
@@ -343,7 +345,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "EndTime") == 0)
 				{
 					gchar* propertyName = g_strdup("DTEND");
-					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
@@ -352,7 +354,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "DtStamp") == 0)
 				{
 					gchar* propertyName = g_strdup("DTSTAMP");
-					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
@@ -591,8 +593,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
 						const gint32 standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
 						const gint32 daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
-						const gchar* standardUtcOffsetStr = g_strdup_printf("%+03d%02d", standardUtcOffsetMins / MINUTES_PER_HOUR, standardUtcOffsetMins % MINUTES_PER_HOUR);
-						const gchar* daylightUtcOffsetStr = g_strdup_printf("%+03d%02d", daylightUtcOffsetMins / MINUTES_PER_HOUR, daylightUtcOffsetMins % MINUTES_PER_HOUR);
+						gchar* standardUtcOffsetStr = g_strdup_printf("%+03d%02d", standardUtcOffsetMins / MINUTES_PER_HOUR, standardUtcOffsetMins % MINUTES_PER_HOUR);
+						gchar* daylightUtcOffsetStr = g_strdup_printf("%+03d%02d", daylightUtcOffsetMins / MINUTES_PER_HOUR, daylightUtcOffsetMins % MINUTES_PER_HOUR);
 						
 						// Using StandardName as the TZID
 						// (Doesn't matter if it's not an exact description: this field is only used internally
@@ -1103,7 +1105,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		if (tzid)
 		{
 			// Get the ASCII value from the iCal
-			const gchar* tzidValue8 = (const gchar*)icalproperty_get_value_as_string(tzid);
+			gchar* tzidValue8 = (gchar*)icalproperty_get_value_as_string(tzid);
 
 			// Convert to Unicode, max. 32 chars (including the trailing 0)
 			gunichar2* tzidValue16 = g_utf8_to_utf16(tzidValue8, 31, NULL, NULL, NULL);
@@ -1127,7 +1129,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 
 		// Write the timezone into the XML, base64-encoded
 		const int rawStructSize = sizeof(EasTimeZone);
-		WB_UTINY* timezoneBase64 = wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
+		WB_UTINY* timezoneBase64 = (WB_UTINY*)wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
 		xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
 		g_free(timezoneBase64);
 	}
