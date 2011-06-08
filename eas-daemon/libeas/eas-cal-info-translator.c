@@ -22,10 +22,11 @@ const gchar* ICAL_FOLDING_SEPARATOR         = "\r\n ";   // ICAL_LINE_TERMINATOR
 const guint	 ICAL_MAX_LINE_LENGTH           = 75;
 
 // Values for converting icaldurationtype into a number of minutes
-const gint SECONDS_PER_MINUTE = 60;
-const gint MINUTES_PER_HOUR = 60;
-const gint MINUTES_PER_DAY  = 60 * 24;
-const gint MINUTES_PER_WEEK = 60 * 24 * 7;
+const gint SECONDS_PER_MINUTE               = 60;
+const gint MINUTES_PER_HOUR                 = 60;
+const gint MINUTES_PER_DAY                  = 60 * 24;
+const gint MINUTES_PER_WEEK                 = 60 * 24 * 7;
+const gint EPOCH_START_YEAR					= 1970;
 
 #define compile_time_assert(cond, msg) \
 	char msg[(cond)?1:-1]
@@ -154,6 +155,126 @@ static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line
 
 
 /**
+ * \brief Private function to decode an EasSystemTime struct containing details of a recurring
+ *        timezone change pattern, modify it to a format iCalendar expects and create the
+ *        required RRULE property value.
+ *
+ * \param date        Pointer to the EasSystemTime struct. This will be modified in this
+ *                    function.
+ * \param rruleValue  Pointer to a NULL buffer. This will be instantiated in this function.
+ *                    The calling code is responsible for freeing the buffer after use
+ *                    (using g_free())
+ */
+static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rruleValue)
+{
+	// DTSTART needs to identify the first date of the recurring pattern in some
+	// year previous to any items in the iCalendar. We'll just use 1970 as the
+	// start of the UNIX epoch.
+	date->Year = EPOCH_START_YEAR;
+
+	// date->DayOfWeek will give us the day to repeat on
+	// date->Day will give us the nth occurrence in the month of this day
+	// (where 5 == last, even if there are only 4)
+
+	// Start at the beginning of the month
+	GDate* recurrenceStartDate = g_date_new_dmy(1, date->Month, date->Year);
+
+	// Seek for the first occurrence of the day.
+	// SYSTEMTIME's wDayOfWeek has 0 = Sunday, 1 = Monday,...     http://msdn.microsoft.com/en-us/library/ms724950(v=vs.85).aspx
+	// GDateWeekDay has 0 = G_DATE_BAD_WEEKDAY, 1 = Monday,...    http://developer.gnome.org/glib/stable/glib-Date-and-Time-Functions.html#GDateWeekday
+	if (date->DayOfWeek == 0)
+	{
+		date->DayOfWeek = 7;
+		// Now our DayOfWeek matches GDateWeekDay
+	}
+	GDateWeekday weekday = (GDateWeekday)date->DayOfWeek;
+	while (g_date_get_weekday(recurrenceStartDate) != weekday)
+	{
+		g_date_add_days (recurrenceStartDate, 1);
+	}
+
+	// Now we've got the first occurence of weekday in the right month in 1970.
+	// Now seek for the nth occurrence (where 5th = last, even if there are only 4)
+	gint occurrence = 1;
+	while (occurrence++ < date->Day)
+	{
+		g_date_add_days(recurrenceStartDate, 7);
+
+		// Check we havn't overrun the end of the month
+		// (If we have, just roll back and we're done: we're on the last occurrence)
+		if (g_date_get_month(recurrenceStartDate) != date->Month)
+		{
+			g_date_subtract_days(recurrenceStartDate, 7);
+			break;
+		}
+	}
+
+	// Now build the RRULE value before modifying date->Day
+	gint byDayNth = date->Day;
+	if (byDayNth == 5)
+	{
+		byDayNth = -1;
+	}
+	gchar byDayName[3]; // 2 characters plus a trailing 0
+	switch (weekday)
+	{
+		case G_DATE_MONDAY:
+			g_stpcpy(&byDayName, "MO");
+			break;
+		case G_DATE_TUESDAY:
+			g_stpcpy(&byDayName, "TU");
+			break;
+		case G_DATE_WEDNESDAY:
+			g_stpcpy(&byDayName, "WE");
+			break;
+		case G_DATE_THURSDAY:
+			g_stpcpy(&byDayName, "TH");
+			break;
+		case G_DATE_FRIDAY:
+			g_stpcpy(&byDayName, "FR");
+			break;
+		case G_DATE_SATURDAY:
+			g_stpcpy(&byDayName, "SA");
+			break;
+		case G_DATE_SUNDAY:
+			g_stpcpy(&byDayName, "SU");
+			break;
+	}
+	
+	*rruleValue = g_strdup_printf("FREQ=YEARLY;BYDAY=%d%s;BYMONTH=%d", byDayNth, byDayName, date->Month);
+
+	// Finally, we can set the day in the SYSTEMTIME struct to be the start day of the
+	// recurrence sequence.
+	date->Day = g_date_get_day(recurrenceStartDate);
+}
+
+
+/**
+ * \brief Modify a date/time property name (DTSTART, DTEND or DTSTAMP) to add a TZID (timezone ID) attribute if required
+ *
+ * \param propertyName      Pointer to the property name string (e.g. "DTSTART"). This may be modified by
+ *                          this function. The calling code keeps the responsibility for freeing the
+ *                          memory after use.
+ * \param propertyValue     The value for this property (i.e. a date/time in ISO format)
+ * \param tzid              The TZID field from the VTIMEZONE component (if present). If none was present,
+ *                          pass either NULL or an empty string.
+ */
+static void _util_add_timezone_to_property_name(gchar** propertyName, const gchar* propertyValue, const gchar* tzid)
+{
+	// We add the TZID attribute if:
+	//  - we have an attribute value to add!
+	//  - the time value doesn't end in Z (as this indicates a UTC time, so no timezone needs to be specified)
+	if (tzid && strlen(tzid) && !g_str_has_suffix(propertyValue, "Z"))
+	{
+		gchar* temp = g_strdup_printf("%s;TZID=\"%s\"", *propertyName, tzid);
+		g_free(*propertyName);
+		*propertyName = temp;
+	}
+}
+
+
+
+/**
  * \brief Parse an XML-formatted calendar object received from ActiveSync and return
  *        it as a serialised iCalendar object.
  *
@@ -187,6 +308,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		GSList* vevent = NULL;
 		GSList* valarm = NULL;
 
+		// Variable to store the TZID value when decoding a <calendar:Timezone> element
+		// so we can use it in the rest of the iCal's date/time fields.
+		// TODO: check <calendar:Timezone> always occurs at the top of the calendar item.
+		gchar* tzid = "";
+
+
 		// TODO: get all these strings into constants/#defines
 		
 		// TODO: make the PRODID configurable somehow
@@ -206,15 +333,30 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "StartTime") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "DTSTART", n);
+					gchar* propertyName = g_strdup("DTSTART");
+					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
+					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
+					g_free(propertyName);
+				    g_free(propertyValue);
 				}
 				else if (g_strcmp0(name, "EndTime") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "DTEND", n);
+					gchar* propertyName = g_strdup("DTEND");
+					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
+					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
+					g_free(propertyName);
+				    g_free(propertyValue);
 				}
 				else if (g_strcmp0(name, "DtStamp") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "DTSTAMP", n);
+					gchar* propertyName = g_strdup("DTSTAMP");
+					const gchar* propertyValue = (const gchar*)xmlNodeGetContent(n);
+					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
+					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
+					g_free(propertyName);
+				    g_free(propertyValue);
 				}
 				else if (g_strcmp0(name, "UID") == 0)
 				{
@@ -425,95 +567,147 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						g_string_free(attparams, TRUE);
 						g_string_free(cal_address, TRUE);
 					}//end for (attendee)
-					
 				}// end else if (attendees)
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
-					xmlChar *timeZoneB64 = xmlNodeGetContent(n);
-					EasTimeZone tz;
-					WB_UTINY *timeZone = NULL;
-					WB_LONG tz_length = 0;
+					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
+					WB_UTINY* timeZoneRawBytes = NULL;
+					EasTimeZone timeZoneStruct;
 
 					// Expect timeZoneB64 to be NULL terminated
-					tz_length = wbxml_base64_decode(timeZoneB64, -1, &timeZone);
-					xmlFree(timeZoneB64);
+					WB_LONG timeZoneRawBytesSize = wbxml_base64_decode(timeZoneBase64Buffer, -1, &timeZoneRawBytes);
+					xmlFree(timeZoneBase64Buffer);
 
 					// TODO Check decode of timezone for endianess problems
 
-					if (tz_length == sizeof(tz))
+					if (timeZoneRawBytesSize == sizeof(timeZoneStruct))
 					{
-						gchar *result = NULL;
-						memcpy(&tz, timeZone, sizeof(tz));
+						gchar* value = NULL;
+						memcpy(&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
+						g_free(timeZoneRawBytes);
+						timeZoneRawBytes = NULL;
 
-						// @@WARNING: TZID Mandatory, but no equivalent supplied from AS
-						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-						g_warning("Using TimeZone.StandardName as the mandatory iCal TZID as ActiveSync has no equivalent data field");
-						_util_append_prop_string_to_list(&vtimezone, "TZID", result);
-						g_free(result); result = NULL;
+						// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
+						// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
+						const gint32 standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
+						const gint32 daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
+						const gchar* standardUtcOffsetStr = g_strdup_printf("%+03d%02d", standardUtcOffsetMins / MINUTES_PER_HOUR, standardUtcOffsetMins % MINUTES_PER_HOUR);
+						const gchar* daylightUtcOffsetStr = g_strdup_printf("%+03d%02d", daylightUtcOffsetMins / MINUTES_PER_HOUR, daylightUtcOffsetMins % MINUTES_PER_HOUR);
+						
+						// Using StandardName as the TZID
+						// (Doesn't matter if it's not an exact description: this field is only used internally
+						// during iCalendar encoding/decoding)
+						// Note: using tzid here rather than value, as we need it elsewhere in this function
+						tzid = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName,
+						                       (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+						// If no StandardName was supplied, we can just use a temporary name instead.
+						// No need to support more than one: the EAS calendar will only have one Timezone
+						// element. And no need to localise, as it's only used internally.
+						if (tzid == NULL || strlen(tzid) == 0)
+						{
+							tzid = g_strdup("Standard Timezone");
+						}
+						_util_append_prop_string_to_list(&vtimezone, "TZID", tzid);
 
+						
+						// STANDARD component
+						
 						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "STANDARD");
 
+						gchar* rruleValue = NULL;
+
+						// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
+						// the start date of a recurring sequence, and add an RRULE.
+						if (timeZoneStruct.StandardDate.Year == 0)
+						{
+							_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rruleValue);
+						}
+
 						// YEAR MONTH DAY 'T' HOUR MINUTE SECONDS
-						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u",
-												tz.StandardDate.Year, 
-												tz.StandardDate.Month,
-												tz.StandardDate.Day,
-												tz.StandardDate.Hour,
-												tz.StandardDate.Minute,
-												tz.StandardDate.Second);
+						value = g_strdup_printf("%04u%02u%02uT%02u%02u%02u",
+												timeZoneStruct.StandardDate.Year,
+												timeZoneStruct.StandardDate.Month,
+												timeZoneStruct.StandardDate.Day,
+												timeZoneStruct.StandardDate.Hour,
+												timeZoneStruct.StandardDate.Minute,
+												timeZoneStruct.StandardDate.Second);
+						_util_append_prop_string_to_list(&vtimezone, "DTSTART", value); // StandardDate
+						g_free(value); value = NULL;
 
-						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // StandardDate
-						g_free(result); result = NULL;
+						// Add the RRULE (if required)
+						if (rruleValue != NULL)
+						{
+							_util_append_prop_string_to_list(&vtimezone, "RRULE", rruleValue);
+							g_free(rruleValue);
+							rruleValue = NULL;
+						}
+						
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", daylightUtcOffsetStr);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", standardUtcOffsetStr);
 
-						/* The property value is a signed numeric indicating the 
-						 * number of hours and possibly minutes from UTC. Positive 
-						 * numbers represent time zones east of the prime meridian, 
-						 * or ahead of UTC. Negative numbers represent time zones 
-						 * west of the prime meridian, or behind UTC.
-						 * E.g. TZOFFSETFROM:-0500 or TZOFFSETFROM:+1345
-						 */
-						result = g_strdup_printf("%+03d%02d", tz.Bias/60, tz.Bias%60);
-						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result); // Bias
-						g_free(result); result = NULL;
-
-						result = g_strdup_printf("%+03d%02d", tz.StandardBias/60, tz.StandardBias%60);
-						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);   // StandardBias
-						g_free(result); result = NULL;
-
-						result = g_utf16_to_utf8((const gunichar2*)tz.StandardName, (sizeof(tz.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);        // StandardName
-						g_free(result); result = NULL;
+						value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName, (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+						if (value)
+						{
+							if (strlen(value))
+							{
+								_util_append_prop_string_to_list(&vtimezone, "TNAME", value);        // StandardName
+							}
+							g_free(value); value = NULL;
+						}
 						_util_append_prop_string_to_list(&vtimezone, "END", "STANDARD");
 
+						
+						// DAYLIGHT component
+
 						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "DAYLIGHT");
-						result = g_strdup_printf("%04u%02u%02uT%02u%02u%02u", 
-							                     tz.DaylightDate.Year, 
-							                     tz.DaylightDate.Month,
-					                             tz.DaylightDate.Day,
-					                             tz.DaylightDate.Hour,
-					                             tz.DaylightDate.Minute,
-					                             tz.DaylightDate.Second);
-						_util_append_prop_string_to_list(&vtimezone, "DTSTART", result); // DaylightDate
-						g_free(result); result = NULL;
 
-						result = g_strdup_printf("%+03d%02d", tz.Bias/60, tz.Bias%60);
-						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", result);  // Bias
-						g_free(result); result = NULL;
+						// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
+						// the start date of a recurring sequence, and add an RRULE.
+						if (timeZoneStruct.DaylightDate.Year == 0)
+						{
+							_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rruleValue);
+						}
 
-						result = g_strdup_printf("%+03d%02d", tz.DaylightBias/60, tz.DaylightBias%60);
-						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", result);    // DaylightBias
-						g_free(result); result = NULL;
+						
+						value = g_strdup_printf("%04u%02u%02uT%02u%02u%02u", 
+							                    timeZoneStruct.DaylightDate.Year,
+							                    timeZoneStruct.DaylightDate.Month,
+					                            timeZoneStruct.DaylightDate.Day,
+					                            timeZoneStruct.DaylightDate.Hour,
+					                            timeZoneStruct.DaylightDate.Minute,
+					                            timeZoneStruct.DaylightDate.Second);
+						_util_append_prop_string_to_list(&vtimezone, "DTSTART", value); // DaylightDate
+						g_free(value); value = NULL;
 
-						result = g_utf16_to_utf8((const gunichar2 *)tz.DaylightName, (sizeof(tz.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
-						_util_append_prop_string_to_list(&vtimezone, "TNAME", result);         // DaylightName
-						g_free(result); result = NULL;
+						// Add the RRULE (if required)
+						if (rruleValue != NULL)
+						{
+							_util_append_prop_string_to_list(&vtimezone, "RRULE", rruleValue);
+							g_free(rruleValue);
+							rruleValue = NULL;
+						}
+						
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETFROM", standardUtcOffsetStr);
+						_util_append_prop_string_to_list(&vtimezone, "TZOFFSETTO", daylightUtcOffsetStr);
+
+						value = g_utf16_to_utf8((const gunichar2 *)timeZoneStruct.DaylightName, (sizeof(timeZoneStruct.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
+						if (value)
+						{
+							if (strlen(value))
+							{
+								_util_append_prop_string_to_list(&vtimezone, "TNAME", value);   // DaylightName
+							}
+							g_free(value); value = NULL;
+						}
 						_util_append_prop_string_to_list(&vtimezone, "END", "DAYLIGHT");
-					} // tz_length == sizeof(tz)
+
+						g_free(standardUtcOffsetStr);
+						g_free(daylightUtcOffsetStr);
+					} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
 					else
 					{
 						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
 					}
-					g_free(timeZone);
 				}
 
 				// TODO: handle Recurrence element
@@ -594,6 +788,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		g_object_unref(cal_info);
+
+		if (tzid)
+		{
+			g_free(tzid);
+		}
 	}
 
 	return result;
