@@ -367,6 +367,7 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
                               ret_changed_email_array);
     }
 
+	g_object_unref(req);
     g_debug("eas_mail_sync_folder_email--");
     return TRUE;
 }

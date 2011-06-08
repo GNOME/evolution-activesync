@@ -19,6 +19,7 @@ static void testGetMailHandler(EasEmailHandler **email_handler, guint64 accountu
     "eas_mail_handler_new returns NULL when given a valid ID");
     fail_if((*email_handler)->priv == NULL,
     "eas_mail_handler_new account ID object (EasEmailHandler *) member priv (EasEmailHandlerPrivate *) NULL"); 
+
 }
 
 static void testGetFolderHierarchy(EasEmailHandler *email_handler,
@@ -181,6 +182,7 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 		
 	}
 
+	g_object_unref(email_handler);
 	return;
 }
 END_TEST
@@ -289,6 +291,8 @@ START_TEST (test_eas_mail_handler_update_email)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);
 	
 }
 END_TEST
@@ -317,6 +321,8 @@ START_TEST (test_eas_mail_handler_send_email)
 	// call into the daemon to send email to the exchange server
 	testSendEmail(email_handler, client_id, mime_file, &error);	
 
+	g_object_unref(email_handler);
+
 	return;
 }
 END_TEST
@@ -327,6 +333,8 @@ START_TEST (test_get_mail_handler)
     EasEmailHandler *email_handler = NULL;
   
     testGetMailHandler(&email_handler, accountuid);  
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -368,6 +376,8 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -424,6 +434,8 @@ START_TEST (test_get_eas_mail_info_in_folder)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);	
 }
 END_TEST
 
@@ -476,6 +488,9 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);
+
+	g_object_unref(email_handler);	
+	
 }
 END_TEST
 
@@ -609,7 +624,9 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     
     g_slist_free(created);
     g_slist_free(deleted);
-    g_slist_free(updated);	
+	g_slist_free(updated);	
+	
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -764,6 +781,8 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);
 }
 END_TEST
 
@@ -883,6 +902,8 @@ START_TEST (test_eas_mail_handler_delete_email)
     g_slist_free(created);
     g_slist_free(deleted);
     g_slist_free(updated);	
+
+	g_object_unref(email_handler);	
 	
 }
 END_TEST

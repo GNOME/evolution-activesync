@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES =  libeasmail.la
 
-#lrm: TODO remove unnecessary includes
+# TODO remove unnecessary includes
 libeasmail_la_CPPFLAGS =		\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
@@ -10,7 +10,7 @@ libeasmail_la_CPPFLAGS =		\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)
 
-#lrm: TODO remove unnecessary libs	  
+# TODO remove unnecessary libs	  
 libeasmail_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\

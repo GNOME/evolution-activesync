@@ -115,6 +115,8 @@ gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 		self->server_id = g_strndup(tempString, i);
 		self->icalendar = g_strdup(data + (i + 1));
 	}		
+
+	g_free(tempString);
 	
 	return separator_found;
 }

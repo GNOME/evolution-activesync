@@ -22,8 +22,10 @@
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
 struct _EasEmailHandlerPrivate{
+	DBusGConnection *bus;
     DBusGProxy *remoteEas;
     guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+	GMainLoop* main_loop;
 };
 
 // TODO - how much verification of args should happen 
@@ -38,7 +40,9 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	priv = g_new0 (EasEmailHandlerPrivate, 1);
 	
 	priv->remoteEas = NULL;
+	priv->bus = NULL;
 	priv->account_uid = 0;
+	priv->main_loop = NULL;	
 	cnc->priv = priv;	
 	g_debug("eas_mail_handler_init--");
 }
@@ -51,7 +55,10 @@ eas_mail_handler_finalize (GObject *object)
 	EasEmailHandlerPrivate *priv;
 
 	priv = cnc->priv;
-	
+
+	g_main_loop_quit(priv->main_loop);	
+	dbus_g_connection_unref(priv->bus);
+	// nothing to do to 'free' proxy
 	g_free (priv);
 	cnc->priv = NULL;
 
@@ -77,9 +84,6 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 EasEmailHandler *
 eas_mail_handler_new(guint64 account_uid)
 {
-	DBusGConnection* bus;
-	DBusGProxy* remoteEas;
-	GMainLoop* mainloop;
 	GError* error = NULL;
 	EasEmailHandler *object = NULL;
 
@@ -88,39 +92,38 @@ eas_mail_handler_new(guint64 account_uid)
     g_log_set_default_handler(eas_logger, NULL);
 	g_debug("eas_mail_handler_new++");
 
-	mainloop = g_main_loop_new(NULL, TRUE);
-
-	if (mainloop == NULL) {
-		g_error("Error: Failed to create the mainloop");
-		return NULL;
-	}
-
-	g_debug("Connecting to Session D-Bus.");
-	bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
-	if (error != NULL) {
-		g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
-		return NULL;
-	}
-
-	g_debug("Creating a GLib proxy object for Eas.");
-	remoteEas =  dbus_g_proxy_new_for_name(bus,
-		      EAS_SERVICE_NAME,
-		      EAS_SERVICE_MAIL_OBJECT_PATH,
-		      EAS_SERVICE_MAIL_INTERFACE);
-	if (remoteEas == NULL) {
-		g_error("Error: Couldn't create the proxy object");
-		return NULL;
-	}
-
 	object = g_object_new (EAS_TYPE_EMAIL_HANDLER , NULL);
 
 	if(object == NULL){
 		g_error("Error: Couldn't create mail");
 		g_debug("eas_mail_handler_new--");
 		return NULL;  
+	}	
+
+	object->priv->main_loop = g_main_loop_new(NULL, TRUE);
+
+	if (object->priv->main_loop == NULL) {
+		g_error("Error: Failed to create the mainloop");
+		return NULL;
 	}
 
-	object->priv->remoteEas = remoteEas; 
+	g_debug("Connecting to Session D-Bus.");
+	object->priv->bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
+	if (error != NULL) {
+		g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
+		return NULL;
+	}
+
+	g_debug("Creating a GLib proxy object for Eas.");
+	object->priv->remoteEas =  dbus_g_proxy_new_for_name(object->priv->bus,
+		      EAS_SERVICE_NAME,
+		      EAS_SERVICE_MAIL_OBJECT_PATH,
+		      EAS_SERVICE_MAIL_INTERFACE);
+	if (object->priv->remoteEas == NULL) {
+		g_error("Error: Couldn't create the proxy object");
+		return NULL;
+	}
+
 	object->priv->account_uid = account_uid;
 
 	g_debug("eas_mail_handler_new--");
