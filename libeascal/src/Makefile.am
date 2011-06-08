@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES =  libeascal.la
 
-#lrm: TODO remove unnecessary includes
+# TODO remove unnecessary includes
 libeascal_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
@@ -10,7 +10,7 @@ libeascal_la_CPPFLAGS =			\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)
 
-#lrm: TODO remove unnecessary libs	  
+#TODO remove unnecessary libs	  
 libeascal_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
