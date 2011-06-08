@@ -644,7 +644,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Account"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Action"))
 			break;
 	}
 	if (!node)
@@ -652,13 +652,26 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error(&error,
 		            EAS_CONNECTION_ERROR,
 		            EAS_CONNECTION_ERROR_FAILED,
-		            "Failed to find <Account> element");
+		            "Failed to find <Action> element");
+		goto failed;
+	}
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Settings"))
+			break;
+	}
+	if (!node)
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to find <Settings> element");
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next)
 	{
 		if (node->type == XML_ELEMENT_NODE && 
-		    !g_strcmp0(node->name, "Protocol") &&
+		    !g_strcmp0(node->name, "Server") &&
 		    (serverUrl = autodiscover_parse_protocol (node)))
 			break;
 	}
@@ -733,13 +746,13 @@ autodiscover_as_soup_msg(gchar *url, xmlOutputBuffer *buf)
 
 	g_debug("autodiscover_as_soup_msg++");
 
-	msg = soup_message_new("GET", url);
+	msg = soup_message_new("POST", url);
 	
 	soup_message_headers_append (msg->request_headers,
 	                             "User-Agent", "libeas");
 	
 	soup_message_set_request (msg, 
-	                          "application/xml", 
+	                          "text/xml", 
 	                          SOUP_MEMORY_COPY,
 	                          (gchar*)buf->buffer->content,
 	                          buf->buffer->use);
@@ -827,24 +840,24 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 
 	// URL formats to be tried
 	// 1 - https://<domain>/autodiscover/autodiscover.xml
-	url = g_strdup_printf("http://%s/autodiscover/autodiscover.xml", domain);
+	url = g_strdup_printf("https://%s/autodiscover/autodiscover.xml", domain);
 	autoDiscData->msgs[0] = autodiscover_as_soup_msg(url, txBuf);
 	g_free(url);
 	
 	// 2 - https://autodiscover.<domain>/autodiscover/autodiscover.xml
-	url = g_strdup_printf("http://autodiscover.%s/autodiscover/autodiscover.xml", domain);
+	url = g_strdup_printf("https://autodiscover.%s/autodiscover/autodiscover.xml", domain);
 	autoDiscData->msgs[1] = autodiscover_as_soup_msg(url, txBuf);
 	g_free(url);
 
 	if (!username) // Use the front of the email as the username
 	{
 		gchar **split = g_strsplit(email, "@", 2);
-		eas_connection_set_details(cnc, url, split[0], password);
+		eas_connection_set_details(cnc, split[0], password);
 		g_strfreev(split);
 	}
 	else // Use the supplied username
 	{
-		eas_connection_set_details(cnc, url, username, password);
+		eas_connection_set_details(cnc, username, password);
 	}
 
 	soup_session_queue_message(cnc->priv->soup_session,
@@ -912,8 +925,7 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
 	g_debug("eas_connection_set_account--");
 }
 
-void eas_connection_set_details(EasConnection* self, const gchar* serverUri, 
-                                const gchar* username, const gchar* password)
+void eas_connection_set_details(EasConnection* self, const gchar* username, const gchar* password)
 {
 	EasConnectionPrivate *priv = self->priv;
 	
@@ -923,12 +935,11 @@ void eas_connection_set_details(EasConnection* self, const gchar* serverUri,
 	priv->username = NULL;
 	g_free(priv->password);
 	priv->password = NULL;
-	g_free(priv->server_uri);
-	priv->server_uri = NULL;
 
 	priv->username = g_strdup (username);
 	priv->password = g_strdup (password);
-	priv->server_uri = g_strdup (serverUri);
+
+	g_debug("Details: U/n[%s], P/w[%s]", priv->username, priv->password);
 	
 	g_debug("eas_connection_set_details--");
 }
