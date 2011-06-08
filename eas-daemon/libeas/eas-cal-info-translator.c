@@ -22,9 +22,10 @@ const gchar* ICAL_FOLDING_SEPARATOR         = "\r\n ";   // ICAL_LINE_TERMINATOR
 const guint	 ICAL_MAX_LINE_LENGTH           = 75;
 
 // Values for converting icaldurationtype into a number of minutes
-const guint MINUTES_PER_HOUR = 60;
-const guint MINUTES_PER_DAY  = 60 * 24;
-const guint MINUTES_PER_WEEK = 60 * 24 * 7;
+const gint SECONDS_PER_MINUTE = 60;
+const gint MINUTES_PER_HOUR = 60;
+const gint MINUTES_PER_DAY  = 60 * 24;
+const gint MINUTES_PER_WEEK = 60 * 24 * 7;
 
 #define compile_time_assert(cond, msg) \
 	char msg[(cond)?1:-1]
@@ -37,7 +38,7 @@ typedef  struct {
 	guint16 Hour;
 	guint16 Minute;
 	guint16 Second;
-	guint16 Milliseconds;
+	guint16 Millisecond;
 } __attribute__((packed)) EasSystemTime;
 
 compile_time_assert((sizeof(EasSystemTime) == 16), EasSystemTime_not_expected_size);
@@ -748,9 +749,11 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		icalproperty* tzOffsetFrom = icalcomponent_get_first_property(subcomponent, ICAL_TZOFFSETFROM_PROPERTY);
 
 		// Get the values of the properties
+		// Note: icalproperty_get_tzoffsetto() and icalproperty_get_tzofsetfrom() return offsets as seconds.
 		const icaltimetype dtStartValue = icalproperty_get_dtstart(dtStart);
-		const int tzOffsetToValue = icalproperty_get_tzoffsetto(tzOffsetTo);
-		const int tzOffsetFromValue = icalproperty_get_tzoffsetfrom(tzOffsetFrom);
+		const int tzOffsetToValueMins = icalproperty_get_tzoffsetto(tzOffsetTo) / SECONDS_PER_MINUTE;
+		const int tzOffsetFromValueMins = icalproperty_get_tzoffsetfrom(tzOffsetFrom) / SECONDS_PER_MINUTE;
+
 		struct icalrecurrencetype rruleValue;
 		if (rrule)
 		{
@@ -760,9 +763,6 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		{
 			icalrecurrencetype_clear(&rruleValue);
 		}
-
-		// TODO: I'm assuming that icalproperty_get_tzofsetto() and icalproperty_get_tzofsetfrom()
-		// return the offset as minutes. Check this when testing and correct if required.
 		
 		if (isStandardTime)
 		{
@@ -773,7 +773,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 			// get the corresponding PST time), but in EAS that's expressed as a Bias of +480 minutes (i.e. add
 			// 8 hours to a PST time to get back to UTC). Likewise, Central European Time (UTC+1) has a Bias
 			// value of -60. See http://msdn.microsoft.com/en-us/library/ms725481(v=vs.85).aspx for more details.
-			timezone->Bias = -1 * tzOffsetToValue;
+			timezone->Bias = -1 * tzOffsetToValueMins;
 
 			// Standard bias is always 0 (it's the Standard time's offset from the Bias)
 			timezone->StandardBias = 0; // Always zero
@@ -784,7 +784,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 			// daylight saving phase adds 1 hour to the standard phase, the DaylightBias value is -60. Note
 			// that DaylightBias and StandardBias are the additional offsets *relative to the base Bias value*
 			// (rather than absolute offsets from UTC). We can calculate the daylight bias easily as follows:
-			timezone->DaylightBias = tzOffsetFromValue - tzOffsetToValue;
+			timezone->DaylightBias = tzOffsetFromValueMins - tzOffsetToValueMins;
 		}
 
 		// Handle recurrence information if present
@@ -876,6 +876,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		easTimeStruct->Hour = dtStartValue.hour;
 		easTimeStruct->Minute = dtStartValue.minute;
 		easTimeStruct->Second = dtStartValue.second;
+		easTimeStruct->Millisecond = 0;
 
 		// Destroy the property objects
 		icalproperty_free(dtStart);
@@ -896,21 +897,21 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 {
 	if (vtimezone)
 	{
-		EasTimeZone timezone;
+		EasTimeZone timezoneStruct;
 
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
 		if (tzid)
 		{
 			// Get the ASCII value from the iCal
-			const gchar* tzidValue8 = (const gchar*)icalproperty_get_value_as_string(tzid);			// TODO: free
+			const gchar* tzidValue8 = (const gchar*)icalproperty_get_value_as_string(tzid);
 
 			// Convert to Unicode, max. 32 chars (including the trailing 0)
-			gunichar2* tzidValue16 = g_utf8_to_utf16(tzidValue8, 31, NULL, NULL, NULL); // TODO: free
+			gunichar2* tzidValue16 = g_utf8_to_utf16(tzidValue8, 31, NULL, NULL, NULL);
 
 			// Copy this into the EasTimeZone struct as both StandardName and DaylightName
-			memcpy(&(timezone.StandardName), tzidValue16, 64); // 32 Unicode chars = 64 bytes
-			memcpy(&(timezone.DaylightName), tzidValue16, 64);
+			memcpy(&(timezoneStruct.StandardName), tzidValue16, 64); // 32 Unicode chars = 64 bytes
+			memcpy(&(timezoneStruct.DaylightName), tzidValue16, 64);
 
 			g_free(tzidValue8);
 			g_free(tzidValue16);
@@ -922,8 +923,14 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		     subcomponent;
 		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
 		{
-			_util_process_vtimezone_subcomponent(subcomponent, &timezone, icalcomponent_isa(subcomponent));
+			_util_process_vtimezone_subcomponent(subcomponent, &timezoneStruct, icalcomponent_isa(subcomponent));
 		}
+
+		// Write the timezone into the XML, base64-encoded
+		const int rawStructSize = sizeof(EasTimeZone);
+		WB_UTINY* timezoneBase64 = wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
+		xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
+		g_free(timezoneBase64);
 	}
 }
 
@@ -945,10 +952,10 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_dat
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
 		// Process the components of the VCALENDAR
+		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
 		icalcomponent* vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
 		_util_process_vevent_component(vevent, app_data);
 		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), app_data);
-		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
 
 		// DEBUG output
 		xmlChar* dump_buffer;

@@ -60,7 +60,6 @@ void eas_connection_autodiscover (EasAutoDiscoverCallback cb,
                                   const gchar* password);
 
 void eas_connection_set_details(EasConnection* self, 
-                                const gchar* serverUri, 
                                 const gchar* username, 
                                 const gchar* password);
 
