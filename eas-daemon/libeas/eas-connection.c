@@ -214,7 +214,10 @@ connection_authenticate (SoupSession *sess,
 {
     EasConnection* cnc = (EasConnection *)data;
 	g_debug("  eas_connection - connection_authenticate++");
-    soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+	if (!retrying)
+	{
+		soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+	}
 	g_debug("  eas_connection - connection_authenticate--");
 }
 
@@ -588,7 +591,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 
 	if (idx == 2)
 	{
-		// Request got cancelled and removed
+		g_debug("Request got cancelled and removed");
 		return;
 	}
 
@@ -695,7 +698,6 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	return;
 
 failed:
-	g_warning("autodiscover_soup_cb has failed");
 	for (idx = 0; idx < 2; ++idx)
 	{
 		if (adData->msgs[idx])
