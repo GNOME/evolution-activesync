@@ -1,11 +1,11 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES = libeaslogger.la
 
-#lrm: TODO remove unnecessary includes
+#TODO remove unnecessary includes
 libeaslogger_la_CFLAGS =		\
 		$(GLIB_CFLAGS)
 
-#lrm: TODO remove unnecessary libs	  
+#TODO remove unnecessary libs	  
 libeaslogger_la_LDFLAGS =		\
 		$(GLIB_LIBS)
 
