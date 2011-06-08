@@ -83,6 +83,8 @@ eas_mail_handler_new(guint64 account_uid)
 	GError* error = NULL;
 	EasEmailHandler *object = NULL;
 
+#warning This needs to take a GError ** argument, not use g_error().
+
 	g_type_init();
 
     g_log_set_default_handler(eas_logger, NULL);
