@@ -169,7 +169,11 @@ eas_send_email_req_Activate(EasSendEmailReq *self, GError** error)
 	doc = eas_send_email_msg_build_message (priv->send_email_msg);
 
 	g_debug("send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "SendMail", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "SendMail", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            error);
 	
 	g_debug("eas_send_email_req_Activate--");
 

@@ -118,7 +118,11 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	
 
 	g_debug("eas_sync_req_activate - send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Sync", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            error);
 	g_debug("eas_sync_req_activate--");
 }
 
@@ -163,7 +167,11 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError** error)
 			//move to new state
 			priv->state = EasSyncReqStep2;	
 			
-			eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+			eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+			                            "Sync", 
+			                            doc, 
+			                            (struct _EasRequestBase *)self, 
+			                            error);
 
 		}
 		break;

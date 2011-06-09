@@ -5,7 +5,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h> // xmlDoc
 #include <libedataserver/e-flag.h>
-
+#include "eas-connection.h"
 
 G_BEGIN_DECLS
 
