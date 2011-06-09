@@ -40,10 +40,12 @@
 #include <libedataserver/e-flag.h>
 
 #include "../libeasmail/src/eas-folder.h"
+#include "../libeasmail/src/libeasmail.h"
 #include "camel-eas-compat.h"
 #include "camel-eas-folder.h"
 #include "camel-eas-store.h"
 #include "camel-eas-summary.h"
+#include "camel-eas-utils.h"
 
 #ifdef G_OS_WIN32
 #include <winsock2.h>
@@ -280,6 +282,60 @@ eas_get_folder_sync (CamelStore *store, const gchar *folder_name, guint32 flags,
 	return folder;
 }
 
+static CamelFolderInfo *
+folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 flags, GError **error)
+{
+	CamelEasStoreSummary *eas_summary;
+	GSList *folders, *l;
+	GPtrArray *folder_infos;
+	CamelFolderInfo *root_fi = NULL;
+
+	eas_summary = store->summary;
+	folders = camel_eas_store_summary_get_folders (eas_summary, top);
+
+	if (!folders)
+		return NULL;
+
+	folder_infos = g_ptr_array_new ();
+
+	for (l = folders; l != NULL; l = g_slist_next (l)) {
+		CamelFolderInfo *fi;
+		gint64 ftype;
+
+		ftype = camel_eas_store_summary_get_folder_type (eas_summary, l->data, NULL);
+		if (!eas_folder_type_is_mail (ftype))
+			continue;
+
+		fi = camel_eas_utils_build_folder_info (store, l->data);
+		g_ptr_array_add	(folder_infos, fi);
+	}
+
+	root_fi = camel_folder_info_build (folder_infos, top, '/', TRUE);
+
+	g_ptr_array_free (folder_infos, TRUE);
+	g_slist_foreach (folders, (GFunc) g_free, NULL);
+	g_slist_free (folders);
+
+	return root_fi;
+}
+
+static void
+eas_update_folder_hierarchy (CamelEasStore *eas_store, gchar *sync_state,
+			     GSList *folders_created,
+			     GSList *folders_deleted, GSList *folders_updated)
+{
+	eas_utils_sync_folders (eas_store, folders_created, folders_deleted, folders_updated);
+	camel_eas_store_summary_store_string_val (eas_store->summary, "sync_state", sync_state);
+	camel_eas_store_summary_save (eas_store->summary, NULL);
+
+	g_slist_foreach (folders_created, (GFunc) g_object_unref, NULL);
+	g_slist_foreach (folders_updated, (GFunc) g_object_unref, NULL);
+	g_slist_foreach (folders_deleted, (GFunc) g_free, NULL);
+	g_slist_free (folders_created);
+	g_slist_free (folders_deleted);
+	g_slist_free (folders_updated);
+	g_free (sync_state);
+}
 
 struct _store_sync_data
 {
@@ -302,21 +358,32 @@ eas_refresh_finfo (CamelSession *session, CamelSessionThreadMsg *msg)
 	CamelEasStore *eas_store = (CamelEasStore *) m->store;
 	gchar *sync_state;
 	struct _store_sync_data *sync_data;
+	GSList *folders_created = NULL, *folders_updated = NULL;
+	GSList *folders_deleted = NULL;
 
+	printf("%s\n", __func__);
 	if (!camel_offline_store_get_online (CAMEL_OFFLINE_STORE (eas_store)))
 		return;
 
 	if (!EVO3_sync(camel_service_connect) ((CamelService *) eas_store, &msg->error))
 		return;
 
+	g_mutex_lock (eas_store->priv->get_finfo_lock);
+
 	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
 
-	sync_data = g_new0 (struct _store_sync_data, 1);
-	sync_data->eas_store = eas_store;
-	//	e_eas_connection_sync_folder_hierarchy_start	(eas_store->priv->cnc, EAS_PRIORITY_MEDIUM,
-	//							 sync_state, eas_folder_hierarchy_ready_cb,
-	//							 NULL, sync_data);
-	g_free (sync_state);
+	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
+						     sync_state,
+						     &folders_created, &folders_updated,
+						     &folders_deleted, /*cancellable,*/ NULL)) {
+		g_warning ("Unable to fetch the folder hierarchy.\n");
+		g_mutex_unlock (eas_store->priv->get_finfo_lock);
+		return;
+	}
+	eas_update_folder_hierarchy (eas_store, sync_state,
+				     folders_created, folders_deleted, folders_updated);
+
+	g_mutex_unlock (eas_store->priv->get_finfo_lock);
 }
 
 static void
@@ -336,9 +403,72 @@ static CamelSessionThreadOps eas_refresh_ops = {
 static CamelFolderInfo *
 eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EVO3(GCancellable *cancellable,) GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Get folder info not yet implemented"));
-	return NULL;
+	EVO2(GCancellable *cancellable = NULL;)
+	CamelEasStore *eas_store;
+	CamelEasStorePrivate *priv;
+	CamelFolderInfo *fi = NULL;
+	gchar *sync_state;
+	GSList *folders = NULL;
+	gboolean initial_setup = FALSE;
+	GSList *folders_created = NULL, *folders_updated = NULL;
+	GSList *folders_deleted = NULL;
+
+	eas_store = (CamelEasStore *) store;
+	priv = eas_store->priv;
+
+	g_mutex_lock (priv->get_finfo_lock);
+	if (!(camel_offline_store_get_online (CAMEL_OFFLINE_STORE (store))
+	      && EVO3_sync(camel_service_connect) ((CamelService *)store, error))) {
+		g_mutex_unlock (priv->get_finfo_lock);
+		goto offline;
+	}
+
+	folders = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
+	if (!folders)
+		initial_setup = TRUE;
+
+	if (!initial_setup && flags & CAMEL_STORE_FOLDER_INFO_SUBSCRIBED) {
+		time_t now = time (NULL);
+
+		if (now - priv->last_refresh_time > FINFO_REFRESH_INTERVAL) {
+			struct _eas_refresh_msg *m;
+
+			m = camel_session_thread_msg_new (((CamelService *)store)->session, &eas_refresh_ops, sizeof (*m));
+			m->store = g_object_ref (store);
+			camel_session_thread_queue (((CamelService *)store)->session, &m->msg, 0);
+		}
+
+		eas_store->priv->last_refresh_time = time (NULL);
+		g_mutex_unlock (priv->get_finfo_lock);
+		goto offline;
+	}
+
+	g_slist_foreach (folders, (GFunc)g_free, NULL);
+	g_slist_free (folders);
+
+	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
+
+
+	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
+						     sync_state,
+						     &folders_created, &folders_updated,
+						     &folders_deleted, /*cancellable,*/ error)) {
+		if (error)
+			g_warning ("Unable to fetch the folder hierarchy: %s :%d \n",
+				   (*error)->message, (*error)->code);
+		else
+			g_warning ("Unable to fetch the folder hierarchy.\n");
+
+		g_mutex_unlock (priv->get_finfo_lock);
+		return NULL;
+	}
+	eas_update_folder_hierarchy (eas_store, sync_state,
+				     folders_created, folders_deleted, folders_updated);
+	g_mutex_unlock (priv->get_finfo_lock);
+
+offline:
+	fi = folder_info_from_store_summary ( (CamelEasStore *) store, top, flags, error);
+	return fi;
 }
 
 static CamelFolderInfo*
@@ -387,7 +517,7 @@ eas_get_name (CamelService *service, gboolean brief)
 				       service->url->user, service->url->host);
 }
 
-EasEmailHandler *
+static EasEmailHandler *
 camel_eas_store_get_connection (CamelEasStore *eas_store)
 {
 	return g_object_ref (eas_store->priv->handler);
