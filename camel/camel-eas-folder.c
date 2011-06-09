@@ -115,13 +115,16 @@ camel_eas_folder_get_message_from_cache (CamelEasFolder *eas_folder, const gchar
 
 	return msg;
 }
-#if 0
+
 static CamelMimeMessage *
-camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, GCancellable *cancellable, GError **error)
+camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, 
+			      GCancellable *cancellable, GError **error)
 {
+	const gchar *full_name;
+	gchar *fid;
 	CamelEasFolder *eas_folder;
 	CamelEasFolderPrivate *priv;
-	EEasConnection *cnc;
+	EasEmailHandler *handler;
 	CamelEasStore *eas_store;
 	const gchar *mime_content;
 	CamelMimeMessage *message = NULL;
@@ -131,7 +134,6 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 	gchar *cache_file;
 	gchar *dir;
 	const gchar *temp;
-	gpointer progress_data;
 	gboolean res;
 	gchar *mime_fname_new = NULL;
 
@@ -168,10 +170,10 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 	g_hash_table_insert (priv->uid_eflags, (gchar *)uid, (gchar *)uid);
 	g_mutex_unlock (priv->state_lock);
 
-	cnc = camel_eas_store_get_connection (eas_store);
-	ids = g_slist_append (ids, (gchar *) uid);
-	EVO3(progress_data = cancellable);
-	EVO2(progress_data = camel_operation_registered ());
+	handler = camel_eas_store_get_handler (eas_store);
+        full_name = camel_folder_get_full_name (folder);
+        fid = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
+		 full_name);
 
 	mime_dir = g_build_filename (camel_data_cache_get_path (eas_folder->cache),
 				     "mimecontent", NULL);
@@ -184,62 +186,17 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 		goto exit;
 	}
 
-	res = e_eas_connection_get_items (cnc, pri, ids, "IdOnly", "item:MimeContent",
-					  TRUE, mime_dir,
-					  &items,
-					  (ESoapProgressFn)camel_operation_progress,
-					  progress_data,
-					  cancellable, error);
-	g_free (mime_dir);
+	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, error);
 
-	if (!res)
+	if (!res) {
+		g_free (mime_dir);
 		goto exit;
+	}
 
 	/* The mime_content actually contains the *filename*, due to the
 	   streaming hack in ESoapMessage */
-	mime_content = e_eas_item_get_mime_content (items->data);
-
-	/* Exchange returns random UID for associated calendar item, which has no way
-	   to match with calendar components saved in calendar cache. So manually get
-	   AssociatedCalendarItemId, replace the random UID with this ItemId,
-	   And save updated message data to a new temp file */
-	if (e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_REQUEST ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_CANCELLATION ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_MESSAGE ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_RESPONSE) {
-		GSList *items_req = NULL;
-		const EasId *associated_calendar_id;
-
-		// Get AssociatedCalendarItemId with second get_items call
-		res = e_eas_connection_get_items (cnc, pri, ids, "IdOnly", "meeting:AssociatedCalendarItemId",
-						  FALSE, NULL,
-						  &items_req,
-						  (ESoapProgressFn)camel_operation_progress,
-						  progress_data,
-						  cancellable, error);
-		if (!res) {
-			if (items_req) {
-				g_object_unref (items_req->data);
-				g_slist_free (items_req);
-			}
-			goto exit;
-		}
-		associated_calendar_id = e_eas_item_get_associated_calendar_item_id (items_req->data);
-		/*In case of non-exchange based meetings invites the calendar backend have to create the meeting*/
-		if (associated_calendar_id) {
-			mime_fname_new = eas_update_mgtrequest_mime_calendar_itemid (mime_content,
-										     associated_calendar_id,
-										     error);
-		}
-		if (mime_fname_new)
-			mime_content = (const gchar *) mime_fname_new;
-
-		if (items_req) {
-			g_object_unref (items_req->data);
-			g_slist_free (items_req);
-		}
-	}
-
+	mime_content = g_build_filename (mime_dir, uid, NULL);
+	g_free (mime_dir);
 	cache_file = camel_data_cache_get_filename  (eas_folder->cache, "cur",
 						     uid, error);
 	temp = g_strrstr (cache_file, "/");
@@ -289,7 +246,7 @@ exit:
 
 	return message;
 }
-#endif
+
 /* Get the message from cache if available otherwise get it from server */
 static CamelMimeMessage *
 eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, EVO3(GCancellable *cancellable,) GError **error )
@@ -297,9 +254,9 @@ eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, EVO3(GCancel
 	CamelMimeMessage *message;
 	EVO2(GCancellable *cancellable = NULL);
 
-	message = camel_eas_folder_get_message_from_cache ((CamelEasFolder *)folder, uid, cancellable, error);
-	//	if (!message)
-	//	message = camel_eas_folder_get_message (folder, uid, EAS_ITEM_HIGH, cancellable, error);
+	message = camel_eas_folder_get_message_from_cache ((CamelEasFolder *)folder, uid, cancellable, NULL);
+	if (!message)
+		message = camel_eas_folder_get_message (folder, uid, cancellable, error);
 
 	return message;
 }
