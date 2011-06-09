@@ -34,6 +34,7 @@ noinst_HEADERS =         			\
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 
 libcameleas_la_LIBADD =					\
+	$(top_builddir)/libeasmail/src/libeasmail.la	\
 	$(CAMEL_LIBS)                                   \
 	$(EVOLUTION_PLUGIN_LIBS)			\
 	$(LIBEDATASERVER_LIBS)				\

@@ -371,7 +371,11 @@ eas_refresh_finfo (CamelSession *session, CamelSessionThreadMsg *msg)
 	g_mutex_lock (eas_store->priv->get_finfo_lock);
 
 	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
-
+	if (!sync_state || strlen (sync_state) < 64) {
+		gchar *new_ss = g_strndup(sync_state?:"0", 64);
+		g_free (sync_state);
+		sync_state = new_ss;
+	}
 	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
 						     sync_state,
 						     &folders_created, &folders_updated,
@@ -448,7 +452,11 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 
 	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
 
-
+	if (!sync_state || strlen (sync_state) < 64) {
+		gchar *new_ss = g_strndup(sync_state?:"0", 64);
+		g_free (sync_state);
+		sync_state = new_ss;
+	}
 	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
 						     sync_state,
 						     &folders_created, &folders_updated,
