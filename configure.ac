@@ -4,6 +4,21 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.10 no-define])
 
+AS_COMPILER_FLAGS(WARNING_FLAGS,
+	"-Wall -Wextra
+        -Wno-missing-field-initializers
+        -Wno-sign-compare
+        -Wno-unused-parameter
+        -Wdeclaration-after-statement
+        -Werror-implicit-function-declaration
+        -Wformat-nonliteral -Wformat-security -Winit-self
+        -Wmissing-declarations -Wmissing-include-dirs
+        -Wmissing-noreturn -Wnested-externs -Wpointer-arith
+        -Wundef -Wwrite-strings")
+AC_SUBST(WARNING_FLAGS)
+
+CFLAGS="$CFLAGS $WARNING_FLAGS"
+
 # Checks for libraries.
 
 # This macro is defined in check.m4 and tests if check.h and
