@@ -188,7 +188,7 @@ eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError** 
 	
 	g_debug("eas_send_email_req_MessageComplete++");
 
-	eas_send_email_msg_parse_reponse(priv->send_email_msg, doc, error);
+	eas_send_email_msg_parse_response(priv->send_email_msg, doc, error);
 
 	xmlFree(doc);
 

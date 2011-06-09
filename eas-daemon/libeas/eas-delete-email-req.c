@@ -139,7 +139,7 @@ void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc,
 	
 	g_debug("eas_delete_email_req_MessageComplete++");
 
-	eas_sync_msg_parse_reponse (priv->syncMsg, doc, error);
+	eas_sync_msg_parse_response (priv->syncMsg, doc, error);
 
 	xmlFree(doc);
 	

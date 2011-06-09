@@ -136,7 +136,7 @@ void eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, xmlDoc* doc, 
 
 	EasAddCalendarReqPrivate *priv = self->priv;
 
-	eas_sync_msg_parse_reponse (priv->sync_msg, doc, error);
+	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
 	xmlFree(doc);
 	
