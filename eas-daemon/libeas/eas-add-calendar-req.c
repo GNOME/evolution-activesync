@@ -152,7 +152,7 @@ void eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
 	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
 
 	*added_items   = eas_sync_msg_get_added_items (priv->sync_msg);
-	// lrm TODO fill in the error
+	// TODO fill in the error
 	
 	g_debug("eas_add_calendar_req_ActivateFinish--");	
 }

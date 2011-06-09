@@ -22,8 +22,10 @@
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
 struct _EasEmailHandlerPrivate{
+	DBusGConnection *bus;
     DBusGProxy *remoteEas;
     guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+	GMainLoop* main_loop;
 };
 
 // TODO - how much verification of args should happen 
@@ -38,7 +40,9 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	priv = g_new0 (EasEmailHandlerPrivate, 1);
 	
 	priv->remoteEas = NULL;
+	priv->bus = NULL;
 	priv->account_uid = 0;
+	priv->main_loop = NULL;	
 	cnc->priv = priv;	
 	g_debug("eas_mail_handler_init--");
 }
@@ -51,7 +55,10 @@ eas_mail_handler_finalize (GObject *object)
 	EasEmailHandlerPrivate *priv;
 
 	priv = cnc->priv;
-	
+
+	g_main_loop_quit(priv->main_loop);	
+	dbus_g_connection_unref(priv->bus);
+	// nothing to do to 'free' proxy
 	g_free (priv);
 	cnc->priv = NULL;
 
@@ -77,9 +84,6 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 EasEmailHandler *
 eas_mail_handler_new(guint64 account_uid)
 {
-	DBusGConnection* bus;
-	DBusGProxy* remoteEas;
-	GMainLoop* mainloop;
 	GError* error = NULL;
 	EasEmailHandler *object = NULL;
 
@@ -88,39 +92,38 @@ eas_mail_handler_new(guint64 account_uid)
     g_log_set_default_handler(eas_logger, NULL);
 	g_debug("eas_mail_handler_new++");
 
-	mainloop = g_main_loop_new(NULL, TRUE);
-
-	if (mainloop == NULL) {
-		g_error("Error: Failed to create the mainloop");
-		return NULL;
-	}
-
-	g_debug("Connecting to Session D-Bus.");
-	bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
-	if (error != NULL) {
-		g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
-		return NULL;
-	}
-
-	g_debug("Creating a GLib proxy object for Eas.");
-	remoteEas =  dbus_g_proxy_new_for_name(bus,
-		      EAS_SERVICE_NAME,
-		      EAS_SERVICE_MAIL_OBJECT_PATH,
-		      EAS_SERVICE_MAIL_INTERFACE);
-	if (remoteEas == NULL) {
-		g_error("Error: Couldn't create the proxy object");
-		return NULL;
-	}
-
 	object = g_object_new (EAS_TYPE_EMAIL_HANDLER , NULL);
 
 	if(object == NULL){
 		g_error("Error: Couldn't create mail");
 		g_debug("eas_mail_handler_new--");
 		return NULL;  
+	}	
+
+	object->priv->main_loop = g_main_loop_new(NULL, TRUE);
+
+	if (object->priv->main_loop == NULL) {
+		g_error("Error: Failed to create the mainloop");
+		return NULL;
 	}
 
-	object->priv->remoteEas = remoteEas; 
+	g_debug("Connecting to Session D-Bus.");
+	object->priv->bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);
+	if (error != NULL) {
+		g_error("Error: Couldn't connect to the Session bus (%s) ", error->message);
+		return NULL;
+	}
+
+	g_debug("Creating a GLib proxy object for Eas.");
+	object->priv->remoteEas =  dbus_g_proxy_new_for_name(object->priv->bus,
+		      EAS_SERVICE_NAME,
+		      EAS_SERVICE_MAIL_OBJECT_PATH,
+		      EAS_SERVICE_MAIL_INTERFACE);
+	if (object->priv->remoteEas == NULL) {
+		g_error("Error: Couldn't create the proxy object");
+		return NULL;
+	}
+
 	object->priv->account_uid = account_uid;
 
 	g_debug("eas_mail_handler_new--");
@@ -135,6 +138,8 @@ build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, G
 	g_debug("build_folder_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
     g_assert(folder_list);
 
@@ -192,6 +197,8 @@ build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinf
 	gboolean ret = TRUE;
 	guint i = 0;
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
 	g_assert(g_slist_length(*emailinfo_list) == 0);
 	
 	while(serialised_emailinfo_array[i])
@@ -242,6 +249,9 @@ cleanup:
 static void 
 free_string_array(gchar **array)
 {
+	if(array == NULL)
+		return;
+	
 	guint i = 0;
 	while(array[i])
 	{	
@@ -263,6 +273,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 {
 	g_debug("eas_mail_handler_sync_folder_hierarchy++");
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
 	g_assert(self);
 	g_assert(sync_key);
 
@@ -292,29 +304,38 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
-   
+	
     g_debug("eas_mail_handler_sync_folder_hierarchy - dbus proxy called");
-    if (*error) {
-        g_error(" Error: %s", (*error)->message);
-    }
-    
-	if(ret)
+	
+	if(!ret)
 	{
-		g_debug("sync_email_folder_hierarchy called successfully");
-
-		// put the updated sync key back into the original string for tracking this
-        strcpy (sync_key, updatedSyncKey);
-		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
-		if(ret)
-		{
-			ret = build_folder_list((const gchar **)deleted_folder_array, folders_deleted, error);
-		}
-		if(ret)	
-		{
-			ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
-		}
+		goto cleanup;
 	}
+
+	g_debug("sync_email_folder_hierarchy called successfully");
+
+	// put the updated sync key back into the original string for tracking this
+    strcpy (sync_key, updatedSyncKey);
+	
+	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+	ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}
+	ret = build_folder_list((const gchar **)deleted_folder_array, folders_deleted, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}	
+	ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}	
+
+
+cleanup:	
 
 	g_free(updatedSyncKey);
 	free_string_array(created_folder_array);
@@ -323,7 +344,12 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 	
 	if(!ret)	// failed - cleanup lists
 	{
-	   g_debug("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
+		g_assert (error == NULL || *error != NULL);		
+		if(error)
+		{
+			g_error(" Error: %s", (*error)->message);
+		}		
+	   	g_debug("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
 		g_slist_foreach(*folders_created, (GFunc)g_free, NULL);
 		g_free(*folders_created);
 		*folders_created = NULL;
@@ -333,11 +359,6 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 		g_slist_foreach(*folders_deleted, (GFunc)g_free, NULL);
 		g_free(*folders_deleted);
 		*folders_deleted = NULL;
-	}
-	if(*folders_created ==NULL)
-	{
-	    g_debug("created list not correctly created--");
-
 	}
 	
 	g_debug("eas_mail_handler_sync_folder_hierarchy--");

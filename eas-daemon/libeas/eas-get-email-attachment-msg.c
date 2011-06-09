@@ -36,7 +36,6 @@ eas_get_email_attachment_msg_init (EasGetEmailAttachmentMsg *object)
 static void
 eas_get_email_attachment_msg_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
 	EasGetEmailAttachmentMsg* self = (EasGetEmailAttachmentMsg*) object;
 	EasGetEmailAttachmentMsgPrivate* priv = self->priv;
 	g_debug("eas_get_email_attachment_msg_finalize++");

@@ -107,8 +107,6 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 	
 	g_debug("eas_get_email_body_req_Activate++");
 	
-	/* TODO: Add public function implementation here */
-
 	priv->emailBodyMsg = eas_get_email_body_msg_new (priv->serverId, priv->collectionId, priv->mimeDirectory);
 	doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);
 
@@ -125,7 +123,6 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
 	g_debug("eas_get_email_body_req_MessageComplete++");
 
 	eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, error);
-	/* TODO: Add public function implementation here */
 	
 	xmlFree(doc);
 

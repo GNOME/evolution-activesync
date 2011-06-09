@@ -150,7 +150,7 @@ void eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self, gchar**
 
 	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
 
-	// lrm TODO fill in the error
+	// TODO fill in the error
 	
 	g_debug("eas_update_calendar_req_ActivateFinish--");	
 }

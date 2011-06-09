@@ -59,8 +59,6 @@ struct _EasConnectionPrivate
 	xmlDoc* request_doc;
 	EasRequestBase* request;
 	GError **request_error;
-	
-	GError *provision_error;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -121,8 +119,6 @@ eas_connection_init (EasConnection *self)
 	priv->request = NULL;
 	priv->request_error = NULL;
 
-	priv->provision_error = NULL;
-
 	g_debug("eas_connection_init--");
 }
 
@@ -180,11 +176,6 @@ eas_connection_finalize (GObject *object)
 		g_error_free(*priv->request_error);
 	}
 
-	if (priv->provision_error)
-	{
-		g_error_free(priv->provision_error);
-	}
-
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
 	
 	g_debug("eas_connection_finalize--");
@@ -214,7 +205,10 @@ connection_authenticate (SoupSession *sess,
 {
     EasConnection* cnc = (EasConnection *)data;
 	g_debug("  eas_connection - connection_authenticate++");
-    soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+	if (!retrying)
+	{
+		soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+	}
 	g_debug("  eas_connection - connection_authenticate--");
 }
 
@@ -285,16 +279,19 @@ void eas_connection_resume_request(EasConnection* self)
  * @param cmd ActiveSync command string [no transfer]
  * @param doc the message xml body [full transfer]
  * @param request the request GObject
+ *
+ * @return whether successful
  */
-void 
+gboolean 
 eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error)
 {
+	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;
     SoupMessage *msg = NULL;
 	gchar* uri = NULL;
     WB_UTINY *wbxml = NULL;
     WB_ULONG wbxml_len = 0;
-    WBXMLError ret = WBXML_OK;
+    WBXMLError wbxml_ret = WBXML_OK;
     WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
@@ -316,14 +313,21 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		eas_request_base_SetConnection (&req->parent_instance, self);
-		eas_provision_req_Activate (req, &priv->provision_error);
-		return;
+		ret = eas_provision_req_Activate (req, error);
+		if(!ret)
+		{
+			g_assert (error == NULL || *error != NULL);
+		}
+		goto finish;
 	}
 
-    ret = wbxml_conv_xml2wbxml_create(&conv);
-    if (ret != WBXML_OK) {
-        g_debug("%s", wbxml_errors_string(ret));
-        return;
+    wbxml_ret = wbxml_conv_xml2wbxml_create(&conv);
+    if (wbxml_ret != WBXML_OK) {
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     ("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);		
+        ret = FALSE; 
+		goto finish;
     }
 
 	g_assert(priv->server_uri);
@@ -337,6 +341,14 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
     
     msg = soup_message_new("POST", uri);
     g_free(uri);
+	if(!msg)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_SOUPERROR,
+			     ("soup_message_new returned NULL"));		
+		ret = FALSE;
+		goto finish;
+	}
 
     soup_message_headers_append(msg->request_headers, 
                                 "MS-ASProtocolVersion",
@@ -362,33 +374,42 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		g_debug("\n=== XML Input ===\n%s=== XML Input ===", tmp);
 		g_free(tmp);
 
-		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string(ret), wbxml_len);
+		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string(wbxml_ret), wbxml_len);
 	}
-	
-    if (dataptr) {
-        xmlFree(dataptr);
-        dataptr = NULL;
-    }
 
-    if (WBXML_OK == ret)
-    {
-        soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
+    wbxml_ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
+	if(wbxml_ret != WBXML_OK)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);		
+        ret = FALSE; 
+		goto finish;
+	}
 
-        soup_message_set_request(msg, 
-                                 "application/vnd.ms-sync.wbxml",
-                                 SOUP_MEMORY_COPY,
-                                 (gchar*)wbxml,
-                                 wbxml_len);
-    
-        soup_session_queue_message(priv->soup_session, 
-                                   msg, 
-                                   handle_server_response, 
-                                   request);
-    }
-    
+    soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
+
+    soup_message_set_request(msg, 
+                             "application/vnd.ms-sync.wbxml",
+                             SOUP_MEMORY_COPY,
+                             (gchar*)wbxml,
+                             wbxml_len);
+
+    soup_session_queue_message(priv->soup_session, 
+                               msg, 
+                               handle_server_response, 
+                               request);
+finish:	
     if (wbxml) free(wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy(conv);
-	g_debug("eas_connection_send_request--");
+    if (dataptr) xmlFree(dataptr);
+ 
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
+	g_debug("eas_connection_send_request--");	
+	return ret;
 }
 
 typedef enum{
@@ -523,19 +544,358 @@ dump_wbxml_response(const WB_UTINY *wbxml, const WB_LONG wbxml_len)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Autodiscover
+//
+////////////////////////////////////////////////////////////////////////////////
+ 
+static xmlDoc *
+autodiscover_as_xml(const gchar *email)
+{
+    xmlDoc *doc;
+    xmlNode *node, *child;
+    xmlNs *ns;
+
+    doc = xmlNewDoc((xmlChar *) "1.0");
+    node = xmlNewDocNode(doc, NULL, (xmlChar *)"Autodiscover", NULL);
+    xmlDocSetRootElement(doc, node);
+    ns = xmlNewNs (node, (xmlChar *)"http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestschema/2006", NULL);
+    node = xmlNewChild(node, ns, (xmlChar *)"Request", NULL);
+    child = xmlNewChild(node, ns, (xmlChar *)"EMailAddress", (xmlChar *)email);
+    child = xmlNewChild(node, ns, (xmlChar *)"AcceptableResponseSchema", 
+                        (xmlChar *)"http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006");
+
+    return doc;
+}
+
+static gchar*
+autodiscover_parse_protocol(xmlNode *node)
+{
+    for (node = node->children; node; node = node->next) {
+        if (node->type == XML_ELEMENT_NODE &&
+            !strcmp((char *)node->name, "Url")) {
+            char *asurl = (char *)xmlNodeGetContent(node);
+            if (asurl)
+                return asurl;
+        }
+    }
+    return NULL;
+}
+
+typedef struct {
+	EasConnection *cnc;
+	GSimpleAsyncResult *simple;
+	SoupMessage *msgs[2];
+	EasAutoDiscoverCallback cb;
+	gpointer cbdata;
+} EasAutoDiscoverData;
+
+static void
+autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
+{
+	GError *error = NULL;
+	EasAutoDiscoverData *adData = data;
+	guint status = msg->status_code;
+	xmlDoc *doc = NULL;
+	xmlNode *node = NULL;
+	gchar *serverUrl = NULL;
+	gint idx = 0;
+
+	g_debug("autodiscover_soup_cb++");
+
+	for(; idx < 2; ++idx)
+	{
+		if (adData->msgs[idx] == msg)
+			break;
+	}
+
+	if (idx == 2)
+	{
+		g_debug("Request got cancelled and removed");
+		return;
+	}
+
+	adData->msgs[idx] = NULL;
+
+	if (status != 200)
+	{
+		g_warning("Autodiscover HTTP response was not OK");
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Status code: %d - Response from server",
+		            status);
+		goto failed;
+	}
+
+	doc = xmlReadMemory (msg->response_body->data, 
+	                     msg->response_body->length,
+	                     "autodiscover.xml", 
+	                     NULL, 
+	                     XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+
+	if (!doc)
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to parse autodiscover response XML");
+		goto failed;
+	}
+
+	node = xmlDocGetRootElement (doc);
+	if (g_strcmp0(node->name, "Autodiscover"))
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to find <Autodiscover> element");
+		goto failed;
+	}
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Response"))
+			break;
+	}
+	if (!node)
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to find <Response> element");
+		goto failed;
+	}
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Action"))
+			break;
+	}
+	if (!node)
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to find <Action> element");
+		goto failed;
+	}
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Settings"))
+			break;
+	}
+	if (!node)
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to find <Settings> element");
+		goto failed;
+	}
+	for (node = node->children; node; node = node->next)
+	{
+		if (node->type == XML_ELEMENT_NODE && 
+		    !g_strcmp0(node->name, "Server") &&
+		    (serverUrl = autodiscover_parse_protocol (node)))
+			break;
+	}
+
+	for (idx = 0; idx < 2; ++idx)
+	{
+		if (adData->msgs[idx])
+		{
+			SoupMessage *m = adData->msgs[idx];
+			adData->msgs[idx] = NULL;
+			soup_session_cancel_message (adData->cnc->priv->soup_session,
+			                             m,
+			                             SOUP_STATUS_CANCELLED);
+			g_message("Autodiscover success - Cancelling outstanding msg[%d]",idx);
+		}
+	}
+	g_simple_async_result_set_op_res_gpointer (adData->simple, serverUrl, NULL);
+	g_simple_async_result_complete_in_idle (adData->simple);
+
+	g_debug("autodiscover_soup_cb (Success)--");
+	return;
+
+failed:
+	for (idx = 0; idx < 2; ++idx)
+	{
+		if (adData->msgs[idx])
+		{
+			/* Clear this error and hope the second one succeeds */
+			g_warning("First autodiscover attempt failed");
+			g_clear_error (&error);
+			return;
+		}
+	}
+	
+	/* This is returning the last error, it may be preferable for the 
+	 * first error to be returned.
+	 */
+	g_simple_async_result_set_from_error (adData->simple, error);
+	g_simple_async_result_complete_in_idle (adData->simple);
+	
+	g_debug("autodiscover_soup_cb (Failed)--");
+}
+
+static void 
+autodiscover_simple_cb (GObject *cnc, GAsyncResult *res, gpointer data)
+{
+	EasAutoDiscoverData *adData = data;
+	GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
+	GError *error = NULL;
+	gchar *url = NULL;
+
+	g_debug("autodiscover_simple_cb++");
+	
+	if (!g_simple_async_result_propagate_error (simple, &error))
+	{
+		url = g_simple_async_result_get_op_res_gpointer (simple);
+	}
+
+	adData->cb (url, adData->cbdata, error);
+	g_object_unref (G_OBJECT(adData->cnc));
+	g_free (adData);
+	
+	g_debug("autodiscover_simple_cb--");
+}
+
+
+static SoupMessage *
+autodiscover_as_soup_msg(gchar *url, xmlOutputBuffer *buf)
+{
+	SoupMessage *msg = NULL;
+
+	g_debug("autodiscover_as_soup_msg++");
+
+	msg = soup_message_new("POST", url);
+	
+	soup_message_headers_append (msg->request_headers,
+	                             "User-Agent", "libeas");
+	
+	soup_message_set_request (msg, 
+	                          "text/xml", 
+	                          SOUP_MEMORY_COPY,
+	                          (gchar*)buf->buffer->content,
+	                          buf->buffer->use);
+
+	g_debug("autodiscover_as_soup_msg--");
+	return msg;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Public functions
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @param[in]  cb        autodiscover response callback
+ * @param[in]  cb_data   data to be passed into the callback
+ * @param[in]  email     user's exchange email address
+ * @param[in]  username  exchange username in the format DOMAIN\username
+ * @param[in]  password  exchange server account password
+ */
 void
-eas_connection_autodiscover (const gchar* email, 
-                             const gchar* username, 
-                             const gchar* password, 
-                             gchar** serverUri, 
-                             GError** error)
+eas_connection_autodiscover (EasAutoDiscoverCallback cb,
+                             gpointer cb_data,
+                             const gchar* email,
+                             const gchar* username,
+                             const gchar* password)
 {
-	/* TODO: Add public function implementation here */
+	GError *error = NULL;
+	gchar* domain = NULL;
+	EasConnection *cnc = NULL;
+	xmlDoc *doc = NULL;
+	xmlOutputBuffer* txBuf = NULL;
+	gchar* url = NULL;
+	EasAutoDiscoverData *autoDiscData = NULL;
+	
 	g_debug("eas_connection_autodiscover++");
+
+	if (!email || !password) 
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Email and password are mandatory and must be provided");
+		cb(NULL, cb_data, error);
+		return;
+	}
+
+	domain = strchr(email, '@');
+	if (!(domain && *domain))
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed to extract domain from email address");
+		cb(NULL, cb_data, error);
+		return;
+	}
+	++domain; // Advance past the '@'
+
+	doc = autodiscover_as_xml (email);
+	txBuf = xmlAllocOutputBuffer (NULL);
+	xmlNodeDumpOutput(txBuf, doc, xmlDocGetRootElement (doc), 0, 1, NULL);
+	xmlOutputBufferFlush (txBuf);
+
+	cnc = eas_connection_new();
+	if (!cnc) 
+	{
+		g_set_error(&error,
+		            EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FAILED,
+		            "Failed create connection");
+		cb(NULL, cb_data, error);
+		return;
+	}
+
+	autoDiscData = g_new0(EasAutoDiscoverData, 1);
+	autoDiscData->cb = cb;
+	autoDiscData->cbdata = cb_data;
+	autoDiscData->cnc = cnc;
+	autoDiscData->simple = g_simple_async_result_new (G_OBJECT(cnc),
+	                                                  autodiscover_simple_cb,
+	                                                  autoDiscData,
+	                                                  eas_connection_autodiscover);
+
+	// URL formats to be tried
+	// 1 - https://<domain>/autodiscover/autodiscover.xml
+	url = g_strdup_printf("https://%s/autodiscover/autodiscover.xml", domain);
+	autoDiscData->msgs[0] = autodiscover_as_soup_msg(url, txBuf);
+	g_free(url);
+	
+	// 2 - https://autodiscover.<domain>/autodiscover/autodiscover.xml
+	url = g_strdup_printf("https://autodiscover.%s/autodiscover/autodiscover.xml", domain);
+	autoDiscData->msgs[1] = autodiscover_as_soup_msg(url, txBuf);
+	g_free(url);
+
+	if (!username) // Use the front of the email as the username
+	{
+		gchar **split = g_strsplit(email, "@", 2);
+		eas_connection_set_details(cnc, split[0], password);
+		g_strfreev(split);
+	}
+	else // Use the supplied username
+	{
+		eas_connection_set_details(cnc, username, password);
+	}
+
+	soup_session_queue_message(cnc->priv->soup_session,
+	                           autoDiscData->msgs[0],
+	                           autodiscover_soup_cb,
+	                           autoDiscData);
+	                      
+	soup_session_queue_message(cnc->priv->soup_session,
+	                           autoDiscData->msgs[1],
+	                           autodiscover_soup_cb,
+	                           autoDiscData);
+
+	g_object_unref (cnc); // GSimpleAsyncResult holds this now
+	                      
+	xmlOutputBufferClose (txBuf);
+	xmlFreeDoc (doc);
+	
 	g_debug("eas_connection_autodiscover--");
 }
 
@@ -544,6 +904,8 @@ EasConnection* eas_connection_new()
 	EasConnection *cnc = NULL;
 	
 	g_debug("eas_connection_new++");
+
+	g_type_init();
 
     cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
 
@@ -555,31 +917,52 @@ EasConnection* eas_connection_new()
 
 int eas_connection_set_account(EasConnection* self, guint64 accountId)
 {
-  g_debug("creating acounts object\n");   
-  EasAccounts* accountsObj = NULL;
-   accountsObj = eas_accounts_new ();
-   
-   g_debug("eas_accounts_read_accounts_info\n");    
-    int err = eas_accounts_read_accounts_info(accountsObj);
-    if (err !=0)
-    {
-        g_debug("Error reading data from file accounts.cfg\n");
-         return err;    
-    }
+	EasAccounts* accountsObj = NULL;
+	g_debug("eas_connection_set_account++");
 
-   g_debug("getting data from EasAccounts object\n"); 
-   gchar* sUri = NULL;
-   gchar* uname = NULL;
-   gchar* pwd = NULL;
-   sUri = eas_accounts_get_server_uri (accountsObj, accountId);
-   uname = eas_accounts_get_user_id (accountsObj, accountId);
-   pwd = eas_accounts_get_password (accountsObj, accountId);
+	accountsObj = eas_accounts_new ();
 
-    self->priv->username = g_strdup (uname);
-    self->priv->password = g_strdup (pwd);
-    self->priv->server_uri = g_strdup (sUri);
+	g_debug("eas_accounts_read_accounts_info");
+	int err = eas_accounts_read_accounts_info(accountsObj);
+	if (err !=0)
+	{
+		g_debug("Error reading data from file accounts.cfg");
+		return err;
+	}
 
-    g_object_unref (accountsObj);
+	g_debug("getting data from EasAccounts object"); 
+	gchar* sUri = NULL;
+	gchar* uname = NULL;
+	gchar* pwd = NULL;
+	sUri = eas_accounts_get_server_uri (accountsObj, accountId);
+	uname = eas_accounts_get_user_id (accountsObj, accountId);
+	pwd = eas_accounts_get_password (accountsObj, accountId);
+
+	self->priv->username = g_strdup (uname);
+	self->priv->password = g_strdup (pwd);
+	self->priv->server_uri = g_strdup (sUri);
+
+	g_object_unref (accountsObj);
+	g_debug("eas_connection_set_account--");
+}
+
+void eas_connection_set_details(EasConnection* self, const gchar* username, const gchar* password)
+{
+	EasConnectionPrivate *priv = self->priv;
+	
+	g_debug("eas_connection_set_details++");
+
+	g_free(priv->username);
+	priv->username = NULL;
+	g_free(priv->password);
+	priv->password = NULL;
+
+	priv->username = g_strdup (username);
+	priv->password = g_strdup (password);
+
+	g_debug("Details: U/n[%s], P/w[%s]", priv->username, priv->password);
+	
+	g_debug("eas_connection_set_details--");
 }
 
 void parse_for_status(xmlNode *node)
@@ -759,7 +1142,20 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		
 		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
-		eas_provision_req_Activate (req, &error);
+		eas_provision_req_Activate (req, &error);   // TODO check return
 	}
 	g_debug("eas_connection - handle_server_response--");
 }
+
+GQuark eas_connection_error_quark (void)
+{
+	static GQuark quark = 0;
+
+	if (G_UNLIKELY (quark == 0)) {
+		const gchar *string = "eas-connection-error-quark";
+		quark = g_quark_from_static_string (string);
+	}
+
+	return quark;
+}
+

@@ -248,6 +248,7 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 				            ret_deleted_items_array);
     }
 
+	g_object_unref(syncReqObj);
     g_debug("eas_calendar_get_latest_calendar_items--");
 }
 
