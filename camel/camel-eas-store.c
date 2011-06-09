@@ -123,7 +123,7 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 	}
 	eas_store->storage_path = session_storage_path;
 
-	priv->account_uid = g_strtoull (camel_url_get_param (url, "account_uid"));
+	priv->account_uid = g_ascii_strtoull (camel_url_get_param (url, "account_uid"), NULL, 0);
 	if (!priv->account_uid) {
 		g_set_error (
 			error, CAMEL_STORE_ERROR,
