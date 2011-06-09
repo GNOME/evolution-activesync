@@ -70,7 +70,7 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      gpointer data);
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
-
+static void wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -353,6 +353,7 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 	// Convert doc into a flat xml string
     xmlDocDumpFormatMemoryEnc(doc, &dataptr, &data_len, (gchar*)"utf-8",1);
     wbxml_conv_xml2wbxml_disable_public_id(conv);
+	wbxml_conv_xml2wbxml_disable_string_table(conv);
     ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) 
@@ -731,6 +732,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				g_debug("EAS_REQ_SEND_EMAIL");
 				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, &error);
 			}
+			break;
 			case EAS_REQ_UPDATE_MAIL:
 			{
 				g_debug("EAS_REQ_UPDATE_EMAIL");
@@ -742,6 +744,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 				g_debug("EAS_REQ_UPDATE_CALENDAR");
 				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc, &error);
 			}
+			break;
 			case EAS_REQ_ADD_CALENDAR:
 			{
 				g_debug("EAS_REQ_ADD_CALENDAR");
