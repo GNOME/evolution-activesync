@@ -30,7 +30,6 @@ libeasmail/config/*
 libeasmail/m4/*
 
 # File paterns to ignore
-*.m4
 *.o
 *.lo
 *.la
