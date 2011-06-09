@@ -51,11 +51,11 @@ eas_sync_req_init (EasSyncReq *object)
 static void
 eas_sync_req_finalize (GObject *object)
 {
-	g_debug("eas_sync_req_finalize++");
-
     EasSyncReq *req = (EasSyncReq*)object;
 	EasSyncReqPrivate *priv = req->priv;
-	
+
+	g_debug("eas_sync_req_finalize++");
+
 	if(priv->syncMsg){
 		g_object_unref(priv->syncMsg);
 	}
@@ -147,10 +147,9 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError** error)
 		//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
 		case EasSyncReqStep1:
 		{
-			g_debug("eas_sync_req_MessageComplete step 1");
 		    //get syncKey
-		    gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
-			
+			gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
+
 			g_debug("eas_sync_req synckey = %s", syncKey);
 			
 			//clean up old message

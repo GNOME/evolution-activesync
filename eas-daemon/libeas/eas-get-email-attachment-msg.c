@@ -4,6 +4,7 @@
  * Copyright (C)  2011 <>
  */
 #include <libwbxml-1.0/wbxml/wbxml.h>
+#include <libwbxml-1.0/wbxml/wbxml_base64.h>
 #include "eas-get-email-attachment-msg.h"
 
 
@@ -243,7 +244,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 				g_critical("Failed to open file!");
 			}
 			
-			wbxml_free(decoded_buf);
+			g_free(decoded_buf);
 			g_free(fullFilePath);
 			xmlFree(xmlTmp);
 			break;

@@ -143,21 +143,21 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
         return;
     }
     node = xmlDocGetRootElement(doc);
-    if (strcmp((char *)node->name, "ItemOperations")) {
+    if (g_strcmp0((char *)node->name, "ItemOperations")) {
         g_debug("Failed to find <ItemOperations> element");
         return;
     }
 
     for (node = node->children; node; node = node->next) 
 	{
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *status = (gchar *)xmlNodeGetContent(node);
             g_debug ("ItemOperations Status:[%s]", status);
 			xmlFree(status);
             continue;
         }
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Response"))
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Response"))
 		{
 			break;
 		}
@@ -170,7 +170,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Fetch"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Fetch"))
 		{
 			break;
 		}
@@ -183,29 +183,29 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 		{
             gchar *status = (gchar *)xmlNodeGetContent(node);
             g_debug ("Fetch Status:[%s]", status);
 			xmlFree(status);
             continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "CollectionId"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "CollectionId"))
 		{
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "ServerID"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ServerID"))
 		{
 			gchar *xmlTmp = xmlNodeGetContent(node);
 			priv->serverUid = g_strdup(xmlTmp);
 			xmlFree(xmlTmp);
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Class"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Class"))
 		{
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Properties"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Properties"))
 		{
 			break;
 		}
@@ -219,7 +219,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Body"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Body"))
 		{
 			break;
 		}
@@ -233,10 +233,10 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Type"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Type"))
 		{
 			gchar *xmlTmp = xmlNodeGetContent(node);
-			if (strcmp(xmlTmp,"4"))
+			if (g_strcmp0(xmlTmp,"4"))
 			{
 				g_critical("Email type returned by server is not MIME");
 				xmlFree(xmlTmp);
@@ -246,7 +246,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Data"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Data"))
 		{
 			gchar *xmlTmp = xmlNodeGetContent(node);
 			gchar* fullFilePath = NULL;

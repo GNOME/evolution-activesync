@@ -41,6 +41,8 @@ eas_msg_base_class_init (EasMsgBaseClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	void *tmp = object_class;
+	tmp = parent_class;
 	
 	g_debug("eas_msg_base_class_init++");
 	

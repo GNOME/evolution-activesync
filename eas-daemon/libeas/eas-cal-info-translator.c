@@ -14,6 +14,7 @@
 #include <libical/icalduration.h>
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
+#include <libwbxml-1.0/wbxml/wbxml_base64.h>
 
 // iCalendar constants defined in RFC5545 (http://tools.ietf.org/html/rfc5545)
 const gchar* ICAL_LINE_TERMINATOR           = "\r\n";

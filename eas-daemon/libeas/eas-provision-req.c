@@ -90,10 +90,11 @@ eas_provision_req_new (gchar* policy_status, gchar* policy_key)
 gboolean
 eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 {
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	gboolean ret = FALSE;
 	EasProvisionReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
+	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	doc = eas_provision_msg_build_message (priv->msg);
 	if(!doc)
@@ -198,4 +199,5 @@ gchar*
 eas_provision_req_GetPolicyKey (EasProvisionReq* self)
 {
 	/* TODO: Add public function implementation here */
+	return "TODO";
 }

@@ -19,6 +19,7 @@
 
 #include "eas-send-email-msg.h"
 #include <wbxml/wbxml.h>
+#include <wbxml/wbxml_base64.h>
 
 
 G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);

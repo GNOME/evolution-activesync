@@ -212,7 +212,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     }
 	
     node = xmlDocGetRootElement(doc);
-    if (strcmp((char *)node->name, "Provision")) {
+    if (g_strcmp0((char *)node->name, "Provision")) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_INVALIDXML,	   
 			     ("Failed to find <Provision> element"));			
@@ -220,7 +220,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     }
 
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
 			guint provision_status_num = atoi(provision_status);
@@ -242,7 +242,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 
     for (node = node->next; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE &&
-            !strcmp((char *)node->name, "Policies"))
+            !g_strcmp0((char *)node->name, "Policies"))
             break;
     }
     if (!node) {
@@ -254,7 +254,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE &&
-            !strcmp((char *)node->name, "Policy"))
+            !g_strcmp0((char *)node->name, "Policy"))
             break;
     }
     if (!node) {
@@ -266,7 +266,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 
     for (node = node->children; node; node = node->next)
     {
-        if (!found_status && node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+        if (!found_status && node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
         {
 			gchar *xmlTmp = xmlNodeGetContent(node);
             priv->policy_status = g_strdup(xmlTmp);
@@ -285,7 +285,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
             }
 
         }
-        if (!found_policy_key && node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "PolicyKey"))
+        if (!found_policy_key && node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "PolicyKey"))
         {
 			gchar *xmlTmp = xmlNodeGetContent(node);
             priv->policy_key = g_strdup(xmlTmp);

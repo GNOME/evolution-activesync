@@ -33,8 +33,8 @@ struct _EasEmailHandlerPrivate{
 static void
 eas_mail_handler_init (EasEmailHandler *cnc)
 {
-	g_debug("eas_mail_handler_init++");
     EasEmailHandlerPrivate *priv;
+	g_debug("eas_mail_handler_init++");
     
 	/* allocate internal structure */
 	priv = g_new0 (EasEmailHandlerPrivate, 1);
@@ -50,9 +50,9 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 static void
 eas_mail_handler_finalize (GObject *object)
 {
-	g_debug("eas_mail_handler_finalize++");
 	EasEmailHandler *cnc = (EasEmailHandler *) object;
 	EasEmailHandlerPrivate *priv;
+	g_debug("eas_mail_handler_finalize++");
 
 	priv = cnc->priv;
 
@@ -69,14 +69,14 @@ eas_mail_handler_finalize (GObject *object)
 static void
 eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 {
-	g_debug("eas_mail_handler_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
 	// get rid of warnings about above 2 lines
-	void *temp = (void*)object_class;
+    void *temp = (void*)object_class;
 	temp = (void*)parent_class;
-	
+    
+    g_debug("eas_mail_handler_class_init++");
+
 	object_class->finalize = eas_mail_handler_finalize;
 	g_debug("eas_mail_handler_class_init--");
 }
@@ -137,14 +137,12 @@ eas_mail_handler_new(guint64 account_uid)
 static gboolean 
 build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, GError **error)
 {
-	g_debug("build_folder_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
-
+    
+    g_debug("build_folder_list++");
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
     g_assert(folder_list);
-
 	g_assert(g_slist_length(*folder_list) == 0);
 	
 	while(serialised_folder_array[i])
@@ -195,9 +193,9 @@ cleanup:
 static gboolean 
 build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
 {
-	g_debug("build_emailinfo_list++");
 	gboolean ret = TRUE;
 	guint i = 0;
+	g_debug("build_emailinfo_list++");
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
@@ -251,10 +249,11 @@ cleanup:
 static void 
 free_string_array(gchar **array)
 {
+	guint i = 0;
+    
 	if(array == NULL)
 		return;
 	
-	guint i = 0;
 	while(array[i])
 	{	
 		g_free(array[i]);
@@ -273,25 +272,21 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
                                        GSList **folders_deleted,
                                        GError **error)
 {
-	g_debug("eas_mail_handler_sync_folder_hierarchy++");
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	
-	g_assert(self);
-	g_assert(sync_key);
-
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = self->priv->remoteEas; 
-    
-	g_assert(g_slist_length(*folders_created) == 0);
-	g_assert(g_slist_length(*folders_updated) == 0);
-	g_assert(g_slist_length(*folders_deleted) == 0);
-	
 	gchar **created_folder_array = NULL;
 	gchar **deleted_folder_array = NULL;
 	gchar **updated_folder_array = NULL;
-
 	gchar *updatedSyncKey = NULL;
+
+	g_debug("eas_mail_handler_sync_folder_hierarchy++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_assert(self);
+	g_assert(sync_key);
+	g_assert(g_slist_length(*folders_created) == 0);
+	g_assert(g_slist_length(*folders_updated) == 0);
+	g_assert(g_slist_length(*folders_deleted) == 0);
 	
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
@@ -385,22 +380,19 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* self,
 	gboolean *more_available,	// if there are more changes to sync (window_size exceeded)
 	GError **error)
 {
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteEas; 
+	gchar **created_emailinfo_array = NULL;
+	gchar **deleted_emailinfo_array = NULL;
+	gchar **updated_emailinfo_array = NULL;
+	gchar *updatedSyncKey = NULL;
+    
 	g_debug("eas_mail_handler_sync_folder_email_info++");
-
 	g_debug("sync_key = %s", sync_key);
 	g_assert(self);
 	g_assert(sync_key);
 	g_assert(collection_id);
 	g_assert(more_available);
-
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteEas; 
-
-	gchar **created_emailinfo_array = NULL;
-	gchar **deleted_emailinfo_array = NULL;
-	gchar **updated_emailinfo_array = NULL;
-	
-	gchar *updatedSyncKey = NULL;
 	
 	g_debug("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
 	// call dbus api with appropriate params
@@ -472,15 +464,14 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* self,
 		const gchar *mime_directory,
 		GError **error)
 {
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteEas; 
+    
 	g_debug("eas_mail_handler_fetch_email_bodies++");
-
 	g_assert(self);
 	g_assert(folder_id);
 	g_assert(server_id);
 	g_assert(mime_directory);
-	
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
@@ -505,14 +496,13 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* self,
 		const gchar *mime_directory,	
 		GError **error)
 {
-	g_debug("eas_mail_handler_fetch_email_attachment++");
-
-	g_assert(self);
-	g_assert(file_reference);	
-	g_assert(mime_directory);	
-	
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = self->priv->remoteEas; 
+
+    g_debug("eas_mail_handler_fetch_email_attachment++");
+	g_assert(self);
+	g_assert(file_reference);
+	g_assert(mime_directory);
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_attachment", error,
@@ -538,23 +528,21 @@ eas_mail_handler_delete_email(EasEmailHandler* self,
                                 const GSList *items_deleted,		// emails to delete
 								GError **error)
 {
-	g_debug("eas_mail_handler_delete_emails++");
 	gboolean ret = TRUE;
-	
+	DBusGProxy *proxy = self->priv->remoteEas; 
+	gchar *updatedSyncKey = NULL;
+    gchar **deleted_items_array = NULL;
+    // Build string array from items_deleted GSList
+    guint list_length = g_slist_length((GSList*)items_deleted);
+    int loop = 0;
+    
+	g_debug("eas_mail_handler_delete_emails++");
 	g_assert(self);
 	g_assert(sync_key);	
 	g_assert(items_deleted);
-		
-	DBusGProxy *proxy = self->priv->remoteEas; 
 
-	gchar *updatedSyncKey = NULL;
-    gchar **deleted_items_array = NULL;
-
-    // Build string array from items_deleted GSList
-    guint list_length = g_slist_length((GSList*)items_deleted);
     deleted_items_array = g_malloc0((list_length+1) * sizeof(gchar*));
 
-    int loop = 0;
     for (; loop < list_length; ++loop)
     {
         deleted_items_array[loop] = g_strdup(g_slist_nth_data((GSList*)items_deleted, loop));
@@ -607,22 +595,21 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 								GError **error)
 {
 	gboolean ret = TRUE;	
-	g_debug("eas_mail_handler_update_emails++");
-
-	g_assert(self);
-	g_assert(sync_key);	
-	g_assert(update_emails);
-
-	g_debug("sync_key = %s", sync_key);
 	DBusGProxy *proxy = self->priv->remoteEas; 
-	
 	// serialise the emails
 	guint num_emails = g_slist_length((GSList *)update_emails);
-	g_debug("%d emails to update", num_emails);
 	gchar **serialised_email_array = g_malloc0((num_emails * sizeof(gchar*)) + 1);	// null terminated array of strings
 	gchar *serialised_email = NULL;
 	guint i;
 	GSList *l = (GSList *)update_emails;
+
+	g_debug("eas_mail_handler_update_emails++");
+	g_assert(self);
+	g_assert(sync_key);	
+	g_assert(update_emails);
+	g_debug("sync_key = %s", sync_key);
+	g_debug("%d emails to update", num_emails);
+
 	for(i = 0; i < num_emails; i++)
 	{
 		EasEmailInfo *email = l->data;
@@ -665,14 +652,13 @@ eas_mail_handler_send_email(EasEmailHandler* self,
 	const gchar *mime_file,			// the full path to the email (mime) to be sent
 	GError **error)
 {
-	gboolean ret = TRUE;	
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteEas; 
+    
 	g_debug("eas_mail_handler_send_email++");
-
 	g_assert(self);
 	g_assert(client_email_id);	
 	g_assert(mime_file);	
-	
-	DBusGProxy *proxy = self->priv->remoteEas; 
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "send_email", error,

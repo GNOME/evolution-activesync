@@ -78,9 +78,8 @@ eas_request_base_GetRequestType(EasRequestBase* self)
 void 
 eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type)
 {
-	g_debug("eas_request_base_SetRequestType++");
     EasRequestBasePrivate *priv = self->priv;
-
+	g_debug("eas_request_base_SetRequestType++");
     priv->requestType = type;
 	g_debug("eas_request_base_SetRequestType--");
 }
