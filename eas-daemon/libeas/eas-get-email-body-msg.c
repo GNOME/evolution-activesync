@@ -252,7 +252,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 			gchar* fullFilePath = NULL;
 			FILE *hBody = NULL;
 
-			fullFilePath = g_strconcat(priv->directoryPath, priv->serverUid, NULL);
+			fullFilePath = g_build_filename(priv->directoryPath, priv->serverUid, NULL);
 			g_message("Attempting to write email to file [%s]",fullFilePath);   
 			if (hBody = fopen(fullFilePath,"wb"))
 			{
