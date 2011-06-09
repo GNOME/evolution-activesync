@@ -110,6 +110,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, guint64 accountId, EFla
 	return self;
 }
 
+
 gboolean
 eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error)
 {
@@ -120,7 +121,7 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
 	
 	g_debug("eas_sync_folder_hierarchy_req_Activate++");
 
-	// Create syn folder msg type
+	// Create sync folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (priv->syncKey, priv->accountID);
 	if(!priv->syncFolderMsg)
 	{
@@ -235,14 +236,27 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
                                               GSList** deleted_folders, 
                                               GError** error)
 {
-	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
-	
 	g_debug("eas_sync_folder_hierarchy_req_ActivateFinish++");
 
+	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+
+	if(priv->error != NULL)// propogate any preceding error
+	{
+		/* store priv->error in error, if error != NULL,
+		* otherwise call g_error_free() on priv->error
+		*/
+		g_propagate_error (error, priv->error);	
+		priv->error = NULL;
+
+		return FALSE;
+	}
+	
 	*ret_sync_key    = g_strdup(eas_sync_folder_msg_get_syncKey(priv->syncFolderMsg));
 	*added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 	*updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 	*deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 	
 	g_debug("eas_sync_folder_hierarchy_req_ActivateFinish--");
+
+	return TRUE;
 }
