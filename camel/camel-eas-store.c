@@ -525,8 +525,8 @@ eas_get_name (CamelService *service, gboolean brief)
 				       service->url->user, service->url->host);
 }
 
-static EasEmailHandler *
-camel_eas_store_get_connection (CamelEasStore *eas_store)
+EasEmailHandler *
+camel_eas_store_get_handler (CamelEasStore *eas_store)
 {
 	return g_object_ref (eas_store->priv->handler);
 }

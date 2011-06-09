@@ -43,6 +43,7 @@
 #include "camel-eas-private.h"
 #include "camel-eas-store.h"
 #include "camel-eas-summary.h"
+#include "camel-eas-utils.h"
 
 #define CAMEL_EAS_FOLDER_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -450,15 +451,141 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 CamelFolder *
 camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, GCancellable *cancellable, GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Folder creation not possible in ActiveSync"));
-	return NULL;
+        CamelFolder *folder;
+        CamelEasFolder *eas_folder;
+        gchar *summary_file, *state_file;
+        const gchar *short_name;
+
+        short_name = strrchr (folder_name, '/');
+        if (!short_name)
+                short_name = folder_name;
+
+        folder = g_object_new (
+                CAMEL_TYPE_EAS_FOLDER,
+                "name", short_name, "full-name", folder_name,
+                "parent_store", store, NULL);
+
+        eas_folder = CAMEL_EAS_FOLDER(folder);
+
+        summary_file = g_build_filename (folder_dir, "summary", NULL);
+        folder->summary = camel_eas_summary_new (folder, summary_file);
+        g_free(summary_file);
+
+        if (!folder->summary) {
+                g_object_unref (CAMEL_OBJECT (folder));
+                g_set_error (
+                        error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+                        _("Could not load summary for %s"), folder_name);
+                return NULL;
+        }
+
+        /* set/load persistent state */
+        state_file = g_build_filename (folder_dir, "cmeta", NULL);
+        camel_object_set_state_filename (CAMEL_OBJECT (folder), state_file);
+        camel_object_state_read (CAMEL_OBJECT (folder));
+        g_free(state_file);
+
+        eas_folder->cache = camel_data_cache_new (folder_dir, error);
+        if (!eas_folder->cache) {
+                g_object_unref (folder);
+                return NULL;
+        }
+
+        if (!g_ascii_strcasecmp (folder_name, "Inbox")) {
+                if (camel_url_get_param (((CamelService *) store)->url, "filter"))
+                        folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+        }
+
+        eas_folder->search = camel_folder_search_new ();
+        if (!eas_folder->search) {
+                g_object_unref (folder);
+                return NULL;
+        }
+
+        return folder;
 }
+
 
 static gboolean
 eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError **error)
 {
-	g_error ("%s not implemented yet...", __func__);
+        CamelEasFolder *eas_folder;
+        CamelEasFolderPrivate *priv;
+        EasEmailHandler *handler;
+        CamelEasStore *eas_store;
+        const gchar *full_name;
+        gchar *id;
+        gchar *sync_state;
+	gboolean more_available = TRUE;
+	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
+        GError *rerror = NULL;
+        EVO2(GCancellable *cancellable = NULL);
+
+        full_name = camel_folder_get_full_name (folder);
+        eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+
+        eas_folder = (CamelEasFolder *) folder;
+        priv = eas_folder->priv;
+
+        if (!camel_eas_store_connected (eas_store, error))
+                return FALSE;
+
+        g_mutex_lock (priv->state_lock);
+
+        if (priv->refreshing) {
+                g_mutex_unlock (priv->state_lock);
+                return TRUE;
+        }
+
+        priv->refreshing = TRUE;
+        g_mutex_unlock (priv->state_lock);
+
+        handler = camel_eas_store_get_handler (eas_store);
+        id = camel_eas_store_summary_get_folder_id_from_name
+                                                (eas_store->summary,
+                                                 full_name);
+
+        sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
+	do {
+		guint total, unread;
+
+		if (!eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
+							      &items_created,
+							      &items_updated, &items_deleted,
+							      &more_available, error)) {
+			return FALSE;
+		}
+		if (items_deleted)
+			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
+
+		if (items_created)
+			camel_eas_utils_sync_created_items (eas_folder, items_created);
+
+		if (items_updated)
+			camel_eas_utils_sync_updated_items (eas_folder, items_updated);
+
+                total = camel_folder_summary_count (folder->summary);
+                unread = folder->summary->unread_count;
+
+                camel_eas_store_summary_set_folder_total (eas_store->summary, id, total);
+                camel_eas_store_summary_set_folder_unread (eas_store->summary, id, unread);
+                camel_eas_store_summary_save (eas_store->summary, NULL);
+
+                camel_folder_summary_save_to_db (folder->summary, NULL);
+
+        } while (!rerror && more_available);
+
+        if (rerror)
+                g_propagate_error (error, rerror);
+
+        g_mutex_lock (priv->state_lock);
+        priv->refreshing = FALSE;
+        g_mutex_unlock (priv->state_lock);
+        if (sync_state != ((CamelEasSummary *) folder->summary)->sync_state)
+                g_free(sync_state);
+        g_object_unref (handler);
+        g_free (id);
+
 	return TRUE;
 }
 

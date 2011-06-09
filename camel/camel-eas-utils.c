@@ -280,10 +280,11 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *created_folders, GSLis
 	return;
 }
 
-#if 0
 void
 camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_deleted)
 {
+#if 0
+
 	CamelFolder *folder;
 	const gchar *full_name;
 	CamelFolderChangeInfo *ci;
@@ -309,8 +310,9 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 
 	g_slist_foreach (items_deleted, (GFunc) g_free, NULL);
 	g_slist_free (items_deleted);
+#endif
 }
-
+#if 0
 static gint
 eas_utils_get_server_flags (EEasItem *item)
 {
@@ -471,10 +473,12 @@ eas_set_threading_data (CamelEasMessageInfo *mi, EEasItem *item)
 	mi->info.references->size = count;
 	camel_header_references_list_clear (&refs);
 }
+#endif
 
 void
 camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_updated)
 {
+#if 0
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
 	GSList *l;
@@ -512,6 +516,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
+#endif
 }
 
 void
@@ -528,20 +533,21 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 	folder = (CamelFolder *) eas_folder;
 
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
-		EEasItem *item = (EEasItem *) l->data;
+		EasEmailInfo *item = l->data;
 		CamelEasMessageInfo *mi;
-		const EasId *id;
-		const EasMailbox *from;
-		EEasItemType item_type;
-		const GSList *to, *cc;
-		gboolean has_attachments;
-		guint32 server_flags;
-
+		GSList *hl;
 		if (!item)
 			continue;
 
-		id = e_eas_item_get_id (item);
-		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, id->id);
+		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
+		for (hl = item->headers; hl; hl = g_slist_next(hl)) {
+			EasEmailHeader *hdr = hl->data;
+			printf(" %s: %s\n", hdr->name, hdr->value);
+		}
+		return;
+	}
+#if 0
+		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
 		if (mi) {
 			camel_message_info_free (mi);
 			g_object_unref (item);
@@ -555,22 +561,12 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			mi->info.content->type = camel_content_type_new ("multipart", "mixed");
 		}
 
-		item_type = e_eas_item_get_item_type (item);
-		if	(item_type == E_EAS_ITEM_TYPE_CALENDAR_ITEM ||
-			 item_type == E_EAS_ITEM_TYPE_MEETING_MESSAGE ||
-			 item_type == E_EAS_ITEM_TYPE_MEETING_REQUEST ||
-			 item_type == E_EAS_ITEM_TYPE_MEETING_RESPONSE ||
-			 item_type == E_EAS_ITEM_TYPE_MEETING_RESPONSE)
-			camel_message_info_set_user_flag ((CamelMessageInfo*)mi, "$has_cal", TRUE);
-
-		mi->info.uid = camel_pstring_strdup (id->id);
-		mi->info.size = e_eas_item_get_size (item);
+		mi->info.uid = camel_pstring_strdup (item->server_id);
+		//		mi->info.size = e_eas_item_get_size (item);
 		mi->info.subject = camel_pstring_strdup (e_eas_item_get_subject (item));
-		mi->item_type = item_type;
-		mi->change_key = g_strdup (id->change_key);
 
-		mi->info.date_sent = e_eas_item_get_date_sent (item);
-		mi->info.date_received = e_eas_item_get_date_received (item);
+		//		mi->info.date_sent = e_eas_item_get_date_sent (item);
+		//		mi->info.date_received = e_eas_item_get_date_received (item);
 
 		from = e_eas_item_get_from (item);
 		mi->info.from = form_email_string_from_mb (from);
@@ -600,7 +596,10 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_created);
+#endif
 }
+
+#if 0
 
 struct _create_mime_msg_data {
 	CamelMimeMessage *message;
