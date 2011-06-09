@@ -18,6 +18,8 @@
  */
 
 #include "eas-send-email-msg.h"
+#include <wbxml/wbxml.h>
+
 
 G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
@@ -122,9 +124,8 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
-    leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", NULL);
-    cdata = xmlNewCDataBlock(doc, (xmlChar *)priv->mime_string, strlen(priv->mime_string));
-	xmlAddChild( leaf, cdata );
+	WB_UTINY* base64data = wbxml_base64_encode(priv->mime_string, strlen(priv->mime_string));
+	leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar *)base64data);
 
     return doc;
 }
