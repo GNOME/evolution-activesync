@@ -181,7 +181,7 @@ void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, 
 
 	EasUpdateEmailReqPrivate *priv = self->priv;
 
-	eas_sync_msg_parse_reponse (priv->sync_msg, doc, error);
+	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
 	xmlFree(doc);
 	
