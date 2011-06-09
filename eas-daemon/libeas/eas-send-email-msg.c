@@ -131,9 +131,9 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 }
 
 void
-eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc, GError** error)
+eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error)
 {
-    g_debug ("eas_send_email_msg_parse_reponse++\n");
+    g_debug ("eas_send_email_msg_parse_response++\n");
 	
 	EasSendEmailMsgPrivate *priv = self->priv;
 	xmlNode *root, *node = NULL;
@@ -159,7 +159,7 @@ eas_send_email_msg_parse_reponse (EasSendEmailMsg* self, xmlDoc *doc, GError** e
         }
     }
 	
-    g_debug ("eas_send_email_msg_parse_reponse++\n");	
+    g_debug ("eas_send_email_msg_parse_response++\n");	
 
 }
 
