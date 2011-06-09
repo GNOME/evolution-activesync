@@ -5,17 +5,7 @@
 
 G_BEGIN_DECLS
 
-GQuark eas_connection_error_quark (void)
-{
-	static GQuark quark = 0;
-
-	if (G_UNLIKELY (quark == 0)) {
-		const gchar *string = "eas-connection-error-quark";
-		quark = g_quark_from_static_string (string);
-	}
-
-	return quark;
-}
+GQuark eas_connection_error_quark (void);
 
 #define EAS_CONNECTION_ERROR (eas_connection_error_quark ())
 
@@ -94,8 +84,24 @@ enum {
     EAS_CONNECTION_ERROR_PICTURELIMITREACHED=175,
     EAS_CONNECTION_ERROR_BODYPART_CONVERSATIONTOOLARGE=176,
     EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED=177,
-    /* Below this point no longer direction translation of activesync errors */
-    EAS_CONNECTION_ERROR_FAILED
+    /* Below this point no longer direct translation of activesync errors */
+	
+    EAS_CONNECTION_ERROR_FAILED,
+	EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+	EAS_CONNECTION_ERROR_BADARG,
+	EAS_CONNECTION_ERROR_WBXMLERROR,
+	EAS_CONNECTION_ERROR_SOUPERROR,
+
+	/*  Provision status errors */
+	EAS_CONNECTION_PROVISION_ERROR_PROTOCOLERROR,				
+	EAS_CONNECTION_PROVISION_ERROR_GENERALSERVERERROR,			
+	EAS_CONNECTION_PROVISION_ERROR_DEVICE_EXTERNALLY_MANAGED,	
+	EAS_CONNECTION_PROVISION_ERROR_NOCLIENTPOLICYEXISTS,
+	EAS_CONNECTION_PROVISION_ERROR_UNKNOWNPOLICYTYPE,
+	EAS_CONNECTION_PROVISION_ERROR_CORRUPTSERVERPOLICYDATA,
+	EAS_CONNECTION_PROVISION_ERROR_ACKINGWRONGPOLICYKEY,
+	EAS_CONNECTION_PROVISION_ERROR_UNRECOGNIZED,
+	
 } EasConnectionError;
 
 struct EasErrorMap {

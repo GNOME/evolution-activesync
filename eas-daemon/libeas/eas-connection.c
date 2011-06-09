@@ -59,8 +59,6 @@ struct _EasConnectionPrivate
 	xmlDoc* request_doc;
 	EasRequestBase* request;
 	GError **request_error;
-	
-	GError *provision_error;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -121,8 +119,6 @@ eas_connection_init (EasConnection *self)
 	priv->request = NULL;
 	priv->request_error = NULL;
 
-	priv->provision_error = NULL;
-
 	g_debug("eas_connection_init--");
 }
 
@@ -178,11 +174,6 @@ eas_connection_finalize (GObject *object)
 	if (priv->request_error && *priv->request_error)
 	{
 		g_error_free(*priv->request_error);
-	}
-
-	if (priv->provision_error)
-	{
-		g_error_free(priv->provision_error);
 	}
 
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
@@ -285,16 +276,19 @@ void eas_connection_resume_request(EasConnection* self)
  * @param cmd ActiveSync command string [no transfer]
  * @param doc the message xml body [full transfer]
  * @param request the request GObject
+ *
+ * @return whether successful
  */
-void 
+gboolean 
 eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error)
 {
+	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;
     SoupMessage *msg = NULL;
 	gchar* uri = NULL;
     WB_UTINY *wbxml = NULL;
     WB_ULONG wbxml_len = 0;
-    WBXMLError ret = WBXML_OK;
+    WBXMLError wbxml_ret = WBXML_OK;
     WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
@@ -316,14 +310,21 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		eas_request_base_SetConnection (&req->parent_instance, self);
-		eas_provision_req_Activate (req, &priv->provision_error);
-		return;
+		ret = eas_provision_req_Activate (req, error);
+		if(!ret)
+		{
+			g_assert (error == NULL || *error != NULL);
+		}
+		goto finish;
 	}
 
-    ret = wbxml_conv_xml2wbxml_create(&conv);
-    if (ret != WBXML_OK) {
-        g_debug("%s", wbxml_errors_string(ret));
-        return;
+    wbxml_ret = wbxml_conv_xml2wbxml_create(&conv);
+    if (wbxml_ret != WBXML_OK) {
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     ("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);		
+        ret = FALSE; 
+		goto finish;
     }
 
 	g_assert(priv->server_uri);
@@ -337,6 +338,14 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
     
     msg = soup_message_new("POST", uri);
     g_free(uri);
+	if(!msg)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_SOUPERROR,
+			     ("soup_message_new returned NULL"));		
+		ret = FALSE;
+		goto finish;
+	}
 
     soup_message_headers_append(msg->request_headers, 
                                 "MS-ASProtocolVersion",
@@ -353,7 +362,6 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 	// Convert doc into a flat xml string
     xmlDocDumpFormatMemoryEnc(doc, &dataptr, &data_len, (gchar*)"utf-8",1);
     wbxml_conv_xml2wbxml_disable_public_id(conv);
-    ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) 
 	{
@@ -361,33 +369,42 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasReq
 		g_debug("\n=== XML Input ===\n%s=== XML Input ===", tmp);
 		g_free(tmp);
 
-		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string(ret), wbxml_len);
+		g_debug("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string(wbxml_ret), wbxml_len);
 	}
-	
-    if (dataptr) {
-        xmlFree(dataptr);
-        dataptr = NULL;
-    }
 
-    if (WBXML_OK == ret)
-    {
-        soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
+    wbxml_ret = wbxml_conv_xml2wbxml_run(conv, dataptr, data_len, &wbxml, &wbxml_len);
+	if(wbxml_ret != WBXML_OK)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);		
+        ret = FALSE; 
+		goto finish;
+	}
 
-        soup_message_set_request(msg, 
-                                 "application/vnd.ms-sync.wbxml",
-                                 SOUP_MEMORY_COPY,
-                                 (gchar*)wbxml,
-                                 wbxml_len);
-    
-        soup_session_queue_message(priv->soup_session, 
-                                   msg, 
-                                   handle_server_response, 
-                                   request);
-    }
-    
+    soup_message_headers_set_content_length(msg->request_headers, wbxml_len);
+
+    soup_message_set_request(msg, 
+                             "application/vnd.ms-sync.wbxml",
+                             SOUP_MEMORY_COPY,
+                             (gchar*)wbxml,
+                             wbxml_len);
+
+    soup_session_queue_message(priv->soup_session, 
+                               msg, 
+                               handle_server_response, 
+                               request);
+finish:	
     if (wbxml) free(wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy(conv);
-	g_debug("eas_connection_send_request--");
+    if (dataptr) xmlFree(dataptr);
+ 
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
+	g_debug("eas_connection_send_request--");	
+	return ret;
 }
 
 typedef enum{
@@ -1059,13 +1076,13 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 			case EAS_REQ_PROVISION:
 			{
-				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);
+				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);// lrm TODO
 			}
 			break;
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);
+				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);// lrm TODO
 			}
 			break;
 			
@@ -1119,7 +1136,20 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		
 		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
-		eas_provision_req_Activate (req, &error);
+		eas_provision_req_Activate (req, &error);   //lrm TODO check return
 	}
 	g_debug("eas_connection - handle_server_response--");
 }
+
+GQuark eas_connection_error_quark (void)
+{
+	static GQuark quark = 0;
+
+	if (G_UNLIKELY (quark == 0)) {
+		const gchar *string = "eas-connection-error-quark";
+		quark = g_quark_from_static_string (string);
+	}
+
+	return quark;
+}
+

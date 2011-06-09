@@ -6,6 +6,7 @@
  */
 
 #include "eas-provision-msg.h"
+#include "eas-connection-errors.h"
 
 struct _EasProvisionMsgPrivate
 {
@@ -105,7 +106,90 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
     return doc;
 }
 
-void
+/*
+translates from eas provision status code to GError
+*/
+static void set_provision_status_error(guint provision_status, GError **error)
+{
+	switch(provision_status)
+	{
+		case 2:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_PROTOCOLERROR,	   
+			("Provisioning error: protocol error"));	
+		}
+		break;
+		case 3:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_GENERALSERVERERROR,	   
+			("Provisioning error: general server error"));	
+		}
+		break;
+		case 4:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_DEVICE_EXTERNALLY_MANAGED,	   
+			("Provisioning error: device externally managed"));	
+		}
+		break;
+		default:
+		{
+			g_warning("Unrecognised provisioning error");
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_UNRECOGNIZED,	   
+			("Unrecognised provisioning error"));			
+		}
+	}
+}
+
+/*
+translates from eas policy status code to GError
+*/
+static void set_policy_status_error(guint policy_status, GError **error)
+{
+	switch(policy_status)
+	{
+		case 2:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_NOCLIENTPOLICYEXISTS,	   
+			("Provisioning error: No policy for this client"));	
+		}
+		break;
+		case 3:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_UNKNOWNPOLICYTYPE,	   
+			("Provisioning error: unknown policy type value"));	
+		}
+		break;
+		case 4:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_CORRUPTSERVERPOLICYDATA,	   
+			("Provisioning error: policy data on the server is corrupted (possibly tampered with)"));	
+		}
+		break;
+		case 5:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_ACKINGWRONGPOLICYKEY,	   
+			("Provisioning error: client is acknowledging the wrong policy key"));	
+		}
+		default:
+		{
+			g_warning("Unrecognised provisioning error");
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_PROVISION_ERROR_UNRECOGNIZED,	   
+			("unrecognised provisioning error"));			
+		}			
+		break;			
+	}	
+}
+
+gboolean
 eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** error)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
@@ -121,28 +205,39 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 	priv->policy_key = priv->policy_status = NULL;
 
     if (!doc) {
-        g_debug ("  Failed to parse provision response XML");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_BADARG,	   
+			     ("bad argument"));		
+        return FALSE;
     }
 	
     node = xmlDocGetRootElement(doc);
     if (strcmp((char *)node->name, "Provision")) {
-        g_debug("  Failed to find <Provision> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_INVALIDXML,	   
+			     ("Failed to find <Provision> element"));			
+        return FALSE;
     }
 
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
             gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("  Provision Status:[%s]", provision_status);
+			guint provision_status_num = atoi(provision_status);
 			xmlFree(provision_status);
+			if(provision_status_num != 1)  // not success
+			{
+				set_provision_status_error(provision_status_num, error);
+				return FALSE;
+			}
             break;
         }
     }
     if (!node) {
-        g_debug ("  Failed to find <Status> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_INVALIDXML,	   
+			     ("Failed to find <Status> element"));					
+        return FALSE;
     }
 
     for (node = node->next; node; node = node->next) {
@@ -151,8 +246,10 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
             break;
     }
     if (!node) {
-        g_debug("  Failed to find <Policies> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_INVALIDXML,	   
+			     ("Failed to find <Policies> element"));			
+        return FALSE;
     }
 
     for (node = node->children; node; node = node->next) {
@@ -161,8 +258,10 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
             break;
     }
     if (!node) {
-        g_debug ("  Failed to find <Policy> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_INVALIDXML,	   
+			     ("Failed to find <Policy> element"));			
+        return FALSE;
     }
 
     for (node = node->children; node; node = node->next)
@@ -175,7 +274,13 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
             if (priv->policy_status) 
             {
                 found_status = TRUE;
-                g_debug("Policy Status:[%s]", priv->policy_status);
+				guint policy_status_num = atoi(priv->policy_status);
+				if(policy_status_num != 1)	// not success
+				{
+					set_policy_status_error(policy_status_num, error);
+
+					return FALSE;
+				}
                 continue;
             }
 
@@ -195,7 +300,26 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
         if (found_status && found_policy_key) break;
     }
 	
+	if(!found_status)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+				 EAS_CONNECTION_ERROR_INVALIDXML,	   
+				 ("Failed to find <Status> element"));	
+		return FALSE;
+	}
+	else if(!found_policy_key)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+				 EAS_CONNECTION_ERROR_INVALIDXML,	   
+				 ("Failed to find <PolicyKey> element"));	
+		return FALSE;
+	}
+	
 	g_debug("eas_provision_msg_parse_response--");
+
+	g_assert(*error == NULL);
+	
+	return TRUE;
 }
 
 EasProvisionMsg*

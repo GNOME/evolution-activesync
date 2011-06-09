@@ -139,6 +139,8 @@ build_folder_list(const gchar **serialised_folder_array, GSList **folder_list, G
 	gboolean ret = TRUE;
 	guint i = 0;
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_assert(folder_list);
 
 	g_assert(g_slist_length(*folder_list) == 0);
@@ -195,6 +197,8 @@ build_emailinfo_list(const gchar **serialised_emailinfo_array, GSList **emailinf
 	gboolean ret = TRUE;
 	guint i = 0;
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
 	g_assert(g_slist_length(*emailinfo_list) == 0);
 	
 	while(serialised_emailinfo_array[i])
@@ -245,6 +249,9 @@ cleanup:
 static void 
 free_string_array(gchar **array)
 {
+	if(array == NULL)
+		return;
+	
 	guint i = 0;
 	while(array[i])
 	{	
@@ -266,6 +273,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 {
 	g_debug("eas_mail_handler_sync_folder_hierarchy++");
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
 	g_assert(self);
 	g_assert(sync_key);
 
@@ -295,29 +304,38 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
-   
+	
     g_debug("eas_mail_handler_sync_folder_hierarchy - dbus proxy called");
-    if (*error) {
-        g_error(" Error: %s", (*error)->message);
-    }
-    
-	if(ret)
+	
+	if(!ret)
 	{
-		g_debug("sync_email_folder_hierarchy called successfully");
-
-		// put the updated sync key back into the original string for tracking this
-        strcpy (sync_key, updatedSyncKey);
-		// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-		ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
-		if(ret)
-		{
-			ret = build_folder_list((const gchar **)deleted_folder_array, folders_deleted, error);
-		}
-		if(ret)	
-		{
-			ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
-		}
+		goto cleanup;
 	}
+
+	g_debug("sync_email_folder_hierarchy called successfully");
+
+	// put the updated sync key back into the original string for tracking this
+    strcpy (sync_key, updatedSyncKey);
+	
+	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+	ret = build_folder_list((const gchar **)created_folder_array, folders_created, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}
+	ret = build_folder_list((const gchar **)deleted_folder_array, folders_deleted, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}	
+	ret = build_folder_list((const gchar **)updated_folder_array, folders_updated, error);
+	if(!ret)
+	{
+		goto cleanup;		
+	}	
+
+
+cleanup:	
 
 	g_free(updatedSyncKey);
 	free_string_array(created_folder_array);
@@ -326,7 +344,12 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 	
 	if(!ret)	// failed - cleanup lists
 	{
-	   g_debug("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
+		g_assert (error == NULL || *error != NULL);		
+		if(error)
+		{
+			g_error(" Error: %s", (*error)->message);
+		}		
+	   	g_debug("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
 		g_slist_foreach(*folders_created, (GFunc)g_free, NULL);
 		g_free(*folders_created);
 		*folders_created = NULL;
@@ -336,11 +359,6 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 		g_slist_foreach(*folders_deleted, (GFunc)g_free, NULL);
 		g_free(*folders_deleted);
 		*folders_deleted = NULL;
-	}
-	if(*folders_created ==NULL)
-	{
-	    g_debug("created list not correctly created--");
-
 	}
 	
 	g_debug("eas_mail_handler_sync_folder_hierarchy--");

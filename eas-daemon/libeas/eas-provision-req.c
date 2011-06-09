@@ -7,6 +7,7 @@
 
 #include "eas-provision-req.h"
 #include "eas-provision-msg.h"
+#include "eas-connection-errors.h"
 
 typedef enum {
 	EasProvisionStep1 = 0,
@@ -83,34 +84,56 @@ eas_provision_req_new (gchar* policy_status, gchar* policy_key)
 	return req;
 }
 
-void
+/**
+ * @return whether successful
+*/
+gboolean
 eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 {
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	gboolean ret = FALSE;
 	EasProvisionReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
 
 	doc = eas_provision_msg_build_message (priv->msg);
+	if(!doc)
+	{
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));		
+		goto finish;
+	}
 
-
-	
 	// TODO
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
 	                            "Provision", 
 	                            doc, 
-	                            self);
+	                            self,
+	                            error);
+finish:
+	return ret;
 }
 
 /**
  * @param doc The protocol xml to be parsed. MUST be freed with xmlFree()
+ * @return whether successful
  */
-void
+gboolean
 eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** error)
 {
+	gboolean ret;
 	EasProvisionReqPrivate *priv = self->priv;
 
 	g_debug("eas_provision_req_MessageComplete++");
+	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	eas_provision_msg_parse_response (priv->msg, doc, error);
+	ret = eas_provision_msg_parse_response (priv->msg, doc, error);
+	if(!ret)
+	{
+		goto finish;
+	}
 
 	switch (priv->state) {
 		default:
@@ -127,7 +150,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** 
 			
 			g_debug("eas_provision_req_MessageComplete - EasProvisionStep1");
 			
-			msg = eas_provision_msg_new ();
+			msg = eas_provision_msg_new (); //TODO check return
 			eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
 			eas_provision_msg_set_policy_key (msg, eas_provision_msg_get_policy_key (priv->msg));
 
@@ -139,7 +162,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** 
 
 			priv->state = EasProvisionStep2;
 
-			eas_provision_req_Activate (self, error);
+			ret = eas_provision_req_Activate (self, error);			
 		}
 		break;
 
@@ -157,8 +180,15 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** 
 		break;
 	}
 
+finish:
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
 	xmlFree(doc);
 	g_debug("eas_provision_req_MessageComplete--");
+
+	return ret;
 }
 
 gchar*

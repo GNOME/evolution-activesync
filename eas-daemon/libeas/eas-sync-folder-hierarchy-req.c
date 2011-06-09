@@ -7,6 +7,7 @@
 
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-folder-msg.h"
+#include "eas-connection-errors.h"
 
 
 typedef enum {
@@ -104,9 +105,11 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, guint64 accountId, EFla
 	return self;
 }
 
-void
+gboolean
 eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error)
 {
+	gboolean ret = FALSE;
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	xmlDoc *doc = NULL;
 	
@@ -114,14 +117,33 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
 
 	// Create syn folder msg type
 	priv->syncFolderMsg = eas_sync_folder_msg_new (priv->syncKey, priv->accountID);
-
+	if(!priv->syncFolderMsg)
+	{
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));		
+		goto finish;
+	}
 	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+	if(!doc)
+	{
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));	
+		g_free(priv->syncFolderMsg);
+		priv->syncFolderMsg = NULL;		
+		goto finish;
+	}
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self, error);
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
-	g_debug("eas_sync_folder_hierarchy_req_Activate--");
+finish:
+	g_debug("eas_sync_folder_hierarchy_req_Activate--");	
+	return ret;
 }
 
-void
+gboolean
 eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError** error)
 {
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
@@ -174,7 +196,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	g_debug("eas_sync_folder_hierarchy_req_MessageComplete--");
 }
 
-void
+gboolean
 eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self, 
                                               gchar** ret_sync_key, 
                                               GSList** added_folders, 
