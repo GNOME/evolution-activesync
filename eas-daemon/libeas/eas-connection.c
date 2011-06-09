@@ -1078,13 +1078,13 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 			case EAS_REQ_PROVISION:
 			{
-				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);// lrm TODO
+				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);// TODO
 			}
 			break;
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);// lrm TODO
+				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);// TODO
 			}
 			break;
 			
@@ -1138,7 +1138,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		
 		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
-		eas_provision_req_Activate (req, &error);   //lrm TODO check return
+		eas_provision_req_Activate (req, &error);   // TODO check return
 	}
 	g_debug("eas_connection - handle_server_response--");
 }
