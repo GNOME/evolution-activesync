@@ -69,11 +69,11 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
  * \param prop_name         The property name
  * \param prop_value_node   The XML node providing the property value
  */
-static void _util_append_prop_string_to_list(GSList** list, const gchar* prop_name, const gchar* prop_value)
+/*static void _util_append_prop_string_to_list(GSList** list, const gchar* prop_name, const gchar* prop_value)
 {
 	gchar* property = g_strconcat(prop_name, ":", prop_value, NULL);
 	*list = g_slist_append(*list, property); // Takes ownership of the property string
-}
+}*/
 
 
 /**
@@ -84,12 +84,12 @@ static void _util_append_prop_string_to_list(GSList** list, const gchar* prop_na
  * \param prop_name         The property name
  * \param prop_value_node   The XML node providing the property value
  */
-static void _util_append_prop_string_to_list_from_xml(GSList** list, const gchar* prop_name, xmlNode* prop_value_node)
+/*static void _util_append_prop_string_to_list_from_xml(GSList** list, const gchar* prop_name, xmlNode* prop_value_node)
 {
 	xmlChar* prop_value = xmlNodeGetContent(prop_value_node);
 	_util_append_prop_string_to_list (list, prop_name, (const gchar*)prop_value);
 	xmlFree(prop_value);
-}
+}*/
 
 
 /**
@@ -104,7 +104,7 @@ static void _util_append_prop_string_to_list_from_xml(GSList** list, const gchar
  *                             (e.g. a literal such as "BEGIN:VCALENDAR") in which case the GRegex overhead
  *                             can be avoided.
  */
-static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line, gboolean may_contain_newlines)
+/*static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line, gboolean may_contain_newlines)
 {
 	// TODO: there's a lot of string copying going on in this function.
 	// Need to think if thee's a more efficient way of doing this.
@@ -151,7 +151,7 @@ static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line
 	{
 		g_free(line_with_newlines_handled);
 	}
-}
+}*/
 
 
 /**
@@ -297,7 +297,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 		guint bufferSize = 0;
 
-		// Using separate lists to capture the data for various parts of the iCalendar document:
+/*		// Using separate lists to capture the data for various parts of the iCalendar document:
 		//
 		//   BEGIN VCALENDAR
 		//      [ BEGIN VTIMEZONE ... END VTIMEZONE ]
@@ -308,7 +308,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		GSList* vcalendar = NULL;
 		GSList* vtimezone = NULL;
 		GSList* vevent = NULL;
-		GSList* valarm = NULL;
+		GSList* valarm = NULL;*/
+		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
+		icalcomponent* vevent = icalcomponent_new(ICAL_VEVENT_COMPONENT);
+		icalcomponent* valarm = icalcomponent_new(ICAL_VALARM_COMPONENT);
+		icalcomponent* vtimezone = icalcomponent_new(ICAL_VTIMEZONE_COMPONENT);
+		icalproperty* prop = NULL;
 
 		// Variable to store the TZID value when decoding a <calendar:Timezone> element
 		// so we can use it in the rest of the iCal's date/time fields.
@@ -319,10 +324,21 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		// TODO: get all these strings into constants/#defines
 		
 		// TODO: make the PRODID configurable somehow
-		_util_append_prop_string_to_list(&vcalendar, "PRODID", "-//Meego//ActiveSyncD 1.0//EN");
+/*		_util_append_prop_string_to_list(&vcalendar, "PRODID", "-//Meego//ActiveSyncD 1.0//EN");
 		_util_append_prop_string_to_list(&vcalendar, "VERSION", "2.0");
-		_util_append_prop_string_to_list(&vcalendar, "METHOD", "PUBLISH");
-		
+		_util_append_prop_string_to_list(&vcalendar, "METHOD", "PUBLISH");*/
+
+		prop = icalproperty_new_prodid("-//Meego//ActiveSyncD 1.0//EN");
+		icalcomponent_add_property(vcalendar, prop);
+
+		prop = icalproperty_new_version("2.0");
+		icalcomponent_add_property(vcalendar, prop);
+
+		prop = icalproperty_new_method(ICAL_METHOD_PUBLISH);
+		icalcomponent_add_property(vcalendar, prop);
+
+        gchar* value = NULL;
+
 		for (n = n->children; n; n = n->next)
 		{
 			if (n->type == XML_ELEMENT_NODE)
@@ -331,42 +347,54 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 				if (g_strcmp0(name, "Subject") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "SUMMARY", n);
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_summary(value);
+					icalcomponent_add_property(vcalendar, prop);
+					g_free(value); value = NULL;
 				}
 				else if (g_strcmp0(name, "StartTime") == 0)
 				{
-					gchar* propertyName = g_strdup("DTSTART");
+					// TODO
+/*					gchar* propertyName = g_strdup("DTSTART");
 					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
-				    g_free(propertyValue);
+				    g_free(propertyValue);*/
 				}
 				else if (g_strcmp0(name, "EndTime") == 0)
 				{
-					gchar* propertyName = g_strdup("DTEND");
+					// TODO
+/*					gchar* propertyName = g_strdup("DTEND");
 					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
-				    g_free(propertyValue);
+				    g_free(propertyValue);*/
 				}
 				else if (g_strcmp0(name, "DtStamp") == 0)
 				{
-					gchar* propertyName = g_strdup("DTSTAMP");
+					// TODO
+/*					gchar* propertyName = g_strdup("DTSTAMP");
 					gchar* propertyValue = (gchar*)xmlNodeGetContent(n);
 					_util_add_timezone_to_property_name(&propertyName, propertyValue, tzid);
 					_util_append_prop_string_to_list(&vevent, propertyName, propertyValue);
 					g_free(propertyName);
-				    g_free(propertyValue);
+				    g_free(propertyValue);*/
 				}
 				else if (g_strcmp0(name, "UID") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "UID", n);
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_uid(value);
+					icalcomponent_add_property(vcalendar, prop);
+					g_free(value); value = NULL;
 				}
 				else if (g_strcmp0(name, "Location") == 0)
 				{
-					_util_append_prop_string_to_list_from_xml(&vevent, "LOCATION", n);
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_location(value);
+					icalcomponent_add_property(vcalendar, prop);
+					g_free(value); value = NULL;
 				}
 				else if (g_strcmp0(name, "Body") == 0)
 				{
@@ -375,38 +403,49 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					{
 						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Data"))
 						{
-							_util_append_prop_string_to_list_from_xml(&vevent, "DESCRIPTION", subNode);
+							value = (gchar*)xmlNodeGetContent(subNode);
+							prop = icalproperty_new_description(value);
+							icalcomponent_add_property(vcalendar, prop);
+							g_free(value); value = NULL;
 							break;
 						}
 					}
 				}
 				else if (g_strcmp0(name, "Sensitivity") == 0)
 				{
-					const gchar* value = (const gchar*)n->content;
+					value = (gchar*)xmlNodeGetContent(n);
+					icalproperty_class classValue = ICAL_CLASS_PUBLIC;
 					if (g_strcmp0(value, "3") == 0)      // Confidential
 					{
-						_util_append_prop_string_to_list(&vevent, "CLASS", "CONFIDENTIAL");
+						classValue = ICAL_CLASS_CONFIDENTIAL;
 					}
 					else if (g_strcmp0(value, "2") == 0) // Private
 					{
-						_util_append_prop_string_to_list(&vevent, "CLASS", "PRIVATE");
+						classValue = ICAL_CLASS_PRIVATE;
 					}
 					else // Personal or Normal (iCal doesn't distinguish between them)
 					{
-						_util_append_prop_string_to_list(&vevent, "CLASS", "PUBLIC");
+						classValue = ICAL_CLASS_PUBLIC;
 					}
+					prop = icalproperty_new_class(classValue);
+					icalcomponent_add_property(vcalendar, prop);
+					g_free(value); value = NULL;
 				}
 				else if (g_strcmp0(name, "BusyStatus") == 0)
 				{
-					const gchar* value = (const gchar*)n->content;
+					value = (gchar*)xmlNodeGetContent(n);
+					icalproperty_transp transpValue = ICAL_TRANSP_OPAQUE;
 					if (g_strcmp0(value, "0") == 0) // Free
 					{
-						_util_append_prop_string_to_list(&vevent, "TRANSP", "TRANSPARENT");
+						transpValue = ICAL_TRANSP_TRANSPARENT;
 					}
 					else // Tentative, Busy or Out of Office
 					{
-						_util_append_prop_string_to_list(&vevent, "TRANSP", "OPAQUE");
+						transpValue = ICAL_TRANSP_OPAQUE;
 					}
+					prop = icalproperty_new_transp(transpValue);
+					icalcomponent_add_property(vcalendar, prop);
+					g_free(value); value = NULL;
 				}
 				else if (g_strcmp0(name, "Categories") == 0)
 				{
@@ -420,13 +459,14 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							categories = g_string_append(categories, ",");
 						}
 
-						xmlChar* category = xmlNodeGetContent(catNode);
-						categories = g_string_append(categories, (const gchar*)category);
-						xmlFree(category);
+						value = (gchar*)xmlNodeGetContent(catNode);
+						categories = g_string_append(categories, value);
+						g_free(value); value = NULL;
 					}
 					if (categories->len > 0)
 					{
-						_util_append_prop_string_to_list(&vevent, "CATEGORIES", categories->str);
+						prop = icalproperty_new_categories(categories->str);
+						icalcomponent_add_property(vcalendar, prop);
 					}
 
 					// Free the string, including the character buffer
@@ -434,15 +474,25 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "Reminder") == 0)
 				{
-					xmlChar* minutes = xmlNodeGetContent(n);
-					gchar* trigger = g_strconcat("-P", (const char*)minutes, "M", NULL);
-					_util_append_prop_string_to_list(&valarm, "ACTION", "DISPLAY");
-					_util_append_prop_string_to_list(&valarm, "DESCRIPTION", "Reminder");   // TODO: make this configurable
-					_util_append_prop_string_to_list(&valarm, "TRIGGER", trigger);
-					g_free(trigger);
-					xmlFree(minutes);
+					value = (gchar*)xmlNodeGetContent(n);
+
+					// Build an icaltriggertype structure
+					struct icaltriggertype trigger;
+					trigger.duration.is_neg = 1;
+					trigger.duration.minutes = (unsigned int)g_ascii_strtoll(value, NULL, 10);
+
+					prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
+					icalcomponent_add_property(vcalendar, prop);
+
+					prop = icalproperty_new_description("Reminder"); // TODO: make this configurable
+					icalcomponent_add_property(vcalendar, prop);
+
+					prop = icalproperty_new_trigger(trigger);
+					icalcomponent_add_property(vcalendar, prop);
+
+					g_free(value); value = NULL;
 				}
-				else if(g_strcmp0(name, "Attendees") == 0)
+/*				else if(g_strcmp0(name, "Attendees") == 0)
 				{
 					g_debug("Found attendees sequence");					
 					xmlNode* attendeeNode = NULL;
@@ -710,7 +760,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					{
 						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
 					}
-				}
+				}*/
 
 				// TODO: handle Recurrence element
 				// TODO: handle Exceptions element
@@ -718,7 +768,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		// TODO: Think of a way to pre-allocate a sensible size for the buffer
-		GString* ical_buf = g_string_new("");
+/*		GString* ical_buf = g_string_new("");
 		_util_append_line_to_ical_buffer(&ical_buf, "BEGIN:VCALENDAR", FALSE);
 
 		// Add the VCALENDAR properties first
@@ -778,10 +828,23 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		                                 
 		// And finally close the VCALENDAR
 		_util_append_line_to_ical_buffer(&ical_buf, "END:VCALENDAR", FALSE);
+*/
+
+        if (icalcomponent_count_properties(vtimezone, ICAL_ANY_PROPERTY) > 0)
+        {
+			icalcomponent_add_component(vcalendar, vtimezone);
+		}
+		                        
+		icalcomponent_add_component(vcalendar, vevent);
+		                        
+        if (icalcomponent_count_properties(valarm, ICAL_ANY_PROPERTY) > 0)
+        {
+			icalcomponent_add_component(vevent, valarm);
+		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
 		EasCalInfo* cal_info = eas_cal_info_new();
-		cal_info->icalendar = g_string_free(ical_buf, FALSE); // Destroy the GString object and pass its buffer (with ownership) to cal_info
+		cal_info->icalendar = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
 		cal_info->server_id = (gchar*)server_id;
 		if (!eas_cal_info_serialise(cal_info, &result))
 		{
@@ -789,8 +852,20 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 			result = NULL;
 		}
 
+		// Free the EasCalInfo GObject
 		g_object_unref(cal_info);
 
+		// Free the libical components
+		// (It's not clear if freeing a component also frees its children, but in any case
+		// some of these (e.g. vtimezone & valarm) won't have been added as children if they
+		// weren't present in the XML.)
+		icalcomponent_free(valarm);
+		icalcomponent_free(vevent);
+		icalcomponent_free(vtimezone);
+		icalcomponent_free(vcalendar);
+		// Note: the libical examples show that a property doesn't have to be freed once added to a component
+
+		// Free the TZID string
 		if (tzid)
 		{
 			g_free(tzid);
