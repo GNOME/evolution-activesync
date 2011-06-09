@@ -117,21 +117,23 @@ finish:
 
 /**
  * @param doc The protocol xml to be parsed. MUST be freed with xmlFree()
+ * @param response_error set by caller for passing back to user
  * @return whether successful
  */
-gboolean
-eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** error)
+// TODO - how do we get an error out of here!?
+void
+eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* response_error)
 {
+	GError* error = NULL;
 	gboolean ret;
 	EasProvisionReqPrivate *priv = self->priv;
 
 	g_debug("eas_provision_req_MessageComplete++");
-	
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	ret = eas_provision_msg_parse_response (priv->msg, doc, error);
+	ret = eas_provision_msg_parse_response (priv->msg, doc, &error);
 	if(!ret)
 	{
+		g_warning("throwing away provisioning error");
 		goto finish;
 	}
 
@@ -162,7 +164,12 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** 
 
 			priv->state = EasProvisionStep2;
 
-			ret = eas_provision_req_Activate (self, error);			
+			ret = eas_provision_req_Activate (self, &error);			
+			if(!ret)
+			{
+				g_warning("throwing away provisioning error");
+				goto finish;				
+			}
 		}
 		break;
 
@@ -181,14 +188,10 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError** 
 	}
 
 finish:
-	if(!ret)
-	{
-		g_assert (error == NULL || *error != NULL);
-	}	
 	xmlFree(doc);
 	g_debug("eas_provision_req_MessageComplete--");
 
-	return ret;
+	return;
 }
 
 gchar*

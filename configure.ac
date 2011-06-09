@@ -13,6 +13,9 @@ AM_INIT_AUTOMAKE([1.10 no-define])
 #                [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 AM_PATH_CHECK()
 
+GETTEXT_PACKAGE=activesyncd
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AM_PROG_CC_C_O
@@ -34,6 +37,11 @@ PKG_CHECK_MODULES(LIBXML, libxml-2.0)
 PKG_CHECK_MODULES(SOUP, libsoup-2.4)
 PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
+PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
+PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
+
+camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
+AC_SUBST(camel_providerdir)
 
 AC_CONFIG_FILES([
     Makefile 
@@ -45,6 +53,7 @@ AC_CONFIG_FILES([
     libeascal/src/Makefile 
     check_tests/Makefile
     logger/Makefile
+    camel/Makefile
     ])
 
 AC_OUTPUT
