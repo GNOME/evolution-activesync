@@ -68,7 +68,7 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      gpointer data);
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
-static void wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
+static gboolean wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
