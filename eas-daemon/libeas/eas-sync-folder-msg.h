@@ -39,7 +39,7 @@ struct _EasSyncFolderMsg
 GType eas_sync_folder_msg_get_type (void) G_GNUC_CONST;
 EasSyncFolderMsg* eas_sync_folder_msg_new (const gchar* syncKey, gint accountId);
 xmlDoc* eas_sync_folder_msg_build_message (EasSyncFolderMsg* self);
-void eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc, GError** error);
+gboolean eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, GError** error);
 GSList* eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self);
 GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);

@@ -17,6 +17,7 @@ typedef enum {
 
 struct _EasSyncFolderHierarchyReqPrivate
 {
+	GError *error;  // error passed into MessageComplete 
 	EasSyncFolderMsg* syncFolderMsg;
 	EasSyncFolderHierarchyReqState state;
 	guint64 accountID;
@@ -41,6 +42,7 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
 	priv->state = EasSyncFolderHierarchyStep1;
 	priv->accountID = -1;
 	priv->syncKey = NULL;
+	priv->error = NULL;
 
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SYNC_FOLDER_HIERARCHY);
@@ -60,6 +62,10 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 	
 	if (priv->syncFolderMsg) {
 		g_object_unref(priv->syncFolderMsg);
+	}
+	if(priv->error)
+	{
+		g_clear_error(&priv->error);
 	}
 
 	G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
@@ -142,18 +148,37 @@ finish:
 	return ret;
 }
 
-gboolean
-eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError** error)
+/*
+ * @param error any error that occured (or NULL) [full transfer]
+ */
+void
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* response_error)
 {
+	GError *error = NULL;
+	
+	// if an error occurred, store it and signal daemon
+	if(response_error)
+	{
+		self->priv->error = response_error;
+		e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+		goto finish;
+	}
+	
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	
 	g_debug("eas_sync_folder_hierarchy_req_MessageComplete++");
 
-	eas_sync_folder_msg_parse_reponse (priv->syncFolderMsg, doc, error);
-
+	// if an error occurs when parsing, store it
+	gboolean ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
 	xmlFree(doc);
+	if(!ret)
+	{
+		self->priv->error = error; 
+		e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+		goto finish;
+	}
 	
-		switch (priv->state) {
+	switch (priv->state) {
 		default:
 		{
 			g_assert(0);
@@ -180,8 +205,13 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			//move to new state
 			priv->state = EasSyncFolderHierarchyStep2;	
 			
-			eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self);
-
+			ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self, &error);
+			if(!ret)
+			{
+				self->priv->error = error; 
+				e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+				goto finish;
+			}
 		}
 		break;
 
@@ -192,6 +222,8 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 		}
 		break;
 	}
+
+finish:	
 	g_debug("eas_sync_folder_hierarchy_req_MessageComplete--");
 }
 
