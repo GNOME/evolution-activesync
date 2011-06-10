@@ -46,7 +46,7 @@ gboolean eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self
 
 void eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
                                                     xmlDoc *doc, 
-                                                    GError* error);
+                                                    GError* error_in);
 
 gboolean eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self, 
                                                    gchar** ret_sync_key, 

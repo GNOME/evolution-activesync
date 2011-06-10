@@ -159,16 +159,16 @@ finish:
  * @param error any error that occured (or NULL) [full transfer]
  */
 void
-eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* response_error)
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error_in)
 {
 	GError *error = NULL;
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	gboolean ret;
 	
 	// if an error occurred, store it and signal daemon
-	if(response_error)
+	if(error_in)
 	{
-		self->priv->error = response_error;
+		priv->error = error_in;
 		e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 		goto finish;
 	}
@@ -247,6 +247,9 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
                                               GError** error)
 {
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	g_debug("eas_sync_folder_hierarchy_req_ActivateFinish++");
 
 	if(priv->error != NULL)// propogate any preceding error
