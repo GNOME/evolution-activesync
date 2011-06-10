@@ -285,7 +285,7 @@ void eas_connection_resume_request(EasConnection* self)
  * @return whether successful
  */
 gboolean 
-eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
+eas_connection_send_request(EasConnection* self, const gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
 {
 	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;
@@ -581,7 +581,7 @@ autodiscover_parse_protocol(xmlNode *node)
 {
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE &&
-            !strcmp((char *)node->name, "Url")) {
+            !g_strcmp0((char *)node->name, "Url")) {
             char *asurl = (char *)xmlNodeGetContent(node);
             if (asurl)
                 return asurl;
@@ -989,10 +989,10 @@ parse_for_status(xmlNode *node)
 		parse_for_status(child);
 	}
 
-	if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 	{
 		gchar* status = (gchar*)xmlNodeGetContent(node);
-		if (!strcmp(status,"1"))
+		if (!g_strcmp0(status,"1"))
 		{
 			g_message("parent_name[%s] status = [%s]",(char*)node->parent->name , status);
 		}

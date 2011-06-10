@@ -41,6 +41,8 @@ eas_accounts_class_init (EasAccountsClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	object_class->finalize = eas_accounts_finalize;
 	

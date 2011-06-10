@@ -40,6 +40,8 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+    void *tmp = parent_class;
+    tmp = object_class;
 
     g_debug("eas_request_base_class_init++");
 	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
@@ -54,7 +56,7 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 void 
 eas_request_base_Activate (EasRequestBase *self)
 {
-	g_assert(0);
+	g_error("Base class message should never be called");
 }
 
 /**
@@ -64,7 +66,7 @@ eas_request_base_Activate (EasRequestBase *self)
 void
 eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc)
 {
-	g_assert(0);
+	g_error("Base class message should never be called");
 }
 
 EasRequestType 

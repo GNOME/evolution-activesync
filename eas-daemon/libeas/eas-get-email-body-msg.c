@@ -55,6 +55,9 @@ eas_get_email_body_msg_class_init (EasGetEmailBodyMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
+	
 	g_debug("eas_get_email_body_msg_class_init++");
 
 	g_type_class_add_private (klass, sizeof (EasGetEmailBodyMsgPrivate));
@@ -132,10 +135,9 @@ void
 eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GError** error)
 {
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
-	g_debug("eas_get_email_body_msg_parse_response++");
-	/* TODO: Add public function implementation here */
-
 	xmlNode *node = NULL;
+	
+	g_debug("eas_get_email_body_msg_parse_response++");
 	
     if (!doc) 
     {
@@ -196,7 +198,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		}
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ServerID"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
 			priv->serverUid = g_strdup(xmlTmp);
 			xmlFree(xmlTmp);
 			continue;
@@ -235,7 +237,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 	{
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Type"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
 			if (g_strcmp0(xmlTmp,"4"))
 			{
 				g_critical("Email type returned by server is not MIME");
@@ -248,13 +250,13 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Data"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
 			gchar* fullFilePath = NULL;
 			FILE *hBody = NULL;
 
 			fullFilePath = g_strconcat(priv->directoryPath, priv->serverUid, NULL);
 			g_message("Attempting to write email to file [%s]",fullFilePath);   
-			if (hBody = fopen(fullFilePath,"wb"))
+			if ( (hBody = fopen(fullFilePath,"wb")) )
 			{
 				fputs(xmlTmp, hBody);
 				fclose(hBody);

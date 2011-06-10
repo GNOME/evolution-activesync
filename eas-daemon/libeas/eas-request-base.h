@@ -62,8 +62,8 @@ typedef enum {
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
 
-void eas_request_base_Activate (EasRequestBase *self);
-void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc);
+void eas_request_base_Activate (EasRequestBase *self) __attribute__((noreturn));
+void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc) __attribute__((noreturn));
 
 EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
 void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);

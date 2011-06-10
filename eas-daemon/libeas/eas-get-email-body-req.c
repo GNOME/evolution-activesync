@@ -64,6 +64,8 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 	
 	g_debug("eas_get_email_body_req_class_init++");
 
@@ -137,7 +139,6 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
 void
 eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
 {
-	EasGetEmailBodyReqPrivate *priv = self->priv;
 	g_debug("eas_get_email_body_req_ActivateFinish++");
 	/* TODO: Add public function implementation here */
 	g_debug("eas_get_email_body_req_ActivateFinish--");

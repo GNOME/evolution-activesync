@@ -60,6 +60,8 @@ eas_provision_req_class_init (EasProvisionReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	g_type_class_add_private (klass, sizeof (EasProvisionReqPrivate));
 
@@ -199,5 +201,5 @@ gchar*
 eas_provision_req_GetPolicyKey (EasProvisionReq* self)
 {
 	/* TODO: Add public function implementation here */
-	return "TODO";
+	return NULL;
 }

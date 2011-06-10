@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include <check.h>
 
+Suite* eas_daemon_suite(void);
+Suite* eas_autodiscover_suite(void);
+Suite* eas_libeasmail_suite(void);
+Suite* eas_libeascal_suite(void);
+
 int main (void)
 {
     int number_failed;

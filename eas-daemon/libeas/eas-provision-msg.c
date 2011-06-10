@@ -55,6 +55,8 @@ eas_provision_msg_class_init (EasProvisionMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	g_debug("eas_provision_msg_class_init++");
 
@@ -266,15 +268,16 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 
     for (node = node->children; node; node = node->next)
     {
-        if (!found_status && node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
+        if (!found_status && node->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)node->name, "Status"))
         {
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
             priv->policy_status = g_strdup(xmlTmp);
 			xmlFree(xmlTmp);
             if (priv->policy_status) 
             {
-                found_status = TRUE;
 				guint policy_status_num = atoi(priv->policy_status);
+
+                found_status = TRUE;
 				if(policy_status_num != 1)	// not success
 				{
 					set_policy_status_error(policy_status_num, error);
@@ -285,9 +288,9 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
             }
 
         }
-        if (!found_policy_key && node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "PolicyKey"))
+        if (!found_policy_key && node->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)node->name, "PolicyKey"))
         {
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
             priv->policy_key = g_strdup(xmlTmp);
 			xmlFree(xmlTmp);
             if (priv->policy_key) 

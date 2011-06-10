@@ -40,9 +40,9 @@ struct _EasSendEmailReqPrivate
 static void
 eas_send_email_req_init (EasSendEmailReq *object)
 {
-	g_debug("eas_send_email_req_init++");
 	/* initialization code */
 	EasSendEmailReqPrivate *priv;
+	g_debug("eas_send_email_req_init++");
 
 	object->priv = priv = EAS_SEND_EMAIL_REQ_PRIVATE(object);
 
@@ -78,13 +78,14 @@ eas_send_email_req_finalize (GObject *object)
 static void
 eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 {
-	g_debug("eas_send_email_req_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
 	
 	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
+	
+	g_debug("eas_send_email_req_class_init++");
 
 	g_type_class_add_private (klass, sizeof (EasSendEmailReqPrivate));	
 	
@@ -96,10 +97,10 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 EasSendEmailReq *
 eas_send_email_req_new(guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file)
 {
-	g_debug("eas_send_email_req_new++");
-	
 	EasSendEmailReq *self = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
 	EasSendEmailReqPrivate* priv = self->priv;
+	
+	g_debug("eas_send_email_req_new++");
 
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
@@ -119,6 +120,8 @@ eas_send_email_req_Activate(EasSendEmailReq *self, GError** error)
 	EasSendEmailReqPrivate* priv = self->priv;
 	xmlDoc *doc;
 	FILE *file = NULL;
+	guint64 size = 0;
+	size_t result = 0;
 	
 	// store flag in base (doesn't set the flag as in signal the waiters)
 	g_debug("eas_send_email_req_Activate++");
@@ -132,11 +135,7 @@ eas_send_email_req_Activate(EasSendEmailReq *self, GError** error)
 	}
 
 	// read data from the file to mime_string 
-	// TODO..and escape any xml characters; libxml2 may do this when we construct the xml??
-	
-	guint64 size;
-	gchar * buffer;
-	size_t result;
+	// TODO..and escape any xml characters; libxml2 may do this when we construct the xml?? 
 
 	// obtain file size:
 	fseek (file , 0 , SEEK_END);

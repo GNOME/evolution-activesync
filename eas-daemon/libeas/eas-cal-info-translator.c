@@ -107,10 +107,13 @@ static void _util_append_prop_string_to_list_from_xml(GSList** list, const gchar
  */
 static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line, gboolean may_contain_newlines)
 {
-	// TODO: there's a lot of string copying going on in this function.
-	// Need to think if thee's a more efficient way of doing this.
+	GString* line_for_folding = NULL;
+	guint next_line_start = 0;
 
-	
+	// TODO: there's a lot of string copying going on in this function.
+	// Need to think if there's a more efficient way of doing this.
+
+
 	// Start by replacing any newlines in the line with a \n character sequence
 	gchar* line_with_newlines_handled = NULL;
 	if (may_contain_newlines)
@@ -132,9 +135,9 @@ static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line
 	// Now fold the string into max 75-char lines
 	// (See http://tools.ietf.org/html/rfc5545#section-3.1)
 	
-	GString* line_for_folding = g_string_new(line_with_newlines_handled);
+	line_for_folding = g_string_new(line_with_newlines_handled);
 	// Use an index to mark the position the next line should be started at
-	guint next_line_start = ICAL_MAX_LINE_LENGTH;
+	next_line_start = ICAL_MAX_LINE_LENGTH;
 	while (next_line_start < line_for_folding->len)
 	{
 		// Insert a folding break (line break followed by whitespace)
@@ -168,6 +171,12 @@ static void _util_append_line_to_ical_buffer(GString** buffer, const gchar* line
  */
 static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rruleValue)
 {
+	GDate* recurrenceStartDate = NULL;
+	GDateWeekday weekday;
+	gint occurrence;
+	gint byDayNth;
+	gchar* byDayName = NULL;
+	
 	// DTSTART needs to identify the first date of the recurring pattern in some
 	// year previous to any items in the iCalendar. We'll just use 1970 as the
 	// start of the UNIX epoch.
@@ -178,7 +187,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 	// (where 5 == last, even if there are only 4)
 
 	// Start at the beginning of the month
-	GDate* recurrenceStartDate = g_date_new_dmy(1, date->Month, date->Year);
+	recurrenceStartDate = g_date_new_dmy(1, date->Month, date->Year);
 
 	// Seek for the first occurrence of the day.
 	// SYSTEMTIME's wDayOfWeek has 0 = Sunday, 1 = Monday,...     http://msdn.microsoft.com/en-us/library/ms724950(v=vs.85).aspx
@@ -188,7 +197,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 		date->DayOfWeek = 7;
 		// Now our DayOfWeek matches GDateWeekDay
 	}
-	GDateWeekday weekday = (GDateWeekday)date->DayOfWeek;
+	weekday = (GDateWeekday)date->DayOfWeek;
 	while (g_date_get_weekday(recurrenceStartDate) != weekday)
 	{
 		g_date_add_days (recurrenceStartDate, 1);
@@ -196,7 +205,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 
 	// Now we've got the first occurence of weekday in the right month in 1970.
 	// Now seek for the nth occurrence (where 5th = last, even if there are only 4)
-	gint occurrence = 1;
+	occurrence = 1;
 	while (occurrence++ < date->Day)
 	{
 		g_date_add_days(recurrenceStartDate, 7);
@@ -211,12 +220,12 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 	}
 
 	// Now build the RRULE value before modifying date->Day
-	gint byDayNth = date->Day;
+	byDayNth = date->Day;
 	if (byDayNth == 5)
 	{
 		byDayNth = -1;
 	}
-	gchar* byDayName = NULL;
+	
 	switch (weekday)
 	{
 		case G_DATE_MONDAY:
@@ -239,6 +248,10 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, gchar** rr
 			break;
 		case G_DATE_SUNDAY:
 			byDayName = g_strdup("SU");
+			break;
+		case G_DATE_BAD_WEEKDAY:
+		default:
+			g_warning("Unknown weekday");
 			break;
 	}
 	
@@ -286,18 +299,14 @@ static void _util_add_timezone_to_property_name(gchar** propertyName, const gcha
  */
 gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
 {
-	// TODO: Oops! I only found libical after I'd implemented this.
-	// We should switch to libical - it will make further development a lot easier and more robust.
-
-	
 	gchar* result = NULL;
 
-	if (node && (node->type == XML_ELEMENT_NODE) && (!strcmp((char*)(node->name), "ApplicationData")))
+	// TODO: Oops! I only found libical after I'd implemented this.
+	// We should switch to libical - it will make further development a lot easier and more robust.
+	
+	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), "ApplicationData")))
 	{
 		xmlNodePtr n = node;
-
-		guint bufferSize = 0;
-
 		// Using separate lists to capture the data for various parts of the iCalendar document:
 		//
 		//   BEGIN VCALENDAR
@@ -314,8 +323,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		// Variable to store the TZID value when decoding a <calendar:Timezone> element
 		// so we can use it in the rest of the iCal's date/time fields.
 		// TODO: check <calendar:Timezone> always occurs at the top of the calendar item.
-		gchar* tzid = "";
-
+		gchar *tzid = (gchar*)"";
+		GString* ical_buf = NULL;
+		GSList* item = NULL;
+		EasCalInfo* cal_info = NULL;
 
 		// TODO: get all these strings into constants/#defines
 		
@@ -374,7 +385,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					xmlNode *subNode = NULL;
 					for (subNode = n->children; subNode; subNode = subNode->next)
 					{
-						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Data"))
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)subNode->name, "Data"))
 						{
 							_util_append_prop_string_to_list_from_xml(&vevent, "DESCRIPTION", subNode);
 							break;
@@ -416,12 +427,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					xmlNode* catNode = NULL;
 					for (catNode = n->children; catNode; catNode = catNode->next)
 					{
+						xmlChar* category = xmlNodeGetContent(catNode);
 						if (categories->len > 0)
 						{
 							categories = g_string_append(categories, ",");
 						}
 
-						xmlChar* category = xmlNodeGetContent(catNode);
 						categories = g_string_append(categories, (const gchar*)category);
 						xmlFree(category);
 					}
@@ -445,44 +456,48 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if(g_strcmp0(name, "Attendees") == 0)
 				{
-					g_debug("Found attendees sequence");					
 					xmlNode* attendeeNode = NULL;
+					g_debug("Found attendees sequence");
 					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
 					{
-						g_debug("Found attendee");				
 						// TODO make all this string handling more efficient if poss
 						GString* attparams = g_string_new("");
-						GString* cal_address = g_string_new("mailto:");						
-							
+						GString* cal_address = g_string_new("mailto:");
 						xmlNode *subNode = NULL;
+						gchar *attendee = NULL;
+						
+						g_debug("Found attendee");
+
 						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
 						{
-							if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Email"))
+							if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)subNode->name, "Attendee_Email"))
 							{
 								xmlChar* email = xmlNodeGetContent(subNode);
 								g_debug("found attendee email");
 								//mailto
-								cal_address = g_string_append(cal_address, email);
+								cal_address = g_string_append(cal_address, (gchar *)email);
 								g_free(email);
 								g_debug("cal_address = %s", cal_address->str);
 							}								
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Name"))
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)subNode->name, "Attendee_Name"))
 							{
-								xmlChar* name = xmlNodeGetContent(subNode);								
+								xmlChar* name = xmlNodeGetContent(subNode);
 								g_debug("found name");
 								//cnparam
 								attparams = g_string_append(attparams, ";");
 								attparams = g_string_append(attparams, "CN=");
-								attparams = g_string_append(attparams, name);	
+								attparams = g_string_append(attparams, (gchar *)name);	
 								g_free(name);
 								g_debug("attparams = %s", attparams->str);
 							}
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)subNode->name, "Attendee_Status"))
 							{
-								g_debug("found status");																 
 								xmlChar* status_as_string = xmlNodeGetContent(subNode);
-								gchar *status_ical;
-								guint status = atoi(status_as_string);
+								gchar *status_ical = NULL;
+								guint status = atoi((gchar *)status_as_string);
+								
+								g_debug("found status");
+								
 								switch(status)
 								{
 									// TODO create an enum for these values
@@ -518,14 +533,16 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 								attparams = g_string_append(attparams, status_ical);
 								g_free(status_as_string);
 								g_free(status_ical);
-								g_debug("attparams = %s", attparams->str);								
+								g_debug("attparams = %s", attparams->str);
 							}
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
+							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)subNode->name, "Attendee_Type"))
 							{
-								g_debug("found type");								
 								xmlChar* type_as_string = xmlNodeGetContent(subNode);
-								guint type = atoi(type_as_string);
-								gchar *type_ical;
+								guint type = atoi((gchar *)type_as_string);
+								gchar *type_ical = NULL;
+								
+								g_debug("found type");
+								
 								switch(type)
 								{
 									// TODO create an enum for these values
@@ -561,7 +578,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							
 						}// end for subNodes	
 
-						gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+						attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
 
 						// Adding to VEVENT. EAS doesn't appear to support EMAIL ALARMS, so not adding to VALARM
 						_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
@@ -592,10 +609,12 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 						// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
 						// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
+						{ // @@WARNING - Start of scope
 						const gint32 standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
 						const gint32 daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
 						gchar* standardUtcOffsetStr = g_strdup_printf("%+03d%02d", standardUtcOffsetMins / MINUTES_PER_HOUR, standardUtcOffsetMins % MINUTES_PER_HOUR);
 						gchar* daylightUtcOffsetStr = g_strdup_printf("%+03d%02d", daylightUtcOffsetMins / MINUTES_PER_HOUR, daylightUtcOffsetMins % MINUTES_PER_HOUR);
+						gchar* rruleValue = NULL;
 						
 						// Using StandardName as the TZID
 						// (Doesn't matter if it's not an exact description: this field is only used internally
@@ -616,8 +635,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						// STANDARD component
 						
 						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "STANDARD");
-
-						gchar* rruleValue = NULL;
 
 						// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
 						// the start date of a recurring sequence, and add an RRULE.
@@ -659,7 +676,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						}
 						_util_append_prop_string_to_list(&vtimezone, "END", "STANDARD");
 
-						
+
 						// DAYLIGHT component
 
 						_util_append_prop_string_to_list(&vtimezone, "BEGIN", "DAYLIGHT");
@@ -706,6 +723,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 						g_free(standardUtcOffsetStr);
 						g_free(daylightUtcOffsetStr);
+						} // @@WARNING - End of Scope
 					} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
 					else
 					{
@@ -719,11 +737,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		// TODO: Think of a way to pre-allocate a sensible size for the buffer
-		GString* ical_buf = g_string_new("");
+		ical_buf = g_string_new("");
 		_util_append_line_to_ical_buffer(&ical_buf, "BEGIN:VCALENDAR", FALSE);
 
 		// Add the VCALENDAR properties first
-		GSList* item;
 		for (item = vcalendar; item != NULL; item = item->next)
 		{
 			// Add a string per list item then destroy the list item behind us
@@ -781,7 +798,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		_util_append_line_to_ical_buffer(&ical_buf, "END:VCALENDAR", FALSE);
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
-		EasCalInfo* cal_info = eas_cal_info_new();
+		cal_info = eas_cal_info_new();
 		cal_info->icalendar = g_string_free(ical_buf, FALSE); // Destroy the GString object and pass its buffer (with ownership) to cal_info
 		cal_info->server_id = (gchar*)server_id;
 		if (!eas_cal_info_serialise(cal_info, &result))
@@ -817,38 +834,38 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 			switch (prop_type)
 			{
 				case ICAL_SUMMARY_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:Subject", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Subject", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTSTAMP_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:DtStamp", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:DtStamp", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTSTART_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:StartTime", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTEND_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:EndTime", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_LOCATION_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:Location", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Location", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_UID_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:UID", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:UID", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_CLASS_PROPERTY:
 					{
 						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
 						if (g_strcmp0(value, "CONFIDENTIAL") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "3"); // Confidential
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
 						}
 						else if (g_strcmp0(value, "PRIVATE") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "2"); // Private
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
 						}
 						else // PUBLIC
 						{
 							// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "0");
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
 						}
 					}
 					break;
@@ -857,12 +874,12 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
 						if (g_strcmp0(value, "TRANSPARENT") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "0"); // Free
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
 						}
 						else // OPAQUE
 						{
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
-							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "2"); // Busy
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"2"); // Busy
 						}
 					}
 					break;
@@ -870,10 +887,10 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 					{
 						if (categories == NULL)
 						{
-							categories = xmlNewChild(app_data, NULL, "calendar:Categories", NULL);
+							categories = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Categories", NULL);
 						}
 
-						xmlNewTextChild(categories, NULL, "calendar:Category", icalproperty_get_value_as_string(prop));
+						xmlNewTextChild(categories, NULL, (const xmlChar*)"calendar:Category", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
 
@@ -900,14 +917,11 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 {
 	if (valarm)
 	{
-		g_debug("Processing VALARM...");
-		
 		// Just need to get the TRIGGER property
 		icalproperty* prop = icalcomponent_get_first_property(valarm, ICAL_TRIGGER_PROPERTY);
+		g_debug("Processing VALARM...");
 		if (prop)
 		{
-			g_debug("Processing TRIGGER...");
-			
 			struct icaltriggertype trigger = icalproperty_get_trigger(prop);
 
 			// TRIGGER can be either a period of time before the event, OR a specific date/time.
@@ -923,9 +937,11 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 				+ (trigger.duration.weeks * MINUTES_PER_WEEK);
 
 			char minutes_buf[6];
+			g_debug("Processing TRIGGER...");
+
 			g_snprintf(minutes_buf, 6, "%d", minutes);
 
-			xmlNewTextChild(app_data, NULL, "calendar:Reminder", minutes_buf);
+			xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Reminder", (const xmlChar*)minutes_buf);
 		}
 	}
 }
@@ -1062,6 +1078,10 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 				case ICAL_SATURDAY_WEEKDAY:
 					easTimeStruct->DayOfWeek = 6;
 					break;
+				case ICAL_NO_WEEKDAY:
+				default:
+					g_warning("Unknown byDayWeekday");
+					break;
 			}
 
 			// Date set. Time is set below...
@@ -1100,7 +1120,9 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 	if (vtimezone)
 	{
 		EasTimeZone timezoneStruct;
-
+		icalcomponent* subcomponent;
+		WB_UTINY* timezoneBase64 = NULL;
+			
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
 		if (tzid)
@@ -1120,7 +1142,6 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Now process the STANDARD and DAYLIGHT subcomponents
-		icalcomponent* subcomponent;
 		for (subcomponent = icalcomponent_get_first_component(vtimezone, ICAL_ANY_COMPONENT);
 		     subcomponent;
 		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
@@ -1129,9 +1150,8 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		const int rawStructSize = sizeof(EasTimeZone);
-		WB_UTINY* timezoneBase64 = (WB_UTINY*)wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
-		xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
+		timezoneBase64 = wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), sizeof(EasTimeZone));
+		xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Timezone", timezoneBase64);
 		g_free(timezoneBase64);
 	}
 }
@@ -1144,28 +1164,31 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_dat
 {
 	gboolean success = FALSE;
 
-	icalcomponent* ical;
+	icalcomponent* ical = NULL;
 	if (doc &&
 	    app_data &&
 	    cal_info &&
 	    (app_data->type == XML_ELEMENT_NODE) &&
-	    (strcmp((char*)(app_data->name), "ApplicationData") == 0) &&
+	    (g_strcmp0((char*)(app_data->name), "ApplicationData") == 0) &&
 	    (ical = icalparser_parse_string(cal_info->icalendar)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
 		// Process the components of the VCALENDAR
+		icalcomponent* vevent = NULL;
 		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
-		icalcomponent* vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
+		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
 		_util_process_vevent_component(vevent, app_data);
 		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), app_data);
 
 		// DEBUG output
+		{ // @@WARNING - Start of Scope
 		xmlChar* dump_buffer;
 		int dump_buffer_size;
 		xmlIndentTreeOutput = 1;
 		xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
 		g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
 		xmlFree(dump_buffer);
+		} // @@WARNING - End of Scope
 
 		success = TRUE;
 	}

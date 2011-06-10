@@ -295,13 +295,13 @@ create_node_from_categorylist(xmlNode *app_data, const GSList* categories)
 		g_debug("Creating Categories node");
 		// Create the categories collection node
 		// TODO - can namespace name (email) be included in name like this rather than as a xmlNsPtr param?
-		categories_node = xmlNewChild(app_data, NULL, "email:Categories", NULL);		
+		categories_node = xmlNewChild(app_data, NULL, (xmlChar *)"email:Categories", NULL);
 	}
 
 	while(categories != NULL)
 	{
 		g_debug("Creating Categorys node for %s", (gchar *)categories->data);		
-		leaf = xmlNewTextChild(categories_node, NULL, "email:Category", (xmlChar*)categories->data);
+		leaf = xmlNewTextChild(categories_node, NULL, (xmlChar *)"email:Category", (xmlChar*)categories->data);
 		if(!leaf)
 		{
 			ret = FALSE;
@@ -337,18 +337,18 @@ eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, c
 		if(email_info->flags & EAS_EMAIL_READ)
 		{
 			g_debug("setting Read to 1");
-			leaf = xmlNewChild(app_data, NULL, "Read", (xmlChar*)"1");
+			leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"1");
 		}
 		else
 		{
 			g_debug("setting Read to 0");
-			leaf = xmlNewChild(app_data, NULL, "Read", (xmlChar*)"0");
+			leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"0");
 		}	
 
 		if(ret)
 		{
 			//categories
-			ret = create_node_from_categorylist(app_data, email_info->categories);			
+			ret = create_node_from_categorylist(app_data, email_info->categories);
 		}
 	}
 

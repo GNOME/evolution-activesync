@@ -73,6 +73,8 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 

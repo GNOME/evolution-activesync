@@ -37,9 +37,10 @@ struct _EasUpdateEmailReqPrivate
 static void
 eas_update_email_req_init (EasUpdateEmailReq *object)
 {
-	g_debug("eas_update_email_req_init++");
 	/* initialization code */
 	EasUpdateEmailReqPrivate *priv;
+	
+	g_debug("eas_update_email_req_init++");
 	
 	object->priv = priv = EAS_UPDATE_EMAIL_REQ_PRIVATE(object);
 
@@ -61,10 +62,11 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 static void
 eas_update_email_req_finalize (GObject *object)
 {
-	g_debug("eas_update_email_req_finalize++");
 	/* deinitalization code */
 	EasUpdateEmailReq *req = (EasUpdateEmailReq *) object;
 	EasUpdateEmailReqPrivate *priv = req->priv;
+	
+	g_debug("eas_update_email_req_finalize++");
 
 	g_object_unref(priv->sync_msg);
 	free_string_array(priv->serialised_email_array);
@@ -96,16 +98,17 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 // TODO - update this to take a GSList of serialised emails? rem to copy the list
 EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag)
 {
-	g_debug("eas_update_email_req_new++");
-
 	EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
 	EasUpdateEmailReqPrivate *priv = self->priv;
-	
+	guint i;
+	guint num_serialised_emails = 0;
+		
+	g_debug("eas_update_email_req_new++");
 	g_assert(sync_key);
 	g_assert(folder_id);
 	g_assert(serialised_email_array);
 
-	guint num_serialised_emails = array_length(serialised_email_array);
+	num_serialised_emails = array_length(serialised_email_array);
 	priv->sync_key = g_strdup(sync_key);
 	priv->folder_id = g_strdup(folder_id);
 	// TODO duplicate the string array
@@ -114,7 +117,6 @@ EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *syn
 	{
 		goto cleanup;
 	}
-	guint i;
 	for(i = 0; i < num_serialised_emails; i++)
 	{
 		priv->serialised_email_array[i] = g_strdup(serialised_email_array[i]);
@@ -139,17 +141,18 @@ cleanup:
 	}
 	
 	g_debug("eas_update_email_req_new--");
-	return self;	
+	return self;
 }
 
 void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 {
-	g_debug("eas_update_email_req_Activate++");
-	
 	EasUpdateEmailReqPrivate *priv = self->priv;
 	xmlDoc *doc;
 	GSList *update_emails = NULL;   // sync msg expects a list, we have an array
 	guint i = 0;
+	
+	g_debug("eas_update_email_req_Activate++");
+	
 	while(priv->serialised_email_array[i])
 	{
 		g_debug("append email to list");
@@ -181,9 +184,9 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 
 void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError** error)
 {
-	g_debug("eas_update_email_req_MessageComplete++");	
-
 	EasUpdateEmailReqPrivate *priv = self->priv;
+	
+	g_debug("eas_update_email_req_MessageComplete++");
 
 	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
