@@ -210,9 +210,9 @@ build_serialised_email_info_array(gchar ***serialised_email_info_array, const GS
 	
 finish:
 	if(!ret)
-		{
-			g_assert(error == NULL || *error != NULL);
-		}
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
     
 	return ret;
 }
@@ -395,6 +395,7 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
 finish:
     if (!ret)
     {
+		g_debug("returning error %s", error->message);
 		g_assert (error != NULL);		
         dbus_g_method_return_error (context, error);
         g_error_free (error);
