@@ -5,6 +5,7 @@
  * 
  */
 
+#include "eas-connection-errors.h"
 #include "eas-sync-folder-msg.h"
 #include "../../libeasmail/src/eas-folder.h"
 
@@ -107,27 +108,142 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
     return doc;
 }
 
-void
-eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc, GError** error)
+/*
+translates from eas sync status code to GError. 
+*/
+static void set_sync_status_error(guint sync_status, GError **error)
 {
+	switch(sync_status)
+	{
+		// 2 not spec'd
+		case 3:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCKEY,	   
+			("Sync error: Invalid synchronization key"));	
+		}
+		break;
+		case 4:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_PROTOCOLERROR,	   
+			("Sync error: Request that does not comply with the specification requirements"));	
+		}
+		break;
+		case 5:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_SERVERERROR,	   
+			("Sync error: Server misconfiguration, temporary system issue, or bad item"));	
+		}
+		break;
+		case 6:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_CONVERSIONERROR,	   
+			("Sync error: malformed or invalid item sent"));	
+		}
+		break;		
+		case 7:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_CONFLICTERROR,	   
+			("Sync error: client tried to change an item for which server changes take precedence"));	
+		}
+		break;		
+		case 8:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_OBJECTNOTFOUND,	   
+			("Sync error: Fetch or Change operation that has an id no longer valid on the server"));	
+		}
+		break;	
+		case 9:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_MAILBOXFULL,	   
+			("Sync error: User account could be out of disk space"));	
+		}
+		break;
+		case 12:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_FOLDERHIERARCHYCHANGED,	   
+			("Sync error: Mailbox folders are not synchronized, need FolderSync first"));	
+		}
+		break;
+		case 13:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_REQUESTINCOMPLETE,	   
+			("Sync error: sync request not complete, cached set of notify-able collections missing, resend a full Sync request"));	
+		}
+		break;
+		case 14:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_INVALIDWAITORHEARTBEAT,   
+			("Sync error: Invalid Wait or HeartbeatInterval value, update the Wait element value according to the Limit and resend the request"));	
+		}
+		break;
+		case 15:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCCOMMAND,	   
+			("Sync error: Too many collections are included in the Sync request, sync fewer folders"));	
+		}
+		break;
+		case 16:
+		{
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_RETRY,	   
+			("Sync error: Something on the server caused a retriable error."));	
+		}
+		break;			
+		default:
+		{
+			g_warning("Unrecognised provisioning error");
+			g_set_error (error, EAS_CONNECTION_ERROR,
+			EAS_CONNECTION_SYNC_ERROR_STATUSUNRECOGNIZED,	   
+			("Unrecognised sync status"));			
+		}
+	}
+
+	return;
+}
+
+gboolean
+eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, GError** error)
+{
+	gboolean ret = TRUE;
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
 	
     if (!doc) {
-        g_debug ("Failed to parse folder_sync response XML");
-        return;
+        g_warning ("folder_sync response XML is empty");
+		// Note not setting error here as empty doc is valid
+		goto finish;
     }
-    node = xmlDocGetRootElement(doc);
+    node = xmlDocGetRootElement((xmlDoc*)doc);
     if (strcmp((char *)node->name, "FolderSync")) {
-        g_debug("Failed to find <FolderSync> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <FolderSync> element"));
+        ret = FALSE;
+		goto finish;		
     }
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
         {
-            gchar *provision_status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("FolderSync Status:[%s]", provision_status);
-			xmlFree(provision_status);
+            gchar *sync_status = (gchar *)xmlNodeGetContent(node);
+			guint sync_status_num = atoi(sync_status);			
+			xmlFree(sync_status);
+			if(sync_status_num != 1)  // not success
+			{
+				set_sync_status_error(sync_status_num, error);
+				ret = FALSE;
+				goto finish;
+			}			
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
@@ -142,8 +258,11 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc, GError**
 		}
     }
     if (!node) {
-        g_debug ("Failed to find Changes element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Changes> element"));		
+        ret = FALSE;
+		goto finish;		
     }
 	
     for (node = node->children; node; node = node->next) {
@@ -170,6 +289,13 @@ eas_sync_folder_msg_parse_reponse (EasSyncFolderMsg* self, xmlDoc *doc, GError**
 			continue;
 		}
 	}
+
+finish:	
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}
+	return ret;
 	
 }
 

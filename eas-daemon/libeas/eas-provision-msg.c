@@ -138,7 +138,7 @@ static void set_provision_status_error(guint provision_status, GError **error)
 		{
 			g_warning("Unrecognised provisioning error");
 			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_PROVISION_ERROR_UNRECOGNIZED,	   
+			EAS_CONNECTION_PROVISION_ERROR_STATUSUNRECOGNIZED,	   
 			("Unrecognised provisioning error"));			
 		}
 	}
@@ -182,7 +182,7 @@ static void set_policy_status_error(guint policy_status, GError **error)
 		{
 			g_warning("Unrecognised provisioning error");
 			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_PROVISION_ERROR_UNRECOGNIZED,	   
+			EAS_CONNECTION_PROVISION_ERROR_STATUSUNRECOGNIZED,	   
 			("unrecognised provisioning error"));			
 		}			
 		break;			

@@ -249,7 +249,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 }
 
 void
-eas_sync_msg_parse_reponse (EasSyncMsg* self, xmlDoc *doc, GError** error)
+eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
     g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;

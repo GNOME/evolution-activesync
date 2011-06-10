@@ -165,9 +165,13 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 	doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, update_emails, NULL);
 	
 	g_debug("send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Sync", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            error);
 
-	g_debug("eas_update_email_req_Activate--");		
+	g_debug("eas_update_email_req_Activate--");
 
 	g_slist_free(update_emails);
 
@@ -181,7 +185,7 @@ void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, 
 
 	EasUpdateEmailReqPrivate *priv = self->priv;
 
-	eas_sync_msg_parse_reponse (priv->sync_msg, doc, error);
+	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
 	xmlFree(doc);
 	

@@ -119,9 +119,14 @@ void eas_update_calendar_req_Activate(EasUpdateCalendarReq *self)
 	doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
 	
 	g_debug("send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	GError *error = NULL;
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Sync", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            &error);
 
-	g_debug("eas_update_calendar_req_Activate--");		
+	g_debug("eas_update_calendar_req_Activate--");
 
 	return;
 }
@@ -133,7 +138,7 @@ void eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self, xmlDoc*
 
 	EasUpdateCalendarReqPrivate *priv = self->priv;
 
-	eas_sync_msg_parse_reponse (priv->sync_msg, doc, error);
+	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
 	xmlFree(doc);
 	

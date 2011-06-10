@@ -57,7 +57,7 @@ struct _EasConnectionPrivate
 
 	gchar* request_cmd;
 	xmlDoc* request_doc;
-	EasRequestBase* request;
+	struct _EasRequestBase* request;
 	GError **request_error;
 };
 
@@ -68,7 +68,7 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      gpointer data);
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
-static void wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
+static gboolean wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -243,7 +243,7 @@ void eas_connection_resume_request(EasConnection* self)
 {
 	EasConnectionPrivate *priv = self->priv;
 	gchar *_cmd;
-	EasRequestBase *_request;
+	struct _EasRequestBase *_request;
 	xmlDoc *_doc;
 	GError **_error;
 
@@ -283,7 +283,7 @@ void eas_connection_resume_request(EasConnection* self)
  * @return whether successful
  */
 gboolean 
-eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error)
+eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
 {
 	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;
@@ -474,53 +474,60 @@ isResponseValid(SoupMessage *msg)
  * @param xml output buffer [full transfer]
  * @param xml_len length of the output buffer in bytes
  */
-static void 
+static gboolean
 wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
 {
+	gboolean ret = TRUE;
     WBXMLConvWBXML2XML *conv = NULL;
-    WBXMLError ret = WBXML_OK;
+    WBXMLError wbxml_ret = WBXML_OK;
 
 	g_debug("eas_connection - wbxml2xml++");
 	
     *xml = NULL;
     *xml_len = 0;
-    
-    ret = wbxml_conv_wbxml2xml_create(&conv);
-    
-    if (ret != WBXML_OK)
-    {
-		g_debug ("  Failed to create conv! %s", wbxml_errors_string(ret));
-        return;
-    }
 
     if (NULL == wbxml)
     {
-		g_debug ("  wbxml is NULL!");
-        goto failed;
+		g_warning ("  wbxml is NULL!");
+		ret = FALSE;
+		goto finish;
     }
 
     if (0 == wbxml_len)
     {
-        g_debug("  wbxml_len is 0!");
-        goto failed;
+        g_warning("  wbxml_len is 0!");
+		ret = FALSE;
+		goto finish;		
+    }
+	
+    wbxml_ret = wbxml_conv_wbxml2xml_create(&conv);
+    
+    if (wbxml_ret != WBXML_OK)
+    {
+		g_warning ("  Failed to create conv! %s", wbxml_errors_string(ret));
+        ret = FALSE;
+		goto finish;
     }
 
     wbxml_conv_wbxml2xml_set_language(conv, WBXML_LANG_ACTIVESYNC);
     wbxml_conv_wbxml2xml_set_indent(conv, 1);
     
-    ret = wbxml_conv_wbxml2xml_run(conv,
+    wbxml_ret = wbxml_conv_wbxml2xml_run(conv,
                                    (WB_UTINY *)wbxml,
                                    wbxml_len,
                                    xml, 
                                    xml_len);
 
-    if (WBXML_OK != ret) 
+    if (WBXML_OK != wbxml_ret) 
 	{
-        g_debug ("  wbxml2xml Ret = %s", wbxml_errors_string(ret));
+        g_warning ("  wbxml2xml Ret = %s", wbxml_errors_string(wbxml_ret));
+		ret = FALSE;
     }
 
-failed:
+finish:
     if (conv) wbxml_conv_wbxml2xml_destroy(conv);
+
+	return ret;
 }
 
 /**
@@ -996,9 +1003,11 @@ void parse_for_status(xmlNode *node)
 	}
 }
 
+
 void 
 handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 {
+	gboolean ret;
 	EasRequestBase *req = (EasRequestBase *)data;
 	EasConnection *self = (EasConnection *)eas_request_base_GetConnection (req);
 	EasConnectionPrivate *priv = self->priv;
@@ -1015,7 +1024,10 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 	RequestValidity validity = isResponseValid(msg);
 	if (INVALID == validity) {
-		return;
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+	     EAS_CONNECTION_ERROR_SOUPERROR,
+	     ("Invalid soup message received"));
+		goto complete_request;
 	}
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) {
@@ -1025,14 +1037,20 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 	if(VALID_NON_EMPTY == validity)
 	{
-		wbxml2xml ((WB_UTINY*)msg->response_body->data,
+		if(!wbxml2xml ((WB_UTINY*)msg->response_body->data, 
 		           msg->response_body->length,
 		           &xml,
-		           &xml_len);
+		           &xml_len))
+		{
+			g_set_error (&error, EAS_CONNECTION_ERROR,
+			 EAS_CONNECTION_ERROR_WBXMLERROR,
+			 ("Converting wbxml failed"));
+			goto complete_request;			
+		}
 
 		g_debug("  handle_server_response - pre-xmlReadMemory");
 	
-		doc = xmlReadMemory ((const char*)xml, 
+		doc = xmlReadMemory ((const char*)xml,
 		                     xml_len,
 		                     "sync.xml", 
 		                     NULL, 
@@ -1043,14 +1061,15 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 		if (doc) 
 		{
 			xmlNode* node = xmlDocGetRootElement(doc);
-			parse_for_status(node);
+			parse_for_status(node); 
 		}
 	}
 
 
 	// TODO Pre-process response status to see if provisioning is required
 	// isProvisioningRequired = ????
-	
+
+complete_request:	
 	if (!isProvisioningRequired)
 	{
 		EasRequestType request_type = eas_request_base_GetRequestType(req);
@@ -1080,58 +1099,58 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 
 			case EAS_REQ_PROVISION:
 			{
-				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, &error);
+				eas_provision_req_MessageComplete ((EasProvisionReq *)req, doc, error);
 			}
 			break;
 				
 			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
 			{
-				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, &error);
+				eas_sync_folder_hierarchy_req_MessageComplete((EasSyncFolderHierarchyReq *)req, doc, error);
 			}
 			break;
 			
 			case EAS_REQ_SYNC:
 			{
-				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc, &error);
+				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc, &error);// TODO update MessageComplete to take an error rather than pass one back
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_BODY:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);
+				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);// TODO
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc, &error);
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc, &error);// TODO
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:
 			{
-				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc, &error);
+				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc, &error);// TODO
 			}
 			break;
 			case EAS_REQ_SEND_EMAIL:
 			{
 				g_debug("EAS_REQ_SEND_EMAIL");
-				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, &error);
+				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, &error);// TODO
 			}
 			break;
 			case EAS_REQ_UPDATE_MAIL:
 			{
 				g_debug("EAS_REQ_UPDATE_EMAIL");
-				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc, &error);
+				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc, &error);// TODO
 			}
 			break;
 			case EAS_REQ_UPDATE_CALENDAR:
 			{
 				g_debug("EAS_REQ_UPDATE_CALENDAR");
-				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc, &error);
+				eas_update_calendar_req_MessageComplete ((EasUpdateCalendarReq *)req, doc, &error);// TODO
 			}
 			break;
 			case EAS_REQ_ADD_CALENDAR:
 			{
 				g_debug("EAS_REQ_ADD_CALENDAR");
-				eas_add_calendar_req_MessageComplete ((EasAddCalendarReq *)req, doc, &error);
+				eas_add_calendar_req_MessageComplete ((EasAddCalendarReq *)req, doc, &error);// TODO
 			}
 			break;				
 		}
