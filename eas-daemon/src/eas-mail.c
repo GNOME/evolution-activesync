@@ -210,9 +210,9 @@ build_serialised_email_info_array(gchar ***serialised_email_info_array, const GS
 	
 finish:
 	if(!ret)
-		{
-			g_assert(error == NULL || *error != NULL);
-		}
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
     
 	return ret;
 }
