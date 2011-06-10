@@ -73,7 +73,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				header->value = (gchar *)xmlNodeGetContent(n);
 				headers = g_slist_append(headers, header);
 			}				
-			//Received
+			//Received TODO date-received is NOT a standard MIME header and should be put into a separate field in email info
 			else if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DateReceived")) 
 			{
 				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
@@ -99,7 +99,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				}
 			}	
 			// TODO which if any of these other headers are standard email headers?	
-			//ThreadTopic   TODO is this where we get the answered/forwarded 'flags' from?			
+			//ThreadTopic   			
 			//MessageClass			-   ?
 			//MeetingRequest stuff  -   ignoring, not MIME header
 			//InternetCPID			-   ignoring, EAS specific

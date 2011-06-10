@@ -248,7 +248,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     return doc;
 }
 
-void
+// lrm TODO set the Gerror/return value:
+gboolean
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
     g_debug ("eas_sync_msg_parse_response ++");
