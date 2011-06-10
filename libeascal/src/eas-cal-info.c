@@ -56,12 +56,8 @@ static void eas_cal_info_class_init (EasCalInfoClass *klass)
 
 EasCalInfo* eas_cal_info_new ()
 {
-	g_debug("eas_cal_info_new++");	
-	
-	EasCalInfo *object = NULL;
-	object = g_object_new (EAS_TYPE_CAL_INFO , NULL);
-	g_debug("eas_cal_info_new--");	
-	
+	EasCalInfo *object = g_object_new (EAS_TYPE_CAL_INFO , NULL);
+	g_debug("eas_cal_info_new+-");
 	return object;
 }
 
@@ -81,10 +77,11 @@ gboolean eas_cal_info_serialise(EasCalInfo* self, gchar** result)
 gboolean eas_cal_info_deserialise(EasCalInfo* self, const gchar* data)
 {
 	gboolean separator_found = FALSE;
-	g_debug("eas_cal_info_deserialise++");
-	gchar *tempString = NULL;
-	// Look for the separator character
 	guint i = 0;
+	gchar *tempString = NULL;
+	
+	g_debug("eas_cal_info_deserialise++");
+	// Look for the separator character
 	for (; data[i]; i++)
 	{
 		if (data[i] == SERVER_ID_SEPARATOR)

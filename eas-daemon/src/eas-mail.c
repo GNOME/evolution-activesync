@@ -50,14 +50,15 @@ eas_mail_finalize (GObject *object)
 static void
 eas_mail_class_init (EasMailClass *klass)
 {
- 	g_debug("eas_mail_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
 	// get rid of warnings about above 2 lines
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
-	
+    
+ 	g_debug("eas_mail_class_init++");
+
 	object_class->finalize = eas_mail_finalize;
 		g_debug(">>eas_mail_class_init 01");	
 	g_type_class_add_private (klass, sizeof (EasMailPrivate));
@@ -107,21 +108,21 @@ eas_connection_folder_sync(easMailObj->easConnection,
 void eas_mail_test_001(EasMail* obj, DBusGMethodInvocation* context)
 {
 
+    GError *error = NULL;
+    gchar *ok_str = g_strdup ("OK");
+    
  	g_debug(">> eas_mail_test_001()");
-        GError *error = NULL;
-        gchar *ok_str = g_strdup ("OK");
-         // ...
 
-        if (error) {
-		g_debug(">> eas_mail_test_001 -error-");
-                dbus_g_method_return_error (context, error);
-                g_error_free (error);
-        } else{
-		g_debug(">> eas_mail_test_001 -No error-");
-                dbus_g_method_return (context, ok_str);
-	}
+    if (error) {
+        g_debug(">> eas_mail_test_001 -error-");
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    } else {
+        g_debug(">> eas_mail_test_001 -No error-");
+        dbus_g_method_return (context, ok_str);
+    }
 
-        g_free (ok_str);
+    g_free (ok_str);
 }
 
 
@@ -132,20 +133,19 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 {
 	gboolean ret = TRUE;
 	guint i = 0;
+	guint array_len = g_slist_length((GSList*)folder_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+	GSList *l = (GSList*)folder_list;
 
     g_assert(serialised_folder_array);
     g_assert(*serialised_folder_array == NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	guint array_len = g_slist_length((GSList*)folder_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
-    
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 
-	GSList *l = (GSList*)folder_list;
 	for(i = 0; i < array_len - 1; i++)
 	{
-		g_assert(l != NULL);
 		EasFolder *folder;
+		g_assert(l != NULL);
 		folder = l->data;
 
 		if(!eas_folder_serialise(folder, &(*serialised_folder_array)[i]))
@@ -179,17 +179,18 @@ cleanup:
 static gboolean 
 build_serialised_email_info_array(gchar ***serialised_email_info_array, const GSList *email_list, GError **error)
 {
-    g_debug("build email arrays++");
 	gboolean ret = TRUE;
 	guint i = 0;
+	guint array_len = g_slist_length((GSList*)email_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
+	GSList *l = (GSList*)email_list;
+
+    g_debug("build email arrays++");
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
     g_assert(serialised_email_info_array);
     g_assert(*serialised_email_info_array == NULL);
 
-	guint array_len = g_slist_length((GSList*)email_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
-    
 	*serialised_email_info_array = g_malloc0(array_len * sizeof(gchar*));
 	if(!serialised_email_info_array)
 	{
@@ -200,10 +201,9 @@ build_serialised_email_info_array(gchar ***serialised_email_info_array, const GS
 		goto finish;
 	}
 
-	GSList *l = (GSList*)email_list;
 	for(i = 0; i < array_len - 1; i++){
-		g_assert(l != NULL);
 		gchar *tstring = g_strdup(l->data);
+		g_assert(l != NULL);
 		(*serialised_email_info_array)[i]=tstring;
 		l = g_slist_next (l);
 	}
@@ -235,6 +235,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     gchar** ret_created_folders_array = NULL;
     gchar** ret_updated_folders_array = NULL;
     gchar** ret_deleted_folders_array = NULL;
+	gboolean ret;
 
     eflag = e_flag_new ();
     
@@ -255,7 +256,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
     // Activate the request
-    gboolean ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
+    ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
 	if(!ret)
 	{
 		goto finish;
@@ -327,8 +328,16 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     EasMailPrivate* priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
-	gboolean ret = TRUE;
-	
+    EasSyncReq *req = NULL;
+    gchar *ret_sync_key = NULL;
+    gboolean ret_more_available = FALSE;
+    gchar** ret_added_email_array = NULL;
+    gchar** ret_deleted_email_array = NULL;
+    gchar** ret_changed_email_array = NULL;
+    // TODO ActivateFinish needs to be refactored to serialise the data.
+    GSList *a = NULL, *b = NULL, *c = NULL;
+    gboolean ret = TRUE;
+
     g_debug ("eas_mail_sync_folder_email++");
 
     flag = e_flag_new ();
@@ -337,7 +346,7 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     eas_connection_set_account(priv->connection, account_uid);
 
     // Create Request
-    EasSyncReq *req = g_object_new(EAS_TYPE_SYNC_REQ, NULL);
+    req = g_object_new(EAS_TYPE_SYNC_REQ, NULL);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
@@ -357,18 +366,11 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     e_flag_wait (flag);
     e_flag_free (flag);
 
-    gchar *ret_sync_key = NULL;
-    gboolean ret_more_available = FALSE;
-    gchar** ret_added_email_array = NULL;
-    gchar** ret_deleted_email_array = NULL;
-    gchar** ret_changed_email_array = NULL;
+
 
     // Fetch the serialised response for transmission over DBusresponse
 
     // TODO ActivateFinish needs to be refactored to serialise the data.
-    GSList *a, *b, *c;
-    a = b = c = NULL;
-
     ret = eas_sync_req_ActivateFinish(req,
                                 &ret_sync_key,
                                 &a /* &ret_add_email_array     */,
@@ -419,12 +421,16 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
                                 const gchar **server_ids_array,
                                 DBusGMethodInvocation* context)
 {
-    g_debug("eas_mail_delete_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
     gchar* ret_sync_key = NULL;	
     GSList *server_ids_list = NULL;
-
+    int index = 0;
+    const gchar* id = NULL;
+	EasDeleteEmailReq *req = NULL;
+    GSList *item = NULL;
+        
+    g_debug("eas_mail_delete_email++");
     g_assert(server_ids_array);
     
     flag = e_flag_new ();
@@ -435,19 +441,16 @@ gboolean eas_mail_delete_email(EasMail *easMailObj,
     }
 
     // Convert server_ids_array into GSList
-    int index = 0;
-    const gchar* id = NULL;
     while ( (id = server_ids_array[index++]) )
     {
         server_ids_list = g_slist_prepend(server_ids_list, g_strdup(id));
     }
 
     // Create the request
-	EasDeleteEmailReq *req = NULL;
 	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, flag);
 
     // Cleanup the gslist
-    GSList *item = server_ids_list;
+    item = server_ids_list;
     for(;item; item = item->next)
     {
         g_free(item->data);
@@ -491,10 +494,12 @@ gboolean eas_mail_update_emails(EasMail *self,
                                     const gchar **serialised_email_array,
                                     DBusGMethodInvocation* context)
 {
-    g_debug("eas_mail_update_email++");
     EFlag *flag = NULL;
     GError *error = NULL;
-	 
+	EasUpdateEmailReq *req = NULL;
+    
+    g_debug("eas_mail_update_email++");
+
     flag = e_flag_new ();
 
     if(self->priv->connection)
@@ -504,7 +509,6 @@ gboolean eas_mail_update_emails(EasMail *self,
 
     // Create the request
 	g_debug("create request");
-	EasUpdateEmailReq *req = NULL;
 	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -558,7 +562,8 @@ eas_mail_fetch_email_body (EasMail* self,
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
-
+    EasGetEmailBodyReq *req = NULL;
+        
     g_debug("eas_mail_fetch_email_body++");
 
     flag = e_flag_new ();
@@ -567,11 +572,11 @@ eas_mail_fetch_email_body (EasMail* self,
     eas_connection_set_account(priv->connection, account_uid);
 
     // Create Request
-    EasGetEmailBodyReq *req = eas_get_email_body_req_new (account_uid,
-                                                          collection_id,
-                                                          server_id,
-                                                          mime_directory,
-                                                          flag);
+    req = eas_get_email_body_req_new (account_uid,
+                                      collection_id,
+                                      server_id,
+                                      mime_directory,
+                                      flag);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
@@ -608,11 +613,12 @@ eas_mail_fetch_attachment (EasMail* self,
                             const gchar *mime_directory, 
                             DBusGMethodInvocation* context)
 {
-    g_debug("eas_mail_fetch_attachment++");
-     
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
+    EasGetEmailAttachmentReq *req = NULL;
+        
+    g_debug("eas_mail_fetch_attachment++");
 
     flag = e_flag_new ();
     
@@ -620,10 +626,10 @@ eas_mail_fetch_attachment (EasMail* self,
     eas_connection_set_account(priv->connection, account_uid);
 
     // Create Request
-    EasGetEmailAttachmentReq *req = eas_get_email_attachment_req_new (account_uid,
-                                                          file_reference,
-                                                          mime_directory,
-                                                          flag);
+    req = eas_get_email_attachment_req_new (account_uid,
+                                            file_reference,
+                                            mime_directory,
+                                            flag);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
@@ -661,10 +667,11 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
 								const gchar *mime_file,
 								DBusGMethodInvocation* context)
 {
-	g_debug("eas_mail_send_email++");
-	
     EFlag *flag = NULL;
     GError *error = NULL;
+    EasSendEmailReq *req = NULL;
+    
+    g_debug("eas_mail_send_email++");
 
     flag = e_flag_new ();
 
@@ -672,10 +679,10 @@ gboolean eas_mail_send_email(EasMail* easMailObj,
     {
         eas_connection_set_account(easMailObj->priv->connection, account_uid);
     }
-	
-    // Create Request                         
-	EasSendEmailReq *req = eas_send_email_req_new(account_uid, flag, clientid, mime_file);
-	
+
+    // Create Request
+	req = eas_send_email_req_new(account_uid, flag, clientid, mime_file);
+
 	g_debug("request created");
     eas_request_base_SetConnection (&req->parent_instance, 
                                     easMailObj->priv->connection);

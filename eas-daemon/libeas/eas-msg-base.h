@@ -49,8 +49,8 @@ typedef enum {
 
 GType eas_msg_base_get_type (void) G_GNUC_CONST;
 
-xmlDoc* eas_msg_base_build_message (EasMsgBase *self);
-void eas_msg_base_parse_response (EasMsgBase *self, xmlDoc* doc);
+xmlDoc* eas_msg_base_build_message (EasMsgBase *self) __attribute__ ((noreturn));
+void eas_msg_base_parse_response (EasMsgBase *self, xmlDoc* doc) __attribute__ ((noreturn));
 
 G_END_DECLS
 

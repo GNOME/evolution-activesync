@@ -170,7 +170,7 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 		for (headers = email->headers; headers != NULL; headers = headers->next)
 		{
 			header = headers->data;
-			if(!strcmp((char *)header->name, "Importance"))
+			if(!g_strcmp0((char *)header->name, "Importance"))
 			{
 				g_debug("Importance = %d", header->name);
 				importance = atoi(header->value);

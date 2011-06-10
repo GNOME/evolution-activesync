@@ -22,10 +22,10 @@
 // takes a null terminated array of strings. frees the strings pointed to and the array itself
 void free_string_array(gchar **string_array)
 {
+	guint i = 0;
 	if(!string_array)
 		return;
 	
-	guint i = 0;
 	while(string_array[i])
 	{
 		g_free(string_array[i]);

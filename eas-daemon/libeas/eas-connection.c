@@ -69,6 +69,7 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
 static gboolean wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
+static void parse_for_status(xmlNode *node);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -186,7 +187,8 @@ eas_connection_class_init (EasConnectionClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
+	void *tmp = object_class;
+	tmp = parent_class;
 	g_debug("eas_connection_class_init++");
 	
 	g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
@@ -283,7 +285,7 @@ void eas_connection_resume_request(EasConnection* self)
  * @return whether successful
  */
 gboolean 
-eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
+eas_connection_send_request(EasConnection* self, const gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
 {
 	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;
@@ -309,9 +311,9 @@ eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct
 	// If we need to provision, and not the provisioning msg
 	if (!priv->policy_key && g_strcmp0(cmd,"Provision"))
 	{
+		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		g_debug("  eas_connection_send_request - Provisioning required");
 		
-		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		eas_request_base_SetConnection (&req->parent_instance, self);
 		ret = eas_provision_req_Activate (req, error);
 		if(!ret)
@@ -579,7 +581,7 @@ autodiscover_parse_protocol(xmlNode *node)
 {
     for (node = node->children; node; node = node->next) {
         if (node->type == XML_ELEMENT_NODE &&
-            !strcmp((char *)node->name, "Url")) {
+            !g_strcmp0((char *)node->name, "Url")) {
             char *asurl = (char *)xmlNodeGetContent(node);
             if (asurl)
                 return asurl;
@@ -650,7 +652,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 
 	node = xmlDocGetRootElement (doc);
-	if (g_strcmp0(node->name, "Autodiscover"))
+	if (g_strcmp0((gchar*)node->name, "Autodiscover"))
 	{
 		g_set_error(&error,
 		            EAS_CONNECTION_ERROR,
@@ -660,7 +662,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Response"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)node->name, "Response"))
 			break;
 	}
 	if (!node)
@@ -673,7 +675,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Action"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)node->name, "Action"))
 			break;
 	}
 	if (!node)
@@ -686,7 +688,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0(node->name, "Settings"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)node->name, "Settings"))
 			break;
 	}
 	if (!node)
@@ -700,7 +702,7 @@ autodiscover_soup_cb(SoupSession *session, SoupMessage *msg, gpointer data)
 	for (node = node->children; node; node = node->next)
 	{
 		if (node->type == XML_ELEMENT_NODE && 
-		    !g_strcmp0(node->name, "Server") &&
+		    !g_strcmp0((gchar*)node->name, "Server") &&
 		    (serverUrl = autodiscover_parse_protocol (node)))
 			break;
 	}
@@ -925,12 +927,17 @@ EasConnection* eas_connection_new()
 int eas_connection_set_account(EasConnection* self, guint64 accountId)
 {
 	EasAccounts* accountsObj = NULL;
+	int err = 0;
+	gchar* sUri = NULL;
+	gchar* uname = NULL;
+	gchar* pwd = NULL;
+	
 	g_debug("eas_connection_set_account++");
 
 	accountsObj = eas_accounts_new ();
 
 	g_debug("eas_accounts_read_accounts_info");
-	int err = eas_accounts_read_accounts_info(accountsObj);
+	err = eas_accounts_read_accounts_info(accountsObj);
 	if (err !=0)
 	{
 		g_debug("Error reading data from file accounts.cfg");
@@ -938,9 +945,6 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
 	}
 
 	g_debug("getting data from EasAccounts object"); 
-	gchar* sUri = NULL;
-	gchar* uname = NULL;
-	gchar* pwd = NULL;
 	sUri = eas_accounts_get_server_uri (accountsObj, accountId);
 	uname = eas_accounts_get_user_id (accountsObj, accountId);
 	pwd = eas_accounts_get_password (accountsObj, accountId);
@@ -951,6 +955,8 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
 
 	g_object_unref (accountsObj);
 	g_debug("eas_connection_set_account--");
+
+	return err;
 }
 
 void eas_connection_set_details(EasConnection* self, const gchar* username, const gchar* password)
@@ -971,22 +977,22 @@ void eas_connection_set_details(EasConnection* self, const gchar* username, cons
 	
 	g_debug("eas_connection_set_details--");
 }
-
-void parse_for_status(xmlNode *node)
+static void 
+parse_for_status(xmlNode *node)
 {
 	xmlNode *child = NULL;
 	xmlNode *sibling = NULL;
 
 	if (!node) return;
-	if (child = node->children) 
+	if ( (child = node->children) )
 	{
 		parse_for_status(child);
 	}
 
-	if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 	{
-		gchar* status = xmlNodeGetContent(node);
-		if (!strcmp(status,"1"))
+		gchar* status = (gchar*)xmlNodeGetContent(node);
+		if (!g_strcmp0(status,"1"))
 		{
 			g_message("parent_name[%s] status = [%s]",(char*)node->parent->name , status);
 		}
@@ -997,7 +1003,7 @@ void parse_for_status(xmlNode *node)
 		xmlFree(status);
 	}
 	
-	if (sibling = node->next)
+	if ( (sibling = node->next) )
 	{
 		parse_for_status(sibling);
 	}
@@ -1007,7 +1013,6 @@ void parse_for_status(xmlNode *node)
 void 
 handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 {
-	gboolean ret;
 	EasRequestBase *req = (EasRequestBase *)data;
 	EasConnection *self = (EasConnection *)eas_request_base_GetConnection (req);
 	EasConnectionPrivate *priv = self->priv;
@@ -1016,13 +1021,12 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
     WB_ULONG xml_len = 0;
 	gboolean isProvisioningRequired = FALSE;
 	GError *error = NULL;
+	RequestValidity validity = isResponseValid(msg);
 
 	g_debug("eas_connection - handle_server_response++");
-
 	g_debug("  eas_connection - handle_server_response self[%x]", (unsigned int)self);
 	g_debug("  eas_connection - handle_server_response priv[%x]", (unsigned int)self->priv);
 
-	RequestValidity validity = isResponseValid(msg);
 	if (INVALID == validity) {
 		g_set_error (&error, EAS_CONNECTION_ERROR,
 	     EAS_CONNECTION_ERROR_SOUPERROR,
@@ -1031,8 +1035,7 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 
     if (getenv("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) {
-		dump_wbxml_response(msg->response_body->data, 
-		                    msg->response_body->length);
+		dump_wbxml_response((WB_UTINY*)msg->response_body->data, msg->response_body->length);
 	}
 
 	if(VALID_NON_EMPTY == validity)
@@ -1157,10 +1160,10 @@ complete_request:
 	}
 	else
 	{
-		g_debug("  handle_server_response - parsed provisioning required");
-		
-		// Don't delete this request and create a provisioning request.
 		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
+		g_debug("  handle_server_response - parsed provisioning required");
+
+		// Don't delete this request and create a provisioning request.
 		eas_provision_req_Activate (req, &error);   // TODO check return
 	}
 	g_debug("eas_connection - handle_server_response--");

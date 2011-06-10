@@ -3,10 +3,6 @@ camel_provider_DATA = libcameleas.urls
 
 libcameleas_la_CPPFLAGS = \
 	$(AM_CPPFLAGS)				\
-	-I$(top_srcdir)/src			\
-	-I$(top_srcdir)/src/camel		\
-	-I$(top_srcdir)/src/server	        \
-	-I$(top_srcdir)/src/utils	        \
 	$(CAMEL_CFLAGS)				\
 	$(LIBEDATASERVER_CFLAGS)		\
 	$(LIBECAL_CFLAGS)			\
@@ -23,7 +19,8 @@ libcameleas_la_SOURCES = 			\
 	camel-eas-store.c                 	\
 	camel-eas-summary.c               	\
 	camel-eas-provider.c			\
-	camel-eas-transport.c     	       	
+	camel-eas-utils.c			\
+	camel-eas-transport.c
 
 noinst_HEADERS =         			\
 	camel-eas-folder.h			\
@@ -31,11 +28,13 @@ noinst_HEADERS =         			\
 	camel-eas-store-summary.h              	\
 	camel-eas-store.h			\
 	camel-eas-summary.h			\
-	camel-eas-transport.h		
+	camel-eas-utils.h			\
+	camel-eas-transport.h
 
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 
 libcameleas_la_LIBADD =					\
+	$(top_builddir)/libeasmail/src/libeasmail.la	\
 	$(CAMEL_LIBS)                                   \
 	$(EVOLUTION_PLUGIN_LIBS)			\
 	$(LIBEDATASERVER_LIBS)				\

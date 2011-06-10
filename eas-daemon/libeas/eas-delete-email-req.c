@@ -58,9 +58,12 @@ eas_delete_email_req_finalize (GObject *object)
 static void
 eas_delete_email_req_class_init (EasDeleteEmailReqClass *klass)
 {
-	g_debug("eas_delete_email_req_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
+	
+	g_debug("eas_delete_email_req_class_init++");
 
 	g_type_class_add_private (klass, sizeof (EasDeleteEmailReqPrivate));
 
@@ -97,18 +100,18 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
 
 EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EFlag *flag)
 {
-	g_debug("eas_delete_email_req_new++");
-
 	EasDeleteEmailReq* self = g_object_new (EAS_TYPE_DELETE_EMAIL_REQ, NULL);
 	EasDeleteEmailReqPrivate *priv = self->priv;
+	guint listCount;
+	guint listLen = g_slist_length((GSList*)server_ids_array);
+	gchar *server_id = NULL;
 	
+	g_debug("eas_delete_email_req_new++");
 	g_assert(syncKey);
 	
 	priv->syncKey = g_strdup(syncKey);
 	priv->folder_id = g_strdup(folderId);
-	guint listCount;
-	guint listLen = g_slist_length((GSList*)server_ids_array);
-	gchar *server_id = NULL;
+	
 	for(listCount = 0;listCount < listLen;listCount++)
 	{
 		server_id = g_slist_nth_data((GSList*)server_ids_array, listCount);

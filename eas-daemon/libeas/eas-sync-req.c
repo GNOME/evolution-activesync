@@ -53,11 +53,11 @@ eas_sync_req_init (EasSyncReq *object)
 static void
 eas_sync_req_finalize (GObject *object)
 {
-	g_debug("eas_sync_req_finalize++");
-
     EasSyncReq *req = (EasSyncReq*)object;
 	EasSyncReqPrivate *priv = req->priv;
-	
+
+	g_debug("eas_sync_req_finalize++");
+
 	if(priv->syncMsg){
 		g_object_unref(priv->syncMsg);
 	}
@@ -75,6 +75,8 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 
@@ -86,12 +88,15 @@ gboolean
 eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID, EFlag *flag, const gchar* folderId, EasItemType type, GError** error)
 {
 	gboolean ret = FALSE;
-	g_debug("eas_sync_req_activate++");
-	EasSyncReqPrivate* priv = self->priv;
+	EasSyncReqPrivate* priv;
 	xmlDoc *doc;
 	gboolean getChanges = FALSE;
 
+	g_debug("eas_sync_req_activate++");
+	
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	priv = self->priv;
 	
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
@@ -160,11 +165,12 @@ finish:
 
 void
 eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
-{
-	g_debug("eas_sync_req_MessageComplete++");
-	
+{	
+	gboolean ret;
 	GError *error = NULL;
 	EasSyncReqPrivate* priv = self->priv;
+
+	g_debug("eas_sync_req_MessageComplete++");
 	
 	// if an error occurred, store it and signal daemon
 	if(error_in)
@@ -174,7 +180,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		goto finish;
 	}
 	
-	gboolean ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
+	ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
 	xmlFree(doc);
 	if(!ret)
 	{
@@ -194,10 +200,9 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
 		case EasSyncReqStep1:
 		{
-			g_debug("eas_sync_req_MessageComplete step 1");
 		    //get syncKey
-		    gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
-			
+			gchar* syncKey = g_strdup(eas_sync_msg_get_syncKey (priv->syncMsg));
+
 			g_debug("eas_sync_req synckey = %s", syncKey);
 			
 			//clean up old message
@@ -249,11 +254,13 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 								GSList** deleted_items, 
 								GError** error)
 {
+	EasSyncReqPrivate *priv;
+	
 	g_debug("eas_sync_req_Activate_Finish++");
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);	
 	
-	EasSyncReqPrivate *priv = self->priv;
+	priv = self->priv;
 
 	if(priv->error != NULL)// propogate any preceding error
 	{

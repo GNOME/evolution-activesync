@@ -43,6 +43,7 @@
 #include "camel-eas-private.h"
 #include "camel-eas-store.h"
 #include "camel-eas-summary.h"
+#include "camel-eas-utils.h"
 
 #define CAMEL_EAS_FOLDER_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
@@ -114,13 +115,16 @@ camel_eas_folder_get_message_from_cache (CamelEasFolder *eas_folder, const gchar
 
 	return msg;
 }
-#if 0
+
 static CamelMimeMessage *
-camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, GCancellable *cancellable, GError **error)
+camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, 
+			      GCancellable *cancellable, GError **error)
 {
+	const gchar *full_name;
+	gchar *fid;
 	CamelEasFolder *eas_folder;
 	CamelEasFolderPrivate *priv;
-	EEasConnection *cnc;
+	EasEmailHandler *handler;
 	CamelEasStore *eas_store;
 	const gchar *mime_content;
 	CamelMimeMessage *message = NULL;
@@ -130,7 +134,6 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 	gchar *cache_file;
 	gchar *dir;
 	const gchar *temp;
-	gpointer progress_data;
 	gboolean res;
 	gchar *mime_fname_new = NULL;
 
@@ -167,10 +170,10 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 	g_hash_table_insert (priv->uid_eflags, (gchar *)uid, (gchar *)uid);
 	g_mutex_unlock (priv->state_lock);
 
-	cnc = camel_eas_store_get_connection (eas_store);
-	ids = g_slist_append (ids, (gchar *) uid);
-	EVO3(progress_data = cancellable);
-	EVO2(progress_data = camel_operation_registered ());
+	handler = camel_eas_store_get_handler (eas_store);
+        full_name = camel_folder_get_full_name (folder);
+        fid = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
+		 full_name);
 
 	mime_dir = g_build_filename (camel_data_cache_get_path (eas_folder->cache),
 				     "mimecontent", NULL);
@@ -183,62 +186,17 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, gint pri, G
 		goto exit;
 	}
 
-	res = e_eas_connection_get_items (cnc, pri, ids, "IdOnly", "item:MimeContent",
-					  TRUE, mime_dir,
-					  &items,
-					  (ESoapProgressFn)camel_operation_progress,
-					  progress_data,
-					  cancellable, error);
-	g_free (mime_dir);
+	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, error);
 
-	if (!res)
+	if (!res) {
+		g_free (mime_dir);
 		goto exit;
+	}
 
 	/* The mime_content actually contains the *filename*, due to the
 	   streaming hack in ESoapMessage */
-	mime_content = e_eas_item_get_mime_content (items->data);
-
-	/* Exchange returns random UID for associated calendar item, which has no way
-	   to match with calendar components saved in calendar cache. So manually get
-	   AssociatedCalendarItemId, replace the random UID with this ItemId,
-	   And save updated message data to a new temp file */
-	if (e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_REQUEST ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_CANCELLATION ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_MESSAGE ||
-		e_eas_item_get_item_type (items->data) == E_EAS_ITEM_TYPE_MEETING_RESPONSE) {
-		GSList *items_req = NULL;
-		const EasId *associated_calendar_id;
-
-		// Get AssociatedCalendarItemId with second get_items call
-		res = e_eas_connection_get_items (cnc, pri, ids, "IdOnly", "meeting:AssociatedCalendarItemId",
-						  FALSE, NULL,
-						  &items_req,
-						  (ESoapProgressFn)camel_operation_progress,
-						  progress_data,
-						  cancellable, error);
-		if (!res) {
-			if (items_req) {
-				g_object_unref (items_req->data);
-				g_slist_free (items_req);
-			}
-			goto exit;
-		}
-		associated_calendar_id = e_eas_item_get_associated_calendar_item_id (items_req->data);
-		/*In case of non-exchange based meetings invites the calendar backend have to create the meeting*/
-		if (associated_calendar_id) {
-			mime_fname_new = eas_update_mgtrequest_mime_calendar_itemid (mime_content,
-										     associated_calendar_id,
-										     error);
-		}
-		if (mime_fname_new)
-			mime_content = (const gchar *) mime_fname_new;
-
-		if (items_req) {
-			g_object_unref (items_req->data);
-			g_slist_free (items_req);
-		}
-	}
-
+	mime_content = g_build_filename (mime_dir, uid, NULL);
+	g_free (mime_dir);
 	cache_file = camel_data_cache_get_filename  (eas_folder->cache, "cur",
 						     uid, error);
 	temp = g_strrstr (cache_file, "/");
@@ -288,7 +246,7 @@ exit:
 
 	return message;
 }
-#endif
+
 /* Get the message from cache if available otherwise get it from server */
 static CamelMimeMessage *
 eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, EVO3(GCancellable *cancellable,) GError **error )
@@ -296,9 +254,9 @@ eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, EVO3(GCancel
 	CamelMimeMessage *message;
 	EVO2(GCancellable *cancellable = NULL);
 
-	message = camel_eas_folder_get_message_from_cache ((CamelEasFolder *)folder, uid, cancellable, error);
-	//	if (!message)
-	//	message = camel_eas_folder_get_message (folder, uid, EAS_ITEM_HIGH, cancellable, error);
+	message = camel_eas_folder_get_message_from_cache ((CamelEasFolder *)folder, uid, cancellable, NULL);
+	if (!message)
+		message = camel_eas_folder_get_message (folder, uid, cancellable, error);
 
 	return message;
 }
@@ -450,15 +408,141 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 CamelFolder *
 camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, GCancellable *cancellable, GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Folder creation not possible in ActiveSync"));
-	return NULL;
+        CamelFolder *folder;
+        CamelEasFolder *eas_folder;
+        gchar *summary_file, *state_file;
+        const gchar *short_name;
+
+        short_name = strrchr (folder_name, '/');
+        if (!short_name)
+                short_name = folder_name;
+
+        folder = g_object_new (
+                CAMEL_TYPE_EAS_FOLDER,
+                "name", short_name, "full-name", folder_name,
+                "parent_store", store, NULL);
+
+        eas_folder = CAMEL_EAS_FOLDER(folder);
+
+        summary_file = g_build_filename (folder_dir, "summary", NULL);
+        folder->summary = camel_eas_summary_new (folder, summary_file);
+        g_free(summary_file);
+
+        if (!folder->summary) {
+                g_object_unref (CAMEL_OBJECT (folder));
+                g_set_error (
+                        error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+                        _("Could not load summary for %s"), folder_name);
+                return NULL;
+        }
+
+        /* set/load persistent state */
+        state_file = g_build_filename (folder_dir, "cmeta", NULL);
+        camel_object_set_state_filename (CAMEL_OBJECT (folder), state_file);
+        camel_object_state_read (CAMEL_OBJECT (folder));
+        g_free(state_file);
+
+        eas_folder->cache = camel_data_cache_new (folder_dir, error);
+        if (!eas_folder->cache) {
+                g_object_unref (folder);
+                return NULL;
+        }
+
+        if (!g_ascii_strcasecmp (folder_name, "Inbox")) {
+                if (camel_url_get_param (((CamelService *) store)->url, "filter"))
+                        folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+        }
+
+        eas_folder->search = camel_folder_search_new ();
+        if (!eas_folder->search) {
+                g_object_unref (folder);
+                return NULL;
+        }
+
+        return folder;
 }
+
 
 static gboolean
 eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError **error)
 {
-	g_error ("%s not implemented yet...", __func__);
+        CamelEasFolder *eas_folder;
+        CamelEasFolderPrivate *priv;
+        EasEmailHandler *handler;
+        CamelEasStore *eas_store;
+        const gchar *full_name;
+        gchar *id;
+        gchar *sync_state;
+	gboolean more_available = TRUE;
+	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
+        GError *rerror = NULL;
+        EVO2(GCancellable *cancellable = NULL);
+
+        full_name = camel_folder_get_full_name (folder);
+        eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+
+        eas_folder = (CamelEasFolder *) folder;
+        priv = eas_folder->priv;
+
+        if (!camel_eas_store_connected (eas_store, error))
+                return FALSE;
+
+        g_mutex_lock (priv->state_lock);
+
+        if (priv->refreshing) {
+                g_mutex_unlock (priv->state_lock);
+                return TRUE;
+        }
+
+        priv->refreshing = TRUE;
+        g_mutex_unlock (priv->state_lock);
+
+        handler = camel_eas_store_get_handler (eas_store);
+        id = camel_eas_store_summary_get_folder_id_from_name
+                                                (eas_store->summary,
+                                                 full_name);
+
+        sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
+	do {
+		guint total, unread;
+
+		if (!eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
+							      &items_created,
+							      &items_updated, &items_deleted,
+							      &more_available, error)) {
+			return FALSE;
+		}
+		if (items_deleted)
+			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
+
+		if (items_created)
+			camel_eas_utils_sync_created_items (eas_folder, items_created);
+
+		if (items_updated)
+			camel_eas_utils_sync_updated_items (eas_folder, items_updated);
+
+                total = camel_folder_summary_count (folder->summary);
+                unread = folder->summary->unread_count;
+
+                camel_eas_store_summary_set_folder_total (eas_store->summary, id, total);
+                camel_eas_store_summary_set_folder_unread (eas_store->summary, id, unread);
+                camel_eas_store_summary_save (eas_store->summary, NULL);
+
+                camel_folder_summary_save_to_db (folder->summary, NULL);
+
+        } while (!rerror && more_available);
+
+        if (rerror)
+                g_propagate_error (error, rerror);
+
+        g_mutex_lock (priv->state_lock);
+        priv->refreshing = FALSE;
+        g_mutex_unlock (priv->state_lock);
+        if (sync_state != ((CamelEasSummary *) folder->summary)->sync_state)
+                g_free(sync_state);
+        g_object_unref (handler);
+        g_free (id);
+
 	return TRUE;
 }
 
