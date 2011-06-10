@@ -131,11 +131,11 @@ gboolean eas_mail_handler_sync_folder_email_info(EasEmailHandler* this,
  *                              back through underlying layers
 */
 
-gboolean eas_mail_handler_fetch_email_body(EasEmailHandler* this, 
-	 										     const gchar *folder_id, 		                                           
-	        									 const gchar *server_id, 		
-											     const gchar *mime_directory,
-											     GError **error);
+gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
+					    const gchar *folder_id,
+					    const gchar *server_id,
+					    const gchar *mime_directory,
+					    GError **error);
 
 
 /* function name:               eas_mail_handler_fetch_email_attachment

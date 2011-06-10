@@ -234,7 +234,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
         	g_message ("data decoded   =--->:[%s]",   decoded_buf);
   			g_message ("data decoded length =--->:[%d]",  decoded_len);
 
-			fullFilePath = g_strconcat(priv->directoryPath, priv->fileReference, NULL);
+			fullFilePath = g_build_filename(priv->directoryPath, priv->fileReference, NULL);
 			g_message("Attempting to write attachment to file [%s]", fullFilePath);   
 			if ( (hAttachement = fopen(fullFilePath,"wb")) )
 			{

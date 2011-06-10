@@ -27,6 +27,7 @@
 #define CAMEL_EAS_STORE_SUMMARY_H
 
 #include <camel/camel.h>
+#include "../libeasmail/src/eas-folder.h"
 
 /* Standard GObject macros */
 #define CAMEL_TYPE_EAS_STORE_SUMMARY \
@@ -81,18 +82,10 @@ void		camel_eas_store_summary_set_parent_folder_id
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 const gchar *parent_id);
-void		camel_eas_store_summary_set_change_key
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 const gchar *change_key);
 void		camel_eas_store_summary_set_sync_state
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 const gchar *sync_state);
-void		camel_eas_store_summary_set_folder_flags
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 guint64 flags);
 void		camel_eas_store_summary_set_folder_unread
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
@@ -118,15 +111,7 @@ gchar *	camel_eas_store_summary_get_parent_folder_id
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 GError **error);
-gchar *	camel_eas_store_summary_get_change_key
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 GError **error);
 gchar *	camel_eas_store_summary_get_sync_state
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 GError **error);
-guint64		camel_eas_store_summary_get_folder_flags
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 GError **error);
@@ -165,13 +150,7 @@ gboolean	camel_eas_store_summary_remove_folder
 
 void		camel_eas_store_summary_new_folder
 						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 const gchar *parent_fid,
-						 const gchar *change_key,
-						 const gchar *display_name,
-						 guint64 folder_type,
-						 guint64 folder_flags,
-						 guint64 total);
+						 const EasFolder *folder);
 
 gchar *		camel_eas_store_summary_get_folder_id_from_name
 						(CamelEasStoreSummary *eas_summary,
