@@ -19,8 +19,7 @@
 
 #include "eas-send-email-msg.h"
 #include <wbxml/wbxml.h>
-#include <wbxml/wbxml_base64.h>
-
+#include <glib.h>
 
 G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
@@ -107,7 +106,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
     xmlDoc  *doc   = NULL;
     xmlNode *root  = NULL, 
 	        *leaf = NULL;
-	WB_UTINY* base64data = NULL;
+	gchar* base64data = NULL;
 	
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     root = xmlNewDocNode (doc, NULL, (xmlChar*)"SendMail", NULL);
@@ -126,7 +125,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
-	base64data = wbxml_base64_encode(priv->mime_string, strlen(priv->mime_string));
+	base64data = g_base64_encode((const guchar *)priv->mime_string, strlen(priv->mime_string));
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar *)base64data);
 
     return doc;

@@ -4,9 +4,8 @@
  * Copyright (C)  2011 <>
  */
 #include <libwbxml-1.0/wbxml/wbxml.h>
-#include <libwbxml-1.0/wbxml/wbxml_base64.h>
 #include "eas-get-email-attachment-msg.h"
-
+#include <glib.h>
 
 struct _EasGetEmailAttachmentMsgPrivate
 {
@@ -216,13 +215,12 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Data"))
 		{
 			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
-			gint  len =  strlen(xmlTmp) ;
-		    unsigned char *decoded_buf = NULL;
+			gsize decoded_len = 0;
+		    guchar* decoded_buf = g_base64_decode((const gchar*)xmlTmp, &decoded_len);
 			gchar* fullFilePath = NULL;
 			FILE *hAttachement = NULL;
-		    WB_LONG decoded_len = wbxml_base64_decode((const unsigned char*)xmlTmp, len, &decoded_buf);
 			
-			g_message ("data ecoded length  =--->:[%d]",  len);
+			g_message ("data ecoded length  =--->:[%d]",  strlen(xmlTmp));
 			g_message ("data encoded   =--->:[%s]",   xmlTmp);
 
 		    if (!decoded_len) {

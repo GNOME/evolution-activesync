@@ -87,7 +87,7 @@ eas_mail_handler_new(guint64 account_uid)
 	GError* error = NULL;
 	EasEmailHandler *object = NULL;
 
-#warning This needs to take a GError ** argument, not use g_error().
+    // TODO This needs to take a GError ** argument, not use g_error().
 
 	g_type_init();
 
@@ -100,7 +100,7 @@ eas_mail_handler_new(guint64 account_uid)
 		g_error("Error: Couldn't create mail");
 		g_debug("eas_mail_handler_new--");
 		return NULL;  
-	}	
+	}
 
 	object->priv->main_loop = g_main_loop_new(NULL, TRUE);
 

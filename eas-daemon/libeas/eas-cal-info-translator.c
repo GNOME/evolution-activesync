@@ -14,7 +14,6 @@
 #include <libical/icalduration.h>
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
-#include <libwbxml-1.0/wbxml/wbxml_base64.h>
 
 // iCalendar constants defined in RFC5545 (http://tools.ietf.org/html/rfc5545)
 const gchar* ICAL_LINE_TERMINATOR           = "\r\n";
@@ -591,16 +590,14 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
-					WB_UTINY* timeZoneRawBytes = NULL;
+					gsize timeZoneRawBytesSize = 0;
+					guchar* timeZoneRawBytes = g_base64_decode((const gchar*)timeZoneBase64Buffer, &timeZoneRawBytesSize);
 					EasTimeZone timeZoneStruct;
-
-					// Expect timeZoneB64 to be NULL terminated
-					WB_LONG timeZoneRawBytesSize = wbxml_base64_decode(timeZoneBase64Buffer, -1, &timeZoneRawBytes);
 					xmlFree(timeZoneBase64Buffer);
 
 					// TODO Check decode of timezone for endianess problems
 
-					if (timeZoneRawBytesSize == sizeof(timeZoneStruct))
+					if (timeZoneRawBytesSize == sizeof(EasTimeZone))
 					{
 						gchar* value = NULL;
 						memcpy(&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
@@ -1121,7 +1118,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 	{
 		EasTimeZone timezoneStruct;
 		icalcomponent* subcomponent;
-		WB_UTINY* timezoneBase64 = NULL;
+		gchar* timezoneBase64 = NULL;
 			
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
@@ -1150,8 +1147,8 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		timezoneBase64 = wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), sizeof(EasTimeZone));
-		xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Timezone", timezoneBase64);
+		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
+		xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Timezone", (const xmlChar*)timezoneBase64);
 		g_free(timezoneBase64);
 	}
 }
