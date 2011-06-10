@@ -1,4 +1,4 @@
- - Password handling
+ - Password handling - Gnome Keyring, Fetch at the point of authentication required - sshaskpass for testing
 
  - Move settings to GConf
 
@@ -10,6 +10,8 @@
 
  - Make the dæmon exit if it is superseded by another dæmon (see
       http://mail.gnome.org/archives/evolution-hackers/2011-May/msg00085.html )
+
+ - Remove dependency on EFlag from libedataserver
 
  - Remove all asserts, return runtime errors (in GError / over DBus)
 
