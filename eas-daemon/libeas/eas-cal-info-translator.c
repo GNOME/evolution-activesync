@@ -15,12 +15,6 @@
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
 
-// iCalendar constants defined in RFC5545 (http://tools.ietf.org/html/rfc5545)
-const gchar* ICAL_LINE_TERMINATOR           = "\r\n";
-const guint  ICAL_LINE_TERMINATOR_LENGTH    = 2;
-const gchar* ICAL_FOLDING_SEPARATOR         = "\r\n ";   // ICAL_LINE_TERMINATOR followed by single whitespace character (space or tab)
-const guint	 ICAL_MAX_LINE_LENGTH           = 75;
-
 // Values for converting icaldurationtype into a number of minutes
 const gint SECONDS_PER_MINUTE               = 60;
 const gint MINUTES_PER_HOUR                 = 60;
@@ -201,7 +195,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 	// Variable to store the TZID value when decoding a <calendar:Timezone> element
 	// so we can use it in the rest of the iCal's date/time fields.
-	// TODO: check <calendar:Timezone> always occurs at the top of the calendar item.
 	gchar*      tzid         = NULL;
 
 	// iCalendar objects
@@ -888,7 +881,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		// Handle recurrence information if present
 		if (rrule)
 		{
-			// Assuming FREQ=YEARLY - TODO: check this is safe...
+			// We can assume FREQ=YEARLY: EAS only supports annually recurring timezone changes
 			short byMonth = rruleValue.by_month[0];
 			short byDayRaw = rruleValue.by_day[0];
 			icalrecurrencetype_weekday byDayWeekday = icalrecurrencetype_day_day_of_week(byDayRaw);
