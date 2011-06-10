@@ -337,10 +337,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	}
 
     if (!node) {
-		g_set_error (error, EAS_CONNECTION_ERROR,
-		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
-		("Failed to find <Commands> or <Responses> element"));
-        ret = FALSE;
+        g_warning ("Found no <Responses> element or no <Commands element>");
+		// Note not setting error here as this is valid	// TODO verify this is the case
 		goto finish;
     }
 
