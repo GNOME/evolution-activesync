@@ -250,7 +250,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     return doc;
 }
 
-void
+// lrm TODO set the Gerror/return value:
+gboolean
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
 	EasSyncMsgPrivate *priv = self->priv;
@@ -264,7 +265,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	
     if (!doc) {
         g_debug ("Failed to parse sync response XML");
-        return;
+        return FALSE;
     }
     node = xmlDocGetRootElement(doc);
     
@@ -272,7 +273,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     
     if (g_strcmp0((char *)node->name, "Sync")) {
         g_debug("Failed to find <Sync> element");
-        return;
+        return FALSE;
     }
     for (node = node->children; node; node = node->next) {
     
@@ -285,7 +286,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     }
     if (!node) {
         g_debug ("Failed to find Collections element");
-        return;
+        return FALSE;
     }
     
     for (node = node->children; node; node = node->next) {
@@ -299,7 +300,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     }
     if (!node) {
         g_debug ("Failed to find Collection element");
-        return;
+        return FALSE;
     }
 	
     for (node = node->children; node; node = node->next) {
@@ -323,7 +324,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     if (!node) {
         g_debug ("Failed to find Commands or responses element\n");
-        return;
+        return FALSE;
     }
 
 	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")){
@@ -478,6 +479,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	
 	g_debug ("eas_sync_msg_parse_response --");
 
+	return TRUE;
 }
 
 
