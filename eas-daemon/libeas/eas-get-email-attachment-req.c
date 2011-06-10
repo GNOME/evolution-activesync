@@ -106,7 +106,11 @@ void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GErr
 	priv->emailAttachmentMsg = eas_get_email_attachment_msg_new ( priv->fileReference, priv->mimeDirectory);
 	doc = eas_get_email_attachment_msg_build_message (priv->emailAttachmentMsg);
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "ItemOperations", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "ItemOperations", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            error);
 	
 	g_debug("eas_get_email_attachment_req_Activate--");
 }

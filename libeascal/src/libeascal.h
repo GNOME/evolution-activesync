@@ -47,14 +47,14 @@ EasCalHandler *eas_cal_handler_new(guint64 account_uid);
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
- * GSList **items_created (out): returns a list of EasFolder structs that describe
- *                              created folders.  If there are no new created folders
+ * GSList **items_created (out): returns a list of EasCalInfo structs that describe
+ *                              created items.  If there are no new created items
  *                              this parameter will be unchanged.
- * GSList **items_updated (out): returns a list of EasFolder structs that describe
- *                              updated folders.  If there are no new updated folders
+ * GSList **items_updated (out): returns a list of EasCalInfo structs that describe
+ *                              updated items.  If there are no new updated items
  *                              this parameter will be unchanged.
- * GSList **items_deleted (out): returns a list of EasFolder structs that describe
- *                              deleted folders.  If there are no new deleted folders
+ * GSList **items_deleted (out): returns a list of strings that show server IDs of 
+ *                              deleted items.  If there are no new deleted items
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
@@ -75,9 +75,8 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
- * GSList *items_deleted (in): provides a list of EasFolder structs that describe
- *                              deleted folders.  If there are no new deleted folders
- *                              this parameter will be unchanged.
+ * GSList *items_deleted (in): provides a list of strings that identify the deleted
+ *                              items' server IDs. 
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
@@ -95,7 +94,7 @@ gboolean eas_cal_handler_delete_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
- * GSList *items_updated (in): provides a list of EasFolder structs that describe
+ * GSList *items_updated (in): provides a list of EasCalInfo structs that describe
  *                              update items.  If there are no new updated items
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
@@ -115,8 +114,8 @@ gboolean eas_cal_handler_update_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
- * GSList *items_added (in): provides a list of EasFolder structs that describe
- *                              add items.  If there are no new updated items
+ * GSList *items_added (in): provides a list of EasCalInfo structs that describe
+ *                              added items.  If there are no new updated items
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information

@@ -141,7 +141,11 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	}
 	
 	g_debug("eas_sync_req_activate - send message");
-	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self, error);
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+										"Sync", 
+										doc, 
+										(struct _EasRequestBase *)self, 
+										error);
 
 finish:
 	if(!ret)
@@ -210,7 +214,10 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			//move to new state
 			priv->state = EasSyncReqStep2;	
 			
-			ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self, &error);
+			ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+												"Sync", 
+												doc, 												(struct _EasRequestBase *)self, 
+												&error);
 			if(!ret)
 			{
 				self->priv->error = error; 

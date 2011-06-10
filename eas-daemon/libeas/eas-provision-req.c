@@ -107,10 +107,10 @@ eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 
 	// TODO
 	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
-	                            "Provision", 
-	                            doc, 
-	                            self,
-	                            error);
+	                                  "Provision", 
+	                                  doc, 
+	                                  (struct _EasRequestBase *)self,
+	                                  error);
 finish:
 	return ret;
 }

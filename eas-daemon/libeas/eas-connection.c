@@ -57,7 +57,7 @@ struct _EasConnectionPrivate
 
 	gchar* request_cmd;
 	xmlDoc* request_doc;
-	EasRequestBase* request;
+	struct _EasRequestBase* request;
 	GError **request_error;
 };
 
@@ -243,7 +243,7 @@ void eas_connection_resume_request(EasConnection* self)
 {
 	EasConnectionPrivate *priv = self->priv;
 	gchar *_cmd;
-	EasRequestBase *_request;
+	struct _EasRequestBase *_request;
 	xmlDoc *_doc;
 	GError **_error;
 
@@ -283,7 +283,7 @@ void eas_connection_resume_request(EasConnection* self)
  * @return whether successful
  */
 gboolean 
-eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error)
+eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
 {
 	gboolean ret = TRUE;
 	EasConnectionPrivate *priv = self->priv;

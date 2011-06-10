@@ -117,9 +117,14 @@ void eas_add_calendar_req_Activate(EasAddCalendarReq *self)
 	doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, priv->serialised_calendar, NULL, NULL);
 	
 	g_debug("send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "Sync", doc, self);
+	GError *error = NULL;
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Sync", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            &error);
 
-	g_debug("eas_add_calendar_req_Activate--");		
+	g_debug("eas_add_calendar_req_Activate--");
 
 	return;
 }

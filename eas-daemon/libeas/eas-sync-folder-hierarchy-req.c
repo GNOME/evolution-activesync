@@ -142,10 +142,14 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
 		priv->syncFolderMsg = NULL;		
 		goto finish;
 	}
-	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self, error);
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                                  "FolderSync", 
+	                                  doc, 
+	                                  (struct _EasRequestBase *)self, 
+	                                  error);
 
 finish:
-	g_debug("eas_sync_folder_hierarchy_req_Activate--");	
+	g_debug("eas_sync_folder_hierarchy_req_Activate--");
 	return ret;
 }
 
@@ -205,7 +209,11 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			//move to new state
 			priv->state = EasSyncFolderHierarchyStep2;	
 			
-			ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "FolderSync", doc, self, &error);
+			ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+			                                  "FolderSync", 
+			                                  doc, 
+			                                  (struct _EasRequestBase *)self, 
+			                                  &error);
 			if(!ret)
 			{
 				self->priv->error = error; 

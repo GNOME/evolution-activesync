@@ -22,7 +22,7 @@
 
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
-#include "eas-request-base.h"
+//#include "eas-request-base.h"
 
 G_BEGIN_DECLS
 
@@ -37,6 +37,7 @@ typedef struct _EasConnectionClass EasConnectionClass;
 typedef struct _EasConnectionPrivate EasConnectionPrivate;
 typedef struct _EasConnection EasConnection;
 
+struct _EasRequestBase;
 
 struct _EasConnectionClass
 {
@@ -72,7 +73,7 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId);
 void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey);
 void eas_connection_resume_request(EasConnection* self);
 
-gboolean eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, EasRequestBase *request, GError** error);
+gboolean eas_connection_send_request(EasConnection* self, gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error);
 
 
 

@@ -110,7 +110,11 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 	priv->emailBodyMsg = eas_get_email_body_msg_new (priv->serverId, priv->collectionId, priv->mimeDirectory);
 	doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), "ItemOperations", doc, self);
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "ItemOperations", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            error);
 	
 	g_debug("eas_get_email_body_req_Activate--");
 }

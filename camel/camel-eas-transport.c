@@ -75,7 +75,7 @@ eas_send_to_sync (CamelTransport *transport,
 	gboolean res;
 
 	service = CAMEL_SERVICE (transport);
-	account_uid = g_strtoull (camel_url_get_param (service->url, "account_uid"));
+	account_uid = g_ascii_strtoull (camel_url_get_param (service->url, "account_uid"), NULL, 0);
 
 	handler = e_eas_connection_find (account_uid);
 	if (!handler) {
