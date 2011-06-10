@@ -92,12 +92,17 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// So, we have all the information we need in the SYSTEMTIME but there's quite a bit of
 	// conversin to do to get to the iCalendar properties.
 
+	EasSystemTime   modifiedDate;
+	GDate*          recurrenceStartDate;
+	GDateWeekday    weekday;
+	gint            occurrence;
+	short           byDayPos;
+	short           byDayDayOfWeek;
 
 	// We're going to modify the value of date to reflect the iCal values. (e.g. the Year
 	// will change from 0 to 1970 and the Day will change from a 1..5 "nth occurrence in the
 	// month" value to an actual date of the required month in 1970. we'll use a copy to do
 	// themodifications on then assign it back before we return.
-	EasSystemTime modifiedDate;
 	memcpy(&modifiedDate, date, sizeof(EasSystemTime));
 
 	modifiedDate.Year = EPOCH_START_YEAR;
@@ -118,10 +123,10 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// We're going to build a GDate object to calculate the actual date in 1970 that represents
 	// the first instance of this recurrence pattern.	
 	// Start by initialising to the 1st of of the month
-	GDate* recurrenceStartDate = g_date_new_dmy(1, modifiedDate.Month, modifiedDate.Year);
+	recurrenceStartDate = g_date_new_dmy(1, modifiedDate.Month, modifiedDate.Year);
 
 	// Now seek for the first occurrence of the day the sequence repeats on.
-	GDateWeekday weekday = (GDateWeekday)modifiedDate.DayOfWeek;
+	weekday = (GDateWeekday)modifiedDate.DayOfWeek;
 	while (g_date_get_weekday(recurrenceStartDate) != weekday)
 	{
 		g_date_add_days(recurrenceStartDate, 1);
@@ -129,7 +134,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 
 	// Now we've got the FIRST occurence of the correct weekday in the correct month in 1970.
 	// Finally we need to seek for the nth occurrence (where 5th = last, even if there are only 4)
-	gint occurrence = 1;
+	occurrence = 1;
 	while (occurrence++ < date->Day)
 	{
 		g_date_add_days(recurrenceStartDate, 7);
@@ -156,7 +161,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// period (Nth-ness) and the numerical value of the day are encoded
 	// together as: pos*7 + dow") is wrong. :-\ From the code we can see it's
 	// actually as implemented below.
-	short byDayPos = (short)date->Day;
+	byDayPos = (short)date->Day;
 	if (byDayPos == 5)
 	{
 		byDayPos = -1;
@@ -164,7 +169,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// Here the day is represented by the enum icalrecurrencetype_weekday, which has the
 	// range 0 = ICAL_NO_WEEKDAY, 1 = ICAL_SUNDAY_WEEKDAY, 2 = ICAL_MONDAY_WEEKDAY...
 	// so we can just add 1 to the EasSystemTime value (see above).
-	short byDayDayOfWeek = (short)(date->DayOfWeek + 1);
+	byDayDayOfWeek = (short)(date->DayOfWeek + 1);
 
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
@@ -191,12 +196,14 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
  */
 static void _util_add_timezone_to_property_name(gchar** propertyName, const gchar* propertyValue, const gchar* tzid)
 {
+	gchar* temp;
+	
 	// We add the TZID attribute if:
 	//  - we have an attribute value to add!
 	//  - the time value doesn't end in Z (as this indicates a UTC time, so no timezone needs to be specified)
 	if (tzid && strlen(tzid) && !g_str_has_suffix(propertyValue, "Z"))
 	{
-		gchar* temp = g_strdup_printf("%s;TZID=\"%s\"", *propertyName, tzid);
+		temp = g_strdup_printf("%s;TZID=\"%s\"", *propertyName, tzid);
 		g_free(*propertyName);
 		*propertyName = temp;
 	}
@@ -212,17 +219,24 @@ static void _util_add_timezone_to_property_name(gchar** propertyName, const gcha
  */
 gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
 {
-	// TODO: Oops! I only found libical after I'd implemented this.
-	// We should switch to libical - it will make further development a lot easier and more robust.
+	// Variable for the return value
+	gchar*      result = NULL;
 
-	
-	gchar* result = NULL;
+	// Variable for property values as they're read from the XML
+	gchar*      value  = NULL;
 
-	if (node && (node->type == XML_ELEMENT_NODE) && (!strcmp((char*)(node->name), "ApplicationData")))
+	// Variable to store the TZID value when decoding a <calendar:Timezone> element
+	// so we can use it in the rest of the iCal's date/time fields.
+	// TODO: check <calendar:Timezone> always occurs at the top of the calendar item.
+	gchar*      tzid         = NULL;
+
+	// iCalendar objects
+	struct icaltimetype dateTime;
+	struct icaltriggertype trigger;
+
+	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), "ApplicationData")))
 	{
 		xmlNodePtr n = node;
-
-		guint bufferSize = 0;
 
 		// iCalendar objects
 		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
@@ -231,12 +245,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		icalcomponent* vtimezone = icalcomponent_new(ICAL_VTIMEZONE_COMPONENT);
 		icalproperty* prop = NULL;
 		icalparameter* param = NULL;
-
-		// Variable to store the TZID value when decoding a <calendar:Timezone> element
-		// so we can use it in the rest of the iCal's date/time fields.
-		// TODO: check <calendar:Timezone> always occurs at the top of the calendar item.
-		gchar* tzid = NULL;
-
 
 		// TODO: get all these strings into constants/#defines
 		
@@ -249,8 +257,6 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 		prop = icalproperty_new_method(ICAL_METHOD_PUBLISH);
 		icalcomponent_add_property(vcalendar, prop);
-
-        gchar* value = NULL;
 
 		for (n = n->children; n; n = n->next)
 		{
@@ -268,7 +274,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "StartTime") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
-					struct icaltimetype dateTime = icaltime_from_string(value);
+					dateTime = icaltime_from_string(value);
 					prop = icalproperty_new_dtstart(dateTime);
 					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
 					{
@@ -281,7 +287,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "EndTime") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
-					struct icaltimetype dateTime = icaltime_from_string(value);
+					dateTime = icaltime_from_string(value);
 					prop = icalproperty_new_dtend(dateTime);
 					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
 					{
@@ -294,7 +300,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "DtStamp") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
-					struct icaltimetype dateTime = icaltime_from_string(value);
+					dateTime = icaltime_from_string(value);
 					prop = icalproperty_new_dtstamp(dateTime);
 					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
 					{
@@ -320,7 +326,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "Body") == 0)
 				{
-					xmlNode *subNode = NULL;
+					xmlNodePtr subNode = NULL;
 					for (subNode = n->children; subNode; subNode = subNode->next)
 					{
 						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Data"))
@@ -399,7 +405,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					value = (gchar*)xmlNodeGetContent(n);
 
 					// Build an icaltriggertype structure
-					struct icaltriggertype trigger;
+					trigger = icaltriggertype_from_int(0); // Null the fields first
 					trigger.duration.is_neg = 1;
 					trigger.duration.minutes = (unsigned int)g_ascii_strtoll(value, NULL, 10);
 
@@ -560,134 +566,139 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						g_free(timeZoneRawBytes);
 						timeZoneRawBytes = NULL;
 
-						// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
-						// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
-						const gint32 standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
-						const gint32 daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
+						{
+							// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
+							// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
+							const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
+							const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
+							icalcomponent*              xstandard             = NULL;
+							icalcomponent*              xdaylight             = NULL;
+							struct icalrecurrencetype   rrule;
+							struct icaltimetype         time;
+							
 						
-						// Using StandardName as the TZID
-						// (Doesn't matter if it's not an exact description: this field is only used internally
-						// during iCalendar encoding/decoding)
-						// Note: using tzid here rather than value, as we need it elsewhere in this function
-						tzid = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName,
-						                       (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-						// If no StandardName was supplied, we can just use a temporary name instead.
-						// No need to support more than one: the EAS calendar will only have one Timezone
-						// element. And no need to localise, as it's only used internally.
-						if (tzid == NULL || strlen(tzid) == 0)
-						{
-							tzid = g_strdup("Standard Timezone");
-						}
-						prop = icalproperty_new_tzid(tzid);
-						icalcomponent_add_property(vtimezone, prop);
-
-						
-						// STANDARD component
-						icalcomponent* xstandard = icalcomponent_new(ICAL_XSTANDARD_COMPONENT);
-
-						struct icalrecurrencetype rrule;
-						icalrecurrencetype_clear(&rrule);
-
-						// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
-						// the start date of a recurring sequence, and add an RRULE.
-						if (timeZoneStruct.StandardDate.Year == 0)
-						{
-							_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
-						}
-
-						// Add the DTSTART property
-						struct icaltimetype time = icaltime_null_time();
-						time.year = timeZoneStruct.StandardDate.Year;
-						time.month = timeZoneStruct.StandardDate.Month;
-						time.day = timeZoneStruct.StandardDate.Day;
-						time.hour = timeZoneStruct.StandardDate.Hour;
-						time.minute = timeZoneStruct.StandardDate.Minute;
-						time.second = timeZoneStruct.StandardDate.Second;
-						prop = icalproperty_new_dtstart(time);
-						icalcomponent_add_property(xstandard, prop);
-
-						// Add the RRULE (if required)
-						if (rrule.freq != ICAL_NO_RECURRENCE)
-						{
-							prop = icalproperty_new_rrule(rrule);
-							icalcomponent_add_property(xstandard, prop);
-						}
-
-						// Add TZOFFSETFROM and TZOFFSETTO
-						// Note that libical expects these properties in seconds.
-						prop = icalproperty_new_tzoffsetfrom(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
-						icalcomponent_add_property(xstandard, prop);
-						prop = icalproperty_new_tzoffsetto(standardUtcOffsetMins * SECONDS_PER_MINUTE);
-						icalcomponent_add_property(xstandard, prop);
-
-						value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName, (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-						if (value)
-						{
-							if (strlen(value))
+							// Using StandardName as the TZID
+							// (Doesn't matter if it's not an exact description: this field is only used internally
+							// during iCalendar encoding/decoding)
+							// Note: using tzid here rather than value, as we need it elsewhere in this function
+							tzid = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName,
+								                   (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+							// If no StandardName was supplied, we can just use a temporary name instead.
+							// No need to support more than one: the EAS calendar will only have one Timezone
+							// element. And no need to localise, as it's only used internally.
+							if (tzid == NULL || strlen(tzid) == 0)
 							{
-								prop = icalproperty_new_tzname(value);
+								tzid = g_strdup("Standard Timezone");
+							}
+							prop = icalproperty_new_tzid(tzid);
+							icalcomponent_add_property(vtimezone, prop);
+
+						
+							// STANDARD component
+							xstandard = icalcomponent_new(ICAL_XSTANDARD_COMPONENT);
+
+							icalrecurrencetype_clear(&rrule);
+
+							// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
+							// the start date of a recurring sequence, and add an RRULE.
+							if (timeZoneStruct.StandardDate.Year == 0)
+							{
+								_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
+							}
+
+							// Add the DTSTART property
+							time = icaltime_null_time();
+							time.year = timeZoneStruct.StandardDate.Year;
+							time.month = timeZoneStruct.StandardDate.Month;
+							time.day = timeZoneStruct.StandardDate.Day;
+							time.hour = timeZoneStruct.StandardDate.Hour;
+							time.minute = timeZoneStruct.StandardDate.Minute;
+							time.second = timeZoneStruct.StandardDate.Second;
+							prop = icalproperty_new_dtstart(time);
+							icalcomponent_add_property(xstandard, prop);
+
+							// Add the RRULE (if required)
+							if (rrule.freq != ICAL_NO_RECURRENCE)
+							{
+								prop = icalproperty_new_rrule(rrule);
 								icalcomponent_add_property(xstandard, prop);
 							}
-							g_free(value); value = NULL;
-						}
 
-						// And now add the STANDARD component to the VTIMEZONE
-						icalcomponent_add_component(vtimezone, xstandard);
+							// Add TZOFFSETFROM and TZOFFSETTO
+							// Note that libical expects these properties in seconds.
+							prop = icalproperty_new_tzoffsetfrom(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
+							icalcomponent_add_property(xstandard, prop);
+							prop = icalproperty_new_tzoffsetto(standardUtcOffsetMins * SECONDS_PER_MINUTE);
+							icalcomponent_add_property(xstandard, prop);
 
-						
-						// DAYLIGHT component
-						
-						icalcomponent* xdaylight = icalcomponent_new(ICAL_XDAYLIGHT_COMPONENT);
-
-						// Reset the RRULE
-						icalrecurrencetype_clear(&rrule);
-
-						// If timeZoneStruct.DaylightDate.Year == 0 we need to convert it into
-						// the start date of a recurring sequence, and add an RRULE.
-						if (timeZoneStruct.DaylightDate.Year == 0)
-						{
-							_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
-						}
-
-						// Add the DTSTART property
-						time = icaltime_null_time();
-						time.year = timeZoneStruct.DaylightDate.Year;
-						time.month = timeZoneStruct.DaylightDate.Month;
-						time.day = timeZoneStruct.DaylightDate.Day;
-						time.hour = timeZoneStruct.DaylightDate.Hour;
-						time.minute = timeZoneStruct.DaylightDate.Minute;
-						time.second = timeZoneStruct.DaylightDate.Second;
-						prop = icalproperty_new_dtstart(time);
-						icalcomponent_add_property(xdaylight, prop);
-
-						// Add the RRULE (if required)
-						if (rrule.freq != ICAL_NO_RECURRENCE)
-						{
-							prop = icalproperty_new_rrule(rrule);
-							icalcomponent_add_property(xdaylight, prop);
-						}
-
-						// Add TZOFFSETFROM and TZOFFSETTO
-						// Note that libical expects these properties in seconds.
-						prop = icalproperty_new_tzoffsetfrom(standardUtcOffsetMins * SECONDS_PER_MINUTE);
-						icalcomponent_add_property(xdaylight, prop);
-						prop = icalproperty_new_tzoffsetto(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
-						icalcomponent_add_property(xdaylight, prop);
-
-						value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.DaylightName, (sizeof(timeZoneStruct.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
-						if (value)
-						{
-							if (strlen(value))
+							value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName, (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+							if (value)
 							{
-								prop = icalproperty_new_tzname(value);
+								if (strlen(value))
+								{
+									prop = icalproperty_new_tzname(value);
+									icalcomponent_add_property(xstandard, prop);
+								}
+								g_free(value); value = NULL;
+							}
+
+							// And now add the STANDARD component to the VTIMEZONE
+							icalcomponent_add_component(vtimezone, xstandard);
+
+						
+							// DAYLIGHT component
+						
+							xdaylight = icalcomponent_new(ICAL_XDAYLIGHT_COMPONENT);
+
+							// Reset the RRULE
+							icalrecurrencetype_clear(&rrule);
+
+							// If timeZoneStruct.DaylightDate.Year == 0 we need to convert it into
+							// the start date of a recurring sequence, and add an RRULE.
+							if (timeZoneStruct.DaylightDate.Year == 0)
+							{
+								_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
+							}
+
+							// Add the DTSTART property
+							time = icaltime_null_time();
+							time.year = timeZoneStruct.DaylightDate.Year;
+							time.month = timeZoneStruct.DaylightDate.Month;
+							time.day = timeZoneStruct.DaylightDate.Day;
+							time.hour = timeZoneStruct.DaylightDate.Hour;
+							time.minute = timeZoneStruct.DaylightDate.Minute;
+							time.second = timeZoneStruct.DaylightDate.Second;
+							prop = icalproperty_new_dtstart(time);
+							icalcomponent_add_property(xdaylight, prop);
+
+							// Add the RRULE (if required)
+							if (rrule.freq != ICAL_NO_RECURRENCE)
+							{
+								prop = icalproperty_new_rrule(rrule);
 								icalcomponent_add_property(xdaylight, prop);
 							}
-							g_free(value); value = NULL;
+
+							// Add TZOFFSETFROM and TZOFFSETTO
+							// Note that libical expects these properties in seconds.
+							prop = icalproperty_new_tzoffsetfrom(standardUtcOffsetMins * SECONDS_PER_MINUTE);
+							icalcomponent_add_property(xdaylight, prop);
+							prop = icalproperty_new_tzoffsetto(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
+							icalcomponent_add_property(xdaylight, prop);
+
+							value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.DaylightName, (sizeof(timeZoneStruct.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
+							if (value)
+							{
+								if (strlen(value))
+								{
+									prop = icalproperty_new_tzname(value);
+									icalcomponent_add_property(xdaylight, prop);
+								}
+								g_free(value); value = NULL;
+							}
+
+							// And now add the DAYLIGHT component to the VTIMEZONE
+							icalcomponent_add_component(vtimezone, xdaylight);
 						}
-
-						// And now add the DAYLIGHT component to the VTIMEZONE
-						icalcomponent_add_component(vtimezone, xdaylight);
-
 					} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
 					else
 					{
@@ -844,14 +855,10 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 {
 	if (valarm)
 	{
-		g_debug("Processing VALARM...");
-		
 		// Just need to get the TRIGGER property
 		icalproperty* prop = icalcomponent_get_first_property(valarm, ICAL_TRIGGER_PROPERTY);
 		if (prop)
 		{
-			g_debug("Processing TRIGGER...");
-			
 			struct icaltriggertype trigger = icalproperty_get_trigger(prop);
 
 			// TRIGGER can be either a period of time before the event, OR a specific date/time.
@@ -938,7 +945,6 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 		{
 			// Assuming FREQ=YEARLY - TODO: check this is safe...
 			short byMonth = rruleValue.by_month[0];
-
 			short byDayRaw = rruleValue.by_day[0];
 			icalrecurrencetype_weekday byDayWeekday = icalrecurrencetype_day_day_of_week(byDayRaw);
 			/** 0 == any of day of week. 1 == first, 2 = second, -2 == second to last, etc */
@@ -1044,6 +1050,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 	if (vtimezone)
 	{
 		EasTimeZone timezoneStruct;
+		icalcomponent* subcomponent = NULL;
 
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
@@ -1064,7 +1071,6 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Now process the STANDARD and DAYLIGHT subcomponents
-		icalcomponent* subcomponent;
 		for (subcomponent = icalcomponent_get_first_component(vtimezone, ICAL_ANY_COMPONENT);
 		     subcomponent;
 		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
@@ -1073,10 +1079,12 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		const int rawStructSize = sizeof(EasTimeZone);
-		WB_UTINY* timezoneBase64 = (WB_UTINY*)wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
-		xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
-		g_free(timezoneBase64);
+		{
+			const int rawStructSize = sizeof(EasTimeZone);
+			WB_UTINY* timezoneBase64 = (WB_UTINY*)wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
+			xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
+			g_free(timezoneBase64);
+		}
 	}
 }
 
@@ -1087,30 +1095,34 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info)
 {
 	gboolean success = FALSE;
-
-	icalcomponent* ical;
+	icalcomponent* ical = NULL;
+	
 	if (doc &&
 	    app_data &&
 	    cal_info &&
 	    (app_data->type == XML_ELEMENT_NODE) &&
-	    (strcmp((char*)(app_data->name), "ApplicationData") == 0) &&
+	    (g_strcmp0((char*)(app_data->name), "ApplicationData") == 0) &&
 	    (ical = icalparser_parse_string(cal_info->icalendar)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
+		icalcomponent* vevent = NULL;
+		
 		// Process the components of the VCALENDAR
 		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
-		icalcomponent* vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
+		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
 		_util_process_vevent_component(vevent, app_data);
 		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), app_data);
 
 		// DEBUG output
-		xmlChar* dump_buffer;
-		int dump_buffer_size;
-		xmlIndentTreeOutput = 1;
-		xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
-		g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
-		xmlFree(dump_buffer);
-
+		{
+			xmlChar* dump_buffer;
+			int dump_buffer_size;
+			xmlIndentTreeOutput = 1;
+			xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+			g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+			xmlFree(dump_buffer);
+		}
+		
 		success = TRUE;
 	}
 
