@@ -214,6 +214,9 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		icalcomponent* vtimezone = icalcomponent_new(ICAL_VTIMEZONE_COMPONENT);
 		icalproperty* prop = NULL;
 		icalparameter* param = NULL;
+		gboolean isAllDayEvent = FALSE;
+		gchar* organizerName = NULL;
+		gchar* organizerEmail = NULL;
 
 		// TODO: get all these strings into constants/#defines
 		
@@ -244,6 +247,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
+					if (isAllDayEvent)
+					{
+						// Ensure time is set to 00:00:00 for all-day events
+						dateTime.hour = dateTime.minute = dateTime.second = 0;
+					}
 					prop = icalproperty_new_dtstart(dateTime);
 					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
 					{
@@ -257,6 +265,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
+					if (isAllDayEvent)
+					{
+						// Ensure time is set to 00:00:00 for all-day events
+						dateTime.hour = dateTime.minute = dateTime.second = 0;
+					}
 					prop = icalproperty_new_dtend(dateTime);
 					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
 					{
@@ -389,7 +402,46 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 					g_free(value); value = NULL;
 				}
-				else if(g_strcmp0(name, "Attendees") == 0)
+				else if (g_strcmp0(name, "AllDayEvent") == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					if (atoi(value) == 1)
+					{
+						isAllDayEvent = TRUE;
+
+						// Check if we've already stored any start/end dates, and if so ensure all their times are set to 00:00:00.
+						// (Note: DtStamp times shouldn't be affected by this as that's the time the calendar entry was created,
+						// not when the event starts or ends.)
+						for (prop = icalcomponent_get_first_property(vevent, ICAL_DTEND_PROPERTY); prop;
+							 prop = icalcomponent_get_next_property(vevent, ICAL_DTEND_PROPERTY))
+						{
+							struct icaltimetype date = icalproperty_get_dtend(prop);
+							date.hour = date.minute = date.second = 0;
+							icalproperty_set_dtend(prop, dateTime);
+						}
+						for (prop = icalcomponent_get_first_property(vevent, ICAL_DTSTART_PROPERTY); prop;
+							 prop = icalcomponent_get_next_property(vevent, ICAL_DTSTART_PROPERTY))
+						{
+							struct icaltimetype date = icalproperty_get_dtstart(prop);
+							date.hour = date.minute = date.second = 0;
+							icalproperty_set_dtstart(prop, dateTime);
+						}
+					}
+					g_free(value); value = NULL;
+				}
+				else if (g_strcmp0(name, "OrganizerName") == 0)
+				{
+					organizerName = (gchar*)xmlNodeGetContent(n);
+					// That's all for now: deal with it after the loop completes so we
+					// have both OrganizerName and OrganizerEmail
+				}
+				else if (g_strcmp0(name, "OrganizerEmail") == 0)
+				{
+					organizerEmail = (gchar*)xmlNodeGetContent(n);
+					// That's all for now: deal with it after the loop completes so we
+					// have both OrganizerName and OrganizerEmail
+				}
+				else if (g_strcmp0(name, "Attendees") == 0)
 				{
 					xmlNode* attendeeNode = NULL;
 
@@ -658,8 +710,32 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 			}
 		}
 
+		// Deal with OrganizerName and OrganizerEmail
+		if (organizerEmail)
+		{
+		   prop = icalproperty_new_organizer(organizerEmail);
+		   g_free(organizerEmail); organizerEmail = NULL;
 
-		// Add the subcomponens to their parent components
+		   if (organizerName)
+		   {
+			   param = icalparameter_new_cn(organizerName);
+			   icalproperty_add_parameter(prop, param);
+			   g_free(organizerName); organizerName = NULL;
+		   }
+
+		   icalcomponent_add_property(vevent, prop);
+		}
+
+		// Check organizerName again, so we free it if we had a name but no e-mail
+		if (organizerName)
+		{
+		   // TODO: Is there any way we can use the name without the e-mail address?
+		   g_warning("OrganizerName element found but no OrganizerEmail");
+		   g_free(organizerName); organizerName = NULL;
+		}
+
+
+		// Add the subcomponents to their parent components
         if (icalcomponent_count_properties(vtimezone, ICAL_ANY_PROPERTY) > 0)
         {
 			icalcomponent_add_component(vcalendar, vtimezone);
@@ -738,26 +814,26 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 					break;
 				case ICAL_CLASS_PROPERTY:
 					{
-						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
-						if (g_strcmp0(value, "CONFIDENTIAL") == 0)
+						icalproperty_class classValue = icalproperty_get_class(prop);
+						switch (classValue)
 						{
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
-						}
-						else if (g_strcmp0(value, "PRIVATE") == 0)
-						{
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
-						}
-						else // PUBLIC
-						{
-							// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
+							case ICAL_CLASS_CONFIDENTIAL:
+								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
+								break;
+							case ICAL_CLASS_PRIVATE:
+								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
+								break;
+							default: // PUBLIC or NONE
+								// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
+								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
+								break;
 						}
 					}
 					break;
 				case ICAL_TRANSP_PROPERTY:
 					{
-						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
-						if (g_strcmp0(value, "TRANSPARENT") == 0)
+						icalproperty_transp transp = icalproperty_get_transp(prop);
+						if (transp == ICAL_TRANSP_TRANSPARENT)
 						{
 							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
 						}
@@ -774,8 +850,22 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 						{
 							categories = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Categories", NULL);
 						}
-
 						xmlNewTextChild(categories, NULL, (const xmlChar*)"calendar:Category", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					}
+					break;
+				case ICAL_ORGANIZER_PROPERTY:
+					{
+						icalparameter* cnParam = NULL;
+						
+						// Get the e-mail address
+						xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:OrganizerEmail", (const xmlChar*)icalproperty_get_organizer(prop));
+
+						// Now check for a name in the (optional) CN parameter
+						cnParam = icalproperty_get_first_parameter(prop, ICAL_CN_PARAMETER);
+						if (cnParam)
+						{
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:OrganizerName", (const xmlChar*)icalparameter_get_cn(cnParam));
+						}
 					}
 					break;
 
