@@ -420,134 +420,112 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 					g_free(value); value = NULL;
 				}
-/*				else if(g_strcmp0(name, "Attendees") == 0)
+				else if(g_strcmp0(name, "Attendees") == 0)
 				{
-					g_debug("Found attendees sequence");					
 					xmlNode* attendeeNode = NULL;
+
+					g_debug("Attendees element found in EAS XML");
+
 					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
 					{
-						g_debug("Found attendee");				
-						// TODO make all this string handling more efficient if poss
-						GString* attparams = g_string_new("");
-						GString* cal_address = g_string_new("mailto:");						
-							
-						xmlNode *subNode = NULL;
+						// Variables for attendee properties and parameters
+						gchar*                   email      = NULL;
+						gchar*                   name       = NULL;
+						icalparameter_partstat   partstat   = ICAL_PARTSTAT_NONE;	// Participatant Status parameter
+						icalparameter_role       role       = ICAL_ROLE_NONE;
+						xmlNodePtr               subNode    = NULL;
+
+						g_debug("Attendee element found in EAS XML");
+
 						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
 						{
-							if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Email"))
+							if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Email") == 0)
 							{
-								xmlChar* email = xmlNodeGetContent(subNode);
-								g_debug("found attendee email");
-								//mailto
-								cal_address = g_string_append(cal_address, email);
-								g_free(email);
-								g_debug("cal_address = %s", cal_address->str);
+								email = (gchar*)xmlNodeGetContent(subNode);
 							}								
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Name"))
+							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Name") == 0)
 							{
-								xmlChar* name = xmlNodeGetContent(subNode);								
-								g_debug("found name");
-								//cnparam
-								attparams = g_string_append(attparams, ";");
-								attparams = g_string_append(attparams, "CN=");
-								attparams = g_string_append(attparams, name);	
-								g_free(name);
-								g_debug("attparams = %s", attparams->str);
+								name = (gchar*)xmlNodeGetContent(subNode);								
 							}
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Status"))
+							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Status") == 0)
 							{
-								g_debug("found status");																 
-								xmlChar* status_as_string = xmlNodeGetContent(subNode);
-								gchar *status_ical;
-								guint status = atoi(status_as_string);
+								value = (gchar*)xmlNodeGetContent(subNode);
+								gint64 status = g_ascii_strtoll(value, NULL, 10);
 								switch(status)
 								{
-									// TODO create an enum for these values
 									case 0: // Response unknown
 									case 5: // Not responded
-									{
-										status_ical = strdup("NEEDS-ACTION");
-									}
-									break;
+										partstat = ICAL_PARTSTAT_NEEDSACTION;
+										break;
 									case 2: // Tentative
-									{
-										status_ical = strdup("TENTATIVE");
-									}
-									break;									
+										partstat = ICAL_PARTSTAT_TENTATIVE;
+										break;									
 									case 3: // Accept
-									{
-										status_ical = strdup("ACCEPTED");
-									}
-									break;	
+										partstat = ICAL_PARTSTAT_ACCEPTED;
+										break;	
 									case 4: // Decline
-									{
-										status_ical = strdup("DECLINED");
-									}
-									break;									
+										partstat = ICAL_PARTSTAT_DECLINED;
+										break;									
 									default:
-									{
+										partstat = ICAL_PARTSTAT_NONE;
 										g_warning("unrecognised attendee status received");
-									}
+										break;
 								}// end switch status
-								//partstatparam
-								attparams = g_string_append(attparams, ";");
-								attparams = g_string_append(attparams, "PARTSTAT=");
-								attparams = g_string_append(attparams, status_ical);
-								g_free(status_as_string);
-								g_free(status_ical);
-								g_debug("attparams = %s", attparams->str);								
+								
+								g_free(value); value = NULL;
 							}
-							else if(subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
+							else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
 							{
-								g_debug("found type");								
-								xmlChar* type_as_string = xmlNodeGetContent(subNode);
-								guint type = atoi(type_as_string);
-								gchar *type_ical;
-								switch(type)
+								value = (gchar*)xmlNodeGetContent(subNode);
+								gint64 roleValue = g_ascii_strtoll(value, NULL, 10);
+								switch (roleValue)
 								{
 									// TODO create an enum for these values
 									case 1: //Required
-									{
-										type_ical = g_strdup("REQ-PARTICIPANT");
-									}
-									break;
+										role = ICAL_ROLE_REQPARTICIPANT;
+										break;
 									case 2: //Optional
-									{
-										type_ical = g_strdup("OPT-PARTICIPANT");
-									}
-									break;
+										role = ICAL_ROLE_OPTPARTICIPANT;
+										break;
 									case 3: //Resource
-									{
-										type_ical = g_strdup("NON-PARTICIPANT");
-									}
-									break;
+										role = ICAL_ROLE_NONPARTICIPANT;
+										break;
 									default:
-									{
+										role = ICAL_ROLE_NONE;
 										g_warning("unrecognised attendee type received");
-									}
+										break;
 								}// end switch type
 								
-								//roleparam
-								attparams = g_string_append(attparams, ";");
-								attparams = g_string_append(attparams, "ROLE=");
-								attparams = g_string_append(attparams, type_ical);
-								g_free(type_as_string);
-								g_free(type_ical);
-								g_debug("attparams = %s", attparams->str);
+								g_free(value); value = NULL;
 							}		
 							
-						}// end for subNodes	
+						}// end for subNodes
 
-						gchar *attendee = g_strconcat("ATTENDEE", attparams->str, NULL);
+						// Now finally build and add the property, assuming we have at least an e-mail address
+						if (email && strlen(email))
+						{
+							prop = icalproperty_new_attendee(email);
 
-						// Adding to VEVENT. EAS doesn't appear to support EMAIL ALARMS, so not adding to VALARM
-						_util_append_prop_string_to_list(&vevent, attendee, cal_address->str);	
-
-						// Free the strings, including the character buffer
-						g_string_free(attparams, TRUE);
-						g_string_free(cal_address, TRUE);
+							if (email && strlen(name))
+							{
+								param = icalparameter_new_cn(name);
+								icalproperty_add_parameter(prop, param);
+							}
+							if (partstat != ICAL_PARTSTAT_NONE)
+							{
+								param = icalparameter_new_partstat(partstat);
+								icalproperty_add_parameter(prop, param);
+							}
+							if (role != ICAL_ROLE_NONE)
+							{
+								param = icalparameter_new_role(role);
+								icalproperty_add_parameter(prop, param);
+							}
+							
+							icalcomponent_add_property(vevent, prop);
+						}
 					}//end for (attendee)
-				}// end else if (attendees)*/
+				}// end else if (attendees)
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
@@ -832,15 +810,6 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 					}
 					break;
 
-/*				case ICAL_xxx_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
-					break;
-				case ICAL_xxx_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
-					break;
-				case ICAL_xxx_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:xxx", icalproperty_get_value_as_string(prop));
-					break;*/
 				// TODO: all the rest :)
 
 				default:
