@@ -30,6 +30,7 @@ eas-daemon/m4/*
 libeasmail/config/*
 libeasmail/m4/*
 libeascal/m4/*
+aclocal.m4
 
 # File paterns to ignore
 *.o
