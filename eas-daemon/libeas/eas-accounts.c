@@ -41,6 +41,8 @@ eas_accounts_class_init (EasAccountsClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	object_class->finalize = eas_accounts_finalize;
 	
@@ -79,8 +81,9 @@ eas_accounts_get_server_uri (EasAccounts* self, guint64 accountId)
 
 int eas_accounts_read_accounts_info(EasAccounts* self)
 {
-	g_debug("eas_accounts_read_accounts_info ++\n");	 
 	FILE *file =NULL;
+	int status = 0;
+	g_debug("eas_accounts_read_accounts_info ++\n");	 
 	
 	file = fopen("/usr/local/etc/accounts.cfg","r");	
    if(file==NULL)
@@ -89,7 +92,6 @@ int eas_accounts_read_accounts_info(EasAccounts* self)
  		 return 1;   
    }
    	
-	int status = 0;
 	status = fscanf(file, "accountId=%lld\nserverUri=%s\nusername=%s\npassword=%s\n",
 						      &self->_priv->accountId, 	self->_priv->serverUri, self->_priv->username, self->_priv->password);
   if (status != 4)

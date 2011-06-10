@@ -159,9 +159,11 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 	if (part)
 		EXTRACT_FIRST_DIGIT(gms->version);
 
-	if (part && part++ && strcmp (part, "(null)")) {
-		gms->sync_state = g_strdup (part);
-	}
+	if (part && part++ && strcmp (part, "(null)"))
+		gms->sync_state = g_strndup (part, 64);
+
+	printf("sync_state was %s\n", gms->sync_state);
+	gms->sync_state = g_strndup ("0", 64);
 
 	return 0;
 }

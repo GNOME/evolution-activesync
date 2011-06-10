@@ -77,6 +77,8 @@ eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 
 	g_debug("eas_sync_folder_hierarchy_req_class_init++");
 
@@ -115,10 +117,10 @@ gboolean
 eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error)
 {
 	gboolean ret = FALSE;
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	xmlDoc *doc = NULL;
 	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_debug("eas_sync_folder_hierarchy_req_Activate++");
 
 	// Create sync folder msg type
@@ -160,6 +162,8 @@ void
 eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* response_error)
 {
 	GError *error = NULL;
+	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+	gboolean ret;
 	
 	// if an error occurred, store it and signal daemon
 	if(response_error)
@@ -169,12 +173,10 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 		goto finish;
 	}
 	
-	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
-	
 	g_debug("eas_sync_folder_hierarchy_req_MessageComplete++");
 
 	// if an error occurs when parsing, store it
-	gboolean ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
+	ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
 	xmlFree(doc);
 	if(!ret)
 	{
@@ -244,9 +246,8 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
                                               GSList** deleted_folders, 
                                               GError** error)
 {
-	g_debug("eas_sync_folder_hierarchy_req_ActivateFinish++");
-
 	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+	g_debug("eas_sync_folder_hierarchy_req_ActivateFinish++");
 
 	if(priv->error != NULL)// propogate any preceding error
 	{

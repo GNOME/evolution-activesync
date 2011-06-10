@@ -19,7 +19,7 @@
 
 #include "eas-send-email-msg.h"
 #include <wbxml/wbxml.h>
-
+#include <glib.h>
 
 G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
@@ -35,12 +35,12 @@ struct _EasSendEmailMsgPrivate
 static void
 eas_send_email_msg_init (EasSendEmailMsg *object)
 {
+	EasSendEmailMsgPrivate *priv;
+	
 	/* initialization code: */
 	g_debug("eas_send_email_msg_init++");
 
-	EasSendEmailMsgPrivate *priv;
-
-	object->priv = priv = EAS_SEND_EMAIL_MSG_PRIVATE(object);	
+	object->priv = priv = EAS_SEND_EMAIL_MSG_PRIVATE(object);
 
 	priv->account_id = 0;
 	priv->client_id = NULL;
@@ -83,9 +83,10 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 EasSendEmailMsg*
 eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string)
 {
-	g_debug("eas_send_email_msg_new++");
 	EasSendEmailMsg* msg = NULL;
 	EasSendEmailMsgPrivate *priv = NULL;
+	
+	g_debug("eas_send_email_msg_new++");
 
 	msg = g_object_new (EAS_TYPE_SEND_EMAIL_MSG, NULL);
 	priv = msg->priv;
@@ -104,9 +105,9 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 	EasSendEmailMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
     xmlNode *root  = NULL, 
-	        *leaf = NULL,
-	        *cdata = NULL;
-
+	        *leaf = NULL;
+	gchar* base64data = NULL;
+	
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     root = xmlNewDocNode (doc, NULL, (xmlChar*)"SendMail", NULL);
     xmlDocSetRootElement (doc, root);
@@ -124,7 +125,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
                        
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"ClientId", (xmlChar*)(priv->client_id));
    	leaf = xmlNewChild(root, NULL, (xmlChar *)"SaveInSentItems", NULL); // presence indicates true
-	WB_UTINY* base64data = wbxml_base64_encode(priv->mime_string, strlen(priv->mime_string));
+	base64data = g_base64_encode((const guchar *)priv->mime_string, strlen(priv->mime_string));
 	leaf = xmlNewChild(root, NULL, (xmlChar *)"MIME", (xmlChar *)base64data);
 
     return doc;
@@ -133,25 +134,23 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 void
 eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error)
 {
-    g_debug ("eas_send_email_msg_parse_response++\n");
-	
-	EasSendEmailMsgPrivate *priv = self->priv;
 	xmlNode *root, *node = NULL;
-	
+    g_debug ("eas_send_email_msg_parse_response++\n");
+
     if (!doc) 
 	{
 		g_debug ("Failed: no doc supplied");
         return;
     }
     root = xmlDocGetRootElement(doc);
-    if (strcmp((char *)root->name, "SendMail")) 
+    if (g_strcmp0((char *)root->name, "SendMail")) 
 	{
         g_debug("Failed: not a SendMail response!");
         return;
     }
     for (node = root->children; node; node = node->next) 
 	{
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sendmail_status = (gchar *)xmlNodeGetContent(node);
             g_debug ("SendMail Status:[%s]", sendmail_status);  //TODO - how are errors being propagated to client??

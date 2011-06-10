@@ -9,6 +9,8 @@
 
 G_BEGIN_DECLS
 
+GQuark eas_mail_error_quark (void);
+
 GQuark
 eas_mail_error_quark (void)
 {

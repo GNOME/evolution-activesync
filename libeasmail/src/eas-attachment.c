@@ -26,8 +26,8 @@ eas_attachment_init (EasAttachment *object)
 static void
 eas_attachment_finalize (GObject *object)
 {
-	g_debug("eas_attachment_finalize++");
 	EasAttachment *self = (EasAttachment*)object;
+	g_debug("eas_attachment_finalize++");
 	/* deinitalization code */
 	g_free(self->file_reference);
 	g_free(self->display_name);
@@ -51,9 +51,9 @@ eas_attachment_class_init (EasAttachmentClass *klass)
 EasAttachment *
 eas_attachment_new()
 {
+	EasAttachment *object = NULL;
 	g_debug("eas_attachment_new++");	
 	
-	EasAttachment *object = NULL;
 
 	object = g_object_new (EAS_TYPE_ATTACHMENT , NULL);
 
@@ -66,14 +66,16 @@ eas_attachment_new()
 gboolean 
 eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 {
-	g_debug("eas_attachment_serialise++");  
-	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";			
-	
-	g_assert(attachment->estimated_size);	
+	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";
+   	gchar *strings[3] = {0,0,0};
+	g_debug("eas_attachment_serialise++");
+	g_assert(attachment->estimated_size);
 
 	snprintf(est_size, sizeof(est_size)/sizeof(est_size[0]), "%d", attachment->estimated_size);
 	
-	gchar *strings[3] = {attachment->file_reference, attachment->display_name, est_size};
+	strings[0] = attachment->file_reference;
+    strings[1] = attachment->display_name;
+    strings[2] = est_size;
 
 	*result = strconcatwithseparator(strings, sizeof(strings)/sizeof(strings[0]), attachment_separator);
 	
@@ -90,15 +92,13 @@ eas_attachment_serialise(EasAttachment *attachment, gchar **result)
 gboolean 
 eas_attachment_deserialise(EasAttachment *attachment, const gchar *data)
 {
-	g_debug("eas_attachment_deserialise++");
-
 	gboolean ret = TRUE;
-	
-	g_assert(attachment);
-	g_assert(data);
-	
 	gchar *from = (gchar*)data;
 	gchar *est_size = NULL;
+
+    g_debug("eas_attachment_deserialise++");
+	g_assert(attachment);
+	g_assert(data);
 
 	// file_reference
 	if(attachment->file_reference != NULL)   //just in case
@@ -160,6 +160,7 @@ guint
 eas_attachment_serialised_length(EasAttachment *attachment)
 {
 	guint len = 0;
+	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";
 
 	// file_reference:
 	g_assert(attachment->file_reference);
@@ -174,8 +175,7 @@ eas_attachment_serialised_length(EasAttachment *attachment)
 		len += 1;	// just separator
 	}
 	// estimated_size:
-	g_assert(attachment->estimated_size);	
-	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";				
+	g_assert(attachment->estimated_size);
 	snprintf(est_size, sizeof(est_size)/sizeof(est_size[0]), "%d", attachment->estimated_size);	
 
 	len += strlen(est_size) +1;		// no separator at end, allows for null terminate

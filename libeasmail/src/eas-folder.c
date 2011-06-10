@@ -28,9 +28,10 @@ eas_folder_init (EasFolder *object)
 static void
 eas_folder_finalize (GObject *object)
 {
+	EasFolder *self = (EasFolder *) object;
+    
 	g_debug("eas_folder_finalize++");
 	/* deinitalization code here */
-	EasFolder *self = (EasFolder *) object;
 
 	g_free(self->parent_id);
 	g_free(self->folder_id);
@@ -60,13 +61,12 @@ eas_folder_class_init (EasFolderClass *klass)
 EasFolder *
 eas_folder_new()
 {
-	g_debug("eas_folder_new++");	
-	
 	EasFolder *object = NULL;
+	g_debug("eas_folder_new++");
 
 	object = g_object_new (EAS_TYPE_FOLDER , NULL);
 
-	g_debug("eas_folder_new--");	
+	g_debug("eas_folder_new--");
 	
 	return object;
 }
@@ -78,15 +78,15 @@ gboolean
 eas_folder_serialise(EasFolder* folder, gchar **result)
 {
 	gboolean ret = TRUE;
-	
-	g_debug("eas_folder_serialise++");  
 	gchar type[4] = "";
+	gchar *strings[4] = {folder->parent_id, folder->folder_id, folder->display_name, type};
 
+	g_debug("eas_folder_serialise++");
     g_assert(result);
     g_assert(*result == NULL);
 
-    // Bad assert these numbers can change based on server whim
-//	g_assert(folder->type < EAS_FOLDER_TYPE_MAX);
+    // Bad assert?
+   //  g_assert(folder->type < EAS_FOLDER_TYPE_MAX);
 	
 	if(folder->type)
 	{
@@ -94,8 +94,6 @@ eas_folder_serialise(EasFolder* folder, gchar **result)
 		snprintf(type, sizeof(type)/sizeof(type[0]), "%d", folder->type);
 	}
 	
-	gchar *strings[4] = {folder->parent_id, folder->folder_id, folder->display_name, type};
-
 	*result = strconcatwithseparator(strings, sizeof(strings)/sizeof(strings[0]), folder_separator);
 
 	g_debug("serialise result: ");
@@ -116,14 +114,12 @@ gboolean
 eas_folder_deserialise(EasFolder* folder, const gchar *data)
 {
 	gboolean ret = TRUE;
+	gchar *from = (gchar*)data;
+	gchar *type = NULL;
 	
 	g_debug("eas_folder_deserialise++");
-
 	g_assert(folder);
 	g_assert(data);
-	
-	gchar *from = (gchar*)data;
-	gchar *type;
 	
 	// parent_id
 	if(folder->parent_id != NULL)   //expect empty structure, but just in case

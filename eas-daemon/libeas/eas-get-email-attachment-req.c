@@ -64,6 +64,8 @@ eas_get_email_attachment_req_class_init (EasGetEmailAttachmentReqClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 	
 	g_debug("eas_get_email_attachment_req_class_init++");
 	g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentReqPrivate));
@@ -132,7 +134,6 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
 
 void eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error)
 {
-	EasGetEmailAttachmentReqPrivate *priv = self->priv;
 	g_debug("eas_get_email_attachment_req_ActivateFinish++");
 	/* TODO: Add public function implementation here */
 	g_debug("eas_get_email_attachment_req_ActivateFinish--");

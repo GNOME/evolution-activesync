@@ -185,32 +185,6 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 
 
 /**
- * \brief Modify a date/time property name (DTSTART, DTEND or DTSTAMP) to add a TZID (timezone ID) attribute if required
- *
- * \param propertyName      Pointer to the property name string (e.g. "DTSTART"). This may be modified by
- *                          this function. The calling code keeps the responsibility for freeing the
- *                          memory after use.
- * \param propertyValue     The value for this property (i.e. a date/time in ISO format)
- * \param tzid              The TZID field from the VTIMEZONE component (if present). If none was present,
- *                          pass either NULL or an empty string.
- */
-static void _util_add_timezone_to_property_name(gchar** propertyName, const gchar* propertyValue, const gchar* tzid)
-{
-	gchar* temp;
-	
-	// We add the TZID attribute if:
-	//  - we have an attribute value to add!
-	//  - the time value doesn't end in Z (as this indicates a UTC time, so no timezone needs to be specified)
-	if (tzid && strlen(tzid) && !g_str_has_suffix(propertyValue, "Z"))
-	{
-		temp = g_strdup_printf("%s;TZID=\"%s\"", *propertyName, tzid);
-		g_free(*propertyName);
-		*propertyName = temp;
-	}
-}
-
-
-/**
  * \brief Parse an XML-formatted calendar object received from ActiveSync and return
  *        it as a serialised iCalendar object.
  *
@@ -237,6 +211,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), "ApplicationData")))
 	{
 		xmlNodePtr n = node;
+
+		EasCalInfo* cal_info = NULL;
 
 		// iCalendar objects
 		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
@@ -329,7 +305,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					xmlNodePtr subNode = NULL;
 					for (subNode = n->children; subNode; subNode = subNode->next)
 					{
-						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Data"))
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Data"))
 						{
 							value = (gchar*)xmlNodeGetContent(subNode);
 							prop = icalproperty_new_description(value);
@@ -341,8 +317,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "Sensitivity") == 0)
 				{
-					value = (gchar*)xmlNodeGetContent(n);
 					icalproperty_class classValue = ICAL_CLASS_PUBLIC;
+					value = (gchar*)xmlNodeGetContent(n);
 					if (g_strcmp0(value, "3") == 0)      // Confidential
 					{
 						classValue = ICAL_CLASS_CONFIDENTIAL;
@@ -361,8 +337,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				}
 				else if (g_strcmp0(name, "BusyStatus") == 0)
 				{
-					value = (gchar*)xmlNodeGetContent(n);
 					icalproperty_transp transpValue = ICAL_TRANSP_OPAQUE;
+					value = (gchar*)xmlNodeGetContent(n);
 					if (g_strcmp0(value, "0") == 0) // Free
 					{
 						transpValue = ICAL_TRANSP_TRANSPARENT;
@@ -439,18 +415,19 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
 						{
-							if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Email") == 0)
+							if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Email") == 0)
 							{
 								email = (gchar*)xmlNodeGetContent(subNode);
 							}								
-							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Name") == 0)
+							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Name") == 0)
 							{
 								name = (gchar*)xmlNodeGetContent(subNode);								
 							}
-							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0(subNode->name, "Attendee_Status") == 0)
+							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Status") == 0)
 							{
+								gint64 status = 0;
 								value = (gchar*)xmlNodeGetContent(subNode);
-								gint64 status = g_ascii_strtoll(value, NULL, 10);
+								status = g_ascii_strtoll(value, NULL, 10);
 								switch(status)
 								{
 									case 0: // Response unknown
@@ -474,10 +451,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 								
 								g_free(value); value = NULL;
 							}
-							else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0(subNode->name, "Attendee_Type"))
+							else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Attendee_Type"))
 							{
+								gint64 roleValue = 0;
 								value = (gchar*)xmlNodeGetContent(subNode);
-								gint64 roleValue = g_ascii_strtoll(value, NULL, 10);
+								roleValue = g_ascii_strtoll(value, NULL, 10);
 								switch (roleValue)
 								{
 									// TODO create an enum for these values
@@ -529,16 +507,14 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
-					WB_UTINY* timeZoneRawBytes = NULL;
+					gsize timeZoneRawBytesSize = 0;
+					guchar* timeZoneRawBytes = g_base64_decode((const gchar*)timeZoneBase64Buffer, &timeZoneRawBytesSize);
 					EasTimeZone timeZoneStruct;
-
-					// Expect timeZoneB64 to be NULL terminated
-					WB_LONG timeZoneRawBytesSize = wbxml_base64_decode(timeZoneBase64Buffer, -1, &timeZoneRawBytes);
 					xmlFree(timeZoneBase64Buffer);
 
 					// TODO Check decode of timezone for endianess problems
 
-					if (timeZoneRawBytesSize == sizeof(timeZoneStruct))
+					if (timeZoneRawBytesSize == sizeof(EasTimeZone))
 					{
 						memcpy(&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
 						g_free(timeZoneRawBytes);
@@ -702,7 +678,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
-		EasCalInfo* cal_info = eas_cal_info_new();
+		cal_info = eas_cal_info_new();
 		cal_info->icalendar = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
 		cal_info->server_id = (gchar*)server_id;
 		if (!eas_cal_info_serialise(cal_info, &result))
@@ -750,38 +726,38 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 			switch (prop_type)
 			{
 				case ICAL_SUMMARY_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:Subject", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Subject", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTSTAMP_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:DtStamp", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:DtStamp", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTSTART_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:StartTime", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_DTEND_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:EndTime", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_LOCATION_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:Location", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Location", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_UID_PROPERTY:
-					xmlNewTextChild(app_data, NULL, "calendar:UID", icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:UID", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 				case ICAL_CLASS_PROPERTY:
 					{
 						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
 						if (g_strcmp0(value, "CONFIDENTIAL") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "3"); // Confidential
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
 						}
 						else if (g_strcmp0(value, "PRIVATE") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "2"); // Private
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
 						}
 						else // PUBLIC
 						{
 							// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
-							xmlNewTextChild(app_data, NULL, "calendar:Sensitivity", "0");
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
 						}
 					}
 					break;
@@ -790,12 +766,12 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 						const gchar* value = (const gchar*)icalproperty_get_value_as_string(prop);
 						if (g_strcmp0(value, "TRANSPARENT") == 0)
 						{
-							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "0"); // Free
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
 						}
 						else // OPAQUE
 						{
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
-							xmlNewTextChild(app_data, NULL, "calendar:BusyStatus", "2"); // Busy
+							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"2"); // Busy
 						}
 					}
 					break;
@@ -803,10 +779,10 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 					{
 						if (categories == NULL)
 						{
-							categories = xmlNewChild(app_data, NULL, "calendar:Categories", NULL);
+							categories = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Categories", NULL);
 						}
 
-						xmlNewTextChild(categories, NULL, "calendar:Category", icalproperty_get_value_as_string(prop));
+						xmlNewTextChild(categories, NULL, (const xmlChar*)"calendar:Category", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
 
@@ -845,7 +821,7 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 			char minutes_buf[6];
 			g_snprintf(minutes_buf, 6, "%d", minutes);
 
-			xmlNewTextChild(app_data, NULL, "calendar:Reminder", minutes_buf);
+			xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Reminder", (const xmlChar*)minutes_buf);
 		}
 	}
 }
@@ -960,6 +936,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 			// Don't want to rely on enum values in icalrecurrencetype_weekday so use a switch statement to set the DayOfWeek
 			switch (byDayWeekday)
 			{
+				case ICAL_NO_WEEKDAY:
 				case ICAL_SUNDAY_WEEKDAY:
 					easTimeStruct->DayOfWeek = 0;
 					break;
@@ -1020,6 +997,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 	{
 		EasTimeZone timezoneStruct;
 		icalcomponent* subcomponent = NULL;
+		gchar* timezoneBase64 = NULL;
 
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
@@ -1048,12 +1026,9 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		{
-			const int rawStructSize = sizeof(EasTimeZone);
-			WB_UTINY* timezoneBase64 = (WB_UTINY*)wbxml_base64_encode((const WB_UTINY*)(&timezoneStruct), rawStructSize);
-			xmlNewTextChild(app_data, NULL, "calendar:Timezone", timezoneBase64);
-			g_free(timezoneBase64);
-		}
+		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
+		xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Timezone", (const xmlChar*)timezoneBase64);
+		g_free(timezoneBase64);
 	}
 }
 

@@ -41,6 +41,8 @@ eas_msg_base_class_init (EasMsgBaseClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	void *tmp = object_class;
+	tmp = parent_class;
 	
 	g_debug("eas_msg_base_class_init++");
 	
@@ -58,8 +60,7 @@ eas_msg_base_class_init (EasMsgBaseClass *klass)
 xmlDoc*
 eas_msg_base_build_message (EasMsgBase *self)
 {
-	g_assert(0);
-	return NULL;
+	g_error("Base class function should never be used");
 }
 
 /**
@@ -69,6 +70,6 @@ eas_msg_base_build_message (EasMsgBase *self)
 void
 eas_msg_base_parse_response (EasMsgBase *self, xmlDoc* doc)
 {
-	g_assert(0);
+	g_error("Base class function should never be used");
 }
 

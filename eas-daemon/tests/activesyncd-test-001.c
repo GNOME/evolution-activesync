@@ -25,6 +25,9 @@ int main(int argc, char** argv) {
   DBusGProxy* remoteEasMail = NULL;
   GMainLoop* mainloop = NULL;
   GError* error = NULL;
+  gchar *sync_key = NULL;
+  GError* err = NULL;
+  gboolean ret = FALSE;
 
 	// initise G type library to allow use of G type objects which provide
 	// a higher level of programming syntax including the psuedo object 
@@ -59,12 +62,7 @@ int main(int argc, char** argv) {
     g_error("Error: Couldn't create the proxy object");
     exit(EXIT_FAILURE);
   }
-
-
-  gchar *sync_key = NULL;
-  GError* err = NULL;
-  gboolean ret = FALSE;
-
+    
   g_debug("making the call...");
   ret = dbus_g_proxy_call(remoteEasMail,  // name of interface object
                           "test_001",   //  name of method on interface object

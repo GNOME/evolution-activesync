@@ -31,9 +31,9 @@ static void eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node);
 static void
 eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 {
+	EasSyncFolderMsgPrivate *priv;
 	g_debug("eas_sync_folder_msg_init++");
 
-	EasSyncFolderMsgPrivate *priv;
 
 	object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE(object);
 	
@@ -57,9 +57,12 @@ eas_sync_folder_msg_finalize (GObject *object)
 static void
 eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
-	g_debug("eas_sync_folder_msg_class_init++");
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	void *tmp = object_class;
+	tmp = parent_class;
+	
+	g_debug("eas_sync_folder_msg_class_init++");
 
 	g_type_class_add_private (klass, sizeof (EasSyncFolderMsgPrivate));
 
@@ -225,7 +228,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 		goto finish;
     }
     node = xmlDocGetRootElement((xmlDoc*)doc);
-    if (strcmp((char *)node->name, "FolderSync")) {
+    if (g_strcmp0((char *)node->name, "FolderSync")) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
 		("Failed to find <FolderSync> element"));
@@ -233,7 +236,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 		goto finish;		
     }
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sync_status = (gchar *)xmlNodeGetContent(node);
 			guint sync_status_num = atoi(sync_status);			
@@ -246,13 +249,13 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 			}			
             continue;
         }
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "SyncKey")) 
         {
-            priv->sync_key = xmlNodeGetContent(node);
+            priv->sync_key = (gchar*)xmlNodeGetContent(node);
             g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;
         }
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Changes")) 
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Changes")) 
 		{
 			break;
 		}
@@ -266,24 +269,24 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     }
 	
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Count"))
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Count"))
 		{
-			gchar *count = (gchar *)xmlNodeGetContent(node);
+			//gchar *count = (gchar *)xmlNodeGetContent(node);
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Add")) {
 			eas_connection_parse_fs_add(self, node);
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Delete")) {
 			// TODO Parse deleted folders
 			g_assert(0);
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Update")) {
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Update")) {
 			// TODO Parse updated folders
 			g_assert(0);
 			continue;
@@ -305,7 +308,7 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node)
 	EasSyncFolderMsgPrivate *priv = self->priv;
 
 	if (!node) return;
-    if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) 
+    if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Add")) 
 	{
 		xmlNode *n = node;
 		gchar *serverId = NULL, 
@@ -314,19 +317,19 @@ eas_connection_parse_fs_add(EasSyncFolderMsg *self, xmlNode *node)
 			  *type = NULL;
 		
 		for (n = n->children; n; n = n->next) {
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "ServerId")) {
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "ServerId")) {
 				serverId = (gchar *)xmlNodeGetContent(n);
 				continue;
 			}
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "ParentId")) {
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "ParentId")) {
 				parentId = (gchar *)xmlNodeGetContent(n);
 				continue;
 			}
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "DisplayName")) {
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "DisplayName")) {
 				displayName = (gchar *)xmlNodeGetContent(n);
 				continue;
 			}
-			if (n->type == XML_ELEMENT_NODE && !strcmp((char *)n->name, "Type")) {
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Type")) {
 				type = (gchar *)xmlNodeGetContent(n);
 				continue;
 			}

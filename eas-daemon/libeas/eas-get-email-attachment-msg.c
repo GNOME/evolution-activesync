@@ -5,7 +5,7 @@
  */
 #include <libwbxml-1.0/wbxml/wbxml.h>
 #include "eas-get-email-attachment-msg.h"
-
+#include <glib.h>
 
 struct _EasGetEmailAttachmentMsgPrivate
 {
@@ -52,6 +52,10 @@ eas_get_email_attachment_msg_class_init (EasGetEmailAttachmentMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
+
+	
 	g_debug("eas_get_email_attachment_msg_class_init++");
 	g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentMsgPrivate));
 
@@ -86,8 +90,6 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 
 	xmlNode *root = NULL;
 	xmlNode *fetch = NULL, 
-	        *options = NULL, 
-	        *body_pref = NULL, 
 	        *leaf = NULL;
 
 	g_debug("eas_get_email_attachment_msg_build_message++");
@@ -117,9 +119,9 @@ void
 eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc, GError** error)
 {
 	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
-	g_debug("eas_get_email_attachment_msg_parse_response ++");
-
 	xmlNode *node = NULL;
+	
+	g_debug("eas_get_email_attachment_msg_parse_response ++");
 	
     if (!doc) 
     {
@@ -127,21 +129,21 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
         return;
     }
     node = xmlDocGetRootElement(doc);
-    if (strcmp((char *)node->name, "ItemOperations")) {
+    if (g_strcmp0((char *)node->name, "ItemOperations")) {
         g_debug("Failed to find <ItemOperations> element");
         return;
     }
 
     for (node = node->children; node; node = node->next) 
 	{
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status")) 
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *status = (gchar *)xmlNodeGetContent(node);
             g_debug ("ItemOperations Status:[%s]", status);
 			xmlFree(status);
             continue;
         }
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Response"))
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Response"))
 		{
 			break;
 		}
@@ -154,7 +156,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Fetch"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Fetch"))
 		{
 			break;
 		}
@@ -167,26 +169,26 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Status"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 		{
             gchar *status = (gchar *)xmlNodeGetContent(node);
             g_debug ("Fetch Status:[%s]", status);
 			xmlFree(status);
             continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "FileReference"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "FileReference"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
 			priv->fileReference = g_strdup(xmlTmp);
 			g_debug ("FileReference:[%s]", priv->fileReference);			
 			xmlFree(xmlTmp);		
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Class"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Class"))
 		{
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Properties"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Properties"))
 		{
 			break;
 		}
@@ -201,39 +203,40 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 
 	for (node = node->children; node; node = node->next)
 	{
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "ContentType"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ContentType"))
 		{
-			gchar *xmlTmp = xmlNodeGetContent(node);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
 			g_debug ("ContentType:[%s]", xmlTmp);
 			//TODO: do we need to handle the ContentType? 
 			xmlFree(xmlTmp);
 			continue;
 		}
 		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Data"))
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Data"))
 		{
-			guchar *xmlTmp = xmlNodeGetContent(node);
-			gint  len =  strlen(xmlTmp) ;
-			g_message ("data ecoded length  =--->:[%d]",  len);
+			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
+			gsize decoded_len = 0;
+		    guchar* decoded_buf = g_base64_decode((const gchar*)xmlTmp, &decoded_len);
+			gchar* fullFilePath = NULL;
+			FILE *hAttachement = NULL;
+			
+			g_message ("data ecoded length  =--->:[%d]",  strlen(xmlTmp));
 			g_message ("data encoded   =--->:[%s]",   xmlTmp);
 
-		    unsigned char *decoded_buf = NULL;
-		    WB_LONG decoded_len = wbxml_base64_decode((const unsigned char*)xmlTmp, len, &decoded_buf);
 		    if (!decoded_len) {
 		        //TODO: Set the GError
 		         //error = WBXML_ERROR_B64_ENC;
 		        //  g_set_error();
 		        g_warning("Failed to base64_decode attachment ");
+				xmlFree(xmlTmp);
 		        return;
 		    }
         	g_message ("data decoded   =--->:[%s]",   decoded_buf);
-  			g_message ("data decoded length =--->:[%d]",  decoded_len);      	
+  			g_message ("data decoded length =--->:[%d]",  decoded_len);
 
-			gchar* fullFilePath = NULL;
-			FILE *hAttachement = NULL;        			
-			fullFilePath = g_strconcat(priv->directoryPath, priv->fileReference, NULL);
+			fullFilePath = g_build_filename(priv->directoryPath, priv->fileReference, NULL);
 			g_message("Attempting to write attachment to file [%s]", fullFilePath);   
-			if (hAttachement = fopen(fullFilePath,"wb"))
+			if ( (hAttachement = fopen(fullFilePath,"wb")) )
 			{
 				fwrite((const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
 				fclose(hAttachement);
@@ -243,7 +246,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 				g_critical("Failed to open file!");
 			}
 			
-			wbxml_free(decoded_buf);
+			g_free(decoded_buf);
 			g_free(fullFilePath);
 			xmlFree(xmlTmp);
 			break;

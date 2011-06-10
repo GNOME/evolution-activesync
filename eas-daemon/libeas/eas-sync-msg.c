@@ -27,14 +27,13 @@ struct _EasSyncMsgPrivate
 
 G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
 
-static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node, GError** error);
+//static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node, GError** error);
 
 static void
 eas_sync_msg_init (EasSyncMsg *object)
 {
-	g_debug("eas_sync_msg_init++");
-
 	EasSyncMsgPrivate *priv;
+	g_debug("eas_sync_msg_init++");
 
 	object->priv = priv = EAS_SYNC_MSG_PRIVATE(object);
 	
@@ -61,6 +60,8 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+	void *tmp = parent_class;
+	tmp = object_class;
 	
 	g_type_class_add_private (klass, sizeof (EasSyncMsgPrivate));
 
@@ -140,9 +141,9 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     }
     //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
     else{
+		GSList * iterator;
 		xmlNewChild(collection, NULL, (xmlChar *)"DeletesAsMoves", (xmlChar*)"1");
 		xmlNewChild(collection, NULL, (xmlChar *)"GetChanges", (xmlChar*)"0");
-		GSList * iterator;
 		//if any of the lists are not null we need to add commands element
 		if(added || updated || deleted)
 		{
@@ -168,12 +169,12 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 							if(iterator->data){
 								//TODO: call translator to get client ID and  encoded application data
 								//gchar *serialised_calendar = (gchar *)iterator->data;	
-											
+								xmlNode *app_data = NULL;
 								EasCalInfo *cal_info =(EasCalInfo*) iterator->data;	
 								
 								// create the server_id node
-								xmlNode *server_id = xmlNewChild(added, NULL, (xmlChar *)"ClientId", (xmlChar*)cal_info->client_id);								
-								xmlNode *app_data = xmlNewChild(added, NULL, (xmlChar *)"ApplicationData", NULL);										
+								xmlNewChild(added, NULL, (xmlChar *)"ClientId", (xmlChar*)cal_info->client_id);
+								app_data = xmlNewChild(added, NULL, (xmlChar *)"ApplicationData", NULL);
 								// translator deals with app data
 								eas_cal_info_translator_parse_request(doc, app_data, cal_info);
 								// TODO error handling and freeing
@@ -198,16 +199,17 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						break;
 						case EAS_ITEM_MAIL:
 						{
-							xmlNewNs (node, (xmlChar *)"Email:", (xmlChar *)"email");	
-							
-							gchar *serialised_email = (gchar *)updated->data;					
+							gchar *serialised_email = (gchar *)updated->data;
 							EasEmailInfo *email_info = eas_email_info_new ();
+							
+							xmlNewNs (node, (xmlChar *)"Email:", (xmlChar *)"email");
 
 							if(eas_email_info_deserialise(email_info, serialised_email))
 							{
+							xmlNode *app_data = NULL;
 							// create the server_id node
-							xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)email_info->server_id);								
-							xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
+							xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)email_info->server_id);
+							app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);
 							// call translator to get encoded application data
 							eas_email_info_translator_build_update_request(doc, app_data, email_info);
 							g_object_unref(email_info);
@@ -223,10 +225,10 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 								//gchar *serialised_calendar = (gchar *)iterator->data;	
 											
 								EasCalInfo *cal_info =(EasCalInfo*) iterator->data;	
-								
+								xmlNode *app_data = NULL;
 								// create the server_id node
-								xmlNode *server_id = xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)cal_info->server_id);								
-								xmlNode *app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);										
+								xmlNewChild(update, NULL, (xmlChar *)"ServerId", (xmlChar*)cal_info->server_id);
+								app_data = xmlNewChild(update, NULL, (xmlChar *)"ApplicationData", NULL);
 								// translator deals with app data
 								eas_cal_info_translator_parse_request(doc, app_data, cal_info);
 								// TODO error handling and freeing
@@ -251,13 +253,14 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 void
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
-    g_debug ("eas_sync_msg_parse_response ++");
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL,
 					*appData = NULL;
 					
 	gchar *item_server_id = NULL;
 	gchar *item_client_id = NULL;
+
+	g_debug ("eas_sync_msg_parse_response ++");
 	
     if (!doc) {
         g_debug ("Failed to parse sync response XML");
@@ -267,13 +270,13 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     
     //TODO: parse response correctly
     
-    if (strcmp((char *)node->name, "Sync")) {
+    if (g_strcmp0((char *)node->name, "Sync")) {
         g_debug("Failed to find <Sync> element");
         return;
     }
     for (node = node->children; node; node = node->next) {
     
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collections")) 
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Collections")) 
         {
                g_debug ("Collections:");
                break;
@@ -287,7 +290,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     
     for (node = node->children; node; node = node->next) {
     
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Collection")) 
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Collection")) 
         {
                g_debug ("Collection:");
                break;
@@ -300,18 +303,18 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     }
 	
     for (node = node->children; node; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "SyncKey"))
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "SyncKey"))
 		{
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
 			g_debug ("Got SyncKey = %s", priv->sync_key);
 			continue;
 		}
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Responses")) 
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Responses")) 
         {
                g_debug ("Responses:\n");
                break;
         }		
-		if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")) 
+		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")) 
         {
                g_debug ("Commands:\n");
                break;
@@ -323,19 +326,19 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         return;
     }
 
-	if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Commands")){
+	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")){
 		 for (node = node->children; node; node = node->next) {
 	
-			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Add")) {
 				appData = node;
 			
 				for (appData = appData->children; appData; appData = appData->next) {
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ServerId")) {
 						item_server_id = (gchar *)xmlNodeGetContent(appData);
 						g_debug ("Found serverID for Item = %s", item_server_id);
 						continue;
 					}
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ApplicationData")) {
 						gchar *flatItem = NULL;
 						g_debug ("Found AppliicationData - about to parse and flatten");
 						//choose translator based on data type
@@ -374,11 +377,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 				continue;
 			}
 		
-			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Delete")) {
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Delete")) {
 				appData = node;
 				// TODO Parse deleted folders
 				for (appData = appData->children; appData; appData = appData->next) {
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ServerId")) {
 						item_server_id = (gchar *)xmlNodeGetContent(appData);
 						g_debug ("Found serverID for Item = %s", item_server_id);
 						priv->deleted_items = g_slist_append(priv->deleted_items, item_server_id);
@@ -388,17 +391,17 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 				continue;
 			}
 		
-			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Change")) {
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Change")) {
 				// TODO Parse updated folders
 				appData = node;
 			
 				for (appData = appData->children; appData; appData = appData->next) {
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ServerId")) {
 						item_server_id = (gchar *)xmlNodeGetContent(appData);
 						g_debug ("Found serverID for Item = %s", item_server_id);
 						continue;
 					}
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ApplicationData")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ApplicationData")) {
 						gchar *flatItem = NULL;
 						g_debug ("Found AppliicationData - about to parse and flatten");
 						//choose translator based on data type
@@ -437,26 +440,27 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 			}
 		}
 	}
-	else if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Responses")){
+	else if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Responses")){
 		for (node = node->children; node; node = node->next) {
 	
-			if (node->type == XML_ELEMENT_NODE && !strcmp((char *)node->name, "Add")) {
-				appData = node;
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Add")) {
 				gchar *flatItem = NULL;
+				EasCalInfo *info = NULL;
+				appData = node;
 				for (appData = appData->children; appData; appData = appData->next) {
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ClientId")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ClientId")) {
 						item_client_id = (gchar *)xmlNodeGetContent(appData);
 						g_debug ("Found clientID for Item = %s", item_server_id);
 						continue;
 					}
-					if (appData->type == XML_ELEMENT_NODE && !strcmp((char *)appData->name, "ServerId")) {
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "ServerId")) {
 						item_server_id = (gchar *)xmlNodeGetContent(appData);
 						g_debug ("Found serverID for Item = %s", item_server_id);
 						continue;
 					}
 					
 				}
-				EasCalInfo *info = eas_cal_info_new ();
+				info = eas_cal_info_new ();
 				info->client_id = item_client_id;
 				info->server_id = item_server_id;
 				eas_cal_info_serialise (info, &flatItem);
@@ -502,8 +506,8 @@ eas_sync_msg_get_deleted_items (EasSyncMsg* self)
 gchar* 
 eas_sync_msg_get_syncKey(EasSyncMsg* self)
 {
-    g_debug ("eas_sync_msg_getSyncKey ++");
 	EasSyncMsgPrivate *priv = self->priv;
+    g_debug ("eas_sync_msg_getSyncKey +-");
 	return priv->sync_key;
 }
 
