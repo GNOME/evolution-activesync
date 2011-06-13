@@ -1169,15 +1169,4 @@ complete_request:
 	g_debug("eas_connection - handle_server_response--");
 }
 
-GQuark eas_connection_error_quark (void)
-{
-	static GQuark quark = 0;
-
-	if (G_UNLIKELY (quark == 0)) {
-		const gchar *string = "eas-connection-error-quark";
-		quark = g_quark_from_static_string (string);
-	}
-
-	return quark;
-}
 
