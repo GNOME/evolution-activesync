@@ -4,16 +4,18 @@
 <!--
   <interface name="org.meego.Eas">
 -->
-  <interface name="org.meego.activesyncd.EasCalendar">
+  <interface name="org.meego.activesyncd.EasSync">
 
 <!--
- get latest changes from calendar folder 
+ get latest changes from folder 
  will use AS Sync command	
 -->
 
-    <method name="get_latest_calendar_items">
+    <method name="get_latest_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="t" name="type" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="folder_id" direction="in"/>	
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>
       <arg type="as" name="ret_created_items_array" direction="out"/>
@@ -21,26 +23,31 @@
       <arg type="as" name="ret_updated_items_array" direction="out"/>
     </method>
     
-    <method name="add_calendar_items">
+    <method name="add_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="t" name="type" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="folder_id" direction="in"/>	
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="as" name="add_items_array" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>
       <arg type="as" name="ret_created_items_array" direction="out"/>
     </method>
 
-    <method name="update_calendar_items">
+    <method name="update_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="t" name="type" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="folder_id" direction="in"/>	
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="as" name="updated_items_array" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>
     </method>
 
-    <method name="delete_calendar_items">
+    <method name="delete_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="folder_id" direction="in"/>	
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="as" name="deleted_items_array" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>

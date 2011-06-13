@@ -5,6 +5,7 @@
  * 
  */
 
+#include "eas-connection-errors.h"
 #include "eas-sync-msg.h"
 #include "eas-email-info-translator.h"
 #include "eas-cal-info-translator.h"
@@ -250,10 +251,12 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     return doc;
 }
 
-// lrm TODO set the Gerror/return value:
+
 gboolean
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
+	EasError error_details;
+	gboolean ret = TRUE;
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL,
 					*appData = NULL;
@@ -263,20 +266,45 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
 	g_debug ("eas_sync_msg_parse_response ++");
 	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
     if (!doc) {
-        g_debug ("Failed to parse sync response XML");
-        return FALSE;
+        g_warning ("folder_sync response XML is empty");
+		// Note not setting error here as empty doc is valid	
+		goto finish;
     }
     node = xmlDocGetRootElement(doc);
     
     //TODO: parse response correctly
     
     if (g_strcmp0((char *)node->name, "Sync")) {
-        g_debug("Failed to find <Sync> element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Sync> element"));
+        ret = FALSE;
+		goto finish;		
     }
-    for (node = node->children; node; node = node->next) {
-    
+    for (node = node->children; node; node = node->next) 
+	{
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
+        {
+            gchar *sync_status = (gchar *)xmlNodeGetContent(node);
+			EasSyncStatus sync_status_num = atoi(sync_status);			
+			xmlFree(sync_status);
+			if(sync_status_num != EAS_COMMON_STATUS_OK)  // not success
+			{
+				// TODO could also be a common status code!?
+				if(sync_status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT)
+				{
+					sync_status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
+				}
+				error_details = sync_status_error_map[sync_status_num];
+				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+				ret = FALSE;
+				goto finish;
+			}
+            continue;
+        }    
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Collections")) 
         {
                g_debug ("Collections:");
@@ -285,8 +313,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     }
     if (!node) {
-        g_debug ("Failed to find Collections element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Collections> element"));
+        ret = FALSE;
+		goto finish;
     }
     
     for (node = node->children; node; node = node->next) {
@@ -299,11 +330,40 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     }
     if (!node) {
-        g_debug ("Failed to find Collection element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Collection> element"));
+        ret = FALSE;
+		goto finish;
     }
 	
     for (node = node->children; node; node = node->next) {
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
+        {
+            gchar *sync_status = (gchar *)xmlNodeGetContent(node);
+			EasSyncStatus status_num = atoi(sync_status);			
+			xmlFree(sync_status);
+			if(status_num != EAS_COMMON_STATUS_OK)  // not success
+			{
+				ret = FALSE;
+
+				// TODO - think of a nicer way to do this?
+				if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
+				{
+					error_details = common_status_error_map[status_num - 100];
+				}
+				else 
+				{
+					if(status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT)// not pretty, but make sure we don't overrun array if new status added
+						status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+					error_details = itemoperations_status_error_map[status_num];	
+				}
+				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+				goto finish;
+			}
+            continue;
+        }		
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "SyncKey"))
 		{
 			priv->sync_key = (gchar *)xmlNodeGetContent(node);
@@ -320,11 +380,13 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                g_debug ("Commands:\n");
                break;
         }		
+		
 	}
 
     if (!node) {
-        g_debug ("Failed to find Commands or responses element\n");
-        return FALSE;
+        g_warning ("Found no <Responses> element or <Commands> element>");
+		// Note not setting error here as this is valid	
+		goto finish;		
     }
 
 	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")){
@@ -364,8 +426,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
 						
 						}		
-					
-					
+
 						g_debug ("FlatItem = %s", flatItem);
 						if(flatItem){
 							g_debug ("appending to added_items");
@@ -427,7 +488,6 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 						
 						}		
 					
-					
 						g_debug ("FlatItem = %s", flatItem);
 						if(flatItem){
 							g_debug ("appending to updated_items");
@@ -459,7 +519,32 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 						g_debug ("Found serverID for Item = %s", item_server_id);
 						continue;
 					}
-					
+					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "Status")) 
+					{
+						gchar *status = (gchar *)xmlNodeGetContent(appData);
+						EasSyncStatus status_num = atoi(status);			
+						xmlFree(status);
+						if(status_num != EAS_COMMON_STATUS_OK)  // not success
+						{
+							ret = FALSE;
+
+							// TODO - think of a nicer way to do this?
+							if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
+							{
+								error_details = common_status_error_map[status_num - 100];
+							}
+							else 
+							{
+								if(status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT)// not pretty, but make sure we don't overrun array if new status added
+									status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+								error_details = itemoperations_status_error_map[status_num];	
+							}
+							g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+							goto finish;
+						}
+						continue;
+					}
 				}
 				info = eas_cal_info_new ();
 				info->client_id = item_client_id;
@@ -477,9 +562,14 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 		}
 	}
 	
-	g_debug ("eas_sync_msg_parse_response --");
+	g_debug ("eas_sync_msg_parse_response--");
 
-	return TRUE;
+finish:
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
+	return ret;
 }
 
 

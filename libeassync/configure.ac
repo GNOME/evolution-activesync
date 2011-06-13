@@ -1,4 +1,4 @@
-AC_INIT(libeascal, 1.0)
+AC_INIT(libeassync, 1.0)
 AC_PREREQ([2.59])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([1.10 no-define])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 
-AC_CONFIG_SRCDIR(src/libeascal.c)
+AC_CONFIG_SRCDIR(src/libeassync.c)
 
 AC_SUBST(NO_UNDEFINED)
 

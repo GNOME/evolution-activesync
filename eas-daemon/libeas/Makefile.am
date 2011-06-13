@@ -86,7 +86,8 @@ libeas_la_SOURCES =		\
         eas-utils.h \
         eas-utils.c \
         eas-add-calendar-req.h \
-        eas-add-calendar-req.c 
+        eas-add-calendar-req.c \
+		eas-connection-errors.c       
 
 
 

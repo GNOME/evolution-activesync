@@ -1,4 +1,4 @@
 ACLOCAL_AMFLAGS = -I m4
 #SUBDIRS = libeasmail/tests
-SUBDIRS = . logger libeascal/src libeasmail/src eas-daemon/libeas eas-daemon/src eas-daemon/tests check_tests camel
+SUBDIRS = . logger libeassync/src libeasmail/src eas-daemon/libeas eas-daemon/src eas-daemon/tests check_tests camel
 EXTRA_DIST = autogen.sh
