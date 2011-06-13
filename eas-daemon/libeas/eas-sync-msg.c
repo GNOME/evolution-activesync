@@ -5,6 +5,7 @@
  * 
  */
 
+#include "eas-connection-errors.h"
 #include "eas-sync-msg.h"
 #include "eas-email-info-translator.h"
 #include "eas-cal-info-translator.h"
@@ -250,10 +251,11 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     return doc;
 }
 
-// lrm TODO set the Gerror/return value:
+
 gboolean
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
+	gboolean ret = TRUE;
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL,
 					*appData = NULL;
@@ -263,17 +265,23 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
 	g_debug ("eas_sync_msg_parse_response ++");
 	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
     if (!doc) {
-        g_debug ("Failed to parse sync response XML");
-        return FALSE;
+        g_warning ("folder_sync response XML is empty");
+		// Note not setting error here as empty doc is valid	// TODO verify this is the case
+		goto finish;
     }
     node = xmlDocGetRootElement(doc);
     
     //TODO: parse response correctly
     
     if (g_strcmp0((char *)node->name, "Sync")) {
-        g_debug("Failed to find <Sync> element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Sync> element"));
+        ret = FALSE;
+		goto finish;		
     }
     for (node = node->children; node; node = node->next) {
     
@@ -285,8 +293,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     }
     if (!node) {
-        g_debug ("Failed to find Collections element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Collections> element"));
+        ret = FALSE;
+		goto finish;
     }
     
     for (node = node->children; node; node = node->next) {
@@ -299,8 +310,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     }
     if (!node) {
-        g_debug ("Failed to find Collection element");
-        return FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <Collection> element"));
+        ret = FALSE;
+		goto finish;
     }
 	
     for (node = node->children; node; node = node->next) {
@@ -323,8 +337,9 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	}
 
     if (!node) {
-        g_debug ("Failed to find Commands or responses element\n");
-        return FALSE;
+        g_warning ("Found no <Responses> element or no <Commands element>");
+		// Note not setting error here as this is valid	// TODO verify this is the case
+		goto finish;
     }
 
 	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")){
@@ -364,8 +379,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
 						
 						}		
-					
-					
+
 						g_debug ("FlatItem = %s", flatItem);
 						if(flatItem){
 							g_debug ("appending to added_items");
@@ -427,7 +441,6 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 						
 						}		
 					
-					
 						g_debug ("FlatItem = %s", flatItem);
 						if(flatItem){
 							g_debug ("appending to updated_items");
@@ -477,9 +490,14 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 		}
 	}
 	
-	g_debug ("eas_sync_msg_parse_response --");
+	g_debug ("eas_sync_msg_parse_response--");
 
-	return TRUE;
+finish:
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
+	return ret;
 }
 
 

@@ -221,6 +221,8 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 	gboolean ret = TRUE;
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
     if (!doc) {
         g_warning ("folder_sync response XML is empty");
