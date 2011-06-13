@@ -1119,7 +1119,7 @@ complete_request:
 			break;
 			case EAS_REQ_GET_EMAIL_BODY:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);// TODO update MessageComplete to take an error rather than pass one back
+				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, error);
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
