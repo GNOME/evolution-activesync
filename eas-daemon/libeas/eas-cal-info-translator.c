@@ -268,6 +268,9 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 			{
 				const gchar* name = (const gchar*)(n->name);
 
+				//
+				// Subject
+				//
 				if (g_strcmp0(name, "Subject") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -275,6 +278,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// StartTime
+				//
 				else if (g_strcmp0(name, "StartTime") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -293,6 +300,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// EndTime
+				//
 				else if (g_strcmp0(name, "EndTime") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -311,6 +322,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// DtStamp
+				//
 				else if (g_strcmp0(name, "DtStamp") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -324,6 +339,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+				
+				//
+				// UID
+				//
 				else if (g_strcmp0(name, "UID") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -331,6 +350,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// Location
+				//
 				else if (g_strcmp0(name, "Location") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -338,6 +361,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// Body
+				//
 				else if (g_strcmp0(name, "Body") == 0)
 				{
 					xmlNodePtr subNode = NULL;
@@ -353,6 +380,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						}
 					}
 				}
+
+				//
+				// Sensitivity
+				//
 				else if (g_strcmp0(name, "Sensitivity") == 0)
 				{
 					icalproperty_class classValue = ICAL_CLASS_PUBLIC;
@@ -373,6 +404,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// BusyStatus
+				//
 				else if (g_strcmp0(name, "BusyStatus") == 0)
 				{
 					icalproperty_transp transpValue = ICAL_TRANSP_OPAQUE;
@@ -389,6 +424,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
+
+				//
+				// Categories
+				//
 				else if (g_strcmp0(name, "Categories") == 0)
 				{
 					GString* categories = g_string_new("");
@@ -414,6 +453,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					// Free the string, including the character buffer
 					g_string_free(categories, TRUE);
 				}
+
+				//
+				// Reminder
+				//
 				else if (g_strcmp0(name, "Reminder") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -434,6 +477,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 					g_free(value); value = NULL;
 				}
+
+				//
+				// AllDayEvent
+				//
 				else if (g_strcmp0(name, "AllDayEvent") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
@@ -461,18 +508,30 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					}
 					g_free(value); value = NULL;
 				}
+
+				//
+				// OrganizerName
+				//
 				else if (g_strcmp0(name, "OrganizerName") == 0)
 				{
 					organizerName = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
 					// have both OrganizerName and OrganizerEmail
 				}
+
+				//
+				// OrganizerEmail
+				//
 				else if (g_strcmp0(name, "OrganizerEmail") == 0)
 				{
 					organizerEmail = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
 					// have both OrganizerName and OrganizerEmail
 				}
+
+				//
+				// Attendees
+				//
 				else if (g_strcmp0(name, "Attendees") == 0)
 				{
 					xmlNode* attendeeNode = NULL;
@@ -581,6 +640,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						}
 					}//end for (attendee)
 				}// end else if (attendees)
+
+				//
+				// TimeZone
+				//
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
 					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
@@ -736,6 +799,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
 					}
 				}
+
+				//
+				// Recurrence
+				//
 				else if (g_strcmp0(name, "Recurrence") == 0)
 				{
 					xmlNode* subNode = NULL;
@@ -891,6 +958,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					prop = icalproperty_new_rrule(recur);
 					icalcomponent_add_property(vevent, prop);
 				}
+
+				//
+				// Exceptions
+				//
 				else if (g_strcmp0(name, "Exceptions") == 0)
 				{
 					// TODO: handle Exceptions element
