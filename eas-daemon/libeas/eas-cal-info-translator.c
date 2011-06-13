@@ -16,11 +16,22 @@
 #include <libwbxml-1.0/wbxml/wbxml.h>
 
 // Values for converting icaldurationtype into a number of minutes
-const gint SECONDS_PER_MINUTE               = 60;
-const gint MINUTES_PER_HOUR                 = 60;
-const gint MINUTES_PER_DAY                  = 60 * 24;
-const gint MINUTES_PER_WEEK                 = 60 * 24 * 7;
-const gint EPOCH_START_YEAR					= 1970;
+const gint SECONDS_PER_MINUTE          = 60;
+const gint MINUTES_PER_HOUR            = 60;
+const gint MINUTES_PER_DAY             = 60 * 24;
+const gint MINUTES_PER_WEEK            = 60 * 24 * 7;
+const gint EPOCH_START_YEAR            = 1970;
+
+// Constants for <Calendar> parsing
+const guint DAY_OF_WEEK_MONDAY         = 0x00000001;
+const guint DAY_OF_WEEK_TUESDAY        = 0x00000002;
+const guint DAY_OF_WEEK_WEDNESDAY      = 0x00000004;
+const guint DAY_OF_WEEK_THURSDAY       = 0x00000008;
+const guint DAY_OF_WEEK_FRIDAY         = 0x00000010;
+const guint DAY_OF_WEEK_SATURDAY       = 0x00000020;
+const guint DAY_OF_WEEK_SUNDAY         = 0x00000040;
+const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
+
 
 #define compile_time_assert(cond, msg) \
 	char msg[(cond)?1:-1]
@@ -57,6 +68,30 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
 
 
 /**
+ * \brief The by_day member of icalrecurrencetype is a composite value, encoding
+ *        both the day to repeat on and (in the case of monthly recurrence) the position
+ *        of the day to repeat on (e.g. 2nd Monday in each month). libical doesn't provide
+ *        an API to encode this, so we've had to write our own by reverse engineering
+ *        the implementation of icalrecurrencetype_day_day_of_week() and
+ *        icalrecurrencetype_day_position() in icalrecur.c.
+ *
+ * \param byDayDayOfWeek  The day of the week to repeat on
+ * \param byDayPos        The position of this day in the month on which to repeat
+ *                        (or 0 if not applicable)
+ */
+static short _util_make_ical_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
+{
+	// Now calculate the composite value as follows:
+	//  - Multiply byDayPos by 8
+	//  - Add byDayDayOfWeek if byDayPos is positive, or subtract if negative
+	short dowShort = (short)byDayDayOfWeek;
+	return
+		(byDayPos * 8) +
+		((byDayPos >= 0) ? dowShort : (-1 * dowShort));
+}
+
+
+/**
  * \brief Private function to decode an EasSystemTime struct containing details of a recurring
  *        timezone change pattern, modify it to a format iCalendar expects and create the
  *        required RRULE property value.
@@ -86,12 +121,12 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// So, we have all the information we need in the SYSTEMTIME but there's quite a bit of
 	// conversin to do to get to the iCalendar properties.
 
-	EasSystemTime   modifiedDate;
-	GDate*          recurrenceStartDate;
-	GDateWeekday    weekday;
-	gint            occurrence;
-	short           byDayPos;
-	short           byDayDayOfWeek;
+	EasSystemTime              modifiedDate;
+	GDate*                     recurrenceStartDate;
+	GDateWeekday               weekday;
+	gint                       occurrence;
+	short                      byDayPos;
+	icalrecurrencetype_weekday byDayDayOfWeek;
 
 	// We're going to modify the value of date to reflect the iCal values. (e.g. the Year
 	// will change from 0 to 1970 and the Day will change from a 1..5 "nth occurrence in the
@@ -151,7 +186,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// The by_day value in icalrecurrencetype is a short containing two
 	// fields: the day, and the position in the month. Weirdly there's no
 	// API to encode this (only to decode it) so we'll have to do it by hand.
-	// Unfortunaely the comment in icalrecur.c ("The day's position in the
+	// Unfortunately the comment in icalrecur.c ("The day's position in the
 	// period (Nth-ness) and the numerical value of the day are encoded
 	// together as: pos*7 + dow") is wrong. :-\ From the code we can see it's
 	// actually as implemented below.
@@ -163,15 +198,12 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// Here the day is represented by the enum icalrecurrencetype_weekday, which has the
 	// range 0 = ICAL_NO_WEEKDAY, 1 = ICAL_SUNDAY_WEEKDAY, 2 = ICAL_MONDAY_WEEKDAY...
 	// so we can just add 1 to the EasSystemTime value (see above).
-	byDayDayOfWeek = (short)(date->DayOfWeek + 1);
+	byDayDayOfWeek = (icalrecurrencetype_weekday)(date->DayOfWeek + 1);
 
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
 	//  - Add byDayDayOfWeek if byDayPos is positive, or subtract if negative
-	rrule->by_day[0] =
-		(byDayPos * 8) +
-		((byDayPos >= 0) ? byDayDayOfWeek : (-1 * byDayDayOfWeek));
-
+	rrule->by_day[0] = _util_make_ical_rrule_by_day_value(byDayDayOfWeek, byDayPos);
 
 	// Finally, copy the modified version back into the date that was passed in
 	memcpy(date, &modifiedDate, sizeof(EasSystemTime));
@@ -389,7 +421,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					// Build an icaltriggertype structure
 					trigger = icaltriggertype_from_int(0); // Null the fields first
 					trigger.duration.is_neg = 1;
-					trigger.duration.minutes = (unsigned int)g_ascii_strtoll(value, NULL, 10);
+					trigger.duration.minutes = (unsigned int)atoi(value);
 
 					prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
 					icalcomponent_add_property(valarm, prop);
@@ -470,9 +502,9 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							}
 							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Status") == 0)
 							{
-								gint64 status = 0;
+								int status = 0;
 								value = (gchar*)xmlNodeGetContent(subNode);
-								status = g_ascii_strtoll(value, NULL, 10);
+								status = atoi(value);
 								switch(status)
 								{
 									case 0: // Response unknown
@@ -498,9 +530,9 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 							}
 							else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Attendee_Type"))
 							{
-								gint64 roleValue = 0;
+								int roleValue = 0;
 								value = (gchar*)xmlNodeGetContent(subNode);
-								roleValue = g_ascii_strtoll(value, NULL, 10);
+								roleValue = atoi(value);
 								switch (roleValue)
 								{
 									// TODO create an enum for these values
@@ -704,9 +736,169 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
 					}
 				}
+				else if (g_strcmp0(name, "Recurrence") == 0)
+				{
+					xmlNode* subNode = NULL;
+					struct icalrecurrencetype recur;
 
-				// TODO: handle Recurrence element
-				// TODO: handle Exceptions element
+					// Ensure the icalrecurrencetype is null
+					icalrecurrencetype_clear(&recur);
+
+					g_debug("Recurrence element found in EAS XML");
+
+					for (subNode = n->children; subNode; subNode = subNode->next)
+					{
+						const gchar* elemName = (const gchar*)subNode->name;
+						value = (gchar*)xmlNodeGetContent(subNode);
+
+						if (g_strcmp0(elemName, "Type") == 0)
+						{
+							int typeInt = atoi(value);
+							switch (typeInt)
+							{
+								case 0: // Recurs daily
+									recur.freq = ICAL_DAILY_RECURRENCE;
+									break;
+								case 1: // Recurs weekly
+									recur.freq = ICAL_WEEKLY_RECURRENCE;
+									break;
+								case 2: // Recurs monthly
+									recur.freq = ICAL_MONTHLY_RECURRENCE;
+									break;
+								case 3: // Recurs monthly on the nth day
+									recur.freq = ICAL_MONTHLY_RECURRENCE;
+									break;
+								case 5: // Recurs yearly
+									recur.freq = ICAL_YEARLY_RECURRENCE;
+									break;
+								case 6: // Recurs yearly on the nth day
+									recur.freq = ICAL_YEARLY_RECURRENCE;
+									break;
+							}
+						}
+						else if (g_strcmp0(elemName, "Occurrences") == 0)
+						{
+							// From [MS-ASCAL]:
+							// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
+							// recommended that only one of these elements be included in a Recurrence element (section
+							// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
+							// the value of the Occurrences element and ignore the Until element.
+							recur.count = atoi((char*)xmlNodeGetContent(subNode));
+							recur.until = icaltime_null_time();
+						}
+						else if (g_strcmp0(elemName, "Interval") == 0)
+						{
+							recur.interval = (short)atoi((char*)xmlNodeGetContent(subNode));
+						}
+						else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
+						{
+							g_warning("Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
+						}
+						else if (g_strcmp0(elemName, "DayOfWeek") == 0)
+						{
+							// A recurrence rule can target any combination of the 7 week days.
+							// EAS encodes these as a bit set in a single int value.
+							// libical encodes them as an array (max size 7) of icalrecurrencetype_weekday
+							// enum values.
+							// This block of code converts the former into the latter.
+
+							int dayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
+							int index = 0;
+
+							// Note: must use IF for subsequent blocks, not ELSE IF
+							if (dayOfWeek & DAY_OF_WEEK_MONDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_TUESDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_WEDNESDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_THURSDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_FRIDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_SATURDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
+							}
+							if (dayOfWeek & DAY_OF_WEEK_SUNDAY)
+							{
+								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
+							}
+						}
+						else if (g_strcmp0(elemName, "MonthOfYear") == 0)
+						{
+							recur.by_month[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
+						}
+						else if (g_strcmp0(elemName, "Until") == 0)
+						{
+							// From [MS-ASCAL]:
+							// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
+							// recommended that only one of these elements be included in a Recurrence element (section
+							// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
+							// the value of the Occurrences element and ignore the Until element.
+							if (recur.count == 0)
+							{
+								recur.until = icaltime_from_string((gchar*)xmlNodeGetContent(subNode));
+							}
+						}
+						else if (g_strcmp0(elemName, "DayOfMonth") == 0)
+						{
+							recur.by_month_day[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
+						}
+						else if (g_strcmp0(elemName, "CalendarType") == 0)
+						{
+							const int calType = atoi((char*)xmlNodeGetContent(subNode));
+							if ((calType != 0)    // Default
+							    &&
+							    (calType != 1))   // Gregorian
+							{
+								// No way of handling in iCal
+								g_warning("Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
+							}
+						}
+						else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
+						{
+							if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
+							{
+								// Only applies to non-Gregorian calendars so can't be handled in iCal
+								g_warning("Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
+							}
+						}
+						else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
+						{
+							int firstDayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
+
+							// EAS value is in range 0=Sunday..6=Saturday
+							// iCal value is in range 0=NoWeekday, 1=Sunday..7=Saturday
+							recur.week_start = (icalrecurrencetype_weekday)firstDayOfWeek + 1;
+						}
+						else
+						{
+							g_warning("Unknown element encountered in <Recurrence> element: %s", elemName);
+						}
+					}
+
+					prop = icalproperty_new_rrule(recur);
+					icalcomponent_add_property(vevent, prop);
+				}
+				else if (g_strcmp0(name, "Exceptions") == 0)
+				{
+					// TODO: handle Exceptions element
+
+
+
+					
+				}
 			}
 		}
 
