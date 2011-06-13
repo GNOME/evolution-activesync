@@ -111,9 +111,9 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
     return doc;
 }
 
+
 /*
-translates from eas sync status code to GError. 
-*/
+translates from eas sync status code to GError. TODO this could just be a table in a header?
 static void set_sync_status_error(guint sync_status, GError **error)
 {
 	switch(sync_status)
@@ -214,6 +214,7 @@ static void set_sync_status_error(guint sync_status, GError **error)
 
 	return;
 }
+*/
 
 gboolean
 eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, GError** error)
@@ -221,7 +222,8 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 	gboolean ret = TRUE;
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
-
+	EasError error_details;
+	
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
     if (!doc) {
@@ -245,7 +247,12 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 			xmlFree(sync_status);
 			if(sync_status_num != 1)  // not success
 			{
-				set_sync_status_error(sync_status_num, error);
+				if(sync_status_num > EAS_SYNC_STATUS_LIMIT)// not pretty, but make sure we don't overrun array if new status added
+				{
+					sync_status_num = EAS_SYNC_STATUS_LIMIT;
+				}
+				error_details = status_error_map[sync_status_num];
+				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
 				ret = FALSE;
 				goto finish;
 			}			

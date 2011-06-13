@@ -337,9 +337,9 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 	}
 
     if (!node) {
-        g_warning ("Found no <Responses> element or no <Commands element>");
-		// Note not setting error here as this is valid	// TODO verify this is the case
-		goto finish;
+        g_warning ("Found no <Responses> element or <Commands> element>");
+		// Note not setting error here as this is valid	
+		goto finish;		
     }
 
 	if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Commands")){
