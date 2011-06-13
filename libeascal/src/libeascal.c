@@ -149,7 +149,9 @@ free_string_array(gchar **array)
 }
 
 gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+                                                 EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
@@ -167,15 +169,17 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	g_assert(this);
 	g_assert(sync_key);
 
-    g_debug("eas_cal_handler_sync_folder_hierarch - dbus proxy ok");
+    g_debug("eas_cal_handler_get_latest_items - dbus proxy ok");
     
 	g_assert(g_slist_length(*items_created) == 0);
 	g_assert(g_slist_length(*items_updated) == 0);
 	g_assert(g_slist_length(*items_deleted) == 0);
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items", error,
+	ret = dbus_g_proxy_call(proxy, "get_latest_items", error,
 				  G_TYPE_UINT64, this->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
@@ -184,7 +188,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		          G_TYPE_STRV, &updated_item_array,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_get_calendar_items - dbus proxy called");
+    g_debug("eas_cal_handler_get_latest_items - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -248,7 +252,8 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 
 gboolean 
 eas_cal_handler_delete_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+                             				     const gchar* folder_id,
                                                  GSList *items_deleted,
                                                  GError **error)
 {
@@ -264,8 +269,9 @@ eas_cal_handler_delete_items(EasCalHandler* this,
     g_debug("eas_cal_handler_delete_items - dbus proxy ok");
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "delete_calendar_items", error,
+	ret = dbus_g_proxy_call(proxy, "delete_items", error,
 				  G_TYPE_UINT64, this->priv->account_uid,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, items_deleted,
 		          G_TYPE_INVALID, 
@@ -289,7 +295,9 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 
 gboolean 
 eas_cal_handler_update_items(EasCalHandler* self, 
-                             gchar *sync_key, 
+                             gchar *sync_key,
+                             EasItemType type,
+                             const gchar* folder_id,
                              GSList *items_updated,
                              GError **error)
 {
@@ -310,8 +318,10 @@ eas_cal_handler_update_items(EasCalHandler* self,
     build_serialised_calendar_info_array (&updated_item_array, items_updated, error);
     
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "update_calendar_items", error,
+	ret = dbus_g_proxy_call(proxy, "update_items", error,
 				  G_TYPE_UINT64, self->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, updated_item_array,
 		          G_TYPE_INVALID, 
@@ -363,7 +373,9 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 
 gboolean 
 eas_cal_handler_add_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+                          						 EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList *items_added,
                                                  GError **error)
 {
@@ -382,8 +394,10 @@ eas_cal_handler_add_items(EasCalHandler* this,
     build_serialised_calendar_info_array (&added_item_array, items_added, error);
     
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "add_calendar_items", error,
+	ret = dbus_g_proxy_call(proxy, "add_items", error,
 				  G_TYPE_UINT64, this->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, added_item_array,
 		          G_TYPE_INVALID, 

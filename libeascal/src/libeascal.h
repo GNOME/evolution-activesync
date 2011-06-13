@@ -6,6 +6,7 @@
 #define EAS_CAL_H
 
 #include <glib-object.h>
+#include "../../eas-daemon/libeas/eas-request-base.h"
 
 
 G_BEGIN_DECLS
@@ -47,6 +48,8 @@ EasCalHandler *eas_cal_handler_new(guint64 account_uid);
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
+ * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
+ * gchar *folder_id (in ):      identifier for folder to sync from                              	 
  * GSList **items_created (out): returns a list of EasCalInfo structs that describe
  *                              created items.  If there are no new created items
  *                              this parameter will be unchanged.
@@ -62,7 +65,9 @@ EasCalHandler *eas_cal_handler_new(guint64 account_uid);
  *                              back through underlying layers
 */
 gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+                                            	 EasItemType type,
+                                   		  		 const gchar* folder_id,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
@@ -75,6 +80,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
+ * gchar *folder_id (in ):      identifier for folder to delete items from    
  * GSList *items_deleted (in): provides a list of strings that identify the deleted
  *                              items' server IDs. 
  * GError **error (out):        returns error information if an error occurs.  If no
@@ -83,7 +89,8 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_cal_handler_delete_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+		                                         const gchar* folder_id,
                                                  GSList *items_deleted,
                                                  GError **error);
 
@@ -94,6 +101,8 @@ gboolean eas_cal_handler_delete_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
+ * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
+ * gchar *folder_id (in ):      identifier for folder to update       
  * GSList *items_updated (in): provides a list of EasCalInfo structs that describe
  *                              update items.  If there are no new updated items
  *                              this parameter will be unchanged.
@@ -103,7 +112,9 @@ gboolean eas_cal_handler_delete_items(EasCalHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_cal_handler_update_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+		                                         EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList *items_updated,
                                                  GError **error);
 
@@ -114,6 +125,8 @@ gboolean eas_cal_handler_update_items(EasCalHandler* this,
  * EasCalHandler* this (in):  use value returned from eas_cal_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
+ * EAS_ITEM_TYPE type (in):		identify the type of data being added
+ * gchar *folder_id (in ):      identifier for folder to add to       
  * GSList *items_added (in): provides a list of EasCalInfo structs that describe
  *                              added items.  If there are no new updated items
  *                              this parameter will be unchanged.
@@ -123,7 +136,9 @@ gboolean eas_cal_handler_update_items(EasCalHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_cal_handler_add_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+                                                 gchar *sync_key,
+                               					 EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList *items_added,
                                                  GError **error);
 

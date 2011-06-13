@@ -44,25 +44,32 @@ void eas_calendar_set_eas_connection(EasCalendar* self, EasConnection* easConnOb
 
 
 /* TODO:Insert your Calendar Interface APIS here*/
-void eas_calendar_get_latest_calendar_items(EasCalendar* self,
+void eas_calendar_get_latest_items(EasCalendar* self,
                                           guint64 account_uid,
+                                   		  guint64 type,
+                                   		  const gchar* folder_id,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
 
-gboolean eas_calendar_delete_calendar_items(EasCalendar* self,
+gboolean eas_calendar_delete_items(EasCalendar* self,
                                     guint64 account_uid,
+                                    const gchar* folder_id,
                                     const gchar* sync_key, 
                                     const GSList *deleted_items_array,
                                     DBusGMethodInvocation* context);
 
-gboolean eas_calendar_update_calendar_items(EasCalendar* self,
+gboolean eas_calendar_update_items(EasCalendar* self,
                                     guint64 account_uid,
+                                    guint64 type,
+                                    const gchar* folder_id,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context);
 
-gboolean eas_calendar_add_calendar_items(EasCalendar* self,
+gboolean eas_calendar_add_items(EasCalendar* self,
                                     guint64 account_uid,
+                                    guint64 type,
+                                    const gchar* folder_id,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context);

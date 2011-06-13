@@ -125,7 +125,7 @@ static void testGetLatestCalendar(EasCalHandler *cal_handler,
                                      GError **error){
     gboolean ret = FALSE;
  	mark_point();
-    ret  = eas_cal_handler_get_calendar_items (cal_handler, sync_key, 	
+    ret  = eas_cal_handler_get_calendar_items (cal_handler, sync_key, EAS_ITEM_CALENDAR, "1", 	
 	        &(*created),	
 	        &(*updated),
 	        &(*deleted),
@@ -261,7 +261,7 @@ START_TEST (test_eas_cal_handler_delete_cal)
 		calitemToDel = g_slist_append(calitemToDel, calitem->server_id);
 
 		// delete the first calendar item in the folder
-		rtn = eas_cal_handler_delete_items(cal_handler, folder_sync_key, calitemToDel,&error);
+		rtn = eas_cal_handler_delete_items(cal_handler, folder_sync_key, "1", calitemToDel,&error);
 		if(error){
 			fail_if(rtn == FALSE,"%s",error->message);
 		}
@@ -341,7 +341,7 @@ START_TEST (test_eas_cal_handler_update_cal)
 		calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
 
 		// update the first calendar item in the folder
-		rtn = eas_cal_handler_update_items(cal_handler, folder_sync_key, calitemToUpdate,&error);
+		rtn = eas_cal_handler_update_items(cal_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
 		if(error){
 			fail_if(rtn == FALSE,"%s",error->message);
 		}
@@ -418,7 +418,7 @@ START_TEST (test_eas_cal_handler_add_cal)
 	calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
 
 
-	rtn = eas_cal_handler_add_items(cal_handler, folder_sync_key, calitemToUpdate,&error);
+	rtn = eas_cal_handler_add_items(cal_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
 	if(error){
 		fail_if(rtn == FALSE,"%s",error->message);
 	}
