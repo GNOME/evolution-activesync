@@ -13,6 +13,7 @@
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
 #include "eas-update-email-req.h"
+#include "eas-connection-errors.h"
 
 #include "eas-get-email-attachment-req.h"
 
@@ -137,6 +138,7 @@ build_serialised_folder_array(gchar ***serialised_folder_array, const GSList *fo
 
     g_assert(serialised_folder_array);
     g_assert(*serialised_folder_array == NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	*serialised_folder_array = g_malloc0(array_len * sizeof(gchar*));
 
@@ -164,7 +166,9 @@ cleanup:
 			g_free((*serialised_folder_array)[i]);
 		}
 		g_free(*serialised_folder_array);
-		// TODO set error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
 	}
 
 	return ret;
@@ -182,16 +186,32 @@ build_serialised_email_info_array(gchar ***serialised_email_info_array, const GS
 
     g_debug("build email arrays++");
 
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_assert(serialised_email_info_array);
     g_assert(*serialised_email_info_array == NULL);
 
 	*serialised_email_info_array = g_malloc0(array_len * sizeof(gchar*));
+	if(!serialised_email_info_array)
+	{
+		ret = FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+					EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+					("out of memory"));
+		goto finish;
+	}
 
 	for(i = 0; i < array_len - 1; i++){
 		gchar *tstring = g_strdup(l->data);
 		g_assert(l != NULL);
 		(*serialised_email_info_array)[i]=tstring;
 		l = g_slist_next (l);
+	}
+	
+finish:
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
 	}
     
 	return ret;
@@ -215,6 +235,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     gchar** ret_created_folders_array = NULL;
     gchar** ret_updated_folders_array = NULL;
     gchar** ret_deleted_folders_array = NULL;
+	gboolean ret;
 
     eflag = e_flag_new ();
     
@@ -235,40 +256,49 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
     g_debug("eas_mail_sync_email_folder_hierarchy++ 3");
 
     // Activate the request
-    eas_sync_folder_hierarchy_req_Activate (req, &error);
+    ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
+	if(!ret)
+	{
+		goto finish;
+	}
     e_flag_wait(eflag);
     e_flag_free (eflag);
-
-    // TODO Check error
     
 	// Fetch the response data from the message
-    eas_sync_folder_hierarchy_req_ActivateFinish (req,
+    ret = eas_sync_folder_hierarchy_req_ActivateFinish (req,
                                                   &ret_sync_key,
                                                   &added_folders,
                                                   &updated_folders,
                                                   &deleted_folders,
                                                   &error);
-
+	if(!ret)
+	{
+		goto finish;
+	}
+	
     // Serialise the response data from GSList* to char** for transmission over Dbus
 
-    if(build_serialised_folder_array(&ret_created_folders_array, added_folders, &error))
+	ret = build_serialised_folder_array(&ret_created_folders_array, added_folders, &error);
+    if(ret)
     {
-        if(build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error))
+		ret = build_serialised_folder_array(&ret_updated_folders_array, updated_folders, &error);
+        if(ret)
         {
-            build_serialised_folder_array(&ret_deleted_folders_array, deleted_folders, &error);
+            ret = build_serialised_folder_array(&ret_deleted_folders_array, deleted_folders, &error);
         }
     }
 
+	
+finish:	
      // Return the error or the requested data to the mail client
-    if (error) 
+    if (!ret) 
     {
-       g_debug(">> Daemon : Error ");
-       dbus_g_method_return_error (context, error);
-       g_error_free (error);
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
     } 
     else
     {
-        g_debug(">> Daemon : Success-");
 		dbus_g_method_return (context,
                               ret_sync_key,
                               ret_created_folders_array,
@@ -306,7 +336,8 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     gchar** ret_changed_email_array = NULL;
     // TODO ActivateFinish needs to be refactored to serialise the data.
     GSList *a = NULL, *b = NULL, *c = NULL;
-    
+    gboolean ret = TRUE;
+
     g_debug ("eas_mail_sync_folder_email++");
 
     flag = e_flag_new ();
@@ -320,39 +351,52 @@ gboolean eas_mail_sync_folder_email(EasMail* self,
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
     // Activate Request
-    eas_sync_req_Activate (req,
+    ret = eas_sync_req_Activate (req,
                            sync_key,
                            account_uid,
                            flag,
                            collection_id,
                            EAS_ITEM_MAIL,
                            &error);
-
+	if(!ret)
+	{
+		goto finish;
+	}
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
 
-    // TODO Check error
+
 
     // Fetch the serialised response for transmission over DBusresponse
 
     // TODO ActivateFinish needs to be refactored to serialise the data.
-    eas_sync_req_ActivateFinish(req,
+    ret = eas_sync_req_ActivateFinish(req,
                                 &ret_sync_key,
                                 &a /* &ret_add_email_array     */,
                                 &b /* &ret_changed_email_array */,
                                 &c /* &ret_deleted_email_array */,
                                 &error);
+	if(!ret)
+	{
+		goto finish;
+	}
 
+	ret = build_serialised_email_info_array(&ret_added_email_array, a, &error);
+	if(ret)
+	{
+		ret = build_serialised_email_info_array(&ret_changed_email_array, b, &error);
+		if(ret)
+		{
+		    ret = build_serialised_email_info_array(&ret_deleted_email_array, c, &error);
+		}
+	}
 
-   if(build_serialised_email_info_array(&ret_added_email_array, a, &error)){
-        if(build_serialised_email_info_array(&ret_changed_email_array, b, &error)){
-            build_serialised_email_info_array(&ret_deleted_email_array, c, &error);
-        }
-   }
-
-    if (error)
+finish:
+    if (!ret)
     {
+		g_debug("returning error %s", error->message);
+		g_assert (error != NULL);		
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     } 

@@ -1114,12 +1114,12 @@ complete_request:
 			
 			case EAS_REQ_SYNC:
 			{
-				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc, &error);// TODO update MessageComplete to take an error rather than pass one back
+				eas_sync_req_MessageComplete ((EasSyncReq *)req, doc, error);
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_BODY:
 			{
-				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);// TODO
+				eas_get_email_body_req_MessageComplete ((EasGetEmailBodyReq *)req, doc, &error);// TODO update MessageComplete to take an error rather than pass one back
 			}
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
@@ -1169,15 +1169,4 @@ complete_request:
 	g_debug("eas_connection - handle_server_response--");
 }
 
-GQuark eas_connection_error_quark (void)
-{
-	static GQuark quark = 0;
-
-	if (G_UNLIKELY (quark == 0)) {
-		const gchar *string = "eas-connection-error-quark";
-		quark = g_quark_from_static_string (string);
-	}
-
-	return quark;
-}
 

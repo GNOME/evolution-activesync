@@ -19,6 +19,8 @@ eas-daemon/tests/activesyncd-test-001
 libeasmail/tests/libeasmail_test
 TODO.tasks
 TODO.list
+libeascal/aclocal.m4
+*.m4
 
 # Folders to ignore
 config/*
@@ -28,6 +30,7 @@ eas-daemon/config/*
 eas-daemon/m4/*
 libeasmail/config/*
 libeasmail/m4/*
+libeascal/m4/*
 
 # File paterns to ignore
 *.o

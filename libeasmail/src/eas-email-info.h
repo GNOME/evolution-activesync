@@ -48,6 +48,7 @@ struct _EasEmailInfo{
 	...
 	TODO which, if any, of the other fields supplied by exchange should be included?
 	*/
+	// TODO size, date received (pref as time_t) fields
 };
 
 GType eas_email_info_get_type (void) G_GNUC_CONST;
