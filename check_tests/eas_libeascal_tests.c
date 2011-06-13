@@ -3,8 +3,8 @@
 #include <string.h>
 #include <check.h>
 
-#include "../libeascal/src/libeascal.h"
-#include "../libeascal/src/eas-cal-info.h"
+#include "../libeassync/src/libeassync.h"
+#include "../libeassync/src/eas-cal-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
 
 
@@ -105,19 +105,19 @@ END:VCALENDAR";
 
 
 
-static void testGetCalendarHandler(EasCalHandler **cal_handler, guint64 accountuid){
+static void testGetCalendarHandler(EasSyncHandler **sync_handler, guint64 accountuid){
   	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
-    *cal_handler = eas_cal_handler_new(accountuid);
+    *sync_handler = eas_sync_handler_new(accountuid);
 
     // confirm that the handle object has been correctly setup
-    fail_if(*cal_handler == NULL,
+    fail_if(*sync_handler == NULL,
     "eas_mail_handler_new returns NULL when given a valid ID");
-    fail_if((*cal_handler)->priv == NULL,
+    fail_if((*sync_handler)->priv == NULL,
     "eas_mail_handler_new account ID object (EasEmailHandler *) member priv (EasEmailHandlerPrivate *) NULL"); 
 }
 
-static void testGetLatestCalendar(EasCalHandler *cal_handler,
+static void testGetLatestCalendar(EasSyncHandler *sync_handler,
                                      gchar *sync_key,
                                      GSList **created,
                                      GSList **updated,
@@ -125,7 +125,7 @@ static void testGetLatestCalendar(EasCalHandler *cal_handler,
                                      GError **error){
     gboolean ret = FALSE;
  	mark_point();
-    ret  = eas_cal_handler_get_calendar_items (cal_handler, sync_key, EAS_ITEM_CALENDAR, "1", 	
+    ret  = eas_sync_handler_get_calendar_items (sync_handler, sync_key, EAS_ITEM_CALENDAR, "1", 	
 	        &(*created),	
 	        &(*updated),
 	        &(*deleted),
@@ -153,14 +153,14 @@ START_TEST (test_cal)
 }
 END_TEST
 
-START_TEST (test_get_cal_handler)
+START_TEST (test_get_sync_handler)
 {
     guint64 accountuid = 123456789;
-    EasCalHandler *cal_handler = NULL;
+    EasSyncHandler *sync_handler = NULL;
   
-    testGetCalendarHandler(&cal_handler, accountuid);  
+    testGetCalendarHandler(&sync_handler, accountuid);  
 
-	g_object_unref(cal_handler);
+	g_object_unref(sync_handler);
 }
 END_TEST
 
@@ -171,11 +171,11 @@ START_TEST (test_get_latest_calendar_items)
 	// there should be a mechanism for getting the value from the same place
 	// that the daemon uses
     guint64 accountuid = 123456789;
-    EasCalHandler *cal_handler = NULL;
+    EasSyncHandler *sync_handler = NULL;
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
-    testGetCalendarHandler(&cal_handler, accountuid);
+    testGetCalendarHandler(&sync_handler, accountuid);
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -191,7 +191,7 @@ START_TEST (test_get_latest_calendar_items)
 
 	mark_point();
 	// call into the daemon to get the folder hierarchy from the exchange server
-	testGetLatestCalendar (cal_handler,sync_key,&created,&updated,&deleted,&error);
+	testGetLatestCalendar (sync_handler,sync_key,&created,&updated,&deleted,&error);
 		
 	//  free everything!
     g_slist_foreach(created, (GFunc)g_object_unref, NULL);
@@ -202,7 +202,7 @@ START_TEST (test_get_latest_calendar_items)
     g_slist_free(deleted);
     g_slist_free(updated);
 
-	g_object_unref(cal_handler);
+	g_object_unref(sync_handler);
 }
 END_TEST
 
@@ -224,16 +224,16 @@ START_TEST(test_translate_ical_to_xml)
 }
 END_TEST
 
-START_TEST (test_eas_cal_handler_delete_cal)
+START_TEST (test_eas_sync_handler_delete_cal)
 {
     guint64 accountuid = 123456789;
-    EasCalHandler *cal_handler = NULL;
+    EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
-    testGetCalendarHandler(&cal_handler, accountuid);
+    testGetCalendarHandler(&sync_handler, accountuid);
 
 
     gchar folder_sync_key[64];
@@ -242,7 +242,7 @@ START_TEST (test_eas_cal_handler_delete_cal)
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;    
 
-    testGetLatestCalendar(cal_handler,
+    testGetLatestCalendar(sync_handler,
                       folder_sync_key,
                       &calitems_created,
                       &calitems_updated,
@@ -261,7 +261,7 @@ START_TEST (test_eas_cal_handler_delete_cal)
 		calitemToDel = g_slist_append(calitemToDel, calitem->server_id);
 
 		// delete the first calendar item in the folder
-		rtn = eas_cal_handler_delete_items(cal_handler, folder_sync_key, "1", calitemToDel,&error);
+		rtn = eas_sync_handler_delete_items(sync_handler, folder_sync_key, "1", calitemToDel,&error);
 		if(error){
 			fail_if(rtn == FALSE,"%s",error->message);
 		}
@@ -293,21 +293,21 @@ START_TEST (test_eas_cal_handler_delete_cal)
     g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
 
-	g_object_unref(cal_handler);
+	g_object_unref(sync_handler);
 	
 }
 END_TEST
 
-START_TEST (test_eas_cal_handler_update_cal)
+START_TEST (test_eas_sync_handler_update_cal)
 {
     guint64 accountuid = 123456789;
-    EasCalHandler *cal_handler = NULL;
+    EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
-    testGetCalendarHandler(&cal_handler, accountuid);
+    testGetCalendarHandler(&sync_handler, accountuid);
 
 
     gchar folder_sync_key[64];
@@ -316,7 +316,7 @@ START_TEST (test_eas_cal_handler_update_cal)
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;    
 
-    testGetLatestCalendar(cal_handler,
+    testGetLatestCalendar(sync_handler,
                       folder_sync_key,
                       &calitems_created,
                       &calitems_updated,
@@ -341,7 +341,7 @@ START_TEST (test_eas_cal_handler_update_cal)
 		calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
 
 		// update the first calendar item in the folder
-		rtn = eas_cal_handler_update_items(cal_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
+		rtn = eas_sync_handler_update_items(sync_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
 		if(error){
 			fail_if(rtn == FALSE,"%s",error->message);
 		}
@@ -373,21 +373,21 @@ START_TEST (test_eas_cal_handler_update_cal)
     g_slist_foreach(calitems_updated, (GFunc)g_object_unref, NULL);
     g_slist_foreach(calitems_created, (GFunc)g_object_unref, NULL);
 
-	g_object_unref(cal_handler);
+	g_object_unref(sync_handler);
 }
 END_TEST
 
 
-START_TEST (test_eas_cal_handler_add_cal)
+START_TEST (test_eas_sync_handler_add_cal)
 {
     guint64 accountuid = 123456789;
-    EasCalHandler *cal_handler = NULL;
+    EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
 	
 	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
-    testGetCalendarHandler(&cal_handler, accountuid);
+    testGetCalendarHandler(&sync_handler, accountuid);
 
 
     gchar folder_sync_key[64];
@@ -396,7 +396,7 @@ START_TEST (test_eas_cal_handler_add_cal)
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;    
 
-    testGetLatestCalendar(cal_handler,
+    testGetLatestCalendar(sync_handler,
                       folder_sync_key,
                       &calitems_created,
                       &calitems_updated,
@@ -418,7 +418,7 @@ START_TEST (test_eas_cal_handler_add_cal)
 	calitemToUpdate = g_slist_append(calitemToUpdate, updatedcalitem);
 
 
-	rtn = eas_cal_handler_add_items(cal_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
+	rtn = eas_sync_handler_add_items(sync_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate,&error);
 	if(error){
 		fail_if(rtn == FALSE,"%s",error->message);
 	}
@@ -430,7 +430,7 @@ START_TEST (test_eas_cal_handler_add_cal)
 
 	testCalFound = TRUE;
 
-	g_object_unref(cal_handler);
+	g_object_unref(sync_handler);
 }
 END_TEST
 
@@ -445,12 +445,12 @@ Suite* eas_libeascal_suite (void)
   suite_add_tcase (s, tc_libeascal);
   //tcase_add_test (tc_libeascal, test_cal);
   
-  tcase_add_test (tc_libeascal, test_get_cal_handler);
+  tcase_add_test (tc_libeascal, test_get_sync_handler);
   tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
 //  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
-  //tcase_add_test (tc_libeascal, test_eas_cal_handler_delete_cal);
-  //tcase_add_test (tc_libeascal, test_eas_cal_handler_update_cal);
-	//tcase_add_test (tc_libeascal, test_eas_cal_handler_add_cal);
+  //tcase_add_test (tc_libeascal, test_eas_sync_handler_delete_cal);
+  //tcase_add_test (tc_libeascal, test_eas_sync_handler_update_cal);
+	//tcase_add_test (tc_libeascal, test_eas_sync_handler_add_cal);
 
   return s;
 }
