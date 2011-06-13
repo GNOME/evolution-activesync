@@ -9,7 +9,7 @@ GQuark eas_connection_error_quark (void);
 
 #define EAS_CONNECTION_ERROR (eas_connection_error_quark ())
 
-enum {
+enum _EasConnectionError{
     EAS_CONNECTION_ERROR_INVALIDCONTENT=101,
     EAS_CONNECTION_ERROR_INVALIDWBXML=102,
     EAS_CONNECTION_ERROR_INVALIDXML=103,
@@ -119,14 +119,45 @@ enum {
 	EAS_CONNECTION_SYNC_ERROR_STATUSUNRECOGNIZED,	
 
 	
-} EasConnectionError;
+} ;
 
+typedef enum _EasConnectionError EasConnectionError;
+
+/*
 struct EasErrorMap {
 	const gchar *error_id;
 	gint error_code;
 };
 
 gint eas_get_error_code (const gchar *str);
+*/
+
+enum EasSyncStatus
+{
+	EAS_SYNC_STATUS_OK = 1,
+	EAS_SYNC_STATUS_INVALIDSYNCKEY = 3,
+	EAS_SYNC_STATUS_PROTOCOLERROR = 4,
+	EAS_SYNC_STATUS_SERVERERROR = 5,
+	EAS_SYNC_STATUS_CONVERSIONERROR = 6,
+	EAS_SYNC_STATUS_CONFLICTERROR = 7,
+	EAS_SYNC_STATUS_OBJECTNOTFOUND = 8,
+	EAS_SYNC_STATUS_MAILBOXFULL = 9,
+	EAS_SYNC_STATUS_FOLDERHIERARCHYCHANGED = 12,
+	EAS_SYNC_STATUS_REQUESTINCOMPLETE = 13,
+	EAS_SYNC_STATUS_INVALIDWAITORHEARTBEAT = 14,
+	EAS_SYNC_STATUS_INVALIDSYNCCOMMAND = 15,
+	EAS_SYNC_STATUS_RETRY = 16,
+	EAS_SYNC_STATUS_LIMIT,   // no sync status spec'd above 16 currently
+};
+
+struct _EasError{
+	EasConnectionError code;
+	const gchar *message;
+};
+
+typedef struct _EasError EasError;
+
+extern EasError status_error_map[];
 
 G_END_DECLS
 
