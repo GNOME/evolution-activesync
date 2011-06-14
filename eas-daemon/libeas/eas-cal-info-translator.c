@@ -1131,6 +1131,238 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 						}
 					}
 					break;
+				case ICAL_RRULE_PROPERTY:
+					{
+						// Get the iCal RRULE property
+						struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
+
+						// Create a new <Recurrence> element to contain the recurrence sub-elements
+						xmlNodePtr recurNode = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Recurrence", NULL);
+
+						// Other declarations
+						int    recurType    = 0;
+						gchar* xmlValue     = NULL;
+						int    index        = 0;
+						guint  dayOfWeek    = 0;
+						gint   weekOfMonth  = 0;
+						gint   monthOfYear  = 0;
+						gint   dayOfMonth   = 0;
+
+						//
+						// Type element
+						//
+						switch (rrule.freq)
+						{
+							case ICAL_SECONDLY_RECURRENCE:
+							case ICAL_MINUTELY_RECURRENCE:
+							case ICAL_HOURLY_RECURRENCE:
+								g_warning("DATA LOSS: cannot encode secondly/minutely/hourly recurrence in EAS.");
+								break;
+							case ICAL_DAILY_RECURRENCE:
+								recurType = 0;
+								break;
+							case ICAL_WEEKLY_RECURRENCE:
+								recurType = 1;
+								break;
+							case ICAL_MONTHLY_RECURRENCE:
+								recurType = 2;
+								break;
+							case ICAL_YEARLY_RECURRENCE:
+								recurType = 5;
+								break;
+							case ICAL_NO_RECURRENCE:
+							default:
+								g_warning("RRULE with no recurrence type.");
+								break;
+						}
+						// Note: don't add this to the XML yet: if we encounter an "nth day in the month" value
+						// blow we need to change this
+
+						//
+						// Occurrences & Until elements
+						//
+						// Note: count and until are mutually exclusive in both formats, with count taking precedence
+						if (rrule.count)
+						{
+							// EAS specifies a maximum value of 999 for the Occurrences element
+							if (rrule.count > 999)
+							{
+								g_warning("DATA LOSS: RRULE had recurrence count of %d, maximum is 999.", rrule.count);
+								rrule.count = 999;
+							}
+							xmlValue = g_strdup_printf("%d", rrule.count);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Occurrences", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+						else if (!icaltime_is_null_time(rrule.until))
+						{
+							// Note: icaltime_as_ical_string() retains ownership of the string, so no need to free
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Until", (const xmlChar*)icaltime_as_ical_string(rrule.until));
+						}
+
+						//
+						// Interval element
+						//
+						if (rrule.interval)
+						{
+							// EAS specifies a maximum value of 999 for the Interval element
+							if (rrule.count > 999)
+							{
+								g_warning("DATA LOSS: RRULE had recurrence interval of %d, maximum is 999.", rrule.interval);
+								rrule.interval = 999;
+							}
+							xmlValue = g_strdup_printf("%d", rrule.interval);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+
+						// 
+						// DayOfWeek & WeekOfMonth elements
+						//
+						// icalrecurrencetype arrays are terminated with ICAL_RECURRENCE_ARRAY_MAX unless they're full
+						for (index = 0;
+						     (index < ICAL_BY_DAY_SIZE) && (rrule.by_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
+						     index++)
+						{
+							enum icalrecurrencetype_weekday icalDayOfWeek = icalrecurrencetype_day_day_of_week(rrule.by_day[index]);
+							gint icalDayPosition = icalrecurrencetype_day_position(rrule.by_day[index]);
+
+							switch (icalDayOfWeek)
+							{
+								case ICAL_SUNDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_SUNDAY;
+									break;
+								case ICAL_MONDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_MONDAY;
+									break;
+								case ICAL_TUESDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_TUESDAY;
+									break;
+								case ICAL_WEDNESDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_WEDNESDAY;
+									break;
+								case ICAL_THURSDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_THURSDAY;
+									break;
+								case ICAL_FRIDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_FRIDAY;
+									break;
+								case ICAL_SATURDAY_WEEKDAY:
+									dayOfWeek &= DAY_OF_WEEK_SATURDAY;
+									break;
+								case ICAL_NO_WEEKDAY:
+								default:
+									g_warning("Found by-day RRULE with an empty day value");
+									break;
+							}
+
+							// Now process the position part
+							if (icalDayPosition != 0)
+							{
+								if (icalDayPosition < -1)
+								{
+									g_warning("DATA LOSS: EAS cannot encode RRULE position value of %d", icalDayPosition);
+									// For now, convert all large naegative values (meaning nth from the end of the month)
+									// to 5 (meaning last of the month)
+									icalDayPosition = 5;
+								}
+								else if (icalDayPosition == -1)
+								{
+									// Convert to the equivalent EAS value
+									// (both mean "last instance in the month")
+									icalDayPosition = 5;
+								}
+
+								// Check if we've already processed a position part from one of the other recurrence days
+								// (EAS has no way of encoding different position values for different days)
+								if (weekOfMonth && (weekOfMonth != icalDayPosition))
+								{
+									g_warning("DATA LOSS: Position %d already stored for this recurrence; ignoring value of %d", weekOfMonth, icalDayPosition);
+								}
+								else
+								{
+									weekOfMonth = icalDayPosition;
+								}
+						    }
+						}// end of for loop
+
+						if (dayOfWeek)
+						{
+							xmlValue = g_strdup_printf("%d", dayOfWeek);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+						if (weekOfMonth)
+						{
+							// Set the Type value to 3 ("Recurs monthly on the nth day")
+							recurType = 3;
+							
+							xmlValue = g_strdup_printf("%d", weekOfMonth);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:WeekOfMonth", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+
+						// And now we can add the Type element too
+						xmlValue = g_strdup_printf("%d", recurType);
+						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Type", (const xmlChar*)xmlValue);
+						g_free(xmlValue); xmlValue = NULL;
+
+						//
+						// FirstDayOfWeek
+						//
+						if (rrule.week_start)
+						{
+							// EAS value is 0=Sunday..6=Saturday
+							// libical value is 0=NoDay, 1=Sunday..7=Saturday
+							xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayfWeek", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+
+						//
+						// MonthOfYear
+						//
+						for (index = 0;
+						     (index < ICAL_BY_MONTH_SIZE) && (rrule.by_month[index] != ICAL_RECURRENCE_ARRAY_MAX);
+						     index++)
+						{
+							if (monthOfYear == 0)
+							{
+								monthOfYear = rrule.by_month[index];
+							}
+							else
+							{
+								// We've already set monthOfyear: EAS only supports a single monthly recurrence
+								// (unlike days where we can repeat on many days of the week)
+								g_warning("DATA LOSS: Already set to recur on month %d, discarding recurrence info for month %d", monthOfYear, rrule.by_month[index]);
+							}
+						}
+						xmlValue = g_strdup_printf("%d", monthOfYear);
+						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
+						g_free(xmlValue); xmlValue = NULL;
+
+						//
+						// DayOfMonth
+						//
+						for (index = 0;
+						     (index < ICAL_BY_MONTHDAY_SIZE) && (rrule.by_month_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
+						     index++)
+						{
+							if (dayOfMonth == 0)
+							{
+								dayOfMonth = rrule.by_month_day[index];
+							}
+							else
+							{
+								// EAS only supports a single occurrence of DayOfMonth
+								g_warning("DATA LOSS: Already set to recur on day %d of the month, discarding recurrence info for day %d of month", dayOfMonth, rrule.by_month_day[index]);
+							}
+						}
+						xmlValue = g_strdup_printf("%d", dayOfMonth);
+						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
+						g_free(xmlValue); xmlValue = NULL;
+					}
+					break;
 
 				// TODO: all the rest :)
 
