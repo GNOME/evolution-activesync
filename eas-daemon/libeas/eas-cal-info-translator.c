@@ -19,6 +19,7 @@
 const gint SECONDS_PER_MINUTE          = 60;
 const gint MINUTES_PER_HOUR            = 60;
 const gint MINUTES_PER_DAY             = 60 * 24;
+const gint SECONDS_PER_DAY             = 60 * 60 * 24;
 const gint MINUTES_PER_WEEK            = 60 * 24 * 7;
 const gint EPOCH_START_YEAR            = 1970;
 
@@ -1261,7 +1262,7 @@ static void _util_process_rrule_property(icalproperty* prop, xmlNodePtr appData)
 
 	if (dayOfWeek)
 	{
-		g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
+		//g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
 		xmlValue = g_strdup_printf("%d", dayOfWeek);
 		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
@@ -1355,6 +1356,7 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 	if (vevent)
 	{
 		xmlNodePtr categories = NULL;
+		struct icaltimetype startTime, endTime;
 		
 		icalproperty* prop;
 		for (prop = icalcomponent_get_first_property(vevent, ICAL_ANY_PROPERTY);
@@ -1377,11 +1379,15 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 				// DTSTART
 				case ICAL_DTSTART_PROPERTY:
 					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					// And additionally store the start time so we can calculate the AllDayEvent value later
+					startTime = icalproperty_get_dtstart(prop);
 					break;
 					
 				// DTEND
 				case ICAL_DTEND_PROPERTY:
 					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					// And additionally store the end time so we can calculate the AllDayEvent value later
+					endTime = icalproperty_get_dtend(prop);
 					break;
 					
 				// LOCATION
@@ -1470,7 +1476,22 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 					// Note: icalproperty_as_ical_string() keeps ownership of the string so we don't have to delete
 					g_warning("DATA LOSS: unparsed iCalendar property: %s", icalproperty_as_ical_string(prop));
 					break;
-			}
+			}// end of switch
+		}// end of for loop
+
+		// Add an <AllDayEvent> element if both the start and end dates have no times
+		// (ie. just dates, with time set to midnight) and are 1 day apart
+		// (from [MS-ASCAL]: "An item marked as an all day event is understood to begin
+		// on midnight of the current day and to end on midnight of the next day.")
+		if (icaltime_is_null_time(startTime) &&
+		    icaltime_is_null_time(endTime) &&
+		    (icaltime_as_timet(endTime) - icaltime_as_timet(startTime)) == (time_t)SECONDS_PER_DAY)
+		{
+			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)"1");
+		}
+		else
+		{
+			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)"0");
 		}
 	}
 }
