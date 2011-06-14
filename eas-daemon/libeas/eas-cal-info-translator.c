@@ -23,13 +23,13 @@ const gint MINUTES_PER_WEEK            = 60 * 24 * 7;
 const gint EPOCH_START_YEAR            = 1970;
 
 // Constants for <Calendar> parsing
-const guint DAY_OF_WEEK_MONDAY         = 0x00000001;
-const guint DAY_OF_WEEK_TUESDAY        = 0x00000002;
-const guint DAY_OF_WEEK_WEDNESDAY      = 0x00000004;
-const guint DAY_OF_WEEK_THURSDAY       = 0x00000008;
-const guint DAY_OF_WEEK_FRIDAY         = 0x00000010;
-const guint DAY_OF_WEEK_SATURDAY       = 0x00000020;
-const guint DAY_OF_WEEK_SUNDAY         = 0x00000040;
+const guint DAY_OF_WEEK_SUNDAY         = 0x00000001;
+const guint DAY_OF_WEEK_MONDAY         = 0x00000002;
+const guint DAY_OF_WEEK_TUESDAY        = 0x00000004;
+const guint DAY_OF_WEEK_WEDNESDAY      = 0x00000008;
+const guint DAY_OF_WEEK_THURSDAY       = 0x00000010;
+const guint DAY_OF_WEEK_FRIDAY         = 0x00000020;
+const guint DAY_OF_WEEK_SATURDAY       = 0x00000040;
 const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 
 
@@ -1206,14 +1206,19 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 						if (rrule.interval)
 						{
 							// EAS specifies a maximum value of 999 for the Interval element
-							if (rrule.count > 999)
+							if (rrule.interval > 999)
 							{
 								g_warning("DATA LOSS: RRULE had recurrence interval of %d, maximum is 999.", rrule.interval);
 								rrule.interval = 999;
 							}
-							xmlValue = g_strdup_printf("%d", rrule.interval);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
+							// Only write the Interval element if it's greater than 1;
+							// 1 is te default (i.e. every day)
+							if (rrule.interval > 1)
+							{
+								xmlValue = g_strdup_printf("%d", rrule.interval);
+								xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
+								g_free(xmlValue); xmlValue = NULL;
+							}
 						}
 
 						// 
@@ -1230,25 +1235,25 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 							switch (icalDayOfWeek)
 							{
 								case ICAL_SUNDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_SUNDAY;
+									dayOfWeek |= DAY_OF_WEEK_SUNDAY;
 									break;
 								case ICAL_MONDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_MONDAY;
+									dayOfWeek |= DAY_OF_WEEK_MONDAY;
 									break;
 								case ICAL_TUESDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_TUESDAY;
+									dayOfWeek |= DAY_OF_WEEK_TUESDAY;
 									break;
 								case ICAL_WEDNESDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_WEDNESDAY;
+									dayOfWeek |= DAY_OF_WEEK_WEDNESDAY;
 									break;
 								case ICAL_THURSDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_THURSDAY;
+									dayOfWeek |= DAY_OF_WEEK_THURSDAY;
 									break;
 								case ICAL_FRIDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_FRIDAY;
+									dayOfWeek |= DAY_OF_WEEK_FRIDAY;
 									break;
 								case ICAL_SATURDAY_WEEKDAY:
-									dayOfWeek &= DAY_OF_WEEK_SATURDAY;
+									dayOfWeek |= DAY_OF_WEEK_SATURDAY;
 									break;
 								case ICAL_NO_WEEKDAY:
 								default:
@@ -1288,6 +1293,7 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 
 						if (dayOfWeek)
 						{
+							g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
 							xmlValue = g_strdup_printf("%d", dayOfWeek);
 							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
 							g_free(xmlValue); xmlValue = NULL;
@@ -1315,7 +1321,7 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 							// EAS value is 0=Sunday..6=Saturday
 							// libical value is 0=NoDay, 1=Sunday..7=Saturday
 							xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayfWeek", (const xmlChar*)xmlValue);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayOfWeek", (const xmlChar*)xmlValue);
 							g_free(xmlValue); xmlValue = NULL;
 						}
 
@@ -1337,10 +1343,13 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 								g_warning("DATA LOSS: Already set to recur on month %d, discarding recurrence info for month %d", monthOfYear, rrule.by_month[index]);
 							}
 						}
-						xmlValue = g_strdup_printf("%d", monthOfYear);
-						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
-						g_free(xmlValue); xmlValue = NULL;
-
+						if (monthOfYear > 0)
+						{
+							xmlValue = g_strdup_printf("%d", monthOfYear);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
+						
 						//
 						// DayOfMonth
 						//
@@ -1358,9 +1367,12 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 								g_warning("DATA LOSS: Already set to recur on day %d of the month, discarding recurrence info for day %d of month", dayOfMonth, rrule.by_month_day[index]);
 							}
 						}
-						xmlValue = g_strdup_printf("%d", dayOfMonth);
-						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
-						g_free(xmlValue); xmlValue = NULL;
+						if (dayOfMonth > 0)
+						{
+							xmlValue = g_strdup_printf("%d", dayOfMonth);
+							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
+							g_free(xmlValue); xmlValue = NULL;
+						}
 					}
 					break;
 
