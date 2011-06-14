@@ -40,29 +40,31 @@ GType eas_calendar_get_type (void) G_GNUC_CONST;
 EasCalendar* eas_calendar_new(void);
 
 EasConnection*  eas_calendar_get_eas_connection(EasCalendar* self);
+#if 0
 void eas_calendar_set_eas_connection(EasCalendar* self, EasConnection* easConnObj);
+#endif
 
 
 /* TODO:Insert your Calendar Interface APIS here*/
 void eas_calendar_get_latest_calendar_items(EasCalendar* self,
-                                          guint64 account_uid,
+                                          const gchar* account_uid,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
 
 gboolean eas_calendar_delete_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const GSList *deleted_items_array,
                                     DBusGMethodInvocation* context);
 
 gboolean eas_calendar_update_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context);
 
 gboolean eas_calendar_add_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context);

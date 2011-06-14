@@ -65,12 +65,13 @@ EasCalendar* eas_calendar_new(void)
 	return easCal;
 }
 
-
+#if 0
 void eas_calendar_set_eas_connection(EasCalendar* self, EasConnection* easConnObj)
 {
    EasCalendarPrivate* priv = self->priv;
    priv->connection = easConnObj;
 }
+#endif
 
 
 EasConnection*
@@ -163,9 +164,9 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 
 void 
 eas_calendar_get_latest_calendar_items(EasCalendar* self,
-                                          guint64 account_uid,
-                                          const gchar* sync_key,
-                                          DBusGMethodInvocation* context)
+                                       const gchar* account_uid,
+                                       const gchar* sync_key,
+                                       DBusGMethodInvocation* context)
 {
     GError *error = NULL;
     GSList* added_items = NULL;
@@ -182,23 +183,27 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 
     g_debug("eas_calendar_get_latest_calendar_items++");
 
-    eflag = e_flag_new ();
-    
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(self->priv->connection, account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return;
     }
 
-
-    g_debug("eas_calendar_get_latest_calendar_items++");
     syncReqObj = g_object_new(EAS_TYPE_SYNC_REQ , NULL);
 
     eas_request_base_SetConnection (&syncReqObj->parent_instance, 
                                     self->priv->connection);
-                                    
 
     g_debug("eas_calendar_get_latest_calendar_items - new req");
     // Start the request
+    eflag = e_flag_new ();
     eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, "1", EAS_ITEM_CALENDAR, &error);
 
     g_debug("eas_calendar_get_latest_calendar_items  - activate req");
@@ -254,7 +259,7 @@ eas_calendar_get_latest_calendar_items(EasCalendar* self,
 
 gboolean 
 eas_calendar_delete_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const GSList *deleted_items_array,
                                     DBusGMethodInvocation* context)
@@ -266,14 +271,21 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 
     g_debug("eas_calendar_delete_calendar_items++");
 
-    flag = e_flag_new ();
-
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(self->priv->connection, account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
 
     // Create the request
+    flag = e_flag_new ();
 	req = eas_delete_email_req_new (account_uid, sync_key, "1", deleted_items_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -308,7 +320,7 @@ eas_calendar_delete_calendar_items(EasCalendar* self,
 
 gboolean 
 eas_calendar_update_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context)
@@ -320,17 +332,24 @@ eas_calendar_update_calendar_items(EasCalendar* self,
 	EasUpdateCalendarReq *req = NULL;
 
 	g_debug("eas_calendar_update_calendar_items++");
-	 
-    flag = e_flag_new ();
 
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(eas_calendar_get_eas_connection(self), account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
 
     build_calendar_list(calendar_items, &items, &error);
 
     // Create the request
+    flag = e_flag_new ();
 	req = eas_update_calendar_req_new (account_uid, sync_key, "1", items, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -360,7 +379,7 @@ eas_calendar_update_calendar_items(EasCalendar* self,
 
 gboolean 
 eas_calendar_add_calendar_items(EasCalendar* self,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
                                     const gchar* sync_key, 
                                     const gchar **calendar_items,
                                     DBusGMethodInvocation* context)
@@ -374,17 +393,24 @@ eas_calendar_add_calendar_items(EasCalendar* self,
 	EasAddCalendarReq *req = NULL;
 
 	g_debug("eas_calendar_add_calendar_items++");
- 
-    flag = e_flag_new ();
 
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(eas_calendar_get_eas_connection(self), account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
 
     build_calendar_list(calendar_items, &items, &error);
 
     // Create the request
+    flag = e_flag_new ();
 	req = eas_add_calendar_req_new (account_uid, sync_key, "1", items, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -400,7 +426,7 @@ eas_calendar_add_calendar_items(EasCalendar* self,
 	                                    &ret_sync_key,
 	                                    &added_items,
 	                                    &error);
-		
+
     if (error)
     {
         dbus_g_method_return_error (context, error);

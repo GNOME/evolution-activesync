@@ -11,7 +11,7 @@
 struct _EasDeleteEmailReqPrivate
 {
 	EasSyncMsg* syncMsg;
-	guint64 accountID;
+	gchar* accountID;
 	gchar* syncKey;
 	gchar* folder_id;
 	GSList *server_ids_array;
@@ -30,7 +30,7 @@ eas_delete_email_req_init (EasDeleteEmailReq *object)
 	object->priv = priv = EAS_DELETE_EMAIL_REQ_PRIVATE(object);
 
 	g_debug("eas_delete_email_req_init++");
-	priv->accountID = -1;
+	priv->accountID = NULL;
 	priv->syncKey = NULL;
 
 	eas_request_base_SetRequestType (&object->parent_instance, 
@@ -50,6 +50,7 @@ eas_delete_email_req_finalize (GObject *object)
 	g_free(priv->syncKey);
 	g_slist_foreach(priv->server_ids_array, (GFunc)g_object_unref, NULL);
 	g_slist_free(priv->server_ids_array);
+	g_free(priv->accountID);
 	
 	g_debug("eas_delete_email_req_finalize--");
 	G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
@@ -98,7 +99,7 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
 	g_debug("eas_delete_email_req_Activate--");	
 }
 
-EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EFlag *flag)
+EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EFlag *flag)
 {
 	EasDeleteEmailReq* self = g_object_new (EAS_TYPE_DELETE_EMAIL_REQ, NULL);
 	EasDeleteEmailReqPrivate *priv = self->priv;
@@ -118,7 +119,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (guint64 accountId, const gchar *syn
 		priv->server_ids_array = g_slist_append(priv->server_ids_array, g_strdup(server_id));
 	}
 	
-	priv->accountID = accountId;
+	priv->accountID = g_strdup(accountId);
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
 	g_debug("eas_delete_email_req_new--");

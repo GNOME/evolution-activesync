@@ -39,7 +39,7 @@ struct _EasGetEmailBodyReq
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
 EasGetEmailBodyReq* 
-eas_get_email_body_req_new (const guint64 account_uid, 
+eas_get_email_body_req_new (const gchar* account_uid, 
                             const gchar *collection_id, 
                             const gchar *server_id, 
                             const gchar *mime_directory,

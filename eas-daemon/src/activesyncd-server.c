@@ -111,7 +111,7 @@ void eas_logger(const gchar *log_domain,
 int main(int argc, char** argv) {
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
-    EasConnection* EasConnObj = NULL;
+//    EasConnection* EasConnObj = NULL;
     EasCalendar* EasCalendarObj = NULL;
     EasCommon* EasCommonObj = NULL;
     EasContact* EasContactObj = NULL;
@@ -139,7 +139,8 @@ int main(int argc, char** argv) {
     //Creating all the GObjects
     g_debug("activesyncd Daemon Started");
 
-    g_debug("Creating EEasConnection GObject.\n");
+#if 0
+    g_debug("Creating EEasConnection GObject.");
     EasConnObj = eas_connection_new();
     if (EasConnObj == NULL) {
         g_debug("Error: Failed to create EEasConnection instance");
@@ -147,6 +148,7 @@ int main(int argc, char** argv) {
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
     }
+#endif
 
     g_debug("Creating calendar  gobject.");
     EasCalendarObj = eas_calendar_new();
@@ -181,10 +183,10 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Pass a EasConnection handle to the exposed GObjects");
-    eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
-    //ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
-    //ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
-    eas_mail_set_eas_connection(EasMailObj, EasConnObj);
+    // eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
+    // ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
+    // ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
+    // eas_mail_set_eas_connection(EasMailObj, EasConnObj);
    
     g_debug("Connecting to the session DBus");
     bus = dbus_g_bus_get(DBUS_BUS_SESSION, &error);

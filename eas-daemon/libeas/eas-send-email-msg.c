@@ -27,7 +27,7 @@ G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
 struct _EasSendEmailMsgPrivate
 {
-	guint64 account_id;
+	gchar* account_id;
 	gchar* client_id; 
 	gchar* mime_string;	
 };
@@ -42,7 +42,7 @@ eas_send_email_msg_init (EasSendEmailMsg *object)
 
 	object->priv = priv = EAS_SEND_EMAIL_MSG_PRIVATE(object);
 
-	priv->account_id = 0;
+	priv->account_id = NULL;
 	priv->client_id = NULL;
 	priv->mime_string = NULL;
 	
@@ -59,6 +59,7 @@ eas_send_email_msg_finalize (GObject *object)
 
 	g_free(priv->mime_string);
 	g_free(priv->client_id);
+	g_free(priv->account_id);
 	g_free (priv);
 	msg->priv = NULL;
 	
@@ -81,7 +82,7 @@ eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 }
 
 EasSendEmailMsg*
-eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string)
+eas_send_email_msg_new (const char* account_id, const gchar* client_id, const gchar* mime_string)
 {
 	EasSendEmailMsg* msg = NULL;
 	EasSendEmailMsgPrivate *priv = NULL;
@@ -93,7 +94,7 @@ eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar*
 
 	priv->client_id = g_strdup(client_id);
 	priv->mime_string = g_strdup(mime_string);
-	priv->account_id = account_id;
+	priv->account_id = g_strdup(account_id);
 
 	g_debug("eas_send_email_msg_new--");
 	return msg;

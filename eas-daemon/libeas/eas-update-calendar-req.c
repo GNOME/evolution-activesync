@@ -16,7 +16,7 @@ G_DEFINE_TYPE (EasUpdateCalendarReq, eas_update_calendar_req, EAS_TYPE_REQUEST_B
 struct _EasUpdateCalendarReqPrivate
 {
 	EasSyncMsg* sync_msg;
-	guint64 account_id;
+	gchar* account_id;
 	gchar* sync_key;
 	gchar* folder_id;
 	GSList *serialised_calendar; 
@@ -32,7 +32,7 @@ eas_update_calendar_req_init (EasUpdateCalendarReq *object)
 	object->priv = priv = EAS_UPDATE_CALENDAR_REQ_PRIVATE(object);
 
 	priv->sync_msg = NULL;
-	priv->account_id = 0;
+	priv->account_id = NULL;
 	priv->sync_key = NULL;
 	priv->folder_id = NULL;
 	priv->serialised_calendar = NULL;
@@ -51,6 +51,8 @@ eas_update_calendar_req_finalize (GObject *object)
 	EasUpdateCalendarReqPrivate *priv = req->priv;
 	
 	g_debug("eas_update_calendar_req_finalize++");
+
+	g_free(priv->account_id);
 
 	g_object_unref(priv->sync_msg);
 	g_free (priv);
@@ -80,7 +82,7 @@ eas_update_calendar_req_class_init (EasUpdateCalendarReqClass *klass)
 
 
 // TODO - update this to take a GSList of serialised calendars? rem to copy the list
-EasUpdateCalendarReq *eas_update_calendar_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
+EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
 {
 	EasUpdateCalendarReq* self = g_object_new (EAS_TYPE_UPDATE_CALENDAR_REQ, NULL);
 	EasUpdateCalendarReqPrivate *priv = self->priv;
@@ -94,7 +96,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(guint64 account_id, const gcha
 	priv->sync_key = g_strdup(sync_key);
 	priv->folder_id = g_strdup(folder_id);
 	priv->serialised_calendar = (GSList *)serialised_calendar;
-	priv->account_id = account_id;
+	priv->account_id = g_strdup(account_id);
 
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 

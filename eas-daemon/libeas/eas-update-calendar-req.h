@@ -39,7 +39,7 @@ struct _EasUpdateCalendarReq
 GType eas_update_calendar_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasUpdateCalendarReq *eas_update_calendar_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const GSList *serialised_calendar, EFlag *flag);
+EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const GSList *serialised_calendar, EFlag *flag);
 
 // start async request
 void eas_update_calendar_req_Activate(EasUpdateCalendarReq *self);

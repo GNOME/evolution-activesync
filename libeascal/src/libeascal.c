@@ -25,7 +25,7 @@ G_DEFINE_TYPE (EasCalHandler, eas_cal_handler, G_TYPE_OBJECT);
 struct _EasCalHandlerPrivate{
 	DBusGConnection* bus;	
     DBusGProxy *remoteEas;
-    guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+    gchar* account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GMainLoop* main_loop;
 	
 };
@@ -46,7 +46,7 @@ eas_cal_handler_init (EasCalHandler *cnc)
 	
 	priv->remoteEas = NULL;
 	priv->bus = NULL;
-	priv->account_uid = 0;
+	priv->account_uid = NULL;
 	priv->main_loop = NULL;
 	cnc->priv = priv;
 	g_debug("eas_cal_handler_init--");
@@ -61,6 +61,7 @@ eas_cal_handler_finalize (GObject *object)
 	g_debug("eas_cal_handler_finalize++");
 
 	priv = cnc->priv;
+    g_free(priv->account_uid);
 
 	g_main_loop_quit (priv->main_loop);
 	dbus_g_connection_unref (priv->bus);
@@ -86,7 +87,7 @@ eas_cal_handler_class_init (EasCalHandlerClass *klass)
 }
 
 EasCalHandler *
-eas_cal_handler_new(guint64 account_uid)
+eas_cal_handler_new(const gchar* account_uid)
 {
 	GError* error = NULL;
 	EasCalHandler *object = NULL;
@@ -94,8 +95,10 @@ eas_cal_handler_new(guint64 account_uid)
 	g_type_init();
 
     g_log_set_default_handler(eas_logger, NULL);
-	g_debug("eas_cal_handler_new++");
+	g_debug("eas_cal_handler_new++ : account_uid[%s]",
+            (account_uid?account_uid:"NULL"));
 
+    if (!account_uid) return NULL;
 
 	object = g_object_new (EAS_TYPE_CAL_HANDLER , NULL);
 
@@ -128,7 +131,7 @@ eas_cal_handler_new(guint64 account_uid)
 		return NULL;
 	}
 
-	object->priv->account_uid = account_uid;
+	object->priv->account_uid = g_strdup(account_uid);
 
 	g_debug("eas_cal_handler_new--");
 	return object;
@@ -175,7 +178,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+				  G_TYPE_STRING, this->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
@@ -265,7 +268,7 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "delete_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+				  G_TYPE_STRING, this->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, items_deleted,
 		          G_TYPE_INVALID, 
@@ -311,7 +314,7 @@ eas_cal_handler_update_items(EasCalHandler* self,
     
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "update_calendar_items", error,
-				  G_TYPE_UINT64, self->priv->account_uid,
+				  G_TYPE_STRING, self->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, updated_item_array,
 		          G_TYPE_INVALID, 
@@ -383,7 +386,7 @@ eas_cal_handler_add_items(EasCalHandler* this,
     
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "add_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+				  G_TYPE_STRING, this->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, added_item_array,
 		          G_TYPE_INVALID, 
