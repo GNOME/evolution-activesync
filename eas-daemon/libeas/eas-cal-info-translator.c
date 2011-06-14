@@ -211,6 +211,462 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 
 
 /**
+ * \brief Process the <Attendees> element during parsing of an EAS XML document
+ *
+ */
+static void _util_process_attendees_element(xmlNodePtr n, icalcomponent* vevent)
+{
+	gchar*         value = NULL;
+	icalproperty*  prop  = NULL;
+	icalparameter* param = NULL;
+
+	xmlNode* attendeeNode = NULL;
+
+	g_debug("Attendees element found in EAS XML");
+
+	for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
+	{
+		// Variables for attendee properties and parameters
+		gchar*                   email      = NULL;
+		gchar*                   name       = NULL;
+		icalparameter_partstat   partstat   = ICAL_PARTSTAT_NONE;	// Participatant Status parameter
+		icalparameter_role       role       = ICAL_ROLE_NONE;
+		xmlNodePtr               subNode    = NULL;
+
+		g_debug("Attendee element found in EAS XML");
+
+		for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
+		{
+			if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Email") == 0)
+			{
+				email = (gchar*)xmlNodeGetContent(subNode);
+			}								
+			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Name") == 0)
+			{
+				name = (gchar*)xmlNodeGetContent(subNode);								
+			}
+			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Status") == 0)
+			{
+				int status = 0;
+				value = (gchar*)xmlNodeGetContent(subNode);
+				status = atoi(value);
+				switch(status)
+				{
+					case 0: // Response unknown
+					case 5: // Not responded
+						partstat = ICAL_PARTSTAT_NEEDSACTION;
+						break;
+					case 2: // Tentative
+						partstat = ICAL_PARTSTAT_TENTATIVE;
+						break;									
+					case 3: // Accept
+						partstat = ICAL_PARTSTAT_ACCEPTED;
+						break;	
+					case 4: // Decline
+						partstat = ICAL_PARTSTAT_DECLINED;
+						break;									
+					default:
+						partstat = ICAL_PARTSTAT_NONE;
+						g_warning("unrecognised attendee status received");
+						break;
+				}// end switch status
+				
+				g_free(value); value = NULL;
+			}
+			else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Attendee_Type"))
+			{
+				int roleValue = 0;
+				value = (gchar*)xmlNodeGetContent(subNode);
+				roleValue = atoi(value);
+				switch (roleValue)
+				{
+					// TODO create an enum for these values
+					case 1: //Required
+						role = ICAL_ROLE_REQPARTICIPANT;
+						break;
+					case 2: //Optional
+						role = ICAL_ROLE_OPTPARTICIPANT;
+						break;
+					case 3: //Resource
+						role = ICAL_ROLE_NONPARTICIPANT;
+						break;
+					default:
+						role = ICAL_ROLE_NONE;
+						g_warning("unrecognised attendee type received");
+						break;
+				}// end switch type
+				
+				g_free(value); value = NULL;
+			}		
+			
+		}// end for subNodes
+
+		// Now finally build and add the property, assuming we have at least an e-mail address
+		if (email && strlen(email))
+		{
+			prop = icalproperty_new_attendee(email);
+
+			if (email && strlen(name))
+			{
+				param = icalparameter_new_cn(name);
+				icalproperty_add_parameter(prop, param);
+			}
+			if (partstat != ICAL_PARTSTAT_NONE)
+			{
+				param = icalparameter_new_partstat(partstat);
+				icalproperty_add_parameter(prop, param);
+			}
+			if (role != ICAL_ROLE_NONE)
+			{
+				param = icalparameter_new_role(role);
+				icalproperty_add_parameter(prop, param);
+			}
+			
+			icalcomponent_add_property(vevent, prop);
+		}
+	}
+}
+
+
+/**
+ * \brief Process the <Timezone> element during parsing of an EAS XML document
+ *
+ * \param n          An XML node pointing to the <Recurrence> element
+ * \param vtimezone  The iCalendar VTIMEZONE component to add the parsed timezone properties to
+ * \param tzid       Pointer to a buffer to initialise with the parsed TZID (timezone ID) string
+ */
+static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
+{
+	gchar*         value = NULL;
+	icalproperty*  prop = NULL;
+	xmlChar*       timeZoneBase64Buffer = xmlNodeGetContent(n);
+	gsize          timeZoneRawBytesSize = 0;
+	guchar*        timeZoneRawBytes = g_base64_decode((const gchar*)timeZoneBase64Buffer, &timeZoneRawBytesSize);
+	EasTimeZone    timeZoneStruct;
+	
+	xmlFree(timeZoneBase64Buffer);
+
+	// TODO Check decode of timezone for endianess problems
+
+	if (timeZoneRawBytesSize == sizeof(EasTimeZone))
+	{
+		memcpy(&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
+		g_free(timeZoneRawBytes);
+		timeZoneRawBytes = NULL;
+
+		{
+			// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
+			// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
+			const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
+			const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
+			icalcomponent*              xstandard             = NULL;
+			icalcomponent*              xdaylight             = NULL;
+			struct icalrecurrencetype   rrule;
+			struct icaltimetype         time;
+			
+		
+			// Using StandardName as the TZID
+			// (Doesn't matter if it's not an exact description: this field is only used internally
+			// during iCalendar encoding/decoding)
+			// Note: using tzid here rather than value, as we need it elsewhere in this function
+			*tzid = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName,
+				                   (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+			// If no StandardName was supplied, we can just use a temporary name instead.
+			// No need to support more than one: the EAS calendar will only have one Timezone
+			// element. And no need to localise, as it's only used internally.
+			if (*tzid == NULL || strlen(*tzid) == 0)
+			{
+				*tzid = g_strdup("Standard Timezone");
+			}
+			prop = icalproperty_new_tzid(*tzid);
+			icalcomponent_add_property(vtimezone, prop);
+
+			
+			//
+			// STANDARD component
+			//
+			
+			xstandard = icalcomponent_new(ICAL_XSTANDARD_COMPONENT);
+
+			icalrecurrencetype_clear(&rrule);
+
+			// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
+			// the start date of a recurring sequence, and add an RRULE.
+			if (timeZoneStruct.StandardDate.Year == 0)
+			{
+				_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
+			}
+
+			// Add the DTSTART property
+			time = icaltime_null_time();
+			time.year = timeZoneStruct.StandardDate.Year;
+			time.month = timeZoneStruct.StandardDate.Month;
+			time.day = timeZoneStruct.StandardDate.Day;
+			time.hour = timeZoneStruct.StandardDate.Hour;
+			time.minute = timeZoneStruct.StandardDate.Minute;
+			time.second = timeZoneStruct.StandardDate.Second;
+			prop = icalproperty_new_dtstart(time);
+			icalcomponent_add_property(xstandard, prop);
+
+			// Add the RRULE (if required)
+			if (rrule.freq != ICAL_NO_RECURRENCE)
+			{
+				prop = icalproperty_new_rrule(rrule);
+				icalcomponent_add_property(xstandard, prop);
+			}
+
+			// Add TZOFFSETFROM and TZOFFSETTO
+			// Note that libical expects these properties in seconds.
+			prop = icalproperty_new_tzoffsetfrom(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
+			icalcomponent_add_property(xstandard, prop);
+			prop = icalproperty_new_tzoffsetto(standardUtcOffsetMins * SECONDS_PER_MINUTE);
+			icalcomponent_add_property(xstandard, prop);
+
+			value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName, (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
+			if (value)
+			{
+				if (strlen(value))
+				{
+					prop = icalproperty_new_tzname(value);
+					icalcomponent_add_property(xstandard, prop);
+				}
+				g_free(value); value = NULL;
+			}
+
+			// And now add the STANDARD component to the VTIMEZONE
+			icalcomponent_add_component(vtimezone, xstandard);
+
+			
+			//
+			// DAYLIGHT component
+			//
+		
+			xdaylight = icalcomponent_new(ICAL_XDAYLIGHT_COMPONENT);
+
+			// Reset the RRULE
+			icalrecurrencetype_clear(&rrule);
+
+			// If timeZoneStruct.DaylightDate.Year == 0 we need to convert it into
+			// the start date of a recurring sequence, and add an RRULE.
+			if (timeZoneStruct.DaylightDate.Year == 0)
+			{
+				_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
+			}
+
+			// Add the DTSTART property
+			time = icaltime_null_time();
+			time.year = timeZoneStruct.DaylightDate.Year;
+			time.month = timeZoneStruct.DaylightDate.Month;
+			time.day = timeZoneStruct.DaylightDate.Day;
+			time.hour = timeZoneStruct.DaylightDate.Hour;
+			time.minute = timeZoneStruct.DaylightDate.Minute;
+			time.second = timeZoneStruct.DaylightDate.Second;
+			prop = icalproperty_new_dtstart(time);
+			icalcomponent_add_property(xdaylight, prop);
+
+			// Add the RRULE (if required)
+			if (rrule.freq != ICAL_NO_RECURRENCE)
+			{
+				prop = icalproperty_new_rrule(rrule);
+				icalcomponent_add_property(xdaylight, prop);
+			}
+
+			// Add TZOFFSETFROM and TZOFFSETTO
+			// Note that libical expects these properties in seconds.
+			prop = icalproperty_new_tzoffsetfrom(standardUtcOffsetMins * SECONDS_PER_MINUTE);
+			icalcomponent_add_property(xdaylight, prop);
+			prop = icalproperty_new_tzoffsetto(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
+			icalcomponent_add_property(xdaylight, prop);
+
+			value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.DaylightName, (sizeof(timeZoneStruct.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
+			if (value)
+			{
+				if (strlen(value))
+				{
+					prop = icalproperty_new_tzname(value);
+					icalcomponent_add_property(xdaylight, prop);
+				}
+				g_free(value); value = NULL;
+			}
+
+			// And now add the DAYLIGHT component to the VTIMEZONE
+			icalcomponent_add_component(vtimezone, xdaylight);
+		}
+	} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
+	else
+	{
+		g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
+	}
+}
+
+
+/**
+ * \brief Process the <Recurrence> element during parsing of an EAS XML document
+ *
+ * \param n       An XML node pointing to the <Recurrence> element
+ * \param vevent  The iCalendar VEVENT component to add the parsed RRULE property to
+ */
+static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent)
+{
+	gchar*         value = NULL;
+	icalproperty*  prop = NULL;
+
+	xmlNode*       subNode = NULL;
+	struct icalrecurrencetype recur;
+
+	// Ensure the icalrecurrencetype is null
+	icalrecurrencetype_clear(&recur);
+
+	g_debug("Recurrence element found in EAS XML");
+
+	for (subNode = n->children; subNode; subNode = subNode->next)
+	{
+		const gchar* elemName = (const gchar*)subNode->name;
+		value = (gchar*)xmlNodeGetContent(subNode);
+
+		if (g_strcmp0(elemName, "Type") == 0)
+		{
+			int typeInt = atoi(value);
+			switch (typeInt)
+			{
+				case 0: // Recurs daily
+					recur.freq = ICAL_DAILY_RECURRENCE;
+					break;
+				case 1: // Recurs weekly
+					recur.freq = ICAL_WEEKLY_RECURRENCE;
+					break;
+				case 2: // Recurs monthly
+					recur.freq = ICAL_MONTHLY_RECURRENCE;
+					break;
+				case 3: // Recurs monthly on the nth day
+					recur.freq = ICAL_MONTHLY_RECURRENCE;
+					break;
+				case 5: // Recurs yearly
+					recur.freq = ICAL_YEARLY_RECURRENCE;
+					break;
+				case 6: // Recurs yearly on the nth day
+					recur.freq = ICAL_YEARLY_RECURRENCE;
+					break;
+			}
+		}
+		else if (g_strcmp0(elemName, "Occurrences") == 0)
+		{
+			// From [MS-ASCAL]:
+			// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
+			// recommended that only one of these elements be included in a Recurrence element (section
+			// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
+			// the value of the Occurrences element and ignore the Until element.
+			recur.count = atoi((char*)xmlNodeGetContent(subNode));
+			recur.until = icaltime_null_time();
+		}
+		else if (g_strcmp0(elemName, "Interval") == 0)
+		{
+			recur.interval = (short)atoi((char*)xmlNodeGetContent(subNode));
+		}
+		else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
+		{
+			g_warning("Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
+		}
+		else if (g_strcmp0(elemName, "DayOfWeek") == 0)
+		{
+			// A recurrence rule can target any combination of the 7 week days.
+			// EAS encodes these as a bit set in a single int value.
+			// libical encodes them as an array (max size 7) of icalrecurrencetype_weekday
+			// enum values.
+			// This block of code converts the former into the latter.
+
+			int dayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
+			int index = 0;
+
+			// Note: must use IF for subsequent blocks, not ELSE IF
+			if (dayOfWeek & DAY_OF_WEEK_MONDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_TUESDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_WEDNESDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_THURSDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_FRIDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_SATURDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
+			}
+			if (dayOfWeek & DAY_OF_WEEK_SUNDAY)
+			{
+				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
+			}
+		}
+		else if (g_strcmp0(elemName, "MonthOfYear") == 0)
+		{
+			recur.by_month[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
+		}
+		else if (g_strcmp0(elemName, "Until") == 0)
+		{
+			// From [MS-ASCAL]:
+			// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
+			// recommended that only one of these elements be included in a Recurrence element (section
+			// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
+			// the value of the Occurrences element and ignore the Until element.
+			if (recur.count == 0)
+			{
+				recur.until = icaltime_from_string((gchar*)xmlNodeGetContent(subNode));
+			}
+		}
+		else if (g_strcmp0(elemName, "DayOfMonth") == 0)
+		{
+			recur.by_month_day[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
+		}
+		else if (g_strcmp0(elemName, "CalendarType") == 0)
+		{
+			const int calType = atoi((char*)xmlNodeGetContent(subNode));
+			if ((calType != 0)    // Default
+			    &&
+			    (calType != 1))   // Gregorian
+			{
+				// No way of handling in iCal
+				g_warning("Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
+			}
+		}
+		else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
+		{
+			if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
+			{
+				// Only applies to non-Gregorian calendars so can't be handled in iCal
+				g_warning("Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
+			}
+		}
+		else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
+		{
+			int firstDayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
+
+			// EAS value is in range 0=Sunday..6=Saturday
+			// iCal value is in range 0=NoWeekday, 1=Sunday..7=Saturday
+			recur.week_start = (icalrecurrencetype_weekday)firstDayOfWeek + 1;
+		}
+		else
+		{
+			g_warning("Unknown element encountered in <Recurrence> element: %s", elemName);
+		}
+	}
+
+	prop = icalproperty_new_rrule(recur);
+	icalcomponent_add_property(vevent, prop);
+}
+
+
+/**
  * \brief Parse an XML-formatted calendar object received from ActiveSync and return
  *        it as a serialised iCalendar object.
  *
@@ -220,14 +676,14 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
 {
 	// Variable for the return value
-	gchar*      result = NULL;
+	gchar* result = NULL;
 
 	// Variable for property values as they're read from the XML
-	gchar*      value  = NULL;
+	gchar* value  = NULL;
 
 	// Variable to store the TZID value when decoding a <calendar:Timezone> element
 	// so we can use it in the rest of the iCal's date/time fields.
-	gchar*      tzid         = NULL;
+	gchar* tzid   = NULL;
 
 	// iCalendar objects
 	struct icaltimetype dateTime;
@@ -237,7 +693,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 	{
 		xmlNodePtr n = node;
 
-		EasCalInfo* cal_info = NULL;
+		EasCalInfo* calInfo = NULL;
 
 		// iCalendar objects
 		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
@@ -534,270 +990,15 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Attendees") == 0)
 				{
-					xmlNode* attendeeNode = NULL;
-
-					g_debug("Attendees element found in EAS XML");
-
-					for (attendeeNode = n->children; attendeeNode; attendeeNode = attendeeNode->next)
-					{
-						// Variables for attendee properties and parameters
-						gchar*                   email      = NULL;
-						gchar*                   name       = NULL;
-						icalparameter_partstat   partstat   = ICAL_PARTSTAT_NONE;	// Participatant Status parameter
-						icalparameter_role       role       = ICAL_ROLE_NONE;
-						xmlNodePtr               subNode    = NULL;
-
-						g_debug("Attendee element found in EAS XML");
-
-						for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
-						{
-							if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Email") == 0)
-							{
-								email = (gchar*)xmlNodeGetContent(subNode);
-							}								
-							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Name") == 0)
-							{
-								name = (gchar*)xmlNodeGetContent(subNode);								
-							}
-							else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Status") == 0)
-							{
-								int status = 0;
-								value = (gchar*)xmlNodeGetContent(subNode);
-								status = atoi(value);
-								switch(status)
-								{
-									case 0: // Response unknown
-									case 5: // Not responded
-										partstat = ICAL_PARTSTAT_NEEDSACTION;
-										break;
-									case 2: // Tentative
-										partstat = ICAL_PARTSTAT_TENTATIVE;
-										break;									
-									case 3: // Accept
-										partstat = ICAL_PARTSTAT_ACCEPTED;
-										break;	
-									case 4: // Decline
-										partstat = ICAL_PARTSTAT_DECLINED;
-										break;									
-									default:
-										partstat = ICAL_PARTSTAT_NONE;
-										g_warning("unrecognised attendee status received");
-										break;
-								}// end switch status
-								
-								g_free(value); value = NULL;
-							}
-							else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Attendee_Type"))
-							{
-								int roleValue = 0;
-								value = (gchar*)xmlNodeGetContent(subNode);
-								roleValue = atoi(value);
-								switch (roleValue)
-								{
-									// TODO create an enum for these values
-									case 1: //Required
-										role = ICAL_ROLE_REQPARTICIPANT;
-										break;
-									case 2: //Optional
-										role = ICAL_ROLE_OPTPARTICIPANT;
-										break;
-									case 3: //Resource
-										role = ICAL_ROLE_NONPARTICIPANT;
-										break;
-									default:
-										role = ICAL_ROLE_NONE;
-										g_warning("unrecognised attendee type received");
-										break;
-								}// end switch type
-								
-								g_free(value); value = NULL;
-							}		
-							
-						}// end for subNodes
-
-						// Now finally build and add the property, assuming we have at least an e-mail address
-						if (email && strlen(email))
-						{
-							prop = icalproperty_new_attendee(email);
-
-							if (email && strlen(name))
-							{
-								param = icalparameter_new_cn(name);
-								icalproperty_add_parameter(prop, param);
-							}
-							if (partstat != ICAL_PARTSTAT_NONE)
-							{
-								param = icalparameter_new_partstat(partstat);
-								icalproperty_add_parameter(prop, param);
-							}
-							if (role != ICAL_ROLE_NONE)
-							{
-								param = icalparameter_new_role(role);
-								icalproperty_add_parameter(prop, param);
-							}
-							
-							icalcomponent_add_property(vevent, prop);
-						}
-					}//end for (attendee)
-				}// end else if (attendees)
+					_util_process_attendees_element(n, vevent);
+				}
 
 				//
 				// TimeZone
 				//
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
-					xmlChar* timeZoneBase64Buffer = xmlNodeGetContent(n);
-					gsize timeZoneRawBytesSize = 0;
-					guchar* timeZoneRawBytes = g_base64_decode((const gchar*)timeZoneBase64Buffer, &timeZoneRawBytesSize);
-					EasTimeZone timeZoneStruct;
-					xmlFree(timeZoneBase64Buffer);
-
-					// TODO Check decode of timezone for endianess problems
-
-					if (timeZoneRawBytesSize == sizeof(EasTimeZone))
-					{
-						memcpy(&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
-						g_free(timeZoneRawBytes);
-						timeZoneRawBytes = NULL;
-
-						{
-							// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
-							// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
-							const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
-							const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
-							icalcomponent*              xstandard             = NULL;
-							icalcomponent*              xdaylight             = NULL;
-							struct icalrecurrencetype   rrule;
-							struct icaltimetype         time;
-							
-						
-							// Using StandardName as the TZID
-							// (Doesn't matter if it's not an exact description: this field is only used internally
-							// during iCalendar encoding/decoding)
-							// Note: using tzid here rather than value, as we need it elsewhere in this function
-							tzid = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName,
-								                   (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-							// If no StandardName was supplied, we can just use a temporary name instead.
-							// No need to support more than one: the EAS calendar will only have one Timezone
-							// element. And no need to localise, as it's only used internally.
-							if (tzid == NULL || strlen(tzid) == 0)
-							{
-								tzid = g_strdup("Standard Timezone");
-							}
-							prop = icalproperty_new_tzid(tzid);
-							icalcomponent_add_property(vtimezone, prop);
-
-						
-							// STANDARD component
-							xstandard = icalcomponent_new(ICAL_XSTANDARD_COMPONENT);
-
-							icalrecurrencetype_clear(&rrule);
-
-							// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
-							// the start date of a recurring sequence, and add an RRULE.
-							if (timeZoneStruct.StandardDate.Year == 0)
-							{
-								_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
-							}
-
-							// Add the DTSTART property
-							time = icaltime_null_time();
-							time.year = timeZoneStruct.StandardDate.Year;
-							time.month = timeZoneStruct.StandardDate.Month;
-							time.day = timeZoneStruct.StandardDate.Day;
-							time.hour = timeZoneStruct.StandardDate.Hour;
-							time.minute = timeZoneStruct.StandardDate.Minute;
-							time.second = timeZoneStruct.StandardDate.Second;
-							prop = icalproperty_new_dtstart(time);
-							icalcomponent_add_property(xstandard, prop);
-
-							// Add the RRULE (if required)
-							if (rrule.freq != ICAL_NO_RECURRENCE)
-							{
-								prop = icalproperty_new_rrule(rrule);
-								icalcomponent_add_property(xstandard, prop);
-							}
-
-							// Add TZOFFSETFROM and TZOFFSETTO
-							// Note that libical expects these properties in seconds.
-							prop = icalproperty_new_tzoffsetfrom(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
-							icalcomponent_add_property(xstandard, prop);
-							prop = icalproperty_new_tzoffsetto(standardUtcOffsetMins * SECONDS_PER_MINUTE);
-							icalcomponent_add_property(xstandard, prop);
-
-							value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.StandardName, (sizeof(timeZoneStruct.StandardName)/sizeof(guint16)), NULL, NULL, NULL);
-							if (value)
-							{
-								if (strlen(value))
-								{
-									prop = icalproperty_new_tzname(value);
-									icalcomponent_add_property(xstandard, prop);
-								}
-								g_free(value); value = NULL;
-							}
-
-							// And now add the STANDARD component to the VTIMEZONE
-							icalcomponent_add_component(vtimezone, xstandard);
-
-						
-							// DAYLIGHT component
-						
-							xdaylight = icalcomponent_new(ICAL_XDAYLIGHT_COMPONENT);
-
-							// Reset the RRULE
-							icalrecurrencetype_clear(&rrule);
-
-							// If timeZoneStruct.DaylightDate.Year == 0 we need to convert it into
-							// the start date of a recurring sequence, and add an RRULE.
-							if (timeZoneStruct.DaylightDate.Year == 0)
-							{
-								_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
-							}
-
-							// Add the DTSTART property
-							time = icaltime_null_time();
-							time.year = timeZoneStruct.DaylightDate.Year;
-							time.month = timeZoneStruct.DaylightDate.Month;
-							time.day = timeZoneStruct.DaylightDate.Day;
-							time.hour = timeZoneStruct.DaylightDate.Hour;
-							time.minute = timeZoneStruct.DaylightDate.Minute;
-							time.second = timeZoneStruct.DaylightDate.Second;
-							prop = icalproperty_new_dtstart(time);
-							icalcomponent_add_property(xdaylight, prop);
-
-							// Add the RRULE (if required)
-							if (rrule.freq != ICAL_NO_RECURRENCE)
-							{
-								prop = icalproperty_new_rrule(rrule);
-								icalcomponent_add_property(xdaylight, prop);
-							}
-
-							// Add TZOFFSETFROM and TZOFFSETTO
-							// Note that libical expects these properties in seconds.
-							prop = icalproperty_new_tzoffsetfrom(standardUtcOffsetMins * SECONDS_PER_MINUTE);
-							icalcomponent_add_property(xdaylight, prop);
-							prop = icalproperty_new_tzoffsetto(daylightUtcOffsetMins * SECONDS_PER_MINUTE);
-							icalcomponent_add_property(xdaylight, prop);
-
-							value = g_utf16_to_utf8((const gunichar2*)timeZoneStruct.DaylightName, (sizeof(timeZoneStruct.DaylightName)/sizeof(guint16)), NULL, NULL, NULL);
-							if (value)
-							{
-								if (strlen(value))
-								{
-									prop = icalproperty_new_tzname(value);
-									icalcomponent_add_property(xdaylight, prop);
-								}
-								g_free(value); value = NULL;
-							}
-
-							// And now add the DAYLIGHT component to the VTIMEZONE
-							icalcomponent_add_component(vtimezone, xdaylight);
-						}
-					} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
-					else
-					{
-						g_critical("TimeZone BLOB did not match sizeof(EasTimeZone)");
-					}
+					_util_process_timezone_element(n, vtimezone, &tzid);
 				}
 
 				//
@@ -805,158 +1006,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Recurrence") == 0)
 				{
-					xmlNode* subNode = NULL;
-					struct icalrecurrencetype recur;
-
-					// Ensure the icalrecurrencetype is null
-					icalrecurrencetype_clear(&recur);
-
-					g_debug("Recurrence element found in EAS XML");
-
-					for (subNode = n->children; subNode; subNode = subNode->next)
-					{
-						const gchar* elemName = (const gchar*)subNode->name;
-						value = (gchar*)xmlNodeGetContent(subNode);
-
-						if (g_strcmp0(elemName, "Type") == 0)
-						{
-							int typeInt = atoi(value);
-							switch (typeInt)
-							{
-								case 0: // Recurs daily
-									recur.freq = ICAL_DAILY_RECURRENCE;
-									break;
-								case 1: // Recurs weekly
-									recur.freq = ICAL_WEEKLY_RECURRENCE;
-									break;
-								case 2: // Recurs monthly
-									recur.freq = ICAL_MONTHLY_RECURRENCE;
-									break;
-								case 3: // Recurs monthly on the nth day
-									recur.freq = ICAL_MONTHLY_RECURRENCE;
-									break;
-								case 5: // Recurs yearly
-									recur.freq = ICAL_YEARLY_RECURRENCE;
-									break;
-								case 6: // Recurs yearly on the nth day
-									recur.freq = ICAL_YEARLY_RECURRENCE;
-									break;
-							}
-						}
-						else if (g_strcmp0(elemName, "Occurrences") == 0)
-						{
-							// From [MS-ASCAL]:
-							// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
-							// recommended that only one of these elements be included in a Recurrence element (section
-							// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
-							// the value of the Occurrences element and ignore the Until element.
-							recur.count = atoi((char*)xmlNodeGetContent(subNode));
-							recur.until = icaltime_null_time();
-						}
-						else if (g_strcmp0(elemName, "Interval") == 0)
-						{
-							recur.interval = (short)atoi((char*)xmlNodeGetContent(subNode));
-						}
-						else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
-						{
-							g_warning("Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
-						}
-						else if (g_strcmp0(elemName, "DayOfWeek") == 0)
-						{
-							// A recurrence rule can target any combination of the 7 week days.
-							// EAS encodes these as a bit set in a single int value.
-							// libical encodes them as an array (max size 7) of icalrecurrencetype_weekday
-							// enum values.
-							// This block of code converts the former into the latter.
-
-							int dayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
-							int index = 0;
-
-							// Note: must use IF for subsequent blocks, not ELSE IF
-							if (dayOfWeek & DAY_OF_WEEK_MONDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_TUESDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_WEDNESDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_THURSDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_FRIDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_SATURDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
-							}
-							if (dayOfWeek & DAY_OF_WEEK_SUNDAY)
-							{
-								recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
-							}
-						}
-						else if (g_strcmp0(elemName, "MonthOfYear") == 0)
-						{
-							recur.by_month[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
-						}
-						else if (g_strcmp0(elemName, "Until") == 0)
-						{
-							// From [MS-ASCAL]:
-							// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
-							// recommended that only one of these elements be included in a Recurrence element (section
-							// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
-							// the value of the Occurrences element and ignore the Until element.
-							if (recur.count == 0)
-							{
-								recur.until = icaltime_from_string((gchar*)xmlNodeGetContent(subNode));
-							}
-						}
-						else if (g_strcmp0(elemName, "DayOfMonth") == 0)
-						{
-							recur.by_month_day[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
-						}
-						else if (g_strcmp0(elemName, "CalendarType") == 0)
-						{
-							const int calType = atoi((char*)xmlNodeGetContent(subNode));
-							if ((calType != 0)    // Default
-							    &&
-							    (calType != 1))   // Gregorian
-							{
-								// No way of handling in iCal
-								g_warning("Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
-							}
-						}
-						else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
-						{
-							if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
-							{
-								// Only applies to non-Gregorian calendars so can't be handled in iCal
-								g_warning("Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
-							}
-						}
-						else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
-						{
-							int firstDayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
-
-							// EAS value is in range 0=Sunday..6=Saturday
-							// iCal value is in range 0=NoWeekday, 1=Sunday..7=Saturday
-							recur.week_start = (icalrecurrencetype_weekday)firstDayOfWeek + 1;
-						}
-						else
-						{
-							g_warning("Unknown element encountered in <Recurrence> element: %s", elemName);
-						}
-					}
-
-					prop = icalproperty_new_rrule(recur);
-					icalcomponent_add_property(vevent, prop);
+					_util_process_recurrence_element(n, vevent);
 				}
 
 				//
@@ -1010,17 +1060,17 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
-		cal_info = eas_cal_info_new();
-		cal_info->icalendar = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
-		cal_info->server_id = (gchar*)server_id;
-		if (!eas_cal_info_serialise(cal_info, &result))
+		calInfo = eas_cal_info_new();
+		calInfo->icalendar = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
+		calInfo->server_id = (gchar*)server_id;
+		if (!eas_cal_info_serialise(calInfo, &result))
 		{
 			// TODO: log error
 			result = NULL;
 		}
 
 		// Free the EasCalInfo GObject
-		g_object_unref(cal_info);
+		g_object_unref(calInfo);
 
 		// Free the libical components
 		// (It's not clear if freeing a component also frees its children, but in any case
@@ -1043,7 +1093,264 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 }
 
 
-static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app_data)
+/**
+ * \brief Process the RRULE (recurrence rule) property during parsing of an iCalendar VEVENT component
+ *
+ * \param prop     Pointer to the RRULE property
+ * \param appData  Pointer to the <ApplicationData> element to add parsed elements to
+ */
+static void _util_process_rrule_property(icalproperty* prop, xmlNodePtr appData)
+{
+	// Get the iCal RRULE property
+	struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
+
+	// Create a new <Recurrence> element to contain the recurrence sub-elements
+	xmlNodePtr recurNode = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Recurrence", NULL);
+
+	// Other declarations
+	int    recurType    = 0;
+	gchar* xmlValue     = NULL;
+	int    index        = 0;
+	guint  dayOfWeek    = 0;
+	gint   weekOfMonth  = 0;
+	gint   monthOfYear  = 0;
+	gint   dayOfMonth   = 0;
+
+	//
+	// Type element
+	//
+	switch (rrule.freq)
+	{
+		case ICAL_SECONDLY_RECURRENCE:
+		case ICAL_MINUTELY_RECURRENCE:
+		case ICAL_HOURLY_RECURRENCE:
+			g_warning("DATA LOSS: cannot encode secondly/minutely/hourly recurrence in EAS.");
+			break;
+		case ICAL_DAILY_RECURRENCE:
+			recurType = 0;
+			break;
+		case ICAL_WEEKLY_RECURRENCE:
+			recurType = 1;
+			break;
+		case ICAL_MONTHLY_RECURRENCE:
+			recurType = 2;
+			break;
+		case ICAL_YEARLY_RECURRENCE:
+			recurType = 5;
+			break;
+		case ICAL_NO_RECURRENCE:
+		default:
+			g_warning("RRULE with no recurrence type.");
+			break;
+	}
+	// Note: don't add this to the XML yet: if we encounter an "nth day in the month" value
+	// blow we need to change this
+
+	//
+	// Occurrences & Until
+	//
+	// Note: count and until are mutually exclusive in both formats, with count taking precedence
+	if (rrule.count)
+	{
+		// EAS specifies a maximum value of 999 for the Occurrences element
+		if (rrule.count > 999)
+		{
+			g_warning("DATA LOSS: RRULE had recurrence count of %d, maximum is 999.", rrule.count);
+			rrule.count = 999;
+		}
+		xmlValue = g_strdup_printf("%d", rrule.count);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Occurrences", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+	else if (!icaltime_is_null_time(rrule.until))
+	{
+		// Note: icaltime_as_ical_string() retains ownership of the string, so no need to free
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Until", (const xmlChar*)icaltime_as_ical_string(rrule.until));
+	}
+
+	//
+	// Interval
+	//
+	if (rrule.interval)
+	{
+		// EAS specifies a maximum value of 999 for the Interval element
+		if (rrule.interval > 999)
+		{
+			g_warning("DATA LOSS: RRULE had recurrence interval of %d, maximum is 999.", rrule.interval);
+			rrule.interval = 999;
+		}
+		// Only write the Interval element if it's greater than 1;
+		// 1 is te default (i.e. every day)
+		if (rrule.interval > 1)
+		{
+			xmlValue = g_strdup_printf("%d", rrule.interval);
+			xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
+			g_free(xmlValue); xmlValue = NULL;
+		}
+	}
+
+	// 
+	// DayOfWeek & WeekOfMonth
+	//
+	// icalrecurrencetype arrays are terminated with ICAL_RECURRENCE_ARRAY_MAX unless they're full
+	for (index = 0;
+	     (index < ICAL_BY_DAY_SIZE) && (rrule.by_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
+	     index++)
+	{
+		enum icalrecurrencetype_weekday icalDayOfWeek = icalrecurrencetype_day_day_of_week(rrule.by_day[index]);
+		gint icalDayPosition = icalrecurrencetype_day_position(rrule.by_day[index]);
+
+		switch (icalDayOfWeek)
+		{
+			case ICAL_SUNDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_SUNDAY;
+				break;
+			case ICAL_MONDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_MONDAY;
+				break;
+			case ICAL_TUESDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_TUESDAY;
+				break;
+			case ICAL_WEDNESDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_WEDNESDAY;
+				break;
+			case ICAL_THURSDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_THURSDAY;
+				break;
+			case ICAL_FRIDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_FRIDAY;
+				break;
+			case ICAL_SATURDAY_WEEKDAY:
+				dayOfWeek |= DAY_OF_WEEK_SATURDAY;
+				break;
+			case ICAL_NO_WEEKDAY:
+			default:
+				g_warning("Found by-day RRULE with an empty day value");
+				break;
+		}
+
+		// Now process the position part
+		if (icalDayPosition != 0)
+		{
+			if (icalDayPosition < -1)
+			{
+				g_warning("DATA LOSS: EAS cannot encode RRULE position value of %d", icalDayPosition);
+				// For now, convert all large naegative values (meaning nth from the end of the month)
+				// to 5 (meaning last of the month)
+				icalDayPosition = 5;
+			}
+			else if (icalDayPosition == -1)
+			{
+				// Convert to the equivalent EAS value
+				// (both mean "last instance in the month")
+				icalDayPosition = 5;
+			}
+
+			// Check if we've already processed a position part from one of the other recurrence days
+			// (EAS has no way of encoding different position values for different days)
+			if (weekOfMonth && (weekOfMonth != icalDayPosition))
+			{
+				g_warning("DATA LOSS: Position %d already stored for this recurrence; ignoring value of %d", weekOfMonth, icalDayPosition);
+			}
+			else
+			{
+				weekOfMonth = icalDayPosition;
+			}
+	    }
+	}// end of for loop
+
+	if (dayOfWeek)
+	{
+		g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
+		xmlValue = g_strdup_printf("%d", dayOfWeek);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+	if (weekOfMonth)
+	{
+		// Set the Type value to 3 ("Recurs monthly on the nth day")
+		recurType = 3;
+		
+		xmlValue = g_strdup_printf("%d", weekOfMonth);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:WeekOfMonth", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+
+	// And now we can add the Type element too
+	xmlValue = g_strdup_printf("%d", recurType);
+	xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Type", (const xmlChar*)xmlValue);
+	g_free(xmlValue); xmlValue = NULL;
+
+	//
+	// FirstDayOfWeek
+	//
+	if (rrule.week_start)
+	{
+		// EAS value is 0=Sunday..6=Saturday
+		// libical value is 0=NoDay, 1=Sunday..7=Saturday
+		xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayOfWeek", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+
+	//
+	// MonthOfYear
+	//
+	for (index = 0;
+	     (index < ICAL_BY_MONTH_SIZE) && (rrule.by_month[index] != ICAL_RECURRENCE_ARRAY_MAX);
+	     index++)
+	{
+		if (monthOfYear == 0)
+		{
+			monthOfYear = rrule.by_month[index];
+		}
+		else
+		{
+			// We've already set monthOfyear: EAS only supports a single monthly recurrence
+			// (unlike days where we can repeat on many days of the week)
+			g_warning("DATA LOSS: Already set to recur on month %d, discarding recurrence info for month %d", monthOfYear, rrule.by_month[index]);
+		}
+	}
+	if (monthOfYear > 0)
+	{
+		xmlValue = g_strdup_printf("%d", monthOfYear);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+	
+	//
+	// DayOfMonth
+	//
+	for (index = 0;
+	     (index < ICAL_BY_MONTHDAY_SIZE) && (rrule.by_month_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
+	     index++)
+	{
+		if (dayOfMonth == 0)
+		{
+			dayOfMonth = rrule.by_month_day[index];
+		}
+		else
+		{
+			// EAS only supports a single occurrence of DayOfMonth
+			g_warning("DATA LOSS: Already set to recur on day %d of the month, discarding recurrence info for day %d of month", dayOfMonth, rrule.by_month_day[index]);
+		}
+	}
+	if (dayOfMonth > 0)
+	{
+		xmlValue = g_strdup_printf("%d", dayOfMonth);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
+		g_free(xmlValue); xmlValue = NULL;
+	}
+}
+
+
+/**
+ * \brief Process the VEVENT component during parsing of an iCalendar
+ *
+ * \param vevent  Pointer to the iCalendar VEVENT component
+ * \param appData Pointer to the <ApplicationData> element to add parsed elements to
+ */
+static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr appData)
 {
 	if (vevent)
 	{
@@ -1057,328 +1364,111 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 			const icalproperty_kind prop_type = icalproperty_isa(prop);
 			switch (prop_type)
 			{
+				// SUMMARY
 				case ICAL_SUMMARY_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Subject", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Subject", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// DTSTAMP
 				case ICAL_DTSTAMP_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:DtStamp", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:DtStamp", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// DTSTART
 				case ICAL_DTSTART_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// DTEND
 				case ICAL_DTEND_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// LOCATION
 				case ICAL_LOCATION_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Location", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Location", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// UID
 				case ICAL_UID_PROPERTY:
-					xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:UID", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:UID", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
+					
+				// CLASS
 				case ICAL_CLASS_PROPERTY:
 					{
 						icalproperty_class classValue = icalproperty_get_class(prop);
 						switch (classValue)
 						{
-							case ICAL_CLASS_CONFIDENTIAL:
-								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
-								break;
-							case ICAL_CLASS_PRIVATE:
-								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
-								break;
-							default: // PUBLIC or NONE
-								// iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal)
-								xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
-								break;
+						case ICAL_CLASS_CONFIDENTIAL:
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
+							break;
+						case ICAL_CLASS_PRIVATE:
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
+							break;
+						default: // PUBLIC or NONE (iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal))
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
+							break;
 						}
 					}
 					break;
+					
+				// TRANSP
 				case ICAL_TRANSP_PROPERTY:
 					{
 						icalproperty_transp transp = icalproperty_get_transp(prop);
 						if (transp == ICAL_TRANSP_TRANSPARENT)
 						{
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
 						}
 						else // OPAQUE
 						{
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"2"); // Busy
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"2"); // Busy
 						}
 					}
 					break;
+					
+				// CATEGORIES
 				case ICAL_CATEGORIES_PROPERTY:
 					{
 						if (categories == NULL)
 						{
-							categories = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Categories", NULL);
+							categories = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Categories", NULL);
 						}
 						xmlNewTextChild(categories, NULL, (const xmlChar*)"calendar:Category", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
+					
+				// ORGANIZER
 				case ICAL_ORGANIZER_PROPERTY:
 					{
 						icalparameter* cnParam = NULL;
 						
 						// Get the e-mail address
-						xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:OrganizerEmail", (const xmlChar*)icalproperty_get_organizer(prop));
+						xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:OrganizerEmail", (const xmlChar*)icalproperty_get_organizer(prop));
 
 						// Now check for a name in the (optional) CN parameter
 						cnParam = icalproperty_get_first_parameter(prop, ICAL_CN_PARAMETER);
 						if (cnParam)
 						{
-							xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:OrganizerName", (const xmlChar*)icalparameter_get_cn(cnParam));
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:OrganizerName", (const xmlChar*)icalparameter_get_cn(cnParam));
 						}
 					}
 					break;
+					
+				// RRULE
 				case ICAL_RRULE_PROPERTY:
 					{
-						// Get the iCal RRULE property
-						struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
-
-						// Create a new <Recurrence> element to contain the recurrence sub-elements
-						xmlNodePtr recurNode = xmlNewChild(app_data, NULL, (const xmlChar*)"calendar:Recurrence", NULL);
-
-						// Other declarations
-						int    recurType    = 0;
-						gchar* xmlValue     = NULL;
-						int    index        = 0;
-						guint  dayOfWeek    = 0;
-						gint   weekOfMonth  = 0;
-						gint   monthOfYear  = 0;
-						gint   dayOfMonth   = 0;
-
-						//
-						// Type element
-						//
-						switch (rrule.freq)
-						{
-							case ICAL_SECONDLY_RECURRENCE:
-							case ICAL_MINUTELY_RECURRENCE:
-							case ICAL_HOURLY_RECURRENCE:
-								g_warning("DATA LOSS: cannot encode secondly/minutely/hourly recurrence in EAS.");
-								break;
-							case ICAL_DAILY_RECURRENCE:
-								recurType = 0;
-								break;
-							case ICAL_WEEKLY_RECURRENCE:
-								recurType = 1;
-								break;
-							case ICAL_MONTHLY_RECURRENCE:
-								recurType = 2;
-								break;
-							case ICAL_YEARLY_RECURRENCE:
-								recurType = 5;
-								break;
-							case ICAL_NO_RECURRENCE:
-							default:
-								g_warning("RRULE with no recurrence type.");
-								break;
-						}
-						// Note: don't add this to the XML yet: if we encounter an "nth day in the month" value
-						// blow we need to change this
-
-						//
-						// Occurrences & Until elements
-						//
-						// Note: count and until are mutually exclusive in both formats, with count taking precedence
-						if (rrule.count)
-						{
-							// EAS specifies a maximum value of 999 for the Occurrences element
-							if (rrule.count > 999)
-							{
-								g_warning("DATA LOSS: RRULE had recurrence count of %d, maximum is 999.", rrule.count);
-								rrule.count = 999;
-							}
-							xmlValue = g_strdup_printf("%d", rrule.count);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Occurrences", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
-						else if (!icaltime_is_null_time(rrule.until))
-						{
-							// Note: icaltime_as_ical_string() retains ownership of the string, so no need to free
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Until", (const xmlChar*)icaltime_as_ical_string(rrule.until));
-						}
-
-						//
-						// Interval element
-						//
-						if (rrule.interval)
-						{
-							// EAS specifies a maximum value of 999 for the Interval element
-							if (rrule.interval > 999)
-							{
-								g_warning("DATA LOSS: RRULE had recurrence interval of %d, maximum is 999.", rrule.interval);
-								rrule.interval = 999;
-							}
-							// Only write the Interval element if it's greater than 1;
-							// 1 is te default (i.e. every day)
-							if (rrule.interval > 1)
-							{
-								xmlValue = g_strdup_printf("%d", rrule.interval);
-								xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
-								g_free(xmlValue); xmlValue = NULL;
-							}
-						}
-
-						// 
-						// DayOfWeek & WeekOfMonth elements
-						//
-						// icalrecurrencetype arrays are terminated with ICAL_RECURRENCE_ARRAY_MAX unless they're full
-						for (index = 0;
-						     (index < ICAL_BY_DAY_SIZE) && (rrule.by_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
-						     index++)
-						{
-							enum icalrecurrencetype_weekday icalDayOfWeek = icalrecurrencetype_day_day_of_week(rrule.by_day[index]);
-							gint icalDayPosition = icalrecurrencetype_day_position(rrule.by_day[index]);
-
-							switch (icalDayOfWeek)
-							{
-								case ICAL_SUNDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_SUNDAY;
-									break;
-								case ICAL_MONDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_MONDAY;
-									break;
-								case ICAL_TUESDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_TUESDAY;
-									break;
-								case ICAL_WEDNESDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_WEDNESDAY;
-									break;
-								case ICAL_THURSDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_THURSDAY;
-									break;
-								case ICAL_FRIDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_FRIDAY;
-									break;
-								case ICAL_SATURDAY_WEEKDAY:
-									dayOfWeek |= DAY_OF_WEEK_SATURDAY;
-									break;
-								case ICAL_NO_WEEKDAY:
-								default:
-									g_warning("Found by-day RRULE with an empty day value");
-									break;
-							}
-
-							// Now process the position part
-							if (icalDayPosition != 0)
-							{
-								if (icalDayPosition < -1)
-								{
-									g_warning("DATA LOSS: EAS cannot encode RRULE position value of %d", icalDayPosition);
-									// For now, convert all large naegative values (meaning nth from the end of the month)
-									// to 5 (meaning last of the month)
-									icalDayPosition = 5;
-								}
-								else if (icalDayPosition == -1)
-								{
-									// Convert to the equivalent EAS value
-									// (both mean "last instance in the month")
-									icalDayPosition = 5;
-								}
-
-								// Check if we've already processed a position part from one of the other recurrence days
-								// (EAS has no way of encoding different position values for different days)
-								if (weekOfMonth && (weekOfMonth != icalDayPosition))
-								{
-									g_warning("DATA LOSS: Position %d already stored for this recurrence; ignoring value of %d", weekOfMonth, icalDayPosition);
-								}
-								else
-								{
-									weekOfMonth = icalDayPosition;
-								}
-						    }
-						}// end of for loop
-
-						if (dayOfWeek)
-						{
-							g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
-							xmlValue = g_strdup_printf("%d", dayOfWeek);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
-						if (weekOfMonth)
-						{
-							// Set the Type value to 3 ("Recurs monthly on the nth day")
-							recurType = 3;
-							
-							xmlValue = g_strdup_printf("%d", weekOfMonth);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:WeekOfMonth", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
-
-						// And now we can add the Type element too
-						xmlValue = g_strdup_printf("%d", recurType);
-						xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Type", (const xmlChar*)xmlValue);
-						g_free(xmlValue); xmlValue = NULL;
-
-						//
-						// FirstDayOfWeek
-						//
-						if (rrule.week_start)
-						{
-							// EAS value is 0=Sunday..6=Saturday
-							// libical value is 0=NoDay, 1=Sunday..7=Saturday
-							xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayOfWeek", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
-
-						//
-						// MonthOfYear
-						//
-						for (index = 0;
-						     (index < ICAL_BY_MONTH_SIZE) && (rrule.by_month[index] != ICAL_RECURRENCE_ARRAY_MAX);
-						     index++)
-						{
-							if (monthOfYear == 0)
-							{
-								monthOfYear = rrule.by_month[index];
-							}
-							else
-							{
-								// We've already set monthOfyear: EAS only supports a single monthly recurrence
-								// (unlike days where we can repeat on many days of the week)
-								g_warning("DATA LOSS: Already set to recur on month %d, discarding recurrence info for month %d", monthOfYear, rrule.by_month[index]);
-							}
-						}
-						if (monthOfYear > 0)
-						{
-							xmlValue = g_strdup_printf("%d", monthOfYear);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
-						
-						//
-						// DayOfMonth
-						//
-						for (index = 0;
-						     (index < ICAL_BY_MONTHDAY_SIZE) && (rrule.by_month_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
-						     index++)
-						{
-							if (dayOfMonth == 0)
-							{
-								dayOfMonth = rrule.by_month_day[index];
-							}
-							else
-							{
-								// EAS only supports a single occurrence of DayOfMonth
-								g_warning("DATA LOSS: Already set to recur on day %d of the month, discarding recurrence info for day %d of month", dayOfMonth, rrule.by_month_day[index]);
-							}
-						}
-						if (dayOfMonth > 0)
-						{
-							xmlValue = g_strdup_printf("%d", dayOfMonth);
-							xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
-							g_free(xmlValue); xmlValue = NULL;
-						}
+						_util_process_rrule_property(prop, appData);
 					}
 					break;
 
 				// TODO: all the rest :)
 
 				default:
+					// Note: icalproperty_as_ical_string() keeps ownership of the string so we don't have to delete
+					g_warning("DATA LOSS: unparsed iCalendar property: %s", icalproperty_as_ical_string(prop));
 					break;
 			}
 		}
@@ -1386,7 +1476,13 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 }
 
 
-static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app_data)
+/**
+ * \brief Process the VALARM component during parsing of an iCalendar
+ *
+ * \param valarm  Pointer to the iCalendar VALARM component
+ * \param appData Pointer to the <ApplicationData> element to add parsed elements to
+ */
+static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr appData)
 {
 	if (valarm)
 	{
@@ -1411,15 +1507,19 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
 			char minutes_buf[6];
 			g_snprintf(minutes_buf, 6, "%d", minutes);
 
-			xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Reminder", (const xmlChar*)minutes_buf);
+			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Reminder", (const xmlChar*)minutes_buf);
 		}
 	}
 }
 
 
 /**
- * Parse the STANDARD and DAYLIGHT subcomponents of VTIMEZONE.
- * Using one function for both as their formats are identical.
+ * \brief Parse the STANDARD and DAYLIGHT subcomponents of VTIMEZONE.
+ *        Using one function for both as their formats are identical.
+ *
+ * \param subcomponent The STANDARD or DAYLIGHT subcomponent of the VTIMEZONE component
+ * \param timezone     The EAS timezone structure to parse this subcomponent into
+ * \param type         Determineds whether subcomponent is a STANDARD or a DAYLIGHT
  */
 static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
 {
@@ -1579,9 +1679,12 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
 
 
 /**
- * Parse a VTIMEZONE component_data
+ * \brief Process the VTIMEZONE component during parsing of an iCalendar
+ *
+ * \param vtimezone  Pointer to the iCalendar VTIMEZONE component
+ * \param appData    Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr app_data)
+static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr appData)
 {
 	if (vtimezone)
 	{
@@ -1617,35 +1720,39 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 
 		// Write the timezone into the XML, base64-encoded
 		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
-		xmlNewTextChild(app_data, NULL, (const xmlChar*)"calendar:Timezone", (const xmlChar*)timezoneBase64);
+		xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Timezone", (const xmlChar*)timezoneBase64);
 		g_free(timezoneBase64);
 	}
 }
 
 
 /**
+ * \brief Parse an iCalendar document and convert to EAS XML format
  *
+ * \param doc      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
+ * \param appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
+ * \param calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
  */
-gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info)
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData, EasCalInfo* calInfo)
 {
 	gboolean success = FALSE;
 	icalcomponent* ical = NULL;
 	
 	if (doc &&
-	    app_data &&
-	    cal_info &&
-	    (app_data->type == XML_ELEMENT_NODE) &&
-	    (g_strcmp0((char*)(app_data->name), "ApplicationData") == 0) &&
-	    (ical = icalparser_parse_string(cal_info->icalendar)) &&
+	    appData &&
+	    calInfo &&
+	    (appData->type == XML_ELEMENT_NODE) &&
+	    (g_strcmp0((char*)(appData->name), "ApplicationData") == 0) &&
+	    (ical = icalparser_parse_string(calInfo->icalendar)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
 		icalcomponent* vevent = NULL;
 		
 		// Process the components of the VCALENDAR
-		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), app_data);
+		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
 		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
-		_util_process_vevent_component(vevent, app_data);
-		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), app_data);
+		_util_process_vevent_component(vevent, appData);
+		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
 
 		// DEBUG output
 		{
