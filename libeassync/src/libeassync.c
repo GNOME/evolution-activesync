@@ -1,6 +1,6 @@
 /**
  *  
- *  Filename: libeascal.c
+ *  Filename: libeassync.c
  *  Project:  
  *  Description: client side library for eas calendar (wraps dbus api)
  *
@@ -15,17 +15,17 @@
 #include <libedataserver/e-flag.h>
 
 #include "../../eas-daemon/src/activesyncd-common-defs.h"
-#include "libeascal.h"
+#include "libeassync.h"
 #include "eas-cal-info.h"
 
 #include "../../logger/eas-logger.h"
 
-G_DEFINE_TYPE (EasCalHandler, eas_cal_handler, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
 
-struct _EasCalHandlerPrivate{
+struct _EasSyncHandlerPrivate{
 	DBusGConnection* bus;	
     DBusGProxy *remoteEas;
-    guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+    gchar* account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GMainLoop* main_loop;
 	
 };
@@ -36,68 +36,71 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 // TODO - how much verification of args should happen 
 
 static void
-eas_cal_handler_init (EasCalHandler *cnc)
+eas_sync_handler_init (EasSyncHandler *cnc)
 {
-    EasCalHandlerPrivate *priv = NULL;
-	g_debug("eas_cal_handler_init++");
+    EasSyncHandlerPrivate *priv = NULL;
+	g_debug("eas_sync_handler_init++");
     
 	/* allocate internal structure */
-	priv = g_new0 (EasCalHandlerPrivate, 1);
+	priv = g_new0 (EasSyncHandlerPrivate, 1);
 	
 	priv->remoteEas = NULL;
 	priv->bus = NULL;
-	priv->account_uid = 0;
+	priv->account_uid = NULL;
 	priv->main_loop = NULL;
 	cnc->priv = priv;
-	g_debug("eas_cal_handler_init--");
+	g_debug("eas_sync_handler_init--");
 }
 
 static void
-eas_cal_handler_finalize (GObject *object)
+eas_sync_handler_finalize (GObject *object)
 {
-	EasCalHandler *cnc = (EasCalHandler *) object;
-	EasCalHandlerPrivate *priv;
+	EasSyncHandler *cnc = (EasSyncHandler *) object;
+	EasSyncHandlerPrivate *priv;
     
-	g_debug("eas_cal_handler_finalize++");
+	g_debug("eas_sync_handler_finalize++");
 
 	priv = cnc->priv;
+    g_free(priv->account_uid);
 
 	g_main_loop_quit (priv->main_loop);
 	dbus_g_connection_unref (priv->bus);
 	g_free (priv);
 	cnc->priv = NULL;
 
-	G_OBJECT_CLASS (eas_cal_handler_parent_class)->finalize (object);
-	g_debug("eas_cal_handler_finalize--");
+	G_OBJECT_CLASS (eas_sync_handler_parent_class)->finalize (object);
+	g_debug("eas_sync_handler_finalize--");
 }
 
 static void
-eas_cal_handler_class_init (EasCalHandlerClass *klass)
+eas_sync_handler_class_init (EasSyncHandlerClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 	void *temp = (void*)object_class;
 	temp = (void*)parent_class;
 
-	g_debug("eas_cal_handler_class_init++");
+	g_debug("eas_sync_handler_class_init++");
 
-	object_class->finalize = eas_cal_handler_finalize;
-	g_debug("eas_cal_handler_class_init--");
+	object_class->finalize = eas_sync_handler_finalize;
+	g_debug("eas_sync_handler_class_init--");
 }
 
-EasCalHandler *
-eas_cal_handler_new(guint64 account_uid)
+EasSyncHandler *
+eas_sync_handler_new(const gchar* account_uid)
 {
 	GError* error = NULL;
-	EasCalHandler *object = NULL;
+	EasSyncHandler *object = NULL;
 
 	g_type_init();
 
     g_log_set_default_handler(eas_logger, NULL);
-	g_debug("eas_cal_handler_new++");
+	g_debug("eas_sync_handler_new++ : account_uid[%s]",
+            (account_uid?account_uid:"NULL"));
 
+    if (!account_uid) return NULL;
 
-	object = g_object_new (EAS_TYPE_CAL_HANDLER , NULL);
+	object = g_object_new (EAS_TYPE_SYNC_HANDLER , NULL);
 
 	if(object == NULL){
 		g_error("Error: Couldn't create mail");
@@ -121,16 +124,16 @@ eas_cal_handler_new(guint64 account_uid)
 	g_debug("Creating a GLib proxy object for Eas.");
 	object->priv->remoteEas =  dbus_g_proxy_new_for_name(object->priv->bus,
 		      EAS_SERVICE_NAME,
-		      EAS_SERVICE_CALENDAR_OBJECT_PATH,
-		      EAS_SERVICE_CALENDAR_INTERFACE);
+		      EAS_SERVICE_SYNC_OBJECT_PATH,
+		      EAS_SERVICE_SYNC_INTERFACE);
 	if (object->priv->remoteEas == NULL) {
 		g_error("Error: Couldn't create the proxy object");
 		return NULL;
 	}
 
-	object->priv->account_uid = account_uid;
+	object->priv->account_uid = g_strdup(account_uid);
 
-	g_debug("eas_cal_handler_new--");
+	g_debug("eas_sync_handler_new--");
 	return object;
 
 }
@@ -148,8 +151,10 @@ free_string_array(gchar **array)
 
 }
 
-gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this, 
+                                                 gchar *sync_key,
+                                                 EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
@@ -162,20 +167,22 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 	gchar **updated_item_array = NULL;
 	gchar *updatedSyncKey;
     
-    g_debug("eas_cal_handler_get_calendar_items++");
+    g_debug("eas_sync_handler_get_calendar_items++");
 
 	g_assert(this);
 	g_assert(sync_key);
 
-    g_debug("eas_cal_handler_sync_folder_hierarch - dbus proxy ok");
+    g_debug("eas_sync_handler_get_latest_items - dbus proxy ok");
     
 	g_assert(g_slist_length(*items_created) == 0);
 	g_assert(g_slist_length(*items_updated) == 0);
 	g_assert(g_slist_length(*items_deleted) == 0);
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "get_latest_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+	ret = dbus_g_proxy_call(proxy, "get_latest_items", error,
+				  G_TYPE_STRING, this->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
@@ -184,7 +191,7 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		          G_TYPE_STRV, &updated_item_array,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_get_calendar_items - dbus proxy called");
+    g_debug("eas_sync_handler_get_latest_items - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -242,13 +249,14 @@ gboolean eas_cal_handler_get_calendar_items(EasCalHandler* this,
 		*items_deleted = NULL;
 	}
 
-	g_debug("eas_cal_handler_get_calendar_items--");
+	g_debug("eas_sync_handler_get_calendar_items--");
 	return ret;
 }
 
 gboolean 
-eas_cal_handler_delete_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+eas_sync_handler_delete_items(EasSyncHandler* this, 
+                                                 gchar *sync_key,
+                             				     const gchar* folder_id,
                                                  GSList *items_deleted,
                                                  GError **error)
 {
@@ -256,23 +264,24 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 	DBusGProxy *proxy = this->priv->remoteEas; 
     gchar *updatedSyncKey = NULL;
     
-    g_debug("eas_cal_handler_delete_items++");
+    g_debug("eas_sync_handler_delete_items++");
 
 	g_assert(this);
 	g_assert(sync_key);
 
-    g_debug("eas_cal_handler_delete_items - dbus proxy ok");
+    g_debug("eas_sync_handler_delete_items - dbus proxy ok");
 
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "delete_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+	ret = dbus_g_proxy_call(proxy, "delete_items", error,
+				  G_TYPE_STRING, this->priv->account_uid,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, items_deleted,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_delete_items - dbus proxy called");
+    g_debug("eas_sync_handler_delete_items - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -283,13 +292,15 @@ eas_cal_handler_delete_items(EasCalHandler* this,
 		g_free(updatedSyncKey);
 	}
 
-	g_debug("eas_cal_handler_delete_items--");
+	g_debug("eas_sync_handler_delete_items--");
 	return ret;
 }
 
 gboolean 
-eas_cal_handler_update_items(EasCalHandler* self, 
-                             gchar *sync_key, 
+eas_sync_handler_update_items(EasSyncHandler* self, 
+                             gchar *sync_key,
+                             EasItemType type,
+                             const gchar* folder_id,
                              GSList *items_updated,
                              GError **error)
 {
@@ -298,27 +309,29 @@ eas_cal_handler_update_items(EasCalHandler* self,
     gchar *updatedSyncKey = NULL;
     gchar **updated_item_array = NULL;
     
-    g_debug("eas_cal_handler_update_items++");
+    g_debug("eas_sync_handler_update_items++");
 
 	g_assert(self);
 	g_assert(sync_key);
 
-    g_debug("eas_cal_handler_update_items - dbus proxy ok");
+    g_debug("eas_sync_handler_update_items - dbus proxy ok");
 
     g_debug("server_id = %s", ((EasCalInfo*)(items_updated->data))->server_id);
 
     build_serialised_calendar_info_array (&updated_item_array, items_updated, error);
     
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "update_calendar_items", error,
-				  G_TYPE_UINT64, self->priv->account_uid,
+	ret = dbus_g_proxy_call(proxy, "update_items", error,
+				  G_TYPE_STRING, self->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, updated_item_array,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_update_items - dbus proxy called");
+    g_debug("eas_sync_handler_update_items - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -329,7 +342,7 @@ eas_cal_handler_update_items(EasCalHandler* self,
 		g_free(updatedSyncKey);
 	}
 
-	g_debug("eas_cal_handler_update_items--");
+	g_debug("eas_sync_handler_update_items--");
 	return ret;
 }
 
@@ -362,8 +375,10 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 }
 
 gboolean 
-eas_cal_handler_add_items(EasCalHandler* this, 
-                                                 gchar *sync_key, 
+eas_sync_handler_add_items(EasSyncHandler* this, 
+                                                 gchar *sync_key,
+                          						 EasItemType type,
+                                      			 const gchar* folder_id,
                                                  GSList *items_added,
                                                  GError **error)
 {
@@ -373,17 +388,19 @@ eas_cal_handler_add_items(EasCalHandler* this,
     gchar **added_item_array = NULL;
     gchar **created_item_array = NULL;
     
-    g_debug("eas_cal_handler_add_items++");
+    g_debug("eas_sync_handler_add_items++");
 	g_assert(this);
 	g_assert(sync_key);
-    g_debug("eas_cal_handler_updaddate_items - dbus proxy ok");
+    g_debug("eas_sync_handler_updaddate_items - dbus proxy ok");
     g_debug("server_id = %s", ((EasCalInfo*)(items_added->data))->server_id);
 
     build_serialised_calendar_info_array (&added_item_array, items_added, error);
     
 	// call DBus API
-	ret = dbus_g_proxy_call(proxy, "add_calendar_items", error,
-				  G_TYPE_UINT64, this->priv->account_uid,
+	ret = dbus_g_proxy_call(proxy, "add_items", error,
+				  G_TYPE_STRING, this->priv->account_uid,
+	              G_TYPE_UINT64, (guint64)type,
+                  G_TYPE_STRING, folder_id,
 		          G_TYPE_STRING, sync_key,
    		          G_TYPE_STRV, added_item_array,
 		          G_TYPE_INVALID, 
@@ -391,7 +408,7 @@ eas_cal_handler_add_items(EasCalHandler* this,
 	              G_TYPE_STRV, &created_item_array,
 		          G_TYPE_INVALID);
 
-    g_debug("eas_cal_handler_add_items - dbus proxy called");
+    g_debug("eas_sync_handler_add_items - dbus proxy called");
     if (*error) {
         g_error(" Error: %s", (*error)->message);
     }
@@ -418,7 +435,7 @@ eas_cal_handler_add_items(EasCalHandler* this,
 		g_free(updatedSyncKey);
 	}
 
-	g_debug("eas_cal_handler_add_items--");
+	g_debug("eas_sync_handler_add_items--");
 	return ret;
 }
 

@@ -65,7 +65,7 @@ AC_CONFIG_FILES([
     eas-daemon/src/Makefile 
     eas-daemon/tests/Makefile 
     libeasmail/src/Makefile 
-    libeascal/src/Makefile 
+    libeassync/src/Makefile 
     check_tests/Makefile
     logger/Makefile
     camel/Makefile

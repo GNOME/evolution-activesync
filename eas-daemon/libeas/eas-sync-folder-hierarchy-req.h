@@ -39,7 +39,7 @@ struct _EasSyncFolderHierarchyReq
 GType eas_sync_folder_hierarchy_req_get_type (void) G_GNUC_CONST;
 
 EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncKey,
-                                                             guint64 accountId,
+                                                             const gchar* accountId,
                                                              EFlag *flag);
 
 gboolean eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error);

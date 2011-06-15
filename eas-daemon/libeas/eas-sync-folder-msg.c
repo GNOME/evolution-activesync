@@ -16,7 +16,7 @@ struct _EasSyncFolderMsgPrivate
 	GSList* deleted_folders;
 
 	gchar* sync_key;
-	gint   account_id;
+	gchar* account_id;
 };
 
 #define EAS_SYNC_FOLDER_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_MSG, EasSyncFolderMsgPrivate))
@@ -38,7 +38,7 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 	object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE(object);
 	
 	priv->sync_key = NULL;
-	priv->account_id = -1;
+	priv->account_id = NULL;
 	g_debug("eas_sync_folder_msg_init--");
 
 }
@@ -50,6 +50,7 @@ eas_sync_folder_msg_finalize (GObject *object)
 	EasSyncFolderMsgPrivate *priv = msg->priv;
 
 	g_free(priv->sync_key);
+	g_free(priv->account_id);
 	
 	G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
 }
@@ -73,7 +74,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 
 
 EasSyncFolderMsg*
-eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
+eas_sync_folder_msg_new (const gchar* syncKey, const gchar* accountId)
 {
 	EasSyncFolderMsg* msg = NULL;
 	EasSyncFolderMsgPrivate *priv = NULL;
@@ -82,7 +83,7 @@ eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
 	priv = msg->priv;
 
 	priv->sync_key = g_strdup(syncKey);
-	priv->account_id = accountId;
+	priv->account_id = g_strdup(accountId);
 
 	return msg;
 }
@@ -112,110 +113,6 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
 }
 
 
-/*
-translates from eas sync status code to GError. TODO this could just be a table in a header?
-static void set_sync_status_error(guint sync_status, GError **error)
-{
-	switch(sync_status)
-	{
-		// 2 not spec'd
-		case 3:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCKEY,	   
-			("Sync error: Invalid synchronization key"));	
-		}
-		break;
-		case 4:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_PROTOCOLERROR,	   
-			("Sync error: Request that does not comply with the specification requirements"));	
-		}
-		break;
-		case 5:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_SERVERERROR,	   
-			("Sync error: Server misconfiguration, temporary system issue, or bad item"));	
-		}
-		break;
-		case 6:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_CONVERSIONERROR,	   
-			("Sync error: malformed or invalid item sent"));	
-		}
-		break;		
-		case 7:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_CONFLICTERROR,	   
-			("Sync error: client tried to change an item for which server changes take precedence"));	
-		}
-		break;		
-		case 8:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_OBJECTNOTFOUND,	   
-			("Sync error: Fetch or Change operation that has an id no longer valid on the server"));	
-		}
-		break;	
-		case 9:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_MAILBOXFULL,	   
-			("Sync error: User account could be out of disk space"));	
-		}
-		break;
-		case 12:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_FOLDERHIERARCHYCHANGED,	   
-			("Sync error: Mailbox folders are not synchronized, need FolderSync first"));	
-		}
-		break;
-		case 13:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_REQUESTINCOMPLETE,	   
-			("Sync error: sync request not complete, cached set of notify-able collections missing, resend a full Sync request"));	
-		}
-		break;
-		case 14:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_INVALIDWAITORHEARTBEAT,   
-			("Sync error: Invalid Wait or HeartbeatInterval value, update the Wait element value according to the Limit and resend the request"));	
-		}
-		break;
-		case 15:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCCOMMAND,	   
-			("Sync error: Too many collections are included in the Sync request, sync fewer folders"));	
-		}
-		break;
-		case 16:
-		{
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_RETRY,	   
-			("Sync error: Something on the server caused a retriable error."));	
-		}
-		break;			
-		default:
-		{
-			g_warning("Unrecognised provisioning error");
-			g_set_error (error, EAS_CONNECTION_ERROR,
-			EAS_CONNECTION_SYNC_ERROR_STATUSUNRECOGNIZED,	   
-			("Unrecognised sync status"));			
-		}
-	}
-
-	return;
-}
-*/
-
 gboolean
 eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, GError** error)
 {
@@ -243,19 +140,20 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sync_status = (gchar *)xmlNodeGetContent(node);
-			guint sync_status_num = atoi(sync_status);			
+			EasSyncStatus sync_status_num = atoi(sync_status);			
 			xmlFree(sync_status);
-			if(sync_status_num != 1)  // not success
+			if(sync_status_num != EAS_COMMON_STATUS_OK)  // not success
 			{
-				if(sync_status_num > EAS_SYNC_STATUS_LIMIT)// not pretty, but make sure we don't overrun array if new status added
+				// TODO could also be a commom status code!?
+				if(sync_status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT)// not pretty, but make sure we don't overrun array if new status added
 				{
-					sync_status_num = EAS_SYNC_STATUS_LIMIT;
+					sync_status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 				}
-				error_details = status_error_map[sync_status_num];
+				error_details = sync_status_error_map[sync_status_num];
 				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
 				ret = FALSE;
 				goto finish;
-			}			
+			}
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "SyncKey")) 

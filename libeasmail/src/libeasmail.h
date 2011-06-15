@@ -38,7 +38,7 @@ GType eas_mail_handler_get_type (void) G_GNUC_CONST;
 // Note: the account_uid is not validated against accounts provisioned on the device as part of 
 // this call.  This level of validation will be done on subsequent calls that take EasEmailHandler
 // as an argument
-EasEmailHandler *eas_mail_handler_new(guint64 account_uid);
+EasEmailHandler *eas_mail_handler_new(const gchar* account_uid);
 
 /* function name:               eas_mail_handler_sync_folder_hierarchy
  * function description:        pulls down changes in folder structure (folders 

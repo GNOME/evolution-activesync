@@ -12,10 +12,11 @@
 struct _EasGetEmailBodyReqPrivate
 {
 	EasGetEmailBodyMsg* emailBodyMsg;
-	guint64 accountUid;
+	gchar* accountUid;
 	gchar* serverId;
 	gchar* collectionId;
 	gchar* mimeDirectory;
+	GError *error;
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -35,6 +36,7 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 	                                 EAS_REQ_GET_EMAIL_BODY);
 
 	priv->emailBodyMsg = NULL;
+	priv->accountUid = NULL;
 	g_debug("eas_get_email_body_req_init--");
 }
 
@@ -54,6 +56,7 @@ eas_get_email_body_req_finalize (GObject *object)
 	g_free(priv->serverId);
 	g_free(priv->collectionId);
 	g_free(priv->mimeDirectory);
+	g_free(priv->accountUid);
 
 	G_OBJECT_CLASS (eas_get_email_body_req_parent_class)->finalize (object);
 	g_debug("eas_get_email_body_req_finalize--");
@@ -77,7 +80,7 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 
 
 EasGetEmailBodyReq*
-eas_get_email_body_req_new (const guint64 account_uid, 
+eas_get_email_body_req_new (const gchar* account_uid, 
                             const gchar *collection_id, 
                             const gchar *server_id, 
                             const gchar *mime_directory,
@@ -91,7 +94,7 @@ eas_get_email_body_req_new (const guint64 account_uid,
 	req = g_object_new(EAS_TYPE_GET_EMAIL_BODY_REQ, NULL);
 	priv = req->priv;
 
-	priv->accountUid = account_uid;
+	priv->accountUid = g_strdup(account_uid);
 	priv->collectionId = g_strdup(collection_id);
 	priv->serverId = g_strdup(server_id);
 	priv->mimeDirectory = g_strdup(mime_directory);
@@ -101,45 +104,93 @@ eas_get_email_body_req_new (const guint64 account_uid,
 	return req;
 }
 
-void
+
+gboolean
 eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 {
+	gboolean ret;
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
 	
 	g_debug("eas_get_email_body_req_Activate++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
 	priv->emailBodyMsg = eas_get_email_body_msg_new (priv->serverId, priv->collectionId, priv->mimeDirectory);
 	doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
 	                            "ItemOperations", 
 	                            doc, 
 	                            (struct _EasRequestBase *)self, 
 	                            error);
 	
 	g_debug("eas_get_email_body_req_Activate--");
+
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
+	return ret;
 }
 
 void
-eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError** error)
+eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error_in)
 {
+	gboolean ret;
+	GError *error = NULL;
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	
 	g_debug("eas_get_email_body_req_MessageComplete++");
 
-	eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, error);
-	
-	xmlFree(doc);
+	// if an error occurred, store it and signal daemon
+	if(error_in)
+	{
+		priv->error = error_in;
+		goto finish;
+	}	
 
-	g_debug("eas_get_email_body_req_MessageComplete--");
+	ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
+	xmlFree(doc);
+	if(!ret)
+	{
+		priv->error = error; 
+		goto finish;
+	}		
+
+finish:
 	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+	
+	g_debug("eas_get_email_body_req_MessageComplete--");
 }
 
-void
+
+gboolean
 eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
 {
+	gboolean ret = TRUE;
+	EasGetEmailBodyReqPrivate *priv = self->priv;
+	
 	g_debug("eas_get_email_body_req_ActivateFinish++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if(priv->error != NULL)// propogate any preceding error
+	{
+		/* store priv->error in error, if error != NULL,
+		* otherwise call g_error_free() on priv->error
+		*/
+		g_propagate_error (error, priv->error);	
+		priv->error = NULL;
+
+		ret = FALSE;
+	}	
+	
 	/* TODO: Add public function implementation here */
 	g_debug("eas_get_email_body_req_ActivateFinish--");
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
+	return ret;
 }

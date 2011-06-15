@@ -28,7 +28,7 @@ G_DEFINE_TYPE (EasUpdateEmailReq, eas_update_email_req, EAS_TYPE_REQUEST_BASE);
 struct _EasUpdateEmailReqPrivate
 {
 	EasSyncMsg* sync_msg;
-	guint64 account_id;
+	gchar* account_id;
 	gchar* sync_key;
 	gchar* folder_id;
 	gchar** serialised_email_array; 
@@ -45,7 +45,7 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 	object->priv = priv = EAS_UPDATE_EMAIL_REQ_PRIVATE(object);
 
 	priv->sync_msg = NULL;
-	priv->account_id = 0;
+	priv->account_id = NULL;
 	priv->sync_key = NULL;
 	priv->folder_id = NULL;
 	priv->serialised_email_array = NULL;
@@ -67,6 +67,7 @@ eas_update_email_req_finalize (GObject *object)
 	EasUpdateEmailReqPrivate *priv = req->priv;
 	
 	g_debug("eas_update_email_req_finalize++");
+	g_free(priv->account_id);
 
 	g_object_unref(priv->sync_msg);
 	free_string_array(priv->serialised_email_array);
@@ -96,7 +97,7 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 }
 
 // TODO - update this to take a GSList of serialised emails? rem to copy the list
-EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag)
+EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag)
 {
 	EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
 	EasUpdateEmailReqPrivate *priv = self->priv;
@@ -123,7 +124,7 @@ EasUpdateEmailReq *eas_update_email_req_new(guint64 account_id, const gchar *syn
 	}
 	priv->serialised_email_array[i] = NULL;
 	
-	priv->account_id = account_id;
+	priv->account_id = g_strdup(account_id);
 
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 

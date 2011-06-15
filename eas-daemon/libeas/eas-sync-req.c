@@ -23,7 +23,7 @@ struct _EasSyncReqPrivate
 {
 	EasSyncMsg* syncMsg;
 	EasSyncReqState state;
-	guint accountID;
+	gchar* accountID;
 	gchar* folderID;
 	EasItemType ItemType;
 	GError *error;
@@ -41,7 +41,7 @@ eas_sync_req_init (EasSyncReq *object)
 	g_debug("eas_sync_req_init++");
 	priv->syncMsg = NULL;
 	priv->state = EasSyncReqStep1;
-	priv->accountID= -1;
+	priv->accountID= NULL;
 	priv->folderID = NULL;
 
 	eas_request_base_SetRequestType (&object->parent_instance, 
@@ -61,7 +61,8 @@ eas_sync_req_finalize (GObject *object)
 	if(priv->syncMsg){
 		g_object_unref(priv->syncMsg);
 	}
-	
+
+	g_free(priv->accountID);
 	g_free(priv->folderID);
 
 	G_OBJECT_CLASS (eas_sync_req_parent_class)->finalize (object);
@@ -85,7 +86,7 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 
 
 gboolean
-eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID, EFlag *flag, const gchar* folderId, EasItemType type, GError** error)
+eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* accountID, EFlag *flag, const gchar* folderId, EasItemType type, GError** error)
 {
 	gboolean ret = FALSE;
 	EasSyncReqPrivate* priv;
@@ -100,7 +101,7 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, guint64 accountID
 	
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 	
-	priv->accountID = accountID;
+	priv->accountID = g_strdup(accountID);
 	
 	priv->ItemType = type;
 	

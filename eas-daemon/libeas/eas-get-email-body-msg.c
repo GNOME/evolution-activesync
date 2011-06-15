@@ -5,6 +5,7 @@
  * 
  */
 
+#include "eas-connection-errors.h"
 #include "eas-get-email-body-msg.h"
 
 struct _EasGetEmailBodyMsgPrivate
@@ -131,23 +132,31 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 	return doc;
 }
 
-void
+gboolean
 eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GError** error)
 {
+	EasError error_details;
+	gboolean ret = TRUE;
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
 	
 	g_debug("eas_get_email_body_msg_parse_response++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
     if (!doc) 
     {
-        g_warning ("No XML Doc to parse");
-        return;
+        g_warning ("no XML doc to parse");
+		// Note not setting error here as empty doc is valid
+		goto finish;
     }
     node = xmlDocGetRootElement(doc);
     if (g_strcmp0((char *)node->name, "ItemOperations")) {
-        g_debug("Failed to find <ItemOperations> element");
-        return;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+		EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,	   
+		("Failed to find <ItemOperations> element"));
+        ret = FALSE;
+		goto finish;
     }
 
     for (node = node->children; node; node = node->next) 
@@ -155,9 +164,28 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("ItemOperations Status:[%s]", status);
+			EasItemOperationsStatus status_num = atoi(status);			
 			xmlFree(status);
-            continue;
+			if(status_num != EAS_COMMON_STATUS_OK)  // not success
+			{
+				ret = FALSE;
+
+				// TODO - think of a nicer way to do this?
+				if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
+				{
+					error_details = common_status_error_map[status_num - 100];
+				}
+				else 
+				{
+					if(status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT)// not pretty, but make sure we don't overrun array if new status added
+						status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+					error_details = itemoperations_status_error_map[status_num];	
+				}
+				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+				goto finish;
+			}
+            continue;			
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Response"))
 		{
@@ -167,7 +195,8 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 	if (!node)
 	{
 		g_warning("Could not find Response node");
-		return;
+		// Note not setting error here as this is valid	
+		goto finish;		
 	}
 
 	for (node = node->children; node; node = node->next)
@@ -180,7 +209,8 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 	if (!node)
 	{
 		g_warning("Could not find Fetch node");
-		return;
+		// Note not setting error here as this is valid	
+		goto finish;		
 	}
 
 	for (node = node->children; node; node = node->next)
@@ -188,8 +218,20 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 		{
             gchar *status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("Fetch Status:[%s]", status);
+			EasItemOperationsStatus status_num = atoi(status);			
 			xmlFree(status);
+			if(status_num != EAS_COMMON_STATUS_OK)  // not success
+			{
+				// TODO could also be a common status code!?
+				if(status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT)// not pretty, but make sure we don't overrun array if new status added
+				{
+					status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+				}
+				error_details = itemoperations_status_error_map[status_num];
+				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+				ret = FALSE;
+				goto finish;
+			}
             continue;
 		}
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "CollectionId"))
@@ -216,7 +258,8 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 	if (!node)
 	{
 		g_warning("Failed to find Properties node");
-		return;
+		// Note not setting error here as this is valid	
+		goto finish;
 	}
 
 	for (node = node->children; node; node = node->next)
@@ -227,10 +270,11 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		}
 	}
 
-		if (!node)
+	if (!node)
 	{
 		g_warning("Failed to find Body node");
-		return;
+		// Note not setting error here as this is valid	
+		goto finish;
 	}
 
 	for (node = node->children; node; node = node->next)
@@ -242,7 +286,8 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 			{
 				g_critical("Email type returned by server is not MIME");
 				xmlFree(xmlTmp);
-				return;
+				// TODO set error?
+				goto finish;
 			}
 			xmlFree(xmlTmp);
 			continue;
@@ -264,6 +309,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 			else
 			{
 				g_critical("Failed to open file!");
+				// TODO set error?
 			}
 			g_free(fullFilePath);
 			xmlFree(xmlTmp);
@@ -271,7 +317,12 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		}
 	}
 
-	
+finish:
+	if(!ret)
+	{
+		g_assert (error == NULL || *error != NULL);
+	}	
+	g_debug("eas_get_email_body_msg_parse_response--");	
+	return ret;	
 
-	g_debug("eas_get_email_body_msg_parse_response--");
 }

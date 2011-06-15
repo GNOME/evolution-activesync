@@ -16,14 +16,12 @@
 
 #define EAS_SERVICE_NAME        "org.meego.activesyncd"
 
-#define EAS_SERVICE_CALENDAR_OBJECT_PATH "/EasCalendar"
-#define EAS_SERVICE_CALENDAR_INTERFACE   "org.meego.activesyncd.EasCalendar"
+#define EAS_SERVICE_SYNC_OBJECT_PATH "/EasSync"
+#define EAS_SERVICE_SYNC_INTERFACE   "org.meego.activesyncd.EasSync"
 
 #define EAS_SERVICE_COMMON_OBJECT_PATH 	 "/EasCommon"
 #define EAS_SERVICE_COMMON_INTERFACE   "org.meego.activesyncd.EasCommon"
 
-#define EAS_SERVICE_CONTACT_OBJECT_PATH  "/EasContact"
-#define EAS_SERVICE_CONTACT_INTERFACE   "org.meego.activesyncd.EasContact"
 
 #define EAS_SERVICE_MAIL_INTERFACE   "org.meego.activesyncd.EasMail"
 #define EAS_SERVICE_MAIL_OBJECT_PATH	 "/EasMail"

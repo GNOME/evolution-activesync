@@ -38,9 +38,9 @@ struct _EasAccounts
 GType eas_accounts_get_type (void) G_GNUC_CONST;
 EasAccounts* eas_accounts_new (void);
 int eas_accounts_read_accounts_info(EasAccounts* self);
-gchar* eas_accounts_get_user_id (EasAccounts* self, guint64 accountId);
-gchar* eas_accounts_get_password (EasAccounts* self, guint64 accountId);
-gchar* eas_accounts_get_server_uri (EasAccounts* self, guint64 accountId);
+gchar* eas_accounts_get_user_id (EasAccounts* self, const gchar* accountId);
+gchar* eas_accounts_get_password (EasAccounts* self, const gchar* accountId);
+gchar* eas_accounts_get_server_uri (EasAccounts* self, const gchar* accountId);
 
 G_END_DECLS
 
