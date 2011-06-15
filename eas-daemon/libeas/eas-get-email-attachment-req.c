@@ -57,7 +57,7 @@ eas_get_email_attachment_req_finalize (GObject *object)
 
 	if(priv->error)
 	{
-		g_clear_error(&priv->error);
+		g_error_free(priv->error);
 	}
 	g_free(priv->fileReference);
 	g_free(priv->mimeDirectory);
@@ -163,6 +163,7 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
 	xmlFree(doc);
 	if(!ret)
 	{
+		g_assert(error != NULL);
 		self->priv->error = error; 
 		goto finish;		
 	}
@@ -176,9 +177,8 @@ finish:
 gboolean
 eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error)
 {
+	gboolean ret = TRUE;
 	EasGetEmailAttachmentReqPrivate *priv = self->priv;
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
 	g_debug("eas_get_email_attachment_req_ActivateFinish++");
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);	
@@ -191,11 +191,15 @@ eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GEr
 		g_propagate_error (error, priv->error);	
 		priv->error = NULL;
 
-		return FALSE;
+		ret = FALSE;
 	}	
-	
+
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}	
 	g_debug("eas_get_email_attachment_req_ActivateFinish--");
 
-	return TRUE;
+	return ret;
 }
 

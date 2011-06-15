@@ -164,7 +164,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *status = (gchar *)xmlNodeGetContent(node);
-			EasItemOperationsStatus status_num = atoi(status);			
+			guint status_num = atoi(status);			
 			xmlFree(status);
 			if(status_num != EAS_COMMON_STATUS_OK)  // not success
 			{
@@ -217,7 +217,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
 		{
             gchar *status = (gchar *)xmlNodeGetContent(node);
-			EasItemOperationsStatus status_num = atoi(status);			
+			guint status_num = atoi(status);			
 			xmlFree(status);
 			if(status_num != EAS_COMMON_STATUS_OK)  // not success
 			{

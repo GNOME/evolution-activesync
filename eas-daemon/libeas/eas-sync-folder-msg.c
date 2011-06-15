@@ -140,7 +140,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sync_status = (gchar *)xmlNodeGetContent(node);
-			EasSyncStatus status_num = atoi(sync_status);			
+			guint status_num = atoi(sync_status);			
 			xmlFree(sync_status);
 			if(status_num != EAS_COMMON_STATUS_OK)  // not success
 			{
@@ -211,8 +211,7 @@ finish:
 	{
 		g_assert (error == NULL || *error != NULL);
 	}
-	return ret;
-	
+	return ret;	
 }
 
 static void

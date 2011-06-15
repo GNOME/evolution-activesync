@@ -55,7 +55,7 @@ eas_get_email_body_req_finalize (GObject *object)
 	}
 	if(priv->error)
 	{
-		g_clear_error(&priv->error);
+		g_error_free(priv->error);
 	}
 	g_free(priv->serverId);
 	g_free(priv->collectionId);
@@ -189,12 +189,12 @@ eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
 
 		ret = FALSE;
 	}	
-	
 	/* TODO: Add public function implementation here */
-	g_debug("eas_get_email_body_req_ActivateFinish--");
+	
 	if(!ret)
 	{
 		g_assert(error == NULL || *error != NULL);
 	}
+	g_debug("eas_get_email_body_req_ActivateFinish--");	
 	return ret;
 }

@@ -32,6 +32,7 @@ struct _EasUpdateEmailReqPrivate
 	gchar* sync_key;
 	gchar* folder_id;
 	gchar** serialised_email_array; 
+	GError *error;
 };
 
 static void
@@ -44,6 +45,7 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 	
 	object->priv = priv = EAS_UPDATE_EMAIL_REQ_PRIVATE(object);
 
+	priv->error = NULL;
 	priv->sync_msg = NULL;
 	priv->account_id = NULL;
 	priv->sync_key = NULL;
@@ -68,7 +70,10 @@ eas_update_email_req_finalize (GObject *object)
 	
 	g_debug("eas_update_email_req_finalize++");
 	g_free(priv->account_id);
-
+	if(priv->error)
+	{
+		g_error_free(priv->error);
+	}
 	g_object_unref(priv->sync_msg);
 	free_string_array(priv->serialised_email_array);
 	g_free (priv);
@@ -145,14 +150,18 @@ cleanup:
 	return self;
 }
 
-void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
+gboolean
+eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 {
+	gboolean ret;
 	EasUpdateEmailReqPrivate *priv = self->priv;
 	xmlDoc *doc;
 	GSList *update_emails = NULL;   // sync msg expects a list, we have an array
 	guint i = 0;
 	
 	g_debug("eas_update_email_req_Activate++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);		
 	
 	while(priv->serialised_email_array[i])
 	{
@@ -167,47 +176,92 @@ void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error)
 	g_debug("build messsage");
 	//build request msg
 	doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, update_emails, NULL);
+	g_slist_free(update_emails);
+	if(!doc)
+	{
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
+        ret = FALSE;
+		goto finish;		
+	}		
 	
 	g_debug("send message");
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
 	                            "Sync", 
 	                            doc, 
 	                            (struct _EasRequestBase *)self, 
 	                            error);
 
-	g_debug("eas_update_email_req_Activate--");
-
-	g_slist_free(update_emails);
-
-	return;
+finish:	
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}	
+	g_debug("eas_update_email_req_Activate--");	
+	return ret;
 }
 
 
-void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError** error)
+void
+eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError* error_in)
 {
+	gboolean ret;
+	GError *error = NULL;
 	EasUpdateEmailReqPrivate *priv = self->priv;
 	
 	g_debug("eas_update_email_req_MessageComplete++");
 
-	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
-
-	xmlFree(doc);
+	// if an error occurred, store it and signal daemon
+	if(error_in)
+	{
+		priv->error = error_in;
+		goto finish;
+	}	
 	
+	ret = eas_sync_msg_parse_response (priv->sync_msg, doc, &error);
+	xmlFree(doc);
+	if(!ret)
+	{
+		g_assert(error != NULL);
+		self->priv->error = error; 
+	}
+
+finish:	
 	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 
 	g_debug("eas_update_email_req_MessageComplete--");	
 }
 
-/*
-void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key)
+
+gboolean 
+eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, GError **error)
 {
-	g_debug("eas_update_email_req_ActivateFinish++");
-	
+	gboolean ret = TRUE;
 	EasUpdateEmailReqPrivate *priv = self->priv;
 
-	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
+	g_debug("eas_update_email_req_ActivateFinish++");
 	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if(priv->error != NULL)// propogate any preceding error
+	{
+		/* store priv->error in error, if error != NULL,
+		* otherwise call g_error_free() on priv->error
+		*/
+		g_propagate_error (error, priv->error);	
+		priv->error = NULL;
+
+		ret = FALSE;
+	}
+
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);		
+	}
 	g_debug("eas_update_email_req_ActivateFinish--");	
+
+	return ret;
 }
-*/
+
 

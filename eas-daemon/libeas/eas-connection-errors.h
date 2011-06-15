@@ -226,8 +226,6 @@ enum _EasCommonStatus
 	EAS_COMMON_STATUS_EXCEEDSSTATUSLIMIT	// no common status above 177 currently
 };
 
-typedef enum _EasCommonStatus EasCommonStatus;
-
 enum _EasItemOperationsStatus
 {
 	EAS_ITEMOPERATIONS_STATUS_PROTOCOLERROR = 2,
@@ -249,8 +247,6 @@ enum _EasItemOperationsStatus
 	EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT,   // no itemoperations status spec'd above 18 currently
 };
 
-typedef enum _EasItemOperationsStatus EasItemOperationsStatus;
-
 enum _EasSyncStatus
 {
 	EAS_SYNC_STATUS_INVALIDSYNCKEY = 3,
@@ -268,7 +264,6 @@ enum _EasSyncStatus
 	EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 16 currently
 };
 
-typedef enum _EasSyncStatus EasSyncStatus;
 
 struct _EasError{
 	EasConnectionError code;

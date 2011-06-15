@@ -1365,19 +1365,19 @@ complete_request:
 			break;			
 			case EAS_REQ_DELETE_MAIL:
 			{
-				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc, &error);// TODO
+				eas_delete_email_req_MessageComplete((EasDeleteEmailReq *)req, doc, error);
 			}
 			break;
 			case EAS_REQ_SEND_EMAIL:
 			{
 				g_debug("EAS_REQ_SEND_EMAIL");
-				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, &error);// TODO
+				eas_send_email_req_MessageComplete ((EasSendEmailReq *)req, doc, error);
 			}
 			break;
 			case EAS_REQ_UPDATE_MAIL:
 			{
 				g_debug("EAS_REQ_UPDATE_EMAIL");
-				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc, &error);// TODO
+				eas_update_email_req_MessageComplete ((EasUpdateEmailReq *)req, doc, error);
 			}
 			break;
 			case EAS_REQ_UPDATE_CALENDAR:

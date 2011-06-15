@@ -63,7 +63,7 @@ eas_sync_req_finalize (GObject *object)
 	}
 	if(priv->error)
 	{
-		g_clear_error(&priv->error);
+		g_error_free(priv->error);
 	}	
 
 	g_free(priv->accountID);
@@ -189,6 +189,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 	xmlFree(doc);
 	if(!ret)
 	{
+		g_assert(error != NULL);
 		self->priv->error = error; 
 		e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 		goto finish;
@@ -230,6 +231,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 												&error);
 			if(!ret)
 			{
+				g_assert(error != NULL);
 				self->priv->error = error; 
 				e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 				goto finish;
@@ -259,6 +261,7 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 								GSList** deleted_items, 
 								GError** error)
 {
+	gboolean ret = TRUE;
 	EasSyncReqPrivate *priv;
 	
 	g_debug("eas_sync_req_Activate_Finish++");
@@ -275,15 +278,19 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 		g_propagate_error (error, priv->error);	
 		priv->error = NULL;
 
-		return FALSE;
+		ret = FALSE;
 	}	
 
 	*ret_sync_key    = g_strdup(eas_sync_msg_get_syncKey(priv->syncMsg));
 	*added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
 	*updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
 	*deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);
-	
+
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}	
 	g_debug("eas_sync_req_Activate_Finish--");
 
-	return TRUE;
+	return ret;
 }

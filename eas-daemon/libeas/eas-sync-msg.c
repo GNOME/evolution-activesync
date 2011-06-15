@@ -256,7 +256,6 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 gboolean
 eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 {
-	EasError error_details;
 	gboolean ret = TRUE;
 	EasSyncMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL,
@@ -290,10 +289,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sync_status = (gchar *)xmlNodeGetContent(node);
-			EasSyncStatus status_num = atoi(sync_status);			
+			guint status_num = atoi(sync_status);			
 			xmlFree(sync_status);
 			if(status_num != EAS_COMMON_STATUS_OK)  // not success
 			{
+				EasError error_details;
 				ret = FALSE;
 			
 				if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
@@ -348,10 +348,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
         {
             gchar *sync_status = (gchar *)xmlNodeGetContent(node);
-			EasSyncStatus status_num = atoi(sync_status);			
+			guint status_num = atoi(sync_status);			
 			xmlFree(sync_status);
 			if(status_num != EAS_COMMON_STATUS_OK)  // not success
 			{
+				EasError error_details;
 				ret = FALSE;
 
 				if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
@@ -528,10 +529,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 					if (appData->type == XML_ELEMENT_NODE && !g_strcmp0((char *)appData->name, "Status")) 
 					{
 						gchar *status = (gchar *)xmlNodeGetContent(appData);
-						EasSyncStatus status_num = atoi(status);			
+						guint status_num = atoi(status);			
 						xmlFree(status);
 						if(status_num != EAS_COMMON_STATUS_OK)  // not success
 						{
+							EasError error_details;
 							ret = FALSE;
 
 							if((EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED))// it's a common status code
