@@ -16,7 +16,7 @@ struct _EasSyncFolderMsgPrivate
 	GSList* deleted_folders;
 
 	gchar* sync_key;
-	gint   account_id;
+	gchar* account_id;
 };
 
 #define EAS_SYNC_FOLDER_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_MSG, EasSyncFolderMsgPrivate))
@@ -38,7 +38,7 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 	object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE(object);
 	
 	priv->sync_key = NULL;
-	priv->account_id = -1;
+	priv->account_id = NULL;
 	g_debug("eas_sync_folder_msg_init--");
 
 }
@@ -50,6 +50,7 @@ eas_sync_folder_msg_finalize (GObject *object)
 	EasSyncFolderMsgPrivate *priv = msg->priv;
 
 	g_free(priv->sync_key);
+	g_free(priv->account_id);
 	
 	G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
 }
@@ -73,7 +74,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 
 
 EasSyncFolderMsg*
-eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
+eas_sync_folder_msg_new (const gchar* syncKey, const gchar* accountId)
 {
 	EasSyncFolderMsg* msg = NULL;
 	EasSyncFolderMsgPrivate *priv = NULL;
@@ -82,7 +83,7 @@ eas_sync_folder_msg_new (const gchar* syncKey, gint accountId)
 	priv = msg->priv;
 
 	priv->sync_key = g_strdup(syncKey);
-	priv->account_id = accountId;
+	priv->account_id = g_strdup(accountId);
 
 	return msg;
 }

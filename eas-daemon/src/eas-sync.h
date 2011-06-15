@@ -44,34 +44,34 @@ void eas_sync_set_eas_connection(EasSync* self, EasConnection* easConnObj);
 
 
 void eas_sync_get_latest_items(EasSync* self,
-                                    guint64 account_uid,
-                                    guint64 type,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key,
-                                    DBusGMethodInvocation* context);
+                               const gchar* account_uid,
+                               guint64 type,
+                               const gchar* folder_id,
+                               const gchar* sync_key,
+                               DBusGMethodInvocation* context);
 
 gboolean eas_sync_delete_items(EasSync* self,
-                                    guint64 account_uid,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const GSList *deleted_items_array,
-                                    DBusGMethodInvocation* context);
+                               const gchar* account_uid,
+                               const gchar* folder_id,
+                               const gchar* sync_key, 
+                               const GSList *deleted_items_array,
+                               DBusGMethodInvocation* context);
 
 gboolean eas_sync_update_items(EasSync* self,
-                                    guint64 account_uid,
-                                    guint64 type,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const gchar **items,
-                                    DBusGMethodInvocation* context);
+                               const gchar* account_uid,
+                               guint64 type,
+                               const gchar* folder_id,
+                               const gchar* sync_key, 
+                               const gchar **items,
+                               DBusGMethodInvocation* context);
 
 gboolean eas_sync_add_items(EasSync* self,
-                                    guint64 account_uid,
-                                    guint64 type,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const gchar **items,
-                                    DBusGMethodInvocation* context);
+                            const gchar* account_uid,
+                            guint64 type,
+                            const gchar* folder_id,
+                            const gchar* sync_key, 
+                            const gchar **items,
+                            DBusGMethodInvocation* context);
 
 G_END_DECLS
 

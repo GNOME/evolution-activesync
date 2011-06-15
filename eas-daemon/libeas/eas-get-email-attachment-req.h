@@ -37,7 +37,7 @@ struct _EasGetEmailAttachmentReq
 GType eas_get_email_attachment_req_get_type (void) G_GNUC_CONST;
 
 EasGetEmailAttachmentReq* 
-eas_get_email_attachment_req_new (const guint64 account_uid, 
+eas_get_email_attachment_req_new (const gchar* account_uid, 
                             const gchar *file_reference,
                             const gchar *mime_directory,
                             EFlag *flag);

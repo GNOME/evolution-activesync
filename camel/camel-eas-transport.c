@@ -71,11 +71,11 @@ eas_send_to_sync (CamelTransport *transport,
 	EVO2(GCancellable *cancellable = NULL;)
 	CamelService *service;
 	EasEmailHandler *handler;
-	guint64 account_uid;
+	const gchar* account_uid;
 	gboolean res;
 
 	service = CAMEL_SERVICE (transport);
-	account_uid = g_ascii_strtoull (camel_url_get_param (service->url, "account_uid"), NULL, 0);
+	account_uid = camel_url_get_param (service->url, "account_uid");
 
 	handler = eas_mail_handler_new (account_uid);
 	if (!handler) {

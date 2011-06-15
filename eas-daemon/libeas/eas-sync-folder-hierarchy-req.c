@@ -20,7 +20,7 @@ struct _EasSyncFolderHierarchyReqPrivate
 	GError *error;  // error passed into MessageComplete 
 	EasSyncFolderMsg* syncFolderMsg;
 	EasSyncFolderHierarchyReqState state;
-	guint64 accountID;
+	gchar* accountID;
 	gchar* syncKey;
 };
 
@@ -40,7 +40,7 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
 	g_debug("eas_sync_folder_hierarchy_req_init++");
 	priv->syncFolderMsg = NULL;
 	priv->state = EasSyncFolderHierarchyStep1;
-	priv->accountID = -1;
+	priv->accountID = NULL;
 	priv->syncKey = NULL;
 	priv->error = NULL;
 
@@ -59,6 +59,7 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 	g_debug("eas_sync_folder_hierarchy_req_finalize++");
 
 	g_free(priv->syncKey);
+	g_free(priv->accountID);
 	
 	if (priv->syncFolderMsg) {
 		g_object_unref(priv->syncFolderMsg);
@@ -90,7 +91,7 @@ eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 }
 
 EasSyncFolderHierarchyReq*
-eas_sync_folder_hierarchy_req_new (const gchar* syncKey, guint64 accountId, EFlag *flag)
+eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId, EFlag *flag)
 {
 	EasSyncFolderHierarchyReq* self = g_object_new (EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, NULL);
 	EasSyncFolderHierarchyReqPrivate *priv = self->priv;
@@ -100,7 +101,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, guint64 accountId, EFla
 	g_assert(syncKey);
 	
 	priv->syncKey = g_strdup(syncKey);
-	priv->accountID = accountId;
+	priv->accountID = g_strdup(accountId);
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
 	if (syncKey && !g_strcmp0(syncKey,"0"))

@@ -24,7 +24,7 @@ G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 struct _EasEmailHandlerPrivate{
 	DBusGConnection *bus;
     DBusGProxy *remoteEas;
-    guint64 account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+    gchar* account_uid;		// TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GMainLoop* main_loop;
 };
 
@@ -41,7 +41,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	
 	priv->remoteEas = NULL;
 	priv->bus = NULL;
-	priv->account_uid = 0;
+	priv->account_uid = NULL;
 	priv->main_loop = NULL;	
 	cnc->priv = priv;	
 	g_debug("eas_mail_handler_init--");
@@ -55,6 +55,7 @@ eas_mail_handler_finalize (GObject *object)
 	g_debug("eas_mail_handler_finalize++");
 
 	priv = cnc->priv;
+    g_free(priv->account_uid);
 
 	g_main_loop_quit(priv->main_loop);	
 	dbus_g_connection_unref(priv->bus);
@@ -82,17 +83,18 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 }
 
 EasEmailHandler *
-eas_mail_handler_new(guint64 account_uid)
+eas_mail_handler_new(const char* account_uid)
 {
 	GError* error = NULL;
 	EasEmailHandler *object = NULL;
 
-    // TODO This needs to take a GError ** argument, not use g_error().
-
 	g_type_init();
-
     g_log_set_default_handler(eas_logger, NULL);
-	g_debug("eas_mail_handler_new++");
+
+    g_debug("eas_mail_handler_new++ : account_uid[%s]", (account_uid?account_uid:"NULL"));
+    
+    // TODO This needs to take a GError ** argument, not use g_error().
+    if (!account_uid) return NULL;
 
 	object = g_object_new (EAS_TYPE_EMAIL_HANDLER , NULL);
 
@@ -126,7 +128,7 @@ eas_mail_handler_new(guint64 account_uid)
 		return NULL;
 	}
 
-	object->priv->account_uid = account_uid;
+	object->priv->account_uid = g_strdup(account_uid);
 
 	g_debug("eas_mail_handler_new--");
 	return object;
@@ -279,7 +281,8 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 	gchar **updated_folder_array = NULL;
 	gchar *updatedSyncKey = NULL;
 
-	g_debug("eas_mail_handler_sync_folder_hierarchy++");
+	g_debug("eas_mail_handler_sync_folder_hierarchy++ : account_uid[%s]", 
+            (self->priv->account_uid?self->priv->account_uid:"NULL"));
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -293,21 +296,27 @@ eas_mail_handler_sync_folder_hierarchy(EasEmailHandler* self,
 	// call DBus API
 	ret = dbus_g_proxy_call(proxy, "sync_email_folder_hierarchy",
 		          error,
-				  G_TYPE_UINT64, 
-	              self->priv->account_uid,
-		          G_TYPE_STRING,
-		          sync_key,
+				  G_TYPE_STRING, self->priv->account_uid,
+		          G_TYPE_STRING, sync_key,
 		          G_TYPE_INVALID, 
 		          G_TYPE_STRING, &updatedSyncKey,
 		          G_TYPE_STRV, &created_folder_array,
 		          G_TYPE_STRV, &deleted_folder_array,
 		          G_TYPE_STRV, &updated_folder_array,
 		          G_TYPE_INVALID);
-	
+
     g_debug("eas_mail_handler_sync_folder_hierarchy - dbus proxy called");
 	
 	if(!ret)
 	{
+        if (error && *error)
+        {
+            g_warning("[%s][%d][%s]", 
+                      g_quark_to_string((*error)->domain),
+                      (*error)->code, 
+                      (*error)->message);
+        }
+            g_warning ("DBus dbus_g_proxy_call failed");
 		goto cleanup;
 	}
 
@@ -401,7 +410,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* self,
 	g_debug("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call(proxy, "sync_folder_email", error,
-							G_TYPE_UINT64, self->priv->account_uid,
+							G_TYPE_STRING, self->priv->account_uid,
 							G_TYPE_STRING, sync_key,
 	                        G_TYPE_STRING, collection_id,			// folder 
 							G_TYPE_INVALID, 
@@ -482,7 +491,7 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* self,
 
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_email_body", error,
-	                        G_TYPE_UINT64, self->priv->account_uid, 
+	                        G_TYPE_STRING, self->priv->account_uid, 
 	                        G_TYPE_STRING, folder_id,
 	                        G_TYPE_STRING, server_id,
 	                        G_TYPE_STRING, mime_directory,
@@ -519,7 +528,7 @@ eas_mail_handler_fetch_email_attachment(EasEmailHandler* self,
 	
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "fetch_attachment", error,
-	                        G_TYPE_UINT64, self->priv->account_uid, 
+	                        G_TYPE_STRING, self->priv->account_uid, 
 	                        G_TYPE_STRING, file_reference,
 	                        G_TYPE_STRING, mime_directory,
 	                        G_TYPE_INVALID,
@@ -569,7 +578,7 @@ eas_mail_handler_delete_email(EasEmailHandler* self,
     }
 
 	ret = dbus_g_proxy_call(proxy, "delete_email", error,
-				  G_TYPE_UINT64, self->priv->account_uid,
+				  G_TYPE_STRING, self->priv->account_uid,
 		          G_TYPE_STRING, sync_key,
 		          G_TYPE_STRING, folder_id,
 		          G_TYPE_STRV, deleted_items_array,
@@ -652,7 +661,7 @@ eas_mail_handler_update_email(EasEmailHandler* self,
 	
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "update_emails", error,
-							G_TYPE_UINT64, self->priv->account_uid, 		
+							G_TYPE_STRING, self->priv->account_uid, 		
 							G_TYPE_STRING, sync_key,
 							G_TYPE_STRING, folder_id,
 							G_TYPE_STRV, serialised_email_array,		
@@ -694,7 +703,7 @@ eas_mail_handler_send_email(EasEmailHandler* self,
 	
 	// call dbus api
 	ret = dbus_g_proxy_call(proxy, "send_email", error,
-	                        G_TYPE_UINT64, self->priv->account_uid, 		
+	                        G_TYPE_STRING, self->priv->account_uid, 		
 	                        G_TYPE_STRING, client_email_id,		
 	                        G_TYPE_STRING, mime_file,
 	                        G_TYPE_INVALID,
