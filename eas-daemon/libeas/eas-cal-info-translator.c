@@ -80,7 +80,7 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
  * \param byDayPos        The position of this day in the month on which to repeat
  *                        (or 0 if not applicable)
  */
-static short _util_make_ical_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
+static short _xml2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
 {
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
@@ -101,7 +101,7 @@ static short _util_make_ical_rrule_by_day_value(icalrecurrencetype_weekday byDay
  *                    function to contain the first instance of the recurring sequence.
  * \param rrule       Pointer to an icalrecurrencetype struct to store the recurrence rule in.
  */
-static void _util_convert_relative_timezone_date(EasSystemTime* date, struct icalrecurrencetype* rrule)
+static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct icalrecurrencetype* rrule)
 {
 	// Microsoft's SYSTEMTIME (implemented here as EasSystemTime) stores a recurring date pattern as follows:
 	//   - Year       set to 0
@@ -204,7 +204,7 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
 	//  - Add byDayDayOfWeek if byDayPos is positive, or subtract if negative
-	rrule->by_day[0] = _util_make_ical_rrule_by_day_value(byDayDayOfWeek, byDayPos);
+	rrule->by_day[0] = _xml2ical_make_rrule_by_day_value(byDayDayOfWeek, byDayPos);
 
 	// Finally, copy the modified version back into the date that was passed in
 	memcpy(date, &modifiedDate, sizeof(EasSystemTime));
@@ -214,8 +214,10 @@ static void _util_convert_relative_timezone_date(EasSystemTime* date, struct ica
 /**
  * \brief Process the <Attendees> element during parsing of an EAS XML document
  *
+ * \param n       An XML node pointing at the <Attendees> element
+ * \param vevent  The VEVENT iCal component to add the parsed attendees to
  */
-static void _util_process_attendees_element(xmlNodePtr n, icalcomponent* vevent)
+static void _xml2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 {
 	gchar*         value = NULL;
 	icalproperty*  prop  = NULL;
@@ -336,7 +338,7 @@ static void _util_process_attendees_element(xmlNodePtr n, icalcomponent* vevent)
  * \param vtimezone  The iCalendar VTIMEZONE component to add the parsed timezone properties to
  * \param tzid       Pointer to a buffer to initialise with the parsed TZID (timezone ID) string
  */
-static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
+static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
 {
 	gchar*         value = NULL;
 	icalproperty*  prop = NULL;
@@ -356,7 +358,7 @@ static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezon
 		timeZoneRawBytes = NULL;
 
 		{
-			// Calculate the timezone offsets. See _util_process_vtimezone_subcomponent()
+			// Calculate the timezone offsets. See _ical2xml_process_xstandard_xdaylight()
 			// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
 			const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
 			const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
@@ -395,7 +397,7 @@ static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezon
 			// the start date of a recurring sequence, and add an RRULE.
 			if (timeZoneStruct.StandardDate.Year == 0)
 			{
-				_util_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
+				_xml2ical_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
 			}
 
 			// Add the DTSTART property
@@ -451,7 +453,7 @@ static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezon
 			// the start date of a recurring sequence, and add an RRULE.
 			if (timeZoneStruct.DaylightDate.Year == 0)
 			{
-				_util_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
+				_xml2ical_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
 			}
 
 			// Add the DTSTART property
@@ -507,7 +509,7 @@ static void _util_process_timezone_element(xmlNodePtr n, icalcomponent* vtimezon
  * \param n       An XML node pointing to the <Recurrence> element
  * \param vevent  The iCalendar VEVENT component to add the parsed RRULE property to
  */
-static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent)
+static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 {
 	gchar*         value = NULL;
 	icalproperty*  prop = NULL;
@@ -566,7 +568,7 @@ static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent
 		}
 		else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
 		{
-			g_warning("Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
+			g_warning("DATA LOSS: Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
 		}
 		else if (g_strcmp0(elemName, "DayOfWeek") == 0)
 		{
@@ -582,31 +584,31 @@ static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent
 			// Note: must use IF for subsequent blocks, not ELSE IF
 			if (dayOfWeek & DAY_OF_WEEK_MONDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_TUESDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_WEDNESDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_THURSDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_FRIDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_SATURDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_SUNDAY)
 			{
-				recur.by_day[index++] = _util_make_ical_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
 			}
 		}
 		else if (g_strcmp0(elemName, "MonthOfYear") == 0)
@@ -637,7 +639,7 @@ static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent
 			    (calType != 1))   // Gregorian
 			{
 				// No way of handling in iCal
-				g_warning("Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
+				g_warning("DATA LOSS: Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
 			}
 		}
 		else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
@@ -645,7 +647,7 @@ static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent
 			if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
 			{
 				// Only applies to non-Gregorian calendars so can't be handled in iCal
-				g_warning("Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
+				g_warning("DATA LOSS: Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
 			}
 		}
 		else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
@@ -658,12 +660,49 @@ static void _util_process_recurrence_element(xmlNodePtr n, icalcomponent* vevent
 		}
 		else
 		{
-			g_warning("Unknown element encountered in <Recurrence> element: %s", elemName);
+			g_warning("DATA LOSS: Unknown element encountered in <Recurrence> element: %s", elemName);
 		}
 	}
 
 	prop = icalproperty_new_rrule(recur);
 	icalcomponent_add_property(vevent, prop);
+}
+
+
+/**
+ * \brief Process the <Exceptions> element during parsing of an EAS XML document
+ *
+ * \param n       An XML node pointing to the <Exceptions> element
+ * \param vevent  The iCalendar VEVENT component to add the parsed items property to
+ */
+static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
+{
+	gchar*         value = NULL;
+//	icalproperty*  prop = NULL;
+	xmlNode*       exceptionNode = NULL;
+	xmlNode*       subNode = NULL;
+
+	g_debug("Exceptions element found in EAS XML");
+
+	// Iterate through the <Exception> elements
+	for (exceptionNode = n->children; exceptionNode; exceptionNode = exceptionNode->next)
+	{
+		// Iterate through each Exception's properties
+		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
+		{
+			const gchar* name = (const gchar*)subNode->name;
+			value = (gchar*)xmlNodeGetContent(subNode);
+
+			if (g_strcmp0(name, "Deleted") == 0)
+			{
+				// TODO...
+			}
+			
+			// TODO...
+
+
+		}
+	}
 }
 
 
@@ -991,7 +1030,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Attendees") == 0)
 				{
-					_util_process_attendees_element(n, vevent);
+					_xml2ical_process_attendees(n, vevent);
 				}
 
 				//
@@ -999,7 +1038,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "TimeZone") == 0)
 				{
-					_util_process_timezone_element(n, vtimezone, &tzid);
+					_xml2ical_process_timezone(n, vtimezone, &tzid);
 				}
 
 				//
@@ -1007,7 +1046,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Recurrence") == 0)
 				{
-					_util_process_recurrence_element(n, vevent);
+					_xml2ical_process_recurrence(n, vevent);
 				}
 
 				//
@@ -1015,11 +1054,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Exceptions") == 0)
 				{
-					// TODO: handle Exceptions element
-
-
-
-					
+					_xml2ical_process_exceptions(n, vevent);
 				}
 			}
 		}
@@ -1100,7 +1135,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
  * \param prop     Pointer to the RRULE property
  * \param appData  Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _util_process_rrule_property(icalproperty* prop, xmlNodePtr appData)
+static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 {
 	// Get the iCal RRULE property
 	struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
@@ -1351,7 +1386,7 @@ static void _util_process_rrule_property(icalproperty* prop, xmlNodePtr appData)
  * \param vevent  Pointer to the iCalendar VEVENT component
  * \param appData Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr appData)
+static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 {
 	if (vevent)
 	{
@@ -1466,7 +1501,7 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
 				// RRULE
 				case ICAL_RRULE_PROPERTY:
 					{
-						_util_process_rrule_property(prop, appData);
+						_ical2xml_process_rrule(prop, appData);
 					}
 					break;
 
@@ -1503,7 +1538,7 @@ static void _util_process_vevent_component(icalcomponent* vevent, xmlNodePtr app
  * \param valarm  Pointer to the iCalendar VALARM component
  * \param appData Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr appData)
+static void _ical2xml_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
 {
 	if (valarm)
 	{
@@ -1542,7 +1577,7 @@ static void _util_process_valarm_component(icalcomponent* valarm, xmlNodePtr app
  * \param timezone     The EAS timezone structure to parse this subcomponent into
  * \param type         Determineds whether subcomponent is a STANDARD or a DAYLIGHT
  */
-static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
+static void _ical2xml_process_xstandard_xdaylight(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
 {
 	if (subcomponent)
 	{
@@ -1705,7 +1740,7 @@ static void _util_process_vtimezone_subcomponent(icalcomponent* subcomponent, Ea
  * \param vtimezone  Pointer to the iCalendar VTIMEZONE component
  * \param appData    Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodePtr appData)
+static void _ical2xml_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr appData)
 {
 	if (vtimezone)
 	{
@@ -1736,7 +1771,7 @@ static void _util_process_vtimezone_component(icalcomponent* vtimezone, xmlNodeP
 		     subcomponent;
 		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
 		{
-			_util_process_vtimezone_subcomponent(subcomponent, &timezoneStruct, icalcomponent_isa(subcomponent));
+			_ical2xml_process_xstandard_xdaylight(subcomponent, &timezoneStruct, icalcomponent_isa(subcomponent));
 		}
 
 		// Write the timezone into the XML, base64-encoded
@@ -1770,10 +1805,10 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 		icalcomponent* vevent = NULL;
 		
 		// Process the components of the VCALENDAR
-		_util_process_vtimezone_component(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
+		_ical2xml_process_vtimezone(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
 		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
-		_util_process_vevent_component(vevent, appData);
-		_util_process_valarm_component(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
+		_ical2xml_process_vevent(vevent, appData);
+		_ical2xml_process_valarm(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
 
 		// DEBUG output
 		{
