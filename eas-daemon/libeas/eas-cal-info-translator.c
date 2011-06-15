@@ -688,6 +688,9 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 	for (exceptionNode = n->children; exceptionNode; exceptionNode = exceptionNode->next)
 	{
 		// Iterate through each Exception's properties
+		// Do a first pass just looking for Deleted and DtStart...
+		gchar* dtStart = NULL;
+		gboolean deleted = FALSE;
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
 			const gchar* name = (const gchar*)subNode->name;
@@ -695,12 +698,40 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 
 			if (g_strcmp0(name, "Deleted") == 0)
 			{
-				// TODO...
+				deleted = (g_strcmp0(value, "1") == 0);
 			}
-			
-			// TODO...
+			else if (g_strcmp0(name, "DtStart") == 0)
+			{
+				dtStart = g_strdup(value);
+			}
+		}
 
+		if (deleted)
+		{
+			if (dtStart)
+			{
+				// Add an EXDATE property
 
+				// I'm ASSUMING here that we add multiple single-value EXDATE properties and
+				// libical takes care of merging them into one (just as it splits them when
+				// we're reading an iCal). TODO: check this during testing...
+				icalproperty* exDateProp = icalproperty_new_exdate(icaltime_from_string(dtStart));
+				icalcomponent_add_property(vevent, exDateProp); // vevent takes ownership of exDateProp
+			}
+			else
+			{
+				// Should never have Deleted without DtStart: indicates the XML is corrupt?
+				g_warning("DATA LOSS: <Exception> element found containing <Deleted> element but no <DtStart>: discarded.");
+			}
+		}
+		else // Exception is not deleted
+		{
+			// TODO: handle non-deleted exceptions...
+		}
+		
+		if (dtStart)
+		{
+			g_free(dtStart);
 		}
 	}
 }
