@@ -560,6 +560,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar *mime_directory, 
                            DBusGMethodInvocation* context)
 {
+	gboolean ret;
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
@@ -581,18 +582,21 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-    eas_get_email_body_req_Activate (req, &error);
-
+    ret = eas_get_email_body_req_Activate (req, &error);
+	if(!ret)
+	{
+		goto finish;
+	}
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
 
-    // TODO Check
+    ret = eas_get_email_body_req_ActivateFinish (req, &error);
 
-    eas_get_email_body_req_ActivateFinish (req, &error);
-
-    if (error)
+finish:
+    if (!ret)
     {
+		g_assert (error != NULL);
         g_warning("eas_mail_fetch_email_body - failed to get data from message");
         dbus_g_method_return_error (context, error);
         g_error_free (error);
@@ -614,6 +618,7 @@ eas_mail_fetch_attachment (EasMail* self,
                             const gchar *mime_directory, 
                             DBusGMethodInvocation* context)
 {
+	gboolean ret;
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
@@ -634,18 +639,21 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-    eas_get_email_attachment_req_Activate (req, &error);
-
+    ret = eas_get_email_attachment_req_Activate (req, &error);
+	if(!ret)
+	{
+		goto finish;
+	}
     // Wait for response
     e_flag_wait (flag);
     e_flag_free (flag);
 
-    // TODO check error
+    ret = eas_get_email_attachment_req_ActivateFinish (req, &error);
 
-    eas_get_email_attachment_req_ActivateFinish (req, &error);
-
-    if (error)
+finish:	
+    if (!ret)
     {
+		g_assert(error != NULL);
         g_warning("eas_mail_fetch_attachment - failed to get data from message");
         dbus_g_method_return_error (context, error);
         g_error_free (error);

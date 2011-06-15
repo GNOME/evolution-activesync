@@ -35,6 +35,7 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_GET_EMAIL_BODY);
 
+	priv->error = NULL;
 	priv->emailBodyMsg = NULL;
 	g_debug("eas_get_email_body_req_init--");
 }
@@ -51,7 +52,10 @@ eas_get_email_body_req_finalize (GObject *object)
 	{
 		g_object_unref(priv->emailBodyMsg);
 	}
-
+	if(priv->error)
+	{
+		g_clear_error(&priv->error);
+	}
 	g_free(priv->serverId);
 	g_free(priv->collectionId);
 	g_free(priv->mimeDirectory);

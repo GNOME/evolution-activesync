@@ -1124,7 +1124,7 @@ complete_request:
 			break;
 			case EAS_REQ_GET_EMAIL_ATTACHMENT:
 			{
-				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc, &error);// TODO
+				eas_get_email_attachment_req_MessageComplete ((EasGetEmailAttachmentReq *)req, doc, error);
 			}
 			break;			
 			case EAS_REQ_DELETE_MAIL:

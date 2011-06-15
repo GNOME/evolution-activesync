@@ -88,6 +88,7 @@ enum _EasConnectionError{
     /* Below this point no longer direct translation of activesync errors */
 	
     EAS_CONNECTION_ERROR_FAILED,
+	EAS_CONNECTION_ERROR_FILEERROR,
 	EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 	EAS_CONNECTION_ERROR_BADARG,
 	EAS_CONNECTION_ERROR_WBXMLERROR,

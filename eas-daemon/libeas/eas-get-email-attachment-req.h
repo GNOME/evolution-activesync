@@ -42,9 +42,9 @@ eas_get_email_attachment_req_new (const guint64 account_uid,
                             const gchar *mime_directory,
                             EFlag *flag);
                    
-void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error);
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError** error);
-void eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error);
+gboolean eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error);
+void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error);
+gboolean eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error);
 
 G_END_DECLS
 

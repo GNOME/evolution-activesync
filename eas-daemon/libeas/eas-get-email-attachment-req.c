@@ -3,7 +3,8 @@
  * git
  * Copyright (C)  2011 <>
  */
- 
+
+#include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
 #include "eas-get-email-attachment-req.h"
 
@@ -14,6 +15,7 @@ struct _EasGetEmailAttachmentReqPrivate
     guint64 accountUid;
     gchar *fileReference; 
     gchar *mimeDirectory; 
+	GError *error;
 };
 
 #define EAS_GET_EMAIL_ATTACHMENT_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_ATTACHMENT_REQ, EasGetEmailAttachmentReqPrivate))
@@ -32,6 +34,7 @@ eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_GET_EMAIL_ATTACHMENT);
 
+	priv->error = NULL;
 	priv->emailAttachmentMsg = NULL;
     priv->accountUid = 0;
     priv->fileReference = NULL; 
@@ -52,6 +55,10 @@ eas_get_email_attachment_req_finalize (GObject *object)
 		g_object_unref(priv->emailAttachmentMsg);
 	}
 
+	if(priv->error)
+	{
+		g_clear_error(&priv->error);
+	}
 	g_free(priv->fileReference);
 	g_free(priv->mimeDirectory);
 
@@ -97,45 +104,97 @@ eas_get_email_attachment_req_new (const guint64 account_uid,
 	g_debug("eas_get_email_attachment_req_new--");
 	return req;
 }
-                   
-void eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error)
+
+gboolean
+eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error)
 {
+	gboolean ret;
 	EasGetEmailAttachmentReqPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
 	
 	g_debug("eas_get_email_attachment_req_Activate++");
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	
 	priv->emailAttachmentMsg = eas_get_email_attachment_msg_new ( priv->fileReference, priv->mimeDirectory);
 	doc = eas_get_email_attachment_msg_build_message (priv->emailAttachmentMsg);
+	if(!doc)
+	{
+		ret = FALSE;
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));		
+		goto finish;
+	}	
 
-	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	ret = eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
 	                            "ItemOperations", 
 	                            doc, 
 	                            (struct _EasRequestBase *)self, 
 	                            error);
-	
-	g_debug("eas_get_email_attachment_req_Activate--");
+finish:
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
+	g_debug("eas_get_email_attachment_req_Activate--");	
+	return ret;
 }
 
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError** error)
-{
 
+void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
+{
+	gboolean ret;
 	EasGetEmailAttachmentReqPrivate *priv = self->priv;
+	GError *error = NULL;
 	
 	g_debug("eas_get_email_attachment_req_MessageComplete++");
-
-	eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc, error);
 	
-	xmlFree(doc);
+	// if an error occurred, store it and signal daemon
+	if(error_in)
+	{
+		priv->error = error_in;
+		goto finish;
+	}	
 
-	g_debug("eas_get_email_attachment_req_MessageComplete--");
+	ret = eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc, &error);
+	xmlFree(doc);
+	if(!ret)
+	{
+		self->priv->error = error; 
+		goto finish;		
+	}
+
+finish:	
 	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
+
+	g_debug("eas_get_email_attachment_req_MessageComplete--");	
 }
 
-void eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error)
+gboolean
+eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error)
 {
+	EasGetEmailAttachmentReqPrivate *priv = self->priv;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	
 	g_debug("eas_get_email_attachment_req_ActivateFinish++");
-	/* TODO: Add public function implementation here */
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);	
+
+	if(priv->error != NULL)// propogate any preceding error
+	{
+		/* store priv->error in error, if error != NULL,
+		* otherwise call g_error_free() on priv->error
+		*/
+		g_propagate_error (error, priv->error);	
+		priv->error = NULL;
+
+		return FALSE;
+	}	
+	
 	g_debug("eas_get_email_attachment_req_ActivateFinish--");
+
+	return TRUE;
 }
 

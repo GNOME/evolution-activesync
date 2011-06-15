@@ -43,7 +43,7 @@ eas_sync_req_init (EasSyncReq *object)
 	priv->state = EasSyncReqStep1;
 	priv->accountID= -1;
 	priv->folderID = NULL;
-
+	priv->error = NULL;
 	eas_request_base_SetRequestType (&object->parent_instance, 
 	                                 EAS_REQ_SYNC);
 
@@ -61,7 +61,10 @@ eas_sync_req_finalize (GObject *object)
 	if(priv->syncMsg){
 		g_object_unref(priv->syncMsg);
 	}
-	
+	if(priv->error)
+	{
+		g_clear_error(&priv->error);
+	}	
 	g_free(priv->folderID);
 
 	G_OBJECT_CLASS (eas_sync_req_parent_class)->finalize (object);
