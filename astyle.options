@@ -1,0 +1,10 @@
+indent=spaces=4
+brackets=break
+convert-tabs
+pad-oper
+unpad-paren
+pad-paren-out
+indent-switches
+indent-labels
+indent-preprocessor
+max-instatement-indent=60
