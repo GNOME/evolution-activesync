@@ -21,6 +21,7 @@ const gint MINUTES_PER_HOUR            = 60;
 const gint MINUTES_PER_DAY             = 60 * 24;
 const gint SECONDS_PER_DAY             = 60 * 60 * 24;
 const gint MINUTES_PER_WEEK            = 60 * 24 * 7;
+const gint DAYS_PER_WEEK               = 7;
 const gint EPOCH_START_YEAR            = 1970;
 
 // Constants for <Calendar> parsing
@@ -32,6 +33,10 @@ const guint DAY_OF_WEEK_THURSDAY       = 0x00000010;
 const guint DAY_OF_WEEK_FRIDAY         = 0x00000020;
 const guint DAY_OF_WEEK_SATURDAY       = 0x00000040;
 const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
+
+
+
+const gchar* VCAL_EXTENSION_PROPERTY_PREFIX = "X-MEEGO-ACTIVESYNCD-";
 
 
 #define compile_time_assert(cond, msg) \
@@ -142,7 +147,7 @@ static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct
 	// GDateWeekDay has 0 = G_DATE_BAD_WEEKDAY, 1 = Monday,...    http://developer.gnome.org/glib/stable/glib-Date-and-Time-Functions.html#GDateWeekday
 	if (modifiedDate.DayOfWeek == 0)
 	{
-		modifiedDate.DayOfWeek = 7;
+		modifiedDate.DayOfWeek = (guint16)G_DATE_SUNDAY;
 		// Now our DayOfWeek matches GDateWeekDay (see below)
 	}
 
@@ -167,13 +172,13 @@ static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct
 	occurrence = 1;
 	while (occurrence++ < date->Day)
 	{
-		g_date_add_days(recurrenceStartDate, 7);
+		g_date_add_days(recurrenceStartDate, DAYS_PER_WEEK);
 
 		// Check we havn't overrun the end of the month
 		// (If we have, just roll back and we're done: we're on the last occurrence)
 		if (g_date_get_month(recurrenceStartDate) != modifiedDate.Month)
 		{
-			g_date_subtract_days(recurrenceStartDate, 7);
+			g_date_subtract_days(recurrenceStartDate, DAYS_PER_WEEK);
 			break;
 		}
 	}
@@ -689,7 +694,7 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 	{
 		// Iterate through each Exception's properties
 		// Do a first pass just looking for Deleted and DtStart...
-		gchar* dtStart = NULL;
+		gchar* startTime = NULL;
 		gboolean deleted = FALSE;
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
@@ -700,28 +705,28 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			{
 				deleted = (g_strcmp0(value, "1") == 0);
 			}
-			else if (g_strcmp0(name, "DtStart") == 0)
+			else if (g_strcmp0(name, "ExceptionStartTime") == 0)
 			{
-				dtStart = g_strdup(value);
+				startTime = g_strdup(value);
 			}
 		}
 
 		if (deleted)
 		{
-			if (dtStart)
+			if (startTime)
 			{
 				// Add an EXDATE property
 
 				// I'm ASSUMING here that we add multiple single-value EXDATE properties and
 				// libical takes care of merging them into one (just as it splits them when
 				// we're reading an iCal). TODO: check this during testing...
-				icalproperty* exDateProp = icalproperty_new_exdate(icaltime_from_string(dtStart));
+				icalproperty* exDateProp = icalproperty_new_exdate(icaltime_from_string(startTime));
 				icalcomponent_add_property(vevent, exDateProp); // vevent takes ownership of exDateProp
 			}
 			else
 			{
-				// Should never have Deleted without DtStart: indicates the XML is corrupt?
-				g_warning("DATA LOSS: <Exception> element found containing <Deleted> element but no <DtStart>: discarded.");
+				// Should never have Deleted without StartTime: indicates the XML is corrupt?
+				g_warning("DATA LOSS: <Exception> element found containing <Deleted> element but no <ExceptionStartTime>: discarded.");
 			}
 		}
 		else // Exception is not deleted
@@ -729,9 +734,9 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			// TODO: handle non-deleted exceptions...
 		}
 		
-		if (dtStart)
+		if (startTime)
 		{
-			g_free(dtStart);
+			g_free(startTime);
 		}
 	}
 }
@@ -853,7 +858,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// DtStamp
 				//
-				else if (g_strcmp0(name, "DtStamp") == 0)
+				else if (g_strcmp0(name, "DTStamp") == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
@@ -1039,7 +1044,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// OrganizerName
 				//
-				else if (g_strcmp0(name, "OrganizerName") == 0)
+				else if (g_strcmp0(name, "Organizer_Name") == 0)
 				{
 					organizerName = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
@@ -1049,7 +1054,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// OrganizerEmail
 				//
-				else if (g_strcmp0(name, "OrganizerEmail") == 0)
+				else if (g_strcmp0(name, "Organizer_Email") == 0)
 				{
 					organizerEmail = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
@@ -1086,6 +1091,25 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else if (g_strcmp0(name, "Exceptions") == 0)
 				{
 					_xml2ical_process_exceptions(n, vevent);
+				}
+
+				//
+				// Unmapped data fields
+				//
+				else
+				{
+					// Build a new custom property called X-MEEGO-{ElementName}
+					gchar* propertyName = g_strconcat(VCAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new(ICAL_X_PROPERTY);
+
+					g_debug("Found EAS element that doesn't map to a VEVENT property. Creating X property %s:%s", propertyName, value);
+
+					icalproperty_set_x_name(prop, propertyName);
+					icalproperty_set_value(prop, icalvalue_new_from_string(ICAL_X_VALUE, value));//, (gchar*)"ICAL_X_COMPONENT");
+					icalcomponent_add_property(vevent, prop);
+					g_free(value); value = NULL;
+					g_free(propertyName); propertyName = NULL;
 				}
 			}
 		}
