@@ -694,8 +694,9 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 	{
 		// Iterate through each Exception's properties
 		// Do a first pass just looking for Deleted and DtStart...
-		gchar* startTime = NULL;
+		gchar* exceptionStartTime = NULL;
 		gboolean deleted = FALSE;
+		gboolean otherElementsPresent = FALSE;
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
 			const gchar* name = (const gchar*)subNode->name;
@@ -707,38 +708,61 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			}
 			else if (g_strcmp0(name, "ExceptionStartTime") == 0)
 			{
-				startTime = g_strdup(value);
+				exceptionStartTime = g_strdup(value);
+			}
+			else if (strlen(value) > 0)
+			{
+				// We'll come back and parse these fully below if we need them
+				// TODO: or add them to a hash now, then use the size of the hash
+				// instead of otherElementsPresent...?
+				otherElementsPresent = TRUE;
 			}
 		}
 
+		// ExceptionStartTime is mandatory so check we've got one
+		if (exceptionStartTime == NULL)
+		{
+			g_warning("DATA LOSS: <Exception> element found with no ExceptionStartTime.");
+			break;
+		}
+
+		// If the <Deleted> value is set to 1, it's dead easy: it maps straight onto an
+		// EXDATE an we can ignore the other elements.
 		if (deleted)
 		{
-			if (startTime)
-			{
-				// Add an EXDATE property
+			// Add an EXDATE property
 
-				// I'm ASSUMING here that we add multiple single-value EXDATE properties and
-				// libical takes care of merging them into one (just as it splits them when
-				// we're reading an iCal). TODO: check this during testing...
-				icalproperty* exDateProp = icalproperty_new_exdate(icaltime_from_string(startTime));
-				icalcomponent_add_property(vevent, exDateProp); // vevent takes ownership of exDateProp
-			}
-			else
-			{
-				// Should never have Deleted without StartTime: indicates the XML is corrupt?
-				g_warning("DATA LOSS: <Exception> element found containing <Deleted> element but no <ExceptionStartTime>: discarded.");
-			}
+			// I'm ASSUMING here that we add multiple single-value EXDATE properties and
+			// libical takes care of merging them into one (just as it splits them when
+			// we're reading an iCal). TODO: check this during testing...
+			icalproperty* exdate = icalproperty_new_exdate(icaltime_from_string(exceptionStartTime));
+			icalcomponent_add_property(vevent, exdate); // vevent takes ownership of exdate
 		}
-		else // Exception is not deleted
+		// If it's not deleted, but the only other element present is ExceptionStartTime,
+		// then it's an RDATE (i.e. just a one-off recurrence of the same event but not
+		// included in the regular recurrence sequence)
+		else if (!deleted && !otherElementsPresent)
 		{
-			// TODO: handle non-deleted exceptions...
+			icalproperty* rdate = NULL;
+			
+			// Same assumption as for EXDATE: that we just add multiple properties
+			// and libical takes care of merging them. TODO: check this during testing...
+			struct icaldatetimeperiodtype dtper;
+			dtper.period = icalperiodtype_null_period();
+			dtper.time = icaltime_from_string(exceptionStartTime);
+			rdate = icalproperty_new_rdate(dtper);
+			icalcomponent_add_property(vevent, rdate); // vevent takes ownership of rdate
+		}
+		// Otherwise it's neither an EXDATE or an RDATE: it's a new instance of the
+		// event with more substantial changes (e.g. start time/end time/subject/etc.
+		// has changed)
+		else
+		{
+			// TODO...
 		}
 		
-		if (startTime)
-		{
-			g_free(startTime);
-		}
-	}
+		g_free(exceptionStartTime);
+	}// end of for loop
 }
 
 
