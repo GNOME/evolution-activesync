@@ -1391,6 +1391,7 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 	if (vevent)
 	{
 		xmlNodePtr categories = NULL;
+		xmlNodePtr exceptions = NULL;
 		struct icaltimetype startTime, endTime;
 		
 		icalproperty* prop;
@@ -1502,6 +1503,35 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				case ICAL_RRULE_PROPERTY:
 					{
 						_ical2xml_process_rrule(prop, appData);
+					}
+					break;
+
+				// RDATE
+				case ICAL_RDATE_PROPERTY:
+					{
+						// TODO...
+					}
+					break;
+
+				// EXDATE
+				case ICAL_EXDATE_PROPERTY:
+					{
+						// EXDATE consists of a list of date/times, comma separated.
+						// However, libical breaks this up for us and converts it into
+						// a number of single-value properties.
+						
+						xmlNodePtr exception = NULL;
+
+						// Create the <Exceptions> container element if not already present
+						if (exceptions == NULL)
+						{
+							exceptions = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Exceptions", NULL);
+						}
+
+						// Now create the <Exception> element
+						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)"calendar:Exception", NULL);
+						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:Deleted", (const xmlChar*)"1");
+						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:DtStart", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
 
