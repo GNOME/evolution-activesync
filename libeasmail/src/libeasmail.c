@@ -555,7 +555,7 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 // Delete specified emails from a single folder
 gboolean
 eas_mail_handler_delete_email (EasEmailHandler* self,
-                               gchar *sync_key,            // sync_key for the folder containing these emails
+                               const gchar *sync_key,            // sync_key for the folder containing these emails
                                const gchar *folder_id,     // folder that contains email to delete
                                const GSList *items_deleted,        // emails to delete
                                GError **error)
@@ -636,7 +636,7 @@ TODO - should this be changed to support updating multiple emails at once?
 */
 gboolean
 eas_mail_handler_update_email (EasEmailHandler* self,
-                               gchar *sync_key,            // sync_key for the folder containing the emails
+                               const gchar *sync_key,            // sync_key for the folder containing the emails
                                const gchar *folder_id,     // folder that contains email to delete
                                const GSList *update_emails,        // emails to update
                                GError **error)
