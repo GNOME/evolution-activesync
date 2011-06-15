@@ -101,6 +101,27 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
                 }
                 g_free (tmp);
             }
+			// RepliedTo / Forwarded?
+			else if(n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "LastVerbExecuted"))
+			{
+				gchar *tmp = (gchar*) xmlNodeGetContent (n);
+				if (g_strcmp0 (tmp, "1") || g_strcmp0 (tmp, "2")) // 1 = reply, 2 = reply all
+				{
+					g_debug("email was replied to last");
+					flags |= EAS_EMAIL_ANSWERED_LAST;
+				}
+				else if((g_strcmp0 (tmp, "3")))
+				{
+					g_debug("email was forwarded last");					
+					flags |= EAS_EMAIL_FORWARDED_LAST;
+				}
+				else
+				{
+					g_warning("unexpected value in LastVerbExecuted");
+				}
+	
+				g_free (tmp);
+			}
             // TODO which if any of these other headers are standard email headers?
             //ThreadTopic
             //MessageClass          -   ?
