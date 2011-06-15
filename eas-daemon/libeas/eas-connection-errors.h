@@ -88,6 +88,7 @@ enum _EasConnectionError{
     /* Below this point no longer direct translation of activesync errors */
 	
     EAS_CONNECTION_ERROR_FAILED,
+	EAS_CONNECTION_ERROR_FILEERROR,
 	EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 	EAS_CONNECTION_ERROR_BADARG,
 	EAS_CONNECTION_ERROR_WBXMLERROR,
@@ -225,8 +226,6 @@ enum _EasCommonStatus
 	EAS_COMMON_STATUS_EXCEEDSSTATUSLIMIT	// no common status above 177 currently
 };
 
-typedef enum _EasCommonStatus EasCommonStatus;
-
 enum _EasItemOperationsStatus
 {
 	EAS_ITEMOPERATIONS_STATUS_PROTOCOLERROR = 2,
@@ -248,8 +247,6 @@ enum _EasItemOperationsStatus
 	EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT,   // no itemoperations status spec'd above 18 currently
 };
 
-typedef enum _EasItemOperationsStatus EasItemOperationsStatus;
-
 enum _EasSyncStatus
 {
 	EAS_SYNC_STATUS_INVALIDSYNCKEY = 3,
@@ -267,7 +264,6 @@ enum _EasSyncStatus
 	EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 16 currently
 };
 
-typedef enum _EasSyncStatus EasSyncStatus;
 
 struct _EasError{
 	EasConnectionError code;

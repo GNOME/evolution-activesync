@@ -26,149 +26,150 @@ struct _EasSyncPrivate
 static void
 eas_sync_init (EasSync *object)
 {
-    EasSyncPrivate *priv =NULL;
-	g_debug("++ eas_sync_init()");
-	object->priv = priv = EAS_SYNC_PRIVATE(object);
-	priv->connection = NULL;
- 	g_debug("-- eas_sync_init()");
+    EasSyncPrivate *priv = NULL;
+    g_debug ("++ eas_sync_init()");
+    object->priv = priv = EAS_SYNC_PRIVATE (object);
+    priv->connection = NULL;
+    g_debug ("-- eas_sync_init()");
 }
 
 static void
 eas_sync_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
+    /* TODO: Add deinitalization code here */
 
-	G_OBJECT_CLASS (eas_sync_parent_class)->finalize (object);
+    G_OBJECT_CLASS (eas_sync_parent_class)->finalize (object);
 }
 
 static void
 eas_sync_class_init (EasSyncClass *klass)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
-	(void)parent_class; // remove warning
+    (void) parent_class; // remove warning
 
-	object_class->finalize = eas_sync_finalize;
+    object_class->finalize = eas_sync_finalize;
 
-	g_type_class_add_private (klass, sizeof (EasSyncPrivate));
+    g_type_class_add_private (klass, sizeof (EasSyncPrivate));
 
-	/* Binding to GLib/D-Bus" */ 
-	dbus_g_object_type_install_info(EAS_TYPE_SYNC,
-                                            &dbus_glib_eas_sync_object_info);
+    /* Binding to GLib/D-Bus" */
+    dbus_g_object_type_install_info (EAS_TYPE_SYNC,
+                                     &dbus_glib_eas_sync_object_info);
 }
 
-EasSync* eas_sync_new(void)
+EasSync* eas_sync_new (void)
 {
-	EasSync* easCal = NULL;
-	easCal = g_object_new(EAS_TYPE_SYNC, NULL);
-	return easCal;
+    EasSync* easCal = NULL;
+    easCal = g_object_new (EAS_TYPE_SYNC, NULL);
+    return easCal;
 }
 
 #if 0
-void eas_sync_set_eas_connection(EasSync* self, EasConnection* easConnObj)
+void eas_sync_set_eas_connection (EasSync* self, EasConnection* easConnObj)
 {
-   EasSyncPrivate* priv = self->priv;
-   priv->connection = easConnObj;
+    EasSyncPrivate* priv = self->priv;
+    priv->connection = easConnObj;
 }
 #endif
 
 
 EasConnection*
-  eas_sync_get_eas_connection(EasSync* self)
+eas_sync_get_eas_connection (EasSync* self)
 {
     EasSyncPrivate* priv = self->priv;
-    g_debug("eas_sync_get_eas_connection++");
+    g_debug ("eas_sync_get_eas_connection++");
     return priv->connection;
-    g_debug("eas_sync_get_leas_connection--");
+    g_debug ("eas_sync_get_leas_connection--");
 }
 
 // takes an NULL terminated array of serialised calendar items and creates a list of EasCalInfo objects
-static gboolean 
-build_calendar_list(const gchar **serialised_cal_array, GSList **cal_list, GError **error)
+static gboolean
+build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GError **error)
 {
-	gboolean ret = TRUE;
-	guint i = 0;
+    gboolean ret = TRUE;
+    guint i = 0;
 
-    g_assert(cal_list);
+    g_assert (cal_list);
 
-	g_assert(g_slist_length(*cal_list) == 0);
-	
-	while(serialised_cal_array[i])
-	{
-		EasCalInfo *calInfo = eas_cal_info_new();
-		if(calInfo)
-		{
-			*cal_list = g_slist_append(*cal_list, calInfo);	// add it to the list first to aid cleanup
-			if(!cal_list)
-			{
-				g_free(calInfo);
-				ret = FALSE;
-				goto cleanup;
-			}				
-			if(!eas_cal_info_deserialise(calInfo, serialised_cal_array[i]))
-			{
-				ret = FALSE;
-				goto cleanup;
-			}
-		}
-		else
-		{
-			ret = FALSE;
-			goto cleanup;
-		}
-		i++;
-	}
+    g_assert (g_slist_length (*cal_list) == 0);
+
+    while (serialised_cal_array[i])
+    {
+        EasCalInfo *calInfo = eas_cal_info_new();
+        if (calInfo)
+        {
+            *cal_list = g_slist_append (*cal_list, calInfo); // add it to the list first to aid cleanup
+            if (!cal_list)
+            {
+                g_free (calInfo);
+                ret = FALSE;
+                goto cleanup;
+            }
+            if (!eas_cal_info_deserialise (calInfo, serialised_cal_array[i]))
+            {
+                ret = FALSE;
+                goto cleanup;
+            }
+        }
+        else
+        {
+            ret = FALSE;
+            goto cleanup;
+        }
+        i++;
+    }
 
 cleanup:
-	if(!ret)
-	{
-		// set the error
-		//g_set_error (error, EAS_MAIL_ERROR,
-		//	     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
-		//	     ("out of memory"));
-		// clean up on error
-		g_slist_foreach(*cal_list,(GFunc)g_free, NULL);
-		g_slist_free(*cal_list);
-	}
-	
-	g_debug("list has %d items", g_slist_length(*cal_list));
-	return ret;
+    if (!ret)
+    {
+        // set the error
+        //g_set_error (error, EAS_MAIL_ERROR,
+        //       EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+        //       ("out of memory"));
+        // clean up on error
+        g_slist_foreach (*cal_list, (GFunc) g_free, NULL);
+        g_slist_free (*cal_list);
+    }
+
+    g_debug ("list has %d items", g_slist_length (*cal_list));
+    return ret;
 }
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
-static gboolean 
-build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error)
+static gboolean
+build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error)
 {
-	gboolean ret = TRUE;
-	guint i = 0;
-	GSList *l = (GSList*)cal_list;
-	guint array_len = g_slist_length((GSList*)cal_list) + 1;	//cast away const to avoid warning. +1 to allow terminating null 
-    
-    g_debug("build cal arrays++");
-    g_assert(serialised_cal_info_array);
-    g_assert(*serialised_cal_info_array == NULL);
+    gboolean ret = TRUE;
+    guint i = 0;
+    GSList *l = (GSList*) cal_list;
+    guint array_len = g_slist_length ( (GSList*) cal_list) + 1; //cast away const to avoid warning. +1 to allow terminating null
 
-	*serialised_cal_info_array = g_malloc0(array_len * sizeof(gchar*));
+    g_debug ("build cal arrays++");
+    g_assert (serialised_cal_info_array);
+    g_assert (*serialised_cal_info_array == NULL);
 
-	for(i = 0; i < array_len - 1; i++){
-		gchar *tstring = g_strdup(l->data);
-		g_assert(l != NULL);
-		(*serialised_cal_info_array)[i]=tstring;
-		l = g_slist_next (l);
-	}
+    *serialised_cal_info_array = g_malloc0 (array_len * sizeof (gchar*));
 
-	return ret;
+    for (i = 0; i < array_len - 1; i++)
+    {
+        gchar *tstring = g_strdup (l->data);
+        g_assert (l != NULL);
+        (*serialised_cal_info_array) [i] = tstring;
+        l = g_slist_next (l);
+    }
+
+    return ret;
 }
 
-void 
-eas_sync_get_latest_items(EasSync* self,
-                          const gchar* account_uid,
-                          guint64 type,
-                          const gchar* folder_id,
-                          const gchar* sync_key,
-                          DBusGMethodInvocation* context)
+void
+eas_sync_get_latest_items (EasSync* self,
+                           const gchar* account_uid,
+                           guint64 type,
+                           const gchar* folder_id,
+                           const gchar* sync_key,
+                           DBusGMethodInvocation* context)
 {
     GError *error = NULL;
     GSList* added_items = NULL;
@@ -183,7 +184,7 @@ eas_sync_get_latest_items(EasSync* self,
     // Create the request
     EasSyncReq *syncReqObj = NULL;
 
-    g_debug("eas_sync_get_latest_calendar_items++");
+    g_debug ("eas_sync_get_latest_calendar_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
@@ -199,25 +200,25 @@ eas_sync_get_latest_items(EasSync* self,
     }
 
 
-    g_debug("eas_sync_get_latest_calendar_items++");
-    syncReqObj = g_object_new(EAS_TYPE_SYNC_REQ , NULL);
+    g_debug ("eas_sync_get_latest_calendar_items++");
+    syncReqObj = g_object_new (EAS_TYPE_SYNC_REQ , NULL);
 
-    eas_request_base_SetConnection (&syncReqObj->parent_instance, 
+    eas_request_base_SetConnection (&syncReqObj->parent_instance,
                                     self->priv->connection);
 
-    g_debug("eas_sync_get_latest_calendar_items - new req");
+    g_debug ("eas_sync_get_latest_calendar_items - new req");
     // Start the request
     eflag = e_flag_new ();
     eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, folder_id, type, &error);
 
-    g_debug("eas_sync_get_latest_calendar_items  - activate req");
+    g_debug ("eas_sync_get_latest_calendar_items  - activate req");
     // Set flag to wait for response
-    e_flag_wait(eflag);
+    e_flag_wait (eflag);
     e_flag_free (eflag);
 
     // TODO Check error
-    
-    g_debug("eas_sync_get_latest_calendar_items  - get results");
+
+    g_debug ("eas_sync_get_latest_calendar_items  - get results");
 
     eas_sync_req_ActivateFinish (syncReqObj,
                                  &ret_sync_key,
@@ -227,62 +228,62 @@ eas_sync_get_latest_items(EasSync* self,
                                  &error);
 
     // TODO Check Error
-            
-	switch(type)
-	{
-		case EAS_ITEM_CALENDAR:
-		{
-			if(build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error))
-			{
-				if(build_serialised_calendar_info_array(&ret_updated_items_array, updated_items, &error))
-				{
-				    build_serialised_calendar_info_array(&ret_deleted_items_array, deleted_items, &error);          
-				}
-			}
-		}
-		break;
-		default:
-		{
-			//TODO: put some error in here for unknown type
-		}
-		break;
-	}
-         
-    // Return the error or the requested data to the calendar client
-    if (error) 
-	{
-        g_debug(">> Daemon : Error ");
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    } 
-	else
-	{
-        g_debug(">> Daemon : Success-");
-        dbus_g_method_return (context,
-                         	ret_sync_key,
-                          	ret_created_items_array,
-				            ret_updated_items_array,
-				            ret_deleted_items_array);
+
+    switch (type)
+    {
+        case EAS_ITEM_CALENDAR:
+        {
+            if (build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error))
+            {
+                if (build_serialised_calendar_info_array (&ret_updated_items_array, updated_items, &error))
+                {
+                    build_serialised_calendar_info_array (&ret_deleted_items_array, deleted_items, &error);
+                }
+            }
+        }
+        break;
+        default:
+        {
+            //TODO: put some error in here for unknown type
+        }
+        break;
     }
 
-	g_object_unref(syncReqObj);
-    g_debug("eas_sync_get_latest_calendar_items--");
+    // Return the error or the requested data to the calendar client
+    if (error)
+    {
+        g_debug (">> Daemon : Error ");
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    }
+    else
+    {
+        g_debug (">> Daemon : Success-");
+        dbus_g_method_return (context,
+                              ret_sync_key,
+                              ret_created_items_array,
+                              ret_updated_items_array,
+                              ret_deleted_items_array);
+    }
+
+    g_object_unref (syncReqObj);
+    g_debug ("eas_sync_get_latest_calendar_items--");
 }
 
-gboolean 
-eas_sync_delete_items(EasSync* self,
-                      const gchar* account_uid,
-                      const gchar* folder_id,
-                      const gchar* sync_key, 
-                      const GSList *deleted_items_array,
-                      DBusGMethodInvocation* context)
+gboolean
+eas_sync_delete_items (EasSync* self,
+                       const gchar* account_uid,
+                       const gchar* folder_id,
+                       const gchar* sync_key,
+                       const GSList *deleted_items_array,
+                       DBusGMethodInvocation* context)
 {
     EFlag *flag = NULL;
     GError *error = NULL;
     gchar* ret_sync_key = NULL;
-	EasDeleteEmailReq *req = NULL;
+    EasDeleteEmailReq *req = NULL;
 
-    g_debug("eas_sync_delete_calendar_items++");
+    g_debug ("eas_sync_delete_calendar_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
@@ -299,12 +300,12 @@ eas_sync_delete_items(EasSync* self,
 
     // Create the request
     flag = e_flag_new ();
-	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, flag);
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, flag);
 
-	eas_request_base_SetConnection (&req->parent_instance, 
+    eas_request_base_SetConnection (&req->parent_instance,
                                     self->priv->connection);
 
-	    // Start the request
+    // Start the request
     eas_delete_email_req_Activate (req, &error);
 
     // Set flag to wait for response
@@ -312,42 +313,42 @@ eas_sync_delete_items(EasSync* self,
     e_flag_free (flag);
 
     // TODO Check error
-    
-	eas_delete_email_req_ActivateFinish(req, &ret_sync_key, &error);
-		
+
+    eas_delete_email_req_ActivateFinish (req, &ret_sync_key, &error);
+
     if (error)
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    } 
+    }
     else
     {
-		//TODO: make sure this stuff is ok to go over dbus.
-    
-		dbus_g_method_return (context,
+        //TODO: make sure this stuff is ok to go over dbus.
+
+        dbus_g_method_return (context,
                               ret_sync_key);
-    }	
-	g_debug("eas_sync_delete_calendar_items--");
-	return TRUE;
+    }
+    g_debug ("eas_sync_delete_calendar_items--");
+    return TRUE;
 }
 
-gboolean 
-eas_sync_update_items(EasSync* self,
-                      const gchar* account_uid,
-                      guint64 type,
-                      const gchar* folder_id,
-                      const gchar* sync_key, 
-                      const gchar **calendar_items,
-                      DBusGMethodInvocation* context)
+gboolean
+eas_sync_update_items (EasSync* self,
+                       const gchar* account_uid,
+                       guint64 type,
+                       const gchar* folder_id,
+                       const gchar* sync_key,
+                       const gchar **calendar_items,
+                       DBusGMethodInvocation* context)
 {
     GError* error = NULL;
     EFlag *flag = NULL;
     gchar* ret_sync_key = NULL;
     GSList *items = NULL;
-	EasUpdateCalendarReq *req = NULL;
+    EasUpdateCalendarReq *req = NULL;
 
-	g_debug("eas_sync_update_calendar_items++");
-	 
+    g_debug ("eas_sync_update_calendar_items++");
+
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
     {
@@ -363,32 +364,32 @@ eas_sync_update_items(EasSync* self,
 
     flag = e_flag_new ();
 
-	switch(type)
-	{
-		case EAS_ITEM_CALENDAR:
-		{
-    		build_calendar_list(calendar_items, &items, &error);
-		}
-		break;
-		default:
-		{
-			//TODO: put unknown type error here.
-		}
-	}
+    switch (type)
+    {
+        case EAS_ITEM_CALENDAR:
+        {
+            build_calendar_list (calendar_items, &items, &error);
+        }
+        break;
+        default:
+        {
+            //TODO: put unknown type error here.
+        }
+    }
     // Create the request
-	req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
+    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
 
-	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_sync_get_eas_connection(self));
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    eas_sync_get_eas_connection (self));
 
-	    // Start the request
+    // Start the request
     eas_update_calendar_req_Activate (req);
 
-	    // Set flag to wait for response
-    e_flag_wait(flag);
+    // Set flag to wait for response
+    e_flag_wait (flag);
 
-	eas_update_calendar_req_ActivateFinish(req, &ret_sync_key, &error);
-		
+    eas_update_calendar_req_ActivateFinish (req, &ret_sync_key, &error);
+
     if (error)
     {
         dbus_g_method_return_error (context, error);
@@ -396,65 +397,65 @@ eas_sync_update_items(EasSync* self,
         return FALSE;
     }
 
-	switch(type)
-	{
-		case EAS_ITEM_CALENDAR:
-		{
-    		build_calendar_list(calendar_items, &items, &error);
-		}
-		break;
-		default:
-		{
-			//TODO: put unknown type error here.
-		}
-	}
+    switch (type)
+    {
+        case EAS_ITEM_CALENDAR:
+        {
+            build_calendar_list (calendar_items, &items, &error);
+        }
+        break;
+        default:
+        {
+            //TODO: put unknown type error here.
+        }
+    }
     // Create the request
     flag = e_flag_new ();
-	req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
+    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
 
-	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_sync_get_eas_connection(self));
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    eas_sync_get_eas_connection (self));
 
-	    // Start the request
+    // Start the request
     eas_update_calendar_req_Activate (req);
 
-	    // Set flag to wait for response
-    e_flag_wait(flag);
+    // Set flag to wait for response
+    e_flag_wait (flag);
 
-	eas_update_calendar_req_ActivateFinish(req, &ret_sync_key, &error);
-		
+    eas_update_calendar_req_ActivateFinish (req, &ret_sync_key, &error);
+
     if (error)
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    } 
+    }
     else
     {
         dbus_g_method_return (context,
                               ret_sync_key);
-    }	
-	g_debug("eas_sync_update_calendar_items--");
-	return TRUE;
+    }
+    g_debug ("eas_sync_update_calendar_items--");
+    return TRUE;
 }
 
-gboolean 
-eas_sync_add_items(EasSync* self,
-                   const gchar* account_uid,
-                   guint64 type,
-                   const gchar* folder_id,
-                   const gchar* sync_key, 
-                   const gchar **calendar_items,
-                   DBusGMethodInvocation* context)
+gboolean
+eas_sync_add_items (EasSync* self,
+                    const gchar* account_uid,
+                    guint64 type,
+                    const gchar* folder_id,
+                    const gchar* sync_key,
+                    const gchar **calendar_items,
+                    DBusGMethodInvocation* context)
 {
     GError* error = NULL;
     EFlag *flag = NULL;
     gchar* ret_sync_key = NULL;
     GSList *items = NULL;
-	GSList* added_items = NULL;
-	gchar** ret_created_items_array = NULL;
-	EasAddCalendarReq *req = NULL;
+    GSList* added_items = NULL;
+    gchar** ret_created_items_array = NULL;
+    EasAddCalendarReq *req = NULL;
 
-	g_debug("eas_sync_add_items++");
+    g_debug ("eas_sync_add_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
@@ -469,66 +470,66 @@ eas_sync_add_items(EasSync* self,
         return FALSE;
     }
 
-    switch(type)
-	{
-		case EAS_ITEM_CALENDAR:
-		{
-    		build_calendar_list(calendar_items, &items, &error);
-		}
-		break;
-		default:
-		{
-			//TODO: put unknown type error here.
-		}
-		break;
-	}
+    switch (type)
+    {
+        case EAS_ITEM_CALENDAR:
+        {
+            build_calendar_list (calendar_items, &items, &error);
+        }
+        break;
+        default:
+        {
+            //TODO: put unknown type error here.
+        }
+        break;
+    }
 
     // Create the request
     flag = e_flag_new ();
-	req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, items, flag);
+    req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, items, flag);
 
-	eas_request_base_SetConnection (&req->parent_instance, 
-                                   eas_sync_get_eas_connection(self));
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    eas_sync_get_eas_connection (self));
 
-	    // Start the request
+    // Start the request
     eas_add_calendar_req_Activate (req);
 
-	    // Set flag to wait for response
-    e_flag_wait(flag);
+    // Set flag to wait for response
+    e_flag_wait (flag);
 
-	eas_add_calendar_req_ActivateFinish(req, 
-	                                    &ret_sync_key,
-	                                    &added_items,
-	                                    &error);
+    eas_add_calendar_req_ActivateFinish (req,
+                                         &ret_sync_key,
+                                         &added_items,
+                                         &error);
 
     if (error)
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    } 
+    }
     else
     {
-		switch(type)
-		{
-			case EAS_ITEM_CALENDAR:
-			{
-				build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error);
-			}
-			break;
-			default:
-			{
-				//TODO: put unknown type error here.
-			}
-			break;
-		}
+        switch (type)
+        {
+            case EAS_ITEM_CALENDAR:
+            {
+                build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error);
+            }
+            break;
+            default:
+            {
+                //TODO: put unknown type error here.
+            }
+            break;
+        }
 
 
-		dbus_g_method_return (context,
+        dbus_g_method_return (context,
                               ret_sync_key,
                               ret_created_items_array);
-    }	
-	g_debug("eas_sync_add_items--");
-	return TRUE;
+    }
+    g_debug ("eas_sync_add_items--");
+    return TRUE;
 }
 
 
