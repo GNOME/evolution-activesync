@@ -12,8 +12,7 @@
 #define PASSWORD 1
 #define USERNAME 2
 
-enum EasAdTestcases
-{
+enum EasAdTestcases {
     TC_ALL_NULL = 0,
     TC_NULL_EMAIL,
     TC_NULL_PASSWORD,
@@ -29,21 +28,20 @@ enum EasAdTestcases
 };
 
 // email, pw, username
-const gchar* testdata[][3] =
-{
-    {0, 0, 0},
-    {0, "G00dP@55w0rd", 0},
-    {"good.user@cstylianou.com", 0, 0},
+const gchar* testdata[][3] = { 
+                         {0,0,0},
+                         {0, "G00dP@55w0rd", 0},
+                         {"good.user@cstylianou.com", 0, 0},
 
-    {"good.user@cstylianou.com", "G00dP@55w0rd", "badUser"},
-    {"good.user@cstylianou.com", "badPassword", 0},
-    {"good.user@cstylianou.com", "badPassword", "good.user"},
-    {"good.user@cstylianou.com", "badPassword", "badUser"},
+                         {"good.user@cstylianou.com", "G00dP@55w0rd", "badUser"},
+                         {"good.user@cstylianou.com", "badPassword", 0},
+                         {"good.user@cstylianou.com", "badPassword", "good.user"},
+                         {"good.user@cstylianou.com", "badPassword", "badUser"},
 
-    {"bad.email@cstylianou.com", "G00dP@55w0rd", "good.user"},
-    {"good.user@cstylianou.com", "G00dP@55w0rd", 0},
-    {"good.user@cstylianou.com", "G00dP@55w0rd", "good.user"}
-};
+                         {"bad.email@cstylianou.com", "G00dP@55w0rd", "good.user"},
+                         {"good.user@cstylianou.com", "G00dP@55w0rd", 0},
+                         {"good.user@cstylianou.com", "G00dP@55w0rd", "good.user"}
+                       };
 
 #define MAX_TESTS (sizeof(testdata)/sizeof(testdata[0]))
 
@@ -52,11 +50,11 @@ static GMainLoop *loop = NULL;
 static void
 test_expects_error_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_message ("Error response for test [%d]", (int) data);
-
+    g_message ("Error response for test [%d]", (int)data);
+    
     if (error)
     {
-        g_message ("%s", error->message);
+        g_message ("%s",error->message);
         fail_if (error->domain != EAS_CONNECTION_ERROR, "Incorrect Error Domain");
         fail_if (error->code != EAS_CONNECTION_ERROR_FAILED, "Incorrect Error Code");
         fail_if (error->message == NULL, "Expected an error message");
@@ -97,7 +95,7 @@ START_TEST (test_null_email)
     const gchar* password = testdata[TC_NULL_EMAIL][PASSWORD];
     const gchar* username = testdata[TC_NULL_EMAIL][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_null_email");
@@ -117,7 +115,7 @@ START_TEST (test_good_email_password_bad_user)
     const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_password_bad_user");
@@ -137,7 +135,7 @@ START_TEST (test_good_email_bad_password_null_user)
     const gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_bad_password_null_user");
@@ -157,7 +155,7 @@ START_TEST (test_good_email_user_bad_password)
     const gchar* password = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_user_bad_password");
@@ -177,7 +175,7 @@ START_TEST (test_good_email_bad_password_user)
     const gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_bad_password_user");
@@ -197,7 +195,7 @@ START_TEST (test_good_password_user_bad_email)
     const gchar* password = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][PASSWORD];
     const gchar* username = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][USERNAME];
 
-    loop = g_main_loop_new (NULL, FALSE);
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_password_user_bad_email");
@@ -214,19 +212,19 @@ END_TEST
 static void
 test_expects_success_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_message ("Found URL:[%d] [%s]", (int) data, serverUri);
+    g_message ("Found URL:[%d] [%s]", (int)data, serverUri);
 
     if (error)
     {
-        g_message ("%s", error->message);
+        g_message ("%s",error->message);
         fail_if (error->domain != EAS_CONNECTION_ERROR, "Incorrect Error Domain");
         fail_if (error->code != EAS_CONNECTION_ERROR_FAILED, "Incorrect Error Code");
         fail_if (error->message == NULL, "Expected an error message");
         g_error_free (error);
     }
 
-    fail_if (serverUri == NULL, "Expected Valid Uri");
-    fail_if (NULL != error, "Not expecting an error");
+    fail_if(serverUri == NULL, "Expected Valid Uri");
+    fail_if(NULL != error, "Not expecting an error");
 
     g_main_loop_quit (loop);
     g_main_loop_unref (loop);
@@ -238,8 +236,8 @@ START_TEST (test_good_email_password_null_user)
     const gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][EMAIL];
     const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][USERNAME];
-
-    loop = g_main_loop_new (NULL, FALSE);
+    
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_password_null_user");
@@ -258,8 +256,8 @@ START_TEST (test_good_email_password_user)
     const gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_USER][EMAIL];
     const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_USER][PASSWORD];
     const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_USER][USERNAME];
-
-    loop = g_main_loop_new (NULL, FALSE);
+    
+    loop = g_main_loop_new(NULL, FALSE);
 
     mark_point ();
     g_message ("test_good_email_password_user");
@@ -287,7 +285,7 @@ Suite* eas_autodiscover_suite (void)
 
     tcase_add_test (tc_autodiscover, test_all_null);
     tcase_add_test (tc_autodiscover, test_null_email);
-
+    
 #if 0
     tcase_add_test (tc_autodiscover, test_good_email_password_bad_user);
     tcase_add_test (tc_autodiscover, test_good_email_bad_password_null_user);

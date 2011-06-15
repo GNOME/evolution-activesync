@@ -3,11 +3,11 @@
 
 struct _EasRequestBasePrivate
 {
-    guint64 requestId;
-    gint requestType;
-    guint64 accountId;
-    struct _EasConnection* connection;
-    gpointer result;
+	guint64 requestId;
+	gint requestType;
+	guint64 accountId;
+	struct _EasConnection* connection;
+	gpointer result;
     EFlag *flag;
 };
 
@@ -22,103 +22,103 @@ eas_request_base_init (EasRequestBase *object)
 {
     EasRequestBasePrivate *priv;
 
-    object->priv = priv = EAS_REQUEST_BASE_PRIVATE (object);
+	object->priv = priv = EAS_REQUEST_BASE_PRIVATE(object);
 
-    g_debug ("eas_request_base_init++");
-    priv->connection = NULL;
-    g_debug ("eas_request_base_init--");
+    g_debug("eas_request_base_init++");
+	priv->connection = NULL;
+    g_debug("eas_request_base_init--");
 }
 
 static void
 eas_request_base_finalize (GObject *object)
 {
-    G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
+	G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
 }
 
 static void
 eas_request_base_class_init (EasRequestBaseClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
     void *tmp = parent_class;
     tmp = object_class;
 
-    g_debug ("eas_request_base_class_init++");
-    g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
+    g_debug("eas_request_base_class_init++");
+	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
 
-    object_class->finalize = eas_request_base_finalize;
+	object_class->finalize = eas_request_base_finalize;
 }
 
 /**
- * Should never be called. Exists to define the minium API required for derived
+ * Should never be called. Exists to define the minium API required for derived 
  * classes.
  */
-void
+void 
 eas_request_base_Activate (EasRequestBase *self)
 {
-    g_error ("Base class message should never be called");
+	g_error("Base class message should never be called");
 }
 
 /**
- * Should never be called. Exists to define the minium API required for derived
+ * Should never be called. Exists to define the minium API required for derived 
  * classes.
  */
 void
 eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc)
 {
-    g_error ("Base class message should never be called");
+	g_error("Base class message should never be called");
 }
 
-EasRequestType
-eas_request_base_GetRequestType (EasRequestBase* self)
+EasRequestType 
+eas_request_base_GetRequestType(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
 
     return priv->requestType;
 }
 
-void
-eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type)
+void 
+eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetRequestType++");
+	g_debug("eas_request_base_SetRequestType++");
     priv->requestType = type;
-    g_debug ("eas_request_base_SetRequestType--");
+	g_debug("eas_request_base_SetRequestType--");
 }
 
 
 
-struct _EasConnection*
-eas_request_base_GetConnection (EasRequestBase* self)
+struct _EasConnection* 
+eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetConnection++ %x", (unsigned int) priv->connection);
+    g_debug("eas_request_base_GetConnection++ %x", (unsigned int)priv->connection );
     return priv->connection;
 }
 
 void
-eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* connection)
+eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetConnection++");
+    g_debug("eas_request_base_SetConnection++");
     priv->connection = connection;
-    g_debug ("eas_request_base_SetConnection--");
+    g_debug("eas_request_base_SetConnection--");
 }
 
 
 EFlag *
-eas_request_base_GetFlag (EasRequestBase* self)
+eas_request_base_GetFlag(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetFlag+-");
+    g_debug("eas_request_base_GetFlag+-");
     return priv->flag;
 }
 
 void
-eas_request_base_SetFlag (EasRequestBase* self, EFlag* flag)
+eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetFlag++");
+    g_debug("eas_request_base_SetFlag++");
     priv->flag = flag;
-    g_debug ("eas_request_base_SetFlag--");
+    g_debug("eas_request_base_SetFlag--");
 }

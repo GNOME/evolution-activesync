@@ -2,7 +2,7 @@
 /*
  * intelgit
  * Copyright (C)  2011 <>
- *
+ * 
  */
 #include "eas-sync-msg.h"
 #include "eas-update-calendar-req.h"
@@ -15,148 +15,148 @@ G_DEFINE_TYPE (EasUpdateCalendarReq, eas_update_calendar_req, EAS_TYPE_REQUEST_B
 
 struct _EasUpdateCalendarReqPrivate
 {
-    EasSyncMsg* sync_msg;
-    gchar* account_id;
-    gchar* sync_key;
-    EasItemType item_type;
-    gchar* folder_id;
-    GSList *serialised_calendar;
+	EasSyncMsg* sync_msg;
+	gchar* account_id;
+	gchar* sync_key;
+	EasItemType item_type;
+	gchar* folder_id;
+	GSList *serialised_calendar; 
 };
 
 static void
 eas_update_calendar_req_init (EasUpdateCalendarReq *object)
 {
-    /* initialization code */
-    EasUpdateCalendarReqPrivate *priv;
-    g_debug ("eas_update_calendar_req_init++");
+	/* initialization code */
+	EasUpdateCalendarReqPrivate *priv;
+	g_debug("eas_update_calendar_req_init++");
 
-    object->priv = priv = EAS_UPDATE_CALENDAR_REQ_PRIVATE (object);
+	object->priv = priv = EAS_UPDATE_CALENDAR_REQ_PRIVATE(object);
 
-    priv->sync_msg = NULL;
-    priv->account_id = NULL;
-    priv->sync_key = NULL;
-    priv->item_type = EAS_ITEM_LAST;
-    priv->folder_id = NULL;
-    priv->serialised_calendar = NULL;
+	priv->sync_msg = NULL;
+	priv->account_id = NULL;
+	priv->sync_key = NULL;
+	priv->item_type = EAS_ITEM_LAST;
+	priv->folder_id = NULL;
+	priv->serialised_calendar = NULL;
 
-    eas_request_base_SetRequestType (&object->parent_instance,
-                                     EAS_REQ_UPDATE_CALENDAR);
+	eas_request_base_SetRequestType (&object->parent_instance, 
+	                                 EAS_REQ_UPDATE_CALENDAR);
 
-    g_debug ("eas_update_calendar_req_init++");
+	g_debug("eas_update_calendar_req_init++");
 }
 
 static void
 eas_update_calendar_req_finalize (GObject *object)
 {
-    /* deinitalization code */
-    EasUpdateCalendarReq *req = (EasUpdateCalendarReq *) object;
-    EasUpdateCalendarReqPrivate *priv = req->priv;
+	/* deinitalization code */
+	EasUpdateCalendarReq *req = (EasUpdateCalendarReq *) object;
+	EasUpdateCalendarReqPrivate *priv = req->priv;
+	
+	g_debug("eas_update_calendar_req_finalize++");
 
-    g_debug ("eas_update_calendar_req_finalize++");
+	g_free(priv->account_id);
 
-    g_free (priv->account_id);
+	g_object_unref(priv->sync_msg);
+	g_free (priv);
+	req->priv = NULL;
 
-    g_object_unref (priv->sync_msg);
-    g_free (priv);
-    req->priv = NULL;
+	G_OBJECT_CLASS (eas_update_calendar_req_parent_class)->finalize (object);
 
-    G_OBJECT_CLASS (eas_update_calendar_req_parent_class)->finalize (object);
-
-    g_debug ("eas_update_calendar_req_finalize--");
+	g_debug("eas_update_calendar_req_finalize--");
 }
 
 static void
 eas_update_calendar_req_class_init (EasUpdateCalendarReqClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
 
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
+	// get rid of warnings about above 2 lines
+	void *temp = (void*)object_class;
+	temp = (void*)parent_class;
 
-    g_type_class_add_private (klass, sizeof (EasUpdateCalendarReqPrivate));
+	g_type_class_add_private (klass, sizeof (EasUpdateCalendarReqPrivate));	
+	
+	object_class->finalize = eas_update_calendar_req_finalize;
 
-    object_class->finalize = eas_update_calendar_req_finalize;
-
-    g_debug ("eas_update_calendar_req_class_init--");
+	g_debug("eas_update_calendar_req_class_init--");
 }
 
 
 // TODO - update this to take a GSList of serialised calendars? rem to copy the list
-EasUpdateCalendarReq *eas_update_calendar_req_new (const gchar* account_id, const gchar *sync_key, const EasItemType item_type, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
+EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const gchar *sync_key, const EasItemType item_type, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
 {
-    EasUpdateCalendarReq* self = g_object_new (EAS_TYPE_UPDATE_CALENDAR_REQ, NULL);
-    EasUpdateCalendarReqPrivate *priv = self->priv;
+	EasUpdateCalendarReq* self = g_object_new (EAS_TYPE_UPDATE_CALENDAR_REQ, NULL);
+	EasUpdateCalendarReqPrivate *priv = self->priv;
+	
+	g_debug("eas_update_calendar_req_new++");
+	
+	g_assert(sync_key);
+	g_assert(folder_id);
+	g_assert(serialised_calendar);
+	
+	priv->sync_key = g_strdup(sync_key);
+	priv->folder_id = g_strdup(folder_id);
+	priv->serialised_calendar = (GSList *)serialised_calendar;
+	priv->account_id = g_strdup(account_id);
+	priv->item_type = item_type;
 
-    g_debug ("eas_update_calendar_req_new++");
+	eas_request_base_SetFlag(&self->parent_instance, flag);
 
-    g_assert (sync_key);
-    g_assert (folder_id);
-    g_assert (serialised_calendar);
-
-    priv->sync_key = g_strdup (sync_key);
-    priv->folder_id = g_strdup (folder_id);
-    priv->serialised_calendar = (GSList *) serialised_calendar;
-    priv->account_id = g_strdup (account_id);
-    priv->item_type = item_type;
-
-    eas_request_base_SetFlag (&self->parent_instance, flag);
-
-    g_debug ("eas_update_calendar_req_new--");
-    return self;
+	g_debug("eas_update_calendar_req_new--");
+	return self;
 }
 
-void eas_update_calendar_req_Activate (EasUpdateCalendarReq *self)
+void eas_update_calendar_req_Activate(EasUpdateCalendarReq *self)
 {
-    EasUpdateCalendarReqPrivate *priv = self->priv;
-    xmlDoc *doc;
-    GError *error = NULL;
+	EasUpdateCalendarReqPrivate *priv = self->priv;
+	xmlDoc *doc;
+	GError *error = NULL;
+	
+	g_debug("eas_update_calendar_req_Activate++");
+	//create sync msg object
+	priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
 
-    g_debug ("eas_update_calendar_req_Activate++");
-    //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
+	g_debug("build messsage");
+	//build request msg
+	doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
+	
+	g_debug("send message");
+	eas_connection_send_request(eas_request_base_GetConnection (&self->parent_instance), 
+	                            "Sync", 
+	                            doc, 
+	                            (struct _EasRequestBase *)self, 
+	                            &error);
 
-    g_debug ("build messsage");
-    //build request msg
-    doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
-
-    g_debug ("send message");
-    eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                 "Sync",
-                                 doc,
-                                 (struct _EasRequestBase *) self,
-                                 &error);
-
-    g_debug ("eas_update_calendar_req_Activate--");
+	g_debug("eas_update_calendar_req_Activate--");
 }
 
 
-void eas_update_calendar_req_MessageComplete (EasUpdateCalendarReq *self, xmlDoc* doc, GError** error)
+void eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self, xmlDoc* doc, GError** error)
 {
-    EasUpdateCalendarReqPrivate *priv = self->priv;
+	EasUpdateCalendarReqPrivate *priv = self->priv;
+	
+	g_debug("eas_update_calendar_req_MessageComplete++");
 
-    g_debug ("eas_update_calendar_req_MessageComplete++");
+	eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
-    eas_sync_msg_parse_response (priv->sync_msg, doc, error);
+	xmlFree(doc);
+	
+	e_flag_set(eas_request_base_GetFlag (&self->parent_instance));
 
-    xmlFree (doc);
-
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
-
-    g_debug ("eas_update_calendar_req_MessageComplete--");
+	g_debug("eas_update_calendar_req_MessageComplete--");	
 }
 
 void eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self, gchar** ret_sync_key, GError **error)
 {
-    EasUpdateCalendarReqPrivate *priv = self->priv;
-    g_debug ("eas_update_calendar_req_ActivateFinish++");
+	EasUpdateCalendarReqPrivate *priv = self->priv;
+	g_debug("eas_update_calendar_req_ActivateFinish++");
 
-    *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
+	*ret_sync_key = g_strdup(eas_sync_msg_get_syncKey(priv->sync_msg));
 
-    // TODO fill in the error
-
-    g_debug ("eas_update_calendar_req_ActivateFinish--");
+	// TODO fill in the error
+	
+	g_debug("eas_update_calendar_req_ActivateFinish--");	
 }
 
 
