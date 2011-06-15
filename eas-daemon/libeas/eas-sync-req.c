@@ -192,7 +192,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
+        priv->error = error;
         e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
         goto finish;
     }
@@ -224,7 +224,14 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
             //build request msg
             doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
-
+			if (!doc)
+			{
+				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				             ("out of memory"));
+				ret = FALSE;
+				goto finish;
+			}
             //move to new state
             priv->state = EasSyncReqStep2;
 
@@ -235,7 +242,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             if (!ret)
             {
                 g_assert (error != NULL);
-                self->priv->error = error;
+                priv->error = error;
                 e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
             }
