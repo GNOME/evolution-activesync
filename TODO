@@ -7,6 +7,8 @@
 
  - Return full headers for emails in Sync (get_email_info())
 
+ - Loop on <Sync> command if sync_key is "0".
+
  - Use DBus activation to automatically start the dæmon on demand.
 
  - Make the dæmon exit if it is superseded by another dæmon (see
