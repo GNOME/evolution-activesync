@@ -187,7 +187,14 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     g_debug ("build messsage");
     //build request msg
     doc = eas_send_email_msg_build_message (priv->send_email_msg);
-
+    if (!doc)
+    {
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        ret = FALSE;
+        goto finish;
+    }
     g_debug ("send message");
     ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                        "SendMail",

@@ -214,7 +214,13 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 
             //build request msg
             doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-
+			if (!doc)
+			{
+				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				             ("out of memory"));
+				goto finish;
+			}
             //move to new state
             priv->state = EasSyncFolderHierarchyStep2;
 
@@ -226,7 +232,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             if (!ret)
             {
                 g_assert (error != NULL);
-                self->priv->error = error;
+                priv->error = error;
                 e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
             }
