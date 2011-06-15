@@ -54,13 +54,13 @@ GType eas_update_email_req_get_type (void) G_GNUC_CONST;
 EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag);
 
 // start async request
-void eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error);
+gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error);
 
 // async request completed
-void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError** error);
+void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError* error);
 
 // results returned to client
-void eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, gchar** ret_sync_key, GError **error);
+gboolean eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, GError **error);
 
 G_END_DECLS
 

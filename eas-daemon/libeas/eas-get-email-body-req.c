@@ -35,6 +35,7 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_GET_EMAIL_BODY);
 
+    priv->error = NULL;
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
     g_debug ("eas_get_email_body_req_init--");
@@ -52,7 +53,10 @@ eas_get_email_body_req_finalize (GObject *object)
     {
         g_object_unref (priv->emailBodyMsg);
     }
-
+    if (priv->error)
+    {
+        g_error_free (priv->error);
+    }
     g_free (priv->serverId);
     g_free (priv->collectionId);
     g_free (priv->mimeDirectory);
@@ -185,12 +189,12 @@ eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
 
         ret = FALSE;
     }
-
     /* TODO: Add public function implementation here */
-    g_debug ("eas_get_email_body_req_ActivateFinish--");
+
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
     }
+    g_debug ("eas_get_email_body_req_ActivateFinish--");
     return ret;
 }

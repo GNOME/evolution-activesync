@@ -17,6 +17,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "eas-connection-errors.h"
 #include "eas-send-email-msg.h"
 #include <wbxml/wbxml.h>
 #include <glib.h>
@@ -132,34 +133,67 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
     return doc;
 }
 
-void
+gboolean
 eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error)
 {
+    gboolean ret = TRUE;
     xmlNode *root, *node = NULL;
     g_debug ("eas_send_email_msg_parse_response++\n");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
     if (!doc)
     {
         g_debug ("Failed: no doc supplied");
-        return;
+        // Note not setting error here as empty doc is valid
+        goto finish;
     }
     root = xmlDocGetRootElement (doc);
     if (g_strcmp0 ( (char *) root->name, "SendMail"))
     {
         g_debug ("Failed: not a SendMail response!");
-        return;
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,
+                     ("Failed to find <SendMail> element"));
+        ret = FALSE;
+        goto finish;
     }
     for (node = root->children; node; node = node->next)
     {
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
         {
-            gchar *sendmail_status = (gchar *) xmlNodeGetContent (node);
-            g_debug ("SendMail Status:[%s]", sendmail_status);  //TODO - how are errors being propagated to client??
+            gchar *status = (gchar *) xmlNodeGetContent (node);
+            guint status_num = atoi (status);
+            xmlFree (status);
+            if (status_num != EAS_COMMON_STATUS_OK) // not success
+            {
+                EasError error_details;
+                ret = FALSE;
+
+                // there are no sendmail-specific status codes
+                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                {
+                    error_details = common_status_error_map[status_num - 100];
+                }
+                else
+                {
+                    g_warning ("unexpected send status %d", status_num);
+                    error_details = common_status_error_map[0];
+                }
+                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+                goto finish;
+            }
+
             continue;
         }
     }
 
+finish:
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     g_debug ("eas_send_email_msg_parse_response++\n");
-
+    return ret;
 }
 

@@ -35,6 +35,7 @@ struct _EasSendEmailReqPrivate
     gchar *mime_string;
     gchar* client_id;
     gchar* mime_file;
+    GError *error;
 };
 
 static void
@@ -51,6 +52,7 @@ eas_send_email_req_init (EasSendEmailReq *object)
     priv->mime_string = NULL;
     priv->mime_file = NULL;
     priv->client_id = NULL;
+    priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SEND_EMAIL);
@@ -70,6 +72,11 @@ eas_send_email_req_finalize (GObject *object)
     g_free (priv->client_id);
     g_free (priv->account_id);
     g_object_unref (priv->send_email_msg);
+    if (priv->error)
+    {
+        g_error_free (priv->error);
+    }
+
     g_free (priv);
     req->priv = NULL;
 
@@ -115,9 +122,10 @@ eas_send_email_req_new (const gchar* account_id, EFlag *flag, const gchar* clien
 }
 
 // uses the message object to build xml and sends it to the connection object
-void
+gboolean
 eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 {
+    gboolean ret = TRUE;
     EasSendEmailReqPrivate* priv = self->priv;
     xmlDoc *doc;
     FILE *file = NULL;
@@ -127,17 +135,21 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     // store flag in base (doesn't set the flag as in signal the waiters)
     g_debug ("eas_send_email_req_Activate++");
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     // open file containing mime data to be sent:
     file = fopen (priv->mime_file, "r"); // mime file can be read as text (attachments will be base 64 encoded)
     if (file == NULL)
     {
-        g_debug ("failed to open file %s", priv->mime_file);
-        // TODO - how do we propogate errors?
+        ret = FALSE;
+        // set the error
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_FILEERROR,
+                     ("failed to open file %s"), priv->mime_file);
+        goto finish;
     }
 
     // read data from the file to mime_string
-    // TODO..and escape any xml characters; libxml2 may do this when we construct the xml??
-
     // obtain file size:
     fseek (file , 0 , SEEK_END);
     size = ftell (file);
@@ -148,17 +160,25 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     priv->mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size);
     if (priv->mime_string == NULL)
     {
-        // TODO - propogate error
+        ret = FALSE;
+        // set the error
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        goto finish;
     }
 
     // copy the file into the buffer:
     result = fread (priv->mime_string, 1, size, file);
     if (result != size)
     {
-        // TODO - propogate error
+        ret = FALSE;
+        // set the error
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_FILEERROR,
+                     ("failed to open file %s"), priv->mime_file);
+        goto finish;
     }
-
-    fclose (file);
 
     g_debug ("create msg object");
     //create msg object
@@ -169,29 +189,50 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     doc = eas_send_email_msg_build_message (priv->send_email_msg);
 
     g_debug ("send message");
-    eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                 "SendMail",
-                                 doc,
-                                 (struct _EasRequestBase *) self,
-                                 error);
-
+    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+                                       "SendMail",
+                                       doc,
+                                       (struct _EasRequestBase *) self,
+                                       error);
+finish:
+    if (file == NULL)
+    {
+        fclose (file);
+    }
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     g_debug ("eas_send_email_req_Activate--");
-
-    return;
+    return ret;
 }
 
 
 void
-eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError** error)
+eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* error_in)
 {
+    gboolean ret;
+    GError *error = NULL;
     EasSendEmailReqPrivate *priv = self->priv;
 
     g_debug ("eas_send_email_req_MessageComplete++");
 
-    eas_send_email_msg_parse_response (priv->send_email_msg, doc, error);
+    // if an error occurred, store it and signal daemon
+    if (error_in)
+    {
+        priv->error = error_in;
+        goto finish;
+    }
 
+    ret = eas_send_email_msg_parse_response (priv->send_email_msg, doc, &error);
     xmlFree (doc);
+    if (!ret)
+    {
+        g_assert (error != NULL);
+        self->priv->error = error;
+    }
 
+finish:
     // signal daemon we're done
     e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 
@@ -200,3 +241,30 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError**
     return;
 }
 
+
+gboolean
+eas_send_email_req_ActivateFinish (EasSendEmailReq* self, GError **error)
+{
+    gboolean ret = TRUE;
+    EasSendEmailReqPrivate *priv = self->priv;
+
+    g_debug ("eas_send_email_req_ActivateFinish++");
+
+    if (priv->error != NULL) // propogate any preceding error
+    {
+        /* store priv->error in error, if error != NULL,
+        * otherwise call g_error_free() on priv->error
+        */
+        g_propagate_error (error, priv->error);
+        priv->error = NULL;
+
+        ret = FALSE;
+    }
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
+    g_debug ("eas_send_email_req_ActivateFinish--");
+
+    return ret;
+}

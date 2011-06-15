@@ -32,6 +32,7 @@ GQuark eas_connection_error_quark (void)
     return quark;
 }
 
+// TODO think of a more elegant way to do the status->error mappings?
 
 EasError common_status_error_map[] =
 {

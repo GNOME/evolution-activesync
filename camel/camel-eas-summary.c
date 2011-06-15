@@ -148,16 +148,16 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 static gint
 summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 {
-    CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
-    gchar *part;
+	CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
+	gchar *part;
 
-    if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_from_db (s, mir) == -1)
-        return -1;
+	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_from_db (s, mir) == -1)
+		return -1;
 
-    part = mir->bdata;
+	part = mir->bdata;
 
-    if (part)
-        EXTRACT_FIRST_DIGIT (gms->version);
+	if (part)
+		EXTRACT_FIRST_DIGIT(gms->version);
 
 	if (part && part++ && strcmp (part, "(null)"))
 		gms->sync_state = g_strndup (part, 64);

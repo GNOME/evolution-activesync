@@ -290,6 +290,8 @@ eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* self,
              (self->priv->account_uid ? self->priv->account_uid : "NULL"));
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
     g_assert (self);
     g_assert (sync_key);
     g_assert (g_slist_length (*folders_created) == 0);
@@ -408,6 +410,8 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
     g_assert (collection_id);
     g_assert (more_available);
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_debug ("eas_mail_handler_sync_folder_email_info about to call dbus proxy");
     // call dbus api with appropriate params
     ret = dbus_g_proxy_call (proxy, "sync_folder_email", error,
@@ -489,6 +493,8 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
     g_assert (server_id);
     g_assert (mime_directory);
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     // call dbus api
     ret = dbus_g_proxy_call (proxy, "fetch_email_body", error,
                              G_TYPE_STRING, self->priv->account_uid,
@@ -524,6 +530,8 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
     g_assert (file_reference);
     g_assert (mime_directory);
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     // call dbus api
     ret = dbus_g_proxy_call (proxy, "fetch_attachment", error,
                              G_TYPE_STRING, self->priv->account_uid,
@@ -536,6 +544,10 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 
     g_debug ("eas_mail_handler_fetch_email_attachments--");
 
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     return ret;
 }
 
@@ -561,7 +573,16 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
     g_assert (sync_key);
     g_assert (items_deleted);
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
+    if (!deleted_items_array)
+    {
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        goto finish;
+    }
 
     for (; loop < list_length; ++loop)
     {
@@ -587,10 +608,15 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
     g_free (deleted_items_array);
     deleted_items_array = NULL;
 
+finish:
     if (ret)
     {
         // put the updated sync key back into the original string for tracking this
-//      strcpy(sync_key,updatedSyncKey);
+        // strcpy(sync_key,updatedSyncKey);
+    }
+    else
+    {
+        g_assert (error == NULL || *error != NULL);
     }
 
     if (updatedSyncKey)
@@ -628,6 +654,9 @@ eas_mail_handler_update_email (EasEmailHandler* self,
     g_assert (self);
     g_assert (sync_key);
     g_assert (update_emails);
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_debug ("sync_key = %s", sync_key);
     g_debug ("%d emails to update", num_emails);
 
@@ -637,7 +666,15 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 
         g_debug ("serialising email %d", i);
         ret = eas_email_info_serialise (email, &serialised_email);
-
+        if (!ret)
+        {
+            // set the error
+            g_set_error (error, EAS_MAIL_ERROR,
+                         EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                         ("out of memory"));
+            serialised_email_array[i] = NULL;
+            goto cleanup;
+        }
         serialised_email_array[i] = serialised_email;
         g_debug ("serialised_email_array[%d] = %s", i, serialised_email_array[i]);
 
@@ -654,12 +691,18 @@ eas_mail_handler_update_email (EasEmailHandler* self,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);
 
+cleanup:
     // free all strings in the array
-    for (i = 0; i < num_emails; i++)
+    for (i = 0; i < num_emails && serialised_email_array[i]; i++)
     {
         g_free (serialised_email_array[i]);
     }
     g_free (serialised_email_array);
+
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
 
     g_debug ("eas_mail_handler_update_emails--");
 
@@ -681,6 +724,8 @@ eas_mail_handler_send_email (EasEmailHandler* self,
     g_assert (client_email_id);
     g_assert (mime_file);
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     // call dbus api
     ret = dbus_g_proxy_call (proxy, "send_email", error,
                              G_TYPE_STRING, self->priv->account_uid,
@@ -693,6 +738,10 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 
     g_debug ("eas_mail_handler_send_email--");
 
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     return ret;
 }
 
@@ -706,8 +755,15 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 {
     gboolean ret = TRUE;
     g_debug ("eas_mail_handler_move_to_folder++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_debug ("eas_mail_handler_move_to_folder--");
     /* TODO */
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     return ret;
 }
 
@@ -721,11 +777,15 @@ eas_mail_handler_copy_to_folder (EasEmailHandler* self,
 {
     gboolean ret = TRUE;
     g_debug ("eas_mail_handler_copy_to_folder++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     g_debug ("eas_mail_handler_copy_to_folder--");
 
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     return ret;
     /* TODO */
 }
-
-
-

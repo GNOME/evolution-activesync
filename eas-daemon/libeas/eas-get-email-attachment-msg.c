@@ -4,6 +4,7 @@
  * Copyright (C)  2011 <>
  */
 #include <libwbxml-1.0/wbxml/wbxml.h>
+#include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
 #include <glib.h>
 
@@ -115,24 +116,32 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
     return doc;
 }
 
-void
+gboolean
 eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc, GError** error)
 {
+    EasError error_details;
+    gboolean ret = TRUE;
     EasGetEmailAttachmentMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;
 
     g_debug ("eas_get_email_attachment_msg_parse_response ++");
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     if (!doc)
     {
         g_warning ("No XML Doc to parse");
-        return;
+        // not setting error since this is valid
+        goto finish;
     }
     node = xmlDocGetRootElement (doc);
     if (g_strcmp0 ( (char *) node->name, "ItemOperations"))
     {
-        g_debug ("Failed to find <ItemOperations> element");
-        return;
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,
+                     ("Failed to find <ItemOperations> element"));
+        ret = FALSE;
+        goto finish;
     }
 
     for (node = node->children; node; node = node->next)
@@ -140,8 +149,26 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
         {
             gchar *status = (gchar *) xmlNodeGetContent (node);
-            g_debug ("ItemOperations Status:[%s]", status);
+            guint status_num = atoi (status);
             xmlFree (status);
+            if (status_num != EAS_COMMON_STATUS_OK) // not success
+            {
+                ret = FALSE;
+
+                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                {
+                    error_details = common_status_error_map[status_num - 100];
+                }
+                else
+                {
+                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+                    error_details = itemoperations_status_error_map[status_num];
+                }
+                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+                goto finish;
+            }
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Response"))
@@ -152,7 +179,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
     if (!node)
     {
         g_warning ("Could not find Response node");
-        return;
+        goto finish;
     }
 
     for (node = node->children; node; node = node->next)
@@ -165,7 +192,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
     if (!node)
     {
         g_warning ("Could not find Fetch node");
-        return;
+        goto finish;
     }
 
     for (node = node->children; node; node = node->next)
@@ -173,8 +200,26 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
         {
             gchar *status = (gchar *) xmlNodeGetContent (node);
-            g_debug ("Fetch Status:[%s]", status);
+            guint status_num = atoi (status);
             xmlFree (status);
+            if (status_num != EAS_COMMON_STATUS_OK) // not success
+            {
+                ret = FALSE;
+
+                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                {
+                    error_details = common_status_error_map[status_num - 100];
+                }
+                else
+                {
+                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+                    error_details = itemoperations_status_error_map[status_num];
+                }
+                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+                goto finish;
+            }
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "FileReference"))
@@ -198,7 +243,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
     if (!node)
     {
         g_warning ("Failed to find Properties node");
-        return;
+        goto finish;
     }
 
 
@@ -226,12 +271,12 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
 
             if (!decoded_len)
             {
-                //TODO: Set the GError
-                //error = WBXML_ERROR_B64_ENC;
-                //  g_set_error();
-                g_warning ("Failed to base64_decode attachment ");
+                g_set_error (error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_WBXMLERROR,
+                             ("Failed to base64 decode attachment"));
                 xmlFree (xmlTmp);
-                return;
+                ret = FALSE;
+                goto finish;
             }
             g_message ("data decoded   =--->:[%s]",   decoded_buf);
             g_message ("data decoded length =--->:[%d]",  decoded_len);
@@ -245,7 +290,13 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
             }
             else
             {
-                g_critical ("Failed to open file!");
+                //g_critical("Failed to open file!")
+                g_set_error (error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_FILEERROR,
+                             ("Failed to open file!"));
+                xmlFree (xmlTmp);
+                ret = FALSE;
+                goto finish;
             }
 
             g_free (decoded_buf);
@@ -255,6 +306,12 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xml
         }
     }
 
+finish:
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
+    return ret;
     g_debug ("eas_get_email_attachment_msg_parse_response --");
 }
 

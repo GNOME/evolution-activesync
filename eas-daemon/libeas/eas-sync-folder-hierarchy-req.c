@@ -68,7 +68,7 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
     }
     if (priv->error)
     {
-        g_clear_error (&priv->error);
+        g_error_free (priv->error);
     }
 
     G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
@@ -183,6 +183,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     xmlFree (doc);
     if (!ret)
     {
+        g_assert (error != NULL);
         self->priv->error = error;
         e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
         goto finish;
@@ -224,6 +225,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
                                                &error);
             if (!ret)
             {
+                g_assert (error != NULL);
                 self->priv->error = error;
                 e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
@@ -251,6 +253,7 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
                                               GSList** deleted_folders,
                                               GError** error)
 {
+    gboolean ret = TRUE;
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -265,7 +268,7 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
         g_propagate_error (error, priv->error);
         priv->error = NULL;
 
-        return FALSE;
+        ret = FALSE;
     }
 
     *ret_sync_key    = g_strdup (eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
@@ -273,7 +276,11 @@ eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self,
     *updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
     *deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     g_debug ("eas_sync_folder_hierarchy_req_ActivateFinish--");
 
-    return TRUE;
+    return ret;
 }

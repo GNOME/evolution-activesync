@@ -16,6 +16,7 @@ struct _EasDeleteEmailReqPrivate
     gchar* folder_id;
     GSList *server_ids_array;
     EasItemType ItemType;
+    GError *error;
 };
 
 #define EAS_DELETE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqPrivate))
@@ -32,7 +33,7 @@ eas_delete_email_req_init (EasDeleteEmailReq *object)
     g_debug ("eas_delete_email_req_init++");
     priv->accountID = NULL;
     priv->syncKey = NULL;
-
+    priv->error = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_DELETE_MAIL);
 
@@ -51,7 +52,10 @@ eas_delete_email_req_finalize (GObject *object)
     g_slist_foreach (priv->server_ids_array, (GFunc) g_object_unref, NULL);
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
-
+    if (priv->error)
+    {
+        g_error_free (priv->error);
+    }
     g_debug ("eas_delete_email_req_finalize--");
     G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
 }
@@ -73,14 +77,18 @@ eas_delete_email_req_class_init (EasDeleteEmailReqClass *klass)
 
 }
 
-void
+gboolean
 eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
 {
+    gboolean ret;
     EasDeleteEmailReqPrivate *priv = self->priv;
     xmlDoc *doc;
     gboolean getChanges = FALSE;
 
     g_debug ("eas_delete_email_req_Activate++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
     //create sync  msg type
     priv->syncMsg = eas_sync_msg_new (priv->syncKey, priv->accountID, priv->folder_id, priv->ItemType);
 
@@ -91,12 +99,20 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
     doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, priv->server_ids_array);
 
     g_debug ("eas_delete_email_req_Activate - send message");
-    eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                 "Sync",
-                                 doc,
-                                 (struct _EasRequestBase *) self,
-                                 error);
+    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+                                       "Sync",
+                                       doc,
+                                       (struct _EasRequestBase *) self,
+                                       error);
+
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
+
     g_debug ("eas_delete_email_req_Activate--");
+
+    return ret;
 }
 
 EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EFlag *flag)
@@ -126,27 +142,61 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar
     return self;
 }
 
-void eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key, GError** error)
+gboolean
+eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, gchar** ret_sync_key, GError** error)
 {
+    gboolean ret = TRUE;
     EasDeleteEmailReqPrivate *priv = self->priv;
 
     g_debug ("eas_delete_email_req_ActivateFinish++");
 
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+    if (priv->error != NULL) // propogate any preceding error
+    {
+        /* store priv->error in error, if error != NULL,
+        * otherwise call g_error_free() on priv->error
+        */
+        g_propagate_error (error, priv->error);
+        priv->error = NULL;
+
+        ret = FALSE;
+    }
     *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
 
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
     g_debug ("eas_delete_email_req_ActivateFinish--");
+
+    return ret;
 }
 
-void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError** error)
+void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError* error_in)
 {
+    gboolean ret;
     EasDeleteEmailReqPrivate *priv = self->priv;
+    GError *error = NULL;
 
     g_debug ("eas_delete_email_req_MessageComplete++");
 
-    eas_sync_msg_parse_response (priv->syncMsg, doc, error);
+    // if an error occurred, store it and signal daemon
+    if (error_in)
+    {
+        priv->error = error_in;
+        goto finish;
+    }
 
+    ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
     xmlFree (doc);
+    if (!ret)
+    {
+        g_assert (error != NULL);
+        self->priv->error = error;
+    }
 
+finish:
     e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 
     g_debug ("eas_delete_email_req_MessageComplete--");
