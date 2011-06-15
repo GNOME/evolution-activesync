@@ -1098,7 +1098,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else
 				{
-					// Build a new custom property called X-MEEGO-{ElementName}
+					// Build a new custom property called X-MEEGO-ACTIVESYNCD-{ElementName}
 					gchar* propertyName = g_strconcat(VCAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
 					value = (gchar*)xmlNodeGetContent(n);
 					prop = icalproperty_new(ICAL_X_PROPERTY);
@@ -1106,7 +1106,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					g_debug("Found EAS element that doesn't map to a VEVENT property. Creating X property %s:%s", propertyName, value);
 
 					icalproperty_set_x_name(prop, propertyName);
-					icalproperty_set_value(prop, icalvalue_new_from_string(ICAL_X_VALUE, value));//, (gchar*)"ICAL_X_COMPONENT");
+					icalproperty_set_value(prop, icalvalue_new_from_string(ICAL_X_VALUE, value));
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 					g_free(propertyName); propertyName = NULL;
@@ -1447,6 +1447,7 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 	{
 		xmlNodePtr categories = NULL;
 		xmlNodePtr exceptions = NULL;
+		xmlNodePtr icalExtns = NULL;
 		struct icaltimetype startTime, endTime;
 		
 		icalproperty* prop;
@@ -1590,11 +1591,26 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 					}
 					break;
 
-				// TODO: all the rest :)
-
 				default:
-					// Note: icalproperty_as_ical_string() keeps ownership of the string so we don't have to delete
-					g_warning("DATA LOSS: unparsed iCalendar property: %s", icalproperty_as_ical_string(prop));
+					{
+						// Any other unmapped properties get stored as extension elements under the
+						// <activesyncd:iCalExtensions> collection element.
+						
+						gchar* elementName = NULL;
+
+						// Create the collecion element when first needed
+						if (icalExtns == NULL)
+						{
+							icalExtns = xmlNewChild(appData, NULL, (const xmlChar*)"activesyncd:iCalExtensions", NULL);
+						}
+					
+						// Note: icalproperty_as_ical_string() keeps ownership of the string so we don't have to delete
+						g_debug("Found unsupported iCalendar property (%s): adding as extension element under <iCalExtensions>", icalproperty_as_ical_string(prop));
+
+						elementName = g_strconcat("activesyncd:", icalproperty_get_property_name(prop), NULL);
+						xmlNewTextChild(icalExtns, NULL, (const xmlChar*)elementName, (const xmlChar*)icalproperty_get_value_as_string(prop));
+						g_free(elementName); elementName = NULL;
+					}
 					break;
 			}// end of switch
 		}// end of for loop
