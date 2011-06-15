@@ -146,7 +146,6 @@ eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** 
     {
         g_debug ("Failed: no doc supplied");
         // Note not setting error here as empty doc is valid
-        ret = FALSE;
         goto finish;
     }
     root = xmlDocGetRootElement (doc);
