@@ -1,8 +1,8 @@
 ## Process this file with automake to produce Makefile.in
-lib_LTLIBRARIES =  libeascal.la
+lib_LTLIBRARIES =  libeassync.la
 
 # TODO remove unnecessary includes
-libeascal_la_CPPFLAGS =			\
+libeassync_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
 		$(DBUS_CFLAGS)		\
@@ -11,7 +11,7 @@ libeascal_la_CPPFLAGS =			\
 		$(SOUP_CFLAGS)
 
 #TODO remove unnecessary libs	  
-libeascal_la_LDFLAGS =			\
+libeassync_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
 		$(DBUS_LIBS)		\
@@ -19,25 +19,25 @@ libeascal_la_LDFLAGS =			\
 		$(LIBXML_LIBS)	\
 		$(SOUP_LIBS)
 
-libeascal_la_SOURCES =		\
-        libeascal.h			\
-        libeascal.c                     \
+libeassync_la_SOURCES =		\
+        libeassync.h			\
+        libeassync.c                     \
         eas-cal-info.h                     \
         eas-cal-info.c
         
-interface_xml =  ../../eas-daemon/src/eas-calendar.xml
+interface_xml =  ../../eas-daemon/src/eas-sync.xml
 
 #Rule to generate the binding headers
-eas-calendar-client-stub.h: $(interface_xml)
+eas-sync-client-stub.h: $(interface_xml)
 	dbus-binding-tool --prefix=eas_object --mode=glib-client $< > $@
 	       
-BUILT_SOURCES = eas-calendar-client-stub.h
+BUILT_SOURCES = eas-sync-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 
-libeascal_la_LIBADD = ../../logger/libeaslogger.la
+libeassync_la_LIBADD = ../../logger/libeaslogger.la
 
 # Correctly clean the generated headers, but keep the xml description
 CLEANFILES = $(BUILT_SOURCES)
-MOSTLYCLEANFILES = libeascal.la
+MOSTLYCLEANFILES = libeassync.la
 MAINTAINERCLEANFILES = Makefile.in

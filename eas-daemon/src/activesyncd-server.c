@@ -18,9 +18,8 @@
 #include "activesyncd-common-defs.h"
 #include "../libeas/eas-connection.h"
 #include "../libeas/eas-accounts.h"
-#include "eas-calendar.h" 
+#include "eas-sync.h" 
 #include "eas-common.h"
-#include "eas-contact.h" 
 #include "eas-mail.h"
 
 #include "../../logger/eas-logger.h"
@@ -112,9 +111,8 @@ int main(int argc, char** argv) {
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
 //    EasConnection* EasConnObj = NULL;
-    EasCalendar* EasCalendarObj = NULL;
+    EasSync* EasSyncObj = NULL;
     EasCommon* EasCommonObj = NULL;
-    EasContact* EasContactObj = NULL;
     EasMail*EasMailObj = NULL;
     
     GMainLoop* mainloop = NULL;
@@ -151,8 +149,8 @@ int main(int argc, char** argv) {
 #endif
 
     g_debug("Creating calendar  gobject.");
-    EasCalendarObj = eas_calendar_new();
-    if (EasCalendarObj == NULL) {
+    EasSyncObj = eas_sync_new();
+    if (EasSyncObj == NULL) {
         g_debug("Error: Failed to create calendar  instance");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
@@ -161,14 +159,6 @@ int main(int argc, char** argv) {
     g_debug("Creating common  gobject.");
     EasCommonObj = g_object_new(EAS_TYPE_COMMON , NULL);
     if (EasCommonObj == NULL) {
-        g_debug("Error: Failed to create common  instance");
-        g_main_loop_quit (mainloop);
-        exit(EXIT_FAILURE);
-    }
-
-    g_debug("Creating contact  gobject.");
-    EasContactObj = g_object_new(EAS_TYPE_CONTACT , NULL);
-    if (EasContactObj == NULL) {
         g_debug("Error: Failed to create common  instance");
         g_main_loop_quit (mainloop);
         exit(EXIT_FAILURE);
@@ -183,7 +173,7 @@ int main(int argc, char** argv) {
     }
 
     g_debug("Pass a EasConnection handle to the exposed GObjects");
-    // eas_calendar_set_eas_connection(EasCalendarObj, EasConnObj);
+    // eas_sync_set_eas_connection(EasSyncObj, EasConnObj);
     // ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
     // ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
     // eas_mail_set_eas_connection(EasMailObj, EasConnObj);
@@ -244,18 +234,14 @@ int main(int argc, char** argv) {
 
     //	Registering  calendar Gobject 
     dbus_g_connection_register_g_object(bus,
-                                      EAS_SERVICE_CALENDAR_OBJECT_PATH,
-                                      G_OBJECT(EasCalendarObj));
+                                      EAS_SERVICE_SYNC_OBJECT_PATH,
+                                      G_OBJECT(EasSyncObj));
 
     //	Registering  common Gobject
     dbus_g_connection_register_g_object(bus,
                                       EAS_SERVICE_COMMON_OBJECT_PATH,
                                       G_OBJECT(EasCommonObj));
 
-    //	Registering  contact Gobject
-    dbus_g_connection_register_g_object(bus,
-                                      EAS_SERVICE_CONTACT_OBJECT_PATH,
-                                      G_OBJECT(EasContactObj));
 
     //	Registering  mail Gobject
     dbus_g_connection_register_g_object(bus,

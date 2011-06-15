@@ -18,6 +18,7 @@ struct _EasUpdateCalendarReqPrivate
 	EasSyncMsg* sync_msg;
 	gchar* account_id;
 	gchar* sync_key;
+	EasItemType item_type;
 	gchar* folder_id;
 	GSList *serialised_calendar; 
 };
@@ -34,6 +35,7 @@ eas_update_calendar_req_init (EasUpdateCalendarReq *object)
 	priv->sync_msg = NULL;
 	priv->account_id = NULL;
 	priv->sync_key = NULL;
+	priv->item_type = EAS_ITEM_LAST;
 	priv->folder_id = NULL;
 	priv->serialised_calendar = NULL;
 
@@ -82,7 +84,7 @@ eas_update_calendar_req_class_init (EasUpdateCalendarReqClass *klass)
 
 
 // TODO - update this to take a GSList of serialised calendars? rem to copy the list
-EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
+EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const gchar *sync_key, const EasItemType item_type, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
 {
 	EasUpdateCalendarReq* self = g_object_new (EAS_TYPE_UPDATE_CALENDAR_REQ, NULL);
 	EasUpdateCalendarReqPrivate *priv = self->priv;
@@ -97,6 +99,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, const
 	priv->folder_id = g_strdup(folder_id);
 	priv->serialised_calendar = (GSList *)serialised_calendar;
 	priv->account_id = g_strdup(account_id);
+	priv->item_type = item_type;
 
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
@@ -112,7 +115,7 @@ void eas_update_calendar_req_Activate(EasUpdateCalendarReq *self)
 	
 	g_debug("eas_update_calendar_req_Activate++");
 	//create sync msg object
-	priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_CALENDAR);
+	priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
 
 	g_debug("build messsage");
 	//build request msg

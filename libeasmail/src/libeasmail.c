@@ -447,6 +447,7 @@ eas_mail_handler_sync_folder_email_info(EasEmailHandler* self,
 	
 	if(!ret)	// failed - cleanup lists
 	{
+		g_assert(error == NULL || *error != NULL);
 		g_slist_foreach(*emailinfos_created, (GFunc)g_free, NULL);
 		g_free(*emailinfos_created);
 		*emailinfos_created = NULL;
@@ -495,6 +496,10 @@ eas_mail_handler_fetch_email_body(EasEmailHandler* self,
 	
 	g_debug("eas_mail_handler_fetch_email_bodies--");
 
+	if(!ret)
+	{
+		g_assert(error == NULL || *error != NULL);
+	}
 	return ret;
 }
 
