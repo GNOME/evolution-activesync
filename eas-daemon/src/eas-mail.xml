@@ -30,7 +30,7 @@
 
     <method name="sync_email_folder_hierarchy">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="t" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="s" name="account_uid" direction="in"/>	<!-- t == UINT64-->
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>
       <arg type="as" name="ret_created_folder_array" direction="out"/>
@@ -41,7 +41,7 @@
 <!-- 2-way sync of specified email folder. This will sync email headers only, not bodies will use AS 'Sync' command -->
     <method name="sync_folder_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="t" name="account_uid" direction="in"/>
+      <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="collection_id" direction="in"/>
       <arg type="s" name="ret_sync_key" direction="out"/>
@@ -55,7 +55,7 @@
 <!-- used by clients to fetch email bodies and attachments -->
     <method name="fetch_email_body">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-   	<arg type="t" name="account_uid" direction="in"/>
+   	<arg type="s" name="account_uid" direction="in"/>
 	<arg type="s" name="collection_id" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
@@ -63,7 +63,7 @@
 
     <method name="fetch_attachment">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-   	<arg type="t" name="account_uid" direction="in"/>
+   	<arg type="s" name="account_uid" direction="in"/>
 	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
     </method>
@@ -72,7 +72,7 @@
 <!-- used by clients to send MIME-formatted e-mail messages to the server -->
     <method name="send_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="t" name="account_uid" direction="in"/>
+      <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="clientid" direction="in"/>
       <arg type="s" name="mime_file" direction="in"/>
 
@@ -81,7 +81,7 @@
   <!-- TODO: MoveItem -->
 	<method name="delete_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="t" name="account_uid" direction="in"/>
+      <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="s" name="folder_id" direction="in"/>		
       <arg type="as" name="server_ids_array" direction="in"/>		
@@ -90,7 +90,7 @@
 
 	<method name="update_emails">
 		<annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-		<arg type="t" name="account_uid" direction="in"/>
+		<arg type="s" name="account_uid" direction="in"/>
 		<arg type="s" name="sync_key" direction="in"/>
 		<arg type="s" name="folder_id" direction="in"/>		
 		<arg type="as" name="update_email_array" direction="in"/>		

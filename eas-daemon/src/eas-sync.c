@@ -65,12 +65,13 @@ EasSync* eas_sync_new(void)
 	return easCal;
 }
 
-
+#if 0
 void eas_sync_set_eas_connection(EasSync* self, EasConnection* easConnObj)
 {
    EasSyncPrivate* priv = self->priv;
    priv->connection = easConnObj;
 }
+#endif
 
 
 EasConnection*
@@ -163,11 +164,11 @@ build_serialised_calendar_info_array(gchar ***serialised_cal_info_array, const G
 
 void 
 eas_sync_get_latest_items(EasSync* self,
-                                          guint64 account_uid,
-                              			  guint64 type,
-                                          const gchar* folder_id,
-                                          const gchar* sync_key,
-                                          DBusGMethodInvocation* context)
+                          const gchar* account_uid,
+                          guint64 type,
+                          const gchar* folder_id,
+                          const gchar* sync_key,
+                          DBusGMethodInvocation* context)
 {
     GError *error = NULL;
     GSList* added_items = NULL;
@@ -184,11 +185,17 @@ eas_sync_get_latest_items(EasSync* self,
 
     g_debug("eas_sync_get_latest_calendar_items++");
 
-    eflag = e_flag_new ();
-    
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(self->priv->connection, account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return;
     }
 
 
@@ -197,10 +204,10 @@ eas_sync_get_latest_items(EasSync* self,
 
     eas_request_base_SetConnection (&syncReqObj->parent_instance, 
                                     self->priv->connection);
-                                    
 
     g_debug("eas_sync_get_latest_calendar_items - new req");
     // Start the request
+    eflag = e_flag_new ();
     eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, folder_id, type, &error);
 
     g_debug("eas_sync_get_latest_calendar_items  - activate req");
@@ -264,11 +271,11 @@ eas_sync_get_latest_items(EasSync* self,
 
 gboolean 
 eas_sync_delete_items(EasSync* self,
-                                    guint64 account_uid,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const GSList *deleted_items_array,
-                                    DBusGMethodInvocation* context)
+                      const gchar* account_uid,
+                      const gchar* folder_id,
+                      const gchar* sync_key, 
+                      const GSList *deleted_items_array,
+                      DBusGMethodInvocation* context)
 {
     EFlag *flag = NULL;
     GError *error = NULL;
@@ -277,14 +284,21 @@ eas_sync_delete_items(EasSync* self,
 
     g_debug("eas_sync_delete_calendar_items++");
 
-    flag = e_flag_new ();
-
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(self->priv->connection, account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
 
     // Create the request
+    flag = e_flag_new ();
 	req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -319,12 +333,12 @@ eas_sync_delete_items(EasSync* self,
 
 gboolean 
 eas_sync_update_items(EasSync* self,
-                                    guint64 account_uid,
-                                    guint64 type,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const gchar **calendar_items,
-                                    DBusGMethodInvocation* context)
+                      const gchar* account_uid,
+                      guint64 type,
+                      const gchar* folder_id,
+                      const gchar* sync_key, 
+                      const gchar **calendar_items,
+                      DBusGMethodInvocation* context)
 {
     GError* error = NULL;
     EFlag *flag = NULL;
@@ -334,12 +348,20 @@ eas_sync_update_items(EasSync* self,
 
 	g_debug("eas_sync_update_calendar_items++");
 	 
-    flag = e_flag_new ();
-
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(eas_sync_get_eas_connection(self), account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
+
+    flag = e_flag_new ();
 
 	switch(type)
 	{
@@ -371,6 +393,40 @@ eas_sync_update_items(EasSync* self,
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
+        return FALSE;
+    }
+
+	switch(type)
+	{
+		case EAS_ITEM_CALENDAR:
+		{
+    		build_calendar_list(calendar_items, &items, &error);
+		}
+		break;
+		default:
+		{
+			//TODO: put unknown type error here.
+		}
+	}
+    // Create the request
+    flag = e_flag_new ();
+	req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
+
+	eas_request_base_SetConnection (&req->parent_instance, 
+                                   eas_sync_get_eas_connection(self));
+
+	    // Start the request
+    eas_update_calendar_req_Activate (req);
+
+	    // Set flag to wait for response
+    e_flag_wait(flag);
+
+	eas_update_calendar_req_ActivateFinish(req, &ret_sync_key, &error);
+		
+    if (error)
+    {
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
     } 
     else
     {
@@ -383,12 +439,12 @@ eas_sync_update_items(EasSync* self,
 
 gboolean 
 eas_sync_add_items(EasSync* self,
-                                    guint64 account_uid,
-                        			guint64 type,
-                                    const gchar* folder_id,
-                                    const gchar* sync_key, 
-                                    const gchar **calendar_items,
-                                    DBusGMethodInvocation* context)
+                   const gchar* account_uid,
+                   guint64 type,
+                   const gchar* folder_id,
+                   const gchar* sync_key, 
+                   const gchar **calendar_items,
+                   DBusGMethodInvocation* context)
 {
     GError* error = NULL;
     EFlag *flag = NULL;
@@ -398,13 +454,19 @@ eas_sync_add_items(EasSync* self,
 	gchar** ret_created_items_array = NULL;
 	EasAddCalendarReq *req = NULL;
 
-	g_debug("eas_sync_add_calendar_items++");
- 
-    flag = e_flag_new ();
+	g_debug("eas_sync_add_items++");
 
-    if(self->priv->connection)
+    self->priv->connection = eas_connection_find (account_uid);
+    if (!self->priv->connection)
     {
-        eas_connection_set_account(eas_sync_get_eas_connection(self), account_uid);
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
     }
 
     switch(type)
@@ -422,6 +484,7 @@ eas_sync_add_items(EasSync* self,
 	}
 
     // Create the request
+    flag = e_flag_new ();
 	req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, items, flag);
 
 	eas_request_base_SetConnection (&req->parent_instance, 
@@ -437,7 +500,7 @@ eas_sync_add_items(EasSync* self,
 	                                    &ret_sync_key,
 	                                    &added_items,
 	                                    &error);
-		
+
     if (error)
     {
         dbus_g_method_return_error (context, error);
@@ -464,7 +527,7 @@ eas_sync_add_items(EasSync* self,
                               ret_sync_key,
                               ret_created_items_array);
     }	
-	g_debug("eas_sync_add_calendar_items--");
+	g_debug("eas_sync_add_items--");
 	return TRUE;
 }
 

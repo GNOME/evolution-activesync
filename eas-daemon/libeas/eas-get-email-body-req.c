@@ -12,7 +12,7 @@
 struct _EasGetEmailBodyReqPrivate
 {
 	EasGetEmailBodyMsg* emailBodyMsg;
-	guint64 accountUid;
+	gchar* accountUid;
 	gchar* serverId;
 	gchar* collectionId;
 	gchar* mimeDirectory;
@@ -36,6 +36,7 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 	                                 EAS_REQ_GET_EMAIL_BODY);
 
 	priv->emailBodyMsg = NULL;
+	priv->accountUid = NULL;
 	g_debug("eas_get_email_body_req_init--");
 }
 
@@ -55,6 +56,7 @@ eas_get_email_body_req_finalize (GObject *object)
 	g_free(priv->serverId);
 	g_free(priv->collectionId);
 	g_free(priv->mimeDirectory);
+	g_free(priv->accountUid);
 
 	G_OBJECT_CLASS (eas_get_email_body_req_parent_class)->finalize (object);
 	g_debug("eas_get_email_body_req_finalize--");
@@ -78,7 +80,7 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 
 
 EasGetEmailBodyReq*
-eas_get_email_body_req_new (const guint64 account_uid, 
+eas_get_email_body_req_new (const gchar* account_uid, 
                             const gchar *collection_id, 
                             const gchar *server_id, 
                             const gchar *mime_directory,
@@ -92,7 +94,7 @@ eas_get_email_body_req_new (const guint64 account_uid,
 	req = g_object_new(EAS_TYPE_GET_EMAIL_BODY_REQ, NULL);
 	priv = req->priv;
 
-	priv->accountUid = account_uid;
+	priv->accountUid = g_strdup(account_uid);
 	priv->collectionId = g_strdup(collection_id);
 	priv->serverId = g_strdup(server_id);
 	priv->mimeDirectory = g_strdup(mime_directory);

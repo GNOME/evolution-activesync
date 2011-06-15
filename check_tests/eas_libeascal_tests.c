@@ -105,7 +105,7 @@ END:VCALENDAR";
 
 
 
-static void testGetCalendarHandler(EasSyncHandler **sync_handler, guint64 accountuid){
+static void testGetCalendarHandler(EasSyncHandler **sync_handler, const gchar* accountuid){
   	// get a handle to the DBus interface and associate the account ID with 
 	// this object 
     *sync_handler = eas_sync_handler_new(accountuid);
@@ -155,7 +155,7 @@ END_TEST
 
 START_TEST (test_get_sync_handler)
 {
-    guint64 accountuid = 123456789;
+    const char* accountuid = "123456789";
     EasSyncHandler *sync_handler = NULL;
   
     testGetCalendarHandler(&sync_handler, accountuid);  
@@ -170,7 +170,7 @@ START_TEST (test_get_latest_calendar_items)
 	// it should be hard coded to the value used by the daemon but later 
 	// there should be a mechanism for getting the value from the same place
 	// that the daemon uses
-    guint64 accountuid = 123456789;
+    const char* accountuid = "123456789";
     EasSyncHandler *sync_handler = NULL;
 	
 	// get a handle to the DBus interface and associate the account ID with 
@@ -226,7 +226,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_delete_cal)
 {
-    guint64 accountuid = 123456789;
+    const char* accountuid = "123456789";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
@@ -300,7 +300,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_update_cal)
 {
-    guint64 accountuid = 123456789;
+    const char* accountuid = "123456789";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
@@ -380,7 +380,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_add_cal)
 {
-    guint64 accountuid = 123456789;
+    const char* accountuid = "123456789";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
 	gboolean testCalFound = FALSE;
@@ -402,8 +402,6 @@ START_TEST (test_eas_sync_handler_add_cal)
                       &calitems_updated,
                       &calitems_deleted,
                       &error);
-
-	
 
 	GSList *calitemToUpdate = NULL;
 	EasCalInfo *updatedcalitem = NULL;

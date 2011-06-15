@@ -45,13 +45,15 @@ void eas_mail_test_001(EasMail* self, DBusGMethodInvocation* context);
 
 EasMail* eas_mail_new(void);
 
+#if 0
 void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj);
+#endif
 
 /*
 	sync the entire email folder hierarchy 
 */                            
 void eas_mail_sync_email_folder_hierarchy(EasMail* self,
-                                          guint64 account_uid,
+                                          const gchar* account_uid,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
 
@@ -59,7 +61,7 @@ void eas_mail_sync_email_folder_hierarchy(EasMail* self,
 	synchronize an email folder. Gets email headers only, not bodies
 */                            
 gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
-                                    guint64 account_uid,
+                                    const gchar* account_uid,
 									const gchar* sync_key,
 									const gchar *collection_id,
                                     DBusGMethodInvocation* context);
@@ -67,7 +69,7 @@ gboolean eas_mail_sync_folder_email(EasMail* easMailObj,
     delete an email 
 */
 gboolean eas_mail_delete_email(EasMail* easMailObj,
-                                guint64 account_uid,
+                                const gchar* account_uid,
                                 const gchar *sync_key, 
                                 const gchar *folder_id,
                                 const gchar **server_ids_array,
@@ -77,7 +79,7 @@ gboolean eas_mail_delete_email(EasMail* easMailObj,
 */
 gboolean
 eas_mail_fetch_email_body (EasMail* self, 
-                           guint64 account_uid, 
+                           const gchar* account_uid, 
                            const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
@@ -88,7 +90,7 @@ eas_mail_fetch_email_body (EasMail* self,
 */
 gboolean
 eas_mail_fetch_attachment (EasMail* self, 
-                          guint64 account_uid, 
+                          const gchar* account_uid, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
                           DBusGMethodInvocation* context);
@@ -98,7 +100,7 @@ eas_mail_fetch_attachment (EasMail* self,
 	send an email
 */						
 gboolean eas_mail_send_email(EasMail* self, 
-                             guint64 account_uid,
+                             const gchar* account_uid,
                              const gchar* clientid,
                              const gchar *mime_file,
                              DBusGMethodInvocation* context);
@@ -107,7 +109,7 @@ gboolean eas_mail_send_email(EasMail* self,
 	update an email
  */
 gboolean eas_mail_update_emails(EasMail *self,
-								guint64 account_uid,
+								const gchar* account_uid,
 								const gchar *sync_key, 
 								const gchar *folder_id,
 								const gchar **serialised_email_array,

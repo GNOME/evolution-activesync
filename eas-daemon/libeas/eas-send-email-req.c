@@ -31,7 +31,7 @@ G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
 struct _EasSendEmailReqPrivate
 {
 	EasSendEmailMsg *send_email_msg;
-	guint64 account_id;
+	gchar* account_id;
 	gchar *mime_string;
 	gchar* client_id;	
 	gchar* mime_file;	
@@ -46,7 +46,7 @@ eas_send_email_req_init (EasSendEmailReq *object)
 
 	object->priv = priv = EAS_SEND_EMAIL_REQ_PRIVATE(object);
 
-	priv->account_id = 0;   // assuming 0 not a valid account id
+	priv->account_id = NULL;
 	priv->send_email_msg = NULL;
 	priv->mime_string = NULL;
 	priv->mime_file = NULL;
@@ -64,10 +64,11 @@ eas_send_email_req_finalize (GObject *object)
 	/* deinitalization code */
 	EasSendEmailReq *req = (EasSendEmailReq *)object;
 	
-	EasSendEmailReqPrivate *priv = req->priv;	
+	EasSendEmailReqPrivate *priv = req->priv;
 	g_free(priv->mime_string);
 	g_free(priv->mime_file);
-	g_free(priv->client_id);	
+	g_free(priv->client_id);
+	g_free(priv->account_id);
 	g_object_unref(priv->send_email_msg);
 	g_free (priv);
 	req->priv = NULL;
@@ -95,7 +96,7 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 }
 
 EasSendEmailReq *
-eas_send_email_req_new(guint64 account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file)
+eas_send_email_req_new(const gchar* account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file)
 {
 	EasSendEmailReq *self = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
 	EasSendEmailReqPrivate* priv = self->priv;
@@ -105,10 +106,10 @@ eas_send_email_req_new(guint64 account_id, EFlag *flag, const gchar* client_id, 
 	eas_request_base_SetFlag(&self->parent_instance, flag);
 
 	priv->mime_file = g_strdup(mime_file);
-	priv->account_id = account_id;	
+	priv->account_id = g_strdup(account_id);
 	priv->client_id = g_strdup(client_id);
 	
-	g_debug("eas_send_email_req_new--");	
+	g_debug("eas_send_email_req_new--");
 	
 	return self;
 }

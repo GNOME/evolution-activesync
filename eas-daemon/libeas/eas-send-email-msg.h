@@ -52,7 +52,7 @@ struct _EasSendEmailMsg
 GType eas_send_email_msg_get_type (void) G_GNUC_CONST;
 
 // c'tor
-EasSendEmailMsg* eas_send_email_msg_new (guint64 account_id, const gchar* client_id, const gchar* mime_string);
+EasSendEmailMsg* eas_send_email_msg_new (const gchar* account_id, const gchar* client_id, const gchar* mime_string);
 
 // build xml for SendMail request
 xmlDoc* eas_send_email_msg_build_message (EasSendEmailMsg* self);

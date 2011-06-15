@@ -63,7 +63,7 @@
 
 struct _CamelEasStorePrivate {
 
-	guint64 account_uid;
+	gchar* account_uid;
 	time_t last_refresh_time;
 	GMutex *get_finfo_lock;
 	EasEmailHandler *handler;
@@ -125,7 +125,7 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 	}
 	eas_store->storage_path = session_storage_path;
 
-	priv->account_uid = g_ascii_strtoull (camel_url_get_param (url, "account_uid"), NULL, 0);
+	priv->account_uid = g_strdup (camel_url_get_param (url, "account_uid"));
 	if (!priv->account_uid) {
 		g_set_error (
 			error, CAMEL_STORE_ERROR,
@@ -597,6 +597,8 @@ eas_store_finalize (GObject *object)
 
 	eas_store = CAMEL_EAS_STORE (object);
 
+	g_free (eas_store->priv->account_uid);
+	
 	g_free (eas_store->storage_path);
 	g_mutex_free (eas_store->priv->get_finfo_lock);
 
@@ -644,6 +646,7 @@ camel_eas_store_init (CamelEasStore *eas_store)
 	eas_store->priv =
 		CAMEL_EAS_STORE_GET_PRIVATE (eas_store);
 
+	eas_store->priv->account_uid = NULL;
 	eas_store->priv->handler = NULL;
 	eas_store->priv->last_refresh_time = time (NULL) - (FINFO_REFRESH_INTERVAL + 10);
 	eas_store->priv->get_finfo_lock = g_mutex_new ();

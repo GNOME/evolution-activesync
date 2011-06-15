@@ -23,6 +23,8 @@
 #include <wbxml/wbxml.h>
 #include <libedataserver/e-flag.h>
 #include <libxml/xmlreader.h> // xmlDoc
+#include <time.h>
+#include <unistd.h>
 
 #include "eas-accounts.h"
 #include "eas-connection-errors.h"
@@ -46,9 +48,9 @@ struct _EasConnectionPrivate
 	GMainLoop* soup_loop;
 	GMainContext* soup_context;
 	
-	gchar* server_uri;
+	gchar* accountUid;
+	gchar* serverUri;
 	gchar* username;
-	gchar* password;
 
 	gchar* device_type;
 	gchar* device_id;
@@ -63,6 +65,10 @@ struct _EasConnectionPrivate
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
 
+static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
+static GHashTable *g_open_connections = NULL;
+static EasAccounts* g_eas_accounts = NULL;
+
 static void connection_authenticate (SoupSession *sess, SoupMessage *msg, 
                                      SoupAuth *auth, gboolean retrying, 
                                      gpointer data);
@@ -72,6 +78,48 @@ static gboolean wbxml2xml(const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTI
 static void parse_for_status(xmlNode *node);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
+
+/**
+ * eas_uid_new:
+ *
+ * Generate a new unique string for use e.g. in account lists.
+ *
+ * Returns: The newly generated UID.  The caller should free the string
+ * when it's done with it.
+ **/
+static gchar *
+eas_uid_new (void)
+{
+	static gint serial;
+	static gchar *hostname;
+
+	if (!hostname) {
+		hostname = (gchar *) g_get_host_name ();
+	}
+
+	return g_strdup_printf ("%lu.%lu.%d@%s",
+				(gulong) time (NULL),
+				(gulong) getpid (),
+				serial++,
+				hostname);
+}
+
+static void 
+eas_connection_accounts_init()
+{
+	if (!g_eas_accounts)
+	{
+		// TODO Set up GConf accounts here
+		g_eas_accounts = eas_accounts_new ();
+		if (eas_accounts_read_accounts_info(g_eas_accounts))
+		{
+			g_critical("Error reading data from file accounts.cfg");
+			return;
+		}
+
+		// TODO register for GConf updates
+	}
+}
 
 static void
 eas_connection_init (EasConnection *self)
@@ -109,9 +157,9 @@ eas_connection_init (EasConnection *self)
 	priv->device_type = g_strdup ("FakeDevice");
 	priv->device_id = g_strdup ("1234567890");
 
-	priv->server_uri = NULL;
+	priv->accountUid = NULL;
+	priv->serverUri = NULL;
 	priv->username = NULL;
-	priv->password = NULL;
 
 	priv->policy_key = NULL;
 
@@ -124,18 +172,34 @@ eas_connection_init (EasConnection *self)
 }
 
 static void
-eas_connection_finalize (GObject *object)
+eas_connection_dispose (GObject *object)
 {
-	EasConnection *cnc = (EasConnection *)object;
-	EasConnectionPrivate *priv = cnc->priv;
+	EasConnection *cnc = (EasConnection *) object;
+	EasConnectionPrivate *priv = NULL;
+	gchar* hashkey = NULL;
+
+	g_return_if_fail (EAS_IS_CONNECTION (cnc));
+
+	priv = cnc->priv;
 	
-	g_debug("eas_connection_finalize++");
+	if (g_open_connections)
+	{
+		hashkey = g_strdup_printf("%s@%s", priv->username, priv->serverUri);
+		g_hash_table_remove (g_open_connections, hashkey);
+		g_free (hashkey);
+		if (g_hash_table_size (g_open_connections) == 0)
+		{
+			g_hash_table_destroy (g_open_connections);
+			g_open_connections = NULL;
+		}
+	}
 
     g_signal_handlers_disconnect_by_func (priv->soup_session, 
                                           connection_authenticate, 
                                           cnc);
 
-    if (priv->soup_session) {
+    if (priv->soup_session) 
+	{
         g_object_unref (priv->soup_session);
         priv->soup_session = NULL;
 
@@ -150,9 +214,9 @@ eas_connection_finalize (GObject *object)
     }
 
 	// g_free can handle NULL
-    g_free (priv->server_uri);
+	g_free (priv->accountUid);
+    g_free (priv->serverUri);
     g_free (priv->username);
-    g_free (priv->password);
 
     g_free (priv->device_type);
     g_free (priv->device_id);
@@ -177,8 +241,14 @@ eas_connection_finalize (GObject *object)
 		g_error_free(*priv->request_error);
 	}
 
+	G_OBJECT_CLASS (eas_connection_parent_class)->dispose (object);
+}
+
+static void
+eas_connection_finalize (GObject *object)
+{
+	g_debug("eas_connection_finalize++");
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
-	
 	g_debug("eas_connection_finalize--");
 }
 
@@ -193,7 +263,10 @@ eas_connection_class_init (EasConnectionClass *klass)
 	
 	g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
 
+	object_class->dispose = eas_connection_dispose;
 	object_class->finalize = eas_connection_finalize;
+
+	eas_connection_accounts_init();
 	
 	g_debug("eas_connection_class_init--");
 }
@@ -206,11 +279,18 @@ connection_authenticate (SoupSession *sess,
                          gpointer data)
 {
     EasConnection* cnc = (EasConnection *)data;
+	
 	g_debug("  eas_connection - connection_authenticate++");
+
+	// TODO replace with gnome key ring
+
 	if (!retrying)
 	{
-		soup_auth_authenticate (auth, cnc->priv->username, cnc->priv->password);
+		soup_auth_authenticate (auth, 
+		                        eas_accounts_get_user_id (g_eas_accounts, cnc->priv->accountUid),
+		                        eas_accounts_get_password (g_eas_accounts, cnc->priv->accountUid));
 	}
+
 	g_debug("  eas_connection - connection_authenticate--");
 }
 
@@ -332,9 +412,9 @@ eas_connection_send_request(EasConnection* self, const gchar* cmd, xmlDoc* doc, 
 		goto finish;
     }
 
-	g_assert(priv->server_uri);
+	g_assert(priv->serverUri);
 	
-    uri = g_strconcat (priv->server_uri,
+    uri = g_strconcat (priv->serverUri,
                        "?Cmd=", cmd,
                        "&User=", priv->username,
                        "&DeviceID=", priv->device_id,
@@ -384,7 +464,7 @@ eas_connection_send_request(EasConnection* self, const gchar* cmd, xmlDoc* doc, 
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);		
+			     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);
         ret = FALSE; 
 		goto finish;
 	}
@@ -808,8 +888,7 @@ void
 eas_connection_autodiscover (EasAutoDiscoverCallback cb,
                              gpointer cb_data,
                              const gchar* email,
-                             const gchar* username,
-                             const gchar* password)
+                             const gchar* username)
 {
 	GError *error = NULL;
 	gchar* domain = NULL;
@@ -818,15 +897,16 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	xmlOutputBuffer* txBuf = NULL;
 	gchar* url = NULL;
 	EasAutoDiscoverData *autoDiscData = NULL;
+	gchar* autodiscover_uid = NULL;
 	
 	g_debug("eas_connection_autodiscover++");
 
-	if (!email || !password) 
+	if (!email) 
 	{
 		g_set_error(&error,
 		            EAS_CONNECTION_ERROR,
 		            EAS_CONNECTION_ERROR_FAILED,
-		            "Email and password are mandatory and must be provided");
+		            "Email is mandatory and must be provided");
 		cb(NULL, cb_data, error);
 		return;
 	}
@@ -843,21 +923,29 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	}
 	++domain; // Advance past the '@'
 
+	autodiscover_uid = eas_uid_new();
+	if (!username) // Use the front of the email as the username
+	{
+		gchar **split = g_strsplit(email, "@", 2);
+		cnc = eas_connection_new (autodiscover_uid, "autodiscover", split[0], &error);
+		g_strfreev(split);
+	}
+	else // Use the supplied username
+	{
+		cnc = eas_connection_new (autodiscover_uid, "autodiscover", username, &error);
+	}
+	g_free (autodiscover_uid);
+
+	if (!cnc) 
+	{
+		cb(NULL, cb_data, error);
+		return;
+	}
+
 	doc = autodiscover_as_xml (email);
 	txBuf = xmlAllocOutputBuffer (NULL);
 	xmlNodeDumpOutput(txBuf, doc, xmlDocGetRootElement (doc), 0, 1, NULL);
 	xmlOutputBufferFlush (txBuf);
-
-	cnc = eas_connection_new();
-	if (!cnc) 
-	{
-		g_set_error(&error,
-		            EAS_CONNECTION_ERROR,
-		            EAS_CONNECTION_ERROR_FAILED,
-		            "Failed create connection");
-		cb(NULL, cb_data, error);
-		return;
-	}
 
 	autoDiscData = g_new0(EasAutoDiscoverData, 1);
 	autoDiscData->cb = cb;
@@ -869,26 +957,17 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	                                                  eas_connection_autodiscover);
 
 	// URL formats to be tried
+	g_debug("Building message one");
 	// 1 - https://<domain>/autodiscover/autodiscover.xml
 	url = g_strdup_printf("https://%s/autodiscover/autodiscover.xml", domain);
 	autoDiscData->msgs[0] = autodiscover_as_soup_msg(url, txBuf);
 	g_free(url);
 	
+	g_debug("Building message two");
 	// 2 - https://autodiscover.<domain>/autodiscover/autodiscover.xml
 	url = g_strdup_printf("https://autodiscover.%s/autodiscover/autodiscover.xml", domain);
 	autoDiscData->msgs[1] = autodiscover_as_soup_msg(url, txBuf);
 	g_free(url);
-
-	if (!username) // Use the front of the email as the username
-	{
-		gchar **split = g_strsplit(email, "@", 2);
-		eas_connection_set_details(cnc, split[0], password);
-		g_strfreev(split);
-	}
-	else // Use the supplied username
-	{
-		eas_connection_set_details(cnc, username, password);
-	}
 
 	soup_session_queue_message(cnc->priv->soup_session,
 	                           autoDiscData->msgs[0],
@@ -901,29 +980,187 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	                           autoDiscData);
 
 	g_object_unref (cnc); // GSimpleAsyncResult holds this now
-	                      
 	xmlOutputBufferClose (txBuf);
 	xmlFreeDoc (doc);
-	
+
 	g_debug("eas_connection_autodiscover--");
 }
 
-EasConnection* eas_connection_new()
+EasConnection* 
+eas_connection_find (const gchar* accountId)
 {
 	EasConnection *cnc = NULL;
+	GError *error = NULL;
+
+	g_debug ("eas_connection_find++ : account_uid[%s]",
+	         (accountId?accountId:"NULL"));
+
+	if (!accountId) return NULL;
+	eas_connection_accounts_init();
+
+	// TODO if we don't have details for an account ID return NULL
+	if (!eas_accounts_get_user_id (g_eas_accounts, accountId) ||
+	    !eas_accounts_get_server_uri (g_eas_accounts, accountId))
+	{
+		g_warning("No account details found for accountId [%s]", accountId);
+		return NULL;
+	}
+
+	g_static_mutex_lock (&connection_list);
+	if (g_open_connections)
+	{
+		gchar *hashkey = g_strdup_printf("%s@%s", 
+		                                 eas_accounts_get_user_id (g_eas_accounts, accountId), 
+		                                 eas_accounts_get_server_uri (g_eas_accounts, accountId) );
+		cnc = g_hash_table_lookup (g_open_connections, hashkey);
+		g_free (hashkey);
+
+		if (EAS_IS_CONNECTION (cnc))
+		{
+			g_object_ref (cnc);
+			g_static_mutex_unlock (&connection_list);
+			g_debug ("eas_connection_find (Found) --");
+			return cnc;
+		}
+	}
+	g_static_mutex_unlock (&connection_list);
+
+	// TODO Create a new cnc using the valid GConf details
+	cnc = eas_connection_new (accountId,
+	                          eas_accounts_get_server_uri (g_eas_accounts, accountId),
+	                          eas_accounts_get_user_id (g_eas_accounts, accountId),
+	                          &error);
+
+	if (cnc)
+	{
+		g_debug ("eas_connection_find (Created) --");
+	}
+	else
+	{
+		if (error)
+        {
+            g_warning("[%s][%d][%s]", 
+                      g_quark_to_string (error->domain),
+                      error->code, 
+                      error->message);
+			g_error_free(error);
+        }
+		g_warning("eas_connection_find (Failed to create connection) --");
+	}
+
+	return cnc;
+}
+
+
+EasConnection* 
+eas_connection_new(const gchar* accountUid, const gchar* serverUri, const gchar* username, GError** error)
+{
+	EasConnection *cnc = NULL;
+	EasConnectionPrivate *priv = NULL;
+	gchar *hashkey = NULL;
 	
-	g_debug("eas_connection_new++");
+	g_debug ("eas_connection_new++ : params[%s] [%s] [%s]",
+	         (accountUid?accountUid:"NULL"), serverUri, username);
 
-	g_type_init();
+	g_type_init ();
 
-    cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-    // May need to allow a connection to set its own authentication
+	if (!serverUri || !username)
+	{
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+		             EAS_CONNECTION_ERROR_BADARG,
+		             "A server url and username must be provided.");
+		return NULL;
+	}
 
-	g_debug("eas_connection_new--");
+	g_debug ("Checking for open connection");
+	g_static_mutex_lock (&connection_list);
+	if (g_open_connections)
+	{
+		hashkey = g_strdup_printf("%s@%s", username, serverUri);
+		cnc = g_hash_table_lookup (g_open_connections, hashkey);
+		g_free (hashkey);
+
+		if (EAS_IS_CONNECTION (cnc))
+		{
+			g_object_ref (cnc);
+			g_static_mutex_unlock (&connection_list);
+			return cnc;
+		}
+	}
+
+	g_debug ("No existing connection, create new one");
+	cnc = g_object_new (EAS_TYPE_CONNECTION, NULL);
+	priv = cnc->priv;
+
+	if (!cnc)
+	{
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+		             "A server url and username must be provided.");
+		g_static_mutex_unlock (&connection_list);
+		return NULL;
+	}
+
+	// Cache the account ID
+	priv->accountUid = g_strdup(accountUid);
+	if (!priv->accountUid)
+	{
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+		             "Failed to cache accountUid");
+		g_object_unref (cnc);
+		g_static_mutex_unlock (&connection_list);
+		return NULL;
+	}
+
+	// Cache the username
+	priv->username = g_strdup (username);
+	if (!priv->username)
+	{
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+		             "Failed to cache username");
+		g_object_unref (cnc);
+		g_static_mutex_unlock (&connection_list);
+		return NULL;
+	}
+
+	// Cache the serverUri
+	priv->serverUri = g_strdup (serverUri);
+	if (!priv->serverUri)
+	{
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+		             "Failed to cache serverUri");
+		g_object_unref (cnc);
+		g_static_mutex_unlock (&connection_list);
+		return NULL;
+	}
+
+	hashkey = g_strdup_printf("%s@%s", priv->username, priv->serverUri);
+
+	if (!g_open_connections)
+	{
+		g_debug ("Creating hashtable");
+		g_open_connections = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	}
+
+	g_debug ("Adding to hashtable");
+	g_hash_table_insert (g_open_connections, hashkey, cnc);
+
+	g_static_mutex_unlock (&connection_list);
+	g_debug ("eas_connection_new--");
     return cnc;
 }
 
+#if 0
 int eas_connection_set_account(EasConnection* self, guint64 accountId)
 {
 	EasAccounts* accountsObj = NULL;
@@ -951,7 +1188,7 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
 
 	self->priv->username = g_strdup (uname);
 	self->priv->password = g_strdup (pwd);
-	self->priv->server_uri = g_strdup (sUri);
+	self->priv->serverUri = g_strdup (sUri);
 
 	g_object_unref (accountsObj);
 	g_debug("eas_connection_set_account--");
@@ -959,7 +1196,7 @@ int eas_connection_set_account(EasConnection* self, guint64 accountId)
 	return err;
 }
 
-void eas_connection_set_details(EasConnection* self, const gchar* username, const gchar* password)
+void eas_connection_set_details(EasConnection* self, const gchar* username)
 {
 	EasConnectionPrivate *priv = self->priv;
 	
@@ -967,16 +1204,15 @@ void eas_connection_set_details(EasConnection* self, const gchar* username, cons
 
 	g_free(priv->username);
 	priv->username = NULL;
-	g_free(priv->password);
-	priv->password = NULL;
 
 	priv->username = g_strdup (username);
-	priv->password = g_strdup (password);
 
-	g_debug("Details: U/n[%s], P/w[%s]", priv->username, priv->password);
+	g_debug("Details: U/n[%s]", priv->username);
 	
 	g_debug("eas_connection_set_details--");
 }
+#endif
+
 static void 
 parse_for_status(xmlNode *node)
 {

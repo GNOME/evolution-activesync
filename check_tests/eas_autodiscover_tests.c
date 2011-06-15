@@ -28,7 +28,7 @@ enum EasAdTestcases {
 };
 
 // email, pw, username
-gchar* testdata[][3] = { 
+const gchar* testdata[][3] = { 
                          {0,0,0},
                          {0, "G00dP@55w0rd", 0},
                          {"good.user@cstylianou.com", 0, 0},
@@ -71,9 +71,9 @@ test_expects_error_cb (char* serverUri, gpointer data, GError *error)
 
 START_TEST (test_all_null)
 {
-    gchar* email    = testdata[TC_ALL_NULL][EMAIL];
-    gchar* password = testdata[TC_ALL_NULL][PASSWORD];
-    gchar* username = testdata[TC_ALL_NULL][USERNAME];
+    const gchar* email    = testdata[TC_ALL_NULL][EMAIL];
+    const gchar* password = testdata[TC_ALL_NULL][PASSWORD];
+    const gchar* username = testdata[TC_ALL_NULL][USERNAME];
 
     loop = g_main_loop_new (NULL, FALSE);
 
@@ -82,8 +82,7 @@ START_TEST (test_all_null)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_ALL_NULL,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -92,9 +91,9 @@ END_TEST
 
 START_TEST (test_null_email)
 {
-    gchar* email    = testdata[TC_NULL_EMAIL][EMAIL];
-    gchar* password = testdata[TC_NULL_EMAIL][PASSWORD];
-    gchar* username = testdata[TC_NULL_EMAIL][USERNAME];
+    const gchar* email    = testdata[TC_NULL_EMAIL][EMAIL];
+    const gchar* password = testdata[TC_NULL_EMAIL][PASSWORD];
+    const gchar* username = testdata[TC_NULL_EMAIL][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -103,29 +102,7 @@ START_TEST (test_null_email)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_NULL_EMAIL,
                                  email,
-                                 username,
-                                 password);
-    mark_point ();
-    if (loop) g_main_loop_run (loop);
-    mark_point ();
-}
-END_TEST
-
-START_TEST (test_null_password)
-{
-    gchar* email    = testdata[TC_NULL_PASSWORD][EMAIL];
-    gchar* password = testdata[TC_NULL_PASSWORD][PASSWORD];
-    gchar* username = testdata[TC_NULL_PASSWORD][USERNAME];
-
-    loop = g_main_loop_new(NULL, FALSE);
-
-    mark_point ();
-    g_message ("test_null_password");
-    eas_connection_autodiscover (test_expects_error_cb,
-                                 TC_NULL_PASSWORD,
-                                 email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -134,9 +111,9 @@ END_TEST
 
 START_TEST (test_good_email_password_bad_user)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_BAD_USER][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -145,8 +122,7 @@ START_TEST (test_good_email_password_bad_user)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_PASSWORD_BAD_USER,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -155,9 +131,9 @@ END_TEST
 
 START_TEST (test_good_email_bad_password_null_user)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -166,8 +142,7 @@ START_TEST (test_good_email_bad_password_null_user)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -176,9 +151,9 @@ END_TEST
 
 START_TEST (test_good_email_user_bad_password)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_USER_BAD_PASSWORD][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -187,8 +162,7 @@ START_TEST (test_good_email_user_bad_password)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_USER_BAD_PASSWORD,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -197,9 +171,9 @@ END_TEST
 
 START_TEST (test_good_email_bad_password_user)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_BAD_PASSWORD_USER][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -208,8 +182,7 @@ START_TEST (test_good_email_bad_password_user)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_BAD_PASSWORD_USER,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -218,9 +191,9 @@ END_TEST
 
 START_TEST (test_good_password_user_bad_email)
 {
-    gchar* email    = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][EMAIL];
-    gchar* password = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][PASSWORD];
-    gchar* username = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][EMAIL];
+    const gchar* password = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_PASSWORD_USER_BAD_EMAIL][USERNAME];
 
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -229,8 +202,7 @@ START_TEST (test_good_password_user_bad_email)
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_PASSWORD_USER_BAD_EMAIL,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -261,9 +233,9 @@ test_expects_success_cb (char* serverUri, gpointer data, GError *error)
 
 START_TEST (test_good_email_password_null_user)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_NULL_USER][USERNAME];
     
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -272,8 +244,7 @@ START_TEST (test_good_email_password_null_user)
     eas_connection_autodiscover (test_expects_success_cb,
                                  TC_GOOD_EMAIL_PASSWORD_NULL_USER,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -282,9 +253,9 @@ END_TEST
 
 START_TEST (test_good_email_password_user)
 {
-    gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_USER][EMAIL];
-    gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_USER][PASSWORD];
-    gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_USER][USERNAME];
+    const gchar* email    = testdata[TC_GOOD_EMAIL_PASSWORD_USER][EMAIL];
+    const gchar* password = testdata[TC_GOOD_EMAIL_PASSWORD_USER][PASSWORD];
+    const gchar* username = testdata[TC_GOOD_EMAIL_PASSWORD_USER][USERNAME];
     
     loop = g_main_loop_new(NULL, FALSE);
 
@@ -293,8 +264,7 @@ START_TEST (test_good_email_password_user)
     eas_connection_autodiscover (test_expects_success_cb,
                                  TC_GOOD_EMAIL_PASSWORD_USER,
                                  email,
-                                 username,
-                                 password);
+                                 username);
     mark_point ();
     if (loop) g_main_loop_run (loop);
     mark_point ();
@@ -315,8 +285,8 @@ Suite* eas_autodiscover_suite (void)
 
     tcase_add_test (tc_autodiscover, test_all_null);
     tcase_add_test (tc_autodiscover, test_null_email);
-    tcase_add_test (tc_autodiscover, test_null_password);
     
+#if 0
     tcase_add_test (tc_autodiscover, test_good_email_password_bad_user);
     tcase_add_test (tc_autodiscover, test_good_email_bad_password_null_user);
     tcase_add_test (tc_autodiscover, test_good_email_user_bad_password);
@@ -326,6 +296,6 @@ Suite* eas_autodiscover_suite (void)
 
     tcase_add_test (tc_autodiscover, test_good_email_password_null_user);
     tcase_add_test (tc_autodiscover, test_good_email_password_user);
-
+#endif
     return s;
 }

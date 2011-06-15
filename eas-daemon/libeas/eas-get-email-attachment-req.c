@@ -11,7 +11,7 @@
 struct _EasGetEmailAttachmentReqPrivate
 {
 	EasGetEmailAttachmentMsg* emailAttachmentMsg;
-    guint64 accountUid;
+    gchar* accountUid;
     gchar *fileReference; 
     gchar *mimeDirectory; 
 };
@@ -33,7 +33,7 @@ eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
 	                                 EAS_REQ_GET_EMAIL_ATTACHMENT);
 
 	priv->emailAttachmentMsg = NULL;
-    priv->accountUid = 0;
+    priv->accountUid = NULL;
     priv->fileReference = NULL; 
     priv->mimeDirectory = NULL; 	
 	g_debug("eas_get_email_attachment_req_init--");
@@ -54,6 +54,7 @@ eas_get_email_attachment_req_finalize (GObject *object)
 
 	g_free(priv->fileReference);
 	g_free(priv->mimeDirectory);
+	g_free(priv->accountUid);
 
 	G_OBJECT_CLASS (eas_get_email_attachment_req_parent_class)->finalize (object);
 	g_debug("eas_get_email_attachment_req_finalize--");
@@ -76,7 +77,7 @@ eas_get_email_attachment_req_class_init (EasGetEmailAttachmentReqClass *klass)
 }
 
 EasGetEmailAttachmentReq* 
-eas_get_email_attachment_req_new (const guint64 account_uid, 
+eas_get_email_attachment_req_new (const gchar* account_uid, 
                             const gchar *file_reference,
                             const gchar *mime_directory,
                             EFlag *flag)
@@ -89,7 +90,7 @@ eas_get_email_attachment_req_new (const guint64 account_uid,
 	req = g_object_new(EAS_TYPE_GET_EMAIL_ATTACHMENT_REQ, NULL);
 	priv = req->priv;
 	
-	priv->accountUid = account_uid;
+	priv->accountUid = g_strdup(account_uid);
 	priv->fileReference = g_strdup(file_reference); 
 	priv->mimeDirectory = g_strdup(mime_directory);
 	eas_request_base_SetFlag(&req->parent_instance, flag);
