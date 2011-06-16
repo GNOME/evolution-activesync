@@ -30,9 +30,27 @@ eas_request_base_init (EasRequestBase *object)
 }
 
 static void
+eas_request_base_dispose (GObject *object)
+{
+	EasRequestBase *req = (EasRequestBase *)object;
+	EasRequestBasePrivate *priv = req->priv;
+
+	g_debug ("eas_request_base_dispose++");
+	if(priv->connection)
+	{
+		g_debug("unrefing connection");
+		g_object_unref(priv->connection);
+	}
+    G_OBJECT_CLASS (eas_request_base_parent_class)->dispose (object);
+	g_debug ("eas_request_base_dispose--");
+}
+
+static void
 eas_request_base_finalize (GObject *object)
 {
+	g_debug ("eas_request_base_finalize++");
     G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
+	g_debug ("eas_request_base_finalize--");
 }
 
 static void
@@ -47,6 +65,9 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
     g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
 
     object_class->finalize = eas_request_base_finalize;
+    object_class->dispose = eas_request_base_dispose;
+
+    g_debug ("eas_request_base_class_init--");
 }
 
 /**
