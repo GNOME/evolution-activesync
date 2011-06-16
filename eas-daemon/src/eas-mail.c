@@ -290,7 +290,7 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                                         &added_folders,
                                                         &updated_folders,
                                                         &deleted_folders,
-                                                        &error);
+                                                        &error);	
     if (!ret)
     {
         goto finish;
@@ -308,8 +308,8 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
         }
     }
 
-
 finish:
+	g_object_unref (req);	
     // Return the error or the requested data to the mail client
     if (!ret)
     {
@@ -326,6 +326,7 @@ finish:
                               ret_deleted_folders_array);
     }
 
+	g_free(ret_sync_key);
     g_debug ("eas_mail_sync_email_folder_hierarchy--");
 }
 
@@ -422,6 +423,7 @@ eas_mail_sync_folder_email (EasMail* self,
     }
 
 finish:
+    g_object_unref (req);	
     if (!ret)
     {
         g_debug ("returning error %s", error->message);
@@ -439,7 +441,6 @@ finish:
                               ret_changed_email_array);
     }
 
-    g_object_unref (req);
     g_debug ("eas_mail_sync_folder_email--");
     return TRUE;
 }
@@ -513,6 +514,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     ret = eas_delete_email_req_ActivateFinish (req, &ret_sync_key, &error);
 
 finish:
+	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
@@ -585,6 +587,7 @@ eas_mail_update_emails (EasMail *self,
     ret = eas_update_email_req_ActivateFinish (req, &error);
 
 finish:
+	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
@@ -635,9 +638,8 @@ eas_mail_fetch_email_body (EasMail* self,
                      EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
                      "Failed to find account [%s]",
                      account_uid);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-        return FALSE;
+        ret = FALSE;
+		goto finish;
     }
 
     // Create Request
@@ -662,6 +664,7 @@ eas_mail_fetch_email_body (EasMail* self,
     ret = eas_get_email_body_req_ActivateFinish (req, &error);
 
 finish:
+	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
@@ -674,7 +677,6 @@ finish:
         g_debug ("eas_mail_fetch_email_body - return for dbus");
         dbus_g_method_return (context);
     }
-
     g_debug ("eas_mail_fetch_email_body--");
     return TRUE;
 }
@@ -728,6 +730,7 @@ eas_mail_fetch_attachment (EasMail* self,
     ret = eas_get_email_attachment_req_ActivateFinish (req, &error);
 
 finish:
+	g_object_unref (req);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -740,7 +743,6 @@ finish:
         g_debug ("eas_mail_fetch_attachment - return for dbus");
         dbus_g_method_return (context);
     }
-
     g_debug ("eas_mail_fetch_attachment--");
     return TRUE;
 }
@@ -792,6 +794,7 @@ eas_mail_send_email (EasMail* easMailObj,
     ret = eas_send_email_req_ActivateFinish (req, &error);
 
 finish:
+	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
@@ -802,7 +805,6 @@ finish:
     {
         dbus_g_method_return (context);
     }
-
     g_debug ("eas_mail_send_email--");
     return ret;
 }
