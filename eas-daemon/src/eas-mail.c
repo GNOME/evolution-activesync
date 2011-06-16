@@ -326,6 +326,9 @@ finish:
                               ret_deleted_folders_array);
     }
 
+	g_strfreev(ret_created_folders_array);
+	g_strfreev(ret_updated_folders_array);
+	g_strfreev(ret_deleted_folders_array);
 	g_free(ret_sync_key);
     g_debug ("eas_mail_sync_email_folder_hierarchy--");
 }
