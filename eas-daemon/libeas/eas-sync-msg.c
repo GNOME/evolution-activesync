@@ -316,10 +316,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 }
                 else
                 {
-                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+                    if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 
-                    error_details = itemoperations_status_error_map[status_num];
+                    error_details = sync_status_error_map[status_num];					
                 }
                 g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
                 goto finish;
@@ -379,10 +379,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 }
                 else
                 {
-                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+                    if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 
-                    error_details = itemoperations_status_error_map[status_num];
+                    error_details = sync_status_error_map[status_num];
                 }
                 g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
                 goto finish;
@@ -583,10 +583,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             }
                             else
                             {
-                                if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-                                    status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+						        if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+						            status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 
-                                error_details = itemoperations_status_error_map[status_num];
+						        error_details = sync_status_error_map[status_num];
                             }
                             g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
                             goto finish;
