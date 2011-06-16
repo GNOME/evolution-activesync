@@ -49,7 +49,7 @@ eas_delete_email_req_finalize (GObject *object)
     g_debug ("eas_delete_email_req_finalize++");
 
     g_free (priv->syncKey);
-    g_slist_foreach (priv->server_ids_array, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (priv->server_ids_array, (GFunc) g_object_unref, NULL); // TODO unrefs should be done in dispose?
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
     if (priv->error)
