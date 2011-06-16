@@ -230,6 +230,7 @@ eas_connection_dispose (GObject *object)
 
     if (priv->request_doc)
     {
+		g_debug("free request doc");
         xmlFree (priv->request_doc);
     }
 
