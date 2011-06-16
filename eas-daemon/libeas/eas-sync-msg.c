@@ -391,9 +391,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
-            priv->sync_key = (gchar *) xmlNodeGetContent (node);
-            g_debug ("Got SyncKey = %s", priv->sync_key);
-            continue;
+			g_free(priv->sync_key);
+			priv->sync_key = (gchar *) xmlNodeGetContent (node);
+			g_debug ("Got SyncKey = %s", priv->sync_key);
+			continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Responses"))
         {
