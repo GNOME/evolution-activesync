@@ -221,7 +221,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
             //create new message with new syncKey
             priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID, priv->ItemType);
-
+			g_free(syncKey);
             //build request msg
             doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
 			if (!doc)
@@ -291,7 +291,7 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
         ret = FALSE;
     }
 
-    *ret_sync_key    = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
+    *ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
     *added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
     *updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
     *deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);
