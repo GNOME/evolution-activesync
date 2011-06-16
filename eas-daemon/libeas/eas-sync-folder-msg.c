@@ -49,10 +49,14 @@ eas_sync_folder_msg_finalize (GObject *object)
     EasSyncFolderMsg *msg = (EasSyncFolderMsg *) object;
     EasSyncFolderMsgPrivate *priv = msg->priv;
 
+	g_debug ("eas_sync_folder_msg_finalize++");
+	
     g_free (priv->sync_key);
     g_free (priv->account_id);
 
     G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
+
+	g_debug ("eas_sync_folder_msg_finalize++");
 }
 
 static void
@@ -167,6 +171,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
+			g_free(priv->sync_key);
             priv->sync_key = (gchar*) xmlNodeGetContent (node);
             g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;
