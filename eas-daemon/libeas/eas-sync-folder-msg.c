@@ -56,7 +56,7 @@ eas_sync_folder_msg_finalize (GObject *object)
 
     G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
 
-	g_debug ("eas_sync_folder_msg_finalize++");
+	g_debug ("eas_sync_folder_msg_finalize--");
 }
 
 static void
@@ -64,7 +64,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
     EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = object_class;
+	void *tmp = object_class;
     tmp = parent_class;
 
     g_debug ("eas_sync_folder_msg_class_init++");
