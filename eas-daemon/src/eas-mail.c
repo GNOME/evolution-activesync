@@ -443,7 +443,10 @@ finish:
                               ret_deleted_email_array,
                               ret_changed_email_array);
     }
-
+	g_free(ret_sync_key);
+	g_strfreev(ret_added_email_array);
+	g_strfreev(ret_deleted_email_array);
+	g_strfreev(ret_changed_email_array);
     g_debug ("eas_mail_sync_folder_email--");
     return TRUE;
 }
@@ -529,6 +532,7 @@ finish:
         dbus_g_method_return (context,
                               ret_sync_key);
     }
+	g_free(ret_sync_key);
     g_debug ("eas_mail_delete_email--");
     return ret;
 }
