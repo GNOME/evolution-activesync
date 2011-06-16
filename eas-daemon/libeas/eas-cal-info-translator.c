@@ -532,6 +532,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		const gchar* elemName = (const gchar*)subNode->name;
 		value = (gchar*)xmlNodeGetContent(subNode);
 
+		// Type
 		if (g_strcmp0(elemName, "Type") == 0)
 		{
 			int typeInt = atoi(value);
@@ -557,6 +558,8 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 					break;
 			}
 		}
+		
+		// Occurrences
 		else if (g_strcmp0(elemName, "Occurrences") == 0)
 		{
 			// From [MS-ASCAL]:
@@ -567,14 +570,20 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 			recur.count = atoi((char*)xmlNodeGetContent(subNode));
 			recur.until = icaltime_null_time();
 		}
+		
+		// Interval
 		else if (g_strcmp0(elemName, "Interval") == 0)
 		{
 			recur.interval = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
+
+		// WeekOfMonth
 		else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
 		{
 			g_warning("DATA LOSS: Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
 		}
+
+		// DayOfWeek
 		else if (g_strcmp0(elemName, "DayOfWeek") == 0)
 		{
 			// A recurrence rule can target any combination of the 7 week days.
@@ -616,10 +625,14 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
 			}
 		}
+
+		// MonthOfYear
 		else if (g_strcmp0(elemName, "MonthOfYear") == 0)
 		{
 			recur.by_month[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
+
+		// Until
 		else if (g_strcmp0(elemName, "Until") == 0)
 		{
 			// From [MS-ASCAL]:
@@ -632,10 +645,14 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 				recur.until = icaltime_from_string((gchar*)xmlNodeGetContent(subNode));
 			}
 		}
+
+		// DayOfMonth
 		else if (g_strcmp0(elemName, "DayOfMonth") == 0)
 		{
 			recur.by_month_day[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
+
+		// CalendarType
 		else if (g_strcmp0(elemName, "CalendarType") == 0)
 		{
 			const int calType = atoi((char*)xmlNodeGetContent(subNode));
@@ -647,14 +664,19 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 				g_warning("DATA LOSS: Encountered a calendar type we can't handle in the <Calendar><Recurrence><CalendarType> element: %d", calType);
 			}
 		}
+
+		// IsLeapMonth
 		else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
 		{
 			if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
 			{
-				// Only applies to non-Gregorian calendars so can't be handled in iCal
+				// This has nothing to do with Gregorian calendar leap years (ie. 29 days in Feb).
+				// It only applies to non-Gregorian calendars so can't be handled in iCal.
 				g_warning("DATA LOSS: Cannot handle <Calendar><Recurrence><IsLeapMonth> element");
 			}
 		}
+
+		// FirstDayOfWeek
 		else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
 		{
 			int firstDayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
@@ -663,6 +685,8 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 			// iCal value is in range 0=NoWeekday, 1=Sunday..7=Saturday
 			recur.week_start = (icalrecurrencetype_weekday)firstDayOfWeek + 1;
 		}
+
+		// Other fields...
 		else
 		{
 			g_warning("DATA LOSS: Unknown element encountered in <Recurrence> element: %s", elemName);
@@ -680,23 +704,46 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
  * \param n       An XML node pointing to the <Exceptions> element
  * \param vevent  The iCalendar VEVENT component to add the parsed items property to
  */
-static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
+static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 {
+	// This is a bit tricky.
+	//
+	//  - If the EAS <Exception> element ONLY contains <ExceptionStartTime> and
+	//    <Deleted> (with the latter's value set to 1), it's a simple exception
+	//    that just deletes one of the occurrences of the recurrence (ie. an
+	//    EXDATE in iCal);
+	//
+	//  - If it just contains an <ExceptionStartTime> (and optionally a <Deleted>
+	//    element with the value 0), it represents an *additional* occurrence of
+	//    the event, with all other attributes identical to those of the recurring
+	//    event (ie. an RDATE in iCal);
+	//
+	//  - However, if it contains additional elements, it represents an exception
+	//    where properties have been changed (eg. where the start time or subject
+	//    have been changed for one occurrence only). These aren't supported in
+	//    iCal so we have to create a whole new event. We can't do that here (as
+	//    we're still part-way through parsing the event) so we return a list of
+	//    exception event details so they can be processed later. Each exception
+	//    event we return is stored as a hash table of property names/values.
+	//    (So this function returns a list of hash tables.)
+
+	
 	gchar*         value = NULL;
-//	icalproperty*  prop = NULL;
 	xmlNode*       exceptionNode = NULL;
 	xmlNode*       subNode = NULL;
+	GSList*        listOfNewEventEvents = NULL;
 
 	g_debug("Exceptions element found in EAS XML");
 
 	// Iterate through the <Exception> elements
 	for (exceptionNode = n->children; exceptionNode; exceptionNode = exceptionNode->next)
 	{
+		GHashTable* newEventValues = NULL;
+		
 		// Iterate through each Exception's properties
-		// Do a first pass just looking for Deleted and DtStart...
 		gchar* exceptionStartTime = NULL;
 		gboolean deleted = FALSE;
-		gboolean otherElementsPresent = FALSE;
+
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
 			const gchar* name = (const gchar*)subNode->name;
@@ -712,11 +759,17 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			}
 			else if (strlen(value) > 0)
 			{
-				// We'll come back and parse these fully below if we need them
-				// TODO: or add them to a hash now, then use the size of the hash
-				// instead of otherElementsPresent...?
-				otherElementsPresent = TRUE;
+				// We've got a non-trivial exception that will
+				// require adding a new event: build a hash of its values
+				// and add to the list
+				if (newEventValues == NULL)
+				{
+					newEventValues = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+				}
+				g_hash_table_insert(newEventValues, g_strdup(name), g_strdup(value));
 			}
+
+			g_free(value);
 		}
 
 		// ExceptionStartTime is mandatory so check we've got one
@@ -741,7 +794,7 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 		// If it's not deleted, but the only other element present is ExceptionStartTime,
 		// then it's an RDATE (i.e. just a one-off recurrence of the same event but not
 		// included in the regular recurrence sequence)
-		else if (!deleted && !otherElementsPresent)
+		else if (newEventValues == NULL)
 		{
 			icalproperty* rdate = NULL;
 			
@@ -758,11 +811,20 @@ static void _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 		// has changed)
 		else
 		{
-			// TODO...
+			// Add ExceptionStartTime to the hash now too
+			g_hash_table_insert(newEventValues, g_strdup("ExceptionStartTime"), g_strdup(exceptionStartTime));
+
+			// And add the hash table to the list to be returned
+			// (Using prepend rather than append for efficiency)
+			// (No need to new the list first, it's allocated during prepend:
+			// http://developer.gnome.org/glib/stable/glib-Singly-Linked-Lists.html#g-slist-alloc)
+			listOfNewEventEvents = g_slist_prepend(listOfNewEventEvents, newEventValues);
 		}
 		
 		g_free(exceptionStartTime);
 	}// end of for loop
+
+	return listOfNewEventEvents;
 }
 
 
@@ -805,6 +867,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		gboolean isAllDayEvent = FALSE;
 		gchar* organizerName = NULL;
 		gchar* organizerEmail = NULL;
+		GSList* newExceptionEvents = NULL;
 
 		// TODO: get all these strings into constants/#defines
 		
@@ -1114,7 +1177,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Exceptions") == 0)
 				{
-					_xml2ical_process_exceptions(n, vevent);
+					newExceptionEvents = _xml2ical_process_exceptions(n, vevent);
+					// This is dealt with below...
 				}
 
 				//
@@ -1172,6 +1236,11 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
         if (icalcomponent_count_properties(valarm, ICAL_ANY_PROPERTY) > 0)
         {
 			icalcomponent_add_component(vevent, valarm);
+		}
+
+		if (newExceptionEvents)
+		{
+			// TODO: create the new exception events
 		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
@@ -1262,7 +1331,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	// blow we need to change this
 
 	//
-	// Occurrences & Until
+	// COUNT & UNTIL
 	//
 	// Note: count and until are mutually exclusive in both formats, with count taking precedence
 	if (rrule.count)
@@ -1284,7 +1353,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	}
 
 	//
-	// Interval
+	// INTERVAL
 	//
 	if (rrule.interval)
 	{
@@ -1305,7 +1374,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	}
 
 	// 
-	// DayOfWeek & WeekOfMonth
+	// BYDAY
 	//
 	// icalrecurrencetype arrays are terminated with ICAL_RECURRENCE_ARRAY_MAX unless they're full
 	for (index = 0;
@@ -1397,7 +1466,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	g_free(xmlValue); xmlValue = NULL;
 
 	//
-	// FirstDayOfWeek
+	// WKST
 	//
 	if (rrule.week_start)
 	{
@@ -1409,7 +1478,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	}
 
 	//
-	// MonthOfYear
+	// BYMONTH
 	//
 	for (index = 0;
 	     (index < ICAL_BY_MONTH_SIZE) && (rrule.by_month[index] != ICAL_RECURRENCE_ARRAY_MAX);
@@ -1434,7 +1503,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	}
 	
 	//
-	// DayOfMonth
+	// BYMONTHDAY
 	//
 	for (index = 0;
 	     (index < ICAL_BY_MONTHDAY_SIZE) && (rrule.by_month_day[index] != ICAL_RECURRENCE_ARRAY_MAX);
