@@ -829,6 +829,41 @@ static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 
 
 /**
+ * TODO...
+ */
+static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents)
+{
+	if (vcalendar && vevent && exceptionEvents)
+	{
+		const guint newEventCount = g_slist_length(exceptionEvents);
+		guint index = 0;
+
+		// Iterate through the list adding each exception event in turn
+		for (index = 0; index < newEventCount; index++)
+		{
+			icalcomponent* newEvent = icalcomponent_new_clone(vevent);
+			GHashTable* properties = (GHashTable*)g_slist_nth_data(exceptionEvents, index);
+
+			if (properties == NULL)
+			{
+				g_warning("_xml2ical_add_exception_events(): NULL hash table found in exceptionEvents.");
+				break;
+			}
+
+			// TODO: amend the UID
+
+
+
+
+			// Finally, destroy the hash and replace the list entry with NULL
+			g_hash_table_destroy(properties);
+			g_slist_nth(exceptionEvents, index)->data = NULL;
+		}
+	}
+}
+
+
+/**
  * \brief Parse an XML-formatted calendar object received from ActiveSync and return
  *        it as a serialised iCalendar object.
  *
@@ -1238,9 +1273,13 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 			icalcomponent_add_component(vevent, valarm);
 		}
 
+		// Now handle any non-trivial exception events we found in the <Exceptions> element
 		if (newExceptionEvents)
 		{
-			// TODO: create the new exception events
+			_xml2ical_add_exception_events(vcalendar, vevent, newExceptionEvents);
+			// _xml2ical_add_exception_events() destroys the hash tables as it goes
+			// so all we need to do here is free the list
+			g_slist_free(newExceptionEvents);
 		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
