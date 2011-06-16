@@ -180,6 +180,7 @@ eas_connection_dispose (GObject *object)
     EasConnectionPrivate *priv = NULL;
     gchar* hashkey = NULL;
 
+	g_debug("eas_connection_dispose++");
     g_return_if_fail (EAS_IS_CONNECTION (cnc));
 
     priv = cnc->priv;
@@ -246,6 +247,8 @@ eas_connection_dispose (GObject *object)
     }
 
     G_OBJECT_CLASS (eas_connection_parent_class)->dispose (object);
+
+	g_debug("eas_connection_dispose--");
 }
 
 static void
@@ -386,6 +389,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
     // If not the provision request, store the request
     if (g_strcmp0 (cmd, "Provision"))
     {
+		g_debug("store the request");
         priv->request_cmd = g_strdup (cmd);
         priv->request_doc = doc;
         priv->request = request;
