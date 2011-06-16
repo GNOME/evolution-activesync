@@ -74,6 +74,42 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
 
 
 /**
+ * \brief Convert a <Sensitivity> value from EAS XML into an iCal CLASS property value
+ */
+static icalproperty_class _xml2ical_convert_sensitivity_to_class(const gchar* sensitivityValue)
+{
+	if (g_strcmp0(sensitivityValue, "3") == 0)      // Confidential
+	{
+		return ICAL_CLASS_CONFIDENTIAL;
+	}
+	else if (g_strcmp0(sensitivityValue, "2") == 0) // Private
+	{
+		return ICAL_CLASS_PRIVATE;
+	}
+	else // Personal or Normal (iCal doesn't distinguish between them)
+	{
+		return ICAL_CLASS_PUBLIC;
+	}
+}
+
+
+/**
+ * \brief Convert a <BusyStatus> value from EAS XML into an iCal TRANSP property value
+ */
+static icalproperty_transp _xml2ical_convert_busystatus_to_transp(const gchar* busystatusValue)
+{
+	if (g_strcmp0(busystatusValue, "0") == 0) // Free
+	{
+		return ICAL_TRANSP_TRANSPARENT;
+	}
+	else // Tentative, Busy or Out of Office
+	{
+		return ICAL_TRANSP_OPAQUE;
+	}
+}
+
+
+/**
  * \brief The by_day member of icalrecurrencetype is a composite value, encoding
  *        both the day to repeat on and (in the case of monthly recurrence) the position
  *        of the day to repeat on (e.g. 2nd Monday in each month). libical doesn't provide
@@ -743,7 +779,6 @@ static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 		// Iterate through each Exception's properties
 		gchar* exceptionStartTime = NULL;
 		gboolean deleted = FALSE;
-
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
 			const gchar* name = (const gchar*)subNode->name;
@@ -842,22 +877,226 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 		for (index = 0; index < newEventCount; index++)
 		{
 			icalcomponent* newEvent = icalcomponent_new_clone(vevent);
-			GHashTable* properties = (GHashTable*)g_slist_nth_data(exceptionEvents, index);
+			GHashTable* exceptionProperties = (GHashTable*)g_slist_nth_data(exceptionEvents, index);
+			icalproperty* prop = NULL;
+			gchar* value = NULL;
 
-			if (properties == NULL)
+			if (exceptionProperties == NULL)
 			{
 				g_warning("_xml2ical_add_exception_events(): NULL hash table found in exceptionEvents.");
 				break;
 			}
 
-			// TODO: amend the UID
+			// Remove any recurrence (RRULE, RDATE and EXDATE) properies from the new event
+			while ((prop = icalcomponent_get_first_property(newEvent, ICAL_RRULE_PROPERTY)) != NULL)
+			{
+				icalcomponent_remove_property(newEvent, prop);
+				icalproperty_free(prop); prop = NULL;
+			}
+			while ((prop = icalcomponent_get_first_property(newEvent, ICAL_RDATE_PROPERTY)) != NULL)
+			{
+				icalcomponent_remove_property(newEvent, prop);
+				icalproperty_free(prop); prop = NULL;
+			}
+			while ((prop = icalcomponent_get_first_property(newEvent, ICAL_EXDATE_PROPERTY)) != NULL)
+			{
+				icalcomponent_remove_property(newEvent, prop);
+				icalproperty_free(prop); prop = NULL;
+			}
 
+			// Form a new UID for the new event as follows:
+			// {Original event UID}_{Exception start time}
+			prop = icalcomponent_get_first_property(newEvent, ICAL_UID_PROPERTY); // Retains ownership of the pointer
+			value = g_strconcat((const gchar*)icalproperty_get_uid(prop), "_", (const gchar*)g_hash_table_lookup(exceptionProperties, "ExceptionStartTime"), NULL);
+			icalproperty_set_uid(prop, value);
+			prop = NULL;
 
+			// TODO: as we're parsing these from the <Exceptions> element, I think we need to
+			// add an EXDATE for this ExceptionStartTime. I think ExceptionStartTime identifies
+			// the recurrence this is *replacing*: StartTime specifies this exception's own
+			// start time.
+
+			
+			// Add the other properties from the hash
+
+			// StartTime
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "StartTime")) != NULL)
+			{
+				// If this exception has a new start time, use that. Otherwise we default
+				// to the start time of the original event (as per [MS-ASCAL]).
+				// TODO: this needs testing: [MS-ASCAL] is a bit ambiguous around
+				// <StartTime> vs. <ExceptionStartTime>
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DTSTART_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_dtstart(icaltime_from_string(value));
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
+
+			// EndTime
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "EndTime")) != NULL)
+			{
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DTEND_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_dtend(icaltime_from_string(value));
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
+
+			// Subject
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Subject")) != NULL)
+			{
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_SUMMARY_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_summary(value);
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
+
+			// Location
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Location")) != NULL)
+			{
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_LOCATION_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_location(value);
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
+
+			// Categories
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Categories")) != NULL)
+			{
+				// TODO: sort out <Categories> - it's a collection element! :-(
+			}
+
+			// Sensitivity
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Sensitivity")) != NULL)
+			{
+				// Clear out any existing property
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_CLASS_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_class(_xml2ical_convert_sensitivity_to_class(value));
+				icalcomponent_add_property(newEvent, prop);
+			}
+
+			// BusyStatus
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "BusyStatus")) != NULL)
+			{
+				// Clear out any existing property
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_TRANSP_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_transp(_xml2ical_convert_busystatus_to_transp(value));
+				icalcomponent_add_property(newEvent, prop);
+			}
+
+			// AllDayEvent
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "AllDayEvent")) != NULL)
+			{
+				// TODO
+			}
+
+			// Reminder
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Reminder")) != NULL)
+			{
+				icalcomponent* valarm = NULL;
+				struct icaltriggertype trigger;
+				
+				// Remove any existing VALARM
+				if ((valarm = icalcomponent_get_first_component(newEvent, ICAL_VALARM_COMPONENT)) != NULL)
+				{
+					icalcomponent_remove_component(newEvent, valarm); // We now have ownership of valarm
+					icalcomponent_free(valarm);
+					valarm = NULL;
+				}
+
+				valarm = icalcomponent_new(ICAL_VALARM_COMPONENT);
+				
+				// TODO: find a way of merging this with the other VALARM creation
+				// code to avoid the duplication
+			
+				// Build an icaltriggertype structure
+				trigger = icaltriggertype_from_int(0); // Null the fields first
+				trigger.duration.is_neg = 1;
+				trigger.duration.minutes = (unsigned int)atoi(value);
+
+				prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
+				icalcomponent_add_property(valarm, prop);
+
+				prop = icalproperty_new_description("Reminder"); // TODO: make this configurable
+				icalcomponent_add_property(valarm, prop);
+
+				prop = icalproperty_new_trigger(trigger);
+				icalcomponent_add_property(valarm, prop);
+
+				icalcomponent_add_component(newEvent, valarm);
+			}
+
+			// DtStamp
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "DtStamp")) != NULL)
+			{
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DTSTAMP_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_dtstamp(icaltime_from_string(value));
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
+
+			// MeetingStatus
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "MeetingStatus")) != NULL)
+			{
+				// TODO
+			}
+
+			// AppointmentReplyTime
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "AppointmentReplyTime")) != NULL)
+			{
+				// TODO
+			}
+
+			// ResponseType
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "ResponseType")) != NULL)
+			{
+				// TODO
+			}
+
+			// Body
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Body")) != NULL)
+			{
+				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DESCRIPTION_PROPERTY)) != NULL)
+				{
+					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
+					icalproperty_free(prop); prop = NULL;
+				}
+				prop = icalproperty_new_description(value);
+				icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+			}
 
 
 			// Finally, destroy the hash and replace the list entry with NULL
-			g_hash_table_destroy(properties);
+			g_hash_table_destroy(exceptionProperties);
 			g_slist_nth(exceptionEvents, index)->data = NULL;
+
+			// Add the new event to the parent VCALENDAR
+			icalcomponent_add_component(vcalendar, newEvent);
+
+			// Debug output
+			g_debug("Added new exception VEVENT to the VCALENDAR:n%s", icalcomponent_as_ical_string(newEvent));
 		}
 	}
 }
@@ -1040,21 +1279,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "Sensitivity") == 0)
 				{
-					icalproperty_class classValue = ICAL_CLASS_PUBLIC;
 					value = (gchar*)xmlNodeGetContent(n);
-					if (g_strcmp0(value, "3") == 0)      // Confidential
-					{
-						classValue = ICAL_CLASS_CONFIDENTIAL;
-					}
-					else if (g_strcmp0(value, "2") == 0) // Private
-					{
-						classValue = ICAL_CLASS_PRIVATE;
-					}
-					else // Personal or Normal (iCal doesn't distinguish between them)
-					{
-						classValue = ICAL_CLASS_PUBLIC;
-					}
-					prop = icalproperty_new_class(classValue);
+					prop = icalproperty_new_class(_xml2ical_convert_sensitivity_to_class(value));
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
@@ -1064,17 +1290,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				else if (g_strcmp0(name, "BusyStatus") == 0)
 				{
-					icalproperty_transp transpValue = ICAL_TRANSP_OPAQUE;
 					value = (gchar*)xmlNodeGetContent(n);
-					if (g_strcmp0(value, "0") == 0) // Free
-					{
-						transpValue = ICAL_TRANSP_TRANSPARENT;
-					}
-					else // Tentative, Busy or Out of Office
-					{
-						transpValue = ICAL_TRANSP_OPAQUE;
-					}
-					prop = icalproperty_new_transp(transpValue);
+					prop = icalproperty_new_transp(_xml2ical_convert_busystatus_to_transp(value));
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
