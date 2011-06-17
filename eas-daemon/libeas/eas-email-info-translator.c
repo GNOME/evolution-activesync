@@ -70,7 +70,8 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		 xmlNode *n = node;
 		 GSList *headers = NULL;
 		 GSList *attachments = NULL;
-		 guint8  flags = 0;
+		 guint32  flags = 0;
+		 int importance = 1;
 		 GSList *categories = NULL;
 
 		 g_debug("found ApplicationData root");
@@ -138,10 +139,11 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 			//Importance
 			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Importance")) 
 			{
-				EasEmailHeader *header = g_malloc0(sizeof(EasEmailHeader));  
-				header->name = g_strdup("Importance");
-				header->value = (gchar *)xmlNodeGetContent(n);
-				headers = g_slist_append(headers, header);
+				char *tmp = (gchar *)xmlNodeGetContent (n);
+				importance = strtol(tmp, NULL, 0);
+				g_free (tmp);
+				g_debug("importance = %d", importance);
+				flags |= EAS_VALID_IMPORTANCE;
 			}
 			//Read
 			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Read")) 
@@ -251,7 +253,8 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 		email_info->headers = headers;
 		email_info->attachments = attachments;
 		email_info->categories = categories;
-		email_info->flags = flags;	
+		email_info->flags = flags;
+		email_info->importance = importance;
 
 		// serialise the emailinfo
 		if(!eas_email_info_serialise(email_info, &result))

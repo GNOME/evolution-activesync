@@ -379,7 +379,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 
 		/* Exchange doesn't seem to have a sane representation
 		   for most flags — not even replied/forwarded. */
-		if (flags_changed & (CAMEL_MESSAGE_SEEN|CAMEL_MESSAGE_ANSWERED|CAMEL_MESSAGE_FORWARDED)) {
+		if (flags_changed & (CAMEL_MESSAGE_SEEN|CAMEL_MESSAGE_ANSWERED|CAMEL_MESSAGE_FORWARDED|CAMEL_MESSAGE_FLAGGED)) {
 			mi_list = g_slist_append (mi_list, mi);
 			mi_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {

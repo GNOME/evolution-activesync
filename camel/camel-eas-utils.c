@@ -374,7 +374,12 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 				else
 					flags &= ~CAMEL_MESSAGE_SEEN;
 			}
-
+			if (item->flags & EAS_VALID_IMPORTANCE) {
+				if (item->importance == EAS_IMPORTANCE_HIGH)
+					flags |= CAMEL_MESSAGE_FLAGGED;
+				else
+					flags &= ~CAMEL_MESSAGE_FLAGGED;
+			}
 			if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *)mi,
 								 flags, NULL))
 				camel_folder_change_info_change_uid (ci, mi->info.uid);
@@ -453,6 +458,8 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			flags |= CAMEL_MESSAGE_ANSWERED;
 		if (item->flags & EAS_EMAIL_FORWARDED)
 			flags |= CAMEL_MESSAGE_FORWARDED;
+		if (item->importance == EAS_IMPORTANCE_HIGH)
+			flags |= CAMEL_MESSAGE_FLAGGED;
 
 		camel_eas_summary_add_message_info (folder->summary, flags,
 						    (CamelMessageInfo *) mi);

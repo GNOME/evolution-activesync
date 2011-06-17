@@ -144,7 +144,7 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 		g_string_append_printf (ser, "%s\n", category);
 	}
 	// estimated size, date received
-	g_string_append_printf(ser, "%zu\n%ld", self->estimated_size, self->date_received);
+	g_string_append_printf(ser, "%zu\n%ld\n%d", self->estimated_size, self->date_received, self->importance);
 
 	if (ret) {
 		*result = ser->str;
@@ -306,6 +306,21 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	g_free(flags_as_string);
 	flags_as_string = NULL;
 	g_debug("date received = %ld", self->date_received);
+
+	//date_received
+	flags_as_string = get_next_field(&from, sep);
+	if(!flags_as_string)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
+	if(strlen(flags_as_string))
+	{
+		self->importance = strtoul(flags_as_string, NULL, 10);
+	}
+	g_free(flags_as_string);
+	flags_as_string = NULL;
+	g_debug("importance = %ld", self->importance);
 
 cleanup:
 	

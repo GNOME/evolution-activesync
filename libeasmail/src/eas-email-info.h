@@ -33,6 +33,12 @@ struct _EasEmailInfoClass
 #define EAS_VALID_ANSWERED	(EAS_EMAIL_ANSWERED << 16)
 #define EAS_VALID_FORWARDED	(EAS_EMAIL_FORWARDED << 16)
 
+#define EAS_VALID_IMPORTANCE	(1 << 31)
+
+#define EAS_IMPORTANCE_LOW	0
+#define EAS_IMPORTANCE_NORMAL	1
+#define EAS_IMPORTANCE_HIGH	2
+
 struct _EasEmailHeader{
 	gchar *name;
 	gchar *value;
@@ -48,6 +54,7 @@ struct _EasEmailInfo{
 	GSList *categories;		    // list of categories (strings) that the email belongs to 	
 	gsize estimated_size;
 	time_t date_received;
+	int importance;
 	/*
 	conversation_id
     conversation_index
