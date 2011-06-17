@@ -249,6 +249,7 @@ finish:
 gboolean
 eas_sync_req_ActivateFinish (EasSyncReq* self,
 								gchar** ret_sync_key,
+								gboolean *ret_more_available,
 								GSList** added_items,
 								GSList** updated_items,
 								GSList** deleted_items, 
@@ -273,6 +274,8 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 		return FALSE;
 	}	
 
+	if (ret_more_available)
+		*ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
 	*ret_sync_key    = g_strdup(eas_sync_msg_get_syncKey(priv->syncMsg));
 	*added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
 	*updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);

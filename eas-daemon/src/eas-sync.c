@@ -214,6 +214,7 @@ eas_sync_get_latest_items(EasSync* self,
 
     eas_sync_req_ActivateFinish (syncReqObj,
                                  &ret_sync_key,
+				 NULL, /* FIXME */
                                  &added_items,
                                  &updated_items,
                                  &deleted_items,
