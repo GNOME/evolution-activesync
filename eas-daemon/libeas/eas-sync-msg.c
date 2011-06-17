@@ -124,7 +124,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
         options = xmlNewChild(collection, NULL, (xmlChar *)"Options", NULL);
             xmlNewChild(options, NULL, (xmlChar *)"FilterType", (xmlChar*)"0");
             xmlNewChild(options, NULL, (xmlChar *)"MIMESupport", (xmlChar*)"2");
-            xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"0");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"1"); // First 4KiB
 
             body_pref = xmlNewChild(options, NULL, (xmlChar *)"airsyncbase:BodyPreference", NULL);
             xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:Type", (xmlChar*)"4"); // Plain text 1, HTML 2, MIME 4
