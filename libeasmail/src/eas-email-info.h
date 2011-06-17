@@ -25,9 +25,10 @@ struct _EasEmailInfoClass
 	GObjectClass parent_class;
 };
 
-#define EAS_EMAIL_READ		0x00000001		// whether email has been read
-#define EAS_EMAIL_ANSWERED	0x00000002		// not clear how AS supports answered/forwarded! Read-only
-#define EAS_EMAIL_FORWARDED	0x00000004		// Read-only
+#define EAS_EMAIL_READ				0x00000001		// whether email has been read
+// Note that ANSWERED_LAST and FORWARDED_LAST are mutually exclusive:
+#define EAS_EMAIL_ANSWERED_LAST		0x00000002		// Read-only, set by server. 
+#define EAS_EMAIL_FORWARDED_LAST	0x00000004		// Read-only, set by server
 
 struct _EasEmailHeader{
 	gchar *name;
