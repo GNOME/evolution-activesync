@@ -1,10 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- * 
- */
-
 #ifndef _EAS_CAL_INFO_TRANSLATOR_H_
 #define _EAS_CAL_INFO_TRANSLATOR_H_
 
@@ -15,11 +8,27 @@
 
 
 
-// Parse a response message
-// TODO: this should return a gboolean too
+/**
+ * \brief  Parse a calendar sync response message
+ *
+ * Converts the <ApplicationData> element of an Exchange ActiveSync XML response into an
+ * EasCalInfo structure (containing an iCalendar document).
+ *
+ * \param    app_data   <ApplicationData> element from the Exchange ActiveSync XML response
+ * \param    server_id  The server ID from the Exchange ActiveSync XML response
+ *
+ * \returns  Serialised EasCalInfo structure
+ */
 gchar* eas_cal_info_translator_parse_response(xmlNodePtr app_data, const gchar* server_id);
 
-// Parse a request message
+
+/**
+ * \brief  Parse an EasCalInfo structure and convert to EAS XML format
+ *
+ * \param  doc      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
+ * \param  appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
+ * \param  calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
+ */
 gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info);
 
 G_END_DECLS

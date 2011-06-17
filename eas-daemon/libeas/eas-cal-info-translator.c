@@ -1,11 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- * 
- */
-
-
 #include "eas-cal-info-translator.h"
 
 #include <libical/icalparser.h>
@@ -151,7 +143,7 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
 
 
 /**
- * \brief Convert a <Sensitivity> value from EAS XML into an iCal CLASS property value
+ * \brief  Convert a <Sensitivity> value from EAS XML into an iCal CLASS property value
  */
 static icalproperty_class _eas2ical_convert_sensitivity_to_class(const gchar* sensitivityValue)
 {
@@ -171,7 +163,7 @@ static icalproperty_class _eas2ical_convert_sensitivity_to_class(const gchar* se
 
 
 /**
- * \brief Convert a <BusyStatus> value from EAS XML into an iCal TRANSP property value
+ * \brief  Convert a <BusyStatus> value from EAS XML into an iCal TRANSP property value
  */
 static icalproperty_transp _eas2ical_convert_busystatus_to_transp(const gchar* busystatusValue)
 {
@@ -187,16 +179,16 @@ static icalproperty_transp _eas2ical_convert_busystatus_to_transp(const gchar* b
 
 
 /**
- * \brief The by_day member of icalrecurrencetype is a composite value, encoding
- *        both the day to repeat on and (in the case of monthly recurrence) the position
- *        of the day to repeat on (e.g. 2nd Monday in each month). libical doesn't provide
- *        an API to encode this, so we've had to write our own by reverse engineering
- *        the implementation of icalrecurrencetype_day_day_of_week() and
- *        icalrecurrencetype_day_position() in icalrecur.c.
+ * \brief  The by_day member of icalrecurrencetype is a composite value, encoding
+ *         both the day to repeat on and (in the case of monthly recurrence) the position
+ *         of the day to repeat on (e.g. 2nd Monday in each month). libical doesn't provide
+ *         an API to encode this, so we've had to write our own by reverse engineering
+ *         the implementation of icalrecurrencetype_day_day_of_week() and
+ *         icalrecurrencetype_day_position() in icalrecur.c.
  *
- * \param byDayDayOfWeek  The day of the week to repeat on
- * \param byDayPos        The position of this day in the month on which to repeat
- *                        (or 0 if not applicable)
+ * \param  byDayDayOfWeek  The day of the week to repeat on
+ * \param  byDayPos        The position of this day in the month on which to repeat
+ *                         (or 0 if not applicable)
  */
 static short _eas2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
 {
@@ -211,13 +203,13 @@ static short _eas2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayD
 
 
 /**
- * \brief Private function to decode an EasSystemTime struct containing details of a recurring
- *        timezone change pattern, modify it to a format iCalendar expects and create the
- *        required RRULE property value.
+ * \brief  Private function to decode an EasSystemTime struct containing details of a recurring
+ *         timezone change pattern, modify it to a format iCalendar expects and create the
+ *         required RRULE property value.
  *
- * \param date        Pointer to the EasSystemTime struct. This will be modified in this
- *                    function to contain the first instance of the recurring sequence.
- * \param rrule       Pointer to an icalrecurrencetype struct to store the recurrence rule in.
+ * \param  date   Pointer to the EasSystemTime struct. This will be modified in this
+ *                function to contain the first instance of the recurring sequence.
+ * \param  rrule  Pointer to an icalrecurrencetype struct to store the recurrence rule in.
  */
 static void _eas2ical_convert_relative_timezone_date(EasSystemTime* date, struct icalrecurrencetype* rrule)
 {
@@ -330,10 +322,10 @@ static void _eas2ical_convert_relative_timezone_date(EasSystemTime* date, struct
 
 
 /**
- * \brief Process the <Attendees> element during parsing of an EAS XML document
+ * \brief  Process the <Attendees> element during parsing of an EAS XML document
  *
- * \param n       An XML node pointing at the <Attendees> element
- * \param vevent  The VEVENT iCal component to add the parsed attendees to
+ * \param  n       An XML node pointing at the <Attendees> element
+ * \param  vevent  The VEVENT iCal component to add the parsed attendees to
  */
 static void _eas2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 {
@@ -450,11 +442,11 @@ static void _eas2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 
 
 /**
- * \brief Process the <Timezone> element during parsing of an EAS XML document
+ * \brief  Process the <Timezone> element during parsing of an EAS XML document
  *
- * \param n          An XML node pointing to the <Recurrence> element
- * \param vtimezone  The iCalendar VTIMEZONE component to add the parsed timezone properties to
- * \param tzid       Pointer to a buffer to initialise with the parsed TZID (timezone ID) string
+ * \param  n          An XML node pointing to the <Recurrence> element
+ * \param  vtimezone  The iCalendar VTIMEZONE component to add the parsed timezone properties to
+ * \param  tzid       Pointer to a buffer to initialise with the parsed TZID (timezone ID) string
  */
 static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
 {
@@ -622,10 +614,10 @@ static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 
 
 /**
- * \brief Process the <Recurrence> element during parsing of an EAS XML document
+ * \brief  Process the <Recurrence> element during parsing of an EAS XML document
  *
- * \param n       An XML node pointing to the <Recurrence> element
- * \param vevent  The iCalendar VEVENT component to add the parsed RRULE property to
+ * \param  n       An XML node pointing to the <Recurrence> element
+ * \param  vevent  The iCalendar VEVENT component to add the parsed RRULE property to
  */
 static void _eas2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 {
@@ -811,10 +803,10 @@ static void _eas2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 
 
 /**
- * \brief Process the <Exceptions> element during parsing of an EAS XML document
+ * \brief  Process the <Exceptions> element during parsing of an EAS XML document
  *
- * \param n       An XML node pointing to the <Exceptions> element
- * \param vevent  The iCalendar VEVENT component to add the parsed items property to
+ * \param  n       An XML node pointing to the <Exceptions> element
+ * \param  vevent  The iCalendar VEVENT component to add the parsed items property to
  */
 static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 {
@@ -940,7 +932,7 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 
 
 /**
- * \brief Add additional VEVENT components to the VCALENDAR for non-trivial recurrence exceptions.
+ * \brief  Add additional VEVENT components to the VCALENDAR for non-trivial recurrence exceptions.
  *
  * EAS supports non-trivial exceptions to a recurrence rule (i.e. just just deleted recurrences,
  * but recurrences where field values have changed, such as subject or start time/end time).
@@ -1202,11 +1194,11 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 
 
 /**
- * \brief Parse an XML-formatted calendar object received from ActiveSync and return
- *        it as a serialised iCalendar object.
+ * \brief  Parse an XML-formatted calendar object received from ActiveSync and return
+ *         it as a serialised iCalendar object.
  *
- * \param node       ActiveSync XML <ApplicationData> object containing a calendar.
- * \param server_id  The ActiveSync server ID from the response
+ * \param  node       ActiveSync XML <ApplicationData> object containing a calendar.
+ * \param  server_id  The ActiveSync server ID from the response
  */
 gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
 {
@@ -1633,10 +1625,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 
 
 /**
- * \brief Process the RRULE (recurrence rule) property during parsing of an iCalendar VEVENT component
+ * \brief  Process the RRULE (recurrence rule) property during parsing of an iCalendar VEVENT component
  *
- * \param prop     Pointer to the RRULE property
- * \param appData  Pointer to the <ApplicationData> element to add parsed elements to
+ * \param  prop     Pointer to the RRULE property
+ * \param  appData  Pointer to the <ApplicationData> element to add parsed elements to
  */
 static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 {
@@ -1884,10 +1876,10 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 
 
 /**
- * \brief Process the VEVENT component during parsing of an iCalendar
+ * \brief  Process the VEVENT component during parsing of an iCalendar
  *
- * \param vevent  Pointer to the iCalendar VEVENT component
- * \param appData Pointer to the <ApplicationData> element to add parsed elements to
+ * \param  vevent   Pointer to the iCalendar VEVENT component
+ * \param  appData  Pointer to the <ApplicationData> element to add parsed elements to
  */
 static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 {
@@ -2095,10 +2087,10 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 
 
 /**
- * \brief Process the VALARM component during parsing of an iCalendar
+ * \brief  Process the VALARM component during parsing of an iCalendar
  *
- * \param valarm  Pointer to the iCalendar VALARM component
- * \param appData Pointer to the <ApplicationData> element to add parsed elements to
+ * \param  valarm   Pointer to the iCalendar VALARM component
+ * \param  appData  Pointer to the <ApplicationData> element to add parsed elements to
  */
 static void _ical2eas_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
 {
@@ -2132,12 +2124,12 @@ static void _ical2eas_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
 
 
 /**
- * \brief Parse the STANDARD and DAYLIGHT subcomponents of VTIMEZONE.
- *        Using one function for both as their formats are identical.
+ * \brief  Parse the STANDARD and DAYLIGHT subcomponents of VTIMEZONE.
+ *         Using one function for both as their formats are identical.
  *
- * \param subcomponent The STANDARD or DAYLIGHT subcomponent of the VTIMEZONE component
- * \param timezone     The EAS timezone structure to parse this subcomponent into
- * \param type         Determineds whether subcomponent is a STANDARD or a DAYLIGHT
+ * \param  subcomponent  The STANDARD or DAYLIGHT subcomponent of the VTIMEZONE component
+ * \param  timezone      The EAS timezone structure to parse this subcomponent into
+ * \param  type          Determineds whether subcomponent is a STANDARD or a DAYLIGHT
  */
 static void _ical2eas_process_xstandard_xdaylight(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
 {
@@ -2297,10 +2289,10 @@ static void _ical2eas_process_xstandard_xdaylight(icalcomponent* subcomponent, E
 
 
 /**
- * \brief Process the VTIMEZONE component during parsing of an iCalendar
+ * \brief  Process the VTIMEZONE component during parsing of an iCalendar
  *
- * \param vtimezone  Pointer to the iCalendar VTIMEZONE component
- * \param appData    Pointer to the <ApplicationData> element to add parsed elements to
+ * \param  vtimezone  Pointer to the iCalendar VTIMEZONE component
+ * \param  appData    Pointer to the <ApplicationData> element to add parsed elements to
  */
 static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr appData)
 {
@@ -2345,11 +2337,11 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 
 
 /**
- * \brief Parse an iCalendar document and convert to EAS XML format
+ * \brief  Parse an EasCalInfo structure and convert to EAS XML format
  *
- * \param doc      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
- * \param appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
- * \param calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
+ * \param  doc      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
+ * \param  appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
+ * \param  calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
  */
 gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData, EasCalInfo* calInfo)
 {
