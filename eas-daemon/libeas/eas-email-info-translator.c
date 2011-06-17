@@ -151,6 +151,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				{
 					flags |= EAS_EMAIL_READ;
 				}
+				flags |= EAS_VALID_READ;
 				g_free(tmp);
 			}	
 			// TODO which if any of these other headers are standard email headers?	
@@ -298,6 +299,7 @@ eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				{
 					flags |= EAS_EMAIL_READ;
 				}
+				flags |= EAS_VALID_READ;
 				g_free(tmp);
 				continue;
 			}			
@@ -417,17 +419,19 @@ eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, c
 		xmlNode *leaf;
 		
 		// flags
-		if(email_info->flags & EAS_EMAIL_READ)
+		if (email_info->flags & EAS_VALID_READ)
 		{
-			g_debug("setting Read to 1");
-			leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"1");
+			if(email_info->flags & EAS_EMAIL_READ)
+			{
+				g_debug("setting Read to 1");
+				leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"1");
+			}
+			else
+			{
+				g_debug("setting Read to 0");
+				leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"0");
+			}
 		}
-		else
-		{
-			g_debug("setting Read to 0");
-			leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"0");
-		}	
-
 		if(ret)
 		{
 			//categories
