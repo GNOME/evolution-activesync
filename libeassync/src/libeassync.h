@@ -46,28 +46,31 @@ EasSyncHandler *eas_sync_handler_new(const char* account_uid);
  * return value:                TRUE if function success, FALSE if error
  * params: 
  * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
+ * gchar *sync_key_in (in ):  use zero or NULL for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
+ * gchar **sync_key_out (out ):  store value returned from exchange server for subsequent sync requests
+ *                           must be freed by caller
  * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
  * gchar *folder_id (in ):      identifier for folder to sync from                              	 
- * GSList **items_created (out): returns a list of EasCalInfo structs that describe
+ * GSList **items_created (out): returns a list of  structs that describe
  *                              created items.  If there are no new created items
  *                              this parameter will be unchanged.
- * GSList **items_updated (out): returns a list of EasCalInfo structs that describe
+ * GSList **items_updated (out): returns a list of  structs that describe
  *                              updated items.  If there are no new updated items
  *                              this parameter will be unchanged.
  * GSList **items_deleted (out): returns a list of strings that show server IDs of 
  *                              deleted items.  If there are no new deleted items
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
+ *                              error occurs this will be unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this, 
-                                                 gchar *sync_key,
-                                            	 EasItemType type,
-                                   		  		 const gchar* folder_id,
+gboolean eas_sync_handler_get_items(EasSyncHandler* self, 
+                                                 const gchar *sync_key_in,
+                                                 gchar **sync_key_out,
+                                                 EasItemType type,
+                                                 const gchar* folder_id,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
@@ -77,19 +80,24 @@ gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this,
  * function description:        delete items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
- *                              from exchange server for subsequent sync requests
+ * EasSyncHandler* self (in):  use value returned from eas_sync_hander_new()
+ * gchar *sync_key_in (in ):   sync key of current sync relationship - cannot be zero or NULL
+ *                              
+ * gchar **sync_key_out (out ):  store value returned from exchange server for subsequent sync requests
+ *                              must be freed by caller
+ * EasItemType type             type of item being deleted - allows for default folder to be selected
  * gchar *folder_id (in ):      identifier for folder to delete items from    
  * GSList *items_deleted (in): provides a list of strings that identify the deleted
  *                              items' server IDs. 
  * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
+ *                              error occurs this will be unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_delete_items(EasSyncHandler* this, 
-						gchar *sync_key,
+gboolean eas_sync_handler_delete_items(EasSyncHandler* self, 
+						const gchar *sync_key_in,
+                        gchar ** sync_key_out,
+                        EasItemType type,
 						const gchar* folder_id,
 						GSList *items_deleted,
 						GError **error);
@@ -98,21 +106,23 @@ gboolean eas_sync_handler_delete_items(EasSyncHandler* this,
  * function description:        update items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
- *                              from exchange server for subsequent sync requests
+ * EasSyncHandler* self (in):  use value returned from eas_sync_hander_new()
+ * gchar *sync_key_in (in ):  sync key of current session - cannot be zero or NULL
+ *                              
+ * gchar **sync_key_out (out ):  store value returned from exchange server for subsequent sync requests
+ *                           must be freed by caller
  * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
  * gchar *folder_id (in ):      identifier for folder to update       
- * GSList *items_updated (in): provides a list of EasCalInfo structs that describe
- *                              update items.  If there are no new updated items
- *                              this parameter will be unchanged.
+ * GSList *items_updated (in): provides a list of  structs that describe
+ *                              update items.  
  * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
+ *                              error occurs this will be unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_update_items(EasSyncHandler* this, 
-						gchar *sync_key,
+gboolean eas_sync_handler_update_items(EasSyncHandler* self, 
+						const gchar *sync_key_in,
+                        gchar **sync_key_out,
 						EasItemType type,
 						const gchar* folder_id,
 						GSList *items_updated,
@@ -122,21 +132,24 @@ gboolean eas_sync_handler_update_items(EasSyncHandler* this,
  * function description:        add items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
- *                              from exchange server for subsequent sync requests
+ * EasSyncHandler* self (in):  use value returned from eas_sync_hander_new()
+ * gchar *sync_key_in (in ):  sync key of current session - cannot be zero or NULL
+ *                            
+ * gchar **sync_key_out (out ):  store value returned from exchange server for subsequent sync requests
+ *                           must be freed by caller
  * EAS_ITEM_TYPE type (in):		identify the type of data being added
  * gchar *folder_id (in ):      identifier for folder to add to       
- * GSList *items_added (in): provides a list of EasCalInfo structs that describe
+ * GSList *items_added (in): provides a list of  structs that describe
  *                              added items.  If there are no new updated items
  *                              this parameter will be unchanged.
  * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
+ *                              error occurs this will be unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_add_items(EasSyncHandler* this, 
-						gchar *sync_key,
+gboolean eas_sync_handler_add_items(EasSyncHandler* self, 
+						const gchar *sync_key_in,
+                        gchar **sync_key_out,
 						EasItemType type,
 						const gchar* folder_id,
 						GSList *items_added,

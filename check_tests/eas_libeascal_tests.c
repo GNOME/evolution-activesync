@@ -119,7 +119,8 @@ static void testGetCalendarHandler (EasSyncHandler **sync_handler, const gchar* 
 }
 
 static void testGetLatestCalendar (EasSyncHandler *sync_handler,
-                                   gchar *sync_key,
+                                   gchar *sync_key_in,
+                                   gchar *sync_key_out,
                                    GSList **created,
                                    GSList **updated,
                                    GSList **deleted,
@@ -127,7 +128,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
 {
     gboolean ret = FALSE;
     mark_point();
-    ret  = eas_sync_handler_get_calendar_items (sync_handler, sync_key, EAS_ITEM_CALENDAR, "1",
+    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, &sync_key_out, EAS_ITEM_CALENDAR, "1",
                                                 & (*created),
                                                 & (*updated),
                                                 & (*deleted),
@@ -142,7 +143,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
     // the exchange server should increment the sync key and send back to the
     // client so that the client can track where it is with regard to sync.
     // therefore the key must not be zero as this is the seed value for this test
-    fail_if (sync_key == 0, "Sync Key not updated by call the exchange server");
+    fail_if (sync_key_out==NULL, "Sync Key not updated by call the exchange server");
     fail_if (g_slist_length (*created) == 0, "list length =0");
     EasCalInfo *cal = (*created)->data;
 
@@ -187,14 +188,14 @@ START_TEST (test_get_latest_calendar_items)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar sync_key[64];
-    strcpy (sync_key, "0");
+    gchar* sync_key_in = NULL;
+	gchar* sync_key_out = NULL;
 
     GError *error = NULL;
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetLatestCalendar (sync_handler, sync_key, &created, &updated, &deleted, &error);
+    testGetLatestCalendar (sync_handler, sync_key_in, sync_key_out, &created, &updated, &deleted, &error);
 
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
@@ -239,14 +240,15 @@ START_TEST (test_eas_sync_handler_delete_cal)
     testGetCalendarHandler (&sync_handler, accountuid);
 
 
-    gchar folder_sync_key[64];
-    strcpy (folder_sync_key, "0");
+    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_out = NULL;
     GSList *calitems_created = NULL; //receives a list of EasMails
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;
 
     testGetLatestCalendar (sync_handler,
-                           folder_sync_key,
+                           folder_sync_key_in,
+                           folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,
@@ -264,14 +266,20 @@ START_TEST (test_eas_sync_handler_delete_cal)
 
         calitemToDel = g_slist_append (calitemToDel, calitem->server_id);
 
+		g_free(folder_sync_key_in);
+		folder_sync_key_in = g_strdup(folder_sync_key_out);
+		g_free(folder_sync_key_out);
+		folder_sync_key_out = NULL;
         // delete the first calendar item in the folder
-        rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key, "1", calitemToDel, &error);
+        rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in, folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToDel, &error);
         if (error)
         {
             fail_if (rtn == FALSE, "%s", error->message);
         }
 
         g_slist_free (calitemToDel);
+		g_free(folder_sync_key_in);
+		g_free(folder_sync_key_out);
 
         // free calendar item objects list before reusing
         g_slist_foreach (calitems_deleted, (GFunc) g_object_unref, NULL);
@@ -315,14 +323,15 @@ START_TEST (test_eas_sync_handler_update_cal)
     testGetCalendarHandler (&sync_handler, accountuid);
 
 
-    gchar folder_sync_key[64];
-    strcpy (folder_sync_key, "0");
+    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_out = NULL;
     GSList *calitems_created = NULL; //receives a list of EasMails
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;
 
     testGetLatestCalendar (sync_handler,
-                           folder_sync_key,
+                           folder_sync_key_in,
+                           folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,
@@ -346,14 +355,21 @@ START_TEST (test_eas_sync_handler_update_cal)
 
         calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 
+		g_free(folder_sync_key_in);
+		folder_sync_key_in = g_strdup(folder_sync_key_out);
+		g_free(folder_sync_key_out);
+		folder_sync_key_out = NULL;
         // update the first calendar item in the folder
-        rtn = eas_sync_handler_update_items (sync_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
+        rtn = eas_sync_handler_update_items (sync_handler, folder_sync_key_in, folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
         if (error)
         {
             fail_if (rtn == FALSE, "%s", error->message);
         }
 
         g_slist_free (calitemToUpdate);
+
+		g_free(folder_sync_key_in);
+		g_free(folder_sync_key_out);
 
         // free calendar item objects list before reusing
         g_slist_foreach (calitems_deleted, (GFunc) g_object_unref, NULL);
@@ -397,14 +413,15 @@ START_TEST (test_eas_sync_handler_add_cal)
     testGetCalendarHandler (&sync_handler, accountuid);
 
 
-    gchar folder_sync_key[64];
-    strcpy (folder_sync_key, "0");
+    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_out = NULL;
     GSList *calitems_created = NULL; //receives a list of EasMails
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;
 
     testGetLatestCalendar (sync_handler,
-                           folder_sync_key,
+                           folder_sync_key_in,
+                           folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,
@@ -422,8 +439,13 @@ START_TEST (test_eas_sync_handler_add_cal)
 
     calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 
+	
+	g_free(folder_sync_key_in);
+	folder_sync_key_in = g_strdup(folder_sync_key_out);
+	g_free(folder_sync_key_out);
+	folder_sync_key_out = NULL;
 
-    rtn = eas_sync_handler_add_items (sync_handler, folder_sync_key, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
+    rtn = eas_sync_handler_add_items (sync_handler, folder_sync_key_in, folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
     if (error)
     {
         fail_if (rtn == FALSE, "%s", error->message);
@@ -432,6 +454,9 @@ START_TEST (test_eas_sync_handler_add_cal)
     fail_if (updatedcalitem->server_id == NULL, "Not got new id for item");
 
     g_slist_free (calitemToUpdate);
+
+	g_free(folder_sync_key_in);
+	g_free(folder_sync_key_out);
 
 
     testCalFound = TRUE;
