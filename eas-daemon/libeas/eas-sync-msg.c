@@ -203,7 +203,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 						break;
 						case EAS_ITEM_MAIL:
 						{
-							gchar *serialised_email = (gchar *)updated->data;
+							gchar *serialised_email = (gchar *)iterator->data;
 							EasEmailInfo *email_info = eas_email_info_new ();
 							
 							xmlNewNs (node, (xmlChar *)"Email:", (xmlChar *)"email");
