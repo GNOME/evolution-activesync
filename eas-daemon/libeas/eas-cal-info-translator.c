@@ -36,10 +36,11 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 
 
 
-const gchar* VCAL_EXTENSION_PROPERTY_PREFIX = "X-MEEGO-ACTIVESYNCD-";
-
-
 // EAS string value definitions
+#define EAS_NAMESPACE_CALENDAR                "calendar:"
+#define EAS_NAMESPACE_AIRSYNCBASE             "airsyncbase:"
+#define X_NAMESPACE_ACTIVESYNCD               "activesyncd:"
+#define X_ELEMENT_ICALEXENSIONS               "iCalExtensions"
 #define EAS_ELEMENT_APPLICATIONDATA           "ApplicationData"
 #define EAS_ELEMENT_TIMEZONE                  "TimeZone"
 #define EAS_ELEMENT_ALLDAYEVENT               "AllDayEvent"
@@ -86,19 +87,30 @@ const gchar* VCAL_EXTENSION_PROPERTY_PREFIX = "X-MEEGO-ACTIVESYNCD-";
 #define EAS_ELEMENT_NATIVEBODYTYPE            "NativeBodyType"
 #define EAS_ELEMENT_ONLINEMEETINGCONFLINK     "OnlineMeetingConfLink"
 #define EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK "OnlineMeetingExternalLink"
+#define EAS_ELEMENT_DATA                      "Data"
 
-#define EAS_SENSITIVITY_NORMAL        "0"
-#define EAS_SENSITIVITY_PERSONAL      "1"
-#define EAS_SENSITIVITY_PRIVATE       "2"
-#define EAS_SENSITIVITY_CONFIDENTIAL  "3"
+#define EAS_SENSITIVITY_NORMAL                "0"
+#define EAS_SENSITIVITY_PERSONAL              "1"
+#define EAS_SENSITIVITY_PRIVATE               "2"
+#define EAS_SENSITIVITY_CONFIDENTIAL          "3"
 
-#define EAS_BUSYSTATUS_FREE           "0"
-#define EAS_BUSYSTATUS_TENTATIVE      "1"
-#define EAS_BUSYSTATUS_BUSY           "2"
-#define EAS_BUSYSTATUS_OUTOFOFFICE    "3"
+#define EAS_BUSYSTATUS_FREE                   "0"
+#define EAS_BUSYSTATUS_TENTATIVE              "1"
+#define EAS_BUSYSTATUS_BUSY                   "2"
+#define EAS_BUSYSTATUS_OUTOFOFFICE            "3"
 
-#define EAS_BOOLEAN_FALSE             "0"
-#define EAS_BOOLEAN_TRUE              "1"
+#define EAS_BOOLEAN_FALSE                     "0"
+#define EAS_BOOLEAN_TRUE                      "1"
+
+// Other assorted string constants
+#define ICAL_PROPERTY_PRODID                  "-//Meego//ActiveSyncD 1.0//EN"
+#define ICAL_PROPERTY_VERSION                 "2.0"
+#define ICAL_EXTENSION_PROPERTY_PREFIX        "X-MEEGO-ACTIVESYNCD-"
+#define ICAL_DEFAULT_TZID                     "Standard Timezone" // Only used internally, not visible to user
+#define ICAL_DEFAULT_REMINDER_NAME            "Reminder"
+
+
+
 
 
 #define compile_time_assert(cond, msg) \
@@ -482,7 +494,7 @@ static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 			// element. And no need to localise, as it's only used internally.
 			if (*tzid == NULL || strlen(*tzid) == 0)
 			{
-				*tzid = g_strdup("Standard Timezone");
+				*tzid = g_strdup(ICAL_DEFAULT_TZID);
 			}
 			prop = icalproperty_new_tzid(*tzid);
 			icalcomponent_add_property(vtimezone, prop);
@@ -1097,7 +1109,7 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 				prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
 				icalcomponent_add_property(valarm, prop);
 
-				prop = icalproperty_new_description("Reminder"); // TODO: make this configurable
+				prop = icalproperty_new_description(ICAL_DEFAULT_REMINDER_NAME); // TODO: make this configurable
 				icalcomponent_add_property(valarm, prop);
 
 				prop = icalproperty_new_trigger(trigger);
@@ -1207,10 +1219,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		// TODO: get all these strings into constants/#defines
 		
 		// TODO: make the PRODID configurable somehow
-		prop = icalproperty_new_prodid("-//Meego//ActiveSyncD 1.0//EN");
+		prop = icalproperty_new_prodid(ICAL_PROPERTY_PRODID);
 		icalcomponent_add_property(vcalendar, prop);
 
-		prop = icalproperty_new_version("2.0");
+		prop = icalproperty_new_version(ICAL_PROPERTY_VERSION);
 		icalcomponent_add_property(vcalendar, prop);
 
 		prop = icalproperty_new_method(ICAL_METHOD_PUBLISH);
@@ -1324,7 +1336,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					xmlNodePtr subNode = NULL;
 					for (subNode = n->children; subNode; subNode = subNode->next)
 					{
-						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Data"))
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_DATA))
 						{
 							value = (gchar*)xmlNodeGetContent(subNode);
 							prop = icalproperty_new_description(value);
@@ -1401,7 +1413,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 					prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
 					icalcomponent_add_property(valarm, prop);
 
-					prop = icalproperty_new_description("Reminder"); // TODO: make this configurable
+					prop = icalproperty_new_description(ICAL_DEFAULT_REMINDER_NAME); // TODO: make this configurable
 					icalcomponent_add_property(valarm, prop);
 
 					prop = icalproperty_new_trigger(trigger);
@@ -1500,7 +1512,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				else
 				{
 					// Build a new custom property called X-MEEGO-ACTIVESYNCD-{ElementName}
-					gchar* propertyName = g_strconcat(VCAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
+					gchar* propertyName = g_strconcat(ICAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
 					value = (gchar*)xmlNodeGetContent(n);
 					prop = icalproperty_new(ICAL_X_PROPERTY);
 
@@ -1606,7 +1618,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
 
 	// Create a new <Recurrence> element to contain the recurrence sub-elements
-	xmlNodePtr recurNode = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Recurrence", NULL);
+	xmlNodePtr recurNode = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_RECURRENCE, NULL);
 
 	// Other declarations
 	int    recurType    = 0;
@@ -1660,13 +1672,13 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 			rrule.count = 999;
 		}
 		xmlValue = g_strdup_printf("%d", rrule.count);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Occurrences", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_OCCURRENCES, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 	else if (!icaltime_is_null_time(rrule.until))
 	{
 		// Note: icaltime_as_ical_string() retains ownership of the string, so no need to free
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Until", (const xmlChar*)icaltime_as_ical_string(rrule.until));
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UNTIL, (const xmlChar*)icaltime_as_ical_string(rrule.until));
 	}
 
 	//
@@ -1685,7 +1697,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 		if (rrule.interval > 1)
 		{
 			xmlValue = g_strdup_printf("%d", rrule.interval);
-			xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Interval", (const xmlChar*)xmlValue);
+			xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_INTERVAL, (const xmlChar*)xmlValue);
 			g_free(xmlValue); xmlValue = NULL;
 		}
 	}
@@ -1764,7 +1776,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	{
 		//g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
 		xmlValue = g_strdup_printf("%d", dayOfWeek);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfWeek", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DAYOFWEEK, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 	if (weekOfMonth)
@@ -1773,13 +1785,13 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 		recurType = 3;
 		
 		xmlValue = g_strdup_printf("%d", weekOfMonth);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:WeekOfMonth", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_WEEKOFMONTH, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 
 	// And now we can add the Type element too
 	xmlValue = g_strdup_printf("%d", recurType);
-	xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:Type", (const xmlChar*)xmlValue);
+	xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TYPE, (const xmlChar*)xmlValue);
 	g_free(xmlValue); xmlValue = NULL;
 
 	//
@@ -1790,7 +1802,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 		// EAS value is 0=Sunday..6=Saturday
 		// libical value is 0=NoDay, 1=Sunday..7=Saturday
 		xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:FirstDayOfWeek", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_FIRSTDAYOFWEEK, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 
@@ -1815,7 +1827,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	if (monthOfYear > 0)
 	{
 		xmlValue = g_strdup_printf("%d", monthOfYear);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:MonthOfYear", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_MONTHOFYEAR, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 	
@@ -1839,7 +1851,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	if (dayOfMonth > 0)
 	{
 		xmlValue = g_strdup_printf("%d", dayOfMonth);
-		xmlNewTextChild(recurNode, NULL, (const xmlChar*)"calendar:DayOfMonth", (const xmlChar*)xmlValue);
+		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DAYOFMONTH, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
 }
@@ -1870,36 +1882,36 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 			{
 				// SUMMARY
 				case ICAL_SUMMARY_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Subject", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SUBJECT, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// DTSTAMP
 				case ICAL_DTSTAMP_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:DtStamp", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// DTSTART
 				case ICAL_DTSTART_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:StartTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					// And additionally store the start time so we can calculate the AllDayEvent value later
 					startTime = icalproperty_get_dtstart(prop);
 					break;
 					
 				// DTEND
 				case ICAL_DTEND_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:EndTime", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					// And additionally store the end time so we can calculate the AllDayEvent value later
 					endTime = icalproperty_get_dtend(prop);
 					break;
 					
 				// LOCATION
 				case ICAL_LOCATION_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Location", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_LOCATION, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// UID
 				case ICAL_UID_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:UID", (const xmlChar*)icalproperty_get_value_as_string(prop));
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UID, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// CLASS
@@ -1909,13 +1921,13 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						switch (classValue)
 						{
 						case ICAL_CLASS_CONFIDENTIAL:
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_CONFIDENTIAL);
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SENSITIVITY, (const xmlChar*)EAS_SENSITIVITY_CONFIDENTIAL);
 							break;
 						case ICAL_CLASS_PRIVATE:
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_PRIVATE);
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SENSITIVITY, (const xmlChar*)EAS_SENSITIVITY_PRIVATE);
 							break;
 						default: // PUBLIC or NONE (iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal))
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_NORMAL);
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SENSITIVITY, (const xmlChar*)EAS_SENSITIVITY_NORMAL);
 							break;
 						}
 					}
@@ -1927,12 +1939,12 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						icalproperty_transp transp = icalproperty_get_transp(prop);
 						if (transp == ICAL_TRANSP_TRANSPARENT)
 						{
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)EAS_BUSYSTATUS_FREE);
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_BUSYSTATUS, (const xmlChar*)EAS_BUSYSTATUS_FREE);
 						}
 						else // OPAQUE
 						{
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)EAS_BUSYSTATUS_BUSY);
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_BUSYSTATUS, (const xmlChar*)EAS_BUSYSTATUS_BUSY);
 						}
 					}
 					break;
@@ -1942,9 +1954,9 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 					{
 						if (categories == NULL)
 						{
-							categories = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Categories", NULL);
+							categories = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORIES, NULL);
 						}
-						xmlNewTextChild(categories, NULL, (const xmlChar*)"calendar:Category", (const xmlChar*)icalproperty_get_value_as_string(prop));
+						xmlNewTextChild(categories, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORY, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
 					
@@ -1954,13 +1966,13 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						icalparameter* cnParam = NULL;
 						
 						// Get the e-mail address
-						xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:OrganizerEmail", (const xmlChar*)icalproperty_get_organizer(prop));
+						xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_EMAIL, (const xmlChar*)icalproperty_get_organizer(prop));
 
 						// Now check for a name in the (optional) CN parameter
 						cnParam = icalproperty_get_first_parameter(prop, ICAL_CN_PARAMETER);
 						if (cnParam)
 						{
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:OrganizerName", (const xmlChar*)icalparameter_get_cn(cnParam));
+							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_NAME, (const xmlChar*)icalparameter_get_cn(cnParam));
 						}
 					}
 					break;
@@ -1991,13 +2003,20 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						// Create the <Exceptions> container element if not already present
 						if (exceptions == NULL)
 						{
-							exceptions = xmlNewChild(appData, NULL, (const xmlChar*)"calendar:Exceptions", NULL);
+							exceptions = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
 						}
 
 						// Now create the <Exception> element
-						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)"calendar:Exception", NULL);
-						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:Deleted", (const xmlChar*)EAS_BOOLEAN_TRUE);
-						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:DtStart", (const xmlChar*)icalproperty_get_value_as_string(prop));
+						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DELETED, (const xmlChar*)EAS_BOOLEAN_TRUE);
+						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
+					}
+					break;
+
+				// DESCRIPTION
+				case ICAL_DESCRIPTION_PROPERTY:
+					{
+						// TODO...
 					}
 					break;
 
@@ -2011,13 +2030,13 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						// Create the collecion element when first needed
 						if (icalExtns == NULL)
 						{
-							icalExtns = xmlNewChild(appData, NULL, (const xmlChar*)"activesyncd:iCalExtensions", NULL);
+							icalExtns = xmlNewChild(appData, NULL, (const xmlChar*)X_NAMESPACE_ACTIVESYNCD X_ELEMENT_ICALEXENSIONS, NULL);
 						}
 					
 						// Note: icalproperty_as_ical_string() keeps ownership of the string so we don't have to delete
 						g_debug("Found unsupported iCalendar property (%s): adding as extension element under <iCalExtensions>", icalproperty_as_ical_string(prop));
 
-						elementName = g_strconcat("activesyncd:", icalproperty_get_property_name(prop), NULL);
+						elementName = g_strconcat(X_NAMESPACE_ACTIVESYNCD, icalproperty_get_property_name(prop), NULL);
 						xmlNewTextChild(icalExtns, NULL, (const xmlChar*)elementName, (const xmlChar*)icalproperty_get_value_as_string(prop));
 						g_free(elementName); elementName = NULL;
 					}
@@ -2033,11 +2052,11 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 		    icaltime_is_null_time(endTime) &&
 		    (icaltime_as_timet(endTime) - icaltime_as_timet(startTime)) == (time_t)SECONDS_PER_DAY)
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)EAS_BOOLEAN_TRUE);
+			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_TRUE);
 		}
 		else
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)EAS_BOOLEAN_FALSE);
+			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_FALSE);
 		}
 	}
 }
@@ -2074,7 +2093,7 @@ static void _ical2eas_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
 			char minutes_buf[6];
 			g_snprintf(minutes_buf, 6, "%d", minutes);
 
-			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Reminder", (const xmlChar*)minutes_buf);
+			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_REMINDER, (const xmlChar*)minutes_buf);
 		}
 	}
 }
@@ -2287,7 +2306,7 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 
 		// Write the timezone into the XML, base64-encoded
 		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
-		xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Timezone", (const xmlChar*)timezoneBase64);
+		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)timezoneBase64);
 		g_free(timezoneBase64);
 	}
 }
@@ -2309,7 +2328,7 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 	    appData &&
 	    calInfo &&
 	    (appData->type == XML_ELEMENT_NODE) &&
-	    (g_strcmp0((char*)(appData->name), "ApplicationData") == 0) &&
+	    (g_strcmp0((char*)(appData->name), EAS_ELEMENT_APPLICATIONDATA) == 0) &&
 	    (ical = icalparser_parse_string(calInfo->icalendar)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
