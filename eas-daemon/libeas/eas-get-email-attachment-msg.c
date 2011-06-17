@@ -4,13 +4,14 @@
  * Copyright (C)  2011 <>
  */
 #include <libwbxml-1.0/wbxml/wbxml.h>
+#include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
 #include <glib.h>
 
 struct _EasGetEmailAttachmentMsgPrivate
 {
-	gchar* fileReference;
-	gchar* directoryPath;
+    gchar* fileReference;
+    gchar* directoryPath;
 };
 
 #define EAS_GET_EMAIL_ATTACHMENT_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_ATTACHMENT_MSG, EasGetEmailAttachmentMsgPrivate))
@@ -22,237 +23,295 @@ G_DEFINE_TYPE (EasGetEmailAttachmentMsg, eas_get_email_attachment_msg, EAS_TYPE_
 static void
 eas_get_email_attachment_msg_init (EasGetEmailAttachmentMsg *object)
 {
-	EasGetEmailAttachmentMsgPrivate* priv = NULL;
-	g_debug("eas_get_email_attachment_msg_init++");
-		
-	object->priv = priv = EAS_GET_EMAIL_ATTACHMENT_MSG_PRIVATE(object);
+    EasGetEmailAttachmentMsgPrivate* priv = NULL;
+    g_debug ("eas_get_email_attachment_msg_init++");
 
-	priv->fileReference = NULL;
-	priv->directoryPath = NULL;
-	
-	g_debug("eas_get_email_attachment_msg_init--");
+    object->priv = priv = EAS_GET_EMAIL_ATTACHMENT_MSG_PRIVATE (object);
+
+    priv->fileReference = NULL;
+    priv->directoryPath = NULL;
+
+    g_debug ("eas_get_email_attachment_msg_init--");
 }
 
 static void
 eas_get_email_attachment_msg_finalize (GObject *object)
 {
-	EasGetEmailAttachmentMsg* self = (EasGetEmailAttachmentMsg*) object;
-	EasGetEmailAttachmentMsgPrivate* priv = self->priv;
-	g_debug("eas_get_email_attachment_msg_finalize++");
+    EasGetEmailAttachmentMsg* self = (EasGetEmailAttachmentMsg*) object;
+    EasGetEmailAttachmentMsgPrivate* priv = self->priv;
+    g_debug ("eas_get_email_attachment_msg_finalize++");
 
-	g_free(priv->fileReference);
-	g_free(priv->directoryPath);
-	
-	G_OBJECT_CLASS (eas_get_email_attachment_msg_parent_class)->finalize (object);
-	g_debug("eas_get_email_attachment_msg_finalize--");
+    g_free (priv->fileReference);
+    g_free (priv->directoryPath);
+
+    G_OBJECT_CLASS (eas_get_email_attachment_msg_parent_class)->finalize (object);
+    g_debug ("eas_get_email_attachment_msg_finalize--");
 }
 
 static void
 eas_get_email_attachment_msg_class_init (EasGetEmailAttachmentMsgClass *klass)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-	void *tmp = parent_class;
-	tmp = object_class;
+    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+    EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
+    void *tmp = parent_class;
+    tmp = object_class;
 
-	
-	g_debug("eas_get_email_attachment_msg_class_init++");
-	g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentMsgPrivate));
 
-	object_class->finalize = eas_get_email_attachment_msg_finalize;
-	g_debug("eas_get_email_attachment_msg_class_init++");
+    g_debug ("eas_get_email_attachment_msg_class_init++");
+    g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentMsgPrivate));
+
+    object_class->finalize = eas_get_email_attachment_msg_finalize;
+    g_debug ("eas_get_email_attachment_msg_class_init++");
 }
 
 EasGetEmailAttachmentMsg*
 eas_get_email_attachment_msg_new (const gchar* fileReference, const char* directoryPath)
 {
-	EasGetEmailAttachmentMsg* self = NULL;
-	EasGetEmailAttachmentMsgPrivate* priv = NULL;
-	self = g_object_new(EAS_TYPE_GET_EMAIL_ATTACHMENT_MSG, NULL);
-	priv = self->priv;
-	
-	g_debug("eas_get_email_attachment_msg_new++");
+    EasGetEmailAttachmentMsg* self = NULL;
+    EasGetEmailAttachmentMsgPrivate* priv = NULL;
+    self = g_object_new (EAS_TYPE_GET_EMAIL_ATTACHMENT_MSG, NULL);
+    priv = self->priv;
 
-	priv->fileReference  = g_strdup (fileReference);
-	priv->directoryPath = g_strdup (directoryPath);
+    g_debug ("eas_get_email_attachment_msg_new++");
 
-	g_debug("eas_get_email_attachment_msg_new--");
+    priv->fileReference  = g_strdup (fileReference);
+    priv->directoryPath = g_strdup (directoryPath);
 
-	return self;
+    g_debug ("eas_get_email_attachment_msg_new--");
+
+    return self;
 }
 
 xmlDoc*
 eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 {
 
-	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
-	xmlDoc* doc = NULL;
+    EasGetEmailAttachmentMsgPrivate *priv = self->priv;
+    xmlDoc* doc = NULL;
 
-	xmlNode *root = NULL;
-	xmlNode *fetch = NULL, 
-	        *leaf = NULL;
+    xmlNode *root = NULL;
+    xmlNode *fetch = NULL,
+                     *leaf = NULL;
 
-	g_debug("eas_get_email_attachment_msg_build_message++");
+    g_debug ("eas_get_email_attachment_msg_build_message++");
 
-	doc = xmlNewDoc ( (xmlChar *) "1.0");
-	root = xmlNewDocNode (doc, NULL, (xmlChar*)"ItemOperations", NULL);
-	xmlDocSetRootElement (doc, root);
-	
-	xmlCreateIntSubset(doc, 
-	                   (xmlChar*)"ActiveSync", 
-	                   (xmlChar*)"-//MICROSOFT//DTD ActiveSync//EN", 
-	                   (xmlChar*)"http://www.microsoft.com/");
-	
-	xmlNewNs (root, (xmlChar *)"ItemOperations:", NULL);
-	xmlNewNs (root, (xmlChar *)"AirSync:",(xmlChar *)"airsync");
-	xmlNewNs (root, (xmlChar *)"AirSyncBase:", (xmlChar *)"airsyncbase");
+    doc = xmlNewDoc ( (xmlChar *) "1.0");
+    root = xmlNewDocNode (doc, NULL, (xmlChar*) "ItemOperations", NULL);
+    xmlDocSetRootElement (doc, root);
 
-	fetch = xmlNewChild(root, NULL, (xmlChar *)"Fetch", NULL);	
-    leaf = xmlNewChild(fetch, NULL, (xmlChar *)"Store", (xmlChar*)"Mailbox");
-    leaf = xmlNewChild(fetch, NULL, (xmlChar *)"airsyncbase:FileReference",  (xmlChar*)priv->fileReference );
+    xmlCreateIntSubset (doc,
+                        (xmlChar*) "ActiveSync",
+                        (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
+                        (xmlChar*) "http://www.microsoft.com/");
 
-	g_debug("eas_get_email_attachment_msg_build_message--");
-	return doc;
+    xmlNewNs (root, (xmlChar *) "ItemOperations:", NULL);
+    xmlNewNs (root, (xmlChar *) "AirSync:", (xmlChar *) "airsync");
+    xmlNewNs (root, (xmlChar *) "AirSyncBase:", (xmlChar *) "airsyncbase");
+
+    fetch = xmlNewChild (root, NULL, (xmlChar *) "Fetch", NULL);
+    leaf = xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
+    leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsyncbase:FileReference", (xmlChar*) priv->fileReference);
+
+    g_debug ("eas_get_email_attachment_msg_build_message--");
+    return doc;
 }
 
-void
+gboolean
 eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc, GError** error)
 {
-	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
-	xmlNode *node = NULL;
-	
-	g_debug("eas_get_email_attachment_msg_parse_response ++");
-	
-    if (!doc) 
+    EasError error_details;
+    gboolean ret = TRUE;
+    EasGetEmailAttachmentMsgPrivate *priv = self->priv;
+    xmlNode *node = NULL;
+
+    g_debug ("eas_get_email_attachment_msg_parse_response ++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+    if (!doc)
     {
         g_warning ("No XML Doc to parse");
-        return;
+        // not setting error since this is valid
+        goto finish;
     }
-    node = xmlDocGetRootElement(doc);
-    if (g_strcmp0((char *)node->name, "ItemOperations")) {
-        g_debug("Failed to find <ItemOperations> element");
-        return;
+    node = xmlDocGetRootElement (doc);
+    if (g_strcmp0 ( (char *) node->name, "ItemOperations"))
+    {
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,
+                     ("Failed to find <ItemOperations> element"));
+        ret = FALSE;
+        goto finish;
     }
 
-    for (node = node->children; node; node = node->next) 
-	{
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status")) 
+    for (node = node->children; node; node = node->next)
+    {
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
         {
-            gchar *status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("ItemOperations Status:[%s]", status);
-			xmlFree(status);
+            gchar *status = (gchar *) xmlNodeGetContent (node);
+            guint status_num = atoi (status);
+            xmlFree (status);
+            if (status_num != EAS_COMMON_STATUS_OK) // not success
+            {
+                ret = FALSE;
+
+                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                {
+                    error_details = common_status_error_map[status_num - 100];
+                }
+                else
+                {
+                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+                    error_details = itemoperations_status_error_map[status_num];
+                }
+                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+                goto finish;
+            }
             continue;
         }
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Response"))
-		{
-			break;
-		}
-	}
-	if (!node)
-	{
-		g_warning("Could not find Response node");
-		return;
-	}
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Response"))
+        {
+            break;
+        }
+    }
+    if (!node)
+    {
+        g_warning ("Could not find Response node");
+        goto finish;
+    }
 
-	for (node = node->children; node; node = node->next)
-	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Fetch"))
-		{
-			break;
-		}
-	}
-	if (!node)
-	{
-		g_warning("Could not find Fetch node");
-		return;
-	}
+    for (node = node->children; node; node = node->next)
+    {
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Fetch"))
+        {
+            break;
+        }
+    }
+    if (!node)
+    {
+        g_warning ("Could not find Fetch node");
+        goto finish;
+    }
 
-	for (node = node->children; node; node = node->next)
-	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Status"))
-		{
-            gchar *status = (gchar *)xmlNodeGetContent(node);
-            g_debug ("Fetch Status:[%s]", status);
-			xmlFree(status);
+    for (node = node->children; node; node = node->next)
+    {
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
+        {
+            gchar *status = (gchar *) xmlNodeGetContent (node);
+            guint status_num = atoi (status);
+            xmlFree (status);
+            if (status_num != EAS_COMMON_STATUS_OK) // not success
+            {
+                ret = FALSE;
+
+                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                {
+                    error_details = common_status_error_map[status_num - 100];
+                }
+                else
+                {
+                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+
+                    error_details = itemoperations_status_error_map[status_num];
+                }
+                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+                goto finish;
+            }
             continue;
-		}
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "FileReference"))
-		{
-			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
-			priv->fileReference = g_strdup(xmlTmp);
-			g_debug ("FileReference:[%s]", priv->fileReference);			
-			xmlFree(xmlTmp);		
-			continue;
-		}
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Class"))
-		{
-			continue;
-		}
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Properties"))
-		{
-			break;
-		}
-	}
+        }
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "FileReference"))
+        {
+            gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
+            priv->fileReference = g_strdup (xmlTmp);
+            g_debug ("FileReference:[%s]", priv->fileReference);
+            xmlFree (xmlTmp);
+            continue;
+        }
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Class"))
+        {
+            continue;
+        }
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Properties"))
+        {
+            break;
+        }
+    }
 
-	if (!node)
-	{
-		g_warning("Failed to find Properties node");
-		return;
-	}
+    if (!node)
+    {
+        g_warning ("Failed to find Properties node");
+        goto finish;
+    }
 
 
-	for (node = node->children; node; node = node->next)
-	{
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ContentType"))
-		{
-			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
-			g_debug ("ContentType:[%s]", xmlTmp);
-			//TODO: do we need to handle the ContentType? 
-			xmlFree(xmlTmp);
-			continue;
-		}
-		
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "Data"))
-		{
-			gchar *xmlTmp = (gchar *)xmlNodeGetContent(node);
-			gsize decoded_len = 0;
-		    guchar* decoded_buf = g_base64_decode((const gchar*)xmlTmp, &decoded_len);
-			gchar* fullFilePath = NULL;
-			FILE *hAttachement = NULL;
-			
-			g_message ("data ecoded length  =--->:[%d]",  strlen(xmlTmp));
-			g_message ("data encoded   =--->:[%s]",   xmlTmp);
+    for (node = node->children; node; node = node->next)
+    {
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "ContentType"))
+        {
+            gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
+            g_debug ("ContentType:[%s]", xmlTmp);
+            //TODO: do we need to handle the ContentType?
+            xmlFree (xmlTmp);
+            continue;
+        }
 
-		    if (!decoded_len) {
-		        //TODO: Set the GError
-		         //error = WBXML_ERROR_B64_ENC;
-		        //  g_set_error();
-		        g_warning("Failed to base64_decode attachment ");
-				xmlFree(xmlTmp);
-		        return;
-		    }
-        	g_message ("data decoded   =--->:[%s]",   decoded_buf);
-  			g_message ("data decoded length =--->:[%d]",  decoded_len);
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Data"))
+        {
+            gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
+            gsize decoded_len = 0;
+            guchar* decoded_buf = g_base64_decode ( (const gchar*) xmlTmp, &decoded_len);
+            gchar* fullFilePath = NULL;
+            FILE *hAttachement = NULL;
 
-			fullFilePath = g_build_filename(priv->directoryPath, priv->fileReference, NULL);
-			g_message("Attempting to write attachment to file [%s]", fullFilePath);   
-			if ( (hAttachement = fopen(fullFilePath,"wb")) )
-			{
-				fwrite((const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
-				fclose(hAttachement);
-			}
-			else
-			{
-				g_critical("Failed to open file!");
-			}
-			
-			g_free(decoded_buf);
-			g_free(fullFilePath);
-			xmlFree(xmlTmp);
-			break;
-		}
-	}
+            g_message ("data ecoded length  =--->:[%d]",  strlen (xmlTmp));
+            g_message ("data encoded   =--->:[%s]",   xmlTmp);
 
-	g_debug("eas_get_email_attachment_msg_parse_response --");
+            if (!decoded_len)
+            {
+                g_set_error (error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_WBXMLERROR,
+                             ("Failed to base64 decode attachment"));
+                xmlFree (xmlTmp);
+                ret = FALSE;
+                goto finish;
+            }
+            g_message ("data decoded   =--->:[%s]",   decoded_buf);
+            g_message ("data decoded length =--->:[%d]",  decoded_len);
+
+            fullFilePath = g_build_filename (priv->directoryPath, priv->fileReference, NULL);
+            g_message ("Attempting to write attachment to file [%s]", fullFilePath);
+            if ( (hAttachement = fopen (fullFilePath, "wb")))
+            {
+                fwrite ( (const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
+                fclose (hAttachement);
+            }
+            else
+            {
+                //g_critical("Failed to open file!")
+                g_set_error (error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_FILEERROR,
+                             ("Failed to open file!"));
+                xmlFree (xmlTmp);
+                ret = FALSE;
+                goto finish;
+            }
+
+            g_free (decoded_buf);
+            g_free (fullFilePath);
+            xmlFree (xmlTmp);
+            break;
+        }
+    }
+
+finish:
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
+    return ret;
+    g_debug ("eas_get_email_attachment_msg_parse_response --");
 }
 

@@ -23,6 +23,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 #include "eas-connection-errors.h"
+#include "eas-account.h"
 
 G_BEGIN_DECLS
 
@@ -59,14 +60,8 @@ void eas_connection_autodiscover (EasAutoDiscoverCallback cb,
                                   const gchar* email, 
                                   const gchar* username);
 
-
-
 EasConnection* eas_connection_find (const gchar* accountId);
-EasConnection* eas_connection_new (const gchar* accountId, const gchar* serverUri, const gchar* username, GError** error);
-
-// EasConnection* eas_connection_new ();
-// int eas_connection_set_account(EasConnection* self, guint64 accountId);
-// void eas_connection_set_details(EasConnection* self, const gchar* username, const gchar* password);
+EasConnection* eas_connection_new (EasAccount* account, GError** error);
 
 // Provisioning APIs
 void eas_connection_set_policy_key(EasConnection* self, gchar* policyKey);

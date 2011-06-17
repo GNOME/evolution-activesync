@@ -58,7 +58,7 @@ EasSendEmailMsg* eas_send_email_msg_new (const gchar* account_id, const gchar* c
 xmlDoc* eas_send_email_msg_build_message (EasSendEmailMsg* self);
 
 // parse response to SendMail 
-void eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error);
+gboolean eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error);
 
 G_END_DECLS
 
