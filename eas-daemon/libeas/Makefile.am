@@ -49,8 +49,6 @@ libeas_la_SOURCES =		\
         eas-sync-folder-msg.c \
         eas-provision-msg.h \
         eas-provision-msg.c \
-        eas-accounts.h \
-        eas-accounts.c \
         eas-provision-req.h \
         eas-provision-req.c \
         eas-request-base.h \
@@ -87,9 +85,58 @@ libeas_la_SOURCES =		\
         eas-utils.c \
         eas-add-calendar-req.h \
         eas-add-calendar-req.c \
-		eas-connection-errors.c       
-
-
+		eas-connection-errors.c \
+        eas-account.h \
+        eas-account.c \
+        eas-account-list.h \
+        eas-account-list.c        
+        
+        
 
 #CLEANFILES = $(MARSHAL_GENERATED)
 
+gconf_root = /apps/activesyncd
+
+DISTCLEANFILES = $(schema_DATA)
+
+#schemadir=$(GCONF_SCHEMA_FILE_DIR)
+#schema_in_files=activesyncd-accounts.schemas.in
+#schema_DATA=$(schema_in_files:.schemas.in=.schemas)
+
+
+if GCONF_SCHEMAS_INSTALL
+install-data-local:
+	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) $(GCONFTOOL) --makefile-install-rule $(schemas_DATA)
+endif 
+
+
+#if GCONF_SCHEMAS_INSTALL
+#install-data-local:
+#	if test -z "$(DESTDIR)" ; then							\
+#		for p in $(schema_DATA) ; do						\
+#			GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) 		\
+#				$(GCONFTOOL) --makefile-install-rule $$p;		\
+#		done									\
+#	fi
+#endif
+
+accountinfo = \
+"[<?xml version=\"1.0\"?>\
+	<account uid=\"1303900871.4417.1@brahim-laptop\">\
+		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
+		<username>brahim</username>\
+		<password>M0bica!</password>\
+	</account>,<?xml version=\"1.0\"?>\
+	<account uid=\"1303900872.4418.1@Tez-laptop\">\
+		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
+		<username>Tez</username>\
+		<password>M0bica!</password>\
+	</account>]"
+
+setaccount: clearkeys
+	gconftool-2 --set --type list --list-type=string\
+		$(gconf_root)/accounts $(accountinfo)
+
+# Remove all application keys
+clearkeys:
+	@gconftool-2 --recursive-unset $(gconf_root)

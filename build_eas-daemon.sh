@@ -33,7 +33,7 @@ touch NEWS README AUTHORS ChangeLog
 automake --add-missing
 #mkdir $HOME/eas-daemon-install
 #./configure $HOME/eas-daemon-install
-./configure
+./configure --enable-gconf-schemas-install
 
 make all
 ./gen-todo-list.sh

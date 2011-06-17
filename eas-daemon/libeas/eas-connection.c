@@ -26,7 +26,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "eas-accounts.h"
+//#include "eas-accounts.h"
+#include "eas-account-list.h"
 #include "eas-connection-errors.h"
 
 // List of includes for each request type
@@ -67,7 +68,9 @@ struct _EasConnectionPrivate
 
 static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
 static GHashTable *g_open_connections = NULL;
-static EasAccounts* g_eas_accounts = NULL;
+static GConfClient* gconf_client = NULL;
+static EasAccount* g_eas_accounts = NULL;
+static EasAccountList* account_list = NULL;
 
 static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      SoupAuth *auth, gboolean retrying,
@@ -108,6 +111,7 @@ eas_uid_new (void)
 static void
 eas_connection_accounts_init()
 {
+#if 0
     if (!g_eas_accounts)
     {
         // TODO Set up GConf accounts here
@@ -120,6 +124,27 @@ eas_connection_accounts_init()
 
         // TODO register for GConf updates
     }
+#endif
+	
+	g_debug("eas_connection_accounts_init++");
+	if (!g_eas_accounts)
+	{
+		// At this point we don't have an account Id so just load the list of accounts
+		gconf_client = gconf_client_get_default();
+		if (gconf_client == NULL) {
+			g_critical("Error Failed to create GConfClient");
+			return;
+		}
+		g_debug("-->created gconf_client");
+		
+		account_list = eas_account_list_new (gconf_client);
+		if (account_list == NULL) {
+			g_critical("Error Failed to create account list ");
+			return;
+		}
+		g_debug("-->created account_list");		
+	}
+	g_debug("eas_connection_accounts_init--");	
 }
 
 static void
@@ -291,14 +316,20 @@ connection_authenticate (SoupSession *sess,
     g_debug ("  eas_connection - connection_authenticate++");
 
     // TODO replace with gnome key ring
-
+#if 0
     if (!retrying)
     {
         soup_auth_authenticate (auth,
                                 eas_accounts_get_user_id (g_eas_accounts, cnc->priv->accountUid),
                                 eas_accounts_get_password (g_eas_accounts, cnc->priv->accountUid));
     }
-
+#endif
+    if (!retrying)
+    {	
+		soup_auth_authenticate (auth, 
+		                        g_eas_accounts->username,
+		                        g_eas_accounts->password);
+	}
     g_debug ("  eas_connection - connection_authenticate--");
 }
 
@@ -1005,6 +1036,8 @@ eas_connection_find (const gchar* accountId)
 {
     EasConnection *cnc = NULL;
     GError *error = NULL;
+	EIterator *iter = NULL;
+	gboolean account_found = FALSE;	
 
     g_debug ("eas_connection_find++ : account_uid[%s]",
              (accountId ? accountId : "NULL"));
@@ -1013,19 +1046,46 @@ eas_connection_find (const gchar* accountId)
     eas_connection_accounts_init();
 
     // TODO if we don't have details for an account ID return NULL
+#if 0	
     if (!eas_accounts_get_user_id (g_eas_accounts, accountId) ||
             !eas_accounts_get_server_uri (g_eas_accounts, accountId))
     {
         g_warning ("No account details found for accountId [%s]", accountId);
         return NULL;
     }
+#endif
+	
+	//iterate through the list of accounts
+	for (iter = e_list_get_iterator (E_LIST ( account_list) ); e_iterator_is_valid (iter); e_iterator_next (iter)) {
 
+		g_eas_accounts = EAS_ACCOUNT (e_iterator_get (iter));
+		g_print("account->uid=%s\n", g_eas_accounts->uid );
+		if (strcmp (g_eas_accounts->uid, accountId) == 0) {
+			account_found = TRUE;
+			break;
+		}
+	}
+
+	if(!account_found)
+	{
+		g_warning("No account details found for accountId [%s]", accountId);
+		return NULL;
+	}
+	
     g_static_mutex_lock (&connection_list);
     if (g_open_connections)
     {
+#if 0		
         gchar *hashkey = g_strdup_printf ("%s@%s",
                                           eas_accounts_get_user_id (g_eas_accounts, accountId),
                                           eas_accounts_get_server_uri (g_eas_accounts, accountId));
+#endif
+
+		gchar *hashkey = g_strdup_printf("%s@%s", 
+                                 g_eas_accounts->username, 
+                                 g_eas_accounts->serverUri);
+
+		
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
 
@@ -1040,11 +1100,16 @@ eas_connection_find (const gchar* accountId)
     g_static_mutex_unlock (&connection_list);
 
     // TODO Create a new cnc using the valid GConf details
+#if 0	
     cnc = eas_connection_new (accountId,
                               eas_accounts_get_server_uri (g_eas_accounts, accountId),
                               eas_accounts_get_user_id (g_eas_accounts, accountId),
                               &error);
-
+#endif
+	cnc = eas_connection_new (accountId,
+		                      g_eas_accounts->serverUri,
+	                          g_eas_accounts->username,
+	                          &error);	
     if (cnc)
     {
         g_debug ("eas_connection_find (Created) --");

@@ -54,6 +54,8 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
+#PKG_CHECK_MODULES(GCONF, gconf-2.0)
+
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
@@ -70,6 +72,19 @@ AC_CONFIG_FILES([
     logger/Makefile
     camel/Makefile
     ])
+ 	
+#activesync account schema installation:
+AC_PATH_PROG(GCONFTOOL, gconftool-2)
+AM_GCONF_SOURCE_2
+
+AC_ARG_ENABLE(gconf_schemas_install,
+[  --enable-gconf-schemas-install    install gconf ActiveSync account schemas],
+[case "${enableval}" in
+  yes) gconf_schemas_install=true ;;
+  no)  gconf_schemas_install=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-gconf-schemas-install) ;;
+esac], [gconf_schemas_install=false])
+AM_CONDITIONAL(GCONF_SCHEMAS_INSTALL, test x$gconf_schemas_install = xtrue)
 
 
 

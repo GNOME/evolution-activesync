@@ -620,7 +620,10 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_fetch_email_attachments)
 {
-    const gchar* accountuid = "123456789";
+    //const gchar* accountuid = "123456789";
+    const gchar* accountuid = "1303900871.4417.1@brahim-laptop";
+    //const gchar* accountuid = "1303900872.4418.1@Tez-laptop";	
+	
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -904,12 +907,12 @@ Suite* eas_libeasmail_suite (void)
     TCase *tc_libeasmail = tcase_create ("core");
     suite_add_tcase (s, tc_libeasmail);
 
-    tcase_add_test (tc_libeasmail, test_get_mail_handler);
-    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+//    tcase_add_test (tc_libeasmail, test_get_mail_handler);
+//    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+//    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
     //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     //need an unread, high importance email with a single attachment at top of inbox for this to pass:
