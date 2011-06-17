@@ -283,10 +283,9 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *created_folders, GSLis
 void
 camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_deleted)
 {
-#if 0
-
 	CamelFolder *folder;
 	const gchar *full_name;
+	GSList *uids_deleted = NULL;
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
 	GSList *l;
@@ -298,19 +297,20 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	full_name = camel_folder_get_full_name (folder);
 
 	for (l = items_deleted; l != NULL; l = g_slist_next (l)) {
-		gchar *id = (gchar *) l->data;
+		EasEmailInfo *item = l->data;
 
-		camel_eas_summary_delete_id (folder->summary, id);
-		camel_folder_change_info_remove_uid (ci, id);
+		camel_eas_summary_delete_id (folder->summary, item->server_id);
+		camel_folder_change_info_remove_uid (ci, item->server_id);
+		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
 	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, items_deleted, NULL);
+	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 
-	g_slist_foreach (items_deleted, (GFunc) g_free, NULL);
+	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
 	g_slist_free (items_deleted);
-#endif
+	g_slist_free (uids_deleted);
 }
 #if 0
 static gint
