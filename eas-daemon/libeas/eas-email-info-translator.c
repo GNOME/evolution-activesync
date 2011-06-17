@@ -20,7 +20,13 @@ parse_header (gchar *str, GSList **headers)
 
 	char *eol, *colon, *next;
 
+	colon = strchr (str, ':');
+	if (!colon)
+		return NULL;
+
 	eol = strchr (str, '\n');
+	if (eol < colon)
+		return NULL;
  more:
 	if (!eol)
 		return NULL;
@@ -29,15 +35,12 @@ parse_header (gchar *str, GSList **headers)
 	if (*next == '\r')
 		*(next++) = ' ';
 
-	if (isspace (*next)) { // Header continuation
+	if (*next == ' ' || *next == '\t') { // Header continuation
 		*eol = ' ';
 		eol = strchr (next, '\n');
 		goto more;
 	}
 
-	colon = strchr (str, ':');
-	if (!colon)
-		return NULL;
 
 	*eol = 0;
 	*(colon++) = 0;
