@@ -138,12 +138,13 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 	//categories
 	g_debug("serialising categories");
 	list_len = g_slist_length(self->categories);
-	g_string_append_printf (ser, "%d", list_len);
-	// No trailing separator at end; add one *before* each category
+	g_string_append_printf (ser, "%d\n", list_len);
 	for (l = self->categories; l != NULL; l = g_slist_next (l)) {
 		category = l->data;
-		g_string_append_printf (ser, "\n%s", category);
+		g_string_append_printf (ser, "%s\n", category);
 	}
+	// estimated size, date received
+	g_string_append_printf(ser, "%zu\n%ld", self->estimated_size, self->date_received);
 
 	if (ret) {
 		*result = ser->str;
@@ -275,6 +276,36 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 		categories = g_slist_append(categories, category);
 	}	
 	self->categories = categories;
+
+	//estimated_size
+	flags_as_string = get_next_field(&from, sep);
+	if(!flags_as_string)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
+	if(strlen(flags_as_string))
+	{
+		self->estimated_size = strtoul(flags_as_string, NULL, 10);
+	}
+	g_free(flags_as_string);
+	flags_as_string = NULL;
+	g_debug("estimated size = %zu", self->estimated_size);
+
+	//date_received
+	flags_as_string = get_next_field(&from, sep);
+	if(!flags_as_string)
+	{
+		ret = FALSE;
+		goto cleanup;
+	}
+	if(strlen(flags_as_string))
+	{
+		self->date_received = strtoul(flags_as_string, NULL, 10);
+	}
+	g_free(flags_as_string);
+	flags_as_string = NULL;
+	g_debug("date received = %ld", self->date_received);
 
 cleanup:
 	
