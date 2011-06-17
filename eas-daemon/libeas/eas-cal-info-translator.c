@@ -39,6 +39,68 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 const gchar* VCAL_EXTENSION_PROPERTY_PREFIX = "X-MEEGO-ACTIVESYNCD-";
 
 
+// EAS string value definitions
+#define EAS_ELEMENT_APPLICATIONDATA           "ApplicationData"
+#define EAS_ELEMENT_TIMEZONE                  "TimeZone"
+#define EAS_ELEMENT_ALLDAYEVENT               "AllDayEvent"
+#define EAS_ELEMENT_BUSYSTATUS                "BusyStatus"
+#define EAS_ELEMENT_ORGANIZER_NAME            "Organizer_Name"
+#define EAS_ELEMENT_ORGANIZER_EMAIL           "Organizer_Email"
+#define EAS_ELEMENT_DTSTAMP                   "DtStamp"
+#define EAS_ELEMENT_ENDTIME                   "EndTime"
+#define EAS_ELEMENT_LOCATION                  "Location"
+#define EAS_ELEMENT_REMINDER                  "Reminder"
+#define EAS_ELEMENT_SENSITIVITY               "Sensitivity"
+#define EAS_ELEMENT_SUBJECT                   "Subject"
+#define EAS_ELEMENT_STARTTIME                 "StartTime"
+#define EAS_ELEMENT_UID                       "UID"
+#define EAS_ELEMENT_MEETINGSTATUS             "MeetingStatus"
+#define EAS_ELEMENT_ATTENDEES                 "Attendees"
+#define EAS_ELEMENT_ATTENDEE                  "Attendee"
+#define EAS_ELEMENT_ATTENDEE_EMAIL            "Attendee_Email"
+#define EAS_ELEMENT_ATTENDEE_NAME             "Attendee_Name"
+#define EAS_ELEMENT_ATTENDEE_STATUS           "Attendee_Status"
+#define EAS_ELEMENT_ATTENDEE_TYPE             "Attendee_Type"
+#define EAS_ELEMENT_CATEGORIES                "Categories"
+#define EAS_ELEMENT_CATEGORY                  "Category"
+#define EAS_ELEMENT_RECURRENCE                "Recurrence"
+#define EAS_ELEMENT_TYPE                      "Type"
+#define EAS_ELEMENT_OCCURRENCES               "Occurrences"
+#define EAS_ELEMENT_INTERVAL                  "Interval"
+#define EAS_ELEMENT_WEEKOFMONTH               "WeekOfMonth"
+#define EAS_ELEMENT_DAYOFWEEK                 "DayOfWeek"
+#define EAS_ELEMENT_MONTHOFYEAR               "MonthOfYear"
+#define EAS_ELEMENT_UNTIL                     "Until"
+#define EAS_ELEMENT_DAYOFMONTH                "DayOfMonth"
+#define EAS_ELEMENT_CALENDARTYPE              "CalendarType"
+#define EAS_ELEMENT_ISLEAPMONTH               "IsLeapMonth"
+#define EAS_ELEMENT_FIRSTDAYOFWEEK            "FirstDayOfWeek"
+#define EAS_ELEMENT_EXCEPTIONS                "Exceptions"
+#define EAS_ELEMENT_EXCEPTION                 "Exception"
+#define EAS_ELEMENT_DELETED                   "Deleted"
+#define EAS_ELEMENT_EXCEPTIONSTARTTIME        "ExceptionStartTime"
+#define EAS_ELEMENT_APPOINTMENTREPLYTIME      "AppointmentReplyTime"
+#define EAS_ELEMENT_RESPONSETYPE              "ResponseType"
+#define EAS_ELEMENT_BODY                      "Body"
+#define EAS_ELEMENT_RESPONSEREQUESTED         "ResponseRequested"
+#define EAS_ELEMENT_NATIVEBODYTYPE            "NativeBodyType"
+#define EAS_ELEMENT_ONLINEMEETINGCONFLINK     "OnlineMeetingConfLink"
+#define EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK "OnlineMeetingExternalLink"
+
+#define EAS_SENSITIVITY_NORMAL        "0"
+#define EAS_SENSITIVITY_PERSONAL      "1"
+#define EAS_SENSITIVITY_PRIVATE       "2"
+#define EAS_SENSITIVITY_CONFIDENTIAL  "3"
+
+#define EAS_BUSYSTATUS_FREE           "0"
+#define EAS_BUSYSTATUS_TENTATIVE      "1"
+#define EAS_BUSYSTATUS_BUSY           "2"
+#define EAS_BUSYSTATUS_OUTOFOFFICE    "3"
+
+#define EAS_BOOLEAN_FALSE             "0"
+#define EAS_BOOLEAN_TRUE              "1"
+
+
 #define compile_time_assert(cond, msg) \
 	char msg[(cond)?1:-1]
 
@@ -76,13 +138,13 @@ compile_time_assert((sizeof(EasTimeZone) == 172), EasTimeZone_not_expected_size)
 /**
  * \brief Convert a <Sensitivity> value from EAS XML into an iCal CLASS property value
  */
-static icalproperty_class _xml2ical_convert_sensitivity_to_class(const gchar* sensitivityValue)
+static icalproperty_class _eas2ical_convert_sensitivity_to_class(const gchar* sensitivityValue)
 {
-	if (g_strcmp0(sensitivityValue, "3") == 0)      // Confidential
+	if (g_strcmp0(sensitivityValue, EAS_SENSITIVITY_CONFIDENTIAL) == 0)
 	{
 		return ICAL_CLASS_CONFIDENTIAL;
 	}
-	else if (g_strcmp0(sensitivityValue, "2") == 0) // Private
+	else if (g_strcmp0(sensitivityValue, EAS_SENSITIVITY_PRIVATE) == 0)
 	{
 		return ICAL_CLASS_PRIVATE;
 	}
@@ -96,9 +158,9 @@ static icalproperty_class _xml2ical_convert_sensitivity_to_class(const gchar* se
 /**
  * \brief Convert a <BusyStatus> value from EAS XML into an iCal TRANSP property value
  */
-static icalproperty_transp _xml2ical_convert_busystatus_to_transp(const gchar* busystatusValue)
+static icalproperty_transp _eas2ical_convert_busystatus_to_transp(const gchar* busystatusValue)
 {
-	if (g_strcmp0(busystatusValue, "0") == 0) // Free
+	if (g_strcmp0(busystatusValue, EAS_BUSYSTATUS_FREE) == 0)
 	{
 		return ICAL_TRANSP_TRANSPARENT;
 	}
@@ -121,7 +183,7 @@ static icalproperty_transp _xml2ical_convert_busystatus_to_transp(const gchar* b
  * \param byDayPos        The position of this day in the month on which to repeat
  *                        (or 0 if not applicable)
  */
-static short _xml2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
+static short _eas2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayDayOfWeek, short byDayPos)
 {
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
@@ -142,7 +204,7 @@ static short _xml2ical_make_rrule_by_day_value(icalrecurrencetype_weekday byDayD
  *                    function to contain the first instance of the recurring sequence.
  * \param rrule       Pointer to an icalrecurrencetype struct to store the recurrence rule in.
  */
-static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct icalrecurrencetype* rrule)
+static void _eas2ical_convert_relative_timezone_date(EasSystemTime* date, struct icalrecurrencetype* rrule)
 {
 	// Microsoft's SYSTEMTIME (implemented here as EasSystemTime) stores a recurring date pattern as follows:
 	//   - Year       set to 0
@@ -245,7 +307,7 @@ static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct
 	// Now calculate the composite value as follows:
 	//  - Multiply byDayPos by 8
 	//  - Add byDayDayOfWeek if byDayPos is positive, or subtract if negative
-	rrule->by_day[0] = _xml2ical_make_rrule_by_day_value(byDayDayOfWeek, byDayPos);
+	rrule->by_day[0] = _eas2ical_make_rrule_by_day_value(byDayDayOfWeek, byDayPos);
 
 	// Finally, copy the modified version back into the date that was passed in
 	memcpy(date, &modifiedDate, sizeof(EasSystemTime));
@@ -258,7 +320,7 @@ static void _xml2ical_convert_relative_timezone_date(EasSystemTime* date, struct
  * \param n       An XML node pointing at the <Attendees> element
  * \param vevent  The VEVENT iCal component to add the parsed attendees to
  */
-static void _xml2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
+static void _eas2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 {
 	gchar*         value = NULL;
 	icalproperty*  prop  = NULL;
@@ -281,15 +343,15 @@ static void _xml2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 
 		for (subNode = attendeeNode->children; subNode; subNode = subNode->next)
 		{
-			if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Email") == 0)
+			if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_ATTENDEE_EMAIL) == 0)
 			{
 				email = (gchar*)xmlNodeGetContent(subNode);
 			}								
-			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Name") == 0)
+			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_ATTENDEE_NAME) == 0)
 			{
 				name = (gchar*)xmlNodeGetContent(subNode);								
 			}
-			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, "Attendee_Status") == 0)
+			else if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_ATTENDEE_STATUS) == 0)
 			{
 				int status = 0;
 				value = (gchar*)xmlNodeGetContent(subNode);
@@ -317,7 +379,7 @@ static void _xml2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 				
 				g_free(value); value = NULL;
 			}
-			else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, "Attendee_Type"))
+			else if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_ATTENDEE_TYPE))
 			{
 				int roleValue = 0;
 				value = (gchar*)xmlNodeGetContent(subNode);
@@ -379,7 +441,7 @@ static void _xml2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
  * \param vtimezone  The iCalendar VTIMEZONE component to add the parsed timezone properties to
  * \param tzid       Pointer to a buffer to initialise with the parsed TZID (timezone ID) string
  */
-static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
+static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, gchar** tzid)
 {
 	gchar*         value = NULL;
 	icalproperty*  prop = NULL;
@@ -399,7 +461,7 @@ static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 		timeZoneRawBytes = NULL;
 
 		{
-			// Calculate the timezone offsets. See _ical2xml_process_xstandard_xdaylight()
+			// Calculate the timezone offsets. See _ical2eas_process_xstandard_xdaylight()
 			// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
 			const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
 			const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
@@ -438,7 +500,7 @@ static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 			// the start date of a recurring sequence, and add an RRULE.
 			if (timeZoneStruct.StandardDate.Year == 0)
 			{
-				_xml2ical_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
+				_eas2ical_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
 			}
 
 			// Add the DTSTART property
@@ -494,7 +556,7 @@ static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 			// the start date of a recurring sequence, and add an RRULE.
 			if (timeZoneStruct.DaylightDate.Year == 0)
 			{
-				_xml2ical_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
+				_eas2ical_convert_relative_timezone_date(&timeZoneStruct.DaylightDate, &rrule);
 			}
 
 			// Add the DTSTART property
@@ -550,12 +612,11 @@ static void _xml2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
  * \param n       An XML node pointing to the <Recurrence> element
  * \param vevent  The iCalendar VEVENT component to add the parsed RRULE property to
  */
-static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
+static void _eas2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 {
-	gchar*         value = NULL;
-	icalproperty*  prop = NULL;
-
-	xmlNode*       subNode = NULL;
+	gchar*         value    = NULL;
+	icalproperty*  prop     = NULL;
+	xmlNode*       subNode  = NULL;
 	struct icalrecurrencetype recur;
 
 	// Ensure the icalrecurrencetype is null
@@ -569,7 +630,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		value = (gchar*)xmlNodeGetContent(subNode);
 
 		// Type
-		if (g_strcmp0(elemName, "Type") == 0)
+		if (g_strcmp0(elemName, EAS_ELEMENT_TYPE) == 0)
 		{
 			int typeInt = atoi(value);
 			switch (typeInt)
@@ -596,7 +657,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		}
 		
 		// Occurrences
-		else if (g_strcmp0(elemName, "Occurrences") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_OCCURRENCES) == 0)
 		{
 			// From [MS-ASCAL]:
 			// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
@@ -608,19 +669,19 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		}
 		
 		// Interval
-		else if (g_strcmp0(elemName, "Interval") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_INTERVAL) == 0)
 		{
 			recur.interval = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
 
 		// WeekOfMonth
-		else if (g_strcmp0(elemName, "WeekOfMonth") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_WEEKOFMONTH) == 0)
 		{
 			g_warning("DATA LOSS: Cannot handle <Calendar><Recurrence><WeekOfMonth> element (value=%d)", atoi((char*)xmlNodeGetContent(subNode)));
 		}
 
 		// DayOfWeek
-		else if (g_strcmp0(elemName, "DayOfWeek") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_DAYOFWEEK) == 0)
 		{
 			// A recurrence rule can target any combination of the 7 week days.
 			// EAS encodes these as a bit set in a single int value.
@@ -634,42 +695,42 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 			// Note: must use IF for subsequent blocks, not ELSE IF
 			if (dayOfWeek & DAY_OF_WEEK_MONDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_MONDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_TUESDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_TUESDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_WEDNESDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_WEDNESDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_THURSDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_THURSDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_FRIDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_FRIDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_SATURDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_SATURDAY_WEEKDAY, 0);
 			}
 			if (dayOfWeek & DAY_OF_WEEK_SUNDAY)
 			{
-				recur.by_day[index++] = _xml2ical_make_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
+				recur.by_day[index++] = _eas2ical_make_rrule_by_day_value(ICAL_SUNDAY_WEEKDAY, 0);
 			}
 		}
 
 		// MonthOfYear
-		else if (g_strcmp0(elemName, "MonthOfYear") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_MONTHOFYEAR) == 0)
 		{
 			recur.by_month[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
 
 		// Until
-		else if (g_strcmp0(elemName, "Until") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_UNTIL) == 0)
 		{
 			// From [MS-ASCAL]:
 			// The Occurrences element and the Until element (section 2.2.2.18.7) are mutually exclusive. It is
@@ -683,13 +744,13 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		}
 
 		// DayOfMonth
-		else if (g_strcmp0(elemName, "DayOfMonth") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_DAYOFMONTH) == 0)
 		{
 			recur.by_month_day[0] = (short)atoi((char*)xmlNodeGetContent(subNode));
 		}
 
 		// CalendarType
-		else if (g_strcmp0(elemName, "CalendarType") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_CALENDARTYPE) == 0)
 		{
 			const int calType = atoi((char*)xmlNodeGetContent(subNode));
 			if ((calType != 0)    // Default
@@ -702,7 +763,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		}
 
 		// IsLeapMonth
-		else if (g_strcmp0(elemName, "IsLeapMonth") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_ISLEAPMONTH) == 0)
 		{
 			if (atoi((char*)xmlNodeGetContent(subNode)) == 1)
 			{
@@ -713,7 +774,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 		}
 
 		// FirstDayOfWeek
-		else if (g_strcmp0(elemName, "FirstDayOfWeek") == 0)
+		else if (g_strcmp0(elemName, EAS_ELEMENT_FIRSTDAYOFWEEK) == 0)
 		{
 			int firstDayOfWeek = atoi((char*)xmlNodeGetContent(subNode));
 
@@ -740,7 +801,7 @@ static void _xml2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
  * \param n       An XML node pointing to the <Exceptions> element
  * \param vevent  The iCalendar VEVENT component to add the parsed items property to
  */
-static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
+static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 {
 	// This is a bit tricky.
 	//
@@ -784,11 +845,11 @@ static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			const gchar* name = (const gchar*)subNode->name;
 			value = (gchar*)xmlNodeGetContent(subNode);
 
-			if (g_strcmp0(name, "Deleted") == 0)
+			if (g_strcmp0(name, EAS_ELEMENT_DELETED) == 0)
 			{
-				deleted = (g_strcmp0(value, "1") == 0);
+				deleted = (g_strcmp0(value, EAS_BOOLEAN_TRUE) == 0);
 			}
-			else if (g_strcmp0(name, "ExceptionStartTime") == 0)
+			else if (g_strcmp0(name, EAS_ELEMENT_EXCEPTIONSTARTTIME) == 0)
 			{
 				exceptionStartTime = g_strdup(value);
 			}
@@ -847,7 +908,7 @@ static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 		else
 		{
 			// Add ExceptionStartTime to the hash now too
-			g_hash_table_insert(newEventValues, g_strdup("ExceptionStartTime"), g_strdup(exceptionStartTime));
+			g_hash_table_insert(newEventValues, g_strdup(EAS_ELEMENT_EXCEPTIONSTARTTIME), g_strdup(exceptionStartTime));
 
 			// And add the hash table to the list to be returned
 			// (Using prepend rather than append for efficiency)
@@ -866,7 +927,7 @@ static GSList* _xml2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 /**
  * TODO...
  */
-static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents)
+static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents)
 {
 	if (vcalendar && vevent && exceptionEvents)
 	{
@@ -883,7 +944,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 
 			if (exceptionProperties == NULL)
 			{
-				g_warning("_xml2ical_add_exception_events(): NULL hash table found in exceptionEvents.");
+				g_warning("_eas2ical_add_exception_events(): NULL hash table found in exceptionEvents.");
 				break;
 			}
 
@@ -907,7 +968,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			// Form a new UID for the new event as follows:
 			// {Original event UID}_{Exception start time}
 			prop = icalcomponent_get_first_property(newEvent, ICAL_UID_PROPERTY); // Retains ownership of the pointer
-			value = g_strconcat((const gchar*)icalproperty_get_uid(prop), "_", (const gchar*)g_hash_table_lookup(exceptionProperties, "ExceptionStartTime"), NULL);
+			value = g_strconcat((const gchar*)icalproperty_get_uid(prop), "_", (const gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_EXCEPTIONSTARTTIME), NULL);
 			icalproperty_set_uid(prop, value);
 			prop = NULL;
 
@@ -920,7 +981,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			// Add the other properties from the hash
 
 			// StartTime
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "StartTime")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_STARTTIME)) != NULL)
 			{
 				// If this exception has a new start time, use that. Otherwise we default
 				// to the start time of the original event (as per [MS-ASCAL]).
@@ -936,7 +997,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// EndTime
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "EndTime")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_ENDTIME)) != NULL)
 			{
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DTEND_PROPERTY)) != NULL)
 				{
@@ -948,7 +1009,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// Subject
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Subject")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_SUBJECT)) != NULL)
 			{
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_SUMMARY_PROPERTY)) != NULL)
 				{
@@ -960,7 +1021,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// Location
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Location")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_LOCATION)) != NULL)
 			{
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_LOCATION_PROPERTY)) != NULL)
 				{
@@ -972,13 +1033,13 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// Categories
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Categories")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_CATEGORIES)) != NULL)
 			{
 				// TODO: sort out <Categories> - it's a collection element! :-(
 			}
 
 			// Sensitivity
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Sensitivity")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_SENSITIVITY)) != NULL)
 			{
 				// Clear out any existing property
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_CLASS_PROPERTY)) != NULL)
@@ -986,12 +1047,12 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
 					icalproperty_free(prop); prop = NULL;
 				}
-				prop = icalproperty_new_class(_xml2ical_convert_sensitivity_to_class(value));
+				prop = icalproperty_new_class(_eas2ical_convert_sensitivity_to_class(value));
 				icalcomponent_add_property(newEvent, prop);
 			}
 
 			// BusyStatus
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "BusyStatus")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_BUSYSTATUS)) != NULL)
 			{
 				// Clear out any existing property
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_TRANSP_PROPERTY)) != NULL)
@@ -999,18 +1060,18 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 					icalcomponent_remove_property(newEvent, prop); // Now we have ownership of prop
 					icalproperty_free(prop); prop = NULL;
 				}
-				prop = icalproperty_new_transp(_xml2ical_convert_busystatus_to_transp(value));
+				prop = icalproperty_new_transp(_eas2ical_convert_busystatus_to_transp(value));
 				icalcomponent_add_property(newEvent, prop);
 			}
 
 			// AllDayEvent
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "AllDayEvent")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_ALLDAYEVENT)) != NULL)
 			{
 				// TODO
 			}
 
 			// Reminder
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Reminder")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_REMINDER)) != NULL)
 			{
 				icalcomponent* valarm = NULL;
 				struct icaltriggertype trigger;
@@ -1046,7 +1107,7 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// DtStamp
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "DtStamp")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_DTSTAMP)) != NULL)
 			{
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DTSTAMP_PROPERTY)) != NULL)
 				{
@@ -1058,25 +1119,25 @@ static void _xml2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			}
 
 			// MeetingStatus
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "MeetingStatus")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_MEETINGSTATUS)) != NULL)
 			{
 				// TODO
 			}
 
 			// AppointmentReplyTime
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "AppointmentReplyTime")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_APPOINTMENTREPLYTIME)) != NULL)
 			{
 				// TODO
 			}
 
 			// ResponseType
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "ResponseType")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_RESPONSETYPE)) != NULL)
 			{
 				// TODO
 			}
 
 			// Body
-			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, "Body")) != NULL)
+			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_BODY)) != NULL)
 			{
 				if ((prop = icalcomponent_get_first_property(newEvent, ICAL_DESCRIPTION_PROPERTY)) != NULL)
 				{
@@ -1125,7 +1186,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 	struct icaltimetype dateTime;
 	struct icaltriggertype trigger;
 
-	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), "ApplicationData")))
+	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), EAS_ELEMENT_APPLICATIONDATA)))
 	{
 		xmlNodePtr n = node;
 
@@ -1164,7 +1225,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Subject
 				//
-				if (g_strcmp0(name, "Subject") == 0)
+				if (g_strcmp0(name, EAS_ELEMENT_SUBJECT) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					prop = icalproperty_new_summary(value);
@@ -1175,7 +1236,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// StartTime
 				//
-				else if (g_strcmp0(name, "StartTime") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_STARTTIME) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
@@ -1197,7 +1258,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// EndTime
 				//
-				else if (g_strcmp0(name, "EndTime") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_ENDTIME) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
@@ -1219,7 +1280,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// DtStamp
 				//
-				else if (g_strcmp0(name, "DTStamp") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_DTSTAMP) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					dateTime = icaltime_from_string(value);
@@ -1236,7 +1297,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// UID
 				//
-				else if (g_strcmp0(name, "UID") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_UID) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					prop = icalproperty_new_uid(value);
@@ -1247,7 +1308,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Location
 				//
-				else if (g_strcmp0(name, "Location") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_LOCATION) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					prop = icalproperty_new_location(value);
@@ -1258,7 +1319,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Body
 				//
-				else if (g_strcmp0(name, "Body") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
 				{
 					xmlNodePtr subNode = NULL;
 					for (subNode = n->children; subNode; subNode = subNode->next)
@@ -1277,10 +1338,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Sensitivity
 				//
-				else if (g_strcmp0(name, "Sensitivity") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_SENSITIVITY) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
-					prop = icalproperty_new_class(_xml2ical_convert_sensitivity_to_class(value));
+					prop = icalproperty_new_class(_eas2ical_convert_sensitivity_to_class(value));
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
@@ -1288,10 +1349,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// BusyStatus
 				//
-				else if (g_strcmp0(name, "BusyStatus") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_BUSYSTATUS) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
-					prop = icalproperty_new_transp(_xml2ical_convert_busystatus_to_transp(value));
+					prop = icalproperty_new_transp(_eas2ical_convert_busystatus_to_transp(value));
 					icalcomponent_add_property(vevent, prop);
 					g_free(value); value = NULL;
 				}
@@ -1299,7 +1360,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Categories
 				//
-				else if (g_strcmp0(name, "Categories") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
 				{
 					GString* categories = g_string_new("");
 
@@ -1328,7 +1389,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Reminder
 				//
-				else if (g_strcmp0(name, "Reminder") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_REMINDER) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 
@@ -1352,7 +1413,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// AllDayEvent
 				//
-				else if (g_strcmp0(name, "AllDayEvent") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_ALLDAYEVENT) == 0)
 				{
 					value = (gchar*)xmlNodeGetContent(n);
 					if (atoi(value) == 1)
@@ -1383,7 +1444,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// OrganizerName
 				//
-				else if (g_strcmp0(name, "Organizer_Name") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_NAME) == 0)
 				{
 					organizerName = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
@@ -1393,7 +1454,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// OrganizerEmail
 				//
-				else if (g_strcmp0(name, "Organizer_Email") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_EMAIL) == 0)
 				{
 					organizerEmail = (gchar*)xmlNodeGetContent(n);
 					// That's all for now: deal with it after the loop completes so we
@@ -1403,33 +1464,33 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 				//
 				// Attendees
 				//
-				else if (g_strcmp0(name, "Attendees") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_ATTENDEES) == 0)
 				{
-					_xml2ical_process_attendees(n, vevent);
+					_eas2ical_process_attendees(n, vevent);
 				}
 
 				//
 				// TimeZone
 				//
-				else if (g_strcmp0(name, "TimeZone") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_TIMEZONE) == 0)
 				{
-					_xml2ical_process_timezone(n, vtimezone, &tzid);
+					_eas2ical_process_timezone(n, vtimezone, &tzid);
 				}
 
 				//
 				// Recurrence
 				//
-				else if (g_strcmp0(name, "Recurrence") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_RECURRENCE) == 0)
 				{
-					_xml2ical_process_recurrence(n, vevent);
+					_eas2ical_process_recurrence(n, vevent);
 				}
 
 				//
 				// Exceptions
 				//
-				else if (g_strcmp0(name, "Exceptions") == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_EXCEPTIONS) == 0)
 				{
-					newExceptionEvents = _xml2ical_process_exceptions(n, vevent);
+					newExceptionEvents = _eas2ical_process_exceptions(n, vevent);
 					// This is dealt with below...
 				}
 
@@ -1493,8 +1554,8 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		// Now handle any non-trivial exception events we found in the <Exceptions> element
 		if (newExceptionEvents)
 		{
-			_xml2ical_add_exception_events(vcalendar, vevent, newExceptionEvents);
-			// _xml2ical_add_exception_events() destroys the hash tables as it goes
+			_eas2ical_add_exception_events(vcalendar, vevent, newExceptionEvents);
+			// _eas2ical_add_exception_events() destroys the hash tables as it goes
 			// so all we need to do here is free the list
 			g_slist_free(newExceptionEvents);
 		}
@@ -1539,7 +1600,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
  * \param prop     Pointer to the RRULE property
  * \param appData  Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
+static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 {
 	// Get the iCal RRULE property
 	struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
@@ -1790,7 +1851,7 @@ static void _ical2xml_process_rrule(icalproperty* prop, xmlNodePtr appData)
  * \param vevent  Pointer to the iCalendar VEVENT component
  * \param appData Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
+static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 {
 	if (vevent)
 	{
@@ -1848,13 +1909,13 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						switch (classValue)
 						{
 						case ICAL_CLASS_CONFIDENTIAL:
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"3"); // Confidential
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_CONFIDENTIAL);
 							break;
 						case ICAL_CLASS_PRIVATE:
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"2"); // Private
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_PRIVATE);
 							break;
 						default: // PUBLIC or NONE (iCalendar doesn't distinguish between 0 (Normal) and 1 (Personal))
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)"0");
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:Sensitivity", (const xmlChar*)EAS_SENSITIVITY_NORMAL);
 							break;
 						}
 					}
@@ -1866,12 +1927,12 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						icalproperty_transp transp = icalproperty_get_transp(prop);
 						if (transp == ICAL_TRANSP_TRANSPARENT)
 						{
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"0"); // Free
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)EAS_BUSYSTATUS_FREE);
 						}
 						else // OPAQUE
 						{
 							// iCalendar doesn't distinguish between 1 (Tentative), 2 (Busy), 3 (Out of Office)
-							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)"2"); // Busy
+							xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:BusyStatus", (const xmlChar*)EAS_BUSYSTATUS_BUSY);
 						}
 					}
 					break;
@@ -1907,7 +1968,7 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				// RRULE
 				case ICAL_RRULE_PROPERTY:
 					{
-						_ical2xml_process_rrule(prop, appData);
+						_ical2eas_process_rrule(prop, appData);
 					}
 					break;
 
@@ -1935,7 +1996,7 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 
 						// Now create the <Exception> element
 						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)"calendar:Exception", NULL);
-						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:Deleted", (const xmlChar*)"1");
+						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:Deleted", (const xmlChar*)EAS_BOOLEAN_TRUE);
 						xmlNewTextChild(exception, NULL, (const xmlChar*)"calendar:DtStart", (const xmlChar*)icalproperty_get_value_as_string(prop));
 					}
 					break;
@@ -1972,11 +2033,11 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 		    icaltime_is_null_time(endTime) &&
 		    (icaltime_as_timet(endTime) - icaltime_as_timet(startTime)) == (time_t)SECONDS_PER_DAY)
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)"1");
+			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)EAS_BOOLEAN_TRUE);
 		}
 		else
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)"0");
+			xmlNewTextChild(appData, NULL, (const xmlChar*)"calendar:AllDayEvent", (const xmlChar*)EAS_BOOLEAN_FALSE);
 		}
 	}
 }
@@ -1988,7 +2049,7 @@ static void _ical2xml_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
  * \param valarm  Pointer to the iCalendar VALARM component
  * \param appData Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2xml_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
+static void _ical2eas_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
 {
 	if (valarm)
 	{
@@ -2027,7 +2088,7 @@ static void _ical2xml_process_valarm(icalcomponent* valarm, xmlNodePtr appData)
  * \param timezone     The EAS timezone structure to parse this subcomponent into
  * \param type         Determineds whether subcomponent is a STANDARD or a DAYLIGHT
  */
-static void _ical2xml_process_xstandard_xdaylight(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
+static void _ical2eas_process_xstandard_xdaylight(icalcomponent* subcomponent, EasTimeZone* timezone, icalcomponent_kind type)
 {
 	if (subcomponent)
 	{
@@ -2190,7 +2251,7 @@ static void _ical2xml_process_xstandard_xdaylight(icalcomponent* subcomponent, E
  * \param vtimezone  Pointer to the iCalendar VTIMEZONE component
  * \param appData    Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2xml_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr appData)
+static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr appData)
 {
 	if (vtimezone)
 	{
@@ -2221,7 +2282,7 @@ static void _ical2xml_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 		     subcomponent;
 		     subcomponent = icalcomponent_get_next_component(vtimezone, ICAL_ANY_COMPONENT))
 		{
-			_ical2xml_process_xstandard_xdaylight(subcomponent, &timezoneStruct, icalcomponent_isa(subcomponent));
+			_ical2eas_process_xstandard_xdaylight(subcomponent, &timezoneStruct, icalcomponent_isa(subcomponent));
 		}
 
 		// Write the timezone into the XML, base64-encoded
@@ -2255,10 +2316,10 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 		icalcomponent* vevent = NULL;
 		
 		// Process the components of the VCALENDAR
-		_ical2xml_process_vtimezone(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
+		_ical2eas_process_vtimezone(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
 		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
-		_ical2xml_process_vevent(vevent, appData);
-		_ical2xml_process_valarm(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
+		_ical2eas_process_vevent(vevent, appData);
+		_ical2eas_process_valarm(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
 
 		// DEBUG output
 		{
