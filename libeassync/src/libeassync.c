@@ -299,7 +299,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 	
     g_debug ("eas_sync_handler_delete_items++");
 
-	if(sync_key_in ==NULL || g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
@@ -373,7 +373,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_update_items++");
 
-	if(sync_key_in ==NULL || g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
