@@ -534,6 +534,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
+		struct _camel_header_raw *camel_headers = NULL;
 		CamelEasMessageInfo *mi;
 		GSList *hl;
 
@@ -549,41 +550,28 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			continue;
 		}
 
-		mi = (CamelEasMessageInfo *)camel_message_info_new (folder->summary);
-
 		for (hl = item->headers; hl; hl = g_slist_next(hl)) {
 			EasEmailHeader *hdr = hl->data;
 
-			printf(" %s: %s\n", hdr->name, hdr->value);
-
-			if (!g_ascii_strcasecmp(hdr->name, "Subject"))
-				mi->info.subject = camel_pstring_strdup (hdr->value);
-			else if (!g_ascii_strcasecmp(hdr->name, "From"))
-				mi->info.from = camel_pstring_strdup (hdr->value);
-			else if (!g_ascii_strcasecmp(hdr->name, "Cc"))
-				mi->info.cc = camel_pstring_strdup (hdr->value);
-			else if (!g_ascii_strcasecmp(hdr->name, "To"))
-				mi->info.to = camel_pstring_strdup (hdr->value);
-			else if (!g_ascii_strcasecmp(hdr->name, "Received"))
-				mi->info.date_received = time(NULL);
+			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
 		}
 
+		mi = (CamelEasMessageInfo *)camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
 		if (mi->info.content == NULL) {
+			//mi->info.content = camel_folder_summary_content_info_new_from_header (folder->summary, camel_headers);
 			mi->info.content = camel_folder_summary_content_info_new (folder->summary);
 			mi->info.content->type = camel_content_type_new ("multipart", "mixed");
 		}
 
+		camel_header_raw_clear (&camel_headers);
+
 		mi->info.uid = camel_pstring_strdup (item->server_id);
-		//		mi->info.size = e_eas_item_get_size (item);
-
-		//		mi->info.date_sent = e_eas_item_get_date_sent (item);
-		//		mi->info.date_received = e_eas_item_get_date_received (item);
-
+		mi->info.size = item->estimated_size;
+		mi->info.date_received = item->date_received;
 
 		if (item->attachments)
 			mi->info.flags |= CAMEL_MESSAGE_ATTACHMENTS;
 
-		//	eas_set_threading_data (mi, item);
 		//server_flags = eas_utils_get_server_flags (item);
 
 		camel_eas_summary_add_message_info (folder->summary, 0,//server_flags,
