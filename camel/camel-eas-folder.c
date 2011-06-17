@@ -511,7 +511,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 							      &items_created,
 							      &items_updated, &items_deleted,
 							      &more_available, error)) {
-			return FALSE;
+			goto out;
 		}
 		if (items_deleted)
 			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
@@ -535,12 +535,10 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 
         if (rerror)
                 g_propagate_error (error, rerror);
-
+ out:
         g_mutex_lock (priv->state_lock);
         priv->refreshing = FALSE;
         g_mutex_unlock (priv->state_lock);
-        if (sync_state != ((CamelEasSummary *) folder->summary)->sync_state)
-                g_free(sync_state);
         g_object_unref (handler);
         g_free (id);
 
