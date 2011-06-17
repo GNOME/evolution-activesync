@@ -321,7 +321,7 @@ END_TEST
 START_TEST(test_translate_ical_to_xml)
 {
 	EasCalInfo cal_info;// = eas_cal_info_new();
-	cal_info.icalendar = (char*)TEST_VCAL_WITH_EXDATE_1;
+	cal_info.icalendar = (char*)TEST_VCALENDAR;//TEST_VCAL_WITH_EXDATE_1;
 	cal_info.server_id = (char*)"1.0 (test value)";
 
 	xmlDocPtr doc = xmlNewDoc((const xmlChar*)"1.0");

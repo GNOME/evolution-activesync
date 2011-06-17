@@ -47,7 +47,7 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_ELEMENT_BUSYSTATUS                "BusyStatus"
 #define EAS_ELEMENT_ORGANIZER_NAME            "Organizer_Name"
 #define EAS_ELEMENT_ORGANIZER_EMAIL           "Organizer_Email"
-#define EAS_ELEMENT_DTSTAMP                   "DtStamp"
+#define EAS_ELEMENT_DTSTAMP                   "DTStamp"
 #define EAS_ELEMENT_ENDTIME                   "EndTime"
 #define EAS_ELEMENT_LOCATION                  "Location"
 #define EAS_ELEMENT_REMINDER                  "Reminder"
@@ -88,6 +88,7 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_ELEMENT_ONLINEMEETINGCONFLINK     "OnlineMeetingConfLink"
 #define EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK "OnlineMeetingExternalLink"
 #define EAS_ELEMENT_DATA                      "Data"
+#define EAS_ELEMENT_TRUNCATED                 "Truncated"
 
 #define EAS_SENSITIVITY_NORMAL                "0"
 #define EAS_SENSITIVITY_PERSONAL              "1"
@@ -98,6 +99,8 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_BUSYSTATUS_TENTATIVE              "1"
 #define EAS_BUSYSTATUS_BUSY                   "2"
 #define EAS_BUSYSTATUS_OUTOFOFFICE            "3"
+
+#define EAS_BODY_TYPE_PLAINTEXT               "1"
 
 #define EAS_BOOLEAN_FALSE                     "0"
 #define EAS_BOOLEAN_TRUE                      "1"
@@ -2016,7 +2019,13 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				// DESCRIPTION
 				case ICAL_DESCRIPTION_PROPERTY:
 					{
-						// TODO...
+						// See [MS-ASAIRS] for format of the <Body> element:
+						// http://msdn.microsoft.com/en-us/library/dd299454(v=EXCHG.80).aspx
+						xmlNodePtr bodyNode = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
+						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TYPE, (const xmlChar*)EAS_BODY_TYPE_PLAINTEXT);
+						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*)EAS_BOOLEAN_FALSE);
+						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*)icalproperty_get_value_as_string(prop));
+						// All other fields are optional
 					}
 					break;
 
