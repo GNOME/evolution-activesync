@@ -536,6 +536,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		EasEmailInfo *item = l->data;
 		struct _camel_header_raw *camel_headers = NULL;
 		CamelEasMessageInfo *mi;
+		int flags = 0;
 		GSList *hl;
 
 		if (!item)
@@ -570,11 +571,16 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		mi->info.date_received = item->date_received;
 
 		if (item->attachments)
-			mi->info.flags |= CAMEL_MESSAGE_ATTACHMENTS;
+			flags |= CAMEL_MESSAGE_ATTACHMENTS;
 
-		//server_flags = eas_utils_get_server_flags (item);
+		if (item->flags & EAS_EMAIL_READ)
+			flags |= CAMEL_MESSAGE_SEEN;
+		if (item->flags & EAS_EMAIL_ANSWERED)
+			flags |= CAMEL_MESSAGE_ANSWERED;
+		if (item->flags & EAS_EMAIL_FORWARDED)
+			flags |= CAMEL_MESSAGE_FORWARDED;
 
-		camel_eas_summary_add_message_info (folder->summary, 0,//server_flags,
+		camel_eas_summary_add_message_info (folder->summary, flags,
 						    (CamelMessageInfo *) mi);
 		camel_folder_change_info_add_uid (ci, item->server_id);
 		camel_folder_change_info_recent_uid (ci, item->server_id);
