@@ -346,19 +346,31 @@ eas_folder_search_free (CamelFolder *folder, GPtrArray *uids)
 
 /********************* folder functions*************************/
 
+static gboolean
+eas_delete_messages (CamelFolder *folder, GSList *deleted_items, gboolean expunge, GCancellable *cancellable, GError **error)
+{
+	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+		     _("Deleting message not yet implemented"));
+	return FALSE;
+}
 
 static gboolean
 eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *cancellable,) GError **error)
 {
 	CamelEasStore *eas_store;
+	EasEmailHandler *handler;
 	GPtrArray *uids;
-	GSList *mi_list = NULL, *deleted_uids = NULL;
-	int mi_list_len = 0;
+	GSList *item_list = NULL, *deleted_uids = NULL;
+	int item_list_len = 0;
 	gboolean success = TRUE;
+        const gchar *full_name;
+        gchar *folder_id;
+
 	int i;
 	EVO2(GCancellable *cancellable = NULL);
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+        handler = camel_eas_store_get_handler (eas_store);
 
 	if (!camel_eas_store_connected (eas_store, error))
 		return FALSE;
@@ -368,7 +380,11 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		camel_folder_free_uids (folder, uids);
 		return TRUE;
 	}
-#if 0
+
+	full_name = camel_folder_get_full_name (folder);
+	folder_id = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
+								     full_name);
+
 	for (i = 0; success && i < uids->len; i++) {
 		guint32 flags_changed;
 		CamelEasMessageInfo *mi = (void *)camel_folder_summary_uid (folder->summary, uids->pdata[i]);
@@ -379,29 +395,53 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 
 		/* Exchange doesn't seem to have a sane representation
 		   for most flags — not even replied/forwarded. */
-		if (flags_changed & (CAMEL_MESSAGE_SEEN|CAMEL_MESSAGE_ANSWERED|CAMEL_MESSAGE_FORWARDED|CAMEL_MESSAGE_FLAGGED)) {
-			mi_list = g_slist_append (mi_list, mi);
-			mi_list_len++;
+		if (flags_changed & (CAMEL_MESSAGE_SEEN/*|CAMEL_MESSAGE_ANSWERED|CAMEL_MESSAGE_FORWARDED*/)) {
+			EasEmailInfo *item = eas_email_info_new();
+			item->server_id = g_strdup (uids->pdata[i]);
+			if (flags_changed & CAMEL_MESSAGE_SEEN) {
+				item->flags |= EAS_VALID_READ;
+				if (mi->info.flags & CAMEL_MESSAGE_SEEN)
+					item->flags |= EAS_EMAIL_READ;
+			}
+#if 0 /* ActiveSync doesn't let you update this */
+			if (flags_changed & CAMEL_MESSAGE_FLAGGED) {
+				item->flags |= EAS_VALID_IMPORTANCE;
+				if (mi->info.flags & CAMEL_MESSAGE_FLAGGED)
+					item->importance = EAS_IMPORTANCE_HIGH;
+				else
+					item->importance = EAS_IMPORTANCE_LOW;
+			}
+#endif
+			camel_message_info_free (mi);
+			item_list = g_slist_append (item_list, item);
+			item_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {
 			deleted_uids = g_slist_prepend (deleted_uids, (gpointer) camel_pstring_strdup (uids->pdata [i]));
 			camel_message_info_free (mi);
 		}
 
-		if (mi_list_len == EAS_MAX_FETCH_COUNT) {
-			success = eas_sync_mi_flags (folder, mi_list, cancellable, error);
-			mi_list = NULL;
-			mi_list_len = 0;
+		/* Don't do too many at once */
+		if (item_list_len == 25) {
+			success = eas_mail_handler_update_email (handler, 
+								 ((CamelEasSummary *) folder->summary)->sync_state,
+								 folder_id, item_list, error);
+			item_list = NULL;
+			item_list_len = 0;
 		}
 	}
 	
-	if (mi_list_len)
-		success = eas_sync_mi_flags (folder, mi_list, cancellable, error);
+	if (item_list_len)
+		success = eas_mail_handler_update_email (handler, 
+							 ((CamelEasSummary *) folder->summary)->sync_state,
+							 folder_id, item_list, error);
+
+	g_free (folder_id);
 
 	if (deleted_uids)
 		success = eas_delete_messages (folder, deleted_uids, FALSE, cancellable, error);
 
 	camel_folder_free_uids (folder, uids);
-#endif
+
 	return success;
 }
 
@@ -569,14 +609,6 @@ eas_transfer_messages_to_sync	(CamelFolder *source,
 {
 	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
 		     _("Moving messages not yet implemented"));
-	return FALSE;
-}
-
-static gboolean
-eas_delete_messages (CamelFolder *folder, GSList *deleted_items, gboolean expunge, GCancellable *cancellable, GError **error)
-{
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Deleting message not yet implemented"));
 	return FALSE;
 }
 
