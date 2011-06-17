@@ -127,8 +127,7 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 			g_string_append (ser, temp);
 			g_free(temp);
 			temp = NULL;
-			if (g_slist_next (l))	// don't add a trailing separator
-				g_string_append (ser, sep);
+			g_string_append (ser, sep);
 		}
 	}
 
