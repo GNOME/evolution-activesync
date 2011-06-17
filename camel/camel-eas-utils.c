@@ -256,7 +256,8 @@ sync_created_folders (CamelEasStore *eas_store, GSList *created_folders)
 
 		camel_eas_store_summary_new_folder (eas_store->summary, folder);
 
-		if (eas_folder_type_is_mail (folder->type)) {
+		if (eas_folder_type_is_mail (folder->type) ||
+		    folder->type == EAS_FOLDER_TYPE_USER_CREATED_GENERIC) {
 			fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
 			camel_store_folder_created ((CamelStore *) eas_store, fi);
 		}
