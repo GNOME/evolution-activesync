@@ -940,7 +940,30 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 
 
 /**
- * TODO...
+ * \brief Add additional VEVENT components to the VCALENDAR for non-trivial recurrence exceptions.
+ *
+ * EAS supports non-trivial exceptions to a recurrence rule (i.e. just just deleted recurrences,
+ * but recurrences where field values have changed, such as subject or start time/end time).
+ * The only way we can support these in iCalendar is to create them as additional VEVENTS.
+ * So we gather all the properties of these exceptions into a list during parsing (see
+ * _eas2ical_process_exceptions()) then pass thm to this function which converts them into
+ * VEVENTS.
+ *
+ * We try to maintain the link to the original VEVENT in the UID field: each of the new "child"
+ * VEVENTS has the original VEVENT's UID with the exception's start time appended, e.g.
+ *
+ *   Original VEVENT UID: 0123456789ABCDEF
+ *   Child VEVENT UIDs:   0123456789ABCDEF_20110102T103000Z
+ *                        0123456789ABCDEF_20110103T103000Z
+ *                        etc.
+ *
+ * TODO: look for this format of UID when parsing VEVENTS to try and match them up again.
+ *
+ * \param  vcalendar        The outer VCALENDAR component which owns the "parent" VEVENT
+ *                          (and into which we will add the new "child" VEVENTs)
+ * \param  vevent           The "parent" VEVENT, fully converted from EAS XML format
+ * \param  exceptionEvents  A list of hash tables, each containing the changed field values
+ *                          for a single exception
  */
 static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents)
 {
