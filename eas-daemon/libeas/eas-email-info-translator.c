@@ -132,7 +132,9 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 							//EstimatedDataSize
 							if (t->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)t->name, "EstimatedDataSize")) 						
 							{
-								attachment->estimated_size = (guint)xmlNodeGetContent(t);
+								char *tmp = (gchar *)xmlNodeGetContent (t);
+								attachment->estimated_size = strtol(tmp, NULL, 0);
+								g_free (tmp);
 								g_debug("attachment size = %d", attachment->estimated_size);							
 							}
 							//FileReference
