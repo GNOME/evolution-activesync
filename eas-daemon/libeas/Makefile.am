@@ -25,7 +25,8 @@ libeas_la_CPPFLAGS =			\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
 		$(WBXML_CFLAGS)		\
-		$(LIBICAL_CFLAGS)
+		$(LIBICAL_CFLAGS)   \
+		$(GNOMEKEYRING_CFLAGS)
 
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
@@ -35,7 +36,8 @@ libeas_la_LDFLAGS =			\
 		$(LIBXML_LIBS)		\
 		$(SOUP_LIBS)		\
 		$(WBXML_LIBS)		\
-		$(LIBICAL_LIBS)
+		$(LIBICAL_LIBS)     \
+		$(GNOMEKEYRING_LIBS)
 
 
 
@@ -87,9 +89,7 @@ libeas_la_SOURCES =		\
         eas-utils.c \
         eas-add-calendar-req.h \
         eas-add-calendar-req.c \
-		eas-connection-errors.c       
-
-
+		eas-connection-errors.c
 
 #CLEANFILES = $(MARSHAL_GENERATED)
 

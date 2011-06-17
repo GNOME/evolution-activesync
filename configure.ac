@@ -44,6 +44,7 @@ AM_GLIB_GNU_GETTEXT
 AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
+PKG_CHECK_MODULES(GNOMEKEYRING, gnome-keyring-1)
 PKG_CHECK_MODULES(GLIB, glib-2.0)
 PKG_CHECK_MODULES(EDATASERVER, libedataserver-1.2)
 PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
@@ -54,6 +55,7 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
+
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
