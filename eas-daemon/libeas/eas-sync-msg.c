@@ -16,7 +16,8 @@ struct _EasSyncMsgPrivate
     GSList* updated_items;
     GSList* deleted_items;
 
-    gchar* sync_key;
+    gchar* sync_key_in;
+	gchar* sync_key_out;
     gchar* folderID;
     gchar* account_id;
 
@@ -38,7 +39,8 @@ eas_sync_msg_init (EasSyncMsg *object)
 
     object->priv = priv = EAS_SYNC_MSG_PRIVATE (object);
 
-    priv->sync_key = NULL;
+    priv->sync_key_in = NULL;
+	priv->sync_key_out = NULL;
     priv->folderID = NULL;
     priv->account_id = NULL;
     g_debug ("eas_sync_msg_init--");
@@ -50,7 +52,8 @@ eas_sync_msg_finalize (GObject *object)
     EasSyncMsg *msg = (EasSyncMsg *) object;
     EasSyncMsgPrivate *priv = msg->priv;
 
-    g_free (priv->sync_key);
+    g_free (priv->sync_key_in);
+	g_free (priv->sync_key_out);
     g_free (priv->folderID);
     g_free (priv->account_id);
 
@@ -79,7 +82,7 @@ eas_sync_msg_new (const gchar* syncKey, const gchar* accountId, const gchar *fol
     msg = g_object_new (EAS_TYPE_SYNC_MSG, NULL);
     priv = msg->priv;
 
-    priv->sync_key = g_strdup (syncKey);
+    priv->sync_key_in = g_strdup (syncKey);
     priv->account_id = g_strdup (accountId);
     priv->folderID = g_strdup (folderID);
     priv->ItemType = type;
@@ -93,10 +96,10 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     EasSyncMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
     xmlNode *node  = NULL,
-                     *child = NULL,
-                              *collection = NULL,
-                                            *options = NULL,
-                                                       *body_pref = NULL;
+            *child = NULL,
+            *collection = NULL,
+            *options = NULL,
+            *body_pref = NULL;
     xmlNs   *ns    = NULL;
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -112,7 +115,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     xmlNewNs (node, (xmlChar *) "AirSyncBase:", (xmlChar *) "airsyncbase");
     child = xmlNewChild (node, NULL, (xmlChar *) "Collections", NULL);
     collection = xmlNewChild (child, NULL, (xmlChar *) "Collection", NULL);
-    xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key);
+    xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key_in);
     xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) priv->folderID);
     //if get changes = true - means we are pulling from the server
     if (getChanges)
@@ -391,8 +394,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
-            priv->sync_key = (gchar *) xmlNodeGetContent (node);
-            g_debug ("Got SyncKey = %s", priv->sync_key);
+            priv->sync_key_out = (gchar *) xmlNodeGetContent (node);
+            g_debug ("Got SyncKey = %s", priv->sync_key_out);
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Responses"))
@@ -648,7 +651,7 @@ eas_sync_msg_get_syncKey (EasSyncMsg* self)
 {
     EasSyncMsgPrivate *priv = self->priv;
     g_debug ("eas_sync_msg_getSyncKey +-");
-    return priv->sync_key;
+    return priv->sync_key_out;
 }
 
 
