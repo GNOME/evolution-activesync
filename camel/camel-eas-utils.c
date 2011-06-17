@@ -352,7 +352,6 @@ eas_utils_get_server_flags (EEasItem *item)
 void
 camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_updated)
 {
-#if 0
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
 	GSList *l;
@@ -361,26 +360,27 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 	folder = (CamelFolder *) eas_folder;
 
 	for (l = items_updated; l != NULL; l = g_slist_next (l)) {
-		EEasItem *item = (EEasItem *) l->data;
-		const EasId *id;
+		EasEmailInfo *item = l->data;
 		CamelEasMessageInfo *mi;
 
-		id = e_eas_item_get_id (item);
-		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, id->id);
+		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
 		if (mi) {
-			gint server_flags;
+			gint flags = mi->info.flags;
 
-			server_flags = eas_utils_get_server_flags (item);
+			if (item->flags & EAS_VALID_READ) {
+				if (item->flags & EAS_EMAIL_READ)
+					flags |= CAMEL_MESSAGE_SEEN;
+				else
+					flags &= ~CAMEL_MESSAGE_SEEN;
+			}
+
 			if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *)mi,
-						server_flags, NULL))
+								 flags, NULL))
 				camel_folder_change_info_change_uid (ci, mi->info.uid);
 
-			mi->change_key = g_strdup (id->change_key);
 			mi->info.dirty = TRUE;
 
 			camel_message_info_free (mi);
-			g_object_unref (item);
-			continue;
 		}
 
 		g_object_unref (item);
@@ -390,7 +390,6 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
-#endif
 }
 
 void
