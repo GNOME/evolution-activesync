@@ -45,7 +45,7 @@ EasSyncHandler *eas_sync_handler_new(guint64 account_uid);
  * function description:        pulls down changes in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
+ * EasSyncHandler* handler (in):  use value returned from eas_sync_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
  * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
@@ -64,7 +64,7 @@ EasSyncHandler *eas_sync_handler_new(guint64 account_uid);
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this, 
+gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* handler, 
                                                  gchar *sync_key,
                                             	 EasItemType type,
                                    		  		 const gchar* folder_id,
@@ -77,7 +77,7 @@ gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this,
  * function description:        delete items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
+ * EasSyncHandler* handler (in):  use value returned from eas_sync_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
  * gchar *folder_id (in ):      identifier for folder to delete items from    
@@ -88,7 +88,7 @@ gboolean eas_sync_handler_get_calendar_items(EasSyncHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_delete_items(EasSyncHandler* this, 
+gboolean eas_sync_handler_delete_items(EasSyncHandler* handler, 
 						gchar *sync_key,
 						const gchar* folder_id,
 						GSList *items_deleted,
@@ -98,7 +98,7 @@ gboolean eas_sync_handler_delete_items(EasSyncHandler* this,
  * function description:        update items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
+ * EasSyncHandler* handler (in):  use value returned from eas_sync_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
  * EAS_ITEM_TYPE type (in):		identify the type of data being synchronised
@@ -111,7 +111,7 @@ gboolean eas_sync_handler_delete_items(EasSyncHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_update_items(EasSyncHandler* this, 
+gboolean eas_sync_handler_update_items(EasSyncHandler* handler, 
 						gchar *sync_key,
 						EasItemType type,
 						const gchar* folder_id,
@@ -122,7 +122,7 @@ gboolean eas_sync_handler_update_items(EasSyncHandler* this,
  * function description:        add items in calendar folder
  * return value:                TRUE if function success, FALSE if error
  * params: 
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
+ * EasSyncHandler* handler (in):  use value returned from eas_sync_hander_new()
  * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned 
  *                              from exchange server for subsequent sync requests
  * EAS_ITEM_TYPE type (in):		identify the type of data being added
@@ -135,12 +135,13 @@ gboolean eas_sync_handler_update_items(EasSyncHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_sync_handler_add_items(EasSyncHandler* this, 
+gboolean eas_sync_handler_add_items(EasSyncHandler* handler, 
 						gchar *sync_key,
 						EasItemType type,
 						const gchar* folder_id,
 						GSList *items_added,
 						GError **error);
 
+G_END_DECLS
 
-#endif
+#endif /* _EAS_SYNC_H_ */
