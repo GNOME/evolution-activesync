@@ -1,0 +1,19 @@
+dnl -*- mode: Autoconf; -*-
+dnl Invoke autogen.sh to produce a configure script.
+
+# TODO
+#PKG_CHECK_MODULES(ACTIVESYNC, activesync, ACTIVESYNCFOUND=yes, [ACTIVESYNCFOUND=no])
+BACKEND_CPPFLAGS="$BACKEND_CPPFLAGS $ACTIVESYNC_CFLAGS"
+
+AC_ARG_ENABLE_BACKEND(activesync, activesync,
+                      AS_HELP_STRING([--enable-activesync], [enable access to servers via ActiveSync (default off)]),
+		      [enable_activesync="$enableval"], [enable_activesync="no"])
+
+if test "$enable_activesync" = "yes"; then
+        # test "x${ACTIVESYNCFOUND}" = "yes" || AC_MSG_ERROR([--enable-activesync requires pkg-config information for TODO, which was not found])
+        AC_DEFINE(ENABLE_ACTIVESYNC, 1, [ActiveSync available])
+else
+        # avoid linking against it if not needed
+        ACTIVESYNC_CFLAGS=
+        ACTIVESYNC_LIBS=
+fi

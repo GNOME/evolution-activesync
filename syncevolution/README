@@ -1,0 +1,8 @@
+To compile this backend as part of SyncEvolution, ensure that this directory
+is visible at src/backends/activesync (symlink or copy), run ./autogen.sh at
+the top level, and use --enable-activesync in configure.
+
+To compile as part of the activesync repo, please add a configure
+script which uses syncevolution.pc to find include files and libs. The
+Makefile.am here might already work. Set ENABLE_ACTIVESYNC in your config.h.
+
