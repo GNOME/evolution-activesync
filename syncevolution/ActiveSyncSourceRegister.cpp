@@ -174,7 +174,7 @@ public:
     }
 } ActiveSyncMemoTest;
 
-}
+} // anonymous namespace
 #endif // ENABLE_INTEGRATION_TESTS
 
 #endif // ENABLE_ACTIVESYNC

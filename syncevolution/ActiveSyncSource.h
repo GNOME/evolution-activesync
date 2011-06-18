@@ -30,20 +30,7 @@
 #include <string>
 #include <map>
 
-// TODO: include header files instead
-typedef enum {
-	EAS_ITEM_FOLDER=0,
-	EAS_ITEM_MAIL,
-	EAS_ITEM_CALENDAR,    ///< iCalendar 2.0 VEVENT
-	EAS_ITEM_CONTACT,     ///< vCard 3.0 contact
-        EAS_ITEM_TODO,        ///< iCalendar 2.0 VTODO
-        EAS_ITEM_JOURNAL,     ///< iCalendar 2.0 VJOURNAL
-
-	//TODO: add all other items here
-	
-	EAS_ITEM_LAST
-}EasItemType;
-
+#include "libeassync.h"
 
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
