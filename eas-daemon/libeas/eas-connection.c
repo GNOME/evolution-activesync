@@ -1042,8 +1042,8 @@ handle_server_response(SoupSession *session, SoupMessage *msg, gpointer data)
 	RequestValidity validity = isResponseValid(msg);
 
 	g_debug("eas_connection - handle_server_response++");
-	g_debug("  eas_connection - handle_server_response self[%x]", (unsigned int)self);
-	g_debug("  eas_connection - handle_server_response priv[%x]", (unsigned int)self->priv);
+	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
+	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
 
 	if (INVALID == validity) {
 		g_set_error (&error, EAS_CONNECTION_ERROR,
