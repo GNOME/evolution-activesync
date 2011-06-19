@@ -24,6 +24,7 @@
 #include <syncevo/SyncSource.h>
 #include <syncevo/PrefixConfigNode.h>
 #include <syncevo/SafeConfigNode.h>
+#include <syncevo/SmartPtr.h>
 
 #include <boost/bind.hpp>
 
@@ -102,6 +103,8 @@ class ActiveSyncSource :
   public:
     ActiveSyncSource(const SyncSourceParams &params) :
         TestingSyncSource(params),
+        m_context(params.m_context),
+        m_account(0),
         // Ensure that arbitrary keys can be stored (SafeConfigNode) and
         // that we use a common prefix, so that we can use the key/value store
         // also for other keys if the need ever arises).
@@ -133,9 +136,21 @@ class ActiveSyncSource :
     virtual InsertItemResult insertItem(const std::string &luid, const std::string &item);
     virtual void readItem(const std::string &luid, std::string &item);
 
+    /** to be provided by derived class */
+    virtual EasItemType getEasType() const = 0;
+
  private:
+    /** "source-config@<context>" instance which holds our username == ActiveSync account ID */
+    boost::shared_ptr<SyncConfig> m_context;
+
+    /** account ID for libeas, must be set in "username" config property */
+    guint64 m_account;
+
+    /** folder ID for libeas, optionally set in "database" config property */
+    std::string m_folder;
+
     /** smart pointer holding reference to EasSyncHandler during session */
-    // TODO: include headers - eptr<EasSyncHandler, GObject> m_handler;
+    eptr<EasSyncHandler, GObject> m_handler;
 
     /** original sync key, set when session starts */
     std::string m_startSyncKey;
@@ -162,6 +177,7 @@ class ActiveSyncContactSource : public ActiveSyncSource
     virtual std::string getMimeType() const { return "text/vcard"; }
     virtual std::string getMimeVersion() const { return "3.0"; }
 
+    EasItemType getEasType() const { return EAS_ITEM_CONTACT; }
 
 #if 0 // currently disabled, and thus using the same conversion as the Evolution backend
     void getSynthesisInfo(SynthesisInfo &info,
@@ -201,6 +217,8 @@ class ActiveSyncCalendarSource : public ActiveSyncSource
     /* partial implementation of SyncSourceSerialize */
     virtual std::string getMimeType() const { return "text/calendar"; }
     virtual std::string getMimeVersion() const { return "2.0"; }
+
+    EasItemType getEasType() const { return m_type; }
 };
 
 #endif // ENABLE_ACTIVESYNC

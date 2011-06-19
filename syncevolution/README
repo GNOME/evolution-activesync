@@ -1,3 +1,6 @@
+Compilation
+===========
+
 To compile this backend as part of SyncEvolution, ensure that this directory
 is visible at src/backends/activesync (symlink or copy), run ./autogen.sh at
 the top level, and use --enable-activesync in configure. To work around the
@@ -10,4 +13,44 @@ the sources.
 To compile as part of the activesync repo, please add a configure
 script which uses syncevolution.pc to find include files and libs. The
 Makefile.am here might already work. Set ENABLE_ACTIVESYNC in your config.h.
+
+
+Quickstart
+==========
+
+Check that it is enabled:
+
+$ syncevolution backend=? | grep -i activesync
+   ActiveSync Address Book = eas-contacts
+   ActiveSync Events = eas-events
+   ActiveSync Todos = eas-todos
+   ActiveSync Memos = eas-memos
+
+Configure access to the server:
+$ syncevolution --configure \
+                username=<ActiveSync account ID, as decimal or hexadecimal value> \
+                addressbook/backend=eas-contacts \
+                calendar/backends=eas-events \
+                todo/backends=eas-todos \
+                memo/backends=eas-memos \
+                source-config@exchange
+
+List items:
+$ syncevolution --print-items source-config@exchange [calendar|addressbook|todo|memo]
+
+Debugging:
+- run with --daemon=no (otherwise syncevo-dbus-server will execute the operation)
+- set SYNCEVOLUTION_DEBUG (otherwise SyncEvolution will suppress stdout/stderr from libs)
+
+Configure synchronization:
+$ syncevolution --configure \
+                --template SyncEvolution_Client \
+                syncURL=local://@exchange \
+                exchange
+
+Run a sync (involving all four data types!):
+$ syncevolution exchange
+
+Sync only events:
+$ syncevolution exchange calendar
 
