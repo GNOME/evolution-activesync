@@ -513,9 +513,9 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         const gchar *full_name;
         gchar *id;
         gchar *sync_state;
+	gboolean res = TRUE;
 	gboolean more_available = TRUE;
 	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
-        GError *rerror = NULL;
         EVO2(GCancellable *cancellable = NULL);
 
         full_name = camel_folder_get_full_name (folder);
@@ -547,12 +547,13 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		guint total, unread;
 		items_created = items_updated = items_deleted = NULL;
 
-		if (!eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
-							      &items_created,
-							      &items_updated, &items_deleted,
-							      &more_available, error)) {
-			goto out;
-		}
+		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
+							       &items_created,
+							       &items_updated, &items_deleted,
+							       &more_available, error);
+		if (!res)
+			break;
+
 		if (items_deleted)
 			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
 
@@ -571,18 +572,15 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 
                 camel_folder_summary_save_to_db (folder->summary, NULL);
 
-        } while (!rerror && more_available);
+        } while (more_available);
 
-        if (rerror)
-                g_propagate_error (error, rerror);
- out:
         g_mutex_lock (priv->state_lock);
         priv->refreshing = FALSE;
         g_mutex_unlock (priv->state_lock);
         g_object_unref (handler);
         g_free (id);
 
-	return TRUE;
+	return res;
 }
 
 static gboolean
