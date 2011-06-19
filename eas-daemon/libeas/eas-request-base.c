@@ -93,7 +93,7 @@ struct _EasConnection*
 eas_request_base_GetConnection(EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_GetConnection++ %x", (unsigned int)priv->connection );
+    g_debug("eas_request_base_GetConnection++ %lx", (unsigned long)priv->connection );
     return priv->connection;
 }
 
