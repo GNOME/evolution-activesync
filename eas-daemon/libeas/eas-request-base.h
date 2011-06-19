@@ -3,6 +3,7 @@
 #define _EAS_REQUEST_BASE_H_
 
 #include <glib-object.h>
+#include <libsoup/soup.h>
 #include <libxml/xmlreader.h> // xmlDoc
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
@@ -73,6 +74,9 @@ void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
 
 struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
+
+SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
+void eas_request_base_SetSoupMessage(EasRequestBase* self, SoupMessage *soup_message);
 
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
 void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);
