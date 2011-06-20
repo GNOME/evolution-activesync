@@ -4,7 +4,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 
-#include "../../libeassync/src/eas-cal-info.h"
+#include "../../libeassync/src/eas-item-info.h"
 
 
 

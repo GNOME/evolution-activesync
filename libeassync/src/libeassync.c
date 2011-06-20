@@ -16,7 +16,7 @@
 
 #include "../../eas-daemon/src/activesyncd-common-defs.h"
 #include "libeassync.h"
-#include "eas-cal-info.h"
+#include "eas-item-info.h"
 
 #include "../../logger/eas-logger.h"
 

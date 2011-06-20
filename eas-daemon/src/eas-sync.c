@@ -8,7 +8,7 @@
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
 #include "eas-add-calendar-req.h"
-#include "../../libeassync/src/eas-cal-info.h"
+#include "../../libeassync/src/eas-item-info.h"
 
 #include "../libeas/eas-connection.h"
 #include "eas-mail.h"

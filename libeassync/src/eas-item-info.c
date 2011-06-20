@@ -6,7 +6,7 @@
  */
 
 
-#include "eas-cal-info.h"
+#include "eas-item-info.h"
 
 #include <stdio.h>
 #include <stdlib.h>
