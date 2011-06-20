@@ -8,6 +8,7 @@
 #include "../libeasmail/src/eas-email-info.h"
 #include "../libeasmail/src/eas-attachment.h"
 
+//gchar * g_account_id = "1303900871.4418.1@lorna-laptop";
 gchar * g_account_id = "123456789@andygould";
 //gchar * g_account_id = "123456789";
 
