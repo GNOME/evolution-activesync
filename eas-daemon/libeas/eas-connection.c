@@ -439,7 +439,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
 
     soup_message_headers_append (msg->request_headers,
                                  "MS-ASProtocolVersion",
-                                 "14.0");
+                                "14.0");
 
     soup_message_headers_append (msg->request_headers,
                                  "User-Agent",

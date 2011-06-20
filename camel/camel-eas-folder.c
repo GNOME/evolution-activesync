@@ -528,6 +528,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3 (GCancellable *cancellable,) GE
     do
     {
         guint total, unread;
+        items_created = items_updated = items_deleted = NULL;
 
         if (!eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
                                                       &items_created,

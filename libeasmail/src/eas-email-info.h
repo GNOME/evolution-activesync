@@ -42,6 +42,8 @@ struct _EasEmailInfo{
 	GSList *attachments;		// list of EasAttachments this email has. AS calls id the 'file reference'. Immutable
 	guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED TODO not clear where in the EAS xml some of these come from
 	GSList *categories;		    // list of categories (strings) that the email belongs to 	
+	gsize estimated_size;
+	time_t date_received;
 	/*
 	conversation_id
     conversation_index

@@ -16,6 +16,7 @@ struct _EasSyncMsgPrivate
     GSList* updated_items;
     GSList* deleted_items;
 
+	gboolean more_available;
     gchar* sync_key_in;
 	gchar* sync_key_out;
     gchar* folderID;
@@ -39,6 +40,7 @@ eas_sync_msg_init (EasSyncMsg *object)
 
     object->priv = priv = EAS_SYNC_MSG_PRIVATE (object);
 
+	priv->more_available = FALSE;
     priv->sync_key_in = NULL;
 	priv->sync_key_out = NULL;
     priv->folderID = NULL;
@@ -82,6 +84,7 @@ eas_sync_msg_new (const gchar* syncKey, const gchar* accountId, const gchar *fol
     msg = g_object_new (EAS_TYPE_SYNC_MSG, NULL);
     priv = msg->priv;
 
+	priv->more_available = FALSE;
     priv->sync_key_in = g_strdup (syncKey);
     priv->account_id = g_strdup (accountId);
     priv->folderID = g_strdup (folderID);
@@ -130,7 +133,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
             options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
             xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
             xmlNewChild (options, NULL, (xmlChar *) "MIMESupport", (xmlChar*) "2");
-            xmlNewChild (options, NULL, (xmlChar *) "MIMETruncation", (xmlChar*) "0");
+            xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"1"); // First 4KiB
 
             body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
             xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4"); // Plain text 1, HTML 2, MIME 4
@@ -398,6 +401,12 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
             g_debug ("Got SyncKey = %s", priv->sync_key_out);
             continue;
         }
+        if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "MoreAvailable"))
+		{
+			priv->more_available = TRUE;
+			g_debug ("Got <MoreAvailable/>");
+			continue;
+		}
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Responses"))
         {
             g_debug ("Responses:\n");
@@ -654,4 +663,12 @@ eas_sync_msg_get_syncKey (EasSyncMsg* self)
     return priv->sync_key_out;
 }
 
+gboolean
+eas_sync_msg_get_more_available (EasSyncMsg *self)
+{
+	EasSyncMsgPrivate *priv = self->priv;
+	g_debug ("eas_sync_msg_get_more_available +-");
+	return priv->more_available;
+
+}
 

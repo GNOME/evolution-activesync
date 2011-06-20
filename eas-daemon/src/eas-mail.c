@@ -402,6 +402,7 @@ eas_mail_sync_folder_email (EasMail* self,
     // TODO ActivateFinish needs to be refactored to serialise the data.
     ret = eas_sync_req_ActivateFinish (req,
                                        &ret_sync_key,
+                                       &ret_more_available,
                                        &a /* &ret_add_email_array     */,
                                        &b /* &ret_changed_email_array */,
                                        &c /* &ret_deleted_email_array */,

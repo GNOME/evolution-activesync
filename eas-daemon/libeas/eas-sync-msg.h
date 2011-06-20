@@ -46,6 +46,7 @@ GSList* eas_sync_msg_get_added_items (EasSyncMsg* self);
 GSList* eas_sync_msg_get_updated_items (EasSyncMsg* self);
 GSList* eas_sync_msg_get_deleted_items (EasSyncMsg* self);
 gchar* eas_sync_msg_get_syncKey(EasSyncMsg* self);
+gboolean eas_sync_msg_get_more_available(EasSyncMsg* self);
 
 G_END_DECLS
 

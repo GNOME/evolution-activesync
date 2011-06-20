@@ -2,17 +2,61 @@
 /*
 
  */
-
+#define _XOPEN_SOURCE
+#define _BSD_SOURCE
+#include <time.h>
 #include "eas-email-info-translator.h"
 #include "../../libeasmail/src/eas-folder.h"
 #include "../../libeasmail/src/eas-attachment.h"
 #include "../../libeasmail/src/eas-email-info.h"
 #include <libxml/tree.h>
+#include <string.h>
+#include <ctype.h>
 
+static gchar *
+parse_header (gchar *str, GSList **headers)
+{
+	EasEmailHeader *header;
+
+	char *eol, *colon, *next;
+
+	colon = strchr (str, ':');
+	if (!colon)
+		return NULL;
+
+	eol = strchr (str, '\n');
+	if (eol < colon)
+		return NULL;
+ more:
+	if (!eol)
+		return NULL;
+
+	next = eol + 1; // The \r or first char of next line
+	if (*next == '\r')
+		*(next++) = ' ';
+
+	if (*next == ' ' || *next == '\t') { // Header continuation
+		*eol = ' ';
+		eol = strchr (next, '\n');
+		goto more;
+	}
+
+
+	*eol = 0;
+	*(colon++) = 0;
+	while (*colon && isspace (*colon))
+		colon++;
+
+	header = g_malloc0(sizeof(EasEmailHeader));
+	header->name = g_strdup (str);
+	header->value = g_strdup (colon);
+	*headers = g_slist_append(*headers, header);
+	return next;
+}
 
 gchar *
 eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
-{
+ {
     gchar *result = NULL;
     g_debug ("eas_add_email_appdata_parse_response++");
 
@@ -20,7 +64,7 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 
     // Parse the email specific (applicationdata) part of a sync response
     // and generate the app-specific parts of the EasEmailInfo structure
-    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "ApplicationData"))
+    if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ApplicationData")) 
     {
         EasEmailInfo *email_info = eas_email_info_new();
         xmlNode *n = node;
@@ -33,6 +77,10 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 
         for (n = n->children; n; n = n->next)
         {
+#if 0 // Don't bother with these; we should see the *real* headers.
+      // Perhaps we should note these and fill them in *if* we don't get the real
+	  // info from the real headers?
+
             //To
             if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "To"))
             {
@@ -73,14 +121,18 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
                 header->name = g_strdup ("Reply-To");   //MIME equivalent
                 header->value = (gchar *) xmlNodeGetContent (n);
                 headers = g_slist_append (headers, header);
-            }
+			} else
+#endif
             //Received TODO date-received is NOT a standard MIME header and should be put into a separate field in email info
-            else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "DateReceived"))
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "DateReceived")) 
             {
-                EasEmailHeader *header = g_malloc0 (sizeof (EasEmailHeader));
-                header->name = g_strdup ("Received");   // MIME equivalent
-                header->value = (gchar *) xmlNodeGetContent (n);
-                headers = g_slist_append (headers, header);
+				gchar *received;
+				struct tm tm;
+
+				received = (gchar *)xmlNodeGetContent (n);
+				if (strptime (received, "%Y-%m-%dT%H:%M:%S", &tm))
+					email_info->date_received = timegm (&tm);
+				g_free (received);
             }
             //DisplayTo  - is there an equivalent standard email header?
             //Importance
@@ -132,7 +184,9 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
                             //EstimatedDataSize
                             if (t->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) t->name, "EstimatedDataSize"))
                             {
-                                attachment->estimated_size = (guint) xmlNodeGetContent (t);
+								char *tmp = (gchar *)xmlNodeGetContent (t);
+								attachment->estimated_size = strtol(tmp, NULL, 0);
+								g_free (tmp);
                                 g_debug ("attachment size = %d", attachment->estimated_size);
                             }
                             //FileReference
@@ -161,6 +215,35 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
                     }
                 }
             }
+
+			// Body
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Body")) 
+			{
+				xmlNode *t;
+				g_debug("found body");
+				for (t = n->children; t; t = t->next)
+				{
+					// DisplayName
+					if (t->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)t->name, "EstimatedDataSize"))
+					{
+						char *tmp = (gchar *)xmlNodeGetContent (t);
+						email_info->estimated_size = strtol(tmp, NULL, 0);
+						g_free (tmp);
+						g_debug("body size = %zd", email_info->estimated_size);
+					}
+					// Data
+					if (t->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)t->name, "Data"))
+					{
+						gchar *data = (gchar *)xmlNodeGetContent (t);
+						gchar *p = data;
+						while (p && *p != '\n' && *p != '\r')
+							p = parse_header (p, &headers);
+
+						g_free (data);
+					}
+				}
+			}
+
         } // end for
 
         email_info->server_id = server_id;
