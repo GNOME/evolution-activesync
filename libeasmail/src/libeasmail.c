@@ -458,14 +458,14 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
     if (!ret)   // failed - cleanup lists
     {
         g_assert (error == NULL || *error != NULL);
-        g_slist_foreach (*emailinfos_created, (GFunc) g_free, NULL);
-        g_free (*emailinfos_created);
+		g_slist_foreach(*emailinfos_created, (GFunc)g_object_unref, NULL);
+		g_slist_free(*emailinfos_created);
         *emailinfos_created = NULL;
-        g_slist_foreach (*emailinfos_updated, (GFunc) g_free, NULL);
-        g_free (*emailinfos_updated);
+		g_slist_foreach(*emailinfos_updated, (GFunc)g_object_unref, NULL);
+		g_slist_free(*emailinfos_updated);
         *emailinfos_updated = NULL;
-        g_slist_foreach (*emailinfos_deleted, (GFunc) g_free, NULL);
-        g_free (*emailinfos_deleted);
+		g_slist_foreach(*emailinfos_deleted, (GFunc)g_object_unref, NULL);
+		g_slist_free(*emailinfos_deleted);
         *emailinfos_deleted = NULL;
     }
     g_debug ("eas_mail_handler_sync_folder_email_info--");

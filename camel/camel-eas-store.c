@@ -317,7 +317,8 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
         gint64 ftype;
 
         ftype = camel_eas_store_summary_get_folder_type (eas_summary, l->data, NULL);
-        if (!eas_folder_type_is_mail (ftype))
+		if (!eas_folder_type_is_mail (ftype) &&
+		    ftype != EAS_FOLDER_TYPE_USER_CREATED_GENERIC)
             continue;
 
         fi = camel_eas_utils_build_folder_info (store, l->data);

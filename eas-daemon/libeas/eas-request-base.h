@@ -3,6 +3,7 @@
 #define _EAS_REQUEST_BASE_H_
 
 #include <glib-object.h>
+#include <libsoup/soup.h>
 #include <libxml/xmlreader.h> // xmlDoc
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
@@ -53,8 +54,11 @@ typedef enum {
 typedef enum {
 	EAS_ITEM_FOLDER=0,
 	EAS_ITEM_MAIL,
-	EAS_ITEM_CALENDAR,
-	EAS_ITEM_CONTACT,
+	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
+	EAS_ITEM_CONTACT,     /**< vCard 3.0 contact */
+        EAS_ITEM_TODO,        /**< iCalendar 2.0 VTODO */
+        EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
+
 	//TODO: add all other items here
 	
 	EAS_ITEM_LAST
@@ -70,6 +74,9 @@ void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
 
 struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
+
+SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
+void eas_request_base_SetSoupMessage(EasRequestBase* self, SoupMessage *soup_message);
 
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
 void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);

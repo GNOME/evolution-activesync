@@ -356,6 +356,21 @@ void eas_connection_resume_request (EasConnection* self)
     g_debug ("eas_connection_resume_request--");
 }
 
+static gboolean
+eas_queue_soup_message (gpointer _request)
+{
+	struct _EasRequestBase *request = _request;
+	EasConnection *self = eas_request_base_GetConnection (request);
+	SoupMessage *msg = eas_request_base_GetSoupMessage (request);
+	EasConnectionPrivate *priv = self->priv;
+
+    soup_session_queue_message(priv->soup_session, 
+                               msg, 
+                               handle_server_response, 
+                               request);
+
+	return FALSE;
+}
 /**
  * WBXML encode the message and send to exchange server via libsoup.
  * May also be required to temporarily hold the request message whilst
@@ -381,6 +396,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
     WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
+	GSource *source;
 
     g_debug ("eas_connection_send_request++");
     // If not the provision request, store the request
@@ -482,10 +498,12 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
                               (gchar*) wbxml,
                               wbxml_len);
 
-    soup_session_queue_message (priv->soup_session,
-                                msg,
-                                handle_server_response,
-                                request);
+	eas_request_base_SetSoupMessage (request, msg);
+
+	source = g_idle_source_new ();
+	g_source_set_callback (source, eas_queue_soup_message, request, NULL);
+	g_source_attach (source, priv->soup_context);
+
 finish:
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
@@ -1269,8 +1287,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     RequestValidity validity = isResponseValid (msg);
 
     g_debug ("eas_connection - handle_server_response++");
-    g_debug ("  eas_connection - handle_server_response self[%x]", (unsigned int) self);
-    g_debug ("  eas_connection - handle_server_response priv[%x]", (unsigned int) self->priv);
+	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
+	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
 
     if (INVALID == validity)
     {

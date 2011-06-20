@@ -62,36 +62,76 @@ eas_transport_get_name (CamelService *service,
 
 static gboolean
 eas_send_to_sync (CamelTransport *transport,
-                  CamelMimeMessage *message,
-                  CamelAddress *from,
-                  CamelAddress *recipients,
-                  EVO3 (GCancellable *cancellable,)
-                  GError **error)
+		  CamelMimeMessage *message,
+		  CamelAddress *from,
+		  CamelAddress *recipients,
+		  EVO3(GCancellable *cancellable,)
+		  GError **error)
 {
-    EVO2 (GCancellable *cancellable = NULL;)
-    CamelService *service;
-    EasEmailHandler *handler;
-    const gchar* account_uid;
-    gboolean res;
+	EVO2(GCancellable *cancellable = NULL;)
+	CamelService *service;
+	EasEmailHandler *handler;
+	CamelStream *mimefile, *filtered;
+	CamelMimeFilter *filter;
+	guint64 account_uid;
+	gchar *fname;
+	const gchar *msgid;
+	int fd;
+	gboolean res;
 
-    service = CAMEL_SERVICE (transport);
-    account_uid = camel_url_get_param (service->url, "account_uid");
+	service = CAMEL_SERVICE (transport);
+	account_uid = g_ascii_strtoull (camel_url_get_param (service->url, "account_uid"), NULL, 0);
 
-    handler = eas_mail_handler_new (account_uid);
-    if (!handler)
-    {
-        g_set_error (error, CAMEL_SERVICE_ERROR,
-                     CAMEL_SERVICE_ERROR_NOT_CONNECTED,
-                     _ ("Service not connected"));
-        return FALSE;
-    }
+	handler = eas_mail_handler_new (account_uid);
+	if (!handler) {
+		g_set_error (error, CAMEL_SERVICE_ERROR,
+			     CAMEL_SERVICE_ERROR_NOT_CONNECTED,
+			     _("Service not connected"));
+		return FALSE;
+	}
 
-    //    res = camel_eas_utils_create_mime_message (handler, "SendOnly", NULL,
-    //                           message, 0, from,
-    //                           NULL, NULL,
-    //                           cancellable, error);
-    g_object_unref (handler);
-    return res;
+	/* FIXME: Check that From/To/Cc headers match the 'from' and 'recipients'
+	   arguments. If not, return an error because Exchange is broken can cannot
+	   handle a mismatch (such as with Resent-From/Resent-To) */
+
+	fname = g_build_filename (g_get_tmp_dir(), "eas-out.XXXXXX", NULL);
+	fd = g_mkstemp (fname);
+	if (fd == -1) {
+		g_set_error(error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+			    _("Failed to create temporary file for sending message"));
+		g_free (fname);
+		return FALSE;
+	}
+
+	mimefile = camel_stream_fs_new_with_fd (fd);
+
+	camel_mime_message_set_best_encoding (message,
+					      CAMEL_BESTENC_GET_ENCODING,
+					      CAMEL_BESTENC_8BIT);
+
+	filtered = camel_stream_filter_new (mimefile);
+
+	filter = camel_mime_filter_crlf_new (CAMEL_MIME_FILTER_CRLF_ENCODE,
+				     CAMEL_MIME_FILTER_CRLF_MODE_CRLF_ONLY);
+	camel_stream_filter_add (CAMEL_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
+
+	EVO3_sync(camel_data_wrapper_write_to_stream)
+				(CAMEL_DATA_WRAPPER (message),
+				 filtered, EVO3(cancellable,) error);
+	camel_stream_flush (filtered, EVO3(cancellable,) error);
+	camel_stream_flush (mimefile, EVO3(cancellable,) error);
+
+	g_object_unref (mimefile);
+	g_object_unref (filtered);
+
+	msgid = camel_mime_message_get_message_id (message);
+	res = eas_mail_handler_send_email(handler, msgid, fname, error);
+
+	unlink (fname);
+	g_free (fname);
+	g_object_unref (handler);
+	return res;
 }
 
 static void

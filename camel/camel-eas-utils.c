@@ -263,21 +263,20 @@ sync_updated_folders (CamelEasStore *store, GSList *updated_folders)
 static void
 sync_created_folders (CamelEasStore *eas_store, GSList *created_folders)
 {
-    GSList *l;
+	GSList *l;
 
-    for (l = created_folders; l != NULL; l = g_slist_next (l))
-    {
-        EasFolder *folder = (EasFolder *) l->data;
-        CamelFolderInfo *fi;
+	for (l = created_folders; l != NULL; l = g_slist_next (l)) {
+		EasFolder *folder = (EasFolder *) l->data;
+		CamelFolderInfo *fi;
 
-        camel_eas_store_summary_new_folder (eas_store->summary, folder);
+		camel_eas_store_summary_new_folder (eas_store->summary, folder);
 
-        if (eas_folder_type_is_mail (folder->type))
-        {
-            fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
-            camel_store_folder_created ( (CamelStore *) eas_store, fi);
-        }
-    }
+		if (eas_folder_type_is_mail (folder->type) ||
+		    folder->type == EAS_FOLDER_TYPE_USER_CREATED_GENERIC) {
+			fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
+			camel_store_folder_created ((CamelStore *) eas_store, fi);
+		}
+	}
 }
 
 void
@@ -301,35 +300,34 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *created_folders, GSLis
 void
 camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_deleted)
 {
-#if 0
+	CamelFolder *folder;
+	const gchar *full_name;
+	GSList *uids_deleted = NULL;
+	CamelFolderChangeInfo *ci;
+	CamelEasStore *eas_store;
+	GSList *l;
 
-    CamelFolder *folder;
-    const gchar *full_name;
-    CamelFolderChangeInfo *ci;
-    CamelEasStore *eas_store;
-    GSList *l;
+	ci = camel_folder_change_info_new ();
+	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
 
-    ci = camel_folder_change_info_new ();
-    eas_store = (CamelEasStore *) camel_folder_get_parent_store ( (CamelFolder *) eas_folder);
+	folder = (CamelFolder *) eas_folder;
+	full_name = camel_folder_get_full_name (folder);
 
-    folder = (CamelFolder *) eas_folder;
-    full_name = camel_folder_get_full_name (folder);
+	for (l = items_deleted; l != NULL; l = g_slist_next (l)) {
+		EasEmailInfo *item = l->data;
 
-    for (l = items_deleted; l != NULL; l = g_slist_next (l))
-    {
-        gchar *id = (gchar *) l->data;
+		camel_eas_summary_delete_id (folder->summary, item->server_id);
+		camel_folder_change_info_remove_uid (ci, item->server_id);
+		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
+	}
+	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 
-        camel_eas_summary_delete_id (folder->summary, id);
-        camel_folder_change_info_remove_uid (ci, id);
-    }
-    camel_db_delete_uids ( ( (CamelStore *) eas_store)->cdb_w, full_name, items_deleted, NULL);
+	camel_folder_changed ((CamelFolder *) eas_folder, ci);
+	camel_folder_change_info_free (ci);
 
-    camel_folder_changed ( (CamelFolder *) eas_folder, ci);
-    camel_folder_change_info_free (ci);
-
-    g_slist_foreach (items_deleted, (GFunc) g_free, NULL);
-    g_slist_free (items_deleted);
-#endif
+	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
+	g_slist_free (items_deleted);
+	g_slist_free (uids_deleted);
 }
 #if 0
 static gint
@@ -366,272 +364,131 @@ eas_utils_get_server_flags (EEasItem *item)
     return server_flags;
 }
 
-static const gchar *
-form_email_string_from_mb (const EasMailbox *mb)
-{
-    const gchar *ret = NULL;
-
-    if (mb)
-    {
-        GString *str;
-
-        str = g_string_new ("");
-        if (mb->name && mb->name[0])
-        {
-            str = g_string_append (str, mb->name);
-            str = g_string_append (str, " ");
-        }
-        else
-        {
-            str = g_string_append (str, mb->email);
-            str = g_string_append (str, " ");
-        }
-
-        g_string_append (str, "<");
-        str = g_string_append (str, mb->email);
-        g_string_append (str, ">");
-
-        ret = camel_pstring_add (str->str, TRUE);
-        g_string_free (str, FALSE);
-
-        return ret;
-    }
-    else
-        return camel_pstring_strdup ("");
-}
-
-static const gchar *
-form_recipient_list (const GSList *recipients)
-{
-    const GSList *l;
-    GString *str = NULL;
-    const gchar *ret;
-
-    if (!recipients)
-        return NULL;
-
-    for (l = recipients; l != NULL; l = g_slist_next (l))
-    {
-        EasMailbox *mb = (EasMailbox *) l->data;
-        const gchar *mb_str = form_email_string_from_mb (mb);
-
-        if (!str)
-            str = g_string_new ("");
-        else
-            str = g_string_append (str, ", ");
-
-        str = g_string_append (str, mb_str);
-    }
-
-    ret = camel_pstring_add (str->str, TRUE);
-    g_string_free (str, FALSE);
-
-    return ret;
-}
-
-static guint8 *
-get_md5_digest (const guchar *str)
-{
-    guint8 *digest;
-    gsize length;
-    GChecksum *checksum;
-
-    length = g_checksum_type_get_length (G_CHECKSUM_MD5);
-    digest = g_malloc0 (length);
-
-    checksum = g_checksum_new (G_CHECKSUM_MD5);
-    g_checksum_update (checksum, str, -1);
-    g_checksum_get_digest (checksum, digest, &length);
-    g_checksum_free (checksum);
-
-    return digest;
-}
-
-static void
-eas_set_threading_data (CamelEasMessageInfo *mi, EEasItem *item)
-{
-    const gchar *references, *inreplyto;
-    gint count = 0;
-    const gchar *message_id;
-    struct _camel_header_references *refs, *irt, *scan;
-    guint8 *digest;
-    gchar *msgid;
-
-    /* set message id */
-    message_id = e_eas_item_get_msg_id (item);
-    msgid = camel_header_msgid_decode (message_id);
-    if (msgid)
-    {
-        digest = get_md5_digest ( (const guchar *) msgid);
-        memcpy (mi->info.message_id.id.hash, digest, sizeof (mi->info.message_id.id.hash));
-        g_free (digest);
-        g_free (msgid);
-    }
-
-    /* Process References: header */
-    references = e_eas_item_get_references (item);
-    refs = camel_header_references_decode (references);
-
-    /* Prepend In-Reply-To: contents to References: for summary info */
-    inreplyto = e_eas_item_get_in_replyto (item);
-    irt = camel_header_references_inreplyto_decode (inreplyto);
-    if (irt)
-    {
-        irt->next = refs;
-        refs = irt;
-    }
-    if (!refs)
-        return;
-
-    count = camel_header_references_list_size (&refs);
-    mi->info.references = g_malloc (sizeof (*mi->info.references) + ( (count - 1) * sizeof (mi->info.references->references[0])));
-    scan = refs;
-    count = 0;
-
-    while (scan)
-    {
-        digest = get_md5_digest ( (const guchar *) scan->id);
-        memcpy (mi->info.references->references[count].id.hash, digest, sizeof (mi->info.message_id.id.hash));
-        g_free (digest);
-
-        count++;
-        scan = scan->next;
-    }
-
-    mi->info.references->size = count;
-    camel_header_references_list_clear (&refs);
-}
 #endif
 
 void
 camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_updated)
 {
-#if 0
-    CamelFolder *folder;
-    CamelFolderChangeInfo *ci;
-    GSList *l;
+	CamelFolder *folder;
+	CamelFolderChangeInfo *ci;
+	GSList *l;
 
-    ci = camel_folder_change_info_new ();
-    folder = (CamelFolder *) eas_folder;
+	ci = camel_folder_change_info_new ();
+	folder = (CamelFolder *) eas_folder;
 
-    for (l = items_updated; l != NULL; l = g_slist_next (l))
-    {
-        EEasItem *item = (EEasItem *) l->data;
-        const EasId *id;
-        CamelEasMessageInfo *mi;
+	for (l = items_updated; l != NULL; l = g_slist_next (l)) {
+		EasEmailInfo *item = l->data;
+		CamelEasMessageInfo *mi;
 
-        id = e_eas_item_get_id (item);
-        mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, id->id);
-        if (mi)
-        {
-            gint server_flags;
+		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
+		if (mi) {
+			gint flags = mi->info.flags;
 
-            server_flags = eas_utils_get_server_flags (item);
-            if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *) mi,
-                                                     server_flags, NULL))
-                camel_folder_change_info_change_uid (ci, mi->info.uid);
+			if (item->flags & EAS_VALID_READ) {
+				if (item->flags & EAS_EMAIL_READ)
+					flags |= CAMEL_MESSAGE_SEEN;
+				else
+					flags &= ~CAMEL_MESSAGE_SEEN;
+			}
+			if (item->flags & EAS_VALID_IMPORTANCE) {
+				if (item->importance == EAS_IMPORTANCE_HIGH)
+					flags |= CAMEL_MESSAGE_FLAGGED;
+				else
+					flags &= ~CAMEL_MESSAGE_FLAGGED;
+			}
+			if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *)mi,
+								 flags, NULL))
+				camel_folder_change_info_change_uid (ci, mi->info.uid);
 
-            mi->change_key = g_strdup (id->change_key);
-            mi->info.dirty = TRUE;
+			mi->info.dirty = TRUE;
 
-            camel_message_info_free (mi);
-            g_object_unref (item);
-            continue;
-        }
+			camel_message_info_free (mi);
+		}
 
-        g_object_unref (item);
-    }
+		g_object_unref (item);
+	}
 
-    camel_folder_summary_save_to_db (folder->summary, NULL);
-    camel_folder_changed ( (CamelFolder *) eas_folder, ci);
-    camel_folder_change_info_free (ci);
-    g_slist_free (items_updated);
-#endif
+	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_changed ((CamelFolder *) eas_folder, ci);
+	camel_folder_change_info_free (ci);
+	g_slist_free (items_updated);
 }
 
 void
 camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_created)
 {
-    CamelFolder *folder;
-    CamelFolderChangeInfo *ci;
-    GSList *l;
+	CamelFolder *folder;
+	CamelFolderChangeInfo *ci;
+	GSList *l;
 
-    if (!items_created)
-        return;
+	if (!items_created)
+		return;
 
-    ci = camel_folder_change_info_new ();
-    folder = (CamelFolder *) eas_folder;
+	ci = camel_folder_change_info_new ();
+	folder = (CamelFolder *) eas_folder;
 
-    for (l = items_created; l != NULL; l = g_slist_next (l))
-    {
-        EasEmailInfo *item = l->data;
-        CamelEasMessageInfo *mi;
-        GSList *hl;
+	for (l = items_created; l != NULL; l = g_slist_next (l)) {
+		EasEmailInfo *item = l->data;
+		struct _camel_header_raw *camel_headers = NULL;
+		CamelEasMessageInfo *mi;
+		int flags = 0;
+		GSList *hl;
 
-        if (!item)
-            continue;
+		if (!item)
+			continue;
 
-        printf ("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
+		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
 
-        mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
-        if (mi)
-        {
-            camel_message_info_free (mi);
-            g_object_unref (item);
-            continue;
-        }
+		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
+		if (mi) {
+			camel_message_info_free (mi);
+			g_object_unref (item);
+			continue;
+		}
 
-        mi = (CamelEasMessageInfo *) camel_message_info_new (folder->summary);
+		for (hl = item->headers; hl; hl = g_slist_next(hl)) {
+			EasEmailHeader *hdr = hl->data;
 
-        for (hl = item->headers; hl; hl = g_slist_next (hl))
-        {
-            EasEmailHeader *hdr = hl->data;
+			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
+		}
 
-            printf (" %s: %s\n", hdr->name, hdr->value);
+		mi = (CamelEasMessageInfo *)camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
+		if (mi->info.content == NULL) {
+			//mi->info.content = camel_folder_summary_content_info_new_from_header (folder->summary, camel_headers);
+			mi->info.content = camel_folder_summary_content_info_new (folder->summary);
+			mi->info.content->type = camel_content_type_new ("multipart", "mixed");
+		}
 
-            if (!g_ascii_strcasecmp (hdr->name, "Subject"))
-                mi->info.subject = camel_pstring_strdup (hdr->value);
-            else if (!g_ascii_strcasecmp (hdr->name, "From"))
-                mi->info.from = camel_pstring_strdup (hdr->value);
-            else if (!g_ascii_strcasecmp (hdr->name, "Cc"))
-                mi->info.cc = camel_pstring_strdup (hdr->value);
-            else if (!g_ascii_strcasecmp (hdr->name, "To"))
-                mi->info.to = camel_pstring_strdup (hdr->value);
-            else if (!g_ascii_strcasecmp (hdr->name, "Received"))
-                mi->info.date_received = time (NULL);
-        }
+		camel_header_raw_clear (&camel_headers);
 
-        if (mi->info.content == NULL)
-        {
-            mi->info.content = camel_folder_summary_content_info_new (folder->summary);
-            mi->info.content->type = camel_content_type_new ("multipart", "mixed");
-        }
+		mi->info.uid = camel_pstring_strdup (item->server_id);
+		mi->info.size = item->estimated_size;
+		mi->info.date_received = item->date_received;
 
-        mi->info.uid = camel_pstring_strdup (item->server_id);
-        //      mi->info.size = e_eas_item_get_size (item);
+		if (item->attachments)
+			flags |= CAMEL_MESSAGE_ATTACHMENTS;
 
-        //      mi->info.date_sent = e_eas_item_get_date_sent (item);
-        //      mi->info.date_received = e_eas_item_get_date_received (item);
+		if (item->flags & EAS_EMAIL_READ)
+			flags |= CAMEL_MESSAGE_SEEN;
+		if (item->flags & EAS_EMAIL_ANSWERED)
+			flags |= CAMEL_MESSAGE_ANSWERED;
+		if (item->flags & EAS_EMAIL_FORWARDED)
+			flags |= CAMEL_MESSAGE_FORWARDED;
+		if (item->importance == EAS_IMPORTANCE_HIGH)
+			flags |= CAMEL_MESSAGE_FLAGGED;
 
+		camel_eas_summary_add_message_info (folder->summary, flags,
+						    (CamelMessageInfo *) mi);
+		camel_folder_change_info_add_uid (ci, item->server_id);
+		camel_folder_change_info_recent_uid (ci, item->server_id);
 
-        if (item->attachments)
-            mi->info.flags |= CAMEL_MESSAGE_ATTACHMENTS;
+		g_object_unref (item);
+	}
 
-        //  eas_set_threading_data (mi, item);
-        //server_flags = eas_utils_get_server_flags (item);
-
-        camel_eas_summary_add_message_info (folder->summary, 0,//server_flags,
-                                            (CamelMessageInfo *) mi);
-        camel_folder_change_info_add_uid (ci, item->server_id);
-        camel_folder_change_info_recent_uid (ci, item->server_id);
-
-        g_object_unref (item);
-    }
-
-    camel_folder_summary_save_to_db (folder->summary, NULL);
-    camel_folder_changed ( (CamelFolder *) eas_folder, ci);
-    camel_folder_change_info_free (ci);
-    g_slist_free (items_created);
+	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_changed ((CamelFolder *) eas_folder, ci);
+	camel_folder_change_info_free (ci);
+	g_slist_free (items_created);
 }
 
 #if 0

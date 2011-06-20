@@ -1,0 +1,22 @@
+AM_CPPFLAGS = $(SYNCEVOLUTION_CFLAGS) -I$(top_srcdir)/test $(BACKEND_CPPFLAGS)
+
+EXTRA_DIST = configure-sub.in
+
+SYNCSOURCES = syncactivesync.la
+MOSTLYCLEANFILES = $(SYNCSOURCES)
+if ENABLE_MODULES
+backend_LTLIBRARIES = $(SYNCSOURCES)
+else
+noinst_LTLIBRARIES = $(SYNCSOURCES)
+endif
+
+MAINTAINERCLEANFILES = Makefile.in
+
+SYNCACTIVESYNC_SOURCES = \
+	ActiveSyncSource.h \
+	ActiveSyncSource.cpp
+
+syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)
+syncactivesync_la_LIBADD = $(ACTIVESYNC_LIBS) $(SYNCEVOLUTION_LIBS)
+syncactivesync_la_LDFLAGS = -module -avoid-version
+syncactivesync_la_CXXFLAGS = $(SYNCEVOLUTION_CXXFLAGS)

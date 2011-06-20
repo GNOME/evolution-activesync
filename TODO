@@ -1,3 +1,22 @@
+
+ - Sending email (to Exchange 2007) is not working; server returns
+   400 Bad Request.
+
+ - eas_mail_handler_send_email() returns success even when it actually
+   failed, leading the user to believe the mail was sent!
+
+ - Unimplemented functions in libeasmail (move/copy messages) return
+   success instead of failing with an 'unimplemented' error.
+
+ - Sync calls seem to have no bitmask of which fields are valid.
+
+ - Sync call failing with 'Status 3' must be indicated unambiguously
+   so that caller can restart synchronisation from scratch.
+
+ - Implement saving mail to a mailbox, as shown in §4.1.4 of [MS-ASEMAIL]
+
+ - DBus API for 'submit this XML please', for easy testing
+
  - Password handling: try gnome-keyring and fall back to spawning an
    external tool to ask for the password
 
@@ -14,7 +33,7 @@
  - Make the dæmon exit if it is superseded by another dæmon (see
       http://mail.gnome.org/archives/evolution-hackers/2011-May/msg00085.html )
 
- - Remove dependency on EFlag from libedataserver
+ - Remove dependency on EFlag from libedataserver (deferred till after Beta)
 
  - Remove all asserts, return runtime errors (in GError / over DBus)
 

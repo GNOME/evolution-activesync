@@ -7,6 +7,7 @@ struct _EasRequestBasePrivate
     gint requestType;
     guint64 accountId;
     struct _EasConnection* connection;
+    SoupMessage *soup_message;
     gpointer result;
     EFlag *flag;
 };
@@ -92,7 +93,7 @@ struct _EasConnection*
 eas_request_base_GetConnection (EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetConnection++ %x", (unsigned int) priv->connection);
+    g_debug("eas_request_base_GetConnection++ %lx", (unsigned long)priv->connection );
     return priv->connection;
 }
 
@@ -103,6 +104,23 @@ eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* con
     g_debug ("eas_request_base_SetConnection++");
     priv->connection = connection;
     g_debug ("eas_request_base_SetConnection--");
+}
+
+SoupMessage *
+eas_request_base_GetSoupMessage(EasRequestBase *self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug("eas_request_base_SoupMessage++ %lx", (unsigned long)priv->soup_message );
+    return priv->soup_message;
+}
+
+void
+eas_request_base_SetSoupMessage(EasRequestBase *self, SoupMessage *soup_message)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug("eas_request_base_SetSoupMessage++");
+    priv->soup_message = soup_message;
+    g_debug("eas_request_base_SetSoupMessage--");
 }
 
 

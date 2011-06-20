@@ -125,7 +125,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     {
         xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
         xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "1");
-        xmlNewChild (collection, NULL, (xmlChar *) "WindowSize", (xmlChar*) "100");
+		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"25");
 
         if (priv->ItemType == EAS_ITEM_MAIL)
         {
@@ -216,7 +216,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                         break;
                         case EAS_ITEM_MAIL:
                         {
-                            gchar *serialised_email = (gchar *) updated->data;
+							gchar *serialised_email = (gchar *)iterator->data;
                             EasEmailInfo *email_info = eas_email_info_new ();
 
                             xmlNewNs (node, (xmlChar *) "Email:", (xmlChar *) "email");

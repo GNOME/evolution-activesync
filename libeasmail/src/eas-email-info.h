@@ -29,6 +29,16 @@ struct _EasEmailInfoClass
 #define EAS_EMAIL_ANSWERED	0x00000002		// not clear how AS supports answered/forwarded! Read-only
 #define EAS_EMAIL_FORWARDED	0x00000004		// Read-only
 
+#define EAS_VALID_READ		(EAS_EMAIL_READ << 16)  // Validity flags for the above.
+#define EAS_VALID_ANSWERED	(EAS_EMAIL_ANSWERED << 16)
+#define EAS_VALID_FORWARDED	(EAS_EMAIL_FORWARDED << 16)
+
+#define EAS_VALID_IMPORTANCE	(1 << 31)
+
+#define EAS_IMPORTANCE_LOW	0
+#define EAS_IMPORTANCE_NORMAL	1
+#define EAS_IMPORTANCE_HIGH	2
+
 struct _EasEmailHeader{
 	gchar *name;
 	gchar *value;
@@ -40,10 +50,11 @@ struct _EasEmailInfo{
 	gchar *server_id;		    // from AS server
 	GSList *headers;			// list of EasEmailHeaders eg To, From (in the order they're listed in the eas xml)
 	GSList *attachments;		// list of EasAttachments this email has. AS calls id the 'file reference'. Immutable
-	guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED TODO not clear where in the EAS xml some of these come from
+	guint32	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED TODO not clear where in the EAS xml some of these come from
 	GSList *categories;		    // list of categories (strings) that the email belongs to 	
 	gsize estimated_size;
 	time_t date_received;
+	int importance;
 	/*
 	conversation_id
     conversation_index

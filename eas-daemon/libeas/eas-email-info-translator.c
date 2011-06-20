@@ -70,7 +70,8 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
         xmlNode *n = node;
         GSList *headers = NULL;
         GSList *attachments = NULL;
-        guint8  flags = 0;
+		 guint32  flags = 0;
+		 int importance = 1;
         GSList *categories = NULL;
 
         g_debug ("found ApplicationData root");
@@ -133,57 +134,59 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				if (strptime (received, "%Y-%m-%dT%H:%M:%S", &tm))
 					email_info->date_received = timegm (&tm);
 				g_free (received);
-            }
-            //DisplayTo  - is there an equivalent standard email header?
-            //Importance
-            else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Importance"))
-            {
-                EasEmailHeader *header = g_malloc0 (sizeof (EasEmailHeader));
-                header->name = g_strdup ("Importance");
-                header->value = (gchar *) xmlNodeGetContent (n);
-                headers = g_slist_append (headers, header);
-            }
-            //Read
-            else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Read"))
-            {
-                gchar *tmp = (gchar*) xmlNodeGetContent (n);
-                if (g_strcmp0 (tmp, "0")) // not 0, therefore read
-                {
-                    flags |= EAS_EMAIL_READ;
-                }
-                g_free (tmp);
-            }
-            // TODO which if any of these other headers are standard email headers?
-            //ThreadTopic
-            //MessageClass          -   ?
-            //MeetingRequest stuff  -   ignoring, not MIME header
-            //InternetCPID          -   ignoring, EAS specific
-            //Task 'Flag' stuff     -   ignoring, not MIME header
-            //ContentClass          -   ?
+			}
+			//DisplayTo	 - is there an equivalent standard email header?
+			//Importance
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Importance")) 
+			{
+				char *tmp = (gchar *)xmlNodeGetContent (n);
+				importance = strtol(tmp, NULL, 0);
+				g_free (tmp);
+				g_debug("importance = %d", importance);
+				flags |= EAS_VALID_IMPORTANCE;
+			}
+			//Read
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Read")) 
+			{
+				gchar *tmp = (gchar*) xmlNodeGetContent(n);
+				if(g_strcmp0(tmp, "0"))   // not 0, therefore read
+				{
+					flags |= EAS_EMAIL_READ;
+				}
+				flags |= EAS_VALID_READ;
+				g_free(tmp);
+			}	
+			// TODO which if any of these other headers are standard email headers?	
+			//ThreadTopic   			
+			//MessageClass			-   ?
+			//MeetingRequest stuff  -   ignoring, not MIME header
+			//InternetCPID			-   ignoring, EAS specific
+			//Task 'Flag' stuff		-   ignoring, not MIME header
+			//ContentClass			-   ?
 
-            //Attachments
-            else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Attachments"))
-            {
-                xmlNode *s = n;
-                g_debug ("found attachments");
-                for (s = s->children; s; s = s->next)
-                {
-                    if (s->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar *) s->name, "Attachment"))
-                    {
-                        EasAttachment *attachment = eas_attachment_new();
-                        xmlNode *t = s;
-                        g_debug ("found attachment");
-                        for (t = t->children; t; t = t->next)
-                        {
-                            //DisplayName
-                            if (t->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar *) t->name, "DisplayName"))
-                            {
-                                attachment->display_name = (gchar *) xmlNodeGetContent (t);
-                                g_debug ("attachment name = %s", attachment->display_name);
-                            }
-                            //EstimatedDataSize
-                            if (t->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) t->name, "EstimatedDataSize"))
-                            {
+			//Attachments
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Attachments")) 
+			{ 
+				xmlNode *s = n;
+				g_debug("found attachments");
+				for (s = s->children; s; s = s->next)
+				{				
+					if (s->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)s->name, "Attachment"))					
+					{
+						EasAttachment *attachment = eas_attachment_new(); 
+						xmlNode *t = s;
+						g_debug("found attachment");
+						for (t = t->children; t; t = t->next)
+						{						
+							//DisplayName
+							if (t->type == XML_ELEMENT_NODE && !g_strcmp0((gchar *)t->name, "DisplayName")) 						
+							{
+								attachment->display_name = (gchar *)xmlNodeGetContent(t);
+								g_debug("attachment name = %s", attachment->display_name);							
+							}
+							//EstimatedDataSize
+							if (t->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)t->name, "EstimatedDataSize")) 						
+							{
 								char *tmp = (gchar *)xmlNodeGetContent (t);
 								attachment->estimated_size = strtol(tmp, NULL, 0);
 								g_free (tmp);
@@ -244,97 +247,99 @@ eas_add_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 				}
 			}
 
-        } // end for
+		} // end for 
+		
+		email_info->server_id = server_id;
+		email_info->headers = headers;
+		email_info->attachments = attachments;
+		email_info->categories = categories;
+		email_info->flags = flags;
+		email_info->importance = importance;
 
-        email_info->server_id = server_id;
-        email_info->headers = headers;
-        email_info->attachments = attachments;
-        email_info->categories = categories;
-        email_info->flags = flags;
+		// serialise the emailinfo
+		if(!eas_email_info_serialise(email_info, &result))
+		{
+			g_warning("Failed to serialise email info");
+		}
 
-        // serialise the emailinfo
-        if (!eas_email_info_serialise (email_info, &result))
-        {
-            g_warning ("Failed to serialise email info");
-        }
+		g_object_unref(email_info);   
+	}
+	else
+	{
+		g_error("Failed! Expected ApplicationData node at root");
+	}
 
-        g_object_unref (email_info);
-    }
-    else
-    {
-        g_error ("Failed! Expected ApplicationData node at root");
-    }
-
-    g_debug ("eas_add_email_appdata_parse_response--");
-    return result;
+	g_debug("eas_add_email_appdata_parse_response--");	
+	return result;
 }
 
 gchar *
 eas_update_email_appdata_parse_response (xmlNode *node, gchar *server_id)
 {
-    gchar *result = NULL;
-    g_debug ("eas_update_email_appdata_parse_response++");
+	gchar *result = NULL;
+	g_debug("eas_update_email_appdata_parse_response++");
+	
+	if (!node) return NULL;
+	
+    if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ApplicationData")) 
+	{
+		EasEmailInfo *email_info = eas_email_info_new();
+		GSList *categories = NULL;
+		guint flags = 0;
+		xmlNode *n = node;
+		
+		g_debug("found ApplicationData root");
+		
+		for (n = n->children; n; n = n->next)
+		{
+			// TODO - figure out if/where other flags are stored (eg replied to/forwarded in ConversationIndex?)
+			//Read  
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Read")) 
+			{
+				gchar* tmp = (gchar*)xmlNodeGetContent(n);
+				g_debug("found read node");
+				if(g_strcmp0(tmp, "0"))   // not 0, therefore read
+				{
+					flags |= EAS_EMAIL_READ;
+				}
+				flags |= EAS_VALID_READ;
+				g_free(tmp);
+				continue;
+			}			
+			//Categories 
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Categories")) 
+			{
+				xmlNode *s = n;
+				for (s = s->children; s; s = s->next)
+				{				
+					if (s->type == XML_ELEMENT_NODE && !g_strcmp0((char *)s->name, "Category"))					
+					{
+						categories = g_slist_append(categories, (char *)xmlNodeGetContent(s));
+					}
+				}
+				continue;
+			}		
+		} // end for
+		
+		email_info->server_id = server_id;
+		email_info->categories = categories;
+		email_info->flags = flags;		
 
-    if (!node) return NULL;
+		// serialise the emailinfo
+		if(!eas_email_info_serialise(email_info, &result))
+		{
+			g_warning("Failed to serialise email info");
+		}
+		
+		g_object_unref(email_info);
+	}
+	else
+	{
+		g_error("Failed! Expected ApplicationData node at root");
+	}
 
-    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "ApplicationData"))
-    {
-        EasEmailInfo *email_info = eas_email_info_new();
-        GSList *categories = NULL;
-        guint flags = 0;
-        xmlNode *n = node;
-
-        g_debug ("found ApplicationData root");
-
-        for (n = n->children; n; n = n->next)
-        {
-            // TODO - figure out if/where other flags are stored (eg replied to/forwarded in ConversationIndex?)
-            //Read
-            if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Read"))
-            {
-                gchar* tmp = (gchar*) xmlNodeGetContent (n);
-                g_debug ("found read node");
-                if (g_strcmp0 (tmp, "0")) // not 0, therefore read
-                {
-                    flags |= EAS_EMAIL_READ;
-                }
-                g_free (tmp);
-                continue;
-            }
-            //Categories
-            if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Categories"))
-            {
-                xmlNode *s = n;
-                for (s = s->children; s; s = s->next)
-                {
-                    if (s->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) s->name, "Category"))
-                    {
-                        categories = g_slist_append (categories, (char *) xmlNodeGetContent (s));
-                    }
-                }
-                continue;
-            }
-        } // end for
-
-        email_info->server_id = server_id;
-        email_info->categories = categories;
-        email_info->flags = flags;
-
-        // serialise the emailinfo
-        if (!eas_email_info_serialise (email_info, &result))
-        {
-            g_warning ("Failed to serialise email info");
-        }
-
-        g_object_unref (email_info);
-    }
-    else
-    {
-        g_error ("Failed! Expected ApplicationData node at root");
-    }
-
-    g_debug ("eas_update_email_appdata_parse_response--");
-    return result;
+	g_debug("eas_update_email_appdata_parse_response--");	
+	return result;
 }
 
 
@@ -397,54 +402,56 @@ create_node_from_categorylist (xmlNode *app_data, const GSList* categories)
 
 
 // translate the other way: take the emailinfo object and populate the ApplicationData node
-gboolean
-eas_email_info_translator_build_update_request (xmlDoc *doc, xmlNode *app_data, const EasEmailInfo *email_info)
+gboolean 
+eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, const EasEmailInfo *email_info)
 {
-    gboolean ret = FALSE;
-    g_debug ("eas_email_info_translator_parse_request++");
+	gboolean ret = FALSE;
+	g_debug("eas_email_info_translator_parse_request++");
+	
+	if (!(doc &&
+	    app_data &&
+	    email_info &&
+	    (app_data->type == XML_ELEMENT_NODE) &&
+	    (g_strcmp0((char*)(app_data->name), "ApplicationData") == 0)))
+	{	
+		g_debug("invalid input");
+	}
+	else
+	{	
+		// Note that the only fields it's valid to update are flags and categories!
+		xmlNode *leaf;
+		
+		// flags
+		if (email_info->flags & EAS_VALID_READ)
+		{
+			if(email_info->flags & EAS_EMAIL_READ)
+			{
+				g_debug("setting Read to 1");
+				leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"1");
+			}
+			else
+			{
+				g_debug("setting Read to 0");
+				leaf = xmlNewChild(app_data, NULL, (xmlChar *)"Read", (xmlChar*)"0");
+			}
+		}
+		if(ret)
+		{
+			//categories
+			ret = create_node_from_categorylist(app_data, email_info->categories);
+		}
+	}
 
-    if (! (doc &&
-            app_data &&
-            email_info &&
-            (app_data->type == XML_ELEMENT_NODE) &&
-            (g_strcmp0 ( (char*) (app_data->name), "ApplicationData") == 0)))
-    {
-        g_debug ("invalid input");
-    }
-    else
-    {
-        // Note that the only fields it's valid to update are flags and categories!
-        xmlNode *leaf;
-
-        // flags
-        if (email_info->flags & EAS_EMAIL_READ)
-        {
-            g_debug ("setting Read to 1");
-            leaf = xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "1");
-        }
-        else
-        {
-            g_debug ("setting Read to 0");
-            leaf = xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "0");
-        }
-
-        if (ret)
-        {
-            //categories
-            ret = create_node_from_categorylist (app_data, email_info->categories);
-        }
-    }
-
-    // DEBUG output TODO make configurable or comment out
-    {
-        xmlChar* dump_buffer;
-        int dump_buffer_size;
-        xmlIndentTreeOutput = 1;
-        xmlDocDumpFormatMemory (doc, &dump_buffer, &dump_buffer_size, 1);
-        g_debug ("XML DOCUMENT DUMPED:\n%s", dump_buffer);
-        xmlFree (dump_buffer);
-    }
-
-    g_debug ("eas_email_info_translator_parse_request--");
-    return ret;
+	// DEBUG output TODO make configurable or comment out
+	{
+	xmlChar* dump_buffer;
+	int dump_buffer_size;
+	xmlIndentTreeOutput = 1;
+	xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+	g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+	xmlFree(dump_buffer);
+	}
+	
+	g_debug("eas_email_info_translator_parse_request--");
+	return ret;
 }
