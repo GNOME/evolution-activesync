@@ -348,8 +348,18 @@ connection_authenticate (SoupSession *sess,
 		gint out = 0;
 		GIOChannel *out_ch = NULL;
 
-		g_warning("Failed to find password");
+		g_warning("Failed to find password in Gnome Keyring");
 
+		g_critical("TEMPORARY Fetch of password from GConf - TODO Spawn p/w dialog");
+		if (!retrying)
+		{	
+			soup_auth_authenticate (auth, 
+				                    cnc->priv->account->username,
+				                    cnc->priv->account->password);
+		}
+
+		
+#if 0
 		if (FALSE == g_spawn_async_with_pipes (NULL, argv, NULL,
 		                                       G_SPAWN_SEARCH_PATH, 
 		                                       NULL, NULL, 
@@ -364,6 +374,7 @@ connection_authenticate (SoupSession *sess,
 
 		out_ch = g_io_channel_unix_new ( out );
 		g_io_add_watch( out_ch, G_IO_IN | G_IO_HUP, (GIOFunc)cb_out_watch, cnc);
+#endif		
 	}
 	else if (result != GNOME_KEYRING_RESULT_OK)
 	{
@@ -376,7 +387,7 @@ connection_authenticate (SoupSession *sess,
 		{	
 			soup_auth_authenticate (auth, 
 				                    cnc->priv->account->username,
-				                    cnc->priv->account->password);
+				                    password);
 		}
 	}
 	
@@ -575,6 +586,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
                                 msg,
                                 handle_server_response,
                                 request);
+
 finish:
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
