@@ -191,6 +191,11 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 				folder = g_strdup("1");
 			}
 			break;
+			case EAS_ITEM_CONTACT:
+			{
+				folder = g_strdup("2");
+			}
+			break;
 			default:
 			{
 				//unknown type -no default folder, set GError & return_type
@@ -233,7 +238,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     if (ret)
     {
         guint i = 0;
-        g_debug ("get_latest_calendar_items called successfully");
+        g_debug ("get_latest_items called successfully");
         while (created_item_array[i])
         {
             EasItemInfo *cal = eas_item_info_new ();

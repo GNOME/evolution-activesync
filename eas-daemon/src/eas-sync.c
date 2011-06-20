@@ -184,7 +184,7 @@ eas_sync_get_latest_items (EasSync* self,
     // Create the request
     EasSyncReq *syncReqObj = NULL;
 
-    g_debug ("eas_sync_get_latest_calendar_items++");
+    g_debug ("eas_sync_get_latest_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
@@ -206,19 +206,19 @@ eas_sync_get_latest_items (EasSync* self,
     eas_request_base_SetConnection (&syncReqObj->parent_instance,
                                     self->priv->connection);
 
-    g_debug ("eas_sync_get_latest_calendar_items - new req");
+    g_debug ("eas_sync_get_latest_items - new req");
     // Start the request
     eflag = e_flag_new ();
     eas_sync_req_Activate (syncReqObj, sync_key, account_uid, eflag, folder_id, type, &error);
 
-    g_debug ("eas_sync_get_latest_calendar_items  - activate req");
+    g_debug ("eas_sync_get_latest_items  - activate req");
     // Set flag to wait for response
     e_flag_wait (eflag);
     e_flag_free (eflag);
 
     // TODO Check error
 
-    g_debug ("eas_sync_get_latest_calendar_items  - get results");
+    g_debug ("eas_sync_get_latest_items  - get results");
 
     eas_sync_req_ActivateFinish (syncReqObj,
                                  &ret_sync_key,
@@ -233,6 +233,7 @@ eas_sync_get_latest_items (EasSync* self,
     switch (type)
     {
         case EAS_ITEM_CALENDAR:
+        case EAS_ITEM_CONTACT:
         {
             if (build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error))
             {
@@ -268,7 +269,7 @@ eas_sync_get_latest_items (EasSync* self,
     }
 
     g_object_unref (syncReqObj);
-    g_debug ("eas_sync_get_latest_calendar_items--");
+    g_debug ("eas_sync_get_latest_items--");
 }
 
 gboolean
@@ -284,7 +285,7 @@ eas_sync_delete_items (EasSync* self,
     gchar* ret_sync_key = NULL;
     EasDeleteEmailReq *req = NULL;
 
-    g_debug ("eas_sync_delete_calendar_items++");
+    g_debug ("eas_sync_delete_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
     if (!self->priv->connection)
@@ -329,7 +330,7 @@ eas_sync_delete_items (EasSync* self,
         dbus_g_method_return (context,
                               ret_sync_key);
     }
-    g_debug ("eas_sync_delete_calendar_items--");
+    g_debug ("eas_sync_delete_items--");
     return TRUE;
 }
 
@@ -368,6 +369,7 @@ eas_sync_update_items (EasSync* self,
     switch (type)
     {
         case EAS_ITEM_CALENDAR:
+        case EAS_ITEM_CONTACT:
         {
             build_calendar_list (calendar_items, &items, &error);
         }
@@ -401,6 +403,7 @@ eas_sync_update_items (EasSync* self,
     switch (type)
     {
         case EAS_ITEM_CALENDAR:
+        case EAS_ITEM_CONTACT:
         {
             build_calendar_list (calendar_items, &items, &error);
         }
@@ -435,7 +438,7 @@ eas_sync_update_items (EasSync* self,
         dbus_g_method_return (context,
                               ret_sync_key);
     }
-    g_debug ("eas_sync_update_calendar_items--");
+    g_debug ("eas_sync_update_items--");
     return TRUE;
 }
 
@@ -474,6 +477,7 @@ eas_sync_add_items (EasSync* self,
     switch (type)
     {
         case EAS_ITEM_CALENDAR:
+        case EAS_ITEM_CONTACT:
         {
             build_calendar_list (calendar_items, &items, &error);
         }
@@ -513,6 +517,7 @@ eas_sync_add_items (EasSync* self,
         switch (type)
         {
             case EAS_ITEM_CALENDAR:
+            case EAS_ITEM_CONTACT:
             {
                 build_serialised_calendar_info_array (&ret_created_items_array, added_items, &error);
             }
