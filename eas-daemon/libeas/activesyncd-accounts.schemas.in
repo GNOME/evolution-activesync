@@ -1,0 +1,21 @@
+<gconfschemafile>
+  <schemalist>
+
+    <schema>
+      <key>/schemas/apps/activesyncd/accounts</key>
+      <applyto>/apps/activesyncd/accounts</applyto>
+      <owner>activesyncd</owner>
+      <type>list</type>
+      <list_type>string</list_type>
+      <locale name="C">
+         <short>List of activesync accounts</short>
+         <long>
+           List of activesync accounts known to the activesync daemon component.
+	   The list contains strings naming subdirectories relative to
+		/apps/activesyncd/accounts.
+         </long>
+      </locale>
+    </schema>
+
+  </schemalist>
+</gconfschemafile>
