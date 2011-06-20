@@ -133,6 +133,11 @@ accountinfo = \
 		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
 		<username>brahim</username>\
 		<password>M0bica!</password>\
+	</account>,<?xml version=\"1.0\"?>\
+	<account uid=\"1303900871.4418.1@lorna-laptop\">\
+		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
+		<username>lorna</username>\
+		<password>M0bica!</password>\
 	</account>]"
 
 setaccount: clearkeys
