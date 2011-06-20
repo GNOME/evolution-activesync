@@ -16,32 +16,32 @@
 const gchar SERVER_ID_SEPARATOR = '\n';
 
 
-G_DEFINE_TYPE (EasCalInfo, eas_cal_info, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasItemInfo, eas_item_info, G_TYPE_OBJECT);
 
 
-static void eas_cal_info_init (EasCalInfo *object)
+static void eas_item_info_init (EasItemInfo *object)
 {
-    g_debug ("eas_cal_info_init++");
+    g_debug ("eas_item_info_init++");
 
     object->client_id = NULL;
     object->server_id = NULL;
-    object->icalendar = NULL;
+    object->data = NULL;
 }
 
 
-static void eas_cal_info_finalize (GObject* object)
+static void eas_item_info_finalize (GObject* object)
 {
-    EasCalInfo* self = (EasCalInfo*) object;
+    EasItemInfo* self = (EasItemInfo*) object;
 
     g_free (self->client_id);
     g_free (self->server_id);
-    g_free (self->icalendar);
+    g_free (self->data);
 
-    G_OBJECT_CLASS (eas_cal_info_parent_class)->finalize (object);
+    G_OBJECT_CLASS (eas_item_info_parent_class)->finalize (object);
 }
 
 
-static void eas_cal_info_class_init (EasCalInfoClass *klass)
+static void eas_item_info_class_init (EasItemInfoClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
     GObjectClass* parent_class = G_OBJECT_CLASS (klass);
@@ -50,37 +50,37 @@ static void eas_cal_info_class_init (EasCalInfoClass *klass)
     void *temp = (void*) object_class;
     temp = (void*) parent_class;
 
-    object_class->finalize = eas_cal_info_finalize;
+    object_class->finalize = eas_item_info_finalize;
 }
 
 
-EasCalInfo* eas_cal_info_new ()
+EasItemInfo* eas_item_info_new ()
 {
-    EasCalInfo *object = g_object_new (EAS_TYPE_CAL_INFO , NULL);
-    g_debug ("eas_cal_info_new+-");
+    EasItemInfo *object = g_object_new (EAS_TYPE_ITEM_INFO , NULL);
+    g_debug ("eas_item_info_new+-");
     return object;
 }
 
 
-gboolean eas_cal_info_serialise (EasCalInfo* self, gchar** result)
+gboolean eas_item_info_serialise (EasItemInfo* self, gchar** result)
 {
     GString* str = g_string_new (self->client_id);
     str = g_string_append_c (str, SERVER_ID_SEPARATOR);
     str = g_string_append (str, self->server_id);
     str = g_string_append_c (str, SERVER_ID_SEPARATOR);
-    str = g_string_append (str, self->icalendar);
+    str = g_string_append (str, self->data);
     *result = g_string_free (str, FALSE); // Destroy the GString but not the buffer (which is returned with ownership)
     return TRUE;
 }
 
 
-gboolean eas_cal_info_deserialise (EasCalInfo* self, const gchar* data)
+gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data)
 {
     gboolean separator_found = FALSE;
     guint i = 0;
     gchar *tempString = NULL;
 
-    g_debug ("eas_cal_info_deserialise++");
+    g_debug ("eas_item_info_deserialise++");
     // Look for the separator character
     for (; data[i]; i++)
     {
@@ -110,7 +110,7 @@ gboolean eas_cal_info_deserialise (EasCalInfo* self, const gchar* data)
     if (separator_found)
     {
         self->server_id = g_strndup (tempString, i);
-        self->icalendar = g_strdup (data + (i + 1));
+        self->data = g_strdup (data + (i + 1));
     }
 
     g_free (tempString);

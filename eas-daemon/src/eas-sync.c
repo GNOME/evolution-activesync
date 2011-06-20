@@ -96,7 +96,7 @@ build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GErr
 
     while (serialised_cal_array[i])
     {
-        EasCalInfo *calInfo = eas_cal_info_new();
+        EasItemInfo *calInfo = eas_item_info_new();
         if (calInfo)
         {
             *cal_list = g_slist_append (*cal_list, calInfo); // add it to the list first to aid cleanup
@@ -106,7 +106,7 @@ build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GErr
                 ret = FALSE;
                 goto cleanup;
             }
-            if (!eas_cal_info_deserialise (calInfo, serialised_cal_array[i]))
+            if (!eas_item_info_deserialise (calInfo, serialised_cal_array[i]))
             {
                 ret = FALSE;
                 goto cleanup;

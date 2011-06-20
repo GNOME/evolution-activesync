@@ -236,9 +236,9 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
         g_debug ("get_latest_calendar_items called successfully");
         while (created_item_array[i])
         {
-            EasCalInfo *cal = eas_cal_info_new ();
+            EasItemInfo *cal = eas_item_info_new ();
             g_debug ("created item = %s", created_item_array[i]);
-            eas_cal_info_deserialise (cal, created_item_array[i]);
+            eas_item_info_deserialise (cal, created_item_array[i]);
             g_debug ("created item server id = %s", cal->server_id);
             *items_created = g_slist_append (*items_created, cal);
             i++;
@@ -246,9 +246,9 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
         i = 0;
         while (updated_item_array[i])
         {
-            EasCalInfo *cal = eas_cal_info_new ();
+            EasItemInfo *cal = eas_item_info_new ();
             g_debug ("created item = %s", updated_item_array[i]);
-            eas_cal_info_deserialise (cal, updated_item_array[i]);
+            eas_item_info_deserialise (cal, updated_item_array[i]);
             g_debug ("created item server id = %s", cal->server_id);
             *items_updated = g_slist_append (*items_updated, cal);
             i++;
@@ -404,7 +404,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_update_items - dbus proxy ok");
 
-    g_debug ("server_id = %s", ( (EasCalInfo*) (items_updated->data))->server_id);
+    g_debug ("server_id = %s", ( (EasItemInfo*) (items_updated->data))->server_id);
 
     build_serialised_calendar_info_array (&updated_item_array, items_updated, error);
 
@@ -453,10 +453,10 @@ build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const 
 
     for (i = 0; i < array_len - 1; i++)
     {
-        EasCalInfo *calInfo = l->data;
+        EasItemInfo *calInfo = l->data;
         gchar *tstring = NULL;
         g_assert (l != NULL);
-        eas_cal_info_serialise (calInfo, &tstring);
+        eas_item_info_serialise (calInfo, &tstring);
         (*serialised_cal_info_array) [i] = tstring;
         l = g_slist_next (l);
     }
@@ -537,10 +537,10 @@ eas_sync_handler_add_items (EasSyncHandler* self,
         g_debug ("add_calendar_items called successfully");
         while (created_item_array[i] && i < length)
         {
-            EasCalInfo *cal = eas_cal_info_new ();
-            EasCalInfo *updated = g_slist_nth (items_added, i)->data;
+            EasItemInfo *cal = eas_item_info_new ();
+            EasItemInfo *updated = g_slist_nth (items_added, i)->data;
             g_debug ("created item = %s", created_item_array[i]);
-            eas_cal_info_deserialise (cal, created_item_array[i]);
+            eas_item_info_deserialise (cal, created_item_array[i]);
             g_debug ("created item server id = %s", cal->server_id);
             updated->server_id = g_strdup (cal->server_id);
             g_debug ("created updated server id in list = %s", cal->server_id);
