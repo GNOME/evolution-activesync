@@ -39,8 +39,8 @@ eas_request_base_dispose (GObject *object)
 	g_debug ("eas_request_base_dispose++");
 	if(priv->connection)
 	{
-		g_debug("unrefing connection");
-		g_object_unref(priv->connection);
+		g_debug("not unrefing connection");
+		//g_object_unref(priv->connection);
 	}
     G_OBJECT_CLASS (eas_request_base_parent_class)->dispose (object);
 	g_debug ("eas_request_base_dispose--");
