@@ -41,7 +41,7 @@ struct _EasEmailInfo{
 	gchar *server_id;		    // from AS server
 	GSList *headers;			// list of EasEmailHeaders eg To, From (in the order they're listed in the eas xml)
 	GSList *attachments;		// list of EasAttachments this email has. AS calls id the 'file reference'. Immutable
-	guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED TODO not clear where in the EAS xml some of these come from
+	guint8	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED 
 	GSList *categories;		    // list of categories (strings) that the email belongs to 	
 	/*
 	conversation_id
