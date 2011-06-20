@@ -185,7 +185,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 //TODO: call translator to get client ID and  encoded application data
                                 //gchar *serialised_calendar = (gchar *)iterator->data;
                                 xmlNode *app_data = NULL;
-                                EasCalInfo *cal_info = (EasCalInfo*) iterator->data;
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
 
                                 // create the server_id node
                                 xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
@@ -242,7 +242,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 //TODO: call translator to get client ID and  encoded application data
                                 //gchar *serialised_calendar = (gchar *)iterator->data;
 
-                                EasCalInfo *cal_info = (EasCalInfo*) iterator->data;
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
                                 xmlNode *app_data = NULL;
                                 // create the server_id node
                                 xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
@@ -563,7 +563,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
             if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Add"))
             {
                 gchar *flatItem = NULL;
-                EasCalInfo *info = NULL;
+                EasItemInfo *info = NULL;
                 appData = node;
                 for (appData = appData->children; appData; appData = appData->next)
                 {
@@ -606,10 +606,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                         continue;
                     }
                 }
-                info = eas_cal_info_new ();
+                info = eas_item_info_new ();
                 info->client_id = item_client_id;
                 info->server_id = item_server_id;
-                eas_cal_info_serialise (info, &flatItem);
+                eas_item_info_serialise (info, &flatItem);
                 g_object_unref (info);
                 item_client_id = NULL;
                 item_server_id = NULL;

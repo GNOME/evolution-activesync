@@ -4,7 +4,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 
-#include "../../libeassync/src/eas-cal-info.h"
+#include "../../libeassync/src/eas-item-info.h"
 
 
 
@@ -29,7 +29,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr app_data, const gchar* 
  * \param  appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
  * \param  calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
  */
-gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasCalInfo* cal_info);
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasItemInfo* cal_info);
 
 G_END_DECLS
 
