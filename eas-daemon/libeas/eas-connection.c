@@ -544,7 +544,8 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
         priv->request = request;
         priv->request_error = error;
     }
-
+	// TODO if this *is* the provision request we leak the xml doc (and request)
+	
     // If we need to provision, and not the provisioning msg
     if (!priv->policy_key && g_strcmp0 (cmd, "Provision"))
     {
