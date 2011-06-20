@@ -4,7 +4,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  *
  * Copyright © 2010-2011 Intel Corporation (www.intel.com)
- *
+ * 
  * Based on GroupWise/EWS code which was
  *  Copyright © 1999-2008 Novell, Inc. (www.novell.com)
  *
@@ -42,221 +42,206 @@
 CamelFolderInfo *
 camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 {
-    CamelEasStoreSummary *eas_summary = store->summary;
-    CamelFolderInfo *fi;
-    gchar *url;
+	CamelEasStoreSummary *eas_summary = store->summary;
+	CamelFolderInfo *fi;
+	gchar *url;
 
-    url = camel_url_to_string (CAMEL_SERVICE (store)->url,
-                               (CAMEL_URL_HIDE_PASSWORD |
-                                CAMEL_URL_HIDE_PARAMS |
-                                CAMEL_URL_HIDE_AUTH));
+	url = camel_url_to_string (CAMEL_SERVICE (store)->url,
+			(CAMEL_URL_HIDE_PASSWORD|
+			 CAMEL_URL_HIDE_PARAMS|
+			 CAMEL_URL_HIDE_AUTH) );
 
-    if (url[strlen (url) - 1] != '/')
-    {
-        gchar *temp_url;
+	if ( url[strlen (url) - 1] != '/') {
+		gchar *temp_url;
 
-        temp_url = g_strconcat (url, "/", NULL);
-        g_free ( (gchar *) url);
-        url = temp_url;
-    }
+		temp_url = g_strconcat (url, "/", NULL);
+		g_free ((gchar *)url);
+		url = temp_url;
+	}
 
-    fi = camel_folder_info_new ();
-    fi->full_name = camel_eas_store_summary_get_folder_full_name (eas_summary,
-                    fid, NULL);
-    fi->name = camel_eas_store_summary_get_folder_name (eas_summary,
-                                                        fid, NULL);
-    fi->uri = g_strconcat (url, fi->full_name, NULL);
-    switch (camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL))
-    {
-        case EAS_FOLDER_TYPE_DEFAULT_INBOX:
-            fi->flags = CAMEL_FOLDER_TYPE_INBOX;
-            break;
-        case EAS_FOLDER_TYPE_DEFAULT_OUTBOX:
-            fi->flags = CAMEL_FOLDER_TYPE_OUTBOX;
-            break;
-        case EAS_FOLDER_TYPE_DEFAULT_DELETED_ITEMS:
-            fi->flags = CAMEL_FOLDER_TYPE_TRASH;
-            break;
-        case EAS_FOLDER_TYPE_DEFAULT_SENT_ITEMS:
-            fi->flags = CAMEL_FOLDER_TYPE_SENT;
-            break;
-        default:
-            ;
-    }
-    fi->unread = camel_eas_store_summary_get_folder_unread (eas_summary,
-                                                            fid, NULL);
-    fi->total = camel_eas_store_summary_get_folder_total (eas_summary,
-                                                          fid, NULL);
+	fi = camel_folder_info_new ();
+	fi->full_name = camel_eas_store_summary_get_folder_full_name (eas_summary,
+								      fid, NULL);
+	fi->name = camel_eas_store_summary_get_folder_name (eas_summary,
+							    fid, NULL);
+	fi->uri = g_strconcat (url, fi->full_name, NULL);
+	switch (camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL)) {
+	case EAS_FOLDER_TYPE_DEFAULT_INBOX:
+		fi->flags = CAMEL_FOLDER_TYPE_INBOX;
+		break;
+	case EAS_FOLDER_TYPE_DEFAULT_OUTBOX:
+		fi->flags = CAMEL_FOLDER_TYPE_OUTBOX;
+		break;
+	case EAS_FOLDER_TYPE_DEFAULT_DELETED_ITEMS:
+		fi->flags = CAMEL_FOLDER_TYPE_TRASH;
+		break;
+	case EAS_FOLDER_TYPE_DEFAULT_SENT_ITEMS:
+		fi->flags = CAMEL_FOLDER_TYPE_SENT;
+		break;
+	default:
+		;
+	}
+	fi->unread = camel_eas_store_summary_get_folder_unread (eas_summary,
+								fid, NULL);
+	fi->total = camel_eas_store_summary_get_folder_total (eas_summary,
+							      fid, NULL);
 
-    g_free (url);
+	g_free (url);
 
-    return fi;
+	return fi;
 }
 
 #if 0
-struct remove_esrc_data
-{
-    gchar *fid;
-    gchar *account_name;
-    EasFolderType ftype;
+struct remove_esrc_data {
+	gchar *fid;
+	gchar *account_name;
+	EasFolderType ftype;
 };
 
 static gboolean eas_do_remove_esource (gpointer user_data)
 {
-    struct remove_esrc_data *remove_data = user_data;
+	struct remove_esrc_data *remove_data = user_data;
 
 
-    eas_esource_utils_remove_esource (remove_data->fid,
-                                      remove_data->account_name,
-                                      remove_data->ftype);
-    g_free (remove_data->fid);
-    g_free (remove_data->account_name);
-    g_free (remove_data);
+	eas_esource_utils_remove_esource (remove_data->fid,
+					  remove_data->account_name,
+					  remove_data->ftype);
+	g_free (remove_data->fid);
+	g_free (remove_data->account_name);
+	g_free (remove_data);
 
-    return FALSE;
+	return FALSE;
 }
 #endif
 
 static void
 sync_deleted_folders (CamelEasStore *store, GSList *deleted_folders)
 {
-    CamelEasStoreSummary *eas_summary = store->summary;
-    GSList *l;
+	CamelEasStoreSummary *eas_summary = store->summary;
+	GSList *l;
 
-    for (l = deleted_folders; l != NULL; l = g_slist_next (l))
-    {
-        const gchar *fid = l->data;
-        CamelFolderInfo *fi;
-        GError *error = NULL;
+	for (l = deleted_folders; l != NULL; l = g_slist_next (l)) {
+		const gchar *fid = l->data;
+		CamelFolderInfo *fi;
+		GError *error = NULL;
 
-        if (!camel_eas_store_summary_has_folder (eas_summary, fid))
-            continue;
+		if (!camel_eas_store_summary_has_folder (eas_summary, fid))
+			continue;
 
-        camel_eas_store_summary_remove_folder (eas_summary, fid, NULL);
+		camel_eas_store_summary_remove_folder (eas_summary, fid, NULL);
 #if 0
-        ftype = camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL);
-        if (ftype == EAS_FOLDER_TYPE_MAILBOX)
-        {
-            fi = camel_eas_utils_build_folder_info (store, fid);
+		ftype = camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL);
+		if (ftype == EAS_FOLDER_TYPE_MAILBOX) {
+			fi = camel_eas_utils_build_folder_info (store, fid);
 
-            camel_store_folder_deleted ( (CamelStore *) store, fi);
-        }
+			camel_store_folder_deleted ((CamelStore *) store, fi);
+		}
 #endif
-    }
+	}
 }
 #if 0
-static gboolean eas_utils_rename_folder (CamelEasStore *store,
-                                         const gchar *fid, const gchar *changekey,
-                                         const gchar *pfid, const gchar *display_name,
-                                         const gchar *old_fname, GError **error)
+static gboolean eas_utils_rename_folder (CamelEasStore *store, 
+					 const gchar *fid, const gchar *changekey,
+					 const gchar *pfid, const gchar *display_name,
+					 const gchar *old_fname, GError **error)
 {
-    CamelEasStoreSummary *eas_summary = store->summary;
-    CamelFolderInfo *fi;
+	CamelEasStoreSummary *eas_summary = store->summary;
+	CamelFolderInfo *fi;
 
-    camel_eas_store_summary_set_change_key (eas_summary, fid, changekey);
-    if (display_name)
-        camel_eas_store_summary_set_folder_name (eas_summary, fid, display_name);
-    if (pfid)
-        camel_eas_store_summary_set_parent_folder_id (eas_summary, fid, pfid);
+	camel_eas_store_summary_set_change_key (eas_summary, fid, changekey);
+	if (display_name)
+		camel_eas_store_summary_set_folder_name (eas_summary, fid, display_name);
+	if (pfid)
+		camel_eas_store_summary_set_parent_folder_id (eas_summary, fid, pfid);
 
-    if (ftype == EAS_FOLDER_TYPE_MAILBOX)
-    {
-        fi = camel_eas_utils_build_folder_info (store, fid);
-        camel_store_folder_renamed ( (CamelStore *) store, old_fname, fi);
-    }
+	if (ftype == EAS_FOLDER_TYPE_MAILBOX) {
+		fi = camel_eas_utils_build_folder_info (store, fid);
+		camel_store_folder_renamed ((CamelStore *) store, old_fname, fi);
+	}
 
-    return TRUE;
+	return TRUE;
 }
 #endif
 static void
 sync_updated_folders (CamelEasStore *store, GSList *updated_folders)
 {
 #if 0
-    CamelEasStoreSummary *eas_summary = store->summary;
-    GSList *l;
+	CamelEasStoreSummary *eas_summary = store->summary;
+	GSList *l;
 
-    for (l = updated_folders; l != NULL; l = g_slist_next (l))
-    {
-        EEasFolder *eas_folder = (EEasFolder *) l->data;
-        EasFolderType ftype;
-        gchar *folder_name;
-        gchar *display_name;
-        const EasFolderId *fid, *pfid;
+	for (l = updated_folders; l != NULL; l = g_slist_next (l)) {
+		EEasFolder *eas_folder = (EEasFolder *)	l->data;
+		EasFolderType ftype;
+		gchar *folder_name;
+		gchar *display_name;
+		const EasFolderId *fid, *pfid;
 
-        ftype = e_eas_folder_get_folder_type (eas_folder);
-        if (ftype == EAS_FOLDER_TYPE_CALENDAR ||
-                ftype == EAS_FOLDER_TYPE_TASKS ||
-                ftype == EAS_FOLDER_TYPE_CONTACTS)
-        {
-            /* TODO Update esource */
-        }
-        else  if (ftype != EAS_FOLDER_TYPE_MAILBOX)
-            continue;
+		ftype = e_eas_folder_get_folder_type (eas_folder);
+		if (ftype == EAS_FOLDER_TYPE_CALENDAR ||
+		    ftype == EAS_FOLDER_TYPE_TASKS ||
+		    ftype == EAS_FOLDER_TYPE_CONTACTS) {
+			/* TODO Update esource */
+		} else 	if (ftype != EAS_FOLDER_TYPE_MAILBOX)
+			continue;
 
-        fid = e_eas_folder_get_id (eas_folder);
-        folder_name = camel_eas_store_summary_get_folder_full_name (eas_summary, fid->id, NULL);
+		fid = e_eas_folder_get_id (eas_folder);
+		folder_name = camel_eas_store_summary_get_folder_full_name (eas_summary, fid->id, NULL);
 
-        pfid = e_eas_folder_get_parent_id (eas_folder);
-        display_name = g_strdup (e_eas_folder_get_name (eas_folder));
+		pfid = e_eas_folder_get_parent_id (eas_folder);
+		display_name = g_strdup (e_eas_folder_get_name (eas_folder));
 
-        /* If the folder is moved or renamed (which are separate
-           operations in Exchange, unfortunately, then the name
-           or parent folder will change. Handle both... */
-        if (pfid || display_name)
-        {
-            GError *error = NULL;
-            gchar *new_fname = NULL;
+		/* If the folder is moved or renamed (which are separate
+		   operations in Exchange, unfortunately, then the name
+		   or parent folder will change. Handle both... */
+		if (pfid || display_name) {
+			GError *error = NULL;
+			gchar *new_fname = NULL;
 
-            if (pfid)
-            {
-                gchar *pfname;
+			if (pfid) {
+				gchar *pfname;
 
-                /* If the display name wasn't changed, its basename is still
-                   the same as it was before... */
-                if (!display_name)
-                    display_name = camel_eas_store_summary_get_folder_name (eas_summary,
-                                                                            fid->id, NULL);
-                if (!display_name)
-                    goto done;
+				/* If the display name wasn't changed, its basename is still
+				   the same as it was before... */
+				if (!display_name)
+					display_name = camel_eas_store_summary_get_folder_name (eas_summary,
+										fid->id, NULL);
+				if (!display_name)
+					goto done;
 
-                pfname = camel_eas_store_summary_get_folder_full_name (eas_summary, pfid->id, NULL);
+				pfname = camel_eas_store_summary_get_folder_full_name (eas_summary, pfid->id, NULL);
 
-                /* If the lookup failed, it'll be because the new parent folder
-                   is the message folder root. */
-                if (pfname)
-                {
-                    new_fname = g_strconcat (pfname, "/", display_name, NULL);
-                    g_free (pfname);
-                }
-                else
-                    new_fname = g_strdup (display_name);
-            }
-            else
-            {
-                /* Parent folder not changed; just basename */
-                const gchar *last_slash;
+				/* If the lookup failed, it'll be because the new parent folder
+				   is the message folder root. */
+				if (pfname) {
+					new_fname = g_strconcat (pfname, "/", display_name, NULL);
+					g_free (pfname);
+				} else
+					new_fname = g_strdup (display_name);
+			} else {
+				/* Parent folder not changed; just basename */
+				const gchar *last_slash;
 
-                /* Append new display_name to old parent directory name... */
-                last_slash = g_strrstr (folder_name, "/");
-                if (last_slash)
-                    new_fname = g_strdup_printf ("%.*s/%s", (int) (last_slash - folder_name),
-                                                 folder_name, display_name);
-                else /* ...unless it was a child of the root folder */
-                    new_fname = g_strdup (display_name);
-            }
+				/* Append new display_name to old parent directory name... */
+				last_slash = g_strrstr (folder_name, "/");
+				if (last_slash)
+					new_fname = g_strdup_printf ("%.*s/%s", (int)(last_slash - folder_name),
+								     folder_name, display_name);
+				else /* ...unless it was a child of the root folder */
+					new_fname = g_strdup (display_name);
+			}
 
-            if (strcmp (new_fname, folder_name))
-                eas_utils_rename_folder (store, ftype,
-                                         fid->id, fid->change_key,
-                                         pfid ? pfid->id : NULL,
-                                         display_name, folder_name, &error);
-            g_free (new_fname);
-            g_clear_error (&error);
-        }
-    done:
-        g_free (folder_name);
-        g_free (display_name);
-    }
+			if (strcmp(new_fname, folder_name))
+				eas_utils_rename_folder (store, ftype,
+							 fid->id, fid->change_key,
+							 pfid?pfid->id:NULL,
+							 display_name, folder_name, &error);
+			g_free (new_fname);
+			g_clear_error (&error);
+		}
+ done:
+		g_free (folder_name);
+		g_free (display_name);
+	}
 #endif
 }
 
@@ -282,19 +267,18 @@ sync_created_folders (CamelEasStore *eas_store, GSList *created_folders)
 void
 eas_utils_sync_folders (CamelEasStore *eas_store, GSList *created_folders, GSList *deleted_folders, GSList *updated_folders)
 {
-    GError *error = NULL;
+	GError *error = NULL;
 
-    sync_deleted_folders (eas_store, deleted_folders);
-    sync_updated_folders (eas_store, updated_folders);
-    sync_created_folders (eas_store, created_folders);
+	sync_deleted_folders (eas_store, deleted_folders);
+	sync_updated_folders (eas_store, updated_folders);
+	sync_created_folders (eas_store, created_folders);
 
-    camel_eas_store_summary_save (eas_store->summary, &error);
-    if (error != NULL)
-    {
-        g_print ("Error while saving store summary %s \n", error->message);
-        g_clear_error (&error);
-    }
-    return;
+	camel_eas_store_summary_save (eas_store->summary, &error);
+	if (error != NULL) {
+		g_print ("Error while saving store summary %s \n", error->message);
+		g_clear_error (&error);
+	}
+	return;
 }
 
 void
@@ -333,35 +317,35 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 static gint
 eas_utils_get_server_flags (EEasItem *item)
 {
-    gboolean flag;
-    EasImportance importance;
-    gint server_flags = 0;
+	gboolean flag;
+	EasImportance importance;
+	gint server_flags = 0;
 
-    e_eas_item_is_read (item, &flag);
-    if (flag)
-        server_flags |= CAMEL_MESSAGE_SEEN;
-    else
-        server_flags &= ~CAMEL_MESSAGE_SEEN;
+	e_eas_item_is_read (item, &flag);
+	if (flag)
+		server_flags |= CAMEL_MESSAGE_SEEN;
+	else
+		server_flags &= ~CAMEL_MESSAGE_SEEN;
 
-    e_eas_item_is_forwarded (item, &flag);
-    if (flag)
-        server_flags |= CAMEL_MESSAGE_FORWARDED;
-    else
-        server_flags &= ~CAMEL_MESSAGE_FORWARDED;
+	e_eas_item_is_forwarded (item, &flag);
+	if (flag)
+		server_flags |= CAMEL_MESSAGE_FORWARDED;
+	else
+		server_flags &= ~CAMEL_MESSAGE_FORWARDED;
 
-    e_eas_item_is_answered (item, &flag);
-    if (flag)
-        server_flags |= CAMEL_MESSAGE_ANSWERED;
-    else
-        server_flags &= ~CAMEL_MESSAGE_ANSWERED;
+	e_eas_item_is_answered (item, &flag);
+	if (flag)
+		server_flags |= CAMEL_MESSAGE_ANSWERED;
+	else
+		server_flags &= ~CAMEL_MESSAGE_ANSWERED;
 
-    importance = e_eas_item_get_importance (item);
-    if (importance == EAS_ITEM_HIGH)
-        server_flags |= CAMEL_MESSAGE_FLAGGED;
+	importance = e_eas_item_get_importance (item);
+	if (importance == EAS_ITEM_HIGH)
+		server_flags |= CAMEL_MESSAGE_FLAGGED;
 
-    /* TODO Update replied flags */
+	/* TODO Update replied flags */
 
-    return server_flags;
+	return server_flags;
 }
 
 #endif
@@ -493,105 +477,103 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 #if 0
 
-struct _create_mime_msg_data
-{
-    CamelMimeMessage *message;
-    gint32 message_camel_flags;
-    CamelAddress *from;
+struct _create_mime_msg_data {
+	CamelMimeMessage *message;
+	gint32 message_camel_flags;
+	CamelAddress *from;
 };
 
 static void
 create_mime_message_cb (ESoapMessage *msg, gpointer user_data)
 {
-    struct _create_mime_msg_data *create_data = user_data;
-    CamelStream *mem, *filtered;
-    CamelMimeFilter *filter;
-    GByteArray *bytes;
-    gchar *base64;
+	struct _create_mime_msg_data *create_data = user_data;
+	CamelStream *mem, *filtered;
+	CamelMimeFilter *filter;
+	GByteArray *bytes;
+	gchar *base64;
 
-    e_soap_message_start_element (msg, "Message", NULL, NULL);
-    e_soap_message_start_element (msg, "MimeContent", NULL, NULL);
+	e_soap_message_start_element (msg, "Message", NULL, NULL);
+	e_soap_message_start_element (msg, "MimeContent", NULL, NULL);
 
-    /* This is horrid. We really need to extend ESoapMessage to allow us
-       to stream this directly rather than storing it in RAM. Which right
-       now we are doing about four times: the GByteArray in the mem stream,
-       then the base64 version, then the xmlDoc, then the soup request. */
-    camel_mime_message_set_best_encoding (create_data->message,
-                                          CAMEL_BESTENC_GET_ENCODING,
-                                          CAMEL_BESTENC_8BIT);
+	/* This is horrid. We really need to extend ESoapMessage to allow us
+	   to stream this directly rather than storing it in RAM. Which right
+	   now we are doing about four times: the GByteArray in the mem stream,
+	   then the base64 version, then the xmlDoc, then the soup request. */
+	camel_mime_message_set_best_encoding (create_data->message,
+					      CAMEL_BESTENC_GET_ENCODING,
+					      CAMEL_BESTENC_8BIT);
 
-    mem = camel_stream_mem_new();
-    filtered = camel_stream_filter_new (mem);
+	mem = camel_stream_mem_new();
+	filtered = camel_stream_filter_new (mem);
 
-    filter = camel_mime_filter_crlf_new (CAMEL_MIME_FILTER_CRLF_ENCODE,
-                                         CAMEL_MIME_FILTER_CRLF_MODE_CRLF_ONLY);
-    camel_stream_filter_add (CAMEL_STREAM_FILTER (filtered), filter);
-    g_object_unref (filter);
+	filter = camel_mime_filter_crlf_new (CAMEL_MIME_FILTER_CRLF_ENCODE,
+				     CAMEL_MIME_FILTER_CRLF_MODE_CRLF_ONLY);
+	camel_stream_filter_add (CAMEL_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
 
-    EVO3_sync (camel_data_wrapper_write_to_stream)
-    (CAMEL_DATA_WRAPPER (create_data->message),
-     filtered, EVO3 (NULL,) NULL);
-    camel_stream_flush (filtered, EVO3 (NULL,) NULL);
-    camel_stream_flush (mem, EVO3 (NULL,) NULL);
-    bytes = camel_stream_mem_get_byte_array (CAMEL_STREAM_MEM (mem));
+	EVO3_sync(camel_data_wrapper_write_to_stream)
+				(CAMEL_DATA_WRAPPER (create_data->message),
+				 filtered, EVO3(NULL,) NULL);
+	camel_stream_flush (filtered, EVO3(NULL,) NULL);
+	camel_stream_flush (mem, EVO3(NULL,) NULL);
+	bytes = camel_stream_mem_get_byte_array (CAMEL_STREAM_MEM (mem));
 
-    base64 = g_base64_encode (bytes->data, bytes->len);
-    g_object_unref (mem);
-    g_object_unref (filtered);
+	base64 = g_base64_encode (bytes->data, bytes->len);
+	g_object_unref (mem);
+	g_object_unref (filtered);
 
-    e_soap_message_write_string (msg, base64);
-    g_free (base64);
+	e_soap_message_write_string (msg, base64);
+	g_free (base64);
 
-    e_soap_message_end_element (msg); /* MimeContent */
+	e_soap_message_end_element (msg); /* MimeContent */
 
-    /* FIXME: Handle From address and message_camel_flags */
+	/* FIXME: Handle From address and message_camel_flags */
 
-    e_soap_message_end_element (msg); /* Message */
+	e_soap_message_end_element (msg); /* Message */
 
-    g_free (create_data);
+	g_free (create_data);
 }
 
 gboolean
 camel_eas_utils_create_mime_message (EEasConnection *cnc, const gchar *disposition,
-                                     const gchar *save_folder, CamelMimeMessage *message,
-                                     gint32 message_camel_flags, CamelAddress *from,
-                                     gchar **itemid, gchar **changekey,
-                                     GCancellable *cancellable, GError **error)
+				     const gchar *save_folder, CamelMimeMessage *message,
+				     gint32 message_camel_flags, CamelAddress *from,
+				     gchar **itemid, gchar **changekey,
+				     GCancellable *cancellable, GError **error)
 {
-    struct _create_mime_msg_data *create_data;
-    GSList *ids;
-    EEasItem *item;
-    const EasId *easid;
-    gboolean res;
+	struct _create_mime_msg_data *create_data;
+	GSList *ids;
+	EEasItem *item;
+	const EasId *easid;
+	gboolean res;
 
-    create_data = g_new0 (struct _create_mime_msg_data, 1);
+	create_data = g_new0 (struct _create_mime_msg_data, 1);
 
-    create_data->message = message;
-    create_data->message_camel_flags = message_camel_flags;
-    create_data->from = from;
+	create_data->message = message;
+	create_data->message_camel_flags = message_camel_flags;
+	create_data->from = from;
 
-    res = e_eas_connection_create_items (cnc, EAS_PRIORITY_MEDIUM,
-                                         disposition, NULL, save_folder,
-                                         create_mime_message_cb, create_data,
-                                         &ids, cancellable, error);
-    if (!res || (!itemid && !changekey))
-        return res;
+	res = e_eas_connection_create_items (cnc, EAS_PRIORITY_MEDIUM,
+					     disposition, NULL, save_folder,
+					     create_mime_message_cb, create_data,
+					     &ids, cancellable, error);
+	if (!res || (!itemid && !changekey))
+		return res;
 
-    item = (EEasItem *) ids->data;
-    if (!item || ! (easid = e_eas_item_get_id (item)))
-    {
-        g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-                     _ ("CreateItem call failed to return ID for new message"));
-        return FALSE;
-    }
+	item = (EEasItem *)ids->data;
+	if (!item || !(easid = e_eas_item_get_id (item))) {
+		g_set_error(error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
+			    _("CreateItem call failed to return ID for new message"));
+		return FALSE;
+	}
 
-    if (itemid)
-        *itemid = g_strdup (easid->id);
-    if (changekey)
-        *changekey = g_strdup (easid->change_key);
+	if (itemid)
+		*itemid = g_strdup (easid->id);
+	if (changekey)
+		*changekey = g_strdup (easid->change_key);
 
-    g_object_unref (item);
-    g_slist_free (ids);
-    return TRUE;
+	g_object_unref (item);
+	g_slist_free (ids);
+	return TRUE;
 }
 #endif
