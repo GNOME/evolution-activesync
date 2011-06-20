@@ -139,7 +139,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
             xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4"); // Plain text 1, HTML 2, MIME 4
             xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:TruncationSize", (xmlChar*) "200000");
         }
-        else if (priv->ItemType == EAS_ITEM_CALENDAR)
+        else if (priv->ItemType == EAS_ITEM_CALENDAR || priv->ItemType == EAS_ITEM_CONTACT )
         {
 
             options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
@@ -185,13 +185,34 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 //TODO: call translator to get client ID and  encoded application data
                                 //gchar *serialised_calendar = (gchar *)iterator->data;
                                 xmlNode *app_data = NULL;
-                                EasCalInfo *cal_info = (EasCalInfo*) iterator->data;
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
 
                                 // create the server_id node
                                 xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
                                 app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
                                 // translator deals with app data
                                 eas_cal_info_translator_parse_request (doc, app_data, cal_info);
+                                // TODO error handling and freeing
+                            }
+                        }
+                        break;
+                        case EAS_ITEM_CONTACT:
+                        {
+                            xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
+                            xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
+                            if (iterator->data)
+                            {
+                                //TODO: call translator to get client ID and  encoded application data
+                                //gchar *serialised_calendar = (gchar *)iterator->data;
+                                xmlNode *app_data = NULL;
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
+
+                                // create the server_id node
+                                xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
+                                app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
+                                // translator deals with app data
+                                // TODO: need to add contact translator
+                                 //eas_cal_info_translator_parse_request (doc, app_data, cal_info);
                                 // TODO error handling and freeing
                             }
                         }
@@ -242,13 +263,33 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 //TODO: call translator to get client ID and  encoded application data
                                 //gchar *serialised_calendar = (gchar *)iterator->data;
 
-                                EasCalInfo *cal_info = (EasCalInfo*) iterator->data;
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
                                 xmlNode *app_data = NULL;
                                 // create the server_id node
                                 xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
                                 app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
                                 // translator deals with app data
                                 eas_cal_info_translator_parse_request (doc, app_data, cal_info);
+                                // TODO error handling and freeing
+                            }
+                        }
+                        break;
+                        case EAS_ITEM_CONTACT:
+                        {
+                            xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
+                            if (iterator->data)
+                            {
+                                //TODO: call translator to get client ID and  encoded application data
+                                //gchar *serialised_calendar = (gchar *)iterator->data;
+
+                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
+                                xmlNode *app_data = NULL;
+                                // create the server_id node
+                                xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
+                                app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
+                                // translator deals with app data
+                                //TODO: add contact translator
+                                //eas_cal_info_translator_parse_request (doc, app_data, cal_info);
                                 // TODO error handling and freeing
                             }
                         }
@@ -468,6 +509,12 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                                 flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
                             }
                             break;
+                            case EAS_ITEM_CONTACT:
+                            {
+                                //TOD add contact transalator
+                                //flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
+                            }
+                            break;
 
 
                         }
@@ -537,6 +584,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             {
                                 flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
                             }
+                            case EAS_ITEM_CONTACT:
+                            {
+                                //TODO: add contact translator
+                                //flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
+                            }
                             break;
 
                         }
@@ -563,7 +615,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
             if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Add"))
             {
                 gchar *flatItem = NULL;
-                EasCalInfo *info = NULL;
+                EasItemInfo *info = NULL;
                 appData = node;
                 for (appData = appData->children; appData; appData = appData->next)
                 {
@@ -606,10 +658,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                         continue;
                     }
                 }
-                info = eas_cal_info_new ();
+                info = eas_item_info_new ();
                 info->client_id = item_client_id;
                 info->server_id = item_server_id;
-                eas_cal_info_serialise (info, &flatItem);
+                eas_item_info_serialise (info, &flatItem);
                 g_object_unref (info);
                 item_client_id = NULL;
                 item_server_id = NULL;

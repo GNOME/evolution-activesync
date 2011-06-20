@@ -22,8 +22,8 @@ libeassync_la_LDFLAGS =			\
 libeassync_la_SOURCES =		\
         libeassync.h			\
         libeassync.c                     \
-        eas-cal-info.h                     \
-        eas-cal-info.c
+        eas-item-info.h                     \
+        eas-item-info.c
         
 interface_xml =  ../../eas-daemon/src/eas-sync.xml
 

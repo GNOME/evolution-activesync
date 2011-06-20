@@ -4,7 +4,7 @@
 #include <check.h>
 
 #include "../libeassync/src/libeassync.h"
-#include "../libeassync/src/eas-cal-info.h"
+#include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
 
 
@@ -251,7 +251,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
     // therefore the key must not be zero as this is the seed value for this test
     fail_if (sync_key_out==NULL, "Sync Key not updated by call the exchange server");
     fail_if (g_slist_length (*created) == 0, "list length =0");
-    EasCalInfo *cal = (*created)->data;
+    EasItemInfo *cal = (*created)->data;
 
 }
 
@@ -318,8 +318,8 @@ END_TEST
 
 START_TEST (test_translate_ical_to_xml)
 {
-    EasCalInfo cal_info;// = eas_cal_info_new();
-    cal_info.icalendar = TEST_VCALENDAR;
+    EasItemInfo cal_info;// = eas_cal_info_new();
+    cal_info.data = TEST_VCALENDAR;
     cal_info.server_id = "1.0 (test value)";
 
     xmlDocPtr doc = xmlNewDoc ("1.0");
@@ -364,7 +364,7 @@ START_TEST (test_eas_sync_handler_delete_cal)
     if (calitems_created)
     {
         GSList *calitemToDel = NULL;
-        EasCalInfo *calitem = NULL;
+        EasItemInfo *calitem = NULL;
         gboolean rtn = FALSE;
 
         // get calendar item info for first calendar item in the folder
@@ -447,17 +447,17 @@ START_TEST (test_eas_sync_handler_update_cal)
     if (calitems_created)
     {
         GSList *calitemToUpdate = NULL;
-        EasCalInfo *calitem = NULL;
-        EasCalInfo *updatedcalitem = NULL;
+        EasItemInfo *calitem = NULL;
+        EasItemInfo *updatedcalitem = NULL;
         gboolean rtn = FALSE;
 
         // get calendar item info for first calendar item in the folder
         calitem = (g_slist_nth (calitems_created, 0))->data;
 
 
-        updatedcalitem = eas_cal_info_new();
+        updatedcalitem = eas_item_info_new();
         updatedcalitem->server_id = g_strdup (calitem->server_id);
-        updatedcalitem->icalendar = g_strdup (TEST_VCALENDAR2);
+        updatedcalitem->data = g_strdup (TEST_VCALENDAR2);
 
         calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 
@@ -534,14 +534,14 @@ START_TEST (test_eas_sync_handler_add_cal)
                            &error);
 
     GSList *calitemToUpdate = NULL;
-    EasCalInfo *updatedcalitem = NULL;
+    EasItemInfo *updatedcalitem = NULL;
     gboolean rtn = FALSE;
 
 
 
-    updatedcalitem = eas_cal_info_new();
+    updatedcalitem = eas_item_info_new();
     updatedcalitem->client_id = g_strdup ("sdfasdfsdf");
-    updatedcalitem->icalendar = g_strdup (TEST_VCALENDAR3);
+    updatedcalitem->data = g_strdup (TEST_VCALENDAR3);
 
     calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 

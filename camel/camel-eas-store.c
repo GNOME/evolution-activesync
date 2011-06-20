@@ -423,6 +423,14 @@ static CamelSessionThreadOps eas_refresh_ops =
     eas_refresh_free,
 };
 
+static gchar *
+eas_service_get_path (CamelService *service)
+{
+	return g_build_filename (service->provider->protocol,
+				 camel_url_get_param (service->url, "account_uid"),
+				 NULL);
+}
+
 static CamelFolderInfo *
 eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EVO3 (GCancellable *cancellable,) GError **error)
 {
@@ -652,6 +660,7 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
     service_class->get_name = eas_get_name;
     service_class->EVO3_sync (connect) = eas_connect_sync;
     service_class->EVO3_sync (disconnect) = eas_disconnect_sync;
+    service_class->get_path = eas_service_get_path;
 
     store_class = CAMEL_STORE_CLASS (class);
     store_class->hash_folder_name = eas_hash_folder_name;

@@ -1220,7 +1220,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 	{
 		xmlNodePtr n = node;
 
-		EasCalInfo* calInfo = NULL;
+		EasItemInfo* calInfo = NULL;
 
 		// iCalendar objects
 		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
@@ -1591,10 +1591,10 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* serv
 		}
 
 		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
-		calInfo = eas_cal_info_new();
-		calInfo->icalendar = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
+		calInfo = eas_item_info_new();
+		calInfo->data = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
 		calInfo->server_id = (gchar*)server_id;
-		if (!eas_cal_info_serialise(calInfo, &result))
+		if (!eas_item_info_serialise(calInfo, &result))
 		{
 			// TODO: log error
 			result = NULL;
@@ -2343,7 +2343,7 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
  * \param  appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
  * \param  calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
  */
-gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData, EasCalInfo* calInfo)
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData, EasItemInfo* calInfo)
 {
 	gboolean success = FALSE;
 	icalcomponent* ical = NULL;
@@ -2353,7 +2353,7 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 	    calInfo &&
 	    (appData->type == XML_ELEMENT_NODE) &&
 	    (g_strcmp0((char*)(appData->name), EAS_ELEMENT_APPLICATIONDATA) == 0) &&
-	    (ical = icalparser_parse_string(calInfo->icalendar)) &&
+	    (ical = icalparser_parse_string(calInfo->data)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
 		icalcomponent* vevent = NULL;
