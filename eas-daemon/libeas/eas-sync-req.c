@@ -192,7 +192,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
+        priv->error = error;
         e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
         goto finish;
     }
@@ -221,10 +221,17 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
             //create new message with new syncKey
             priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID, priv->ItemType);
-
+			g_free(syncKey);
             //build request msg
             doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
-
+			if (!doc)
+			{
+				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				             ("out of memory"));
+				ret = FALSE;
+				goto finish;
+			}
             //move to new state
             priv->state = EasSyncReqStep2;
 
@@ -235,7 +242,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             if (!ret)
             {
                 g_assert (error != NULL);
-                self->priv->error = error;
+                priv->error = error;
                 e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
             }
@@ -287,7 +294,7 @@ eas_sync_req_ActivateFinish (EasSyncReq* self,
 
 	if (ret_more_available)
 		*ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
-    *ret_sync_key    = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
+    *ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
     *added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
     *updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
     *deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);

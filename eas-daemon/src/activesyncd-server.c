@@ -17,7 +17,6 @@
 //user include
 #include "activesyncd-common-defs.h"
 #include "../libeas/eas-connection.h"
-#include "../libeas/eas-accounts.h"
 #include "eas-sync.h"
 #include "eas-common.h"
 #include "eas-mail.h"

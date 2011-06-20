@@ -44,15 +44,42 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 }
 
 static void
+eas_sync_folder_msg_dispose (GObject *object)
+{
+    EasSyncFolderMsg *msg = (EasSyncFolderMsg *) object;
+    EasSyncFolderMsgPrivate *priv = msg->priv;
+
+	g_debug ("eas_sync_folder_msg_dispose++");
+
+	g_slist_foreach (priv->added_folders, (GFunc) g_object_unref, NULL);
+	g_slist_foreach (priv->updated_folders, (GFunc) g_object_unref, NULL);
+	g_slist_foreach (priv->deleted_folders, (GFunc) g_object_unref, NULL);
+	
+    G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->dispose (object);
+
+	g_debug ("eas_sync_folder_msg_dispose--");
+}
+
+
+static void
 eas_sync_folder_msg_finalize (GObject *object)
 {
     EasSyncFolderMsg *msg = (EasSyncFolderMsg *) object;
     EasSyncFolderMsgPrivate *priv = msg->priv;
 
+	g_debug ("eas_sync_folder_msg_finalize++");
+	
     g_free (priv->sync_key);
     g_free (priv->account_id);
 
+	// unref'd in dispose
+	g_slist_free (priv->added_folders);
+	g_slist_free (priv->updated_folders);
+	g_slist_free (priv->deleted_folders);	
+	
     G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
+
+	g_debug ("eas_sync_folder_msg_finalize--");
 }
 
 static void
@@ -60,7 +87,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
     EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = object_class;
+	void *tmp = object_class;
     tmp = parent_class;
 
     g_debug ("eas_sync_folder_msg_class_init++");
@@ -68,6 +95,7 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
     g_type_class_add_private (klass, sizeof (EasSyncFolderMsgPrivate));
 
     object_class->finalize = eas_sync_folder_msg_finalize;
+	object_class->dispose = eas_sync_folder_msg_dispose;
     g_debug ("eas_sync_folder_msg_class_init--");
 
 }
@@ -155,10 +183,10 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
                 }
                 else
                 {
-                    if (status_num > EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-                        status_num = EAS_ITEMOPERATIONS_STATUS_EXCEEDSSTATUSLIMIT;
+                    if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+                        status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 
-                    error_details = itemoperations_status_error_map[status_num];
+                    error_details = sync_status_error_map[status_num];
                 }
                 g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
                 goto finish;
@@ -167,6 +195,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
+			g_free(priv->sync_key);
             priv->sync_key = (gchar*) xmlNodeGetContent (node);
             g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;

@@ -470,9 +470,9 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		if (item->flags & EAS_EMAIL_READ)
 			flags |= CAMEL_MESSAGE_SEEN;
-		if (item->flags & EAS_EMAIL_ANSWERED)
+		if (item->flags & EAS_EMAIL_ANSWERED_LAST)
 			flags |= CAMEL_MESSAGE_ANSWERED;
-		if (item->flags & EAS_EMAIL_FORWARDED)
+		if (item->flags & EAS_EMAIL_FORWARDED_LAST)
 			flags |= CAMEL_MESSAGE_FORWARDED;
 		if (item->importance == EAS_IMPORTANCE_HIGH)
 			flags |= CAMEL_MESSAGE_FLAGGED;

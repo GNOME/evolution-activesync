@@ -49,7 +49,7 @@ eas_delete_email_req_finalize (GObject *object)
     g_debug ("eas_delete_email_req_finalize++");
 
     g_free (priv->syncKey);
-    g_slist_foreach (priv->server_ids_array, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (priv->server_ids_array, (GFunc) g_object_unref, NULL); // TODO unrefs should be done in dispose?
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
     if (priv->error)
@@ -97,7 +97,14 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
     g_debug ("eas_delete_email_req_Activate - build messsage");
     //build request msg
     doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, priv->server_ids_array);
-
+	if(!doc)
+	{
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+		ret = FALSE;
+		goto finish;
+	}
     g_debug ("eas_delete_email_req_Activate - send message");
     ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                        "Sync",
@@ -105,6 +112,7 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
                                        (struct _EasRequestBase *) self,
                                        error);
 
+finish:	
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);

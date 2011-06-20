@@ -47,7 +47,7 @@ eas_email_info_finalize (GObject *object)
     g_slist_foreach (self->headers, (GFunc) eas_email_free_header, NULL);
     g_slist_free (self->headers);
 
-    g_slist_foreach (self->attachments, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (self->attachments, (GFunc) g_object_unref, NULL);	// TODO - these should be done in dispose?
 
     g_slist_free (self->attachments); // list of EasAttachments
 

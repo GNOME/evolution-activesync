@@ -51,6 +51,7 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
     g_debug ("eas_sync_folder_hierarchy_req_init--");
 }
 
+// finalize should free anything we own. called once
 static void
 eas_sync_folder_hierarchy_req_finalize (GObject *object)
 {
@@ -62,10 +63,6 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
     g_free (priv->syncKey);
     g_free (priv->accountID);
 
-    if (priv->syncFolderMsg)
-    {
-        g_object_unref (priv->syncFolderMsg);
-    }
     if (priv->error)
     {
         g_error_free (priv->error);
@@ -74,6 +71,27 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
     G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
     g_debug ("eas_sync_folder_hierarchy_req_finalize--");
 }
+
+// dispose should unref all members on which you own a reference.
+// might be called multiple times, so guard against calling g_object_unref() on an invalid GObject
+static void
+eas_sync_folder_hierarchy_req_dispose (GObject *object)
+{
+    EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
+    EasSyncFolderHierarchyReqPrivate *priv = req->priv;
+
+    g_debug ("eas_sync_folder_hierarchy_req_dispose++");
+
+    if (priv->syncFolderMsg)
+    {
+        g_object_unref (priv->syncFolderMsg);
+		priv->syncFolderMsg = NULL;
+    }
+
+    G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->dispose (object);
+    g_debug ("eas_sync_folder_hierarchy_req_dispose--");
+}
+
 
 static void
 eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
@@ -88,6 +106,7 @@ eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
     g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyReqPrivate));
 
     object_class->finalize = eas_sync_folder_hierarchy_req_finalize;
+	object_class->dispose = eas_sync_folder_hierarchy_req_dispose;
     g_debug ("eas_sync_folder_hierarchy_req_class_init--");
 
 }
@@ -214,7 +233,13 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 
             //build request msg
             doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-
+			if (!doc)
+			{
+				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				             ("out of memory"));
+				goto finish;
+			}
             //move to new state
             priv->state = EasSyncFolderHierarchyStep2;
 
@@ -226,7 +251,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             if (!ret)
             {
                 g_assert (error != NULL);
-                self->priv->error = error;
+                priv->error = error;
                 e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
             }

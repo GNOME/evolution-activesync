@@ -101,8 +101,114 @@ DESCRIPTION:Reminder\n\
 TRIGGER:-P15M\n\
 END:VALARM\n\
 END:VEVENT\n\
-END:VCALENDAR";
+END:VCALENDAR\n";
 
+
+const char* TEST_VCAL_WITH_RRULE_1 = "BEGIN:VCALENDAR\n\
+PRODID:-//Microsoft Corporation//Outlook 14.0 MIMEDIR//EN\n\
+VERSION:2.0\n\
+METHOD:PUBLISH\n\
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE\n\
+BEGIN:VTIMEZONE\n\
+TZID:GMT Standard Time\n\
+BEGIN:STANDARD\n\
+DTSTART:16011028T020000\n\
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\n\
+TZOFFSETFROM:+0100\n\
+TZOFFSETTO:-0000\n\
+END:STANDARD\n\
+BEGIN:DAYLIGHT\n\
+DTSTART:16010325T010000\n\
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3\n\
+TZOFFSETFROM:-0000\n\
+TZOFFSETTO:+0100\n\
+END:DAYLIGHT\n\
+END:VTIMEZONE\n\
+BEGIN:VEVENT\n\
+CLASS:PUBLIC\n\
+CREATED:20110613T085657Z\n\
+DESCRIPTION:\n\n\
+DTEND;TZID=\"GMT Standard Time\":20110613T163000\n\
+DTSTAMP:20110613T085657Z\n\
+DTSTART;TZID=\"GMT Standard Time\":20110613T160000\n\
+LAST-MODIFIED:20110613T085657Z\n\
+PRIORITY:5\n\
+RRULE:FREQ=WEEKLY;COUNT=34;BYDAY=MO,WE,FR,SA\n\
+SEQUENCE:0\n\
+SUMMARY;LANGUAGE=en-gb:Outlook recur test (MWFSa\, end after 34)\n\
+TRANSP:OPAQUE\n\
+UID:040000008200E00074C5B7101A82E00800000000E0E40835B029CC01000000000000000\n\
+	010000000D9B4DA1A66FA5F47AEF323BD095A49DA\n\
+X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//E\n\
+	N\">\n<HTML>\n<HEAD>\n<META NAME=\"Generator\" CONTENT=\"MS Exchange Server ve\n\
+	rsion 08.01.0240.003\">\n<TITLE></TITLE>\n</HEAD>\n<BODY>\n<!-- Converted f\n\
+	rom text/rtf format -->\n\n<P DIR=LTR><SPAN LANG=\"en-gb\"></SPAN></P>\n\n</\n\
+	BODY>\n</HTML>\n\
+X-MICROSOFT-CDO-BUSYSTATUS:BUSY\n\
+X-MICROSOFT-CDO-IMPORTANCE:1\n\
+X-MICROSOFT-DISALLOW-COUNTER:FALSE\n\
+X-MS-OLK-CONFTYPE:0\n\
+BEGIN:VALARM\n\
+TRIGGER:-PT15M\n\
+ACTION:DISPLAY\n\
+DESCRIPTION:Reminder\n\
+END:VALARM\n\
+END:VEVENT\n\
+END:VCALENDAR\n";
+
+
+const char* TEST_VCAL_WITH_EXDATE_1 = "BEGIN:VCALENDAR\n\
+PRODID:-//Microsoft Corporation//Outlook 14.0 MIMEDIR//EN\n\
+VERSION:2.0\n\
+METHOD:PUBLISH\n\
+X-MS-OLK-FORCEINSPECTOROPEN:TRUE\n\
+BEGIN:VTIMEZONE\n\
+TZID:GMT Standard Time\n\
+BEGIN:STANDARD\n\
+DTSTART:16011028T020000\n\
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\n\
+TZOFFSETFROM:+0100\n\
+TZOFFSETTO:-0000\n\
+END:STANDARD\n\
+BEGIN:DAYLIGHT\n\
+DTSTART:16010325T010000\n\
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3\n\
+TZOFFSETFROM:-0000\n\
+TZOFFSETTO:+0100\n\
+END:DAYLIGHT\n\
+END:VTIMEZONE\n\
+BEGIN:VEVENT\n\
+CLASS:PUBLIC\n\
+CREATED:20110615T092123Z\n\
+DESCRIPTION:\n\n\
+DTEND;TZID=\"GMT Standard Time\":20110615T133000\n\
+DTSTAMP:20110615T092123Z\n\
+DTSTART;TZID=\"GMT Standard Time\":20110615T130000\n\
+EXDATE;TZID=\"GMT Standard Time\":20110617T130000,20110618T130000\n\
+LAST-MODIFIED:20110615T092123Z\n\
+PRIORITY:5\n\
+RRULE:FREQ=DAILY;COUNT=5\n\
+SEQUENCE:0\n\
+SUMMARY;LANGUAGE=en-gb:Outlook recur daily with exception\n\
+TRANSP:OPAQUE\n\
+UID:040000008200E00074C5B7101A82E00800000000B01F93EA452BCC01000000000000000\n\
+	0100000001C3D980A6BFC0043926D50E6C3809BAB\n\
+X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//E\n\
+	N\">\n<HTML>\n<HEAD>\n<META NAME=\"Generator\" CONTENT=\"MS Exchange Server ve\n\
+	rsion 08.01.0240.003\">\n<TITLE></TITLE>\n</HEAD>\n<BODY>\n<!-- Converted f\n\
+	rom text/rtf format -->\n\n<P DIR=LTR><SPAN LANG=\"en-gb\"></SPAN></P>\n\n</\n\
+	BODY>\n</HTML>\n\
+X-MICROSOFT-CDO-BUSYSTATUS:BUSY\n\
+X-MICROSOFT-CDO-IMPORTANCE:1\n\
+X-MICROSOFT-DISALLOW-COUNTER:FALSE\n\
+X-MS-OLK-CONFTYPE:0\n\
+BEGIN:VALARM\n\
+TRIGGER:-PT15M\n\
+ACTION:DISPLAY\n\
+DESCRIPTION:Reminder\n\
+END:VALARM\n\
+END:VEVENT\n\
+END:VCALENDAR\n";
 
 
 static void testGetCalendarHandler (EasSyncHandler **sync_handler, const gchar* accountuid)
@@ -159,7 +265,7 @@ END_TEST
 
 START_TEST (test_get_sync_handler)
 {
-    const char* accountuid = "123456789";
+    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
 
     testGetCalendarHandler (&sync_handler, accountuid);
@@ -174,7 +280,7 @@ START_TEST (test_get_latest_calendar_items)
     // it should be hard coded to the value used by the daemon but later
     // there should be a mechanism for getting the value from the same place
     // that the daemon uses
-    const char* accountuid = "123456789";
+    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
 
     // get a handle to the DBus interface and associate the account ID with
@@ -230,7 +336,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_delete_cal)
 {
-    const char* accountuid = "123456789";
+    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
@@ -313,7 +419,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_update_cal)
 {
-    const char* accountuid = "123456789";
+    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
@@ -403,7 +509,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_add_cal)
 {
-    const char* accountuid = "123456789";
+    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
