@@ -8,6 +8,8 @@
 #include "../libeasmail/src/eas-email-info.h"
 #include "../libeasmail/src/eas-attachment.h"
 
+gchar * g_account_id = "1303900871.4417.1@brahim-laptop";
+//gchar * g_account_id = "123456789";
 
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
@@ -104,7 +106,7 @@ static void testSendEmail (EasEmailHandler *email_handler,
 
 START_TEST (test_eas_mail_handler_read_email_metadata)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -191,7 +193,7 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_update_email)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -301,7 +303,7 @@ START_TEST (test_eas_mail_handler_send_email)
     EasEmailHandler *email_handler = NULL;
     const gchar *mime_file = g_strconcat (getenv ("HOME"), "/int07/testdata/mime_file.txt", NULL);
     const gchar client_id[21];
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     GError *error = NULL;
     guint random_num;
     /* initialize random generator */
@@ -326,7 +328,7 @@ END_TEST
 
 START_TEST (test_get_mail_handler)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
 
     testGetMailHandler (&email_handler, accountuid);
@@ -341,7 +343,7 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     // it should be hard coded to the value used by the daemon but later
     // there should be a mechanism for getting the value from the same place
     // that the daemon uses
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -379,7 +381,7 @@ END_TEST
 
 START_TEST (test_get_eas_mail_info_in_folder)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -434,7 +436,7 @@ END_TEST
 
 START_TEST (test_get_eas_mail_info_in_inbox)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -486,7 +488,7 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_fetch_email_body)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -620,9 +622,7 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_fetch_email_attachments)
 {
-    //const gchar* accountuid = "123456789";
-    const gchar* accountuid = "1303900871.4417.1@brahim-laptop";
-    //const gchar* accountuid = "1303900872.4418.1@Tez-laptop";	
+    const gchar* accountuid = g_account_id;;
 	
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
@@ -779,7 +779,7 @@ END_TEST
 
 START_TEST (test_eas_mail_handler_delete_email)
 {
-    const gchar* accountuid = "123456789";
+    const gchar* accountuid = g_account_id;
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders

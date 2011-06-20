@@ -25,7 +25,8 @@ libeas_la_CPPFLAGS =			\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
 		$(WBXML_CFLAGS)		\
-		$(LIBICAL_CFLAGS)
+		$(LIBICAL_CFLAGS)   \
+		$(GNOMEKEYRING_CFLAGS)
 
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
@@ -35,7 +36,8 @@ libeas_la_LDFLAGS =			\
 		$(LIBXML_LIBS)		\
 		$(SOUP_LIBS)		\
 		$(WBXML_LIBS)		\
-		$(LIBICAL_LIBS)
+		$(LIBICAL_LIBS)     \
+		$(GNOMEKEYRING_LIBS)
 
 
 
@@ -122,14 +124,14 @@ endif
 
 accountinfo = \
 "[<?xml version=\"1.0\"?>\
+	<account uid=\"123456789\">\
+		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
+		<username>tez</username>\
+		<password>M0bica!</password>\
+	</account>,<?xml version=\"1.0\"?>\
 	<account uid=\"1303900871.4417.1@brahim-laptop\">\
 		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
 		<username>brahim</username>\
-		<password>M0bica!</password>\
-	</account>,<?xml version=\"1.0\"?>\
-	<account uid=\"1303900872.4418.1@Tez-laptop\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>Tez</username>\
 		<password>M0bica!</password>\
 	</account>]"
 
