@@ -24,7 +24,9 @@
 
  - Store policy key in GConf and don't reprovision every time
 
- - Return full headers for emails in Sync (get_email_info())
+ - Use GString for serialising; don't precalculate size. See commit 474ceb9.
+
+ - Handle headers with newline, in serialisation of eas-email-info.
 
  - Loop on <Sync> command if sync_key is "0".
 
