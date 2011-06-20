@@ -353,20 +353,6 @@ camel_eas_store_summary_set_parent_folder_id (CamelEasStoreSummary *eas_summary,
 }
 
 void
-camel_eas_store_summary_set_sync_state (CamelEasStoreSummary *eas_summary,
-					const gchar *folder_id,
-					const gchar *sync_state)
-{
-	S_LOCK(eas_summary);
-
-	g_key_file_set_string	(eas_summary->priv->key_file, folder_id,
-				 "SyncState", sync_state);
-	eas_summary->priv->dirty = TRUE;
-
-	S_UNLOCK(eas_summary);
-}
-
-void
 camel_eas_store_summary_set_folder_unread (CamelEasStoreSummary *eas_summary,
 					   const gchar *folder_id,
 					   guint64 unread)
@@ -469,23 +455,6 @@ camel_eas_store_summary_get_parent_folder_id (CamelEasStoreSummary *eas_summary,
 
 	ret = g_key_file_get_string	(eas_summary->priv->key_file, folder_id,
 					 "ParentFolderId", error);
-
-	S_UNLOCK(eas_summary);
-
-	return ret;
-}
-
-gchar *
-camel_eas_store_summary_get_sync_state (CamelEasStoreSummary *eas_summary,
-					const gchar *folder_id,
-					GError **error)
-{
-	gchar *ret;
-
-	S_LOCK(eas_summary);
-
-	ret = g_key_file_get_string	(eas_summary->priv->key_file, folder_id,
-					 "SyncState", error);
 
 	S_UNLOCK(eas_summary);
 

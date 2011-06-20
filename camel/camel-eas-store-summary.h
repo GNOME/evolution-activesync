@@ -82,10 +82,6 @@ void		camel_eas_store_summary_set_parent_folder_id
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 const gchar *parent_id);
-void		camel_eas_store_summary_set_sync_state
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 const gchar *sync_state);
 void		camel_eas_store_summary_set_folder_unread
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
@@ -108,10 +104,6 @@ gchar *camel_eas_store_summary_get_folder_full_name
 						 const gchar *folder_id,
 						 GError **error);
 gchar *	camel_eas_store_summary_get_parent_folder_id
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 GError **error);
-gchar *	camel_eas_store_summary_get_sync_state
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 GError **error);
