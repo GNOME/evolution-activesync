@@ -625,6 +625,9 @@ else
                               SOUP_MEMORY_COPY,
                               (gchar*) doc,
                               strlen((gchar*)doc));
+
+	//Avoid double-free in handle_server_response()
+	priv->request_doc = NULL;
 }
 #endif
     eas_request_base_SetSoupMessage (request, msg);
