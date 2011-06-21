@@ -1535,7 +1535,7 @@ complete_request:
             case EAS_REQ_UPDATE_CALENDAR:
             {
                 g_debug ("EAS_REQ_UPDATE_CALENDAR");
-                eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, &error);// TODO
+                eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
             }
             break;
             case EAS_REQ_ADD_CALENDAR:

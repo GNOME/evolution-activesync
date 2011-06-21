@@ -386,7 +386,9 @@ eas_sync_update_items (EasSync* self,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
-    eas_update_calendar_req_Activate (req);
+    eas_update_calendar_req_Activate (req, &error);
+
+    // TODO Check error
 
     // Set flag to wait for response
     e_flag_wait (flag);
@@ -421,7 +423,9 @@ eas_sync_update_items (EasSync* self,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
-    eas_update_calendar_req_Activate (req);
+    eas_update_calendar_req_Activate (req, &error);
+
+    // TODO Check error
 
     // Set flag to wait for response
     e_flag_wait (flag);
