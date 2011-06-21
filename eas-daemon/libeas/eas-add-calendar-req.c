@@ -13,6 +13,7 @@ struct _EasAddCalendarReqPrivate
     gchar* sync_key;
     gchar* folder_id;
     GSList *serialised_calendar;
+	GError* error;
 };
 
 static void
@@ -29,6 +30,7 @@ eas_add_calendar_req_init (EasAddCalendarReq *object)
     priv->sync_key = NULL;
     priv->folder_id = NULL;
     priv->serialised_calendar = NULL;
+	priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_ADD_CALENDAR);
@@ -138,27 +140,35 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 }
 
 
-gboolean 
+void
 eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self, 
                                       xmlDoc* doc, 
-                                      GError** error)
+                                      GError* error)
 {
-	gboolean success = FALSE;
+    GError *local_error = NULL;
     EasAddCalendarReqPrivate *priv = self->priv;
 
-	// @@TRICKY doc must be freed, so no g_return_val_if_fail() here.
-    g_assert (error == NULL || *error != NULL);
-
     g_debug ("eas_add_calendar_req_MessageComplete++");
+	
+	// If we have an error already store it for retrieval by the caller when
+	// they invoke ActivateFinish()
+	if (error)
+	{
+		priv->error = error;
+		goto finish;
+	}
 
-    success = eas_sync_msg_parse_response (priv->sync_msg, doc, error);
+	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error))
+	{
+		priv->error = local_error;
+	}
 
+finish:
+	// We always need to free 'doc' and release the semaphore.
     xmlFree (doc);
-
     e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
-	return success;
 }
 
 gboolean 
@@ -172,13 +182,26 @@ eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
 
     g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
 
-    *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
+	g_return_val_if_fail(ret_sync_key && added_items, FALSE);
 
+	*ret_sync_key = NULL;
+	*added_items = NULL;
+	
+	if (priv->error)
+	{
+		if (error)
+		{
+			*error = priv->error;
+		}
+
+		// If this fires we having memory to clean up that would have just been orphaned.
+		g_assert(NULL == eas_sync_msg_get_added_items (priv->sync_msg));
+		return FALSE;
+	}
+
+    *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
     *added_items = eas_sync_msg_get_added_items (priv->sync_msg);
 
     g_debug ("eas_add_calendar_req_ActivateFinish--");
 	return TRUE;
 }
-
-
-
