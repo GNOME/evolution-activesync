@@ -14,13 +14,21 @@ gchar * g_account_id = "123456789@andygould";
 
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
+    GError *error = NULL;
     // get a handle to the DBus interface and associate the account ID with
     // this object
-    *email_handler = eas_mail_handler_new (accountuid);
+    *email_handler = eas_mail_handler_new (accountuid, &error);
 
+    if (error)
+    {
+        g_critical("%s", error->message);
+        g_error_free (error);
+    }
+    
     // confirm that the handle object has been correctly setup
     fail_if (*email_handler == NULL,
              "eas_mail_handler_new returns NULL when given a valid ID");
+    
     fail_if ( (*email_handler)->priv == NULL,
               "eas_mail_handler_new account ID object (EasEmailHandler *) member priv (EasEmailHandlerPrivate *) NULL");
 
