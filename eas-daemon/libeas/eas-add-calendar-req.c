@@ -189,10 +189,7 @@ eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
 	
 	if (priv->error)
 	{
-		if (error)
-		{
-			*error = priv->error;
-		}
+		g_propagate_error(error, priv->error);
 
 		// If this fires we having memory to clean up that would have just been orphaned.
 		g_assert(NULL == eas_sync_msg_get_added_items (priv->sync_msg));
