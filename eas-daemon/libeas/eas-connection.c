@@ -26,6 +26,7 @@
 #include "eas-update-calendar-req.h"
 #include "eas-update-email-req.h"
 #include "eas-add-calendar-req.h"
+#include "eas-move-email-req.h"
 
 #ifdef ACTIVESYNC_14
     #define AS_VERSION "14.0"
@@ -1532,6 +1533,12 @@ complete_request:
                 eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
             }
             break;
+            case EAS_REQ_MOVE_EMAIL:
+            {
+                g_debug ("EAS_REQ_MOVE_EMAIL");
+                eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
+            }
+            break;				
             case EAS_REQ_UPDATE_CALENDAR:
             {
                 g_debug ("EAS_REQ_UPDATE_CALENDAR");

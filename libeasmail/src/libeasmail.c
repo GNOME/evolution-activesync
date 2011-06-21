@@ -763,26 +763,41 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 
 gboolean
 eas_mail_handler_move_to_folder (EasEmailHandler* self,
-                                 EasEmailInfo *email,
+                                 const GSList *server_ids,
                                  const gchar *src_folder_id,
                                  const gchar *dest_folder_id,
                                  GError **error)
 {
     gboolean ret = TRUE;
+    DBusGProxy *proxy = self->priv->remoteEas;
+
     g_debug ("eas_mail_handler_move_to_folder++");
+
+	g_assert(self);
+	g_assert(server_ids);
+	g_assert(src_folder_id);
+	g_assert(dest_folder_id);
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-    g_debug ("eas_mail_handler_move_to_folder--");
-    /* TODO */
+// call dbus api
+    ret = dbus_g_proxy_call (proxy, "move_emails_to_folder", error,
+                             G_TYPE_STRING, self->priv->account_uid,
+                             G_TYPE_STRV, server_ids,
+                             G_TYPE_STRING, src_folder_id,
+                             G_TYPE_STRING, dest_folder_id,
+                             G_TYPE_INVALID,
+                             G_TYPE_INVALID);    // no out params	
+
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
     }
+    g_debug ("eas_mail_handler_move_to_folder--");	
     return ret;
 }
 
-// How supported in AS?
+// TODO How supported in AS?
 gboolean
 eas_mail_handler_copy_to_folder (EasEmailHandler* self,
                                  const GSList *email_ids,

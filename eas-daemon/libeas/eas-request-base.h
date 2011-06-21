@@ -46,6 +46,7 @@ typedef enum {
     EAS_REQ_GET_EMAIL_ATTACHMENT,
     EAS_REQ_UPDATE_CALENDAR,
 	EAS_REQ_ADD_CALENDAR,
+	EAS_REQ_MOVE_EMAIL,
 	//TODO: add all other requests here
 	
 	EAS_REQ_LAST

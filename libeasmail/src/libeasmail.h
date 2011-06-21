@@ -247,7 +247,9 @@ gboolean eas_mail_handler_send_email(EasEmailHandler* this,
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
- * EasEmailInfo *email (in):    identifies the email to be moved
+ * const GSList *server_ids (in):identifies the specific emails to move.  This information is in 
+ *                              the form of server_ids returned from the eas_mail_handler_sync_folder_email_info
+ *                              call
  * const gchar *src_folder_id (in): folder id of the folder from which the email will be moved  
  * const gchar *dest_folder_id (in): folder id of the folder to which the email will be moved
  * GError **error (out):        returns error information if an error occurs.  If no
@@ -256,7 +258,7 @@ gboolean eas_mail_handler_send_email(EasEmailHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_mail_handler_move_to_folder(EasEmailHandler* this, 
-                                            EasEmailInfo *email,
+                                            const GSList *server_ids,
 	                                        const gchar *src_folder_id,
 	                                        const gchar *dest_folder_id,
 	                                        GError **error);
@@ -268,7 +270,9 @@ gboolean eas_mail_handler_move_to_folder(EasEmailHandler* this,
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
- * EasEmailInfo *email (in):    identifies the email to be copied
+ * const GSList *server_ids (in): identifies the specific emails to move.  This information is in 
+ *                              the form of server_ids returned from the eas_mail_handler_sync_folder_email_info
+ *                              call
  * const gchar *src_folder_id (in): folder id of the folder from which the email will be copied  
  * const gchar *dest_folder_id (in): folder id of the folder to which the email will be copied
  * GError **error (out):        returns error information if an error occurs.  If no
@@ -277,7 +281,7 @@ gboolean eas_mail_handler_move_to_folder(EasEmailHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_mail_handler_copy_to_folder(EasEmailHandler* this, 
-                                        const GSList *email_ids,
+                                        const GSList *server_ids,
                                         const gchar *src_folder_id,
                                         const gchar *dest_folder_id,
                                         GError **error);

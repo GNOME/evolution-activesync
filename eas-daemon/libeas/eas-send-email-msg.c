@@ -120,9 +120,6 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
     // no namespaces required?
     xmlNewNs (root, (xmlChar *) "ComposeMail:", NULL);
 
-    // TEMP LINE DO NOT CHECK IN:
-    // leaf = xmlNewChild(root, NULL, (xmlChar *)"AccountId", (xmlChar*)"lorna.mcneil@mobica.com");
-
     leaf = xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
     leaf = xmlNewChild (root, NULL, (xmlChar *) "SaveInSentItems", NULL); // presence indicates true
     base64data = g_base64_encode ( (const guchar *) priv->mime_string, strlen (priv->mime_string));

@@ -14,8 +14,8 @@
 #include "eas-send-email-req.h"
 #include "eas-update-email-req.h"
 #include "eas-connection-errors.h"
-
 #include "eas-get-email-attachment-req.h"
+#include "eas-move-email-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -814,5 +814,85 @@ finish:
         dbus_g_method_return (context);
     }
     g_debug ("eas_mail_send_email--");
+    return ret;
+}
+
+
+gboolean
+eas_mail_move_emails_to_folder (EasMail* easMailObj,
+                     const gchar* account_uid,
+                     const gchar** server_ids_array,
+                     const gchar *src_folder_id,
+                     const gchar *dest_folder_id,
+                     DBusGMethodInvocation* context)
+{
+    gboolean ret = TRUE;
+    EFlag *flag = NULL;
+    GError *error = NULL;
+    EasMoveEmailReq *req = NULL;
+	GSList *server_ids_list = NULL, *l = NULL;
+    int index = 0;
+    const gchar* id = NULL;
+    g_debug ("eas_mail_move_emails_to_folder++");
+
+    easMailObj->priv->connection = eas_connection_find (account_uid);
+    if (!easMailObj->priv->connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        ret = FALSE;
+        goto finish;
+    }
+
+    // Convert server_ids_array into GSList
+    while ( (id = server_ids_array[index++]))
+    {
+        server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
+    }
+	
+    // Create Request
+    flag = e_flag_new ();
+    req = eas_move_email_req_new (account_uid, flag, server_ids_list, src_folder_id, dest_folder_id);
+
+    // Cleanup the gslist
+    l = server_ids_list;
+    for (; l; l = l->next)
+    {
+        g_free (l->data);
+        l->data = NULL;
+    }
+    g_slist_free (server_ids_list);
+	
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    easMailObj->priv->connection);
+
+    // Activate Request
+    ret = eas_move_email_req_Activate (req, &error);
+    if (!ret)
+    {
+        goto finish;
+    }
+    // Wait for response
+    e_flag_wait (flag);
+    e_flag_free (flag);
+
+    ret = eas_move_email_req_ActivateFinish (req, &error);
+
+finish:
+	g_object_unref (req);	
+    if (!ret)
+    {
+        g_assert (error != NULL);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    }
+    else
+    {
+        dbus_g_method_return (context);
+    }
+    g_debug ("eas_mail_move_emails_to_folder--");
     return ret;
 }

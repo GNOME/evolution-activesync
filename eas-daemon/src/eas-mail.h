@@ -115,6 +115,16 @@ gboolean eas_mail_update_emails(EasMail *self,
 								const gchar **serialised_email_array,
 								DBusGMethodInvocation* context);
 
+/*
+	move an email
+ */
+gboolean eas_mail_move_emails_to_folder (EasMail* easMailObj,
+                     const gchar* account_uid,
+                     const gchar** server_ids_array,
+                     const gchar *src_folder_id,
+                     const gchar *dest_folder_id,
+                     DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_MAIL_H_ */

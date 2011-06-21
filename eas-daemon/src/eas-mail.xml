@@ -78,7 +78,6 @@
 
     </method>
 
-  <!-- TODO: MoveItem -->
 	<method name="delete_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="account_uid" direction="in"/>
@@ -95,6 +94,14 @@
 		<arg type="s" name="folder_id" direction="in"/>		
 		<arg type="as" name="update_email_array" direction="in"/>		
 	</method>
+	
+	<method name="move_emails_to_folder">
+		<annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+		<arg type="s" name="account_uid" direction="in"/>
+		<arg type="as" name="server_ids" direction="in"/>
+		<arg type="s" name="src_folder_id" direction="in"/>		
+		<arg type="s" name="dest_folder_id" direction="in"/>			
+	</method>	
 
   </interface>
 </node>

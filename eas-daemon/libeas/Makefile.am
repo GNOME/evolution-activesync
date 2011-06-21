@@ -74,11 +74,18 @@ libeas_la_SOURCES =		\
         eas-utils.c \
         eas-add-calendar-req.h \
         eas-add-calendar-req.c \
-		eas-connection-errors.c \
+	eas-connection-errors.c \
         eas-account.h \
         eas-account.c \
         eas-account-list.h \
-        eas-account-list.c
+        eas-account-list.c \
+        eas-move-email-req.h \
+        eas-move-email-req.c \
+        eas-move-email-msg.h \
+        eas-move-email-msg.c
+        
+        
+
 
 gconf_root = /apps/activesyncd
 
