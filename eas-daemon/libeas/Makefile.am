@@ -1,20 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES = libeas.la
 
-# MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
-
-#eas-marshal.h: eas-marshal.list
-#	$(AM_V_GEN) ( $(GLIB_GENMARSHAL) --prefix=eas_marshal $(srcdir)/eas-marshal.list --header > eas-marshal.tmp \
-#	&& mv eas-marshal.tmp eas-marshal.h ) \
-#	|| ( rm -f eas-marshal.tmp && exit 1 )
-
-#eas-marshal.c: eas-marshal.h
-#	$(AM_V_GEN) ( (echo '#include "eas-marshal.h"'; $(GLIB_GENMARSHAL) --prefix=eas_marshal $(srcdir)/eas-marshal.list --body) > eas-marshal.tmp \
-#	&& mv eas-marshal.tmp eas-marshal.c ) \
-#	|| ( rm -f eas-marshal.tmp && exit 1 )
-
-#eas-connection.c: $(MARSHAL_GENERATED)
-
 AM_CXXFLAGS = $(INTI_CXXFLAGS)
 
 libeas_la_CPPFLAGS =			\
@@ -91,11 +77,7 @@ libeas_la_SOURCES =		\
         eas-account.h \
         eas-account.c \
         eas-account-list.h \
-        eas-account-list.c        
-        
-        
-
-#CLEANFILES = $(MARSHAL_GENERATED)
+        eas-account-list.c
 
 gconf_root = /apps/activesyncd
 
