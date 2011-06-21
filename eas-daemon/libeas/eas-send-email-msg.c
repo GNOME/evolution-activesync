@@ -61,8 +61,6 @@ eas_send_email_msg_finalize (GObject *object)
     g_free (priv->mime_string);
     g_free (priv->client_id);
     g_free (priv->account_id);
-    g_free (priv);
-    msg->priv = NULL;
 
     G_OBJECT_CLASS (eas_send_email_msg_parent_class)->finalize (object);
 }
