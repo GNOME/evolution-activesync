@@ -320,7 +320,7 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	}
 	g_free(flags_as_string);
 	flags_as_string = NULL;
-	g_debug("importance = %ld", self->importance);
+	g_debug("importance = %d", self->importance);
 
 cleanup:
 	
