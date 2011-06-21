@@ -4,7 +4,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  *
  * Copyright © 2010-2011 Intel Corporation (www.intel.com)
- *
+ * 
  * Based on GroupWise/EWS code which was
  *  Copyright © 1999-2008 Novell, Inc. (www.novell.com)
  *
@@ -40,24 +40,24 @@ G_DEFINE_TYPE (CamelEasTransport, camel_eas_transport, CAMEL_TYPE_TRANSPORT)
 
 static gboolean
 eas_transport_connect_sync (CamelService *service,
-                            EVO3 (GCancellable *cancellable,)
-                            GError **error)
+                            EVO3(GCancellable *cancellable,)
+			    GError **error)
 {
-    return TRUE;
+	return TRUE;
 }
 
 static gchar *
 eas_transport_get_name (CamelService *service,
-                        gboolean brief)
+                              gboolean brief)
 {
-    if (brief)
-        return g_strdup_printf (
-                   _ ("Exchange server %s"),
-                   service->url->host);
-    else
-        return g_strdup_printf (
-                   _ ("Exchange mail delivery via %s"),
-                   service->url->host);
+	if (brief)
+		return g_strdup_printf (
+			_("Exchange server %s"),
+			service->url->host);
+	else
+		return g_strdup_printf (
+			_("Exchange mail delivery via %s"),
+			service->url->host);
 }
 
 static gboolean
@@ -137,15 +137,15 @@ eas_send_to_sync (CamelTransport *transport,
 static void
 camel_eas_transport_class_init (CamelEasTransportClass *class)
 {
-    CamelServiceClass *service_class;
-    CamelTransportClass *transport_class;
+	CamelServiceClass *service_class;
+	CamelTransportClass *transport_class;
 
-    service_class = CAMEL_SERVICE_CLASS (class);
-    service_class->EVO3_sync (connect) = eas_transport_connect_sync;
-    service_class->get_name = eas_transport_get_name;
+	service_class = CAMEL_SERVICE_CLASS (class);
+	service_class->EVO3_sync(connect) = eas_transport_connect_sync;
+	service_class->get_name = eas_transport_get_name;
 
-    transport_class = CAMEL_TRANSPORT_CLASS (class);
-    transport_class->EVO3_sync (send_to) = eas_send_to_sync;
+	transport_class = CAMEL_TRANSPORT_CLASS (class);
+	transport_class->EVO3_sync(send_to) = eas_send_to_sync;
 }
 
 static void

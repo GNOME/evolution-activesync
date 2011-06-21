@@ -433,7 +433,10 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
         g_debug ("sync_folder_email called successfully");
 
         // put the updated sync key back into the original string for tracking this
-        strcpy (sync_key, updatedSyncKey);
+	/* When we get a null response (only headers because there were no changes),
+	   do *NOT* overwrite the existing sync key! */
+	if (updatedSyncKey && updatedSyncKey[0])
+		strcpy (sync_key, updatedSyncKey);
 
         // get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
         ret = build_emailinfo_list ( (const gchar **) created_emailinfo_array, emailinfos_created, error);
