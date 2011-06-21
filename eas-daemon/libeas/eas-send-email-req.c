@@ -186,7 +186,13 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 
     g_debug ("build messsage");
     //build request msg
+#ifdef ACTIVESYNC_14
+    //Activesync 14 base64 encodes the Mime and builds an xml message
     doc = eas_send_email_msg_build_message (priv->send_email_msg);
+#else
+	//Activesync 12.1 just uses the mime string in the body of the message
+	doc = (xmlDoc*)priv->mime_string;
+#endif
     if (!doc)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,

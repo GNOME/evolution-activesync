@@ -27,6 +27,12 @@
 #include "eas-update-email-req.h"
 #include "eas-add-calendar-req.h"
 
+#ifdef ACTIVESYNC_14
+    #define AS_VERSION "14.0"
+#else
+    #define AS_VERSION "12.1"
+#endif
+
 struct _EasConnectionPrivate
 {
     SoupSession* soup_session;
@@ -591,7 +597,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
 
     soup_message_headers_append (msg->request_headers,
                                  "MS-ASProtocolVersion",
-                                "12.1");
+                                AS_VERSION);
 
     soup_message_headers_append (msg->request_headers,
                                  "User-Agent",
@@ -600,8 +606,12 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
                                  (priv->policy_key ? priv->policy_key : "0"));
-
-    // Convert doc into a flat xml string
+#ifndef ACTIVESYNC_14
+//in activesync 12.1, SendMail uses mime, not wbxml in the body
+if(g_strcmp0(cmd, "SendMail"))
+{
+#endif
+	// Convert doc into a flat xml string
     xmlDocDumpFormatMemoryEnc (doc, &dataptr, &data_len, (gchar*) "utf-8", 1);
     wbxml_conv_xml2wbxml_disable_public_id (conv);
     wbxml_conv_xml2wbxml_disable_string_table (conv);
@@ -626,6 +636,7 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
         goto finish;
     }
 
+
     soup_message_headers_set_content_length (msg->request_headers, wbxml_len);
 
     soup_message_set_request (msg,
@@ -633,8 +644,21 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
                               SOUP_MEMORY_COPY,
                               (gchar*) wbxml,
                               wbxml_len);
+#ifndef ACTIVESYNC_14
+}
+else
+{
+    //Activesync 12.1 implementation for SendMail Command
+    soup_message_headers_set_content_length (msg->request_headers, strlen((gchar*)doc));
 
-	eas_request_base_SetSoupMessage (request, msg);
+    soup_message_set_request (msg,
+                              "message/rfc822",
+                              SOUP_MEMORY_COPY,
+                              (gchar*) doc,
+                              strlen((gchar*)doc));
+}
+#endif
+    eas_request_base_SetSoupMessage (request, msg);
 
 	source = g_idle_source_new ();
 	g_source_set_callback (source, eas_queue_soup_message, request, NULL);
