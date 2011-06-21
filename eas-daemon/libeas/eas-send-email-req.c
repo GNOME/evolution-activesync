@@ -77,9 +77,6 @@ eas_send_email_req_finalize (GObject *object)
         g_error_free (priv->error);
     }
 
-    g_free (priv);
-    req->priv = NULL;
-
     G_OBJECT_CLASS (eas_send_email_req_parent_class)->finalize (object);
 }
 
