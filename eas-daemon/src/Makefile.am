@@ -22,7 +22,8 @@ activesyncd_CPPFLAGS =			\
 		$(EDATASERVER_CFLAGS)	\
 		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
-		$(SOUP_CFLAGS)
+		$(SOUP_CFLAGS)		\
+		-DG_LOG_DOMAIN=\"activesyncd\"
 
 activesyncd_LDFLAGS =			\
 		$(GLIB_LIBS)		\

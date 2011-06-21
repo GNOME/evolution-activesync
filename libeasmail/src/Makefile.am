@@ -8,7 +8,8 @@ libeasmail_la_CPPFLAGS =		\
 		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
 		$(LIBXML_CFLAGS)	\
-		$(SOUP_CFLAGS)
+		$(SOUP_CFLAGS)		\
+		-DG_LOG_DOMAIN=\"libeasmail\"
 
 # TODO remove unnecessary libs	  
 libeasmail_la_LDFLAGS =			\

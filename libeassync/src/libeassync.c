@@ -95,7 +95,11 @@ eas_sync_handler_new (const gchar* account_uid)
 
     g_type_init();
 
-    g_log_set_default_handler (eas_logger, NULL);
+    g_log_set_handler (G_LOG_DOMAIN,
+                       G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+                       eas_logger,
+                       NULL);
+
     g_debug ("eas_sync_handler_new++ : account_uid[%s]",
              (account_uid ? account_uid : "NULL"));
 
