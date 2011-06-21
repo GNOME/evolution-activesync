@@ -76,8 +76,6 @@ eas_update_email_req_finalize (GObject *object)
     }
     g_object_unref (priv->sync_msg);
     free_string_array (priv->serialised_email_array);
-    g_free (priv);
-    req->priv = NULL;
 
     G_OBJECT_CLASS (eas_update_email_req_parent_class)->finalize (object);
 
