@@ -84,9 +84,8 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 }
 
 EasEmailHandler *
-eas_mail_handler_new (const char* account_uid)
+eas_mail_handler_new (const char* account_uid, GError **error)
 {
-    GError* error = NULL;
     EasEmailHandler *object = NULL;
 
     g_type_init();
@@ -95,30 +94,38 @@ eas_mail_handler_new (const char* account_uid)
     g_debug ("eas_mail_handler_new++ : account_uid[%s]", (account_uid ? account_uid : "NULL"));
 
     // TODO This needs to take a GError ** argument, not use g_error().
-    if (!account_uid) return NULL;
+    if (!account_uid)
+    {
+	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+		     "No account UID specified");
+	return NULL;
+    }
 
-    object = g_object_new (EAS_TYPE_EMAIL_HANDLER , NULL);
+    object = g_object_new (EAS_TYPE_EMAIL_HANDLER, NULL);
 
     if (object == NULL)
     {
+	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+		     "Could not create email handler object");
         g_error ("Error: Couldn't create mail");
-        g_debug ("eas_mail_handler_new--");
-        return NULL;
+	g_debug ("eas_mail_handler_new--");
+	return NULL;
     }
 
     object->priv->main_loop = g_main_loop_new (NULL, TRUE);
 
     if (object->priv->main_loop == NULL)
     {
-        g_error ("Error: Failed to create the mainloop");
+	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+		     "Failed to create mainloop");
         return NULL;
     }
 
     g_debug ("Connecting to Session D-Bus.");
-    object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
-    if (error != NULL)
+    object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
+    if (object->priv->bus == NULL)
     {
-        g_error ("Error: Couldn't connect to the Session bus (%s) ", error->message);
+        g_error ("Error: Couldn't connect to the Session bus (%s) ", error?(*error)->message:"<discarded error>");
         return NULL;
     }
 
@@ -129,6 +136,8 @@ eas_mail_handler_new (const char* account_uid)
                                                           EAS_SERVICE_MAIL_INTERFACE);
     if (object->priv->remoteEas == NULL)
     {
+	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+		     "Failed to create mainloop");
         g_error ("Error: Couldn't create the proxy object");
         return NULL;
     }
@@ -137,7 +146,6 @@ eas_mail_handler_new (const char* account_uid)
 
     g_debug ("eas_mail_handler_new--");
     return object;
-
 }
 
 // takes an NULL terminated array of serialised folders and creates a list of EasFolder objects

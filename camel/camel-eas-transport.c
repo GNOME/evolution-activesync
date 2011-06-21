@@ -73,22 +73,18 @@ eas_send_to_sync (CamelTransport *transport,
 	EasEmailHandler *handler;
 	CamelStream *mimefile, *filtered;
 	CamelMimeFilter *filter;
-	guint64 account_uid;
+	const gchar *account_uid;
 	gchar *fname;
 	const gchar *msgid;
 	int fd;
 	gboolean res;
 
 	service = CAMEL_SERVICE (transport);
-	account_uid = g_ascii_strtoull (camel_url_get_param (service->url, "account_uid"), NULL, 0);
+	account_uid = camel_url_get_param (service->url, "account_uid");
 
-	handler = eas_mail_handler_new (account_uid);
-	if (!handler) {
-		g_set_error (error, CAMEL_SERVICE_ERROR,
-			     CAMEL_SERVICE_ERROR_NOT_CONNECTED,
-			     _("Service not connected"));
+	handler = eas_mail_handler_new (account_uid, error);
+	if (!handler)
 		return FALSE;
-	}
 
 	/* FIXME: Check that From/To/Cc headers match the 'from' and 'recipients'
 	   arguments. If not, return an error because Exchange is broken can cannot

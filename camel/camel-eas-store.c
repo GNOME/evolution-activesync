@@ -177,7 +177,7 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 		return TRUE;
 	}
 
-	priv->handler = eas_mail_handler_new (priv->account_uid/*, error*/);
+	priv->handler = eas_mail_handler_new (priv->account_uid, error);
 	if (!priv->handler) {
 		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
 		EVO3_sync(camel_service_disconnect) (service, TRUE, NULL);
