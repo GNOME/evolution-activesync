@@ -128,7 +128,7 @@ eas_update_calendar_req_Activate (EasUpdateCalendarReq *self, GError **error)
 	gboolean success = FALSE;
 
     g_debug ("eas_update_calendar_req_Activate++");
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
 
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
@@ -184,7 +184,7 @@ eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self,
     EasUpdateCalendarReqPrivate *priv = self->priv;
     g_debug ("eas_update_calendar_req_ActivateFinish++");
 
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
 
 	g_return_val_if_fail(ret_sync_key, FALSE);
 
