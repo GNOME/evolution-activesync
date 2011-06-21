@@ -56,12 +56,18 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
+PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
 
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
+
+# Ick. Shouldn't this be in syncevolution.pc ?
+syncevo_backenddir=$libdir/syncevolution/backends
+AC_SUBST(syncevo_backenddir)
+
 
 AC_CONFIG_FILES([
     Makefile 
@@ -74,6 +80,7 @@ AC_CONFIG_FILES([
     check_tests/Makefile
     logger/Makefile
     camel/Makefile
+    syncevolution/Makefile
     ])
  	
 #activesync account schema installation:

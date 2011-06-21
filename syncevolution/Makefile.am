@@ -2,13 +2,15 @@ AM_CPPFLAGS = $(SYNCEVOLUTION_CFLAGS) -I$(top_srcdir)/test $(BACKEND_CPPFLAGS)
 
 EXTRA_DIST = configure-sub.in
 
+backenddir = $(syncevo_backenddir)
+
 SYNCSOURCES = syncactivesync.la
 MOSTLYCLEANFILES = $(SYNCSOURCES)
-if ENABLE_MODULES
+#if ENABLE_MODULES
 backend_LTLIBRARIES = $(SYNCSOURCES)
-else
-noinst_LTLIBRARIES = $(SYNCSOURCES)
-endif
+#else
+#noinst_LTLIBRARIES = $(SYNCSOURCES)
+#endif
 
 MAINTAINERCLEANFILES = Makefile.in
 
