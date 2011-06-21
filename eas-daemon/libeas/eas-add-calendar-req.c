@@ -1,13 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- *
- */
 #include "eas-sync-msg.h"
 #include "eas-add-calendar-req.h"
-
-
 
 G_DEFINE_TYPE (EasAddCalendarReq, eas_add_calendar_req, EAS_TYPE_REQUEST_BASE);
 
@@ -44,6 +37,24 @@ eas_add_calendar_req_init (EasAddCalendarReq *object)
 }
 
 static void
+eas_add_calendar_req_dispose (GObject *object)
+{
+    EasAddCalendarReq *req = (EasAddCalendarReq *) object;
+    EasAddCalendarReqPrivate *priv = req->priv;
+
+    g_debug ("eas_add_calendar_req_dispose++");
+
+	if (priv->sync_msg) {
+		g_object_unref (priv->sync_msg);
+		priv->sync_msg = NULL;
+	}
+
+    G_OBJECT_CLASS (eas_add_calendar_req_parent_class)->dispose (object);
+
+    g_debug ("eas_add_calendar_req_dispose--");
+}
+
+static void
 eas_add_calendar_req_finalize (GObject *object)
 {
     /* deinitalization code */
@@ -54,10 +65,6 @@ eas_add_calendar_req_finalize (GObject *object)
 
     g_free (priv->account_id);
 
-    g_object_unref (priv->sync_msg);
-    g_free (priv);
-    req->priv = NULL;
-
     G_OBJECT_CLASS (eas_add_calendar_req_parent_class)->finalize (object);
 
     g_debug ("eas_add_calendar_req_finalize--");
@@ -67,31 +74,28 @@ static void
 eas_add_calendar_req_class_init (EasAddCalendarReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_type_class_add_private (klass, sizeof (EasAddCalendarReqPrivate));
 
     object_class->finalize = eas_add_calendar_req_finalize;
+    object_class->dispose = eas_add_calendar_req_dispose;
 
     g_debug ("eas_add_calendar_req_class_init--");
 }
 
 
 // TODO - update this to take a GSList of serialised calendars? rem to copy the list
-EasAddCalendarReq *eas_add_calendar_req_new (const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const GSList* serialised_calendar, EFlag *flag)
+EasAddCalendarReq *
+eas_add_calendar_req_new (const gchar* account_id, 
+                          const gchar *sync_key, 
+                          const gchar *folder_id, 
+                          const GSList* serialised_calendar, 
+                          EFlag *flag)
 {
     EasAddCalendarReq* self = g_object_new (EAS_TYPE_ADD_CALENDAR_REQ, NULL);
     EasAddCalendarReqPrivate *priv = self->priv;
 
     g_debug ("eas_add_calendar_req_new++");
-
-    g_assert (sync_key);
-    g_assert (folder_id);
-    g_assert (serialised_calendar);
 
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
@@ -104,61 +108,76 @@ EasAddCalendarReq *eas_add_calendar_req_new (const gchar* account_id, const gcha
     return self;
 }
 
-void eas_add_calendar_req_Activate (EasAddCalendarReq *self)
+gboolean 
+eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 {
     EasAddCalendarReqPrivate *priv = self->priv;
-    xmlDoc *doc;
-    GError *error = NULL;
+    xmlDoc *doc = NULL;
+    gboolean success = FALSE;
 
     g_debug ("eas_add_calendar_req_Activate++");
+
+    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
+
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_CALENDAR);
 
-    g_debug ("build messsage");
     //build request msg
     doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, priv->serialised_calendar, NULL, NULL);
 
-    g_debug ("send message");
-    eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                 "Sync",
-                                 doc,
-                                 (struct _EasRequestBase *) self,
-                                 &error);
+    success = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+                                           "Sync",
+                                           doc, // full transfer
+                                           (struct _EasRequestBase *) self,
+                                           error);
+
+	g_assert(error == NULL || (!success && *error != NULL));
 
     g_debug ("eas_add_calendar_req_Activate--");
-
-    return;
+	return success;
 }
 
 
-void eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self, xmlDoc* doc, GError** error)
+gboolean 
+eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self, 
+                                      xmlDoc* doc, 
+                                      GError** error)
 {
+	gboolean success = FALSE;
     EasAddCalendarReqPrivate *priv = self->priv;
+
+	// @@TRICKY doc must be freed, so no g_return_val_if_fail() here.
+    g_assert (error == NULL || *error != NULL);
+
     g_debug ("eas_add_calendar_req_MessageComplete++");
 
-    eas_sync_msg_parse_response (priv->sync_msg, doc, error);
+    success = eas_sync_msg_parse_response (priv->sync_msg, doc, error);
 
     xmlFree (doc);
 
     e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
+	return success;
 }
 
-void eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
-                                          gchar** ret_sync_key,
-                                          GSList** added_items,
-                                          GError **error)
+gboolean 
+eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
+                                     gchar** ret_sync_key,
+                                     GSList** added_items,
+                                     GError **error)
 {
     EasAddCalendarReqPrivate *priv = self->priv;
     g_debug ("eas_add_calendar_req_ActivateFinish++");
 
+    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
+
     *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
 
-    *added_items   = eas_sync_msg_get_added_items (priv->sync_msg);
-    // TODO fill in the error
+    *added_items = eas_sync_msg_get_added_items (priv->sync_msg);
 
     g_debug ("eas_add_calendar_req_ActivateFinish--");
+	return TRUE;
 }
 
 

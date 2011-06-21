@@ -61,8 +61,14 @@ EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id,
  *
  * @param[in] self
  *	  The EasAddCalendarReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
  */
-void eas_add_calendar_req_Activate(EasAddCalendarReq *self);
+gboolean eas_add_calendar_req_Activate(EasAddCalendarReq *self, GError **error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -78,13 +84,13 @@ void eas_add_calendar_req_Activate(EasAddCalendarReq *self);
  *	  xmlFreeDoc(). [full transfer]
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if successful, otherwise FALSE.
  */
-void eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, 
-                                          xmlDoc* doc, 
-                                          GError** error);
-
-// TODO Should the error be GError* as it is being propagated by us internally.
-// TODO Should this function return a success boolean?
+gboolean 
+eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, 
+                                     xmlDoc* doc, 
+                                     GError** error);
 
 /**
  * Reads the server response data into the supplied data structures.
@@ -96,20 +102,24 @@ void eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self,
  * @param[in] self
  *	  The EasAddCalendarReq GObject instance whose server response data we accessing.
  * @param[out] ret_sync_key
- *	  The updated synchronisation key from the server.
+ *	  The updated synchronisation key from the server, must be freed with 
+ *	  g_free(). [full transfer]
  * @param[out] added_items
- *	  
+ *	  A GSList of serialised EasItemInfo objects, caller must free the list 
+ *	  contents with g_free() and the list itself with g_slist_free(). [full transfer]
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
- *	  will be populated with error details if an error has occured. Caller should
- *	  free the memory with g_error_free() if it has been set. [full transfer]
+ *	  will be populated with error details if the function returns FALSE. Caller 
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
  */
-void eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self, 
-                                          gchar** ret_sync_key, 
-                                          GSList** added_items, 
-                                          GError **error);
+gboolean 
+eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self, 
+                                     gchar** ret_sync_key, 
+                                     GSList** added_items, 
+                                     GError **error);
 
-// TODO Should this function return a success boolean?
 
 G_END_DECLS
 

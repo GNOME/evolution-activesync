@@ -497,7 +497,9 @@ eas_sync_add_items (EasSync* self,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
-    eas_add_calendar_req_Activate (req);
+    eas_add_calendar_req_Activate (req, &error);
+
+    // TODO Check for error
 
     // Set flag to wait for response
     e_flag_wait (flag);
