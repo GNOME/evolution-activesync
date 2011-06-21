@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_ADD_CALENDAR_REQ_H_
 #define _EAS_ADD_CALENDAR_REQ_H_
@@ -37,18 +32,84 @@ struct _EasAddCalendarReq
 
 GType eas_add_calendar_req_get_type (void) G_GNUC_CONST;
 
-// C'tor
-EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const GSList *serialised_calendar, EFlag *flag);
+/** 
+ * Create a new calendar request GObject
+ *
+ * @param[in] account_id
+ *	  Unique identifier for a user account.
+ * @param[in] sync_key
+ *	  The current synchronisation key.
+ * @param[in] folder_id
+ *	  The identifer for the target server folder.
+ * @param[in] serialised_calendar
+ *	  A list of strings containing serialised EasItemInfo GObjects.
+ * @param[in] flag
+ *	  A semaphore used to make the request appear synchronous by waiting for the
+ *	  server response. It should be set by the caller immediately after this 
+ *	  function is called and cleared in this request's MessageComplete.
+ *
+ * @return An allocated EasAddCalendarReq GObject or NULL
+ */
+EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id, 
+                                            const gchar *sync_key, 
+                                            const gchar *folder_id, 
+                                            const GSList *serialised_calendar, 
+                                            EFlag *flag);
 
-// start async request
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasAddCalendarReq GObject instance to be Activated.
+ */
 void eas_add_calendar_req_Activate(EasAddCalendarReq *self);
 
-// async request completed
-void eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, xmlDoc* doc, GError** error);
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then clearing the semaphore to allow the caller that activated the request
+ * to continue.
+ *
+ * @param[in] self
+ *	  The EasAddCalendarReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *	  Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ */
+void eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, 
+                                          xmlDoc* doc, 
+                                          GError** error);
 
-// results returned to client
-void eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self, gchar** ret_sync_key, GSList** added_items, GError **error);
+// TODO Should the error be GError* as it is being propagated by us internally.
+// TODO Should this function return a success boolean?
 
+/**
+ * Reads the server response data into the supplied data structures.
+ *
+ * Called from the daemon thread after the Soup thread has called MessageComplete
+ * releasing the semaphore. Populates the data structures with the results of the
+ * parsed server response.
+ *
+ * @param[in] self
+ *	  The EasAddCalendarReq GObject instance whose server response data we accessing.
+ * @param[out] ret_sync_key
+ *	  The updated synchronisation key from the server.
+ * @param[out] added_items
+ *	  
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if an error has occured. Caller should
+ *	  free the memory with g_error_free() if it has been set. [full transfer]
+ */
+void eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self, 
+                                          gchar** ret_sync_key, 
+                                          GSList** added_items, 
+                                          GError **error);
+
+// TODO Should this function return a success boolean?
 
 G_END_DECLS
 
