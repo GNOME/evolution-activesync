@@ -40,7 +40,7 @@ GType eas_sync_folder_hierarchy_req_get_type (void) G_GNUC_CONST;
 
 EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncKey,
                                                              const gchar* accountId,
-                                                             EFlag *flag);
+                                                             DBusGMethodInvocation*);
 
 gboolean eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error);
 
@@ -48,12 +48,6 @@ void eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* s
                                                     xmlDoc *doc, 
                                                     GError* error_in);
 
-gboolean eas_sync_folder_hierarchy_req_ActivateFinish (EasSyncFolderHierarchyReq* self, 
-                                                   gchar** ret_sync_key, 
-                                                   GSList** added_folders, 
-                                                   GSList** updated_folders, 
-                                                   GSList** deleted_folders, 
-                                                   GError** error);
 
 G_END_DECLS
 

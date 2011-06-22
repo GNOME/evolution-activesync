@@ -133,53 +133,7 @@ eas_mail_test_001 (EasMail* obj, DBusGMethodInvocation* context)
 }
 
 
-// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
-// null terminates the array
-static gboolean
-build_serialised_folder_array (gchar ***serialised_folder_array, const GSList *folder_list, GError **error)
-{
-    gboolean ret = TRUE;
-    guint i = 0;
-    guint array_len = g_slist_length ( (GSList*) folder_list) + 1; //cast away const to avoid warning. +1 to allow terminating null
-    GSList *l = (GSList*) folder_list;
 
-    g_assert (serialised_folder_array);
-    g_assert (*serialised_folder_array == NULL);
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    *serialised_folder_array = g_malloc0 (array_len * sizeof (gchar*));
-
-    for (i = 0; i < array_len - 1; i++)
-    {
-        EasFolder *folder;
-        g_assert (l != NULL);
-        folder = l->data;
-
-        if (!eas_folder_serialise (folder, & (*serialised_folder_array) [i]))
-        {
-            g_debug ("failed!");
-            ret = FALSE;
-            goto cleanup;
-        }
-
-        l = g_slist_next (l);
-    }
-
-cleanup:
-    if (!ret)
-    {
-        for (i = 0; i < array_len - 1; i++)
-        {
-            g_free ( (*serialised_folder_array) [i]);
-        }
-        g_free (*serialised_folder_array);
-        g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     ("out of memory"));
-    }
-
-    return ret;
-}
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
@@ -226,7 +180,7 @@ finish:
 }
 
 
-void
+gboolean
 eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                       const gchar* account_uid,
                                       const gchar* sync_key,
@@ -234,16 +188,7 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
 {
     EasMailPrivate* priv = self->priv;
     GError *error = NULL;
-    GSList* added_folders = NULL;
-    GSList* updated_folders  = NULL;
-    GSList* deleted_folders  = NULL;
-    EFlag * eflag = NULL;
     EasSyncFolderHierarchyReq *req = NULL;
-
-    gchar*  ret_sync_key = NULL;
-    gchar** ret_created_folders_array = NULL;
-    gchar** ret_updated_folders_array = NULL;
-    gchar** ret_deleted_folders_array = NULL;
     gboolean ret;
 
     g_debug ("eas_mail_sync_email_folder_hierarchy++ : account_uid[%s]",
@@ -259,14 +204,12 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
                      account_uid);
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-        return;
+        return FALSE;
     }
 
     g_debug ("eas_mail_sync_email_folder_hierarchy++ 1");
 
-    // Create the request
-    eflag = e_flag_new ();
-    req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, eflag);
+    req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
 
     g_debug ("eas_mail_sync_email_folder_hierarchy++ 2");
 
@@ -277,60 +220,9 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
 
     // Activate the request
     ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
-    e_flag_wait (eflag);
-    e_flag_free (eflag);
 
-    // Fetch the response data from the message
-    ret = eas_sync_folder_hierarchy_req_ActivateFinish (req,
-                                                        &ret_sync_key,
-                                                        &added_folders,
-                                                        &updated_folders,
-                                                        &deleted_folders,
-                                                        &error);	
-    if (!ret)
-    {
-        goto finish;
-    }
-
-    // Serialise the response data from GSList* to char** for transmission over Dbus
-
-    ret = build_serialised_folder_array (&ret_created_folders_array, added_folders, &error);
-    if (ret)
-    {
-        ret = build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error);
-        if (ret)
-        {
-            ret = build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error);
-        }
-    }
-
-finish:
-	g_object_unref (req);	
-    // Return the error or the requested data to the mail client
-    if (!ret)
-    {
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    else
-    {
-        dbus_g_method_return (context,
-                              ret_sync_key,
-                              ret_created_folders_array,
-                              ret_updated_folders_array,
-                              ret_deleted_folders_array);
-    }
-
-	g_strfreev(ret_created_folders_array);
-	g_strfreev(ret_updated_folders_array);
-	g_strfreev(ret_deleted_folders_array);
-	g_free(ret_sync_key);
     g_debug ("eas_mail_sync_email_folder_hierarchy--");
+	return TRUE;
 }
 
 /**

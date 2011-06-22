@@ -7,6 +7,7 @@
 #include <libxml/xmlreader.h> // xmlDoc
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
+#include <dbus/dbus-glib.h>
 
 G_BEGIN_DECLS
 
@@ -79,9 +80,11 @@ void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection*
 SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
 void eas_request_base_SetSoupMessage(EasRequestBase* self, SoupMessage *soup_message);
 
+DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
+void eas_request_base_SetContext(EasRequestBase* self, DBusGMethodInvocation* context);
+
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
 void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);
-
 
 G_END_DECLS
 

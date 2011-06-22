@@ -10,6 +10,7 @@ struct _EasRequestBasePrivate
     SoupMessage *soup_message;
     gpointer result;
     EFlag *flag;
+	DBusGMethodInvocation *context;
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
@@ -159,5 +160,22 @@ eas_request_base_SetFlag (EasRequestBase* self, EFlag* flag)
     EasRequestBasePrivate *priv = self->priv;
     g_debug ("eas_request_base_SetFlag++");
     priv->flag = flag;
+    g_debug ("eas_request_base_SetFlag--");
+}
+
+DBusGMethodInvocation*
+eas_request_base_GetContext (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug ("eas_request_base_GetFlag+-");
+    return priv->context;
+}
+
+void
+eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug ("eas_request_base_SetFlag++");
+    priv->context = context;
     g_debug ("eas_request_base_SetFlag--");
 }

@@ -3,6 +3,9 @@ lib_LTLIBRARIES = libeas.la
 
 AM_CXXFLAGS = $(INTI_CXXFLAGS)
 
+INCLUDES = -I../../libeasmail/src
+	  
+
 libeas_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\

@@ -52,7 +52,7 @@ void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj);
 /*
 	sync the entire email folder hierarchy 
 */                            
-void eas_mail_sync_email_folder_hierarchy(EasMail* self,
+gboolean eas_mail_sync_email_folder_hierarchy(EasMail* self,
                                           const gchar* account_uid,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
