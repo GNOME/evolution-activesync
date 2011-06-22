@@ -119,7 +119,7 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 
     g_debug ("eas_add_calendar_req_Activate++");
 
-    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_CALENDAR);
@@ -180,7 +180,7 @@ eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
     EasAddCalendarReqPrivate *priv = self->priv;
     g_debug ("eas_add_calendar_req_ActivateFinish++");
 
-    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	g_return_val_if_fail(ret_sync_key && added_items, FALSE);
 

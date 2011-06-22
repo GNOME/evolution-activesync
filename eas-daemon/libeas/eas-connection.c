@@ -44,9 +44,6 @@ struct _EasConnectionPrivate
     gchar* accountUid;
     EasAccount *account;
 
-    gchar* device_type;
-    gchar* device_id;
-
     gchar* policy_key;
 
 	gboolean retrying_asked;
@@ -74,31 +71,7 @@ static void parse_for_status (xmlNode *node);
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
-/**
- * eas_uid_new:
- *
- * Generate a new unique string for use e.g. in account lists.
- *
- * Returns: The newly generated UID.  The caller should free the string
- * when it's done with it.
- **/
-static gchar *
-eas_uid_new (void)
-{
-    static gint serial;
-    static gchar *hostname;
-
-    if (!hostname)
-    {
-        hostname = (gchar *) g_get_host_name ();
-    }
-
-    return g_strdup_printf ("%lu.%lu.%d@%s",
-                            (gulong) time (NULL),
-                            (gulong) getpid (),
-                            serial++,
-                            hostname);
-}
+#define HTTP_STATUS_OK (200)
 
 static void
 eas_connection_accounts_init()
@@ -152,16 +125,12 @@ eas_connection_init (EasConnection *self)
                       G_CALLBACK (connection_authenticate),
                       self);
 
-    if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
+    if (getenv ("EAS_SOUP_LOGGER") && (atoi (g_getenv ("EAS_SOUP_LOGGER")) >= 1))
     {
         SoupLogger *logger;
         logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE (logger));
     }
-
-    // TODO Fetch the Device Type and Id from where ever it is stored.
-    priv->device_type = g_strdup ("FakeDevice");
-    priv->device_id = g_strdup ("1234567890");
 
     priv->accountUid = NULL;
 	priv->account = NULL; // Just a reference
@@ -223,6 +192,14 @@ eas_connection_dispose (GObject *object)
         priv->soup_context = NULL;
     }
 
+    if (priv->request)
+    {
+        // TODO - @@WARNING Check this is a valid thing to do.
+        // It might only call the base gobject class finalize method not the
+        // correct method. Not sure if gobjects are properly polymorphic.
+        g_object_unref (priv->request);
+		priv->request = NULL;
+    }
 
     G_OBJECT_CLASS (eas_connection_parent_class)->dispose (object);
 
@@ -237,29 +214,13 @@ eas_connection_finalize (GObject *object)
 
     g_debug ("eas_connection_finalize++");
 
-    // g_free can handle NULL
     g_free (priv->accountUid);
-	priv->account = NULL;
-
-    g_free (priv->device_type);
-    g_free (priv->device_id);
-
     g_free (priv->policy_key);
-
     g_free (priv->request_cmd);
 
     if (priv->request_doc)
     {
-		g_debug("free request doc");
-        xmlFree (priv->request_doc);
-    }
-
-    if (priv->request)
-    {
-        // TODO - @@WARNING Check this is a valid thing to do.
-        // It might only call the base gobject class finalize method not the
-        // correct method. Not sure if gobjects are properly polymorphic.
-        g_object_unref (priv->request);
+        xmlFreeDoc (priv->request_doc);
     }
 
     if (priv->request_error && *priv->request_error)
@@ -275,9 +236,6 @@ static void
 eas_connection_class_init (EasConnectionClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-    void *tmp = object_class;
-    tmp = parent_class;
     g_debug ("eas_connection_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
@@ -456,7 +414,7 @@ eas_soup_thread (gpointer user_data)
     return NULL;
 }
 
-void eas_connection_set_policy_key (EasConnection* self, gchar* policyKey)
+void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
 {
     EasConnectionPrivate *priv = self->priv;
 
@@ -479,18 +437,16 @@ void eas_connection_resume_request (EasConnection* self)
     g_debug ("eas_connection_resume_request++");
 
     // If these aren't set it's all gone horribly wrong
-    g_assert (priv->request_cmd);
-    g_assert (priv->request);
-    g_assert (priv->request_doc);
+	g_return_if_fail (priv->request_cmd && priv->request && priv->request_doc);
 
-    _cmd = priv->request_cmd;
+    _cmd     = priv->request_cmd;
     _request = priv->request;
-    _doc = priv->request_doc;
-    _error = priv->request_error;
+    _doc     = priv->request_doc;
+    _error   = priv->request_error;
 
-    priv->request_cmd = NULL;
-    priv->request = NULL;
-    priv->request_doc = NULL;
+    priv->request_cmd   = NULL;
+    priv->request       = NULL;
+    priv->request_doc   = NULL;
     priv->request_error = NULL;
 
     eas_connection_send_request (self, _cmd, _doc, _request, _error);
@@ -519,15 +475,27 @@ eas_queue_soup_message (gpointer _request)
  * May also be required to temporarily hold the request message whilst
  * provisioning with the server occurs.
  *
- * @param self the EasConnection GObject
- * @param cmd ActiveSync command string [no transfer]
- * @param doc the message xml body [full transfer]
- * @param request the request GObject
+ * @param self
+ *	  The EasConnection GObject instance.
+ * @param cmd 
+ *	  ActiveSync command string [no transfer]
+ * @param doc
+ *	  The message xml body [full transfer]
+ * @param request
+ *	  The request GObject
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller 
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
  *
- * @return whether successful
+ * @return TRUE if successful, otherwise FALSE.
  */
 gboolean
-eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc, struct _EasRequestBase *request, GError** error)
+eas_connection_send_request (EasConnection* self, 
+                             const gchar* cmd, 
+                             xmlDoc* doc, 
+                             struct _EasRequestBase *request, 
+                             GError** error)
 {
     gboolean ret = TRUE;
     EasConnectionPrivate *priv = self->priv;
@@ -539,20 +507,20 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
     WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
-	GSource *source;
+	GSource *source = NULL;
 
     g_debug ("eas_connection_send_request++");
     // If not the provision request, store the request
     if (g_strcmp0 (cmd, "Provision"))
     {
+		gint recursive = 1;
 		g_debug("store the request");
         priv->request_cmd = g_strdup (cmd);
-        priv->request_doc = doc;
+        priv->request_doc = xmlCopyDoc (doc, recursive);
         priv->request = request;
         priv->request_error = error;
     }
-	// TODO if this *is* the provision request we leak the xml doc (and request)
-	
+
     // If we need to provision, and not the provisioning msg
     if (!priv->policy_key && g_strcmp0 (cmd, "Provision"))
     {
@@ -581,8 +549,8 @@ eas_connection_send_request (EasConnection* self, const gchar* cmd, xmlDoc* doc,
     uri = g_strconcat (priv->account->serverUri,
                        "?Cmd=", cmd,
                        "&User=", priv->account->username,
-                       "&DeviceID=", priv->device_id,
-                       "&DeviceType=", priv->device_type,
+                       "&DeviceID=", "1234567890",   // TODO Need to get device type and id from the correct place.
+                       "&DeviceType=", "FakeDevice", // TODO Need to get device type and id from the correct place.
                        NULL);
 
     msg = soup_message_new ("POST", uri);
@@ -657,9 +625,6 @@ else
                               SOUP_MEMORY_COPY,
                               (gchar*) doc,
                               strlen((gchar*)doc));
-
-	//Avoid double-free in handle_server_response()
-	priv->request_doc = NULL;
 }
 #endif
     eas_request_base_SetSoupMessage (request, msg);
@@ -669,6 +634,8 @@ else
 	g_source_attach (source, priv->soup_context);
 
 finish:
+	// @@WARNING - doc must always be freed before exiting this function.
+    xmlFreeDoc(doc);
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
     if (dataptr) xmlFree (dataptr);
@@ -697,7 +664,7 @@ isResponseValid (SoupMessage *msg)
 
     g_debug ("eas_connection - isResponseValid++");
 
-    if (200 != msg->status_code)
+    if (HTTP_STATUS_OK != msg->status_code)
     {
         g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
         return INVALID;
@@ -844,6 +811,11 @@ autodiscover_as_xml (const gchar *email)
     return doc;
 }
 
+/**
+ * @return NULL or serverUri as a NULL terminated string, caller must free 
+ *		   with xmlFree(). [full transfer]
+ *
+ */
 static gchar*
 autodiscover_parse_protocol (xmlNode *node)
 {
@@ -867,6 +839,7 @@ typedef struct
     SoupMessage *msgs[2];
     EasAutoDiscoverCallback cb;
     gpointer cbdata;
+	EasAccount* account;
 } EasAutoDiscoverData;
 
 static void
@@ -896,7 +869,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 
     adData->msgs[idx] = NULL;
 
-    if (status != 200)
+    if (status != HTTP_STATUS_OK)
     {
         g_warning ("Autodiscover HTTP response was not OK");
         g_set_error (&error,
@@ -987,10 +960,12 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
             soup_session_cancel_message (adData->cnc->priv->soup_session,
                                          m,
                                          SOUP_STATUS_CANCELLED);
-            g_message ("Autodiscover success - Cancelling outstanding msg[%d]", idx);
+            g_debug ("Autodiscover success - Cancelling outstanding msg[%d]", idx);
         }
     }
-    g_simple_async_result_set_op_res_gpointer (adData->simple, serverUrl, NULL);
+	// Copy the pointer here so we can free using g_free() rather than xmlFree()
+    g_simple_async_result_set_op_res_gpointer (adData->simple, g_strdup (serverUrl), NULL);
+	if (serverUrl) xmlFree (serverUrl);
     g_simple_async_result_complete_in_idle (adData->simple);
 
     g_debug ("autodiscover_soup_cb (Success)--");
@@ -1032,8 +1007,10 @@ autodiscover_simple_cb (GObject *cnc, GAsyncResult *res, gpointer data)
         url = g_simple_async_result_get_op_res_gpointer (simple);
     }
 
+	// Url ownership transferred to cb
     adData->cb (url, adData->cbdata, error);
     g_object_unref (G_OBJECT (adData->cnc));
+	g_object_unref (G_OBJECT (adData->account));
     g_free (adData);
 
     g_debug ("autodiscover_simple_cb--");
@@ -1069,11 +1046,14 @@ autodiscover_as_soup_msg (gchar *url, xmlOutputBuffer *buf)
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @param[in]  cb        autodiscover response callback
- * @param[in]  cb_data   data to be passed into the callback
- * @param[in]  email     user's exchange email address
- * @param[in]  username  exchange username in the format DOMAIN\username
- * @param[in]  password  exchange server account password
+ * @param[in] cb
+ *	  Autodiscover response callback
+ * @param[in] cb_data
+ *	  Data to be passed into the callback
+ * @param[in] email
+ *	  User's exchange email address
+ * @param[in] username
+ *	  Exchange Server username in the format DOMAIN\username
  */
 void
 eas_connection_autodiscover (EasAutoDiscoverCallback cb,
@@ -1088,7 +1068,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
     xmlOutputBuffer* txBuf = NULL;
     gchar* url = NULL;
     EasAutoDiscoverData *autoDiscData = NULL;
-    gchar* autodiscover_uid = NULL;
+	EasAccount *account = NULL;
 
     g_debug ("eas_connection_autodiscover++");
 
@@ -1114,25 +1094,37 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
     }
     ++domain; // Advance past the '@'
 
-    autodiscover_uid = eas_uid_new();
-#if 0
-	// TODO Fix this
+	account = eas_account_new();
+	if (!account)
+	{
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     "Failed create temp account for autodiscover");
+        cb (NULL, cb_data, error);
+        return;
+	}
+	
+	account->uid = g_strdup (email);
+	account->serverUri = g_strdup("autodiscover");
+
     if (!username) // Use the front of the email as the username
     {
         gchar **split = g_strsplit (email, "@", 2);
-        cnc = eas_connection_new (autodiscover_uid, "autodiscover", split[0], &error);
+		account->username = g_strdup(split[0]);
         g_strfreev (split);
     }
     else // Use the supplied username
     {
-        cnc = eas_connection_new (autodiscover_uid, "autodiscover", username, &error);
+        account->username = g_strdup (username);
     }
-#endif	
-    g_free (autodiscover_uid);
+
+    cnc = eas_connection_new (account, &error);
 
     if (!cnc)
     {
         cb (NULL, cb_data, error);
+		g_object_unref (account);
         return;
     }
 
@@ -1145,6 +1137,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
     autoDiscData->cb = cb;
     autoDiscData->cbdata = cb_data;
     autoDiscData->cnc = cnc;
+	autoDiscData->account = account;
     autoDiscData->simple = g_simple_async_result_new (G_OBJECT (cnc),
                                                       autodiscover_simple_cb,
                                                       autoDiscData,
@@ -1266,6 +1259,8 @@ eas_connection_new (EasAccount* account, GError** error)
 
     g_type_init ();
 
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+
     if (!account)
     {
         g_set_error (error,
@@ -1308,47 +1303,6 @@ eas_connection_new (EasAccount* account, GError** error)
 	// Just a reference to the global account list
 	priv->account = account;
 
-#if 0
-    // Cache the account ID
-    priv->accountUid = g_strdup (accountUid);
-    if (!priv->accountUid)
-    {
-        g_set_error (error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     "Failed to cache accountUid");
-        g_object_unref (cnc);
-        g_static_mutex_unlock (&connection_list);
-        return NULL;
-    }
-
-    // Cache the username
-    priv->username = g_strdup (username);
-    if (!priv->username)
-    {
-        g_set_error (error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     "Failed to cache username");
-        g_object_unref (cnc);
-        g_static_mutex_unlock (&connection_list);
-        return NULL;
-    }
-
-    // Cache the serverUri
-    priv->serverUri = g_strdup (serverUri);
-    if (!priv->serverUri)
-    {
-        g_set_error (error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     "Failed to cache serverUri");
-        g_object_unref (cnc);
-        g_static_mutex_unlock (&connection_list);
-        return NULL;
-    }
-#endif
-
     hashkey = g_strdup_printf ("%s@%s", account->username, account->serverUri);
 
     if (!g_open_connections)
@@ -1359,6 +1313,7 @@ eas_connection_new (EasAccount* account, GError** error)
 
     g_debug ("Adding to hashtable");
     g_hash_table_insert (g_open_connections, hashkey, cnc);
+	g_free (hashkey);
 
     g_static_mutex_unlock (&connection_list);
     g_debug ("eas_connection_new--");
@@ -1475,7 +1430,7 @@ complete_request:
             g_free (priv->request_cmd);
             priv->request_cmd = NULL;
 
-            xmlFree (priv->request_doc);
+            xmlFreeDoc (priv->request_doc);
             priv->request_doc = NULL;
             priv->request = NULL;
             priv->request_error = NULL;

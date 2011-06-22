@@ -52,11 +52,11 @@ static GMainLoop *loop = NULL;
 static void
 test_expects_error_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_message ("Error response for test [%d]", (int) data);
+    g_debug ("Error response for test [%d]", (int) data);
 
     if (error)
     {
-        g_message ("%s", error->message);
+        g_debug ("%s", error->message);
         fail_if (error->domain != EAS_CONNECTION_ERROR, "Incorrect Error Domain");
         fail_if (error->code != EAS_CONNECTION_ERROR_FAILED, "Incorrect Error Code");
         fail_if (error->message == NULL, "Expected an error message");
@@ -80,7 +80,7 @@ START_TEST (test_all_null)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_all_null");
+    g_debug ("test_all_null");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_ALL_NULL,
                                  email,
@@ -100,7 +100,7 @@ START_TEST (test_null_email)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_null_email");
+    g_debug ("test_null_email");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_NULL_EMAIL,
                                  email,
@@ -120,7 +120,7 @@ START_TEST (test_good_email_password_bad_user)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_password_bad_user");
+    g_debug ("test_good_email_password_bad_user");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_PASSWORD_BAD_USER,
                                  email,
@@ -140,7 +140,7 @@ START_TEST (test_good_email_bad_password_null_user)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_bad_password_null_user");
+    g_debug ("test_good_email_bad_password_null_user");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_BAD_PASSWORD_NULL_USER,
                                  email,
@@ -160,7 +160,7 @@ START_TEST (test_good_email_user_bad_password)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_user_bad_password");
+    g_debug ("test_good_email_user_bad_password");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_USER_BAD_PASSWORD,
                                  email,
@@ -180,7 +180,7 @@ START_TEST (test_good_email_bad_password_user)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_bad_password_user");
+    g_debug ("test_good_email_bad_password_user");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_EMAIL_BAD_PASSWORD_USER,
                                  email,
@@ -200,7 +200,7 @@ START_TEST (test_good_password_user_bad_email)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_password_user_bad_email");
+    g_debug ("test_good_password_user_bad_email");
     eas_connection_autodiscover (test_expects_error_cb,
                                  TC_GOOD_PASSWORD_USER_BAD_EMAIL,
                                  email,
@@ -214,11 +214,11 @@ END_TEST
 static void
 test_expects_success_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_message ("Found URL:[%d] [%s]", (int) data, serverUri);
+    g_debug ("Found URL:[%d] [%s]", (int) data, serverUri);
 
     if (error)
     {
-        g_message ("%s", error->message);
+        g_debug ("%s", error->message);
         fail_if (error->domain != EAS_CONNECTION_ERROR, "Incorrect Error Domain");
         fail_if (error->code != EAS_CONNECTION_ERROR_FAILED, "Incorrect Error Code");
         fail_if (error->message == NULL, "Expected an error message");
@@ -242,7 +242,7 @@ START_TEST (test_good_email_password_null_user)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_password_null_user");
+    g_debug ("test_good_email_password_null_user");
     eas_connection_autodiscover (test_expects_success_cb,
                                  TC_GOOD_EMAIL_PASSWORD_NULL_USER,
                                  email,
@@ -262,7 +262,7 @@ START_TEST (test_good_email_password_user)
     loop = g_main_loop_new (NULL, FALSE);
 
     mark_point ();
-    g_message ("test_good_email_password_user");
+    g_debug ("test_good_email_password_user");
     eas_connection_autodiscover (test_expects_success_cb,
                                  TC_GOOD_EMAIL_PASSWORD_USER,
                                  email,
@@ -287,6 +287,8 @@ Suite* eas_autodiscover_suite (void)
 
     tcase_add_test (tc_autodiscover, test_all_null);
     tcase_add_test (tc_autodiscover, test_null_email);
+    
+    tcase_add_test (tc_autodiscover, test_good_email_password_null_user);
 
 #if 0
     tcase_add_test (tc_autodiscover, test_good_email_password_bad_user);
@@ -296,7 +298,6 @@ Suite* eas_autodiscover_suite (void)
 
     tcase_add_test (tc_autodiscover, test_good_password_user_bad_email);
 
-    tcase_add_test (tc_autodiscover, test_good_email_password_null_user);
     tcase_add_test (tc_autodiscover, test_good_email_password_user);
 #endif
     return s;

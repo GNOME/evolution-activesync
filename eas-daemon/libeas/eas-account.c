@@ -54,10 +54,10 @@ eas_account_class_init (EasAccountClass *account_class)
 static void
 eas_account_init (EasAccount *account)
 {
-	 account->uid = NULL;	 
+	 account->uid = NULL;
 	 account->serverUri = NULL;
 	 account->username = NULL;
-	 account->password = NULL; 	 
+	 account->password = NULL; 	
 }
 
 
