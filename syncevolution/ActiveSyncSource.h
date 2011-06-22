@@ -144,7 +144,7 @@ class ActiveSyncSource :
     boost::shared_ptr<SyncConfig> m_context;
 
     /** account ID for libeas, must be set in "username" config property */
-    guint64 m_account;
+    const char* m_account;
 
     /** folder ID for libeas, optionally set in "database" config property */
     std::string m_folder;

@@ -27,7 +27,7 @@
 #include "ActiveSyncSource.h"
 #include <syncevo/GLibSupport.h>
 
-#include <eas-cal-info.h>
+#include <eas-item-info.h>
 
 #include <stdlib.h>
 #include <errno.h>
@@ -49,14 +49,8 @@ void ActiveSyncSource::open()
 {
     // extract account ID and throw error if missing
     std::string username = m_context->getSyncUsername();
-    char *endptr;
-    unsigned long long account = strtoull(username.c_str(), &endptr, 0);
 
-    if (!account ||
-        (account == ULLONG_MAX && errno == ERANGE)) {
-        throwError(m_context->getConfigName() + ": username must contain the numeric ActiveSync account ID");
-    }
-    m_account = account;
+    m_account = username.c_str();
     m_folder = getDatabaseID();
 
     // create handler
@@ -69,13 +63,13 @@ void ActiveSyncSource::close()
     m_handler.set(NULL);
 }
 
-void EASItemUnref(EasCalInfo *info) { g_object_unref(&info->parent_instance); }
+void EASItemUnref(EasItemInfo *info) { g_object_unref(&info->parent_instance); }
 
-/** non-copyable list of EasCalInfo pointers, owned by list */
-typedef GListCXX<EasCalInfo, GSList, EASItemUnref> EASItemsCXX;
+/** non-copyable list of EasItemInfo pointers, owned by list */
+typedef GListCXX<EasItemInfo, GSList, EASItemUnref> EASItemsCXX;
 
-/** non-copyable smart pointer to an EasCalInfo, unrefs when going out of scope */
-typedef eptr<EasCalInfo, GObject> EASItemPtr;
+/** non-copyable smart pointer to an EasItemInfo, unrefs when going out of scope */
+typedef eptr<EasItemInfo, GObject> EASItemPtr;
 
 void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string &resumeToken)
 {
@@ -86,12 +80,13 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     EASItemsCXX created, updated, deleted;
     char buffer[128];
     strncpy(buffer, m_startSyncKey.c_str(), sizeof(buffer));
-    if (!eas_sync_handler_get_calendar_items(m_handler,
-                                             buffer,
-                                             getEasType(),
-                                             m_folder.c_str(),
-                                             created, updated, deleted,
-                                             gerror)) {
+    if (!eas_sync_handler_get_items(m_handler,
+                                    buffer,
+                                    NULL,
+                                    getEasType(),
+                                    m_folder.c_str(),
+                                    created, updated, deleted,
+                                    gerror)) {
         gerror.throwError("reading ActiveSync changes");
     }
     // TODO: Test that we really get an empty token here for an unexpected slow
@@ -104,19 +99,19 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     }
 
     // populate ID lists and content cache
-    BOOST_FOREACH(EasCalInfo *item, created) {
+    BOOST_FOREACH(EasItemInfo *item, created) {
         string luid(item->server_id);
         addItem(luid, NEW);
         m_ids->setProperty(luid, "1");
-        m_items[luid] = item->icalendar;
+        m_items[luid] = item->data;
     }
-    BOOST_FOREACH(EasCalInfo *item, updated) {
+    BOOST_FOREACH(EasItemInfo *item, updated) {
         string luid(item->server_id);
         addItem(luid, UPDATED);
         // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
-        m_items[luid] = item->icalendar;
+        m_items[luid] = item->data;
     }
-    BOOST_FOREACH(EasCalInfo *item, deleted) {
+    BOOST_FOREACH(EasItemInfo *item, deleted) {
         string luid(item->server_id);
         addItem(luid, DELETED);
         m_ids->removeProperty(luid);
@@ -134,7 +129,7 @@ void ActiveSyncSource::deleteItem(const string &luid)
 {
     // send delete request
     // TODO (?): batch delete requests
-    EASItemPtr item(eas_cal_info_new(), "EasItem");
+    EASItemPtr item(eas_item_info_new(), "EasItem");
     item->server_id = g_strdup(luid.c_str());
     EASItemsCXX items;
     items.push_front(item.release());
@@ -144,7 +139,8 @@ void ActiveSyncSource::deleteItem(const string &luid)
     strncpy(buffer, m_currentSyncKey.c_str(), sizeof(buffer));
     if (!eas_sync_handler_delete_items(m_handler,
                                        buffer,
-                                       // getEasType(),
+                                       NULL,
+                                       getEasType(),
                                        m_folder.c_str(),
                                        items,
                                        gerror)) {
@@ -162,8 +158,8 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
 {
     SyncSourceSerialize::InsertItemResult res;
 
-    EASItemPtr tmp(eas_cal_info_new(), "EasItem");
-    EasCalInfo *item = tmp.get();
+    EASItemPtr tmp(eas_item_info_new(), "EasItem");
+    EasItemInfo *item = tmp.get();
     if (!luid.empty()) {
         // update
         item->server_id = g_strdup(luid.c_str());
@@ -171,7 +167,7 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
         // add
         // TODO: is a local id needed? We don't have one.
     }
-    item->icalendar = g_strdup(data.c_str());
+    item->data = g_strdup(data.c_str());
     EASItemsCXX items;
     items.push_front(tmp.release());
 
@@ -185,6 +181,7 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
         // send item to server
         if (!eas_sync_handler_add_items(m_handler,
                                         buffer,
+                                        NULL,
                                         getEasType(),
                                         m_folder.c_str(),
                                         items,
@@ -203,6 +200,7 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
         // update item on server
         if (!eas_sync_handler_update_items(m_handler,
                                            buffer,
+                                           NULL,
                                            getEasType(),
                                            m_folder.c_str(),
                                            items,
