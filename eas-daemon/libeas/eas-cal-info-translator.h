@@ -6,30 +6,36 @@
 
 #include "../../libeassync/src/eas-item-info.h"
 
-
-
 /**
- * \brief  Parse a calendar sync response message
+ * Parse a calendar sync response message
  *
  * Converts the <ApplicationData> element of an Exchange ActiveSync XML response into an
  * EasCalInfo structure (containing an iCalendar document).
  *
- * \param    app_data   <ApplicationData> element from the Exchange ActiveSync XML response
- * \param    server_id  The server ID from the Exchange ActiveSync XML response
+ * @param app_data  
+ *      <ApplicationData> element from the Exchange ActiveSync XML response
+ * @param server_id  
+ *      The server ID from the Exchange ActiveSync XML response
  *
- * \returns  Serialised EasCalInfo structure
+ * @return Serialised EasCalInfo structure
  */
-gchar* eas_cal_info_translator_parse_response(xmlNodePtr app_data, const gchar* server_id);
+gchar* eas_cal_info_translator_parse_response(xmlNodePtr app_data, 
+                                              const gchar* server_id);
 
 
 /**
- * \brief  Parse an EasCalInfo structure and convert to EAS XML format
+ * Parse an EasCalInfo structure and convert to EAS XML format
  *
- * \param  doc      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
- * \param  appData  The top-level <ApplicationData> XML element in which to store all the parsed elements
- * \param  calInfo  The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
+ * @param  doc
+ *      REDUNDANT PARAMETER: only required for debug output. TODO: remove this
+ * @param appData
+ *      The top-level <ApplicationData> XML element in which to store all the parsed elements
+ * @param calInfo
+ *      The EasCalInfo struct containing the iCalendar string to parse (plus a server ID)
  */
-gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr app_data, EasItemInfo* cal_info);
+gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, 
+                                               xmlNodePtr app_data, 
+                                               EasItemInfo* cal_info);
 
 G_END_DECLS
 
