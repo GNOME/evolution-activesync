@@ -220,7 +220,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     if (g_strcmp0 ( (char *) node->name, "Provision"))
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <Provision> element"));
         return FALSE;
     }
@@ -243,7 +243,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     if (!node)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <Status> element"));
         return FALSE;
     }
@@ -257,7 +257,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     if (!node)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <Policies> element"));
         return FALSE;
     }
@@ -271,7 +271,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     if (!node)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <Policy> element"));
         return FALSE;
     }
@@ -316,14 +316,14 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
     if (!found_status)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <Status> element"));
         return FALSE;
     }
     else if (!found_policy_key)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_INVALIDXML,
+                     EAS_COMMON_STATUS_INVALIDXML,
                      ("Failed to find <PolicyKey> element"));
         return FALSE;
     }

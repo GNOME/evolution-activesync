@@ -357,7 +357,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 EasError error_details;
                 ret = FALSE;
 
-                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
                 {
                     error_details = common_status_error_map[status_num - 100];
                 }
@@ -420,7 +420,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 EasError error_details;
                 ret = FALSE;
 
-                if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
                 {
                     error_details = common_status_error_map[status_num - 100];
                 }
@@ -641,7 +641,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             EasError error_details;
                             ret = FALSE;
 
-                            if ( (EAS_CONNECTION_ERROR_INVALIDCONTENT <= status_num) && (status_num <= EAS_CONNECTION_ERROR_MAXIMUMDEVICESREACHED)) // it's a common status code
+                            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
                             {
                                 error_details = common_status_error_map[status_num - 100];
                             }
