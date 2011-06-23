@@ -1,6 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 #include "eas-sync-msg.h"
 #include "eas-add-calendar-req.h"
+#include "serialise_utils.h"
 
 G_DEFINE_TYPE (EasAddCalendarReq, eas_add_calendar_req, EAS_TYPE_REQUEST_BASE);
 
@@ -92,7 +93,7 @@ eas_add_calendar_req_new (const gchar* account_id,
                           const gchar *sync_key, 
                           const gchar *folder_id, 
                           const GSList* serialised_calendar, 
-                          EFlag *flag)
+                          DBusGMethodInvocation *context)
 {
     EasAddCalendarReq* self = g_object_new (EAS_TYPE_ADD_CALENDAR_REQ, NULL);
     EasAddCalendarReqPrivate *priv = self->priv;
@@ -104,7 +105,7 @@ eas_add_calendar_req_new (const gchar* account_id,
     priv->serialised_calendar = (GSList *) serialised_calendar;
     priv->account_id = g_strdup (account_id);
 
-    eas_request_base_SetFlag (&self->parent_instance, flag);
+    eas_request_base_SetContext (&self->parent_instance, context);
 
     g_debug ("eas_add_calendar_req_new--");
     return self;
@@ -147,6 +148,9 @@ eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self,
 {
     GError *local_error = NULL;
     EasAddCalendarReqPrivate *priv = self->priv;
+	GSList* added_items = NULL;
+	gchar* ret_sync_key = NULL;
+	gchar** ret_added_items_array = NULL;
 
     g_debug ("eas_add_calendar_req_MessageComplete++");
 	
@@ -161,44 +165,33 @@ eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self,
 	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error))
 	{
 		priv->error = local_error;
+		goto finish;
 	}
 
+	ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
+    added_items = eas_sync_msg_get_added_items (priv->sync_msg);
+
+
+	build_serialised_calendar_info_array (&ret_added_items_array, added_items, &error);
+
+
+
 finish:
+
+	if(error)
+	{
+		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
+	}
+	else
+	{
+		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+                              ret_sync_key,
+                              ret_added_items_array);
+	}
 	// We always need to free 'doc' and release the semaphore.
     xmlFree (doc);
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
 }
 
-gboolean 
-eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self,
-                                     gchar** ret_sync_key,
-                                     GSList** added_items,
-                                     GError **error)
-{
-    EasAddCalendarReqPrivate *priv = self->priv;
-    g_debug ("eas_add_calendar_req_ActivateFinish++");
-
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	g_return_val_if_fail(ret_sync_key && added_items, FALSE);
-
-	*ret_sync_key = NULL;
-	*added_items = NULL;
-	
-	if (priv->error)
-	{
-		g_propagate_error(error, priv->error);
-
-		// If this fires we having memory to clean up that would have just been orphaned.
-		g_assert(NULL == eas_sync_msg_get_added_items (priv->sync_msg));
-		return FALSE;
-	}
-
-    *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
-    *added_items = eas_sync_msg_get_added_items (priv->sync_msg);
-
-    g_debug ("eas_add_calendar_req_ActivateFinish--");
-	return TRUE;
-}

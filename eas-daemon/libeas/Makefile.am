@@ -77,7 +77,7 @@ libeas_la_SOURCES =		\
         eas-utils.c \
         eas-add-calendar-req.h \
         eas-add-calendar-req.c \
-	eas-connection-errors.c \
+        eas-connection-errors.c \
         eas-account.h \
         eas-account.c \
         eas-account-list.h \
@@ -85,7 +85,9 @@ libeas_la_SOURCES =		\
         eas-move-email-req.h \
         eas-move-email-req.c \
         eas-move-email-msg.h \
-        eas-move-email-msg.c
+        eas-move-email-msg.c \
+        serialise_utils.c \
+        serialise_utils.h
         
         
 

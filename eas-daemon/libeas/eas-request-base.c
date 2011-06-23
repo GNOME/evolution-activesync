@@ -167,7 +167,7 @@ DBusGMethodInvocation*
 eas_request_base_GetContext (EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetFlag+-");
+    g_debug ("eas_request_base_GetContext+-");
     return priv->context;
 }
 
@@ -175,7 +175,7 @@ void
 eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetFlag++");
+    g_debug ("eas_request_base_SetContext++");
     priv->context = context;
-    g_debug ("eas_request_base_SetFlag--");
+    g_debug ("eas_request_base_SetContext--");
 }

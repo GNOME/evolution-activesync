@@ -54,7 +54,7 @@ EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id,
                                             const gchar *sync_key, 
                                             const gchar *folder_id, 
                                             const GSList *serialised_calendar, 
-                                            EFlag *flag);
+                                            DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

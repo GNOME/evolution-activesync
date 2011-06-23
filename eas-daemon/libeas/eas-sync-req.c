@@ -8,6 +8,7 @@
 #include "eas-sync-req.h"
 #include "eas-sync-msg.h"
 #include "eas-connection-errors.h"
+#include "serialise_utils.h"
 
 G_DEFINE_TYPE (EasSyncReq, eas_sync_req, EAS_TYPE_REQUEST_BASE);
 
@@ -92,7 +93,7 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 
 
 gboolean
-eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* accountID, EFlag *flag, const gchar* folderId, EasItemType type, GError** error)
+eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* accountID, DBusGMethodInvocation *context, const gchar* folderId, EasItemType type, GError** error)
 {
     gboolean ret = FALSE;
     EasSyncReqPrivate* priv;
@@ -105,7 +106,7 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* acco
 
     priv = self->priv;
 
-    eas_request_base_SetFlag (&self->parent_instance, flag);
+    eas_request_base_SetContext (&self->parent_instance, context);
 
     priv->accountID = g_strdup (accountID);
 
@@ -169,21 +170,29 @@ finish:
     return ret;
 }
 
-
 void
 eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     GError *error = NULL;
     EasSyncReqPrivate* priv = self->priv;
+	gchar *ret_sync_key = NULL;
+    gboolean ret_more_available = FALSE;
+    gchar** ret_added_item_array = NULL;
+    gchar** ret_deleted_item_array = NULL;
+    gchar** ret_changed_item_array = NULL;
+
+	GSList* added_items = NULL;
+    GSList* updated_items = NULL;
+    GSList* deleted_items = NULL;
 
     g_debug ("eas_sync_req_MessageComplete++");
 
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
+    	ret = FALSE;
         priv->error = error_in;
-        e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
         goto finish;
     }
 
@@ -193,7 +202,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     {
         g_assert (error != NULL);
         priv->error = error;
-        e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
         goto finish;
     }
 
@@ -243,7 +251,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             {
                 g_assert (error != NULL);
                 priv->error = error;
-                e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
                 goto finish;
             }
 
@@ -254,56 +261,73 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
         case EasSyncReqStep2:
         {
             g_debug ("eas_sync_req_MessageComplete step 2");
-            e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
+			ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
+			ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
+			added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
+			updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
+			deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);
+
+			switch(priv->ItemType)
+			{
+				case EAS_ITEM_MAIL:
+				{
+					ret = build_serialised_email_info_array (&ret_added_item_array, added_items, &error);
+					if (ret)
+					{
+						ret = build_serialised_email_info_array (&ret_changed_item_array, updated_items, &error);
+						if (ret)
+						{
+							ret = build_serialised_email_info_array (&ret_deleted_item_array, deleted_items, &error);
+						}
+					}
+					 if (!ret)
+					{
+						g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				             ("out of memory"));
+						goto finish;
+					}
+				}
+				break;
+				case EAS_ITEM_CALENDAR:
+				case EAS_ITEM_CONTACT:
+				{
+					if (build_serialised_calendar_info_array (&ret_added_item_array, added_items, &error))
+					{
+						if (build_serialised_calendar_info_array (&ret_changed_item_array, updated_items, &error))
+						{
+							build_serialised_calendar_info_array (&ret_deleted_item_array, deleted_items, &error);
+						}
+					}
+				}
+				break;
+				default:
+				{
+					//TODO: put some error in here for unknown type
+				}
+			}
+			dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+                              ret_sync_key,
+                              ret_more_available,
+                              ret_added_item_array,
+                              ret_deleted_item_array,
+                              ret_changed_item_array);
+
         }
         break;
     }
 
 finish:
+	if (!ret)
+    {
+        g_debug ("returning error %s", error->message);
+        g_assert (error != NULL);
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
+    }
+	g_free(ret_sync_key);
+	g_strfreev(ret_added_item_array);
+	g_strfreev(ret_deleted_item_array);
+	g_strfreev(ret_changed_item_array);
     g_debug ("eas_sync_req_MessageComplete--");
-}
-
-gboolean
-eas_sync_req_ActivateFinish (EasSyncReq* self,
-                             gchar** ret_sync_key,
-                             gboolean *ret_more_available,
-                             GSList** added_items,
-                             GSList** updated_items,
-                             GSList** deleted_items,
-                             GError** error)
-{
-    gboolean ret = TRUE;
-    EasSyncReqPrivate *priv;
-
-    g_debug ("eas_sync_req_Activate_Finish++");
-
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    priv = self->priv;
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-
-	if (ret_more_available)
-		*ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
-    *ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
-    *added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
-    *updated_items = eas_sync_msg_get_updated_items (priv->syncMsg);
-    *deleted_items = eas_sync_msg_get_deleted_items (priv->syncMsg);
-
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_sync_req_Activate_Finish--");
-
-    return ret;
 }

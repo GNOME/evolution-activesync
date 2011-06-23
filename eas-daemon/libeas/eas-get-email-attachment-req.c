@@ -87,7 +87,7 @@ EasGetEmailAttachmentReq*
 eas_get_email_attachment_req_new (const gchar* account_uid,
                                   const gchar *file_reference,
                                   const gchar *mime_directory,
-                                  EFlag *flag)
+                                  DBusGMethodInvocation *context)
 {
     EasGetEmailAttachmentReq* req = NULL;
     EasGetEmailAttachmentReqPrivate *priv = NULL;
@@ -100,7 +100,7 @@ eas_get_email_attachment_req_new (const gchar* account_uid,
     priv->accountUid = g_strdup (account_uid);
     priv->fileReference = g_strdup (file_reference);
     priv->mimeDirectory = g_strdup (mime_directory);
-    eas_request_base_SetFlag (&req->parent_instance, flag);
+    eas_request_base_SetContext (&req->parent_instance, context);
 
     g_debug ("eas_get_email_attachment_req_new--");
     return req;
@@ -146,7 +146,7 @@ finish:
 
 void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
     GError *error = NULL;
 
@@ -155,6 +155,7 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
+		ret = FALSE;
         priv->error = error_in;
         goto finish;
     }
@@ -169,37 +170,17 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
     }
 
 finish:
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
-
+	if(!ret)
+	{
+		g_assert (error != NULL);
+		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
+	}
+	else
+	{
+		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+	}
     g_debug ("eas_get_email_attachment_req_MessageComplete--");
 }
 
-gboolean
-eas_get_email_attachment_req_ActivateFinish (EasGetEmailAttachmentReq* self, GError **error)
-{
-    gboolean ret = TRUE;
-    EasGetEmailAttachmentReqPrivate *priv = self->priv;
-
-    g_debug ("eas_get_email_attachment_req_ActivateFinish++");
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_get_email_attachment_req_ActivateFinish--");
-
-    return ret;
-}
 
