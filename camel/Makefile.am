@@ -11,7 +11,8 @@ libcameleas_la_CPPFLAGS = \
 	$(SOUP_CFLAGS)                          \
 	$(LIBEBACKEND_CFLAGS)			\
 	$(E_DATA_SERVER_CFLAGS)			\
-	-DG_LOG_DOMAIN=\"camel-eas-provider\"
+	-DG_LOG_DOMAIN=\"camel-eas-provider\" \
+	-I$(top_srcdir)/camel
 
 libcameleas_la_SOURCES = 			\
 	camel-eas-folder.c                	\
@@ -29,7 +30,8 @@ noinst_HEADERS =         			\
 	camel-eas-store.h			\
 	camel-eas-summary.h			\
 	camel-eas-utils.h			\
-	camel-eas-transport.h
+	camel-eas-transport.h                   \
+        camel-eas-compat.h
 
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 

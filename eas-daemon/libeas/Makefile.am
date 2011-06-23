@@ -87,9 +87,11 @@ libeas_la_SOURCES =		\
         eas-move-email-msg.c \
         serialise_utils.c \
         serialise_utils.h
-        
-        
 
+libeas_la_includedir = $(includedir)/libeas
+libeas_la_include_HEADERS = \
+        eas-connection-errors.h \
+        eas-sync-req.h
 
 gconf_root = /apps/activesyncd
 
