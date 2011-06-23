@@ -12,3 +12,4 @@ $(service_DATA): $(service_in_files) Makefile
 #	@sed -e "s|\@bindir\@|$(bindir)|" $ $@
 
 CLEANFILES = $(service_DATA)
+EXTRA_DIST = $(service_in_files)
