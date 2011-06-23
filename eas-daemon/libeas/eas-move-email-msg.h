@@ -60,6 +60,9 @@ xmlDoc* eas_move_email_msg_build_message (EasMoveEmailMsg* self);
 // parse response to MoveItems
 gboolean eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** error);
 
+// get the updated ids
+GSList* eas_move_email_get_updated_ids (EasMoveEmailMsg* self);
+
 G_END_DECLS
 
 #endif /* _EAS_MOVE_EMAIL_MSG_H_ */

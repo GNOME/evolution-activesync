@@ -16,10 +16,12 @@
 #include "eas-mail-client-stub.h"
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
-
+#include "utils.h"
 #include "../../logger/eas-logger.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
+
+const gchar *updated_id_separator = ",";
 
 struct _EasEmailHandlerPrivate
 {
@@ -263,8 +265,123 @@ cleanup:
     return ret;
 }
 
+/*
+take the contents of the structure and turn it into a null terminated string
+*/
+gboolean
+eas_updatedid_serialise(const EasIdUpdate* updated_id, gchar **result)
+{
+	gboolean ret = TRUE;
+	
+	gchar *strings[3];
 
-//
+    g_debug ("eas_updatedid_serialise++");
+
+	strings[0] = updated_id->src_id;
+	strings[1] = updated_id->dest_id;
+	strings[2] = NULL;
+	
+	*result = g_strjoinv(updated_id_separator, strings);
+	
+	if(*result == NULL)
+	{
+		ret = FALSE;
+	}
+	g_debug ("eas_updatedid_serialise--");
+	return ret;
+}
+
+/*
+populate the object from a string
+*/
+static gboolean 
+eas_updatedid_deserialise(EasIdUpdate *updated_id, const gchar* data)
+{
+    gboolean ret = TRUE;
+    gchar *from = (gchar*) data;
+
+    g_debug ("eas_updatedid_deserialise++");
+    g_assert (updated_id);
+    g_assert (data);
+	g_assert(updated_id->dest_id == NULL);
+	g_assert(updated_id->src_id == NULL);
+	
+    updated_id->src_id = get_next_field (&from, updated_id_separator);
+    if (!updated_id->src_id)
+    {
+        ret = FALSE;
+        goto cleanup;
+    }	
+    updated_id->dest_id = get_next_field (&from, updated_id_separator);// optional, may be NULL
+
+cleanup:
+    if (!ret)
+    {
+        g_free (updated_id->src_id);
+        updated_id->src_id = NULL;
+        g_free (updated_id->dest_id);
+        updated_id->dest_id = NULL;		
+	}
+    g_debug ("eas_updatedid_deserialise++");	
+	return ret;
+}
+
+// converts an NULL terminated array of serialised EasIdUpdates to a list
+static gboolean
+build_easidupdates_list (const gchar **updated_ids_array, GSList **updated_ids_list, GError **error)
+{
+    gboolean ret = TRUE;
+    guint i = 0;
+    g_debug ("build_easidupdates_list++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+    g_assert (g_slist_length (*updated_ids_list) == 0);
+
+    while (updated_ids_array[i])
+    {
+        EasIdUpdate *updated_id = g_malloc0(sizeof(EasIdUpdate));
+        if (updated_id)
+        {
+            *updated_ids_list = g_slist_append (*updated_ids_list, updated_id);
+            if (!*updated_ids_list)
+            {
+                g_free (updated_id);
+                ret = FALSE;
+                goto cleanup;
+            }
+            if (!eas_updatedid_deserialise (updated_id, updated_ids_array[i]))
+            {
+                ret = FALSE;
+                goto cleanup;
+            }
+        }
+        else
+        {
+            ret = FALSE;
+            goto cleanup;
+        }
+        i++;
+    }
+
+cleanup:
+    if (!ret)
+    {
+        // set the error
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        // clean up on error
+        g_slist_foreach (*updated_ids_list, (GFunc) g_free, NULL);
+        g_slist_free (*updated_ids_list);
+        *updated_ids_list = NULL;
+    }
+
+    g_debug ("build_easidupdates_list++");
+    return ret;
+}
+
+// TODO remove and use..._strfreev?
 static void
 free_string_array (gchar **array)
 {
@@ -766,11 +883,13 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
                                  const GSList *server_ids,
                                  const gchar *src_folder_id,
                                  const gchar *dest_folder_id,
+                                 GSList **updated_ids_list,
                                  GError **error)
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
-
+	gchar **updated_ids_array = NULL;
+	
     g_debug ("eas_mail_handler_move_to_folder++");
 
 	g_assert(self);
@@ -787,8 +906,15 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
                              G_TYPE_STRING, src_folder_id,
                              G_TYPE_STRING, dest_folder_id,
                              G_TYPE_INVALID,
-                             G_TYPE_INVALID);    // no out params	
-
+                             G_TYPE_STRV, &updated_ids_array,
+                             G_TYPE_INVALID);    		
+	
+	if(ret)
+	{	
+	 	ret = build_easidupdates_list ((const gchar**)updated_ids_array, updated_ids_list, error);	//why does this require a cast?
+	}
+	g_strfreev(updated_ids_array);
+	
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);

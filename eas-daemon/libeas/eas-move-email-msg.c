@@ -19,6 +19,8 @@
 
 #include "eas-connection-errors.h"
 #include "eas-move-email-msg.h"
+#include "../../libeasmail/src/libeasmail.h"
+
 #include <wbxml/wbxml.h>
 #include <glib.h>
 
@@ -32,6 +34,7 @@ struct _EasMoveEmailMsgPrivate
     GSList* server_ids_list;
     gchar* src_folder_id;
     gchar* dest_folder_id;	
+	GSList *updated_ids_list;
 };
 
 static void
@@ -48,14 +51,15 @@ eas_move_email_msg_init (EasMoveEmailMsg *object)
     priv->server_ids_list = NULL;
 	priv->dest_folder_id = NULL;
 	priv->src_folder_id = NULL;
-
+	priv->updated_ids_list = NULL;
+	
     g_debug ("eas_move_email_msg_init--");
 }
 
 static void
 eas_move_email_msg_dispose (GObject *object)
 {
-	// we don't own any refs
+	// we don't own any refs yet
 	
     G_OBJECT_CLASS (eas_move_email_msg_parent_class)->dispose (object);
 }	
@@ -73,6 +77,8 @@ eas_move_email_msg_finalize (GObject *object)
     g_free (priv->src_folder_id);
 	g_slist_foreach (priv->server_ids_list, (GFunc) g_free, NULL);
 	g_slist_free(priv->server_ids_list);
+	g_slist_foreach (priv->updated_ids_list, (GFunc) g_free, NULL);
+	g_slist_free(priv->updated_ids_list);
 	
     G_OBJECT_CLASS (eas_move_email_msg_parent_class)->finalize (object);
 }
@@ -158,7 +164,9 @@ gboolean
 eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** error)
 {
     gboolean ret = TRUE;
-    xmlNode *root, *node = NULL;
+    xmlNode *root = NULL, *node = NULL, *response = NULL;
+	EasMoveEmailMsgPrivate *priv = self->priv;	
+	
     g_debug ("eas_move_email_msg_parse_response++\n");
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -179,44 +187,89 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
         ret = FALSE;
         goto finish;
     }
-    for (node = root->children; node; node = node->next)
-    {
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
-        {
-            gchar *status = (gchar *) xmlNodeGetContent (node);
-            guint status_num = atoi (status);
-            xmlFree (status);
-			// lrm TODO - for the MoveItems command status 3 is success, doh!
-            if (status_num != EAS_COMMON_STATUS_OK) // not success
-            {
-                EasError error_details;
-                ret = FALSE;
 
-                // there are no movemail-specific status codes
-                if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
-                {
-                    error_details = common_status_error_map[status_num - 100];
-                }
-                else
-                {
-                    g_warning ("unexpected move status %d", status_num);
-                    error_details = common_status_error_map[0];
-                }
-                g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
-                goto finish;
-            }
+    for (response = root->children; response; response = response->next)
+    {	
+		EasIdUpdate *updated_id = NULL;
+		
+		if(response->type == XML_ELEMENT_NODE && g_strcmp0 ( (char *) response->name, "Response"))
+		{
+		    g_debug ("Failed: not a MoveItems Response!, got %s", response->name);
+		    g_set_error (error, EAS_CONNECTION_ERROR,
+		                 EAS_CONNECTION_ERROR_XMLELEMENTNOTFOUND,
+		                 ("Failed to find <Response> element"));
+		    ret = FALSE;
+		    goto finish;
+		}
 
-            continue;
-        }
-		// lrm TODO look for updated msg ids
+		updated_id = g_malloc0(sizeof(EasIdUpdate));
+		
+		for (node = response->children; node; node = node->next)
+		{			
+			g_debug("got Response child %s", node->name);
+		    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
+		    {
+		        gchar *status = (gchar *) xmlNodeGetContent (node);
+		        guint status_num = atoi (status);
+		        xmlFree (status);
+		        if (status_num != 3) // not success (MoveItems command status 3 is success, doh!)
+		        {
+		            EasError error_details;
+		            ret = FALSE;
+
+					g_free(updated_id);
+					// lrm TODO convert status code to GError
+		            g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+		            goto finish;
+		        }
+		        continue;
+		    }
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "DstMsgId"))
+			{			
+				gchar *dstmsgid = (gchar *) xmlNodeGetContent (node);
+				updated_id->dest_id = g_strdup(dstmsgid);
+				xmlFree(dstmsgid);			
+				continue;
+			}		
+			if(node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SrcMsgId"))
+			{
+				gchar *srcmsgid = (gchar *) xmlNodeGetContent (node);
+				updated_id->src_id = g_strdup(srcmsgid);
+				xmlFree(srcmsgid);
+				continue;
+			}
+		}
+		if(updated_id->src_id != NULL)// TODO not sure why this is necessary, but we do appear to get empty Responses!?
+		{
+			g_debug("appending updated id. src = %s, dst = %s", updated_id->src_id, updated_id->dest_id);
+			priv->updated_ids_list = g_slist_append(priv->updated_ids_list, updated_id);
+		}
+		else
+		{
+			g_free(updated_id);
+		}
     }
 
 finish:
     if (!ret)
     {
+		g_debug("returning error");
+		// free updated_ids list in case we had a single non-success status among successful ones
+		g_slist_foreach (priv->updated_ids_list, (GFunc) g_free, NULL);
+		g_slist_free(priv->updated_ids_list);
+		priv->updated_ids_list = NULL;		
         g_assert (error == NULL || *error != NULL);
     }
-    g_debug ("eas_move_email_msg_parse_response++\n");
+    g_debug ("eas_move_email_msg_parse_response--\n");
+	
     return ret;
 }
 
+GSList*
+eas_move_email_get_updated_ids (EasMoveEmailMsg* self)
+{
+    EasMoveEmailMsgPrivate *priv = self->priv;
+    GSList *l = priv->updated_ids_list;
+	priv->updated_ids_list = NULL; // we pass ownership back, so avoid trying to free
+    return l;
+}

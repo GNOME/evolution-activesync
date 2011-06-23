@@ -100,7 +100,9 @@
 		<arg type="s" name="account_uid" direction="in"/>
 		<arg type="as" name="server_ids" direction="in"/>
 		<arg type="s" name="src_folder_id" direction="in"/>		
-		<arg type="s" name="dest_folder_id" direction="in"/>			
+		<arg type="s" name="dest_folder_id" direction="in"/>
+
+		<arg type="as" name="ret_updated_ids" direction="out"/>			
 	</method>	
 
   </interface>

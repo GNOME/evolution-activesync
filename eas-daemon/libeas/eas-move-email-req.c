@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 
+#include "../../libeasmail/src/libeasmail.h"
 #include "eas-move-email-req.h"
 #include "eas-move-email-msg.h"
 
@@ -225,7 +226,7 @@ finish:
 
 
 gboolean
-eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error)
+eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error, GSList **updated_ids)
 {
     gboolean ret = TRUE;
     EasMoveEmailReqPrivate *priv = self->priv;
@@ -243,8 +244,11 @@ eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error)
         ret = FALSE;
     }
 
-	// lrm TODO return destination ids
+	g_assert(*updated_ids == NULL);
 	
+	*updated_ids = eas_move_email_get_updated_ids(priv->move_email_msg);
+	g_debug ("updated ids list size = %d", g_slist_length (*updated_ids));
+
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);

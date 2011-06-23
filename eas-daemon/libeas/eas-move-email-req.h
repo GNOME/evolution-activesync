@@ -61,7 +61,7 @@ gboolean eas_move_email_req_Activate(EasMoveEmailReq *self, GError** error);
 void eas_move_email_req_MessageComplete(EasMoveEmailReq *self, xmlDoc* doc, GError* error);
 
 // result returned to client
-gboolean eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error);
+gboolean eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error, GSList **updated_ids);
 
 G_END_DECLS
 

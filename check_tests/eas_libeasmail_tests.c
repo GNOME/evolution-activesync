@@ -355,7 +355,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 		GSList *server_ids = NULL;
         EasEmailInfo *email = NULL;
         gboolean rtn = FALSE;
-
+		GSList *updated_ids = NULL;
+		
         // get email info for first email in the folder and pull out the server_id
         email = (g_slist_nth (emails_created, 0))->data;
 		server_ids = g_slist_append(server_ids, email->server_id);
@@ -363,7 +364,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         mark_point();
 
         // move the email
-        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, "5", "12", &error);
+        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, "5", "12", &updated_ids, &error);
+        mark_point();
         if (error)
         {
             fail_if (rtn == FALSE, "%s", error->message);

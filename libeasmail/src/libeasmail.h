@@ -20,6 +20,7 @@ G_BEGIN_DECLS
 typedef struct _EasEmailHandlerClass EasEmailHandlerClass;
 typedef struct _EasEmailHandler EasEmailHandler;
 typedef struct _EasEmailHandlerPrivate EasEmailHandlerPrivate;
+typedef struct _EasIdUpdate EasIdUpdate;
 
 struct _EasEmailHandlerClass{
 	GObjectClass parent_class;
@@ -29,6 +30,16 @@ struct _EasEmailHandler{
 	GObject parent_instance;
 	EasEmailHandlerPrivate *priv;
 };
+
+struct _EasIdUpdate{
+	gchar *src_id;
+	gchar *dest_id;
+};
+
+/*
+take the contents of the structure and turn it into a null terminated string
+*/
+gboolean eas_updatedid_serialise(const EasIdUpdate* updated_id, gchar **result);
 
 GType eas_mail_handler_get_type (void) G_GNUC_CONST;
 // This method is called once by clients of the libeasmail plugin for each account.  The method
@@ -248,10 +259,11 @@ gboolean eas_mail_handler_send_email(EasEmailHandler* this,
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * const GSList *server_ids (in):identifies the specific emails to move.  This information is in 
- *                              the form of server_ids returned from the eas_mail_handler_sync_folder_email_info
+ *                              the form of server_ids (gchar*) returned from the eas_mail_handler_sync_folder_email_info
  *                              call
  * const gchar *src_folder_id (in): folder id of the folder from which the email will be moved  
  * const gchar *dest_folder_id (in): folder id of the folder to which the email will be moved
+ * GSList **server_ids_updates (out): when an email is moved between folders its id changes. this is a list of updated ids (EasIdUpdates)
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
@@ -261,6 +273,7 @@ gboolean eas_mail_handler_move_to_folder(EasEmailHandler* this,
                                             const GSList *server_ids,
 	                                        const gchar *src_folder_id,
 	                                        const gchar *dest_folder_id,
+	                                        GSList **server_ids_updates,
 	                                        GError **error);
 
 /* function name:               eas_mail_handler_copy_to_folder
