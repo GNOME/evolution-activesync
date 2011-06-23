@@ -9,7 +9,8 @@ libeassync_la_CPPFLAGS =			\
 		$(DBUS_GLIB_CFLAGS)
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
-		-DG_LOG_DOMAIN=\"libeassync\"
+		-DG_LOG_DOMAIN=\"libeassync\" \
+		-I$(top_srcdir)/eas-daemon/libeas
 
 #TODO remove unnecessary libs	  
 libeassync_la_LDFLAGS =			\

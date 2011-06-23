@@ -87,14 +87,11 @@ libeas_la_SOURCES =		\
         serialise_utils.c \
         serialise_utils.h
 
-libeas_la_includedir = $(includedir)/libeas
-libeas_la_include_HEADERS = \
-        eas-connection-errors.h \
-        eas-sync-req.h
-
 gconf_root = /apps/activesyncd
 
 DISTCLEANFILES = $(schema_DATA)
+EXTRA_DIST = \
+	eas-connection-errors.h
 
 #schemadir=$(GCONF_SCHEMA_FILE_DIR)
 #schema_in_files=activesyncd-accounts.schemas.in
