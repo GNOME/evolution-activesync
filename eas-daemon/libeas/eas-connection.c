@@ -1316,7 +1316,6 @@ eas_connection_new (EasAccount* account, GError** error)
 
     g_debug ("Adding to hashtable");
     g_hash_table_insert (g_open_connections, hashkey, cnc);
-	g_free (hashkey);
 
     g_static_mutex_unlock (&connection_list);
     g_debug ("eas_connection_new--");
