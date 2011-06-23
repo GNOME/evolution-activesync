@@ -1,5 +1,6 @@
 #include "eas-folder.h"
 #include "../libeas/eas-connection.h"
+#include "serialise_utils.h"
 
 
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details

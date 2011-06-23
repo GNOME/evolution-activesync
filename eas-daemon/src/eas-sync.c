@@ -197,9 +197,7 @@ eas_sync_delete_items (EasSync* self,
                        const GSList *deleted_items_array,
                        DBusGMethodInvocation* context)
 {
-    EFlag *flag = NULL;
     GError *error = NULL;
-    gchar* ret_sync_key = NULL;
     EasDeleteEmailReq *req = NULL;
 
     g_debug ("eas_sync_delete_items++");
@@ -217,9 +215,7 @@ eas_sync_delete_items (EasSync* self,
         return FALSE;
     }
 
-    // Create the request
-    flag = e_flag_new ();
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, flag);
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     self->priv->connection);
@@ -227,25 +223,11 @@ eas_sync_delete_items (EasSync* self,
     // Start the request
     eas_delete_email_req_Activate (req, &error);
 
-    // Set flag to wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
-
-    // TODO Check error
-
-    eas_delete_email_req_ActivateFinish (req, &ret_sync_key, &error);
 
     if (error)
     {
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    }
-    else
-    {
-        //TODO: make sure this stuff is ok to go over dbus.
-
-        dbus_g_method_return (context,
-                              ret_sync_key);
     }
     g_debug ("eas_sync_delete_items--");
     return TRUE;

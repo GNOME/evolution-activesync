@@ -254,9 +254,7 @@ eas_mail_delete_email (EasMail *easMailObj,
                        DBusGMethodInvocation* context)
 {
     gboolean ret = TRUE;
-    EFlag *flag = NULL;
     GError *error = NULL;
-    gchar* ret_sync_key = NULL;
     GSList *server_ids_list = NULL;
     int index = 0;
     const gchar* id = NULL;
@@ -285,8 +283,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     }
 
     // Create the request
-    flag = e_flag_new ();
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, flag);
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, context);
 
     // Cleanup the gslist
     item = server_ids_list;
@@ -302,31 +299,14 @@ eas_mail_delete_email (EasMail *easMailObj,
 
     // Start the request
     ret = eas_delete_email_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
-
-    // Set flag to wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
-
-    ret = eas_delete_email_req_ActivateFinish (req, &ret_sync_key, &error);
 
 finish:
-	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     }
-    else
-    {
-        dbus_g_method_return (context,
-                              ret_sync_key);
-    }
-	g_free(ret_sync_key);
     g_debug ("eas_mail_delete_email--");
     return ret;
 }

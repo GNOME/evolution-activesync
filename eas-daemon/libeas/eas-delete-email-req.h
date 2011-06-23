@@ -55,7 +55,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId,
                                              const gchar *syncKey, 
                                              const gchar *folderId, 
                                              const GSList *server_ids_array, 
-                                             EFlag *flag);
+                                             DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -71,10 +71,6 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId,
  */
 gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self, 
                                         GError** error);
-
-gboolean eas_delete_email_req_ActivateFinish (EasDeleteEmailReq* self, 
-                                              gchar** ret_sync_key, 
-                                              GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
