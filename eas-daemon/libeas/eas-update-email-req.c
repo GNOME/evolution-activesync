@@ -100,7 +100,7 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 }
 
 // TODO - update this to take a GSList of serialised emails? rem to copy the list
-EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, EFlag *flag)
+EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, DBusGMethodInvocation *context)
 {
     EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
     EasUpdateEmailReqPrivate *priv = self->priv;
@@ -129,7 +129,7 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gcha
 
     priv->account_id = g_strdup (account_id);
 
-    eas_request_base_SetFlag (&self->parent_instance, flag);
+    eas_request_base_SetContext (&self->parent_instance, context);
 
 cleanup:
     if (!priv->serialised_email_array)
@@ -204,7 +204,7 @@ finish:
 void
 eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     GError *error = NULL;
     EasUpdateEmailReqPrivate *priv = self->priv;
 
@@ -213,6 +213,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
+		ret = FALSE;
         priv->error = error_in;
         goto finish;
     }
@@ -226,40 +227,18 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     }
 
 finish:
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
+    if(!ret)
+	{
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
+    }
+    else
+    {
+        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+    }
 
     g_debug ("eas_update_email_req_MessageComplete--");
 }
 
-
-gboolean
-eas_update_email_req_ActivateFinish (EasUpdateEmailReq* self, GError **error)
-{
-    gboolean ret = TRUE;
-    EasUpdateEmailReqPrivate *priv = self->priv;
-
-    g_debug ("eas_update_email_req_ActivateFinish++");
-
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_update_email_req_ActivateFinish--");
-
-    return ret;
-}
 
 

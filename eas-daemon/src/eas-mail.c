@@ -319,7 +319,6 @@ eas_mail_update_emails (EasMail *self,
                         const gchar **serialised_email_array,
                         DBusGMethodInvocation* context)
 {
-    EFlag *flag = NULL;
     GError *error = NULL;
     EasUpdateEmailReq *req = NULL;
     gboolean ret = TRUE;
@@ -340,8 +339,7 @@ eas_mail_update_emails (EasMail *self,
 
     // Create the request
     g_debug ("create request");
-    flag = e_flag_new ();
-    req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, flag);
+    req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, context);
     if (!req)
     {
         g_set_error (&error, EAS_CONNECTION_ERROR,
@@ -357,15 +355,6 @@ eas_mail_update_emails (EasMail *self,
     // Start the request
     g_debug ("start request");
     ret = eas_update_email_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
-    // Set flag to wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
-
-    ret = eas_update_email_req_ActivateFinish (req, &error);
 
 finish:
 	g_object_unref (req);	
@@ -374,10 +363,6 @@ finish:
         g_assert (error != NULL);
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    }
-    else
-    {
-        dbus_g_method_return (context);
     }
     g_debug ("eas_mail_update_email--");
     return ret;
