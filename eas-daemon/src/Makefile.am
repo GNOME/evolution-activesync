@@ -14,16 +14,16 @@ eas-common-stub.h: eas-common.xml
 eas-mail-stub.h: eas-mail.xml
 	dbus-binding-tool --prefix=eas_mail --mode=glib-server $< > $@
 
-INCLUDES = -I../libeas \
-	  -I../../libeasmail/src
-
 activesyncd_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
 		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
-		-DG_LOG_DOMAIN=\"activesyncd\"
+		-DG_LOG_DOMAIN=\"activesyncd\" \
+		-I$(top_srcdir)/eas-daemon/libeas \
+		-I$(top_srcdir)/libeasmail/src
+
 
 activesyncd_LDFLAGS =			\
 		$(GLIB_LIBS)		\
