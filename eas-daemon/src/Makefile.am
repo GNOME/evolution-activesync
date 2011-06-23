@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = activesyncd
+libexec_PROGRAMS = activesyncd
 
 BUILT_SOURCES = eas-sync-stub.h eas-common-stub.h eas-mail-stub.h
 

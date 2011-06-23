@@ -60,6 +60,8 @@ PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
 
+dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
+AC_SUBST(dbus_servicesdir)
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
