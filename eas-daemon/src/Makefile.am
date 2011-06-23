@@ -51,4 +51,4 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 activesyncd_LDADD = ../../logger/libeaslogger.la ../libeas/libeas.la ../../libeasmail/src/libeasmail.la ../../libeassync/src/libeassync.la $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
-
+EXTRA_DIST = eas-sync.xml eas-common.xml eas-mail.xml
