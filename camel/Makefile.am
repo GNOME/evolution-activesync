@@ -11,7 +11,7 @@ libcameleas_la_CPPFLAGS = \
 	$(SOUP_CFLAGS)                          \
 	$(LIBEBACKEND_CFLAGS)			\
 	$(E_DATA_SERVER_CFLAGS)			\
-	-DG_LOG_DOMAIN=\"camel-eas-provider\" \
+	-DG_LOG_DOMAIN=\"camel-eas-provider\"\
 	-I$(top_srcdir)/camel
 
 libcameleas_la_SOURCES = 			\
