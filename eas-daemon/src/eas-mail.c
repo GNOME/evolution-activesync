@@ -547,7 +547,6 @@ eas_mail_send_email (EasMail* easMailObj,
                      DBusGMethodInvocation* context)
 {
     gboolean ret = TRUE;
-    EFlag *flag = NULL;
     GError *error = NULL;
     EasSendEmailReq *req = NULL;
 
@@ -566,35 +565,21 @@ eas_mail_send_email (EasMail* easMailObj,
     }
 
     // Create Request
-    flag = e_flag_new ();
-    req = eas_send_email_req_new (account_uid, flag, clientid, mime_file);
+    req = eas_send_email_req_new (account_uid, context, clientid, mime_file);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     easMailObj->priv->connection);
 
     // Activate Request
     ret = eas_send_email_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
-    // Wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
 
-    ret = eas_send_email_req_ActivateFinish (req, &error);
 
 finish:
-	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
         dbus_g_method_return_error (context, error);
         g_error_free (error);
-    }
-    else
-    {
-        dbus_g_method_return (context);
     }
     g_debug ("eas_mail_send_email--");
     return ret;

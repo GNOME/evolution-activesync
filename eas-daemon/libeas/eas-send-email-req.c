@@ -100,14 +100,14 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 }
 
 EasSendEmailReq *
-eas_send_email_req_new (const gchar* account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file)
+eas_send_email_req_new (const gchar* account_id, DBusGMethodInvocation *context, const gchar* client_id, const gchar* mime_file)
 {
     EasSendEmailReq *self = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
     EasSendEmailReqPrivate* priv = self->priv;
 
     g_debug ("eas_send_email_req_new++");
 
-    eas_request_base_SetFlag (&self->parent_instance, flag);
+    eas_request_base_SetContext (&self->parent_instance, context);
 
     priv->mime_file = g_strdup (mime_file);
     priv->account_id = g_strdup (account_id);
@@ -221,7 +221,7 @@ finish:
 void
 eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     GError *error = NULL;
     EasSendEmailReqPrivate *priv = self->priv;
 
@@ -230,6 +230,7 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
+		ret = FALSE;
         priv->error = error_in;
         goto finish;
     }
@@ -243,38 +244,19 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     }
 
 finish:
-    // signal daemon we're done
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
+    if (!ret)
+    {
+        g_assert (self->priv->error != NULL);
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), self->priv->error);
+        g_error_free (self->priv->error);
+    }
+    else
+    {
+        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+    }
 
     g_debug ("eas_send_email_req_MessageComplete--");
 
     return;
 }
 
-
-gboolean
-eas_send_email_req_ActivateFinish (EasSendEmailReq* self, GError **error)
-{
-    gboolean ret = TRUE;
-    EasSendEmailReqPrivate *priv = self->priv;
-
-    g_debug ("eas_send_email_req_ActivateFinish++");
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_send_email_req_ActivateFinish--");
-
-    return ret;
-}

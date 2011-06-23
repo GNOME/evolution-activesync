@@ -52,7 +52,7 @@ struct _EasSendEmailReq
 GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasSendEmailReq *eas_send_email_req_new(const gchar* account_id, EFlag *flag, const gchar* client_id, const gchar* mime_file);
+EasSendEmailReq *eas_send_email_req_new(const gchar* account_id, DBusGMethodInvocation *context, const gchar* client_id, const gchar* mime_file);
 
 // start async request
 gboolean eas_send_email_req_Activate(EasSendEmailReq *self, GError** error);
