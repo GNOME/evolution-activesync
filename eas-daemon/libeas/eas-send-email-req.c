@@ -154,7 +154,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     rewind (file);
 
     // allocate memory to contain the whole file:
-    priv->mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size);
+    priv->mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size + 1);
     if (priv->mime_string == NULL)
     {
         ret = FALSE;
