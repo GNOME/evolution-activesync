@@ -32,7 +32,6 @@ libeas_la_LDFLAGS =			\
 
 
 libeas_la_SOURCES =		\
-        eas-errors.h	\
         eas-connection.c \
         eas-connection.h \
         eas-msg-base.h \
