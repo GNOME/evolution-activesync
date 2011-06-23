@@ -88,7 +88,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
                             const gchar *mime_directory,
-                            EFlag* flag)
+                            DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
     EasGetEmailBodyReqPrivate *priv = NULL;
@@ -102,7 +102,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
     priv->collectionId = g_strdup (collection_id);
     priv->serverId = g_strdup (server_id);
     priv->mimeDirectory = g_strdup (mime_directory);
-    eas_request_base_SetFlag (&req->parent_instance, flag);
+    eas_request_base_SetContext(&req->parent_instance, context);
 
     g_debug ("eas_get_email_body_req_new--");
     return req;
@@ -149,15 +149,16 @@ finish:
 void
 eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     GError *error = NULL;
     EasGetEmailBodyReqPrivate *priv = self->priv;
 
     g_debug ("eas_get_email_body_req_MessageComplete++");
 
-    // if an error occurred, store it and signal daemon
+    // if an error occurred, store it and signal client
     if (error_in)
     {
+        ret = FALSE;
         priv->error = error_in;
         goto finish;
     }
@@ -167,42 +168,22 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     if (!ret)
     {
         priv->error = error;
-        goto finish;
     }
 
 finish:
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
+    if (!ret)
+    {
+        g_assert (priv->error != NULL);
+        g_warning ("eas_mail_fetch_email_body - failed to get data from message");
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), priv->error);
+        g_error_free (error);
+    }
+    else
+    {
+        g_debug ("eas_mail_fetch_email_body - return for dbus");
+        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+    }
 
     g_debug ("eas_get_email_body_req_MessageComplete--");
 }
 
-
-gboolean
-eas_get_email_body_req_ActivateFinish (EasGetEmailBodyReq* self, GError** error)
-{
-    gboolean ret = TRUE;
-    EasGetEmailBodyReqPrivate *priv = self->priv;
-
-    g_debug ("eas_get_email_body_req_ActivateFinish++");
-
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-    /* TODO: Add public function implementation here */
-
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_get_email_body_req_ActivateFinish--");
-    return ret;
-}

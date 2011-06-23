@@ -390,7 +390,6 @@ eas_mail_fetch_email_body (EasMail* self,
 {
     gboolean ret;
     EasMailPrivate *priv = self->priv;
-    EFlag *flag = NULL;
     GError *error = NULL;
     EasGetEmailBodyReq *req = NULL;
 
@@ -409,28 +408,19 @@ eas_mail_fetch_email_body (EasMail* self,
     }
 
     // Create Request
-    flag = e_flag_new ();
     req = eas_get_email_body_req_new (account_uid,
                                       collection_id,
                                       server_id,
                                       mime_directory,
-                                      flag);
+                                      context);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
     ret = eas_get_email_body_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
-    // Wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
 
-    ret = eas_get_email_body_req_ActivateFinish (req, &error);
 
 finish:
-	g_object_unref (req);	
+
     if (!ret)
     {
         g_assert (error != NULL);
@@ -438,11 +428,7 @@ finish:
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     }
-    else
-    {
-        g_debug ("eas_mail_fetch_email_body - return for dbus");
-        dbus_g_method_return (context);
-    }
+
     g_debug ("eas_mail_fetch_email_body--");
     return TRUE;
 }
