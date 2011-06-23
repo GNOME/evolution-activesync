@@ -16,7 +16,8 @@ libeas_la_CPPFLAGS =			\
 		$(WBXML_CFLAGS)		\
 		$(LIBICAL_CFLAGS)	\
 		$(GNOMEKEYRING_CFLAGS)	\
-		-DG_LOG_DOMAIN=\"libeas\"
+		-DG_LOG_DOMAIN=\"libeas\" \
+		-DASKPASS=\"@ASKPASS@\"
 
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\

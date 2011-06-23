@@ -262,7 +262,7 @@ connection_authenticate (SoupSession *sess,
                          gpointer data)
 {
     EasConnection* cnc = (EasConnection *) data;
-	gchar *argv[] = {(gchar*)"ssh-askpass", (gchar*)"Please enter your Exchange Password", NULL};
+	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
 	gchar* password = NULL;
 	gint exit_status = 0;
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_OK;

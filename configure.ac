@@ -70,6 +70,8 @@ AC_SUBST(camel_providerdir)
 syncevo_backenddir=$libdir/syncevolution/backends
 AC_SUBST(syncevo_backenddir)
 
+AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
+AC_SUBST(ASKPASS)
 
 AC_CONFIG_FILES([
     Makefile 
