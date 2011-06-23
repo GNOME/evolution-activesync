@@ -154,8 +154,7 @@ eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self,
 
     g_debug ("eas_add_calendar_req_MessageComplete++");
 	
-	// If we have an error already store it for retrieval by the caller when
-	// they invoke ActivateFinish()
+	// If we have an error send it back to client
 	if (error)
 	{
 		priv->error = error;

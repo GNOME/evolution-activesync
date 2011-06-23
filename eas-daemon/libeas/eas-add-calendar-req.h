@@ -90,33 +90,6 @@ eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self,
                                      xmlDoc* doc, 
                                      GError* error);
 
-/**
- * Reads the server response data into the supplied data structures.
- *
- * Called from the daemon thread after the Soup thread has called MessageComplete
- * releasing the semaphore. Populates the data structures with the results of the
- * parsed server response.
- *
- * @param[in] self
- *	  The EasAddCalendarReq GObject instance whose server response data we accessing.
- * @param[out] ret_sync_key
- *	  The updated synchronisation key from the server, must be freed with 
- *	  g_free(). [full transfer]
- * @param[out] added_items
- *	  A GSList of serialised EasItemInfo objects, caller must free the list 
- *	  contents with g_free() and the list itself with g_slist_free(). [full transfer]
- * @param[out] error
- *	  GError may be NULL if the caller wishes to ignore error details, otherwise
- *	  will be populated with error details if the function returns FALSE. Caller 
- *	  should free the memory with g_error_free() if it has been set. [full transfer]
- *
- * @return TRUE if successful, otherwise FALSE.
- */
-gboolean 
-eas_add_calendar_req_ActivateFinish (EasAddCalendarReq* self, 
-                                     gchar** ret_sync_key, 
-                                     GSList** added_items, 
-                                     GError **error);
 
 
 G_END_DECLS
