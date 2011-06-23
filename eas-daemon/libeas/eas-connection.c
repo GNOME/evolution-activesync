@@ -107,6 +107,8 @@ eas_connection_init (EasConnection *self)
 
     g_debug ("eas_connection_init++");
 
+	dbus_g_thread_init();
+
     priv->soup_context = g_main_context_new ();
     priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
 
