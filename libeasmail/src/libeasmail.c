@@ -148,6 +148,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
         return NULL;
     }
 
+    dbus_g_proxy_set_default_timeout (object->priv->remoteEas, 1000000);
     object->priv->account_uid = g_strdup (account_uid);
 
     g_debug ("eas_mail_handler_new--");
