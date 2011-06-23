@@ -36,7 +36,7 @@
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
 
-#ifdef ENABLE_ACTIVESYNC
+#ifdef ENABLE_SYNCEVOLUTION
 
 /**
  * Synchronizes contacts, events, tasks and journals with an

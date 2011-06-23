@@ -1,6 +1,14 @@
-AM_CPPFLAGS = $(SYNCEVOLUTION_CFLAGS) -I$(top_srcdir)/test $(BACKEND_CPPFLAGS)
+libeassync_CFLAGS = \
+	-I$(top_srcdir)/libeassync/src
 
-EXTRA_DIST = configure-sub.in
+AM_CPPFLAGS = \
+	$(SYNCEVOLUTION_CFLAGS) \
+	$(GLIB_CFLAGS) \
+	$(SOUP_CFLAGS) \
+	$(LIBXML_CFLAGS) \
+	$(EDATASERVER_CFLAGS) \
+	$(DBUS_GLIB_CFLAGS) \
+	$(libeassync_CFLAGS)
 
 backenddir = $(syncevo_backenddir)
 

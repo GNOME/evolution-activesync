@@ -46,7 +46,7 @@ AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES(GNOMEKEYRING, gnome-keyring-1)
-PKG_CHECK_MODULES(GLIB, glib-2.0)
+PKG_CHECK_MODULES(GLIB, glib-2.0, have_glib="yes", have_glib="no")
 PKG_CHECK_MODULES(EDATASERVER, libedataserver-1.2)
 PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
 PKG_CHECK_MODULES(DBUS, dbus-1)
@@ -56,12 +56,28 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
-PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
-
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
+
+PKG_CHECK_MODULES(SYNCEVOLUTION,
+                  syncevolution,
+                  have_syncevolution="yes",
+                  have_syncevolution="no")
+AC_ARG_ENABLE(syncevolution,
+              AC_HELP_STRING([--enable-syncevolution],
+                             [enable the compilation of the syncevolution backend]),
+              [ if test "$enableval" = "yes"; then
+                   test "$have_syncevolution" = "yes" || AC_MSG_ERROR([syncevolution not found])
+                   AC_DEFINE(ENABLE_SYNCEVOLUTION, 1, [enable syncevolution backend])
+                else
+                   syncevolution_disabled="yes"
+                fi ],
+              [ syncevolution_disabled="yes" ])
+
+AS_IF([ test "$have_glib" = "yes" ],
+      [ AC_DEFINE(HAVE_GLIB, 1, [glib is available]) ])
 
 # Ick. Shouldn't this be in syncevolution.pc ?
 syncevo_backenddir=$libdir/syncevolution/backends

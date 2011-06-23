@@ -22,7 +22,7 @@
 # include "config.h"
 #endif
 
-#ifdef ENABLE_ACTIVESYNC
+#ifdef ENABLE_SYNCEVOLUTION
 
 #include "ActiveSyncSource.h"
 #include <syncevo/GLibSupport.h>
