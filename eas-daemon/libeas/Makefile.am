@@ -3,8 +3,6 @@ lib_LTLIBRARIES = libeas.la
 
 AM_CXXFLAGS = $(INTI_CXXFLAGS)
 
-INCLUDES = -I../../libeasmail/src
-	  
 
 libeas_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
@@ -16,7 +14,8 @@ libeas_la_CPPFLAGS =			\
 		$(WBXML_CFLAGS)		\
 		$(LIBICAL_CFLAGS)	\
 		$(GNOMEKEYRING_CFLAGS)	\
-		-DG_LOG_DOMAIN=\"libeas\"
+		-DG_LOG_DOMAIN=\"libeas\" \
+		-I$(top_srcdir)/libeasmail/src
 
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
