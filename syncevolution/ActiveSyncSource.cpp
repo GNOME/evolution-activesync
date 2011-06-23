@@ -86,6 +86,7 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
                                     getEasType(),
                                     m_folder.c_str(),
                                     created, updated, deleted,
+                                    0,
                                     gerror)) {
         gerror.throwError("reading ActiveSync changes");
     }
