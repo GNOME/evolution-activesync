@@ -470,6 +470,42 @@ eas_queue_soup_message (gpointer _request)
 
 	return FALSE;
 }
+
+
+static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
+{
+	struct _EasRequestBase *request = data;
+
+	if (msg->status_code != 200)
+		return;
+
+	g_debug ("Received %zd bytes for request %p", chunk->length, request);
+}
+
+static void soap_got_headers (SoupMessage *msg, gpointer data)
+{
+	struct _EasRequestBase *request = data;
+	const gchar *size_hdr;
+
+	size_hdr = soup_message_headers_get_one (msg->response_headers,
+											 "Content-Length");
+	if (size_hdr) {
+		gsize size = strtoull (size_hdr, NULL, 10);
+		g_debug ("Response size of request %p is %zu bytes", request, size);
+		// We can stash this away and use it to provide progress updates
+		// as a percentage. If we don't have a Content-Length: header,
+		// for example if the server uses chunked encoding, then we cannot
+		// do percentages.
+	} else {
+		g_debug ("Response size of request %p is unknown", request);
+		// Note that our got_headers signal handler may be called more than
+		// once for a given request, if it fails once with 'authentication
+		// needed' then succeeds on being resubmitted. So if the *first*
+		// response has a Content-Length but the second one doesn't, we have
+		// to do the right thing and not keep using the first length.
+	}
+}
+
 /**
  * WBXML encode the message and send to exchange server via libsoup.
  * May also be required to temporarily hold the request message whilst
@@ -632,6 +668,11 @@ else
 #endif
     eas_request_base_SetSoupMessage (request, msg);
 
+    g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
+    g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
+
+    // We have to call soup_session_queue_message() from the soup thread,
+    // or libsoup screws up (https://bugzilla.gnome.org/642573)
 	source = g_idle_source_new ();
 	g_source_set_callback (source, eas_queue_soup_message, request, NULL);
 	g_source_attach (source, priv->soup_context);
