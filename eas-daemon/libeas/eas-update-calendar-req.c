@@ -101,7 +101,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new (const gchar* account_id,
                                                    const EasItemType item_type, 
                                                    const gchar *folder_id, 
                                                    const GSList* serialised_calendar, 
-                                                   EFlag *flag)
+                                                   DBusGMethodInvocation *context)
 {
     EasUpdateCalendarReq* self = g_object_new (EAS_TYPE_UPDATE_CALENDAR_REQ, NULL);
     EasUpdateCalendarReqPrivate *priv = self->priv;
@@ -114,7 +114,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new (const gchar* account_id,
     priv->account_id = g_strdup (account_id);
     priv->item_type = item_type;
 
-    eas_request_base_SetFlag (&self->parent_instance, flag);
+    eas_request_base_SetContext (&self->parent_instance, context);
 
     g_debug ("eas_update_calendar_req_new--");
     return self;
@@ -128,21 +128,28 @@ eas_update_calendar_req_Activate (EasUpdateCalendarReq *self, GError **error)
 	gboolean success = FALSE;
 
     g_debug ("eas_update_calendar_req_Activate++");
-    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	g_debug ("eas_update_calendar_req_Activate1");
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
 
+	g_debug ("eas_update_calendar_req_Activate2");
     //build request msg
     doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
 
+	g_debug ("eas_update_calendar_req_Activate3");
     success = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                            "Sync",
                                            doc,
                                            (struct _EasRequestBase *) self,
                                            error);
 
-	g_assert(error == NULL || (!success && *error != NULL));
+	g_debug ("eas_update_calendar_req_Activate4");
+	if(!success)
+	{
+		g_assert(error == NULL || (!success && *error != NULL));
+	}
 
     g_debug ("eas_update_calendar_req_Activate--");
 	return success;
@@ -155,6 +162,7 @@ void eas_update_calendar_req_MessageComplete (EasUpdateCalendarReq *self,
 {
 	GError *local_error = NULL;
     EasUpdateCalendarReqPrivate *priv = self->priv;
+	gchar *ret_sync_key = NULL;
     g_debug ("eas_update_calendar_req_MessageComplete++");
 
 	if (error)
@@ -166,41 +174,26 @@ void eas_update_calendar_req_MessageComplete (EasUpdateCalendarReq *self,
     if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error))
 	{
 		priv->error = local_error;
+		goto finish;
 	}
+	ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
 
 finish:
+	if (error)
+    {
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
+    }
+    else
+    {
+        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+                              ret_sync_key);
+    }
 	// We must always free doc and release the semaphore
     xmlFree (doc);
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
+    g_free(ret_sync_key);
 
     g_debug ("eas_update_calendar_req_MessageComplete--");
 }
-
-gboolean 
-eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self, 
-                                        gchar** ret_sync_key, 
-                                        GError **error)
-{
-    EasUpdateCalendarReqPrivate *priv = self->priv;
-    g_debug ("eas_update_calendar_req_ActivateFinish++");
-
-    g_return_val_if_fail (error == NULL || *error != NULL, FALSE);
-
-	g_return_val_if_fail(ret_sync_key, FALSE);
-
-	*ret_sync_key = NULL;
-
-	if (priv->error)
-	{
-		g_propagate_error (error, priv->error);
-		return FALSE;
-	}
-
-    *ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
-
-    g_debug ("eas_update_calendar_req_ActivateFinish--");
-	return TRUE;
-}
-
 
 

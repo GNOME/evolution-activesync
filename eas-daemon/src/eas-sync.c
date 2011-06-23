@@ -243,8 +243,6 @@ eas_sync_update_items (EasSync* self,
                        DBusGMethodInvocation* context)
 {
     GError* error = NULL;
-    EFlag *flag = NULL;
-    gchar* ret_sync_key = NULL;
     GSList *items = NULL;
     EasUpdateCalendarReq *req = NULL;
 
@@ -263,8 +261,6 @@ eas_sync_update_items (EasSync* self,
         return FALSE;
     }
 
-    flag = e_flag_new ();
-
     switch (type)
     {
         case EAS_ITEM_CALENDAR:
@@ -279,20 +275,13 @@ eas_sync_update_items (EasSync* self,
         }
     }
     // Create the request
-    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
+    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
     eas_update_calendar_req_Activate (req, &error);
-
-    // TODO Check error
-
-    // Set flag to wait for response
-    e_flag_wait (flag);
-
-    eas_update_calendar_req_ActivateFinish (req, &ret_sync_key, &error);
 
     if (error)
     {
@@ -300,47 +289,7 @@ eas_sync_update_items (EasSync* self,
         g_error_free (error);
         return FALSE;
     }
-
-    switch (type)
-    {
-        case EAS_ITEM_CALENDAR:
-        case EAS_ITEM_CONTACT:
-        {
-            build_calendar_list (calendar_items, &items, &error);
-        }
-        break;
-        default:
-        {
-            //TODO: put unknown type error here.
-        }
-    }
-    // Create the request
-    flag = e_flag_new ();
-    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, flag);
-
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    eas_sync_get_eas_connection (self));
-
-    // Start the request
-    eas_update_calendar_req_Activate (req, &error);
-
-    // TODO Check error
-
-    // Set flag to wait for response
-    e_flag_wait (flag);
-
-    eas_update_calendar_req_ActivateFinish (req, &ret_sync_key, &error);
-
-    if (error)
-    {
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    else
-    {
-        dbus_g_method_return (context,
-                              ret_sync_key);
-    }
+	
     g_debug ("eas_sync_update_items--");
     return TRUE;
 }

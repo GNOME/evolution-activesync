@@ -61,6 +61,8 @@ EasSyncHandler *eas_sync_handler_new(const char* account_uid);
  * GSList **items_deleted (out): returns a list of strings that show server IDs of 
  *                              deleted items.  If there are no new deleted items
  *                              this parameter will be unchanged.
+ * gboolean *more_available:    TRUE if there are more changes to sync (window_size exceeded).   
+ *                              Otherwise FALSE.
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will be unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
@@ -74,6 +76,7 @@ gboolean eas_sync_handler_get_items(EasSyncHandler* self,
                                                  GSList **items_created,	
                                                  GSList **items_updated,
                                                  GSList **items_deleted,
+                                                 gboolean *more_available,   // if there are more changes to sync (window_size exceeded)
                                                  GError **error);
                                                  
 /* function name:               eas_sync_handler_delete_items

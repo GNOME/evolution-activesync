@@ -226,7 +226,7 @@ static void testGetCalendarHandler (EasSyncHandler **sync_handler, const gchar* 
 
 static void testGetLatestCalendar (EasSyncHandler *sync_handler,
                                    gchar *sync_key_in,
-                                   gchar *sync_key_out,
+                                   gchar **sync_key_out,
                                    GSList **created,
                                    GSList **updated,
                                    GSList **deleted,
@@ -234,10 +234,12 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
 {
     gboolean ret = FALSE;
     mark_point();
-    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, &sync_key_out, EAS_ITEM_CALENDAR, "1",
+	gboolean more = FALSE;
+    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CALENDAR, "1",
                                                 & (*created),
                                                 & (*updated),
                                                 & (*deleted),
+                                                & more,
                                                 & (*error));
     mark_point();
     // if the call to the daemon returned an error, report and drop out of the test
@@ -249,7 +251,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
     // the exchange server should increment the sync key and send back to the
     // client so that the client can track where it is with regard to sync.
     // therefore the key must not be zero as this is the seed value for this test
-    fail_if (sync_key_out==NULL, "Sync Key not updated by call the exchange server");
+    fail_if (*sync_key_out==NULL, "Sync Key not updated by call the exchange server");
     fail_if (g_slist_length (*created) == 0, "list length =0");
     EasItemInfo *cal = (*created)->data;
 
@@ -301,7 +303,7 @@ START_TEST (test_get_latest_calendar_items)
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetLatestCalendar (sync_handler, sync_key_in, sync_key_out, &created, &updated, &deleted, &error);
+    testGetLatestCalendar (sync_handler, sync_key_in, &sync_key_out, &created, &updated, &deleted, &error);
 
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
@@ -354,7 +356,7 @@ START_TEST (test_eas_sync_handler_delete_cal)
 
     testGetLatestCalendar (sync_handler,
                            folder_sync_key_in,
-                           folder_sync_key_out,
+                           &folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,
@@ -437,7 +439,7 @@ START_TEST (test_eas_sync_handler_update_cal)
 
     testGetLatestCalendar (sync_handler,
                            folder_sync_key_in,
-                           folder_sync_key_out,
+                           &folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,
@@ -527,7 +529,7 @@ START_TEST (test_eas_sync_handler_add_cal)
 
     testGetLatestCalendar (sync_handler,
                            folder_sync_key_in,
-                           folder_sync_key_out,
+                           &folder_sync_key_out,
                            &calitems_created,
                            &calitems_updated,
                            &calitems_deleted,

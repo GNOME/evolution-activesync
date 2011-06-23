@@ -2075,7 +2075,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 					{
 						// Any other unmapped properties get stored as extension elements under the
 						// <activesyncd:iCalExtensions> collection element.
-						
+						/*
 						gchar* elementName = NULL;
 
 						// Create the collecion element when first needed
@@ -2090,6 +2090,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 						elementName = g_strconcat(X_NAMESPACE_ACTIVESYNCD, icalproperty_get_property_name(prop), NULL);
 						xmlNewTextChild(icalExtns, NULL, (const xmlChar*)elementName, (const xmlChar*)icalproperty_get_value_as_string(prop));
 						g_free(elementName); elementName = NULL;
+						*/
 					}
 					break;
 			}// end of switch

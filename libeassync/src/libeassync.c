@@ -168,6 +168,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
                                               GSList **items_created,
                                               GSList **items_updated,
                                               GSList **items_deleted,
+                                              gboolean *more_available,   // if there are more changes to sync (window_size exceeded)
                                               GError **error)
 {
     gboolean ret = TRUE;
@@ -225,6 +226,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_INVALID,
                              G_TYPE_STRING, sync_key_out,
+                             G_TYPE_BOOLEAN, more_available,
                              G_TYPE_STRV, &created_item_array,
                              G_TYPE_STRV, &deleted_item_array,
                              G_TYPE_STRV, &updated_item_array,
@@ -386,7 +388,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
-                     ("delete_items requires a valid sync key"));
+                     ("update_items requires a valid sync key"));
 		return FALSE;
 	}
 	if(folder_id ==NULL)

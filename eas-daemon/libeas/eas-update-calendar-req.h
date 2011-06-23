@@ -46,10 +46,9 @@ GType eas_update_calendar_req_get_type (void) G_GNUC_CONST;
  *	  The identifer for the target server folder.
  * @param[in] serialised_calendar
  *	  A list of strings containing serialised EasItemInfo GObjects.
- * @param[in] flag
- *	  A semaphore used to make the request appear synchronous by waiting for the
- *	  server response. It should be set by the caller immediately after this 
- *	  function is called and cleared in this request's MessageComplete.
+ * @param[in] context
+ *	  A dbus method invocation used to send the completed operation's results
+ *	  to the server. Used in MessageComplete
  *
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
@@ -58,7 +57,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id,
                                                   const EasItemType item_type, 
                                                   const gchar *folder_id, 
                                                   const GSList *serialised_calendar, 
-                                                  EFlag *flag);
+                                                  DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -79,8 +78,7 @@ gboolean eas_update_calendar_req_Activate(EasUpdateCalendarReq *self,
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then clearing the semaphore to allow the caller that activated the request
- * to continue.
+ * then sending the response back across the dbus
  *
  * @param[in] self
  *	  The EasUpdateCalendarReq GObject instance whose messages are complete.
@@ -94,28 +92,7 @@ void eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self,
                                              xmlDoc* doc, 
                                              GError* error);
 
-/**
- * Reads the server response data into the supplied data structures.
- *
- * Called from the daemon thread after the Soup thread has called MessageComplete
- * releasing the semaphore. Populates the data structures with the results of the
- * parsed server response.
- *
- * @param[in] self
- *	  The EasUpdateCalendarReq GObject instance whose server response data we accessing.
- * @param[out] ret_sync_key
- *	  The updated synchronisation key from the server, must be freed with 
- *	  g_free(). [full transfer]
- * @param[out] error
- *	  GError may be NULL if the caller wishes to ignore error details, otherwise
- *	  will be populated with error details if the function returns FALSE. Caller 
- *	  should free the memory with g_error_free() if it has been set. [full transfer]
- *
- * @return TRUE if successful, otherwise FALSE.
- */
-gboolean eas_update_calendar_req_ActivateFinish (EasUpdateCalendarReq* self, 
-                                                 gchar** ret_sync_key, 
-                                                 GError **error);
+
 
 G_END_DECLS
 

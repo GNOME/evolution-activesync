@@ -30,10 +30,12 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
 {
     gboolean ret = FALSE;
     mark_point();
+	gboolean more =FALSE;
     ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, &sync_key_out, EAS_ITEM_CONTACT, "2",
                                                 & (*created),
                                                 & (*updated),
                                                 & (*deleted),
+                                                & more,
                                                 & (*error));
     mark_point();
     // if the call to the daemon returned an error, report and drop out of the test
