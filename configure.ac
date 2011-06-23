@@ -5,11 +5,11 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.10 no-define])
 
 AS_COMPILER_FLAGS(WARNING_FLAGS,
-	"-Wall -Wextra
+        "-Wall -Wextra
         -Wno-missing-field-initializers
         -Wno-sign-compare
         -Wno-unused-parameter
-	-Werror=pointer-to-int-cast
+        -Werror=pointer-to-int-cast
         -Wdeclaration-after-statement
         -Werror-implicit-function-declaration
         -Wformat-nonliteral -Wformat-security -Winit-self
@@ -60,7 +60,6 @@ PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
 
-
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
 
@@ -82,7 +81,7 @@ AC_CONFIG_FILES([
     camel/Makefile
     syncevolution/Makefile
     ])
- 	
+
 #activesync account schema installation:
 AC_PATH_PROG(GCONFTOOL, gconftool-2)
 AM_GCONF_SOURCE_2
@@ -95,7 +94,6 @@ AC_ARG_ENABLE(gconf_schemas_install,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-gconf-schemas-install) ;;
 esac], [gconf_schemas_install=false])
 AM_CONDITIONAL(GCONF_SCHEMAS_INSTALL, test x$gconf_schemas_install = xtrue)
-
 
 
 AC_OUTPUT
