@@ -401,7 +401,7 @@ eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, c
 		}
 	}
 
-	// DEBUG output TODO make configurable or comment out
+    if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
 	{
 	xmlChar* dump_buffer;
 	int dump_buffer_size;
