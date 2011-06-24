@@ -34,7 +34,6 @@ struct _EasSendEmailReqPrivate
     gchar* account_id;
     gchar* client_id;
     gchar* mime_file;
-    GError *error;
 };
 
 static void
@@ -50,7 +49,6 @@ eas_send_email_req_init (EasSendEmailReq *object)
     priv->send_email_msg = NULL;
     priv->mime_file = NULL;
     priv->client_id = NULL;
-    priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SEND_EMAIL);
@@ -85,10 +83,6 @@ eas_send_email_req_finalize (GObject *object)
     g_free (priv->mime_file);
     g_free (priv->client_id);
     g_free (priv->account_id);
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
 
     G_OBJECT_CLASS (eas_send_email_req_parent_class)->finalize (object);
     g_debug ("eas_send_email_req_finalize--");
@@ -242,7 +236,7 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     if (error_in)
     {
 		ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -251,15 +245,14 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
     }
 
 finish:
     if (!ret)
 	{
-        g_assert (self->priv->error != NULL);
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), self->priv->error);
-        g_error_free (self->priv->error);
+        g_assert (error != NULL);
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        g_error_free (error);
     }
     else
     {

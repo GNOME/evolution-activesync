@@ -16,7 +16,6 @@ struct _EasGetEmailBodyReqPrivate
     gchar* serverId;
     gchar* collectionId;
     gchar* mimeDirectory;
-    GError *error;
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -35,7 +34,6 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_GET_EMAIL_BODY);
 
-    priv->error = NULL;
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
     g_debug ("eas_get_email_body_req_init--");
@@ -52,10 +50,6 @@ eas_get_email_body_req_finalize (GObject *object)
     if (priv->emailBodyMsg)
     {
         g_object_unref (priv->emailBodyMsg);
-    }
-    if (priv->error)
-    {
-        g_error_free (priv->error);
     }
     g_free (priv->serverId);
     g_free (priv->collectionId);
@@ -159,23 +153,20 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     if (error_in)
     {
         ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
     xmlFree (doc);
-    if (!ret)
-    {
-        priv->error = error;
-    }
+
 
 finish:
     if (!ret)
     {
-        g_assert (priv->error != NULL);
+        g_assert (error != NULL);
         g_warning ("eas_mail_fetch_email_body - failed to get data from message");
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), priv->error);
+        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
         g_error_free (error);
     }
     else

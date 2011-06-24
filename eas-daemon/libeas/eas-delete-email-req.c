@@ -11,7 +11,6 @@ struct _EasDeleteEmailReqPrivate
     gchar* folder_id;
     GSList *server_ids_array;
     EasItemType itemType;
-    GError *error;
 };
 
 #define EAS_DELETE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqPrivate))
@@ -28,7 +27,6 @@ eas_delete_email_req_init (EasDeleteEmailReq *object)
     g_debug ("eas_delete_email_req_init++");
     priv->accountID = NULL;
     priv->syncKey = NULL;
-    priv->error = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_DELETE_MAIL);
 
@@ -68,10 +66,6 @@ eas_delete_email_req_finalize (GObject *object)
     g_free (priv->syncKey);
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
     g_debug ("eas_delete_email_req_finalize--");
     G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
 }
@@ -177,7 +171,7 @@ gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* 
     if (error_in)
     {
 		ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -185,7 +179,6 @@ gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* 
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
 		goto finish;
     }
 

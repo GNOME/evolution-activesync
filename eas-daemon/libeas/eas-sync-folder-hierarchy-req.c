@@ -20,7 +20,6 @@ typedef enum
 
 struct _EasSyncFolderHierarchyReqPrivate
 {
-    GError *error;  // error passed into MessageComplete
     EasSyncFolderMsg* syncFolderMsg;
     EasSyncFolderHierarchyReqState state;
     gchar* accountID;
@@ -45,7 +44,6 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
     priv->state = EasSyncFolderHierarchyStep1;
     priv->accountID = NULL;
     priv->syncKey = NULL;
-    priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC_FOLDER_HIERARCHY);
@@ -64,11 +62,6 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 
     g_free (priv->syncKey);
     g_free (priv->accountID);
-
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
 
     G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
     g_debug ("eas_sync_folder_hierarchy_req_finalize--");
@@ -204,7 +197,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     if (error_in)
     {
         ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -216,7 +209,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
         goto finish;
     }
 
@@ -248,7 +240,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			if (!doc)
 			{
 				ret = FALSE;
-				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 				goto finish;
@@ -264,7 +256,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             if (!ret)
             {
                 g_assert (error != NULL);
-                priv->error = error;
                 goto finish;
             }
         }
@@ -296,7 +287,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 				// Return the error or the requested data to the mail client
 				if (!ret)
 				{
-					g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+					g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 					goto finish;

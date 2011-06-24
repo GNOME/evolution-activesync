@@ -32,7 +32,6 @@ struct _EasUpdateEmailReqPrivate
     gchar* sync_key;
     gchar* folder_id;
     gchar** serialised_email_array;
-    GError *error;
 };
 
 static void
@@ -45,7 +44,6 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 
     object->priv = priv = EAS_UPDATE_EMAIL_REQ_PRIVATE (object);
 
-    priv->error = NULL;
     priv->sync_msg = NULL;
     priv->account_id = NULL;
     priv->sync_key = NULL;
@@ -70,10 +68,7 @@ eas_update_email_req_finalize (GObject *object)
 
     g_debug ("eas_update_email_req_finalize++");
     g_free (priv->account_id);
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
+
     g_object_unref (priv->sync_msg);
     free_string_array (priv->serialised_email_array);
 
@@ -214,7 +209,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     if (error_in)
     {
 		ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -223,7 +218,6 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
     }
 
 finish:
