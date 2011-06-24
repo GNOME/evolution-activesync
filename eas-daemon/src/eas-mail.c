@@ -264,8 +264,6 @@ eas_mail_sync_folder_email (EasMail* self,
                      EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
                      "Failed to find account [%s]",
                      account_uid);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
         ret = FALSE;
         goto finish;
     }
