@@ -46,7 +46,7 @@ eas_delete_email_req_dispose (GObject *object)
 	{
 		if (item->data)
 		{
-			g_object_unref(G_OBJECT(item->data));
+			g_free (item->data);
 			item->data = NULL;
 		}
 	}
