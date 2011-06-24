@@ -44,8 +44,6 @@ struct _EasConnectionPrivate
     gchar* accountUid;
     EasAccount *account;
 
-    gchar* policy_key;
-
 	gboolean retrying_asked;
 
     const gchar* request_cmd;
@@ -137,8 +135,6 @@ eas_connection_init (EasConnection *self)
     priv->accountUid = NULL;
 	priv->account = NULL; // Just a reference
 
-    priv->policy_key = NULL;
-
     priv->request_cmd = NULL;
     priv->request_doc = NULL;
     priv->request = NULL;
@@ -217,7 +213,6 @@ eas_connection_finalize (GObject *object)
     g_debug ("eas_connection_finalize++");
 
     g_free (priv->accountUid);
-    g_free (priv->policy_key);
 
 
     if (priv->request_doc)
@@ -436,9 +431,8 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
 
     g_debug ("eas_connection_set_policy_key++");
 
-    g_free (priv->policy_key);
-    priv->policy_key = g_strdup (policyKey);
-
+	eas_account_set_policy_key (priv->account, policyKey);
+	g_idle_add (eas_account_list_save, g_account_list);
     g_debug ("eas_connection_set_policy_key--");
 }
 
@@ -559,6 +553,7 @@ eas_connection_send_request (EasConnection* self,
     xmlChar* dataptr = NULL;
     int data_len = 0;
 	GSource *source = NULL;
+	const gchar *policy_key;
 
     g_debug ("eas_connection_send_request++");
     // If not the provision request, store the request
@@ -585,8 +580,9 @@ eas_connection_send_request (EasConnection* self,
         priv->request_error = error;
     }
 
+	policy_key = eas_account_get_policy_key (priv->account);
     // If we need to provision, and not the provisioning msg
-    if (!priv->policy_key && g_strcmp0 (cmd, "Provision"))
+    if (!policy_key && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
         g_debug ("  eas_connection_send_request - Provisioning required");
@@ -638,7 +634,7 @@ eas_connection_send_request (EasConnection* self,
 
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
-                                 (priv->policy_key ? priv->policy_key : "0"));
+                                 policy_key?:"0");
 #ifndef ACTIVESYNC_14
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 if(g_strcmp0(cmd, "SendMail"))

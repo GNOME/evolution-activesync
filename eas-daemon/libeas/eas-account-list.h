@@ -40,7 +40,7 @@ typedef enum _e_account_find_t {
 	EAS_ACCOUNT_FIND_SERVER_URI,
 	EAS_ACCOUNT_FIND_USER_NAME,
 	EAS_ACCOUNT_FIND_PASSWORD,
-	
+	EAS_ACCOUNT_FIND_POLICY_KEY,
 } eas_account_find_t;
 
 /**

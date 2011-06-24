@@ -25,7 +25,7 @@ struct	_EasAccountPrivate
 	 gchar* serverUri;
 	 gchar* username;
 	 gchar* password;		
-
+	 gchar* policy_key;
 };
 	
 #define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
@@ -77,6 +77,7 @@ finalize (GObject *object)
 	g_free (priv->serverUri);
 	g_free (priv->username);
 	g_free (priv->password);
+	g_free (priv->policy_key);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
 	g_debug("finalize--");		
@@ -238,6 +239,37 @@ eas_account_set_password (EasAccount *account, const gchar* password)
 	g_debug("eas_account_set_password--");	
 }
 
+void
+eas_account_set_policy_key (EasAccount *account, const gchar* policy_key)
+{
+	g_debug("eas_account_set_policy_key++");
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+
+	if(account->priv->policy_key == NULL){
+		if(policy_key != NULL){
+			account->priv->policy_key = g_strdup (policy_key);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "policy_key changed: [%s]\n", account->priv->policy_key);
+		}
+	}else{
+		if(policy_key != NULL){
+			if(strcmp(account->priv->policy_key, policy_key) != 0){
+				g_free(account->priv->policy_key);
+				account->priv->policy_key = g_strdup (policy_key);
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "policy_key changed: [%s]\n", account->priv->policy_key);
+				}
+		}else{
+				g_free(account->priv->policy_key);
+				account->priv->policy_key = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "policy_key changed: [%s]\n", account->priv->policy_key);
+		}
+	}
+
+	g_debug("eas_account_set_policy_key--");
+}
+
 gchar*
 eas_account_get_uid (const EasAccount *account)
 {
@@ -262,6 +294,12 @@ eas_account_get_password (const EasAccount *account)
 	return account->priv->password;
 }
 
+gchar*
+eas_account_get_policy_key (const EasAccount *account)
+{
+	return account->priv->policy_key;
+}
+
 gboolean
 eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo)
 {
@@ -274,6 +312,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_uri (account, accountinfo->serverUri);
 	eas_account_set_username (account, accountinfo->username);
 	eas_account_set_password (account, accountinfo->password);
+	eas_account_set_policy_key (account, accountinfo->policy_key);
 	g_debug("eas_account_set_from_info--");	
 	return TRUE;
 }
