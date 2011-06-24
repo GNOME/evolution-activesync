@@ -11,6 +11,8 @@
 gchar * g_account_id = "good.user@cstylianou.com";
 // Password: "G00dP@55w0rd"
 
+gchar * g_inbox_id = NULL;
+
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
     GError *error = NULL;
@@ -41,6 +43,7 @@ static void testGetFolderHierarchy (EasEmailHandler *email_handler,
                                     GError **error)
 {
     gboolean ret = FALSE;
+    GSList *item = NULL;
     mark_point();
     ret  = eas_mail_handler_sync_folder_hierarchy (email_handler,
                                                    sync_key,
@@ -61,7 +64,20 @@ static void testGetFolderHierarchy (EasEmailHandler *email_handler,
     // therefore the key must not be zero as this is the seed value for this test
     fail_if (!g_strcmp0 (sync_key, "0"),
              "Sync Key not updated by call the exchange server %s", sync_key);
-
+             
+    for (item = *created; item; item = item->next)
+    {
+        EasFolder *folder = item->data;
+        if (!g_strcmp0("Inbox", folder->display_name))
+        {
+            g_free(g_inbox_id);
+            g_inbox_id = g_strdup(folder->folder_id);
+            break;
+        }
+    }
+    
+    fail_if(g_inbox_id == NULL);
+    g_message("Inbox Id = [%s]", g_inbox_id);
 }
 
 static void testGetFolderInfo (EasEmailHandler *email_handler,
@@ -145,10 +161,11 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
 
+
     mark_point();
     testGetFolderInfo (email_handler,
                        folder_sync_key,
-                       "5", // Inbox
+                       g_inbox_id, // Inbox
                        &emails_created,
                        &emails_updated,
                        &emails_deleted,
@@ -227,8 +244,16 @@ START_TEST (test_eas_mail_handler_update_email)
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
 
+
     // Get folder email info for Inbox:
-    testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    testGetFolderInfo (email_handler, 
+                       folder_sync_key, 
+                       g_inbox_id, 
+                       &emails_created, 
+                       &emails_updated, 
+                       &emails_deleted, 
+                       &more_available, 
+                       &error);
 
     // if the emails_created list contains email
     if (emails_created)
@@ -258,7 +283,7 @@ START_TEST (test_eas_mail_handler_update_email)
         emails = g_slist_append (emails, email);
 
         // update the first mail in the folder
-        rtn = eas_mail_handler_update_email (email_handler, folder_sync_key, "5", emails, &error);
+        rtn = eas_mail_handler_update_email (email_handler, folder_sync_key, g_inbox_id, emails, &error);
         if (error)
         {
             fail_if (rtn == FALSE, "%s", error->message);
@@ -266,8 +291,9 @@ START_TEST (test_eas_mail_handler_update_email)
 
         mark_point();
 
+        
         // verify that we get updates with the next sync:
-        testGetFolderInfo (email_handler, folder_sync_key, "5", &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
+        testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
 
         fail_if (emails2_created, "Not expecting any new emails");
         fail_if (emails_deleted, "Not expecting any deletions");
@@ -338,10 +364,9 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     fail_unless (created, "No folder information returned from exchange server");
 	fail_if (deleted, "Not expecting any deletions with folder sync");
 	fail_if (updated, "Not expecting any updates with folder sync");
-	
-	// TODO assumes that Inbox has server_id 5!
-    // Get folder email info for Inbox:
-    testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+   // Get folder email info for Inbox:
+    testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	fail_unless (emails_created, "This test requires at least one email in the Inbox and there were none");	
 	fail_if (emails_deleted, "Not expecting any deletions with first sync");
@@ -363,7 +388,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         mark_point();
 
         // move the email
-        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, "5", "12", &updated_ids, &error);
+        g_warning("Folder ID 12 may not be what the test expects");
+        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, g_inbox_id, "12", &updated_ids, &error);
         mark_point();
         if (error)
         {
@@ -373,7 +399,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         mark_point();
 
         // verify that we get a create and a delete with the next sync:
-        testGetFolderInfo (email_handler, folder_sync_key, "5", &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
+        testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
 
         fail_unless (emails_deleted, "Expecting a deletions (from Inbox) after we moved an email");
         fail_if (emails_updated, "Not expecting updates in inbox after we moved an email");		
@@ -471,6 +497,7 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
     testGetFolderHierarchy (email_handler, sync_key, &created, &updated, &deleted, &error);
+    
 
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
@@ -514,6 +541,7 @@ START_TEST (test_get_eas_mail_info_in_folder)
 
     // call into the daemon to get the folder hierarchy from the exchange server
     testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    
 
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
@@ -523,7 +551,7 @@ START_TEST (test_get_eas_mail_info_in_folder)
     folder = g_slist_nth_data (created, 0);
     fail_if (folder == NULL, "Folder is null");
     // get the folder info for the first folder returned in the hierarchy
-    testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
     //  free email objects in lists of email objects
     g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
@@ -573,7 +601,7 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     fail_unless (created, "No folder information returned from exchange server");
 
     // get the folder info for the inbox
-    testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
     //  free email objects in lists of email objects
     g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
@@ -633,7 +661,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     mark_point();
     testGetFolderInfo (email_handler,
                        folder_sync_key,
-                       "5", // Inbox
+                       g_inbox_id, // Inbox
                        &emails_created,
                        &emails_updated,
                        &emails_deleted,
@@ -682,7 +710,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
         mark_point();
         // call method to get body
         rtn = eas_mail_handler_fetch_email_body (email_handler,
-                                                 "5", // Inbox
+                                                 g_inbox_id, // Inbox
                                                  email->server_id,
                                                  mime_directory,
                                                  &error);
@@ -764,6 +792,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     // call into the daemon to get the folder hierarchy from the exchange server
     testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
     mark_point();
+    
 
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
@@ -771,7 +800,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     mark_point();
     testGetFolderInfo (email_handler,
                        folder_sync_key,
-                       "5", // Inbox
+                       g_inbox_id, // Inbox
                        &emails_created,
                        &emails_updated,
                        &emails_deleted,
@@ -915,6 +944,8 @@ START_TEST (test_eas_mail_handler_delete_email)
     // call into the daemon to get the folder hierarchy from the exchange server
     testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
 
+    fail_if(g_inbox_id == NULL, "Failed to find inbox id");
+
     // fail the test if there is no folder information
     fail_unless (created, "No folder information returned from exchange server");
 
@@ -924,7 +955,7 @@ START_TEST (test_eas_mail_handler_delete_email)
         // get the folder info for the current folderIndex
         // since the sync id is zero only the created list will contain folders
         folder = (g_slist_nth (created, folderIndex))->data;
-        testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+        testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
         // if the emails_created list contains email
         if (emails_created)
@@ -942,7 +973,7 @@ START_TEST (test_eas_mail_handler_delete_email)
             g_stpcpy (serveridToDel, email->server_id);
 
             // delete the first mail in the folder
-            rtn = eas_mail_handler_delete_email (email_handler, folder_sync_key, "5", emailToDel, &error);
+            rtn = eas_mail_handler_delete_email (email_handler, folder_sync_key, g_inbox_id, emailToDel, &error);
             if (error)
             {
                 fail_if (rtn == FALSE, "%s", error->message);
@@ -962,8 +993,9 @@ START_TEST (test_eas_mail_handler_delete_email)
             emails_updated = NULL;
             emails_created = NULL;
 
+            
             // get email info for the folder using the saved sync key
-            testGetFolderInfo (email_handler, folder_sync_key, "5", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+            testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
             fail_unless (emails_deleted, "No email reported as deleted");
 
@@ -1021,7 +1053,7 @@ Suite* eas_libeasmail_suite (void)
     tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
     //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
     tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     //need an unread, high importance email with a single attachment at top of inbox for this to pass:
@@ -1030,5 +1062,9 @@ Suite* eas_libeasmail_suite (void)
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
 	// need a 'temp' folder created at the same level as Inbox and at least one email in the inbox for this test to work:
 	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
+	
+    g_free(g_inbox_id);
+    g_inbox_id = NULL;
+
     return s;
 }
