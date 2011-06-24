@@ -88,7 +88,11 @@ libeas_la_SOURCES =		\
         eas-move-email-msg.h \
         eas-move-email-msg.c \
         serialise_utils.c \
-        serialise_utils.h
+        serialise_utils.h\
+        eas-ping-msg.h \
+        eas-ping-msg.c \
+        eas-ping-req.h \
+        eas-ping-req.c
         
         
 
