@@ -164,7 +164,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar
 }
 
 
-void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError* error_in)
+gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError* error_in)
 {
     gboolean ret = TRUE;
     EasDeleteEmailReqPrivate *priv = self->priv;
@@ -208,5 +208,6 @@ finish:
 	g_free(ret_sync_key);
 
     g_debug ("eas_delete_email_req_MessageComplete--");
+	return TRUE;
 }
 

@@ -146,7 +146,7 @@ finish:
     return ret;
 }
 
-void
+gboolean
 eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error_in)
 {
     gboolean ret = TRUE;
@@ -185,5 +185,7 @@ finish:
     }
 
     g_debug ("eas_get_email_body_req_MessageComplete--");
+	//this is a one step request, so always needs cleaning up
+	return TRUE;
 }
 

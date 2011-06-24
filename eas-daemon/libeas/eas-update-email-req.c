@@ -201,7 +201,7 @@ finish:
 }
 
 
-void
+gboolean
 eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GError* error_in)
 {
     gboolean ret = TRUE;
@@ -238,6 +238,7 @@ finish:
     }
 
     g_debug ("eas_update_email_req_MessageComplete--");
+	return TRUE;
 }
 
 

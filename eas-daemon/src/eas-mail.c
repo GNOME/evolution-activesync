@@ -187,6 +187,7 @@ finish:
 
 }
 
+gboolean
 eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                       const gchar* account_uid,
                                       const gchar* sync_key,
@@ -671,7 +672,6 @@ finish:
     }
     else
     {
-		g_debug("");
         dbus_g_method_return (context, ret_updated_ids_array);			
     }
     g_debug ("eas_mail_move_emails_to_folder--");

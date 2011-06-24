@@ -84,8 +84,11 @@ gboolean eas_add_calendar_req_Activate(EasAddCalendarReq *self, GError **error);
  *	  xmlFreeDoc(). [full transfer]
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if request is finished and needs cleaning up by the connection
+ *    object, otherwise FALSE.
  */
-void
+gboolean
 eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, 
                                      xmlDoc* doc, 
                                      GError* error);

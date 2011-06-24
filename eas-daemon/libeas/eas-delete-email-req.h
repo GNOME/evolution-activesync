@@ -76,9 +76,7 @@ gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self,
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then clearing the semaphore to allow the caller that activated the request
- * to continue.
- *
+ * then returning the results across the dbus to the client *
  * @param[in] self
  *	  The EasDeleteEmailReq GObject instance whose messages are complete.
  * @param[in] doc
@@ -86,8 +84,9 @@ gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self,
  *	  xmlFreeDoc(). [full transfer]
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
+ * @return TRUE if finished and needs unreffing, FALSE otherwise
  */
-void eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, 
+gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, 
                                            xmlDoc* doc, 
                                            GError* error);
 

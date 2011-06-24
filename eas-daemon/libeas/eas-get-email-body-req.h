@@ -46,7 +46,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             DBusGMethodInvocation *context);
 
 gboolean eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error);
-void eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error);
+gboolean eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error);
 
 G_END_DECLS
 

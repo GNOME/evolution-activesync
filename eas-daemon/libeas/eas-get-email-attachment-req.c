@@ -144,7 +144,7 @@ finish:
 }
 
 
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
+gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
 {
     gboolean ret = TRUE;
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
@@ -181,6 +181,7 @@ finish:
 		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
 	}
     g_debug ("eas_get_email_attachment_req_MessageComplete--");
+	return TRUE;
 }
 
 

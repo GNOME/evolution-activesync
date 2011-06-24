@@ -156,7 +156,7 @@ eas_update_calendar_req_Activate (EasUpdateCalendarReq *self, GError **error)
 }
 
 
-void eas_update_calendar_req_MessageComplete (EasUpdateCalendarReq *self, 
+gboolean eas_update_calendar_req_MessageComplete (EasUpdateCalendarReq *self, 
                                               xmlDoc* doc, 
                                               GError* error)
 {
@@ -194,6 +194,7 @@ finish:
     g_free(ret_sync_key);
 
     g_debug ("eas_update_calendar_req_MessageComplete--");
+	return TRUE;
 }
 
 

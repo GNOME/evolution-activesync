@@ -141,7 +141,7 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 }
 
 
-void
+gboolean
 eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self, 
                                       xmlDoc* doc, 
                                       GError* error)
@@ -192,5 +192,6 @@ finish:
     xmlFree (doc);
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
+	return TRUE;
 }
 

@@ -57,7 +57,7 @@ EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, const gchar
 gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error);
 
 // async request completed
-void eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError* error);
+gboolean eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError* error);
 
 
 G_END_DECLS

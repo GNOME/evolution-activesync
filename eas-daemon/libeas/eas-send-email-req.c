@@ -218,7 +218,7 @@ finish:
 }
 
 
-void
+gboolean
 eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* error_in)
 {
     gboolean ret = TRUE;
@@ -257,6 +257,6 @@ finish:
 
     g_debug ("eas_send_email_req_MessageComplete--");
 
-    return;
+    return TRUE;
 }
 

@@ -58,10 +58,8 @@ EasSendEmailReq *eas_send_email_req_new(const gchar* account_id, DBusGMethodInvo
 gboolean eas_send_email_req_Activate(EasSendEmailReq *self, GError** error);
 
 // async request completed
-void eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError* error);
+gboolean eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError* error);
 
-// result returned to client
-gboolean eas_send_email_req_ActivateFinish (EasSendEmailReq* self, GError **error);
 
 G_END_DECLS
 

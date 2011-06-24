@@ -1415,6 +1415,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     gboolean isProvisioningRequired = FALSE;
     GError *error = NULL;
     RequestValidity validity = isResponseValid (msg);
+	gboolean cleanupRequest = FALSE;
 
     g_debug ("eas_connection - handle_server_response++");
 	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
@@ -1501,66 +1502,66 @@ complete_request:
 
             case EAS_REQ_PROVISION:
             {
-                eas_provision_req_MessageComplete ( (EasProvisionReq *) req, doc, error);
+                cleanupRequest = eas_provision_req_MessageComplete ( (EasProvisionReq *) req, doc, error);
             }
             break;
 
             case EAS_REQ_SYNC_FOLDER_HIERARCHY:
             {
-                eas_sync_folder_hierarchy_req_MessageComplete ( (EasSyncFolderHierarchyReq *) req, doc, error);
+                 cleanupRequest = eas_sync_folder_hierarchy_req_MessageComplete ( (EasSyncFolderHierarchyReq *) req, doc, error);
             }
             break;
 
             case EAS_REQ_SYNC:
             {
-                eas_sync_req_MessageComplete ( (EasSyncReq *) req, doc, error);
+                cleanupRequest = eas_sync_req_MessageComplete ( (EasSyncReq *) req, doc, error);
             }
             break;
             case EAS_REQ_GET_EMAIL_BODY:
             {
-                eas_get_email_body_req_MessageComplete ( (EasGetEmailBodyReq *) req, doc, error);
+                cleanupRequest = eas_get_email_body_req_MessageComplete ( (EasGetEmailBodyReq *) req, doc, error);
             }
             break;
             case EAS_REQ_GET_EMAIL_ATTACHMENT:
             {
-                eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
+                cleanupRequest = eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
             }
             break;
             case EAS_REQ_DELETE_MAIL:
             {
-                eas_delete_email_req_MessageComplete ( (EasDeleteEmailReq *) req, doc, error);
+                cleanupRequest = eas_delete_email_req_MessageComplete ( (EasDeleteEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_SEND_EMAIL:
             {
-                g_debug ("EAS_REQ_SEND_EMAIL");
-                eas_send_email_req_MessageComplete ( (EasSendEmailReq *) req, doc, error);
+                cleanupRequest = eas_send_email_req_MessageComplete ( (EasSendEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_UPDATE_MAIL:
             {
-                g_debug ("EAS_REQ_UPDATE_EMAIL");
-                eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
+                cleanupRequest = eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_MOVE_EMAIL:
             {
-                g_debug ("EAS_REQ_MOVE_EMAIL");
-                eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
+                /*cleanupRequest =*/ eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
             }
             break;				
             case EAS_REQ_UPDATE_CALENDAR:
             {
-                g_debug ("EAS_REQ_UPDATE_CALENDAR");
-                eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
+                cleanupRequest = eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
             }
             break;
             case EAS_REQ_ADD_CALENDAR:
             {
-                g_debug ("EAS_REQ_ADD_CALENDAR");
-                eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
+                cleanupRequest = eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
             }
             break;
+        }
+        //if cleanupRequest is set - we are done with this request, and should clean it up
+        if(cleanupRequest)
+        {
+            g_object_unref(req);
         }
     }
     else

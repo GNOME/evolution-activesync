@@ -8,8 +8,8 @@
 #include "../libeasmail/src/eas-email-info.h"
 #include "../libeasmail/src/eas-attachment.h"
 
-gchar * g_account_id = "1303900871.4418.1@lorna-laptop";
-//gchar * g_account_id = "123456789@andygould";
+//gchar * g_account_id = "1303900871.4418.1@lorna-laptop";
+gchar * g_account_id = "123456789@andygould";
 //gchar * g_account_id = "123456789";
 
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
@@ -1024,7 +1024,7 @@ Suite* eas_libeasmail_suite (void)
     //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
-    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
+    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     //need an unread, high importance email with a single attachment at top of inbox for this to pass:
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
     // need at least one email in the inbox for this to pass:

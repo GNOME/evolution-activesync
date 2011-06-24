@@ -170,9 +170,10 @@ finish:
     return ret;
 }
 
-void
+gboolean
 eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 {
+    gboolean cleanup = FALSE;
     gboolean ret = TRUE;
     GError *error = NULL;
     EasSyncReqPrivate* priv = self->priv;
@@ -260,6 +261,8 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
         //we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
         case EasSyncReqStep2:
         {
+			//finished state machine - req needs to be cleanup up by connection object
+			cleanup = TRUE;
             g_debug ("eas_sync_req_MessageComplete step 2");
 			ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
 			ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
@@ -324,10 +327,13 @@ finish:
         g_assert (error != NULL);
         dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
         g_error_free (error);
+		cleanup = TRUE;
     }
 	g_free(ret_sync_key);
 	g_strfreev(ret_added_item_array);
 	g_strfreev(ret_deleted_item_array);
 	g_strfreev(ret_changed_item_array);
     g_debug ("eas_sync_req_MessageComplete--");
+
+	return cleanup;
 }

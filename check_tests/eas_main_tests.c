@@ -13,7 +13,7 @@ int main (void)
 
     SRunner* sr = srunner_create (eas_daemon_suite());
 
-    srunner_add_suite (sr, eas_autodiscover_suite());
+//    srunner_add_suite (sr, eas_autodiscover_suite());
     srunner_add_suite (sr, eas_libeasmail_suite());
 //    srunner_add_suite (sr, eas_libeascal_suite());
 //    srunner_add_suite (sr, eas_libeassync_suite());
