@@ -53,16 +53,17 @@ eas_send_email_msg_init (EasSendEmailMsg *object)
 static void
 eas_send_email_msg_finalize (GObject *object)
 {
-    /* deinitalization code: */
     EasSendEmailMsg *msg = (EasSendEmailMsg *) object;
-
     EasSendEmailMsgPrivate *priv = msg->priv;
+
+	g_debug("eas_send_email_msg_finalize++");
 
     g_free (priv->mime_string);
     g_free (priv->client_id);
     g_free (priv->account_id);
 
     G_OBJECT_CLASS (eas_send_email_msg_parent_class)->finalize (object);
+	g_debug("eas_send_email_msg_finalize--");
 }
 
 static void

@@ -32,7 +32,6 @@ struct _EasSendEmailReqPrivate
 {
     EasSendEmailMsg *send_email_msg;
     gchar* account_id;
-    gchar *mime_string;
     gchar* client_id;
     gchar* mime_file;
     GError *error;
@@ -49,7 +48,6 @@ eas_send_email_req_init (EasSendEmailReq *object)
 
     priv->account_id = NULL;
     priv->send_email_msg = NULL;
-    priv->mime_string = NULL;
     priv->mime_file = NULL;
     priv->client_id = NULL;
     priv->error = NULL;
@@ -60,41 +58,53 @@ eas_send_email_req_init (EasSendEmailReq *object)
     g_debug ("eas_send_email_req_init--");
 }
 
+static void 
+eas_send_email_req_dispose (GObject *object)
+{
+    EasSendEmailReq *req = (EasSendEmailReq *) object;
+    EasSendEmailReqPrivate *priv = req->priv;
+
+    g_debug ("eas_send_email_req_dispose++");
+	if (priv->send_email_msg)
+	{
+		g_object_unref (priv->send_email_msg);
+		priv->send_email_msg = NULL;
+	}
+
+    G_OBJECT_CLASS (eas_send_email_req_parent_class)->dispose (object);
+    g_debug ("eas_send_email_req_dispose--");
+}
+
 static void
 eas_send_email_req_finalize (GObject *object)
 {
-    /* deinitalization code */
     EasSendEmailReq *req = (EasSendEmailReq *) object;
-
     EasSendEmailReqPrivate *priv = req->priv;
-    g_free (priv->mime_string);
+
+    g_debug ("eas_send_email_req_finalize++");
     g_free (priv->mime_file);
     g_free (priv->client_id);
     g_free (priv->account_id);
-    g_object_unref (priv->send_email_msg);
     if (priv->error)
     {
         g_error_free (priv->error);
     }
 
     G_OBJECT_CLASS (eas_send_email_req_parent_class)->finalize (object);
+    g_debug ("eas_send_email_req_finalize--");
 }
 
 static void
 eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_debug ("eas_send_email_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasSendEmailReqPrivate));
 
     object_class->finalize = eas_send_email_req_finalize;
+    object_class->dispose = eas_send_email_req_dispose;
 
     g_debug ("eas_send_email_req_class_init--");
 }
@@ -128,6 +138,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     FILE *file = NULL;
     guint64 size = 0;
     size_t result = 0;
+	gchar* mime_string = NULL;
 
     // store flag in base (doesn't set the flag as in signal the waiters)
     g_debug ("eas_send_email_req_Activate++");
@@ -154,8 +165,8 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     rewind (file);
 
     // allocate memory to contain the whole file:
-    priv->mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size + 1);
-    if (priv->mime_string == NULL)
+    mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size);
+    if (mime_string == NULL)
     {
         ret = FALSE;
         // set the error
@@ -166,7 +177,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     }
 
     // copy the file into the buffer:
-    result = fread (priv->mime_string, 1, size, file);
+    result = fread (mime_string, 1, size, file);
     if (result != size)
     {
         ret = FALSE;
@@ -179,7 +190,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 
     g_debug ("create msg object");
     //create msg object
-    priv->send_email_msg = eas_send_email_msg_new (priv->account_id, priv->client_id, priv->mime_string);
+    priv->send_email_msg = eas_send_email_msg_new (priv->account_id, priv->client_id, mime_string);
 
     g_debug ("build messsage");
     //build request msg
@@ -188,7 +199,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     doc = eas_send_email_msg_build_message (priv->send_email_msg);
 #else
 	//Activesync 12.1 just uses the mime string in the body of the message
-	doc = (xmlDoc*)priv->mime_string;
+	doc = (xmlDoc*)mime_string;
 #endif
     if (!doc)
     {
@@ -201,7 +212,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     g_debug ("send message");
     ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                        "SendMail",
-                                       doc,
+                                       doc, // full transfer
                                        (struct _EasRequestBase *) self,
                                        error);
 finish:
@@ -245,7 +256,7 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
 
 finish:
     if (!ret)
-    {
+	{
         g_assert (self->priv->error != NULL);
         dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), self->priv->error);
         g_error_free (self->priv->error);
@@ -259,4 +270,3 @@ finish:
 
     return TRUE;
 }
-

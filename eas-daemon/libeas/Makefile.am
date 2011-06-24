@@ -120,7 +120,7 @@ endif
 
 accountinfo = \
 "[<?xml version=\"1.0\"?>\
-	<account uid=\"123456789\">\
+	<account uid=\"tez@cstylianou.com\">\
 		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
 		<username>tez</username>\
 		<password>M0bica!</password>\
@@ -139,6 +139,11 @@ accountinfo = \
 		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
 		<username>andy</username>\
 		<password>M0bica!</password>\
+	</account>,<?xml version=\"1.0\"?>\
+	<account uid=\"good.user@cstylianou.com\">\
+		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
+		<username>good.user</username>\
+		<password>G00dP@55w0rd</password>\
 	</account>\
 	]"
 

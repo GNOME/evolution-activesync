@@ -219,14 +219,25 @@ eas_connection_finalize (GObject *object)
     g_free (priv->accountUid);
     g_free (priv->policy_key);
 
+
     if (priv->request_doc)
     {
 #ifndef ACTIVESYNC_14
-		//in activesync 12.1, SendMail uses mime, not wbxml in the body
-		if (g_strcmp0(priv->request_cmd, "SendMail"))
-#endif
+		if (!g_strcmp0 ("SendMail", priv->request_cmd))
+		{
+			g_free ((gchar*)priv->request_doc);
+		}
+		else
+		{
 			xmlFreeDoc (priv->request_doc);
+		}
+#else
+        xmlFreeDoc (priv->request_doc);
+#endif
+		priv->request_doc = NULL;
     }
+	
+    priv->request_cmd = NULL;
 
     if (priv->request_error && *priv->request_error)
     {
@@ -550,6 +561,29 @@ eas_connection_send_request (EasConnection* self,
 	GSource *source = NULL;
 
     g_debug ("eas_connection_send_request++");
+    // If not the provision request, store the request
+    if (g_strcmp0 (cmd, "Provision"))
+    {
+		gint recursive = 1;
+		g_debug("store the request");
+        priv->request_cmd = g_strdup (cmd);
+
+#ifndef ACTIVESYNC_14
+		if(!g_strcmp0(cmd, "SendMail"))
+		{
+			priv->request_doc = (gpointer)g_strdup((gchar*) doc);
+		}
+		else
+		{
+			priv->request_doc = xmlCopyDoc (doc, recursive);
+		}
+#else
+        priv->request_doc = xmlCopyDoc (doc, recursive);
+#endif
+
+        priv->request = request;
+        priv->request_error = error;
+    }
 
     // If we need to provision, and not the provisioning msg
     if (!priv->policy_key && g_strcmp0 (cmd, "Provision"))
@@ -557,22 +591,13 @@ eas_connection_send_request (EasConnection* self,
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
         g_debug ("  eas_connection_send_request - Provisioning required");
 
-		g_debug("store the request");
-		//FIXME: What if a *second* request comes in, while we're still waiting
-		//for provisioning to complete. Shouldn't this be a queue? And in fact
-		//shouldn't we have a queue *anyway*?
-        priv->request_cmd = cmd;
-        priv->request_doc = doc;
-        priv->request = request;
-        priv->request_error = error;
-
         eas_request_base_SetConnection (&req->parent_instance, self);
         ret = eas_provision_req_Activate (req, error);
         if (!ret)
         {
             g_assert (error == NULL || *error != NULL);
         }
-        return ret;
+        goto finish;
     }
 
     wbxml_ret = wbxml_conv_xml2wbxml_create (&conv);
@@ -682,11 +707,19 @@ else
 
 finish:
 	// @@WARNING - doc must always be freed before exiting this function.
+
 #ifndef ACTIVESYNC_14
-    //in activesync 12.1, SendMail uses mime, not wbxml in the body
-    if (g_strcmp0(cmd, "SendMail"))
-#endif
+if(!g_strcmp0(cmd, "SendMail"))
+	{
+		g_free ((gchar*)doc);
+	}
+	else
+	{
 		xmlFreeDoc(doc);
+	}
+#else
+	xmlFreeDoc (doc);
+#endif
 
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
@@ -920,7 +953,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
     }
 
     adData->msgs[idx] = NULL;
-
+	
     if (status != HTTP_STATUS_OK)
     {
         g_warning ("Autodiscover HTTP response was not OK");
@@ -1464,7 +1497,6 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         }
     }
 
-
     // TODO Pre-process response status to see if provisioning is required
     // isProvisioningRequired = ????
 
@@ -1479,12 +1511,19 @@ complete_request:
         if (request_type != EAS_REQ_PROVISION)
         {
             // Clean up request data
-
 #ifndef ACTIVESYNC_14
-			//in activesync 12.1, SendMail uses mime, not wbxml in the body
-			if (g_strcmp0(priv->request_cmd, "SendMail"))
+			if (!g_strcmp0("SendMail", priv->request_cmd))
+			{
+				g_free((gchar*)priv->request_doc);
+			}
+			else
+			{
+        		xmlFreeDoc (priv->request_doc);
+			}
+#else
+			xmlFreeDoc (priv->request_doc);
 #endif
-				xmlFreeDoc (priv->request_doc);
+	
 
             priv->request_cmd = NULL;
             priv->request_doc = NULL;

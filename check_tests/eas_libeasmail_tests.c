@@ -8,9 +8,8 @@
 #include "../libeasmail/src/eas-email-info.h"
 #include "../libeasmail/src/eas-attachment.h"
 
-//gchar * g_account_id = "1303900871.4418.1@lorna-laptop";
-gchar * g_account_id = "123456789@andygould";
-//gchar * g_account_id = "123456789";
+gchar * g_account_id = "good.user@cstylianou.com";
+// Password: "G00dP@55w0rd"
 
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
