@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libxml/globals.h>
 
 #include "eas-email-info.h"
 #include "eas-attachment.h"
@@ -51,7 +52,7 @@ eas_email_info_finalize (GObject *object)
 
     g_slist_free (self->attachments); // list of EasAttachments
 
-    g_slist_foreach (self->categories, (GFunc) g_free, NULL);
+    g_slist_foreach (self->categories, (GFunc) xmlFree, NULL);
     g_slist_free (self->categories);
 
     G_OBJECT_CLASS (eas_email_info_parent_class)->finalize (object);

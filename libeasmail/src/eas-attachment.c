@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <libxml/globals.h>
+
 #include "eas-attachment.h"
 #include "utils.h"
 
@@ -29,8 +31,8 @@ eas_attachment_finalize (GObject *object)
     EasAttachment *self = (EasAttachment*) object;
     g_debug ("eas_attachment_finalize++");
     /* deinitalization code */
-    g_free (self->file_reference);
-    g_free (self->display_name);
+    xmlFree (self->file_reference);
+    xmlFree (self->display_name);
     G_OBJECT_CLASS (eas_attachment_parent_class)->finalize (object);
     g_debug ("eas_attachment_finalize--");
 }
@@ -39,11 +41,6 @@ static void
 eas_attachment_class_init (EasAttachmentClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     object_class->finalize = eas_attachment_finalize;
 }
@@ -73,8 +70,8 @@ eas_attachment_serialise (EasAttachment *attachment, gchar **result)
 
     snprintf (est_size, sizeof (est_size) / sizeof (est_size[0]), "%d", attachment->estimated_size);
 
-    strings[0] = attachment->file_reference;
-    strings[1] = attachment->display_name;
+    strings[0] = (gchar*)attachment->file_reference;
+    strings[1] = (gchar*)attachment->display_name;
     strings[2] = est_size;
 
     *result = strconcatwithseparator (strings, sizeof (strings) / sizeof (strings[0]), attachment_separator);
@@ -105,7 +102,7 @@ eas_attachment_deserialise (EasAttachment *attachment, const gchar *data)
     {
         g_free (attachment->file_reference);
     }
-    attachment->file_reference = get_next_field (&from, attachment_separator);
+    attachment->file_reference = (xmlChar*)get_next_field (&from, attachment_separator);
     if (!attachment->file_reference)
     {
         ret = FALSE;
@@ -118,7 +115,7 @@ eas_attachment_deserialise (EasAttachment *attachment, const gchar *data)
     {
         g_free (attachment->display_name);
     }
-    attachment->display_name = get_next_field (&from, attachment_separator);
+    attachment->display_name = (xmlChar*)get_next_field (&from, attachment_separator);
     if (!attachment->display_name)
     {
         ret = FALSE;
@@ -164,11 +161,11 @@ eas_attachment_serialised_length (EasAttachment *attachment)
 
     // file_reference:
     g_assert (attachment->file_reference);
-    len += strlen (attachment->file_reference) + 1; // null-terminate allows for separator
+    len += strlen ((gchar*)attachment->file_reference) + 1; // null-terminate allows for separator
     // display_name:
     if (attachment->display_name)   // optional field
     {
-        len += strlen (attachment->display_name) + 1;
+        len += strlen ((gchar*)attachment->display_name) + 1;
     }
     else
     {

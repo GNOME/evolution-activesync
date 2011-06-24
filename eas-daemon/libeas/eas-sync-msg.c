@@ -501,7 +501,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             case EAS_ITEM_MAIL:
                             {
 
-                                flatItem = eas_add_email_appdata_parse_response (appData, item_server_id);
+                                flatItem = eas_email_info_translator_add (appData, item_server_id);
                             }
                             break;
                             case EAS_ITEM_CALENDAR:
@@ -577,7 +577,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             case EAS_ITEM_MAIL:
                             {
                                 g_debug ("calling email appdata translator for update");
-                                flatItem = eas_update_email_appdata_parse_response (appData, item_server_id);
+                                flatItem = eas_email_info_translator_update (appData, item_server_id);
                             }
                             break;
                             case EAS_ITEM_CALENDAR:
