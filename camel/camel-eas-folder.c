@@ -613,9 +613,38 @@ eas_transfer_messages_to_sync	(CamelFolder *source,
 static gboolean
 eas_expunge_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Expunging folder not yet implemented"));
-	return FALSE;
+	CamelEasStore *eas_store;
+	CamelEasMessageInfo *eas_info;
+	CamelMessageInfo *info;
+	CamelStore *parent_store;
+	GSList *deleted_items = NULL;
+	EVO2(GCancellable *cancellable = NULL;)
+	gboolean expunge = FALSE;
+	gint i, count;
+
+	parent_store = camel_folder_get_parent_store (folder);
+	eas_store = CAMEL_EAS_STORE (parent_store);
+
+	if (!camel_eas_store_connected (eas_store, error))
+		return FALSE;
+
+	/* On Deleted Items folder, actually delete. On others, move to Deleted Items */
+	if (folder->folder_flags & CAMEL_FOLDER_IS_TRASH)
+		expunge = TRUE;
+
+	/* Collect UIDs of deleted messages. */
+	count = camel_folder_summary_count (folder->summary);
+	for (i = 0; i < count; i++) {
+		info = camel_folder_summary_index (folder->summary, i);
+		eas_info = (CamelEasMessageInfo *) info;
+		if (eas_info && (eas_info->info.flags & CAMEL_MESSAGE_DELETED)) {
+			const gchar *uid = camel_message_info_uid (info);
+			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
+		}
+		camel_message_info_free (info);
+	}
+
+	return eas_delete_messages (folder, deleted_items, expunge, cancellable, error);
 }
 
 static gint
