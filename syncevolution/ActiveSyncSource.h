@@ -21,7 +21,11 @@
 #ifndef INCL_ACTIVESYNCSOURCE
 #define INCL_ACTIVESYNCSOURCE
 
+#include <config.h>
 #include <syncevo/SyncSource.h>
+
+#ifdef ENABLE_ACTIVESYNC
+
 #include <syncevo/PrefixConfigNode.h>
 #include <syncevo/SafeConfigNode.h>
 #include <syncevo/SmartPtr.h>
@@ -36,7 +40,6 @@
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
 
-#ifdef ENABLE_ACTIVESYNC
 
 /**
  * Synchronizes contacts, events, tasks and journals with an
@@ -221,7 +224,8 @@ class ActiveSyncCalendarSource : public ActiveSyncSource
     EasItemType getEasType() const { return m_type; }
 };
 
-#endif // ENABLE_ACTIVESYNC
 
 SE_END_CXX
+
+#endif // ENABLE_ACTIVESYNC
 #endif // INCL_ACTIVESYNCSOURCE
