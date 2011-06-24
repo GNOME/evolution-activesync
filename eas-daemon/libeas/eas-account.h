@@ -28,27 +28,12 @@ G_BEGIN_DECLS
 
 typedef struct _EasAccount EasAccount;
 typedef struct _EasAccountClass EasAccountClass;
-
-typedef enum _e_account_item_t {
-	EAS_ACCOUNT_ID_NAME,
-	EAS_ACCOUNT_ID_SERVER_URI,
-	EAS_ACCOUNT_ID_USER_NAME,
-	EAS_ACCOUNT_ID_PASSWORD,
-
-	EAS_ACCOUNT_ITEM_LAST
-} eas_account_item_t;
-
-
+typedef struct _EasAccountPrivate EasAccountPrivate;
 
 struct _EasAccount {
 	GObject parent;
 
-	 gchar* uid; 
-	 gchar* serverUri;
-	 gchar* username;
-	 gchar* password;
-	// gchar *parent_uid;
-		
+	EasAccountPrivate* priv;
 };
 
 struct _EasAccountClass {
@@ -56,37 +41,32 @@ struct _EasAccountClass {
 
 	void		(*changed)		(EasAccount *account,
 						 gint field);
+
 };
+
+typedef struct	_EasAccountInfo
+{
+	 gchar* uid; 
+	 gchar* serverUri;
+	 gchar* username;
+	 gchar* password;
+} EasAccountInfo;
 
 GType		eas_account_get_type		(void) G_GNUC_CONST;
 EasAccount *	eas_account_new			(void);
-EasAccount *	eas_account_new_from_xml		(const gchar *xml);
-gboolean	eas_account_set_from_xml		(EasAccount *account,
-						 const gchar *xml);
-void		eas_account_import		(EasAccount *dest,
-						 EasAccount *src);
-gchar *		eas_account_to_xml		(EasAccount *account);
-gchar *		eas_account_uid_from_xml		(const gchar *xml);
-const gchar *	eas_account_get_string		(EasAccount *account,
-						 eas_account_item_t type);
-gint		eas_account_get_int		(EasAccount *account,
-						 eas_account_item_t type);
-gboolean	eas_account_get_bool		(EasAccount *account,
-						 eas_account_item_t type);
-void		eas_account_set_string		(EasAccount *account,
-						 eas_account_item_t type,
-						 const gchar *v_string);
-void		eas_account_set_int		(EasAccount *account,
-						 eas_account_item_t type,
-						 gint v_int);
-void		eas_account_set_bool		(EasAccount *account,
-						 eas_account_item_t type,
-						 gboolean v_bool);
-gboolean	eas_account_writable		(EasAccount *account,
-						 eas_account_item_t type);
-gboolean	eas_account_writable_option	(EasAccount *account,
-						 const gchar *protocol,
-						 const gchar *option);
+EasAccount *	eas_account_new_from_info (EasAccountInfo* accountinfo);
+void	eas_account_set_uid			(EasAccount *account, const gchar* uid);
+void	eas_account_set_uri			(EasAccount *account, const gchar* uri);
+void	eas_account_set_username	(EasAccount *account, const gchar* username);
+void	eas_account_set_password	(EasAccount *account, const gchar* password);
+gboolean	eas_account_set_from_info	(EasAccount *account, const EasAccountInfo* accountinfo);
+
+gchar*	eas_account_get_uid			(const EasAccount *account);
+gchar*	eas_account_get_uri			(const EasAccount *account);
+gchar*	eas_account_get_username	(const EasAccount *account);
+gchar*	eas_account_get_password	(const EasAccount *account);
+
+
 G_END_DECLS
 
 #endif /* EAS_ACCOUNT_H */

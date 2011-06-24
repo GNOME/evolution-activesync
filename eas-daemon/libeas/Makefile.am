@@ -97,63 +97,61 @@ libeas_la_SOURCES =		\
         
 
 
-gconf_root = /apps/activesyncd
+gconf_root = /apps/activesyncd/accounts
 
-DISTCLEANFILES = $(schema_DATA)
+#account uids (identified using email)
+email01 =andy@mobica.com
+email02 =brahim@mobica.com
+email03 =lorna@mobica.com
+email04 =tez@mobica.com
+email05 =good.user@cstylianou.com
 
-#schemadir=$(GCONF_SCHEMA_FILE_DIR)
-#schema_in_files=activesyncd-accounts.schemas.in
-#schema_DATA=$(schema_in_files:.schemas.in=.schemas)
+setaccounts: clearkeys
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email01)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email01)/username andy
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email01)/password M0bica!
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email02)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email02)/username brahim
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email02)/password M0bica!
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email03)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email03)/username lorna
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email03)/password M0bica!
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email04)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email04)/username tez
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email04)/password M0bica!
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email05)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email05)/username good.user
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email05)/password G00dP@55w0rd
 
 
-if GCONF_SCHEMAS_INSTALL
-install-data-local:
-	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) $(GCONFTOOL) --makefile-install-rule $(schemas_DATA)
-endif 
+#use this option if you need to create a new GConf account
+my_email= myname@mycompany.com
+set-my-account:
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(my_email)/username MyUsername
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(my_email)/password MyPassword
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(my_email)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 
+clear-my-account:
+	@gconftool-2 --recursive-unset $(gconf_root)/$(my_email)
 
-#if GCONF_SCHEMAS_INSTALL
-#install-data-local:
-#	if test -z "$(DESTDIR)" ; then							\
-#		for p in $(schema_DATA) ; do						\
-#			GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) 		\
-#				$(GCONFTOOL) --makefile-install-rule $$p;		\
-#		done									\
-#	fi
-#endif
-
-accountinfo = \
-"[<?xml version=\"1.0\"?>\
-	<account uid=\"tez@cstylianou.com\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>tez</username>\
-		<password>M0bica!</password>\
-	</account>,<?xml version=\"1.0\"?>\
-	<account uid=\"1303900871.4417.1@brahim-laptop\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>brahim</username>\
-		<password>M0bica!</password>\
-	</account>,<?xml version=\"1.0\"?>\
-	<account uid=\"1303900871.4418.1@lorna-laptop\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>lorna</username>\
-		<password>M0bica!</password>\
-	</account>,<?xml version=\"1.0\"?>\
-	<account uid=\"123456789@andygould\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>andy</username>\
-		<password>M0bica!</password>\
-	</account>,<?xml version=\"1.0\"?>\
-	<account uid=\"good.user@cstylianou.com\">\
-		<uri>https://cstylianou.com/Microsoft-Server-ActiveSync</uri>\
-		<username>good.user</username>\
-		<password>G00dP@55w0rd</password>\
-	</account>\
-	]"
-
-setaccount: clearkeys
-	gconftool-2 --set --type list --list-type=string\
-		$(gconf_root)/accounts $(accountinfo)
 
 # Remove all application keys
 clearkeys:

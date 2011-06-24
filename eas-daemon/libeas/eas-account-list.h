@@ -77,19 +77,9 @@ void		eas_account_list_change		(EasAccountList *account_list,
 						 EasAccount *account);
 void		eas_account_list_remove		(EasAccountList *account_list,
 						 EasAccount *account);
-const EasAccount *eas_account_list_get_default	(EasAccountList *account_list);
-void		eas_account_list_set_default	(EasAccountList *account_list,
-						 EasAccount *account);
 const EasAccount *eas_account_list_find		(EasAccountList *account_list,
 						 eas_account_find_t type,
 						 const gchar *key);
-void		eas_account_list_prune_proxies	(EasAccountList *account_list);
-void		eas_account_list_remove_account_proxies
-						(EasAccountList *account_list,
-						 EasAccount *account);
-gboolean	eas_account_list_account_has_proxies
-						(EasAccountList *account_list,
-						 EasAccount *account);
 
 G_END_DECLS
 

@@ -164,8 +164,8 @@ eas_connection_dispose (GObject *object)
     if (g_open_connections)
     {
         hashkey = g_strdup_printf ("%s@%s", 
-                                   priv->account->username, 
-                                   priv->account->serverUri);
+                                   eas_account_get_username(priv->account), 
+                                   eas_account_get_uri(priv->account));
         g_hash_table_remove (g_open_connections, hashkey);
         g_free (hashkey);
         if (g_hash_table_size (g_open_connections) == 0)
@@ -284,8 +284,8 @@ connection_authenticate (SoupSession *sess,
 
 	result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 	                                           &password,
-	                                           "user", cnc->priv->account->username,
-                                               "server", cnc->priv->account->serverUri,
+	                                           "user", eas_account_get_username(cnc->priv->account) ,
+                                               "server", eas_account_get_uri(cnc->priv->account),
 	                                           NULL);
 
 	if (GNOME_KEYRING_RESULT_NO_MATCH == result)
@@ -308,15 +308,15 @@ connection_authenticate (SoupSession *sess,
 		g_strchomp (password);
 
 		description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                               cnc->priv->account->username,
-		                               cnc->priv->account->serverUri);
+		                               eas_account_get_username(cnc->priv->account),
+		                               eas_account_get_uri(cnc->priv->account));
 		
 		result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 		                                            NULL,
 		                                            description,
 		                                            password,
-		                                            "user", cnc->priv->account->username,
-		                                            "server", cnc->priv->account->serverUri,
+		                                            "user", eas_account_get_username(cnc->priv->account),
+		                                            "server", eas_account_get_uri(cnc->priv->account),
 		                                            NULL);
 
 		g_free (description);
@@ -324,7 +324,7 @@ connection_authenticate (SoupSession *sess,
 		if (GNOME_KEYRING_RESULT_OK == result)
 		{
 			soup_auth_authenticate (auth, 
-				                    cnc->priv->account->username,
+				                    eas_account_get_username(cnc->priv->account),
 				                    password);
 		}
 		else 
@@ -347,7 +347,7 @@ connection_authenticate (SoupSession *sess,
 			cnc->priv->retrying_asked = FALSE;
 
 			soup_auth_authenticate (auth, 
-				                    cnc->priv->account->username,
+				                    eas_account_get_username(cnc->priv->account),
 				                    password);
 			if (password)
 			{
@@ -382,15 +382,15 @@ connection_authenticate (SoupSession *sess,
 			g_strchomp (password);
 
 			description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                                   cnc->priv->account->username,
-		                                   cnc->priv->account->serverUri);
+		                                   eas_account_get_username(cnc->priv->account),
+		                                   eas_account_get_uri(cnc->priv->account));
 		
 			result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 				                                        NULL,
 		    		                                    description,
 		        		                                password,
-		            		                            "user", cnc->priv->account->username,
-		                		                        "server", cnc->priv->account->serverUri,
+		            		                            "user", eas_account_get_username(cnc->priv->account),
+		                		                        "server", eas_account_get_uri(cnc->priv->account),
 		                    		                    NULL);
 
 			g_free (description);
@@ -398,7 +398,7 @@ connection_authenticate (SoupSession *sess,
 			if (GNOME_KEYRING_RESULT_OK == result)
 			{
 				soup_auth_authenticate (auth, 
-			                            cnc->priv->account->username,
+			                            eas_account_get_username(cnc->priv->account),
 			                            password);
 			}
 			else 
@@ -610,9 +610,9 @@ eas_connection_send_request (EasConnection* self,
         goto finish;
     }
 
-    uri = g_strconcat (priv->account->serverUri,
+    uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
-                       "&User=", priv->account->username,
+                       "&User=", eas_account_get_username(priv->account),
                        "&DeviceID=", "1234567890",   // TODO Need to get device type and id from the correct place.
                        "&DeviceType=", "FakeDevice", // TODO Need to get device type and id from the correct place.
                        NULL);
@@ -1189,19 +1189,23 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
         cb (NULL, cb_data, error);
         return;
 	}
-	
+#if 0
 	account->uid = g_strdup (email);
 	account->serverUri = g_strdup("autodiscover");
+#endif
+
+	eas_account_set_uid(account, email);	
+	eas_account_set_uri(account, "autodiscover");
 
     if (!username) // Use the front of the email as the username
     {
         gchar **split = g_strsplit (email, "@", 2);
-		account->username = g_strdup(split[0]);
+		eas_account_set_username(account, split[0]);
         g_strfreev (split);
     }
     else // Use the supplied username
     {
-        account->username = g_strdup (username);
+        eas_account_set_username(account, username);
     }
 
     cnc = eas_connection_new (account, &error);
@@ -1278,8 +1282,8 @@ eas_connection_find (const gchar* accountId)
 	for (; e_iterator_is_valid (iter);  e_iterator_next (iter))
 	{
 		account = EAS_ACCOUNT (e_iterator_get (iter));
-		g_print("account->uid=%s\n", account->uid );
-		if (strcmp (account->uid, accountId) == 0) {
+		g_print("account->uid=%s\n", eas_account_get_uid(account));
+		if (strcmp (eas_account_get_uid(account), accountId) == 0) {
 			account_found = TRUE;
 			break;
 		}
@@ -1295,8 +1299,8 @@ eas_connection_find (const gchar* accountId)
     if (g_open_connections)
     {
 		gchar *hashkey = g_strdup_printf("%s@%s", 
-                                         account->username, 
-                                         account->serverUri);
+                                         eas_account_get_username(account), 
+                                         eas_account_get_uri(account));
 
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
@@ -1359,7 +1363,7 @@ eas_connection_new (EasAccount* account, GError** error)
     g_static_mutex_lock (&connection_list);
     if (g_open_connections)
     {
-        hashkey = g_strdup_printf ("%s@%s", account->username, account->serverUri);
+        hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
 
@@ -1388,7 +1392,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	// Just a reference to the global account list
 	priv->account = account;
 
-    hashkey = g_strdup_printf ("%s@%s", account->username, account->serverUri);
+    hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
 
     if (!g_open_connections)
     {
