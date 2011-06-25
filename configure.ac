@@ -89,6 +89,10 @@ if (test "${syncevolution_works}" = "yes"); then
 fi
 AC_SUBST(syncevo_backenddir)
 
+# use the "build as module" part of syncevolution/Makefile.am,
+# unconditionally when compiling as part of activesyncd
+AM_CONDITIONAL([ENABLE_MODULES], [true])
+
 dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(dbus_servicesdir)
 

@@ -19,7 +19,11 @@ backenddir = $(syncevo_backenddir)
 
 SYNCSOURCES = syncactivesync.la
 MOSTLYCLEANFILES = $(SYNCSOURCES)
+if ENABLE_MODULES
 backend_LTLIBRARIES = $(SYNCSOURCES)
+else
+noinst_LTLIBRARIES = $(SYNCSOURCES)
+endif
 
 MAINTAINERCLEANFILES = Makefile.in
 
