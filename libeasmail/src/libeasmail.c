@@ -113,7 +113,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     {
 	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
 		     "Could not create email handler object");
-        g_error ("Error: Couldn't create mail");
+        g_warning ("Error: Couldn't create mail");
 	g_debug ("eas_mail_handler_new--");
 	return NULL;
     }
@@ -131,7 +131,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
     if (object->priv->bus == NULL)
     {
-        g_error ("Error: Couldn't connect to the Session bus (%s) ", error?(*error)->message:"<discarded error>");
+        g_warning ("Error: Couldn't connect to the Session bus (%s) ", error?(*error)->message:"<discarded error>");
         return NULL;
     }
 
@@ -144,7 +144,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     {
 	g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
 		     "Failed to create mainloop");
-        g_error ("Error: Couldn't create the proxy object");
+        g_warning ("Error: Couldn't create the proxy object");
         return NULL;
     }
 
@@ -490,7 +490,7 @@ cleanup:
         g_assert (error == NULL || *error != NULL);
         if (error)
         {
-            g_error (" Error: %s", (*error)->message);
+            g_warning (" Error: %s", (*error)->message);
         }
         g_debug ("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
         g_slist_foreach (*folders_created, (GFunc) g_free, NULL);
