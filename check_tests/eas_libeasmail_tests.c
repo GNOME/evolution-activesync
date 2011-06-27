@@ -89,7 +89,7 @@ static void testGetFolderHierarchy (EasEmailHandler *email_handler,
             g_free(g_inbox_id);
             g_inbox_id = g_strdup(folder->folder_id);
             break;
-        }
+        }	
     }
     
     fail_if(g_inbox_id == NULL);
@@ -369,7 +369,9 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;
-
+	gchar *tempfolder_id = NULL;
+	GSList *l = NULL;
+	
     // get a handle to the DBus interface
     testGetMailHandler (&email_handler, accountuid);
 
@@ -381,10 +383,26 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 	fail_if (deleted, "Not expecting any deletions with folder sync");
 	fail_if (updated, "Not expecting any updates with folder sync");
 
-   // Get folder email info for Inbox:
+	// get the id for the 'Temp' folder
+    for (l = created; l; l = l->next)
+    {
+        EasFolder *folder = l->data;
+        if (!g_strcmp0("Temp", folder->display_name))
+        {
+            g_free(tempfolder_id);
+            tempfolder_id = g_strdup(folder->folder_id);
+            break;
+        }		
+    }
+
+	fail_unless(tempfolder_id, "no Temp folder found");
+	mark_point();
+	
+    // Get folder email info for Inbox:
     testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
-	fail_unless (emails_created, "This test requires at least one email in the Inbox and there were none");	
+	fail_unless (emails_created, "This test requires at least two emails in the Inbox and there were none");
+	fail_unless (g_slist_length(emails_created) > 1, "This test requires at least two emails in the Inbox and there were less than two");
 	fail_if (emails_deleted, "Not expecting any deletions with first sync");
 	fail_if (emails_updated, "Not expecting any updates with first sync");
 
@@ -397,15 +415,16 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         gboolean rtn = FALSE;
 		GSList *updated_ids = NULL;
 		
-        // get email info for first email in the folder and pull out the server_id
+        // get email info for first two emails in the folder and pull out the server_ids:
         email = (g_slist_nth (emails_created, 0))->data;
+		server_ids = g_slist_append(server_ids, email->server_id);
+        email = (g_slist_nth (emails_created, 1))->data;
 		server_ids = g_slist_append(server_ids, email->server_id);
 		
         mark_point();
 
-        // move the email
-        g_warning("Folder ID 12 may not be what the test expects");
-        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, g_inbox_id, "12", &updated_ids, &error);
+        // move the emails
+        rtn = eas_mail_handler_move_to_folder (email_handler, server_ids, g_inbox_id, tempfolder_id, &updated_ids, &error);
         mark_point();
         if (error)
         {
@@ -414,14 +433,18 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 
         mark_point();
 
-        // verify that we get a create and a delete with the next sync:
+        // verify that we get a create (for Temp folder) and a delete (for Inbox) with the next sync:
         testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
 
-        fail_unless (emails_deleted, "Expecting a deletions (from Inbox) after we moved an email");
+        fail_unless (emails_deleted, "Expecting deletions (from Inbox) after we moved an email");
         fail_if (emails_updated, "Not expecting updates in inbox after we moved an email");		
         fail_if (emails2_created, "Not expecting a new email in inbox after we move an email");
 
 		// TODO sync the temp folder and verify we get an added email
+        testGetFolderInfo (email_handler, folder_sync_key, tempfolder_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);		
+        fail_unless (emails2_created, "Expecting created emails in Temp folder after we moved an email");
+        fail_if (emails_updated, "Not expecting updates in Temp folder after we moved an email");		
+        fail_if (emails_deleted, "Not expecting deleted emails for Temp folder after we move an email");
 		
 		g_slist_foreach (emails2_created, (GFunc) g_object_unref, NULL);		
 		g_slist_free (emails2_created);
@@ -444,6 +467,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     g_slist_free (deleted);
     g_slist_free (updated);
 
+	g_free(tempfolder_id);
+	
     g_object_unref (email_handler);
 }
 
@@ -1096,7 +1121,7 @@ Suite* eas_libeasmail_suite (void)
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
     // need at least one email in the inbox for this to pass:
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
-	// need a 'temp' folder created at the same level as Inbox and at least one email in the inbox for this test to work:
+	// need a 'temp' folder created at the same level as Inbox and at least two emails in the inbox for this test to work:
 	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
 	
