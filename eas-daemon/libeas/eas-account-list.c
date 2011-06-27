@@ -172,7 +172,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GC
 		g_debug( "username changed: [%s]\n", strValue);
 	} else if (strcmp(keyname, password_Key_path) == 0) {
 		acc->password = g_strdup(strValue);
-		g_debug( "password  changed: [%s]\n", strValue);
 	} else if (strcmp(keyname, policy_key_Key_path) == 0) {
 		acc->policy_key = g_strdup(strValue);
 		g_debug( "policy_key  changed: [%s]\n", strValue);
@@ -228,7 +227,6 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	g_debug("uid =%s", acc->uid); 
 	g_debug("serverUri =%s", acc->serverUri);
 	g_debug("username =%s", acc->username);
-	g_debug("password =%s", acc->password);
 	g_debug("policy_key =%s", acc->policy_key);
 
 	list = g_slist_append (list, acc);
