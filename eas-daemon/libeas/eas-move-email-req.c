@@ -270,7 +270,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
 		goto finish;
     }
 
-	// lrm TODO results need to be passed back:
+	// get results to be passed back:
 	updated_ids_list = eas_move_email_get_updated_ids(priv->move_email_msg);
 	g_debug ("updated ids list size = %d", g_slist_length (updated_ids_list));
 	// convert list to array for transport over dbus:
