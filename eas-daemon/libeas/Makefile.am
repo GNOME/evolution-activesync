@@ -102,8 +102,8 @@ email01 =andy@mobica.com
 email02 =brahim@mobica.com
 email03 =lorna@mobica.com
 email04 =tez@mobica.com
-email05 =jem@mobica.com
 email05 =good.user@cstylianou.com
+email06 =jem@mobica.com
 
 setaccounts: clearkeys
 	gconftool-2 --set --type string \
