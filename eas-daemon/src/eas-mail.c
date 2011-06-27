@@ -133,61 +133,6 @@ eas_mail_test_001 (EasMail* obj, DBusGMethodInvocation* context)
     g_free (ok_str);
 }
 
-
-
-static gboolean 
-build_serialised_idupdates_array(gchar ***serialised_idupdates_array, const GSList *idupdates_list, GError **error)
-{
-    gboolean ret = TRUE;
-    guint i = 0;
-    GSList *l = (GSList*) idupdates_list;
-	guint array_len = g_slist_length (l) + 1;  // +1 to allow terminating null
-	
-    g_debug ("build_serialised_idupdates_array++");
-
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    g_assert (serialised_idupdates_array);
-	g_assert (*serialised_idupdates_array == NULL);
-
-    *serialised_idupdates_array = g_malloc0 (array_len * sizeof (gchar*));
-    if (!serialised_idupdates_array)
-    {
-        ret = FALSE;
-        g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     ("out of memory"));
-        goto finish;
-    }
-
-    for (i = 0; i < array_len - 1; i++)
-    {
-        EasIdUpdate *id_update;
-        g_assert (l != NULL);
-        id_update = l->data;
-
-        if (!eas_updatedid_serialise (id_update, & (*serialised_idupdates_array)[i]))
-        {
-            g_debug ("failed!");
-            ret = FALSE;
-            goto finish;
-        }
-
-        l = g_slist_next (l);		
-    }
-
-finish:
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-		g_strfreev(*serialised_idupdates_array);	
-    }
-
-	g_debug ("build_serialised_idupdates_array--");
-    return ret;	
-
-}
-
 gboolean
 eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                       const gchar* account_uid,
@@ -282,7 +227,7 @@ eas_mail_sync_folder_email (EasMail* self,
 
     ret = eas_sync_req_Activate (req,                                 
                                  &error);
-    
+	
 
 finish:
 
@@ -593,14 +538,11 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
                      DBusGMethodInvocation* context)
 {
     gboolean ret = TRUE;
-    EFlag *flag = NULL;
     GError *error = NULL;
     EasMoveEmailReq *req = NULL;
 	GSList *server_ids_list = NULL, *l = NULL;
     int index = 0;
     const gchar* id = NULL;
-	GSList *updated_ids_list = NULL;
-	gchar **ret_updated_ids_array = NULL;
 		
 	g_debug ("eas_mail_move_emails_to_folder++");
 
@@ -623,8 +565,7 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
     }
 	
     // Create Request
-    flag = e_flag_new ();
-    req = eas_move_email_req_new (account_uid, flag, server_ids_list, src_folder_id, dest_folder_id);
+    req = eas_move_email_req_new (account_uid, server_ids_list, src_folder_id, dest_folder_id, context);
 
     // Cleanup the gslist
     l = server_ids_list;
@@ -644,19 +585,7 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
     {
         goto finish;
     }
-    // Wait for response
-    e_flag_wait (flag);
-    e_flag_free (flag);
 
-    ret = eas_move_email_req_ActivateFinish (req, &error, &updated_ids_list);
-	if(!ret)
-	{
-		goto finish;			
-	}
-	// convert list to array for transport over dbus:
-	ret = build_serialised_idupdates_array (&ret_updated_ids_array, updated_ids_list, &error);	
-	g_slist_foreach (updated_ids_list, (GFunc) g_free, NULL);
-	g_slist_free(updated_ids_list);	
 	
 finish:
 	g_object_unref (req);	
@@ -667,10 +596,7 @@ finish:
         dbus_g_method_return_error (context, error);
         g_error_free (error);
     }
-    else
-    {
-        dbus_g_method_return (context, ret_updated_ids_array);			
-    }
+	
     g_debug ("eas_mail_move_emails_to_folder--");
     return ret;
 }

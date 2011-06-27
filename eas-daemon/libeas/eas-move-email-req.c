@@ -121,16 +121,16 @@ eas_move_email_req_class_init (EasMoveEmailReqClass *klass)
 }
 
 EasMoveEmailReq *
-eas_move_email_req_new (const gchar* account_id, EFlag *flag, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id)
+eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context)
 {
     EasMoveEmailReq *self = g_object_new (EAS_TYPE_MOVE_EMAIL_REQ, NULL);
     EasMoveEmailReqPrivate* priv = self->priv;
 	const GSList *l;
 	
     g_debug ("eas_move_email_req_new++");
-
-    eas_request_base_SetFlag (&self->parent_instance, flag);
-
+	
+	eas_request_base_SetContext (&self->parent_instance, context);
+	
     priv->account_id = g_strdup (account_id);
 	priv->dest_folder_id = g_strdup(dest_folder_id);
 	priv->src_folder_id = g_strdup(src_folder_id);
@@ -189,19 +189,74 @@ finish:
     return ret;
 }
 
+static gboolean 
+build_serialised_idupdates_array(gchar ***serialised_idupdates_array, const GSList *idupdates_list, GError **error)
+{
+    gboolean ret = TRUE;
+    guint i = 0;
+    GSList *l = (GSList*) idupdates_list;
+	guint array_len = g_slist_length (l) + 1;  // +1 to allow terminating null
+	
+    g_debug ("build_serialised_idupdates_array++");
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+    g_assert (serialised_idupdates_array);
+	g_assert (*serialised_idupdates_array == NULL);
+
+    *serialised_idupdates_array = g_malloc0 (array_len * sizeof (gchar*));
+    if (!serialised_idupdates_array)
+    {
+        ret = FALSE;
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        goto finish;
+    }
+
+    for (i = 0; i < array_len - 1; i++)
+    {
+        EasIdUpdate *id_update;
+        g_assert (l != NULL);
+        id_update = l->data;
+
+        if (!eas_updatedid_serialise (id_update, & (*serialised_idupdates_array)[i]))
+        {
+            g_debug ("failed!");
+            ret = FALSE;
+            goto finish;
+        }
+
+        l = g_slist_next (l);		
+    }
+
+finish:
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+		g_strfreev(*serialised_idupdates_array);	
+    }
+
+	g_debug ("build_serialised_idupdates_array--");
+    return ret;	
+
+}
 
 void
 eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* error_in)
 {
-    gboolean ret;
+    gboolean ret = TRUE;
     GError *error = NULL;
     EasMoveEmailReqPrivate *priv = self->priv;
-
+	GSList *updated_ids_list = NULL;
+	gchar **ret_updated_ids_array = NULL;
+	
     g_debug ("eas_move_email_req_MessageComplete++");
 
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
+		ret = FALSE;
         priv->error = error_in;
         goto finish;
     }
@@ -212,48 +267,31 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
     {
         g_assert (error != NULL);
         self->priv->error = error;
+		goto finish;
     }
+
+	// lrm TODO results need to be passed back:
+	updated_ids_list = eas_move_email_get_updated_ids(priv->move_email_msg);
+	g_debug ("updated ids list size = %d", g_slist_length (updated_ids_list));
+	// convert list to array for transport over dbus:
+	ret = build_serialised_idupdates_array (&ret_updated_ids_array, updated_ids_list, &error);	
+	g_slist_foreach (updated_ids_list, (GFunc) g_free, NULL);
+	g_slist_free(updated_ids_list);			
 
 finish:
     xmlFreeDoc (doc);
     // signal daemon we're done
-    e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
-
+	if(!ret)
+	{
+		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		g_error_free (error);
+	}
+    else
+	{
+		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance), ret_updated_ids_array);
+	}
     g_debug ("eas_move_email_req_MessageComplete--");
 
     return;
 }
 
-
-gboolean
-eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error, GSList **updated_ids)
-{
-    gboolean ret = TRUE;
-    EasMoveEmailReqPrivate *priv = self->priv;
-
-    g_debug ("eas_move_email_req_ActivateFinish++");
-
-    if (priv->error != NULL) // propogate any preceding error
-    {
-        /* store priv->error in error, if error != NULL,
-        * otherwise call g_error_free() on priv->error
-        */
-        g_propagate_error (error, priv->error);
-        priv->error = NULL;
-
-        ret = FALSE;
-    }
-
-	g_assert(*updated_ids == NULL);
-	
-	*updated_ids = eas_move_email_get_updated_ids(priv->move_email_msg);
-	g_debug ("updated ids list size = %d", g_slist_length (*updated_ids));
-
-    if (!ret)
-    {
-        g_assert (error == NULL || *error != NULL);
-    }
-    g_debug ("eas_move_email_req_ActivateFinish--");
-
-    return ret;
-}

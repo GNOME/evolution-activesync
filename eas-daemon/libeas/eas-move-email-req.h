@@ -52,16 +52,13 @@ struct _EasMoveEmailReq
 GType eas_move_email_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasMoveEmailReq *eas_move_email_req_new(const gchar* account_id, EFlag *flag, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id);
+EasMoveEmailReq *eas_move_email_req_new(const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context);
 
 // start async request
 gboolean eas_move_email_req_Activate(EasMoveEmailReq *self, GError** error);
 
 // async request completed
 void eas_move_email_req_MessageComplete(EasMoveEmailReq *self, xmlDoc* doc, GError* error);
-
-// result returned to client
-gboolean eas_move_email_req_ActivateFinish (EasMoveEmailReq* self, GError **error, GSList **updated_ids);
 
 G_END_DECLS
 
