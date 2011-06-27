@@ -218,7 +218,6 @@ eas_account_set_password (EasAccount *account, const gchar* password)
 		if(password != NULL){
 			account->priv->password = g_strdup (password);
 			g_signal_emit (account, signals[CHANGED], 0, -1);
-			g_debug( "password changed: [%s]\n", account->priv->password);	
 		}
 	}else{
 		if(password != NULL){
@@ -226,17 +225,15 @@ eas_account_set_password (EasAccount *account, const gchar* password)
 				g_free(account->priv->password);
 				account->priv->password = g_strdup (password);
 				g_signal_emit (account, signals[CHANGED], 0, -1);
-				g_debug( "password changed: [%s]\n", account->priv->password);
 				}		
 		}else{
 				g_free(account->priv->password);
 				account->priv->password = NULL;
 				g_signal_emit (account, signals[CHANGED], 0, -1);
-				g_debug( "password changed: [%s]\n", account->priv->password);		
 		}
 	}
 
-	g_debug("eas_account_set_password--");	
+	g_debug("eas_account_set_password--");
 }
 
 void
