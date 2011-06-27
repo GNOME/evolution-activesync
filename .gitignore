@@ -21,7 +21,6 @@ libeasmail/tests/libeasmail_test
 TODO.tasks
 TODO.list
 libeascal/aclocal.m4
-*.m4
 
 # Folders to ignore
 config/*

@@ -72,9 +72,10 @@ if (test "${have_syncevolution}" = "yes"); then
 fi
 AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, test "${syncevolution_works}" = "yes")
 
-# If syncevolution.pc has a backenddir variable (as it should), then use it
-# Otherwise, fall back to *its* $libdir/syncevolution/backends
 if (test "${syncevolution_works}" = "yes"); then
+    AX_BOOST_BASE(1.34)
+    # If syncevolution.pc has a backenddir variable (as it should), then use it
+    # Otherwise, fall back to *its* $libdir/syncevolution/backends
     AC_MSG_CHECKING([where to install SyncEvolution plugin])
     if (test "${syncevo_backenddir}" = ""); then
         syncevo_backenddir=`$PKG_CONFIG --variable=backenddir syncevolution`
