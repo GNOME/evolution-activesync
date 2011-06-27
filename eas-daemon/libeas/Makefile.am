@@ -136,6 +136,12 @@ setaccounts: clearkeys
 	            $(gconf_root)/$(email05)/username good.user
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email05)/password G00dP@55w0rd
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email06)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email06)/username jem
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email06)/password M0bica!
 
 
 #use this option if you need to create a new GConf account
