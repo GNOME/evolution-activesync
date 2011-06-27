@@ -280,7 +280,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
 
 finish:
     xmlFreeDoc (doc);
-    // signal daemon we're done
+	// send dbus response
 	if(!ret)
 	{
 		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
