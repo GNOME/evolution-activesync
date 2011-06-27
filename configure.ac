@@ -87,6 +87,8 @@ AC_SUBST(camel_providerdir)
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
 
+AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
+
 AC_CONFIG_FILES([
     Makefile 
     eas-daemon/data/Makefile 
