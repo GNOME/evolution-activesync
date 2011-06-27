@@ -432,7 +432,13 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
     g_debug ("eas_connection_set_policy_key++");
 
 	eas_account_set_policy_key (priv->account, policyKey);
-	g_idle_add (eas_account_list_save, g_account_list);
+	g_idle_add (eas_account_list_save_list, g_account_list);
+#if 0
+	/*TODO: save just the policy_key item rather than the list */
+	eas_account_list_save_item(account_list,
+								account02,
+								EAS_ACCOUNT_POLICY_KEY);	
+#endif
     g_debug ("eas_connection_set_policy_key--");
 }
 

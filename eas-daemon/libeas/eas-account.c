@@ -24,7 +24,6 @@ struct	_EasAccountPrivate
 	 gchar* uid; 
 	 gchar* serverUri;
 	 gchar* username;
-	 gchar* password;		
 	 gchar* policy_key;
 };
 	
@@ -61,7 +60,7 @@ eas_account_init (EasAccount *account)
 	priv->uid = NULL;
 	priv->serverUri = NULL;
 	priv->username = NULL;
-	priv->password = NULL;
+	priv->policy_key = NULL;
 	g_debug("eas_account_init--");
 }
 
@@ -76,7 +75,6 @@ finalize (GObject *object)
 	g_free (priv->uid);
 	g_free (priv->serverUri);
 	g_free (priv->username);
-	g_free (priv->password);
 	g_free (priv->policy_key);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
@@ -118,7 +116,7 @@ eas_account_new_from_info (EasAccountInfo* accountinfo)
 void
 eas_account_set_uid (EasAccount *account, const gchar* uid)
 {
-	g_debug("eas_account_set_uid++");
+	/* g_debug("eas_account_set_uid++"); */
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
 	if(account->priv->uid == NULL){
@@ -143,13 +141,13 @@ eas_account_set_uid (EasAccount *account, const gchar* uid)
 		}
 	}
 
-	g_debug("eas_account_set_uid--");	
+	/* g_debug("eas_account_set_uid--"); */
 }
 
 void
 eas_account_set_uri (EasAccount *account, const gchar* uri)
 {
-	g_debug("eas_account_set_uri++");
+	/* g_debug("eas_account_set_uri++"); */
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
 	if(account->priv->serverUri == NULL){
@@ -174,13 +172,13 @@ eas_account_set_uri (EasAccount *account, const gchar* uri)
 		}
 	}
 	
-	g_debug("eas_account_set_uri--");	
+	/* g_debug("eas_account_set_uri--"); */
 }
 
 void
 eas_account_set_username (EasAccount *account, const gchar* username)
 {
-	g_debug("eas_account_set_username++");
+	/* g_debug("eas_account_set_username++"); */
 	g_return_if_fail (EAS_IS_ACCOUNT (account));	
 
 	if(account->priv->username == NULL){
@@ -205,41 +203,13 @@ eas_account_set_username (EasAccount *account, const gchar* username)
 		}
 	}
 	
-	g_debug("eas_account_set_username--");
-}
-
-void
-eas_account_set_password (EasAccount *account, const gchar* password)
-{
-	g_debug("eas_account_set_password++");
-	g_return_if_fail (EAS_IS_ACCOUNT (account));	
-
-	if(account->priv->password == NULL){
-		if(password != NULL){
-			account->priv->password = g_strdup (password);
-			g_signal_emit (account, signals[CHANGED], 0, -1);
-		}
-	}else{
-		if(password != NULL){
-			if(strcmp(account->priv->password, password) != 0){
-				g_free(account->priv->password);
-				account->priv->password = g_strdup (password);
-				g_signal_emit (account, signals[CHANGED], 0, -1);
-				}		
-		}else{
-				g_free(account->priv->password);
-				account->priv->password = NULL;
-				g_signal_emit (account, signals[CHANGED], 0, -1);
-		}
-	}
-
-	g_debug("eas_account_set_password--");
+	/* g_debug("eas_account_set_username--"); */
 }
 
 void
 eas_account_set_policy_key (EasAccount *account, const gchar* policy_key)
 {
-	g_debug("eas_account_set_policy_key++");
+	/* g_debug("eas_account_set_policy_key++"); */
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
 	if(account->priv->policy_key == NULL){
@@ -264,7 +234,7 @@ eas_account_set_policy_key (EasAccount *account, const gchar* policy_key)
 		}
 	}
 
-	g_debug("eas_account_set_policy_key--");
+	/* g_debug("eas_account_set_policy_key--"); */
 }
 
 gchar*
@@ -285,12 +255,6 @@ eas_account_get_username (const EasAccount *account)
 	return account->priv->username;
 }
 
-gchar* 
-eas_account_get_password (const EasAccount *account)
-{
-	return account->priv->password;
-}
-
 gchar*
 eas_account_get_policy_key (const EasAccount *account)
 {
@@ -300,7 +264,7 @@ eas_account_get_policy_key (const EasAccount *account)
 gboolean
 eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo)
 {
-	g_debug("eas_account_set_from_info++");
+	/*g_debug("eas_account_set_from_info++"); */
 	/* account must have a uid*/
 	if (!accountinfo->uid)
 		return FALSE;
@@ -308,8 +272,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_uid (account, accountinfo->uid);
 	eas_account_set_uri (account, accountinfo->serverUri);
 	eas_account_set_username (account, accountinfo->username);
-	eas_account_set_password (account, accountinfo->password);
 	eas_account_set_policy_key (account, accountinfo->policy_key);
-	g_debug("eas_account_set_from_info--");	
+	/* g_debug("eas_account_set_from_info--");	*/
 	return TRUE;
 }

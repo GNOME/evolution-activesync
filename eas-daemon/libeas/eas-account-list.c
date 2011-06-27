@@ -12,7 +12,6 @@
 #define EAS_ACCOUNT_ROOT			"/apps/activesyncd/accounts"
 #define EAS_ACCOUNT_KEY_SERVERURI	"/serverUri"
 #define EAS_ACCOUNT_KEY_USERNAME	"/username"
-#define EAS_ACCOUNT_KEY_PASSWORD	"/password"
 #define EAS_ACCOUNT_KEY_POLICY_KEY	"/policy_key"
 
 
@@ -115,20 +114,20 @@ eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GC
 	const gchar* keyname = NULL;
 	gchar* strValue = NULL;
 	gchar* uid = NULL;
-	g_debug("eas_account_list_set_account_info++");
+	/* g_debug("eas_account_list_set_account_info++"); */
 	g_return_if_fail (acc != NULL);
 	g_return_if_fail (uid_path != NULL);
 	g_return_if_fail (entry != NULL);
 	
 	keyname = gconf_entry_get_key(entry);
 	if (keyname == NULL) {
-		g_debug("Couldn't get the key name - this could be a delete notification!\n");
+		/* g_debug("Couldn't get the key name - this could be a delete notification!\n");*/
 		return;
 	}
 
 	value = gconf_entry_get_value(entry);
 	if (value == NULL) {
-		g_debug("Couldn't get the key value - this could be a delete notification!\n");
+		/*g_debug("Couldn't get the key value - this could be a delete notification!\n");*/
 		return;
 	}
 
@@ -138,7 +137,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GC
 	gchar **str_array = NULL;
 	str_array = g_strsplit(uid_path, "/", -1);
 	uid = g_strdup(str_array[last_token]);
-	g_debug("uid=%s\n", uid);
+	/* g_debug("uid=%s\n", uid); */
 	/* free the vector */
 	g_strfreev(str_array);
 
@@ -155,10 +154,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GC
 	gchar username_Key_path[string_Key_len];
 	g_snprintf(username_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
 	
-	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_PASSWORD)+ 1;
-	gchar password_Key_path[string_Key_len];
-	g_snprintf(password_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_PASSWORD);
-
 	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
 	gchar policy_key_Key_path[string_Key_len];
 	g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
@@ -166,24 +161,22 @@ eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GC
 	acc->uid = g_strdup(uid);
 	if (strcmp(keyname, serveruri_Key_path) == 0) {
 		acc->serverUri = g_strdup(strValue);
-		g_debug( "serverUri changed: [%s]\n", strValue);
+		//g_debug( "serverUri changed: [%s]\n", strValue);
 	} else if (strcmp(keyname, username_Key_path) == 0) {
 		acc->username = g_strdup(strValue);
-		g_debug( "username changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, password_Key_path) == 0) {
-		acc->password = g_strdup(strValue);
+		//g_debug( "username changed: [%s]\n", strValue);
 	} else if (strcmp(keyname, policy_key_Key_path) == 0) {
 		acc->policy_key = g_strdup(strValue);
-		g_debug( "policy_key  changed: [%s]\n", strValue);
+		//g_debug( "policy_key  changed: [%s]\n", strValue);
 	}  else {
-		g_debug( "Unknown key: %s (value: [%s])\n", keyname, strValue);
+		g_warning( "Unknown key: %s (value: [%s])\n", keyname, strValue);
 	}
 
 	g_free (uid);
 	/* Free the string representation of the value. */
 	g_free(strValue);
 
-	g_debug("eas_account_list_set_account_info--");
+	/* g_debug("eas_account_list_set_account_info--"); */
 }
 
 static void
@@ -387,74 +380,21 @@ eas_account_list_construct (EasAccountList *account_list, GConfClient *gconf)
 }
 
 void
-eas_account_gconf_save(GConfClient *client, const GSList *list)
+eas_account_gconf_save(EasAccountList *account_list, GConfClient *client, const GSList *list)
 {
 	g_debug("eas_account_gconf_save++");
 	GSList* l = NULL;
 	gchar* uid = NULL;
 
-	
-	g_debug("eas_account_gconf_save++ 01");
 
 	for(l = list; l; l = l->next){
-		g_debug("eas_account_gconf_save++ 01 ***");
 		uid = eas_account_get_uid((EasAccount*)l->data);
 		if (!uid)
 			continue;
-//TODO:?
-//		uid = strdup(eas_account_get_uid((EasAccount*)l->data));
 
-		/* Concatenate to form absolute paths for keys */
-		/* e.g. serveruri_Key_path = EAS_ACCOUNT_ROOT + "/" + uid +
-		   EAS_ACCOUNT_KEY_SERVERURI*/
-		gulong string_Key_len;
-		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
-								strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
-	g_debug("eas_account_gconf_save++ 01-A");
-		gchar serveruri_Key_path[string_Key_len];
-	g_debug("eas_account_gconf_save++ 01-A");		
-		g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s",
-					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
-	g_debug("eas_account_gconf_save++ 01-A");
-		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
-								strlen(EAS_ACCOUNT_KEY_USERNAME) + 1;
-		gchar username_Key_path[string_Key_len];
-		g_snprintf(username_Key_path, string_Key_len, "%s/%s%s",
-					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
+		eas_account_list_save_account(account_list,
+						(EasAccount*)l->data);
 
-		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
-								strlen(EAS_ACCOUNT_KEY_PASSWORD)+ 1;
-		gchar password_Key_path[string_Key_len];
-		g_snprintf(password_Key_path, string_Key_len, "%s/%s%s",
-					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_PASSWORD);	
-
-		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
-								strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
-		gchar policy_key_Key_path[string_Key_len];
-		g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s",
-					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-	g_debug("eas_account_gconf_save++ 02");
-		gconf_client_set_string (client,
-								serveruri_Key_path,
-								eas_account_get_uri((EasAccount*)l->data),
-								NULL);
-
-		gconf_client_set_string (client,
-								username_Key_path,
-								eas_account_get_username((EasAccount*)l->data),
-								NULL);
-
-		gconf_client_set_string (client,
-								password_Key_path,
-								eas_account_get_password((EasAccount*)l->data),
-								NULL);
-		gconf_client_set_string (client,
-								policy_key_Key_path,
-								eas_account_get_policy_key((EasAccount*)l->data),
-								NULL);
-	g_debug("eas_account_gconf_save++ 03");
-//END TODO:
-//		g_free (uid);
 	}
 	g_debug("eas_account_gconf_save--");
 }
@@ -466,7 +406,7 @@ eas_account_gconf_save(GConfClient *client, const GSList *list)
  **/
 
 void
-eas_account_list_save (EasAccountList *account_list)
+eas_account_list_save_list (EasAccountList *account_list)
 {
 	g_debug("eas_account_list_save++");	
 
@@ -482,7 +422,7 @@ eas_account_list_save (EasAccountList *account_list)
 	}
 	g_object_unref (iter);
 
-	eas_account_gconf_save(account_list->priv->gconf, list);
+	eas_account_gconf_save(account_list, account_list->priv->gconf, list);
 	
 	while (list) {
 		g_free (list->data);
@@ -493,6 +433,122 @@ eas_account_list_save (EasAccountList *account_list)
 
 	g_debug("eas_account_list_save--");
 }
+
+void
+eas_account_list_save_account(EasAccountList *account_list,
+						EasAccount *account)
+{
+	g_debug("eas_account_list_save_account++");
+	/* Concatenate to form absolute paths for keys */
+	/* e.g. serveruri_Key_path = EAS_ACCOUNT_ROOT + "/" + uid +
+	   EAS_ACCOUNT_KEY_SERVERURI*/
+	gint uid_len;
+	gulong string_Key_len;
+	gchar* uid =NULL;
+
+	uid = eas_account_get_uid(account);
+	uid_len = strlen(uid);
+
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+							strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
+
+	gchar serveruri_Key_path[string_Key_len];
+	g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s",
+				EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+							strlen(EAS_ACCOUNT_KEY_USERNAME) + 1;
+	gchar username_Key_path[string_Key_len];
+	g_snprintf(username_Key_path, string_Key_len, "%s/%s%s",
+				EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
+
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+							strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
+	gchar policy_key_Key_path[string_Key_len];
+	g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s",
+				EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
+
+	gconf_client_set_string (account_list->priv->gconf,
+							serveruri_Key_path,
+							eas_account_get_uri(account),
+							NULL);
+	
+	gconf_client_set_string (account_list->priv->gconf,
+							username_Key_path,
+							eas_account_get_username(account),
+							NULL);
+
+	gconf_client_set_string (account_list->priv->gconf,
+							policy_key_Key_path,
+							eas_account_get_policy_key(account),
+								NULL);
+	g_debug("eas_account_list_save_account--");
+}
+
+void
+eas_account_list_save_item(EasAccountList *account_list,
+						EasAccount *account, eas_account_item_t type)
+{
+	g_debug("eas_account_list_save_item++");
+	/* pre-condition: account must have a uid */
+	g_return_if_fail (eas_account_get_uid(account) != NULL);
+	
+	gint uid_len;
+	gulong string_Key_len;
+	gchar* uid =NULL;
+	
+	uid = eas_account_get_uid(account);
+	uid_len = strlen(uid);
+	
+	switch (type) {
+	case EAS_ACCOUNT_SERVER_URI:
+		{
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+								strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
+		gchar serveruri_Key_path[string_Key_len];
+		g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
+		gconf_client_set_string (account_list->priv->gconf,
+								serveruri_Key_path,
+								eas_account_get_uri(account),
+								NULL);		
+		}
+		break;
+	case EAS_ACCOUNT_USERNAME:
+		{
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+								strlen(EAS_ACCOUNT_KEY_USERNAME) + 1;
+		gchar username_Key_path[string_Key_len];
+		g_snprintf(username_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
+		gconf_client_set_string (account_list->priv->gconf,
+								username_Key_path,
+								eas_account_get_username(account),
+								NULL);
+
+		}
+		break;
+	case EAS_ACCOUNT_POLICY_KEY:
+		{
+		g_debug("set EAS_ACCOUNT_POLICY_KEY");
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + uid_len +
+								strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
+		gchar policy_key_Key_path[string_Key_len];
+		g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
+		gconf_client_set_string (account_list->priv->gconf,
+								policy_key_Key_path,
+								eas_account_get_policy_key(account),
+								NULL);
+		}
+		break;
+	default:
+		g_warning("GConf item Type ( %d ) is not supported", type);
+		break;
+	}
+
+	g_debug("eas_account_list_save_item--");
+}
+
 
 /**
  * eas_account_list_add:
@@ -605,10 +661,6 @@ eas_account_list_find (EasAccountList *account_list,
 		case EAS_ACCOUNT_FIND_USER_NAME:
 			if (eas_account_get_username(account))
 				found = strcmp (eas_account_get_username(account), key) == 0;
-			break;
-		case EAS_ACCOUNT_FIND_PASSWORD:
-			if (eas_account_get_password(account))
-				found = strcmp (eas_account_get_password(account), key) == 0;
 			break;
 		case EAS_ACCOUNT_FIND_POLICY_KEY:
 			if (eas_account_get_policy_key(account))

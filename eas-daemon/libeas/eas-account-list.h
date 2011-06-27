@@ -39,7 +39,6 @@ typedef enum _e_account_find_t {
 	EAS_ACCOUNT_FIND_ACCOUNT_UID,
 	EAS_ACCOUNT_FIND_SERVER_URI,
 	EAS_ACCOUNT_FIND_USER_NAME,
-	EAS_ACCOUNT_FIND_PASSWORD,
 	EAS_ACCOUNT_FIND_POLICY_KEY,
 } eas_account_find_t;
 
@@ -70,7 +69,8 @@ GType		eas_account_list_get_type		(void) G_GNUC_CONST;
 EasAccountList *	eas_account_list_new		(GConfClient *client);
 void		eas_account_list_construct	(EasAccountList *account_list,
 						 GConfClient *client);
-void		eas_account_list_save		(EasAccountList *account_list);
+void		eas_account_list_save_list		(EasAccountList *account_list);
+
 void		eas_account_list_add		(EasAccountList *account_list,
 						 EasAccount *account);
 void		eas_account_list_change		(EasAccountList *account_list,
@@ -81,6 +81,11 @@ const EasAccount *eas_account_list_find		(EasAccountList *account_list,
 						 eas_account_find_t type,
 						 const gchar *key);
 
+/* APIs for handling individual accounts and account fields*/
+void 		eas_account_list_save_account(EasAccountList *account_list,
+						EasAccount *account);
+void 		eas_account_list_save_item(EasAccountList *account_list,
+						EasAccount *account, eas_account_item_t type);
 G_END_DECLS
 
 #endif /* __EAS_ACCOUNT_LIST__ */

@@ -49,9 +49,18 @@ typedef struct	_EasAccountInfo
 	 gchar* uid; 
 	 gchar* serverUri;
 	 gchar* username;
-	 gchar* password;
 	 gchar* policy_key;
 } EasAccountInfo;
+
+typedef enum _eas_account_item_t {
+	EAS_ACCOUNT_UID,
+
+	EAS_ACCOUNT_SERVER_URI,
+	EAS_ACCOUNT_USERNAME,
+	EAS_ACCOUNT_POLICY_KEY,
+
+	E_ACCOUNT_ITEM_LAST
+} eas_account_item_t;
 
 GType		eas_account_get_type		(void) G_GNUC_CONST;
 EasAccount *	eas_account_new			(void);
@@ -59,14 +68,12 @@ EasAccount *	eas_account_new_from_info (EasAccountInfo* accountinfo);
 void	eas_account_set_uid			(EasAccount *account, const gchar* uid);
 void	eas_account_set_uri			(EasAccount *account, const gchar* uri);
 void	eas_account_set_username	(EasAccount *account, const gchar* username);
-void	eas_account_set_password	(EasAccount *account, const gchar* password);
 void	eas_account_set_policy_key	(EasAccount *account, const gchar* policy_key);
 gboolean	eas_account_set_from_info	(EasAccount *account, const EasAccountInfo* accountinfo);
 
 gchar*	eas_account_get_uid			(const EasAccount *account);
 gchar*	eas_account_get_uri			(const EasAccount *account);
 gchar*	eas_account_get_username	(const EasAccount *account);
-gchar*	eas_account_get_password	(const EasAccount *account);
 gchar*	eas_account_get_policy_key	(const EasAccount *account);
 
 
