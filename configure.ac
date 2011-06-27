@@ -99,6 +99,7 @@ AC_SUBST(ASKPASS)
 AC_CONFIG_FILES([
     Makefile 
     eas-daemon/data/Makefile 
+    eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile 
     eas-daemon/src/Makefile 
     eas-daemon/tests/Makefile 
