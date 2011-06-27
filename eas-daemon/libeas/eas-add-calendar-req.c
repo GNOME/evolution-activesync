@@ -14,7 +14,6 @@ struct _EasAddCalendarReqPrivate
     gchar* sync_key;
     gchar* folder_id;
     GSList *serialised_calendar;
-	GError* error;
 };
 
 static void
@@ -31,7 +30,6 @@ eas_add_calendar_req_init (EasAddCalendarReq *object)
     priv->sync_key = NULL;
     priv->folder_id = NULL;
     priv->serialised_calendar = NULL;
-	priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_ADD_CALENDAR);
@@ -141,7 +139,7 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 }
 
 
-void
+gboolean
 eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self, 
                                       xmlDoc* doc, 
                                       GError* error)
@@ -157,13 +155,12 @@ eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self,
 	// If we have an error send it back to client
 	if (error)
 	{
-		priv->error = error;
+		local_error = error;
 		goto finish;
 	}
 
 	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error))
 	{
-		priv->error = local_error;
 		goto finish;
 	}
 
@@ -177,10 +174,10 @@ eas_add_calendar_req_MessageComplete (EasAddCalendarReq *self,
 
 finish:
 
-	if(error)
+	if(local_error)
 	{
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
-        g_error_free (error);
+		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), local_error);
+        g_error_free (local_error);
 	}
 	else
 	{
@@ -192,5 +189,6 @@ finish:
     xmlFree (doc);
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
+	return TRUE;
 }
 

@@ -1914,7 +1914,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 	{
 		xmlNodePtr categories = NULL;
 		xmlNodePtr exceptions = NULL;
-		xmlNodePtr icalExtns = NULL;
+		//xmlNodePtr icalExtns = NULL;		
 		struct icaltimetype startTime, endTime;
 		
 		icalproperty* prop;

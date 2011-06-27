@@ -15,7 +15,6 @@ struct _EasGetEmailAttachmentReqPrivate
     gchar* accountUid;
     gchar *fileReference;
     gchar *mimeDirectory;
-    GError *error;
 };
 
 #define EAS_GET_EMAIL_ATTACHMENT_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_ATTACHMENT_REQ, EasGetEmailAttachmentReqPrivate))
@@ -34,7 +33,6 @@ eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_GET_EMAIL_ATTACHMENT);
 
-    priv->error = NULL;
     priv->emailAttachmentMsg = NULL;
     priv->accountUid = NULL;
     priv->fileReference = NULL;
@@ -55,10 +53,6 @@ eas_get_email_attachment_req_finalize (GObject *object)
         g_object_unref (priv->emailAttachmentMsg);
     }
 
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
     g_free (priv->fileReference);
     g_free (priv->mimeDirectory);
     g_free (priv->accountUid);
@@ -144,7 +138,7 @@ finish:
 }
 
 
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
+gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error_in)
 {
     gboolean ret = TRUE;
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
@@ -156,7 +150,7 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
     if (error_in)
     {
 		ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -165,7 +159,6 @@ void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* sel
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
         goto finish;
     }
 
@@ -181,6 +174,7 @@ finish:
 		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
 	}
     g_debug ("eas_get_email_attachment_req_MessageComplete--");
+	return TRUE;
 }
 
 

@@ -188,6 +188,17 @@ enum _EasSyncStatus
 	EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 16 currently
 };
 
+enum _EasPingStatus
+{
+	EAS_PING_STATUS_FOLDERS_UPDATED = 2,
+	EAS_PING_STATUS_PARAMETER_ERROR = 3,
+	EAS_PING_STATUS_PROTOCOLERROR = 4,
+	EAS_PING_STATUS_HEARTBEAT_INTERVAL_ERROR = 5,
+	EAS_PING_STATUS_FOLDER_ERROR = 6,
+
+	EAS_PING_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 6 currently
+};
+
 
 struct _EasError{
 	EasConnectionError code;

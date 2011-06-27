@@ -155,7 +155,7 @@ public:
 static class ActiveSyncTodoTest : public RegisterSyncSourceTest {
 public:
     ActiveSyncTodoTest() :
-        RegisterSyncSourceTest("eas_todo", "eds_todo")
+        RegisterSyncSourceTest("eas_task", "eds_task")
     {}
 
     virtual void updateConfig(ClientTestConfig &config) const

@@ -20,7 +20,6 @@ typedef enum
 
 struct _EasSyncFolderHierarchyReqPrivate
 {
-    GError *error;  // error passed into MessageComplete
     EasSyncFolderMsg* syncFolderMsg;
     EasSyncFolderHierarchyReqState state;
     gchar* accountID;
@@ -45,7 +44,6 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
     priv->state = EasSyncFolderHierarchyStep1;
     priv->accountID = NULL;
     priv->syncKey = NULL;
-    priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC_FOLDER_HIERARCHY);
@@ -64,11 +62,6 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 
     g_free (priv->syncKey);
     g_free (priv->accountID);
-
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
 
     G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
     g_debug ("eas_sync_folder_hierarchy_req_finalize--");
@@ -184,9 +177,10 @@ finish:
 /*
  * @param error any error that occured (or NULL) [full transfer]
  */
-void
+gboolean
 eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error_in)
 {
+    gboolean cleanup = FALSE;
     GError *error = NULL;
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
     gboolean ret;
@@ -203,7 +197,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     if (error_in)
     {
         ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -215,7 +209,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
         goto finish;
     }
 
@@ -247,7 +240,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			if (!doc)
 			{
 				ret = FALSE;
-				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 				goto finish;
@@ -263,7 +256,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             if (!ret)
             {
                 g_assert (error != NULL);
-                priv->error = error;
                 goto finish;
             }
         }
@@ -272,7 +264,8 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
         //we did a proper sync, so we need to complete the dbus call
         case EasSyncFolderHierarchyStep2:
         {
-
+				//state machine finished, so tell connection object to clean this up.
+				cleanup = TRUE;
 				ret_sync_key    = g_strdup (eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
 				added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 				updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
@@ -294,7 +287,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 				// Return the error or the requested data to the mail client
 				if (!ret)
 				{
-					g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+					g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 					goto finish;
@@ -307,6 +300,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 						                  ret_updated_folders_array,
 						                  ret_deleted_folders_array);
 				}
+			    
 
 				g_strfreev(ret_created_folders_array);
 				g_strfreev(ret_updated_folders_array);
@@ -323,6 +317,9 @@ finish:
 		g_assert (error != NULL);
 		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
 		g_error_free (error);
+		//there has been an error - ensure that we clean this request up
+		cleanup = TRUE;
 	}
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
+	return cleanup;
 }

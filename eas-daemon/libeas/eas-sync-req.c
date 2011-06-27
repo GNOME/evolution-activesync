@@ -28,7 +28,6 @@ struct _EasSyncReqPrivate
     gchar* accountID;
     gchar* folderID;
     EasItemType ItemType;
-    GError *error;
 };
 
 
@@ -45,7 +44,6 @@ eas_sync_req_init (EasSyncReq *object)
     priv->state = EasSyncReqStep1;
     priv->accountID = NULL;
     priv->folderID = NULL;
-    priv->error = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC);
 
@@ -64,11 +62,6 @@ eas_sync_req_finalize (GObject *object)
     {
         g_object_unref (priv->syncMsg);
     }
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
-
     g_free (priv->accountID);
     g_free (priv->folderID);
 
@@ -170,9 +163,10 @@ finish:
     return ret;
 }
 
-void
+gboolean
 eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 {
+    gboolean cleanup = FALSE;
     gboolean ret = TRUE;
     GError *error = NULL;
     EasSyncReqPrivate* priv = self->priv;
@@ -192,7 +186,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     if (error_in)
     {
     	ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -201,7 +195,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     if (!ret)
     {
         g_assert (error != NULL);
-        priv->error = error;
         goto finish;
     }
 
@@ -234,7 +227,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
 			if (!doc)
 			{
-				g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+				g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 				ret = FALSE;
@@ -250,7 +243,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             if (!ret)
             {
                 g_assert (error != NULL);
-                priv->error = error;
                 goto finish;
             }
 
@@ -260,6 +252,8 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
         //we did a proper sync, so we need to inform the daemon that we have finished, so that it can continue and get the data
         case EasSyncReqStep2:
         {
+			//finished state machine - req needs to be cleanup up by connection object
+			cleanup = TRUE;
             g_debug ("eas_sync_req_MessageComplete step 2");
 			ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
 			ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
@@ -282,7 +276,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 					}
 					 if (!ret)
 					{
-						g_set_error (&priv->error, EAS_CONNECTION_ERROR,
+						g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 						goto finish;
@@ -324,10 +318,15 @@ finish:
         g_assert (error != NULL);
         dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
         g_error_free (error);
+		error = NULL;
+		
+		cleanup = TRUE;
     }
 	g_free(ret_sync_key);
 	g_strfreev(ret_added_item_array);
 	g_strfreev(ret_deleted_item_array);
 	g_strfreev(ret_changed_item_array);
     g_debug ("eas_sync_req_MessageComplete--");
+
+	return cleanup;
 }

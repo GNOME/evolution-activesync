@@ -44,8 +44,6 @@ struct _EasConnectionPrivate
     gchar* accountUid;
     EasAccount *account;
 
-    gchar* policy_key;
-
 	gboolean retrying_asked;
 
     const gchar* request_cmd;
@@ -107,6 +105,8 @@ eas_connection_init (EasConnection *self)
 
     g_debug ("eas_connection_init++");
 
+	dbus_g_thread_init();
+
     priv->soup_context = g_main_context_new ();
     priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
 
@@ -135,8 +135,6 @@ eas_connection_init (EasConnection *self)
     priv->accountUid = NULL;
 	priv->account = NULL; // Just a reference
 
-    priv->policy_key = NULL;
-
     priv->request_cmd = NULL;
     priv->request_doc = NULL;
     priv->request = NULL;
@@ -162,8 +160,8 @@ eas_connection_dispose (GObject *object)
     if (g_open_connections)
     {
         hashkey = g_strdup_printf ("%s@%s", 
-                                   priv->account->username, 
-                                   priv->account->serverUri);
+                                   eas_account_get_username(priv->account), 
+                                   eas_account_get_uri(priv->account));
         g_hash_table_remove (g_open_connections, hashkey);
         g_free (hashkey);
         if (g_hash_table_size (g_open_connections) == 0)
@@ -215,16 +213,26 @@ eas_connection_finalize (GObject *object)
     g_debug ("eas_connection_finalize++");
 
     g_free (priv->accountUid);
-    g_free (priv->policy_key);
+
 
     if (priv->request_doc)
     {
 #ifndef ACTIVESYNC_14
-		//in activesync 12.1, SendMail uses mime, not wbxml in the body
-		if (g_strcmp0(priv->request_cmd, "SendMail"))
-#endif
+		if (!g_strcmp0 ("SendMail", priv->request_cmd))
+		{
+			g_free ((gchar*)priv->request_doc);
+		}
+		else
+		{
 			xmlFreeDoc (priv->request_doc);
+		}
+#else
+        xmlFreeDoc (priv->request_doc);
+#endif
+		priv->request_doc = NULL;
     }
+	
+    priv->request_cmd = NULL;
 
     if (priv->request_error && *priv->request_error)
     {
@@ -260,7 +268,7 @@ connection_authenticate (SoupSession *sess,
                          gpointer data)
 {
     EasConnection* cnc = (EasConnection *) data;
-	gchar *argv[] = {(gchar*)"ssh-askpass", (gchar*)"Please enter your Exchange Password", NULL};
+	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
 	gchar* password = NULL;
 	gint exit_status = 0;
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_OK;
@@ -271,8 +279,8 @@ connection_authenticate (SoupSession *sess,
 
 	result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 	                                           &password,
-	                                           "user", cnc->priv->account->username,
-                                               "server", cnc->priv->account->serverUri,
+	                                           "user", eas_account_get_username(cnc->priv->account) ,
+                                               "server", eas_account_get_uri(cnc->priv->account),
 	                                           NULL);
 
 	if (GNOME_KEYRING_RESULT_NO_MATCH == result)
@@ -295,15 +303,15 @@ connection_authenticate (SoupSession *sess,
 		g_strchomp (password);
 
 		description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                               cnc->priv->account->username,
-		                               cnc->priv->account->serverUri);
+		                               eas_account_get_username(cnc->priv->account),
+		                               eas_account_get_uri(cnc->priv->account));
 		
 		result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 		                                            NULL,
 		                                            description,
 		                                            password,
-		                                            "user", cnc->priv->account->username,
-		                                            "server", cnc->priv->account->serverUri,
+		                                            "user", eas_account_get_username(cnc->priv->account),
+		                                            "server", eas_account_get_uri(cnc->priv->account),
 		                                            NULL);
 
 		g_free (description);
@@ -311,7 +319,7 @@ connection_authenticate (SoupSession *sess,
 		if (GNOME_KEYRING_RESULT_OK == result)
 		{
 			soup_auth_authenticate (auth, 
-				                    cnc->priv->account->username,
+				                    eas_account_get_username(cnc->priv->account),
 				                    password);
 		}
 		else 
@@ -334,7 +342,7 @@ connection_authenticate (SoupSession *sess,
 			cnc->priv->retrying_asked = FALSE;
 
 			soup_auth_authenticate (auth, 
-				                    cnc->priv->account->username,
+				                    eas_account_get_username(cnc->priv->account),
 				                    password);
 			if (password)
 			{
@@ -369,15 +377,15 @@ connection_authenticate (SoupSession *sess,
 			g_strchomp (password);
 
 			description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                                   cnc->priv->account->username,
-		                                   cnc->priv->account->serverUri);
+		                                   eas_account_get_username(cnc->priv->account),
+		                                   eas_account_get_uri(cnc->priv->account));
 		
 			result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 				                                        NULL,
 		    		                                    description,
 		        		                                password,
-		            		                            "user", cnc->priv->account->username,
-		                		                        "server", cnc->priv->account->serverUri,
+		            		                            "user", eas_account_get_username(cnc->priv->account),
+		                		                        "server", eas_account_get_uri(cnc->priv->account),
 		                    		                    NULL);
 
 			g_free (description);
@@ -385,7 +393,7 @@ connection_authenticate (SoupSession *sess,
 			if (GNOME_KEYRING_RESULT_OK == result)
 			{
 				soup_auth_authenticate (auth, 
-			                            cnc->priv->account->username,
+			                            eas_account_get_username(cnc->priv->account),
 			                            password);
 			}
 			else 
@@ -423,9 +431,8 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
 
     g_debug ("eas_connection_set_policy_key++");
 
-    g_free (priv->policy_key);
-    priv->policy_key = g_strdup (policyKey);
-
+	eas_account_set_policy_key (priv->account, policyKey);
+	g_idle_add (eas_account_list_save, g_account_list);
     g_debug ("eas_connection_set_policy_key--");
 }
 
@@ -546,23 +553,39 @@ eas_connection_send_request (EasConnection* self,
     xmlChar* dataptr = NULL;
     int data_len = 0;
 	GSource *source = NULL;
+	const gchar *policy_key;
 
     g_debug ("eas_connection_send_request++");
+    // If not the provision request, store the request
+    if (g_strcmp0 (cmd, "Provision"))
+    {
+		gint recursive = 1;
+		g_debug("store the request");
+        priv->request_cmd = g_strdup (cmd);
 
+#ifndef ACTIVESYNC_14
+		if(!g_strcmp0(cmd, "SendMail"))
+		{
+			priv->request_doc = (gpointer)g_strdup((gchar*) doc);
+		}
+		else
+		{
+			priv->request_doc = xmlCopyDoc (doc, recursive);
+		}
+#else
+        priv->request_doc = xmlCopyDoc (doc, recursive);
+#endif
+
+        priv->request = request;
+        priv->request_error = error;
+    }
+
+	policy_key = eas_account_get_policy_key (priv->account);
     // If we need to provision, and not the provisioning msg
-    if (!priv->policy_key && g_strcmp0 (cmd, "Provision"))
+    if (!policy_key && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
         g_debug ("  eas_connection_send_request - Provisioning required");
-
-		g_debug("store the request");
-		//FIXME: What if a *second* request comes in, while we're still waiting
-		//for provisioning to complete. Shouldn't this be a queue? And in fact
-		//shouldn't we have a queue *anyway*?
-        priv->request_cmd = cmd;
-        priv->request_doc = doc;
-        priv->request = request;
-        priv->request_error = error;
 
         eas_request_base_SetConnection (&req->parent_instance, self);
         ret = eas_provision_req_Activate (req, error);
@@ -570,7 +593,7 @@ eas_connection_send_request (EasConnection* self,
         {
             g_assert (error == NULL || *error != NULL);
         }
-        return ret;
+        goto finish;
     }
 
     wbxml_ret = wbxml_conv_xml2wbxml_create (&conv);
@@ -583,9 +606,9 @@ eas_connection_send_request (EasConnection* self,
         goto finish;
     }
 
-    uri = g_strconcat (priv->account->serverUri,
+    uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
-                       "&User=", priv->account->username,
+                       "&User=", eas_account_get_username(priv->account),
                        "&DeviceID=", "1234567890",   // TODO Need to get device type and id from the correct place.
                        "&DeviceType=", "FakeDevice", // TODO Need to get device type and id from the correct place.
                        NULL);
@@ -611,7 +634,7 @@ eas_connection_send_request (EasConnection* self,
 
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
-                                 (priv->policy_key ? priv->policy_key : "0"));
+                                 policy_key?:"0");
 #ifndef ACTIVESYNC_14
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 if(g_strcmp0(cmd, "SendMail"))
@@ -680,11 +703,19 @@ else
 
 finish:
 	// @@WARNING - doc must always be freed before exiting this function.
+
 #ifndef ACTIVESYNC_14
-    //in activesync 12.1, SendMail uses mime, not wbxml in the body
-    if (g_strcmp0(cmd, "SendMail"))
-#endif
+if(!g_strcmp0(cmd, "SendMail"))
+	{
+		g_free ((gchar*)doc);
+	}
+	else
+	{
 		xmlFreeDoc(doc);
+	}
+#else
+	xmlFreeDoc (doc);
+#endif
 
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
@@ -918,7 +949,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
     }
 
     adData->msgs[idx] = NULL;
-
+	
     if (status != HTTP_STATUS_OK)
     {
         g_warning ("Autodiscover HTTP response was not OK");
@@ -1154,19 +1185,23 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
         cb (NULL, cb_data, error);
         return;
 	}
-	
+#if 0
 	account->uid = g_strdup (email);
 	account->serverUri = g_strdup("autodiscover");
+#endif
+
+	eas_account_set_uid(account, email);	
+	eas_account_set_uri(account, "autodiscover");
 
     if (!username) // Use the front of the email as the username
     {
         gchar **split = g_strsplit (email, "@", 2);
-		account->username = g_strdup(split[0]);
+		eas_account_set_username(account, split[0]);
         g_strfreev (split);
     }
     else // Use the supplied username
     {
-        account->username = g_strdup (username);
+        eas_account_set_username(account, username);
     }
 
     cnc = eas_connection_new (account, &error);
@@ -1243,8 +1278,8 @@ eas_connection_find (const gchar* accountId)
 	for (; e_iterator_is_valid (iter);  e_iterator_next (iter))
 	{
 		account = EAS_ACCOUNT (e_iterator_get (iter));
-		g_print("account->uid=%s\n", account->uid );
-		if (strcmp (account->uid, accountId) == 0) {
+		g_print("account->uid=%s\n", eas_account_get_uid(account));
+		if (strcmp (eas_account_get_uid(account), accountId) == 0) {
 			account_found = TRUE;
 			break;
 		}
@@ -1260,8 +1295,8 @@ eas_connection_find (const gchar* accountId)
     if (g_open_connections)
     {
 		gchar *hashkey = g_strdup_printf("%s@%s", 
-                                         account->username, 
-                                         account->serverUri);
+                                         eas_account_get_username(account), 
+                                         eas_account_get_uri(account));
 
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
@@ -1324,7 +1359,7 @@ eas_connection_new (EasAccount* account, GError** error)
     g_static_mutex_lock (&connection_list);
     if (g_open_connections)
     {
-        hashkey = g_strdup_printf ("%s@%s", account->username, account->serverUri);
+        hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
 
@@ -1353,7 +1388,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	// Just a reference to the global account list
 	priv->account = account;
 
-    hashkey = g_strdup_printf ("%s@%s", account->username, account->serverUri);
+    hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
 
     if (!g_open_connections)
     {
@@ -1413,6 +1448,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     gboolean isProvisioningRequired = FALSE;
     GError *error = NULL;
     RequestValidity validity = isResponseValid (msg);
+	gboolean cleanupRequest = FALSE;
 
     g_debug ("eas_connection - handle_server_response++");
 	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
@@ -1461,7 +1497,6 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         }
     }
 
-
     // TODO Pre-process response status to see if provisioning is required
     // isProvisioningRequired = ????
 
@@ -1476,12 +1511,19 @@ complete_request:
         if (request_type != EAS_REQ_PROVISION)
         {
             // Clean up request data
-
 #ifndef ACTIVESYNC_14
-			//in activesync 12.1, SendMail uses mime, not wbxml in the body
-			if (g_strcmp0(priv->request_cmd, "SendMail"))
+			if (!g_strcmp0("SendMail", priv->request_cmd))
+			{
+				g_free((gchar*)priv->request_doc);
+			}
+			else
+			{
+        		xmlFreeDoc (priv->request_doc);
+			}
+#else
+			xmlFreeDoc (priv->request_doc);
 #endif
-				xmlFreeDoc (priv->request_doc);
+	
 
             priv->request_cmd = NULL;
             priv->request_doc = NULL;
@@ -1499,66 +1541,66 @@ complete_request:
 
             case EAS_REQ_PROVISION:
             {
-                eas_provision_req_MessageComplete ( (EasProvisionReq *) req, doc, error);
+                cleanupRequest = eas_provision_req_MessageComplete ( (EasProvisionReq *) req, doc, error);
             }
             break;
 
             case EAS_REQ_SYNC_FOLDER_HIERARCHY:
             {
-                eas_sync_folder_hierarchy_req_MessageComplete ( (EasSyncFolderHierarchyReq *) req, doc, error);
+                 cleanupRequest = eas_sync_folder_hierarchy_req_MessageComplete ( (EasSyncFolderHierarchyReq *) req, doc, error);
             }
             break;
 
             case EAS_REQ_SYNC:
             {
-                eas_sync_req_MessageComplete ( (EasSyncReq *) req, doc, error);
+                cleanupRequest = eas_sync_req_MessageComplete ( (EasSyncReq *) req, doc, error);
             }
             break;
             case EAS_REQ_GET_EMAIL_BODY:
             {
-                eas_get_email_body_req_MessageComplete ( (EasGetEmailBodyReq *) req, doc, error);
+                cleanupRequest = eas_get_email_body_req_MessageComplete ( (EasGetEmailBodyReq *) req, doc, error);
             }
             break;
             case EAS_REQ_GET_EMAIL_ATTACHMENT:
             {
-                eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
+                cleanupRequest = eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
             }
             break;
             case EAS_REQ_DELETE_MAIL:
             {
-                eas_delete_email_req_MessageComplete ( (EasDeleteEmailReq *) req, doc, error);
+                cleanupRequest = eas_delete_email_req_MessageComplete ( (EasDeleteEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_SEND_EMAIL:
             {
-                g_debug ("EAS_REQ_SEND_EMAIL");
-                eas_send_email_req_MessageComplete ( (EasSendEmailReq *) req, doc, error);
+                cleanupRequest = eas_send_email_req_MessageComplete ( (EasSendEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_UPDATE_MAIL:
             {
-                g_debug ("EAS_REQ_UPDATE_EMAIL");
-                eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
+                cleanupRequest = eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
             }
             break;
             case EAS_REQ_MOVE_EMAIL:
             {
-                g_debug ("EAS_REQ_MOVE_EMAIL");
-                eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
+                /*cleanupRequest =*/ eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
             }
             break;				
             case EAS_REQ_UPDATE_CALENDAR:
             {
-                g_debug ("EAS_REQ_UPDATE_CALENDAR");
-                eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
+                cleanupRequest = eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
             }
             break;
             case EAS_REQ_ADD_CALENDAR:
             {
-                g_debug ("EAS_REQ_ADD_CALENDAR");
-                eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
+                cleanupRequest = eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
             }
             break;
+        }
+        //if cleanupRequest is set - we are done with this request, and should clean it up
+        if(cleanupRequest)
+        {
+            g_object_unref(req);
         }
     }
     else

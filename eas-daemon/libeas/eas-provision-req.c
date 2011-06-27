@@ -125,13 +125,13 @@ finish:
  * @param response_error set by caller for passing back to user
  * @return whether successful
  */
-// TODO - how do we get an error out of here!?
-void
+gboolean
 eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* response_error)
 {
     GError* error = NULL;
     gboolean ret;
     EasProvisionReqPrivate *priv = self->priv;
+	gboolean cleanup = FALSE;
 
     g_debug ("eas_provision_req_MessageComplete++");
 
@@ -179,7 +179,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
         }
         break;
 
-        // We no have the final provisioning policy key
+        // We now have the final provisioning policy key
         // Set the policy key in the connection, allowing the original request
         // from the daemon that triggered the provisioning to proceed.
         case EasProvisionStep2:
@@ -189,6 +189,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
             eas_connection_set_policy_key (eas_request_base_GetConnection (&self->parent_instance),
                                            eas_provision_msg_get_policy_key (priv->msg));
             eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance));
+	        cleanup = TRUE;
         }
         break;
     }
@@ -197,7 +198,7 @@ finish:
     xmlFree (doc);
     g_debug ("eas_provision_req_MessageComplete--");
 
-    return;
+    return cleanup;
 }
 
 gchar*

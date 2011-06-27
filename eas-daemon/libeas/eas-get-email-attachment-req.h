@@ -43,7 +43,7 @@ eas_get_email_attachment_req_new (const gchar* account_uid,
                             DBusGMethodInvocation *context);
                    
 gboolean eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error);
-void eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error);
+gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error);
 
 G_END_DECLS
 

@@ -2,14 +2,19 @@
 
 #include <glib.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "eas-account-list.h"
 #include "eas-account.h"
 
 #include <string.h>
+
+
+#define EAS_ACCOUNT_ROOT			"/apps/activesyncd/accounts"
+#define EAS_ACCOUNT_KEY_SERVERURI	"/serverUri"
+#define EAS_ACCOUNT_KEY_USERNAME	"/username"
+#define EAS_ACCOUNT_KEY_PASSWORD	"/password"
+#define EAS_ACCOUNT_KEY_POLICY_KEY	"/policy_key"
+
 
 struct _EasAccountListPrivate {
 	GConfClient *gconf;
@@ -103,44 +108,176 @@ finalize (GObject *object)
 	G_OBJECT_CLASS (eas_account_list_parent_class)->finalize (object);
 }
 
+void
+eas_account_list_set_account_info(EasAccountInfo *acc, const gchar* uid_path, GConfEntry* entry)
+{
+	const GConfValue* value = NULL;
+	const gchar* keyname = NULL;
+	gchar* strValue = NULL;
+	gchar* uid = NULL;
+	g_debug("eas_account_list_set_account_info++");
+	g_return_if_fail (acc != NULL);
+	g_return_if_fail (uid_path != NULL);
+	g_return_if_fail (entry != NULL);
+	
+	keyname = gconf_entry_get_key(entry);
+	if (keyname == NULL) {
+		g_debug("Couldn't get the key name - this could be a delete notification!\n");
+		return;
+	}
+
+	value = gconf_entry_get_value(entry);
+	if (value == NULL) {
+		g_debug("Couldn't get the key value - this could be a delete notification!\n");
+		return;
+	}
+
+	
+	/* strip the EAS_ACCOUNT_ROOT from the uid_path to get the uid only */
+	gint last_token = 4;
+	gchar **str_array = NULL;
+	str_array = g_strsplit(uid_path, "/", -1);
+	uid = g_strdup(str_array[last_token]);
+	g_debug("uid=%s\n", uid);
+	/* free the vector */
+	g_strfreev(str_array);
+
+	
+	strValue = gconf_value_to_string(value); /* need to be freed */
+
+	/* Concatenate "ROOT + UID + KEY" */
+	gulong string_Key_len;
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
+	gchar serveruri_Key_path[string_Key_len];
+	g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
+	
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_USERNAME) + 1;
+	gchar username_Key_path[string_Key_len];
+	g_snprintf(username_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
+	
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_PASSWORD)+ 1;
+	gchar password_Key_path[string_Key_len];
+	g_snprintf(password_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_PASSWORD);
+
+	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
+	gchar policy_key_Key_path[string_Key_len];
+	g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
+
+	acc->uid = g_strdup(uid);
+	if (strcmp(keyname, serveruri_Key_path) == 0) {
+		acc->serverUri = g_strdup(strValue);
+		g_debug( "serverUri changed: [%s]\n", strValue);
+	} else if (strcmp(keyname, username_Key_path) == 0) {
+		acc->username = g_strdup(strValue);
+		g_debug( "username changed: [%s]\n", strValue);
+	} else if (strcmp(keyname, password_Key_path) == 0) {
+		acc->password = g_strdup(strValue);
+		g_debug( "password  changed: [%s]\n", strValue);
+	} else if (strcmp(keyname, policy_key_Key_path) == 0) {
+		acc->policy_key = g_strdup(strValue);
+		g_debug( "policy_key  changed: [%s]\n", strValue);
+	}  else {
+		g_debug( "Unknown key: %s (value: [%s])\n", keyname, strValue);
+	}
+
+	g_free (uid);
+	/* Free the string representation of the value. */
+	g_free(strValue);
+
+	g_debug("eas_account_list_set_account_info--");
+}
+
 static void
 gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 			GConfEntry *entry, gpointer user_data)
 {
 	EasAccountList *account_list = user_data;
-	GSList *list, *l, *new_accounts = NULL;
-	EasAccount *account;
-	EList *old_accounts;
-	EIterator *iter;
-	gchar *uid;
+	GSList *list =NULL, *l=NULL, *ll = NULL, *new_accounts = NULL;
+	EasAccount *account = NULL;
+	EList *old_accounts = NULL;;
+	EIterator *iter = NULL;;
+	gchar *uid = NULL;;	
+	GSList* gconf_entry_list = NULL;
+	GSList *account_uids_list = NULL;	
+	EasAccountInfo* acc = NULL; 
+
 	g_debug("gconf_accounts_changed++");
 	old_accounts = e_list_duplicate (E_LIST (account_list));
 
-	list = gconf_client_get_list (client, "/apps/activesyncd/accounts",
-				      GCONF_VALUE_STRING, NULL);
-	for (l = list; l; l = l->next) {
-		uid = eas_account_uid_from_xml (l->data);
+	/*	
+	Get list of children under /apps/activesyncd/accounts
+	these should be the account uids. Loop through these uids and populate
+	the account list.
+	*/
+	account_uids_list = gconf_client_all_dirs (client, EAS_ACCOUNT_ROOT, NULL);
+
+	for (l = account_uids_list; l; l = l->next) {
+		uid = l->data;
 		if (!uid)
 			continue;
+	/*
+	 Get the key/value for an account with given uid from GConf
+	 save it in EasAccountInfo	and append it to the "list" object
+	*/
+	acc = g_new0 (EasAccountInfo, 1);
+	gconf_entry_list = gconf_client_all_entries(client, uid, NULL);
+	for (ll = gconf_entry_list; ll; ll = ll->next) {
+		eas_account_list_set_account_info(acc, uid, ll->data );
+	}
 
+	g_debug("uid =%s", acc->uid); 
+	g_debug("serverUri =%s", acc->serverUri);
+	g_debug("username =%s", acc->username);
+	g_debug("password =%s", acc->password);
+	g_debug("policy_key =%s", acc->policy_key);
+
+	list = g_slist_append (list, acc);
+
+	// free gconf_entry_list
+	if (gconf_entry_list) {
+		g_slist_foreach (gconf_entry_list, (GFunc) gconf_entry_free, NULL);
+		g_slist_free (gconf_entry_list);
+		gconf_entry_list=NULL;
+	}
+	
+	}
+
+
+	//free account_uids_list 
+	if (account_uids_list) {
+		g_slist_foreach (account_uids_list, (GFunc) g_free, NULL);
+		g_slist_free (account_uids_list);
+		account_uids_list = NULL;
+	}
+	
+
+	/* Begin 	*/
+	for (l = list; l; l = l->next) {
+		uid = ((EasAccountInfo*)l->data)->uid;
+		if (!uid)
+			continue;
+		
 		/* See if this is an existing account */
 		for (iter = e_list_get_iterator (old_accounts);
 		     e_iterator_is_valid (iter);
 		     e_iterator_next (iter)) {
 			account = (EasAccount *)e_iterator_get (iter);
-			if (!strcmp (account->uid, uid)) {
+			if (!strcmp (eas_account_get_uid(account), uid)) {
 				/* The account still exists, so remove
 				 * it from "old_accounts" and update it.
 				 */
 				e_iterator_delete (iter);
-				if (eas_account_set_from_xml (account, l->data))
+				/*if (eas_account_set_from_xml (account, l->data)) */
+				if (eas_account_set_from_info (account, ((EasAccountInfo*)l->data))){
 					g_signal_emit (account_list, signals[ACCOUNT_CHANGED], 0, account);
+					g_debug("Account Changed: %s", eas_account_get_uid(account));
+				}
 				goto next;
 			}
 		}
 
 		/* Must be a new account */
-		account = eas_account_new_from_xml (l->data);
+		account = eas_account_new_from_info (l->data);
 		e_list_append (E_LIST (account_list), account);
 		new_accounts = g_slist_prepend (new_accounts, account);
 
@@ -149,20 +286,18 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		g_object_unref (iter);
 	}
 
+	
+
 	if (list) {
 		g_slist_foreach (list, (GFunc) g_free, NULL);
 		g_slist_free (list);
 	}
 
-	/* Now emit signals for each added account. (We do this after
-	 * adding all of them because otherwise if the signal handler
-	 * calls eas_account_list_get_default_account() it will end up
-	 * causing the first account in the list to become the
-	 * default.)
-	 */
+	/* Now emit signals for each added account */
 	for (l = new_accounts; l; l = l->next) {
 		account = l->data;
 		g_signal_emit (account_list, signals[ACCOUNT_ADDED], 0, account);
+		g_debug("Account Added: %s", eas_account_get_uid(account));
 		g_object_unref (account);
 	}
 	g_slist_free (new_accounts);
@@ -174,6 +309,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		account = (EasAccount *)e_iterator_get (iter);
 		e_list_remove (E_LIST (account_list), account);
 		g_signal_emit (account_list, signals[ACCOUNT_REMOVED], 0, account);
+		g_debug("Account Deleted: %s", eas_account_get_uid(account));
 	}
 	g_object_unref (iter);
 	g_object_unref (old_accounts);
@@ -236,11 +372,12 @@ eas_account_list_construct (EasAccountList *account_list, GConfClient *gconf)
 	g_object_ref (gconf);
 
 	gconf_client_add_dir (account_list->priv->gconf,
-			     "/apps/activesyncd/accounts",
-			      GCONF_CLIENT_PRELOAD_ONELEVEL, NULL);
+			     EAS_ACCOUNT_ROOT,
+			      GCONF_CLIENT_PRELOAD_RECURSIVE, NULL);
+	
 	account_list->priv->notify_id =
 		gconf_client_notify_add (account_list->priv->gconf,
-					 "/apps/activesyncd/accounts",
+					 EAS_ACCOUNT_ROOT,
 					 gconf_accounts_changed, account_list,
 					 NULL, NULL);
 
@@ -251,36 +388,104 @@ eas_account_list_construct (EasAccountList *account_list, GConfClient *gconf)
 	g_debug("eas_account_list_construct--");
 }
 
+void
+eas_account_gconf_save(GConfClient *client, const GSList *list)
+{
+	g_debug("eas_account_gconf_save++");
+	GSList* l = NULL;
+	gchar* uid = NULL;
+
+	
+	g_debug("eas_account_gconf_save++ 01");
+
+	for(l = list; l; l = l->next){
+		g_debug("eas_account_gconf_save++ 01 ***");
+		uid = eas_account_get_uid((EasAccount*)l->data);
+		if (!uid)
+			continue;
+//TODO:?
+//		uid = strdup(eas_account_get_uid((EasAccount*)l->data));
+
+		/* Concatenate to form absolute paths for keys */
+		/* e.g. serveruri_Key_path = EAS_ACCOUNT_ROOT + "/" + uid +
+		   EAS_ACCOUNT_KEY_SERVERURI*/
+		gulong string_Key_len;
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
+								strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
+	g_debug("eas_account_gconf_save++ 01-A");
+		gchar serveruri_Key_path[string_Key_len];
+	g_debug("eas_account_gconf_save++ 01-A");		
+		g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
+	g_debug("eas_account_gconf_save++ 01-A");
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
+								strlen(EAS_ACCOUNT_KEY_USERNAME) + 1;
+		gchar username_Key_path[string_Key_len];
+		g_snprintf(username_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_USERNAME);
+
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
+								strlen(EAS_ACCOUNT_KEY_PASSWORD)+ 1;
+		gchar password_Key_path[string_Key_len];
+		g_snprintf(password_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_PASSWORD);	
+
+		string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) +
+								strlen(EAS_ACCOUNT_KEY_POLICY_KEY)+ 1;
+		gchar policy_key_Key_path[string_Key_len];
+		g_snprintf(policy_key_Key_path, string_Key_len, "%s/%s%s",
+					EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_POLICY_KEY);
+	g_debug("eas_account_gconf_save++ 02");
+		gconf_client_set_string (client,
+								serveruri_Key_path,
+								eas_account_get_uri((EasAccount*)l->data),
+								NULL);
+
+		gconf_client_set_string (client,
+								username_Key_path,
+								eas_account_get_username((EasAccount*)l->data),
+								NULL);
+
+		gconf_client_set_string (client,
+								password_Key_path,
+								eas_account_get_password((EasAccount*)l->data),
+								NULL);
+		gconf_client_set_string (client,
+								policy_key_Key_path,
+								eas_account_get_policy_key((EasAccount*)l->data),
+								NULL);
+	g_debug("eas_account_gconf_save++ 03");
+//END TODO:
+//		g_free (uid);
+	}
+	g_debug("eas_account_gconf_save--");
+}
 /**
  * eas_account_list_save:
  * @account_list: an #EasAccountList
  *
  * Saves @account_list to GConf. Signals will be emitted for changes.
  **/
+
 void
 eas_account_list_save (EasAccountList *account_list)
 {
+	g_debug("eas_account_list_save++");	
+
 	GSList *list = NULL;
-	EasAccount *account;
-	EIterator *iter;
-	gchar *xmlbuf;
-	g_debug("eas_account_list_save++");
+	EasAccount *account =NULL;
+	EIterator *iter =NULL;
 
 	for (iter = e_list_get_iterator (E_LIST (account_list));
 	     e_iterator_is_valid (iter);
 	     e_iterator_next (iter)) {
 		account = (EasAccount *)e_iterator_get (iter);
-
-		xmlbuf = eas_account_to_xml (account);
-		if (xmlbuf)
-			list = g_slist_append (list, xmlbuf);
+		list = g_slist_append (list, account);
 	}
 	g_object_unref (iter);
 
-	gconf_client_set_list (account_list->priv->gconf,
-			       "/apps/activesyncd/accounts",
-			       GCONF_VALUE_STRING, list, NULL);
-
+	eas_account_gconf_save(account_list->priv->gconf, list);
+	
 	while (list) {
 		g_free (list->data);
 		list = g_slist_remove (list, list->data);
@@ -338,9 +543,7 @@ eas_account_list_change (EasAccountList *account_list,
  * @account: an #EasAccount
  *
  * Removes @account from @account list, and emits the
- * #EasAccountList::account-removed signal.  If @account was the default
- * account, then the first account in @account_list becomes the new default.
- **/
+ * #EasAccountList::account-removed signal. **/
 void
 eas_account_list_remove (EasAccountList *account_list,
                        EasAccount *account)
@@ -366,10 +569,7 @@ eas_account_list_remove (EasAccountList *account_list,
  *
  * Perform a search of @account_list on a single key.
  *
- * @type must be set from one of the following search types:
- * E_ACCOUNT_FIND_NAME - Find an account by account name.
- * E_ACCOUNT_FIND_ID_NAME - Find an account by the owner's identity name.
- * E_ACCOUNT_FIND_ID_ADDRESS - Find an account by the owner's identity address.
+ * @type must be set from one of the following search types.
  *
  * Returns: The account or %NULL if it doesn't exist.
  **/
@@ -397,18 +597,24 @@ eas_account_list_find (EasAccountList *account_list,
 
 		switch (type) {
 		case EAS_ACCOUNT_FIND_ACCOUNT_UID:
-			found = strcmp (account->uid, key) == 0;
+			if (eas_account_get_uid(account))
+				found = strcmp (eas_account_get_uid(account), key) == 0;
 			break;
 		case EAS_ACCOUNT_FIND_SERVER_URI:
-			found = strcmp (account->serverUri, key) == 0;
+			if (eas_account_get_uri(account))
+				found = strcmp (eas_account_get_uri(account), key) == 0;
 			break;
 		case EAS_ACCOUNT_FIND_USER_NAME:
-			if (account->username)
-				found = strcmp (account->username, key) == 0;
+			if (eas_account_get_username(account))
+				found = strcmp (eas_account_get_username(account), key) == 0;
 			break;
 		case EAS_ACCOUNT_FIND_PASSWORD:
-			if (account->password)
-				found = strcmp (account->username, key) == 0;
+			if (eas_account_get_password(account))
+				found = strcmp (eas_account_get_password(account), key) == 0;
+			break;
+		case EAS_ACCOUNT_FIND_POLICY_KEY:
+			if (eas_account_get_policy_key(account))
+				found = strcmp (eas_account_get_policy_key(account), key) == 0;
 			break;
 		}
 

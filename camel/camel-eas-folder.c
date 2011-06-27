@@ -347,11 +347,44 @@ eas_folder_search_free (CamelFolder *folder, GPtrArray *uids)
 /********************* folder functions*************************/
 
 static gboolean
-eas_delete_messages (CamelFolder *folder, GSList *deleted_items, gboolean expunge, GCancellable *cancellable, GError **error)
+eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge, GCancellable *cancellable, GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Deleting message not yet implemented"));
-	return FALSE;
+	CamelEasStore *eas_store;
+	const gchar *full_name;
+	EasEmailHandler *handler;
+        gchar *folder_id;
+	gboolean success;
+
+	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+        handler = camel_eas_store_get_handler (eas_store);
+
+	full_name = camel_folder_get_full_name (folder);
+	folder_id = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
+								     full_name);
+
+
+	success = eas_mail_handler_delete_email (handler,
+						 ((CamelEasSummary *) folder->summary)->sync_state,
+						 folder_id, deleted_uids, error);
+	if (success) {
+		CamelFolderChangeInfo *changes = camel_folder_change_info_new ();
+		GSList *l;
+		for (l = deleted_uids; l != NULL; l = g_slist_next (l)) {
+			gchar *uid = l->data;
+			camel_folder_summary_lock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
+			camel_eas_summary_delete_id (folder->summary, uid);
+			camel_folder_change_info_remove_uid (changes, uid);
+			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->cache, "cache", uid, NULL);
+			camel_folder_summary_unlock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
+		}
+		camel_folder_changed (folder, changes);
+		camel_folder_change_info_free (changes);
+	}
+
+	g_slist_foreach (deleted_uids, (GFunc) g_free, NULL);
+	g_slist_free (deleted_uids);
+
+	return success;
 }
 
 static gboolean
@@ -365,7 +398,6 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	gboolean success = TRUE;
         const gchar *full_name;
         gchar *folder_id;
-
 	int i;
 	EVO2(GCancellable *cancellable = NULL);
 
@@ -422,16 +454,16 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 
 		/* Don't do too many at once */
 		if (item_list_len == 25) {
-			success = eas_mail_handler_update_email (handler, 
+			success = eas_mail_handler_update_email (handler,
 								 ((CamelEasSummary *) folder->summary)->sync_state,
 								 folder_id, item_list, error);
 			item_list = NULL;
 			item_list_len = 0;
 		}
 	}
-	
+
 	if (item_list_len)
-		success = eas_mail_handler_update_email (handler, 
+		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
 							 folder_id, item_list, error);
 
@@ -613,9 +645,41 @@ eas_transfer_messages_to_sync	(CamelFolder *source,
 static gboolean
 eas_expunge_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError **error)
 {
-	g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
-		     _("Expunging folder not yet implemented"));
-	return FALSE;
+	CamelEasStore *eas_store;
+	CamelEasMessageInfo *eas_info;
+	CamelMessageInfo *info;
+	CamelStore *parent_store;
+	GSList *deleted_items = NULL;
+	EVO2(GCancellable *cancellable = NULL;)
+	gboolean expunge = FALSE;
+	gint i, count;
+
+	parent_store = camel_folder_get_parent_store (folder);
+	eas_store = CAMEL_EAS_STORE (parent_store);
+
+	if (!camel_eas_store_connected (eas_store, error))
+		return FALSE;
+
+	/* On Deleted Items folder, actually delete. On others, move to Deleted Items */
+	if (folder->folder_flags & CAMEL_FOLDER_IS_TRASH)
+		expunge = TRUE;
+
+	/* Collect UIDs of deleted messages. */
+	count = camel_folder_summary_count (folder->summary);
+	for (i = 0; i < count; i++) {
+		info = camel_folder_summary_index (folder->summary, i);
+		eas_info = (CamelEasMessageInfo *) info;
+		if (eas_info && (eas_info->info.flags & CAMEL_MESSAGE_DELETED)) {
+			const gchar *uid = camel_message_info_uid (info);
+			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
+		}
+		camel_message_info_free (info);
+	}
+
+	if (deleted_items)
+		return eas_delete_messages (folder, deleted_items, expunge, cancellable, error);
+	else
+		return TRUE;
 }
 
 static gint

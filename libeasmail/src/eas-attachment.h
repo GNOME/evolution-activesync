@@ -6,6 +6,7 @@
 #define _EAS_ATTACHMENT_H_
 
 #include <glib-object.h>
+#include <libxml/xmlstring.h>
 
 G_BEGIN_DECLS
 
@@ -26,8 +27,8 @@ struct _EasAttachmentClass{
 struct _EasAttachment{
 	GObject parent_instance;
 
-	gchar *file_reference;			// specifies the location of an item on the server to retrieve
-	gchar *display_name;			//
+	xmlChar *file_reference;		// specifies the location of an item on the server to retrieve
+	xmlChar *display_name;			//
 	guint estimated_size;			// in bytes
 /*
 	guint8  method;					//eg EAS_ATTACHMENT_METHOD_NORMAL

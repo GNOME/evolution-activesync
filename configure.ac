@@ -56,33 +56,44 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
+PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution,
+				 have_syncevolution="yes",
+				 have_syncevolution="no")
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
+
+syncevolution_works="no"
+if (test "${have_syncevolution}" = "yes"); then
+    # Dummy compilation check. If it fails, it's almost certainly because
+    # syncevolution.pc specifies a -lsynthesissdk which doesn't exist.
+    AC_CHECK_LIB(syncevolution, main,
+                 syncevolution_works="yes",
+                 AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)]),
+                 ${SYNCEVOLUTION_LIBS})
+fi
+AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, test "${syncevolution_works}" = "yes")
+
+# If syncevolution.pc has a backenddir variable (as it should), then use it
+# Otherwise, fall back to *its* $libdir/syncevolution/backends
+if (test "${syncevolution_works}" = "yes"); then
+    AC_MSG_CHECKING([where to install SyncEvolution plugin])
+    if (test "${syncevo_backenddir}" = ""); then
+        syncevo_backenddir=`$PKG_CONFIG --variable=backenddir syncevolution`
+        if (test "${syncevo_backenddir}" = ""); then
+            syncevo_backenddir=`$PKG_CONFIG --variable=libdir syncevolution`/syncevolution/backends
+        fi
+    fi
+    AC_MSG_RESULT([$syncevo_backenddir])
+fi
+AC_SUBST(syncevo_backenddir)
+
+dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
+AC_SUBST(dbus_servicesdir)
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
 
-PKG_CHECK_MODULES(SYNCEVOLUTION,
-                  syncevolution,
-                  have_syncevolution="yes",
-                  have_syncevolution="no")
-AC_ARG_ENABLE(syncevolution,
-              AC_HELP_STRING([--enable-syncevolution],
-                             [enable the compilation of the syncevolution backend]),
-              [ if test "$enableval" = "yes"; then
-                   test "$have_syncevolution" = "yes" || AC_MSG_ERROR([syncevolution not found])
-                   AC_DEFINE(ENABLE_SYNCEVOLUTION, 1, [enable syncevolution backend])
-                else
-                   syncevolution_disabled="yes"
-                fi ],
-              [ syncevolution_disabled="yes" ])
-
-AS_IF([ test "$have_glib" = "yes" ],
-      [ AC_DEFINE(HAVE_GLIB, 1, [glib is available]) ])
-
-# Ick. Shouldn't this be in syncevolution.pc ?
-syncevo_backenddir=$libdir/syncevolution/backends
-AC_SUBST(syncevo_backenddir)
-
+AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
+AC_SUBST(ASKPASS)
 
 AC_CONFIG_FILES([
     Makefile 
