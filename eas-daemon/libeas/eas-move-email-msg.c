@@ -212,13 +212,24 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 		        gchar *status = (gchar *) xmlNodeGetContent (node);
 		        guint status_num = atoi (status);
 		        xmlFree (status);
-		        if (status_num != 3) // not success (MoveItems command status 3 is success, doh!)
+		        if (status_num != 3) // not success (MoveItems command status 3 is success (all other commands use 1 for success), doh!)
 		        {
 		            EasError error_details;
 		            ret = FALSE;
 
 					g_free(updated_id);
 					// lrm TODO convert status code to GError
+		            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
+		            {
+		                error_details = common_status_error_map[status_num - 100];
+		            }
+		            else
+		            {
+		                if (status_num > EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+		                    status_num = EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT;
+
+		                error_details = moveitems_status_error_map[status_num];
+		            }
 		            g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
 		            goto finish;
 		        }

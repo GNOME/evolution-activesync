@@ -124,7 +124,7 @@ EasError sync_status_error_map[] =
 EasError itemoperations_status_error_map[] =
 {
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //0
-    {0, ""},  //1
+    {0, ""},  //1, success
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_PROTOCOLERROR, "Protocol error - protocol violation/XML validation error."},
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_SERVERERROR, "Server error"},
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_BADURI, "Document library access - The specified Uniform Resource Identifier (URI) is bad."},
@@ -141,7 +141,8 @@ EasError itemoperations_status_error_map[] =
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_INVALIDATTACHMENT, "Attachment fetch provider - Attachment or attachment ID is invalid."},
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_RESOURCEACCESSDENIED, "Access to the resource is denied."},
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_PARTIALCOMPLETE, "Partial success; the command completed partially."},
-    {EAS_CONNECTION_ITEMOPERATIONS_ERROR_CREDENTIALSREQUIRED, "Credentials required."}
+    {EAS_CONNECTION_ITEMOPERATIONS_ERROR_CREDENTIALSREQUIRED, "Credentials required."},
+	{EAS_CONNECTION_ITEMOPERATIONS_ERROR_STATUSUNRECOGNIZED, "Unrecognised itemoperations status"}  //19	
 };
 
 
@@ -155,6 +156,18 @@ EasError ping_status_error_map[] =
     {EAS_CONNECTION_PING_ERROR_HEARTBEAT_INTERVAL, "Heartbeat Interval outside of allowed parameters - modify and retry"},
     {EAS_CONNECTION_PING_ERROR_FOLDER, "Too Many Folders Selected."},
     {EAS_CONNECTION_PING_ERROR_FOLDER_SYNC, "Folder hierarchy is wrong - resync."}
+};
+EasError moveitems_status_error_map[] =
+{
+    {EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //0
+    {EAS_CONNECTION_MOVEITEMS_ERROR_INVALID_SRC_ID, "Invalid source collection ID or invalid source Item ID. Issue a FolderSync then a Sync command for the SrcFldId and reissue the MoveItems command request if the items are still present in this folder"}, 
+    {EAS_CONNECTION_MOVEITEMS_ERROR_INVALID_DST_ID, "Destination folder ID not recognised by server (may have been deleted). Issue a FolderSync then use a valid folder id"},
+    {0, ""},  // 3, success
+    {EAS_CONNECTION_MOVEITEMS_ERROR_SRC_AND_DST_SAME, "Source and destination folder IDs are the same"},
+    {EAS_CONNECTION_MOVEITEMS_ERROR_MULTIPLE_DST, "More than one Destination folder id was included in the request or an item with that name already exists"},
+    {EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //6	
+    {EAS_CONNECTION_MOVEITEMS_ERROR_SRC_OR_DST_LOCKED, "Source or destination item was locked. Transient server condition, retry"},
+	{EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "Unrecognised moveitems status"}  //8
 };
 	
 
