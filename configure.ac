@@ -104,18 +104,7 @@ AC_CONFIG_FILES([
     syncevolution/Makefile
     ])
 
-#activesync account schema installation:
-AC_PATH_PROG(GCONFTOOL, gconftool-2)
-AM_GCONF_SOURCE_2
 
-AC_ARG_ENABLE(gconf_schemas_install,
-[  --enable-gconf-schemas-install    install gconf ActiveSync account schemas],
-[case "${enableval}" in
-  yes) gconf_schemas_install=true ;;
-  no)  gconf_schemas_install=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-gconf-schemas-install) ;;
-esac], [gconf_schemas_install=false])
-AM_CONDITIONAL(GCONF_SCHEMAS_INSTALL, test x$gconf_schemas_install = xtrue)
 
 
 AC_OUTPUT
