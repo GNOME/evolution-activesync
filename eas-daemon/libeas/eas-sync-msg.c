@@ -482,13 +482,14 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
                 for (appData = appData->children; appData; appData = appData->next)
                 {
+                   item_server_id = (gchar *) xmlNodeGetContent (appData);
+
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
                     {
-                        item_server_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found serverID for Item = %s", item_server_id);
                         continue;
                     }
-                    
+
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ApplicationData"))
                     {
                         gchar *flatItem = NULL;
@@ -525,10 +526,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             g_debug ("appending to added_items");
                             priv->added_items = g_slist_append (priv->added_items, flatItem);
                         }
-
-                        continue;
                     }
-                    xmlFree (item_server_id);
+
+					xmlFree (item_server_id);
+					item_server_id = NULL;
                 } // End for
                 continue;
             }
