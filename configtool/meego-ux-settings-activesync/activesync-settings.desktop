@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=ControlPanelApplet
+Name=ActiveSync
+Name[en_US]=ActiveSync
+Name[en_GB]=ActiveSync
+Icon=sync
+
+[MTS]
+Part=/usr/share/meego-ux-settings/ActiveSync/ActiveSync.qml
+Section=Settings
