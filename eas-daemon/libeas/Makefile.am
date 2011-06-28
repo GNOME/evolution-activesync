@@ -111,37 +111,25 @@ setaccounts: clearkeys
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email01)/username andy
 	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email01)/password M0bica!
-	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email02)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email02)/username brahim
-	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email02)/password M0bica!
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email03)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email03)/username lorna
 	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email03)/password M0bica!
-	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email04)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email04)/username tez
-	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email04)/password M0bica!
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email05)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email05)/username good.user
 	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email05)/password G00dP@55w0rd
-	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email06)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email06)/username jem
-	gconftool-2 --set --type string \
-	            $(gconf_root)/$(email06)/password M0bica!
 
 
 #use this option if you need to create a new GConf account
@@ -149,8 +137,6 @@ my_email= myname@mycompany.com
 set-my-account:
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(my_email)/username MyUsername
-	gconftool-2 --set --type string \
-	            $(gconf_root)/$(my_email)/password MyPassword
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(my_email)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 
