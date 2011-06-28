@@ -61,18 +61,25 @@ PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution,
 				 have_syncevolution="no")
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
-syncevolution_works="no"
 if (test "${have_syncevolution}" = "yes"); then
     # Dummy compilation check. If it fails, it's almost certainly because
     # syncevolution.pc specifies a -lsynthesissdk which doesn't exist.
-    AC_CHECK_LIB(syncevolution, main,
-                 syncevolution_works="yes",
-                 AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)]),
+    AC_CHECK_LIB(syncevolution, main, ,
+		 [have_syncevolution="no";
+                 AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)])],
                  ${SYNCEVOLUTION_LIBS})
 fi
+if (test "${have_syncevolution}" = "yes"); then
+    AC_LANG_PUSH([C++])
+    AC_CHECK_HEADER(syncevo/GLibSupport.h, ,
+                 [have_syncevolution="no";
+                 AC_MSG_NOTICE([Your syncevolution installation lacks GLibSupport.h])],
+                 ${SYNCEVOLUTION_CFLAGS})
+    AC_LANG_POP([C++])
+fi
 
-AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, [test "${syncevolution_works}" = "yes"])
-if (test "${syncevolution_works}" = "yes"); then
+AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, [test "${have_syncevolution}" = "yes"])
+if (test "${have_syncevolution}" = "yes"); then
     AX_BOOST_BASE(1.34)
     AC_DEFINE([ENABLE_SYNCEVOLUTION], [], [Description])
 
