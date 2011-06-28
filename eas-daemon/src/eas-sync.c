@@ -8,6 +8,7 @@
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
 #include "eas-add-calendar-req.h"
+#include "eas-sync-folder-hierarchy-req.h"
 #include "../../libeassync/src/eas-item-info.h"
 
 #include "../libeas/eas-connection.h"
@@ -355,6 +356,51 @@ eas_sync_add_items (EasSync* self,
 
     g_debug ("eas_sync_add_items--");
     return TRUE;
+}
+
+gboolean
+eas_sync_sync_folder_hierarchy (EasSync* self,
+                                      const gchar* account_uid,
+                                      const gchar* sync_key,
+                                      DBusGMethodInvocation* context)
+{
+    EasSyncPrivate* priv = self->priv;
+    GError *error = NULL;
+    EasSyncFolderHierarchyReq *req = NULL;
+    gboolean ret;
+
+    g_debug ("eas_sync_sync_folder_hierarchy++ : account_uid[%s]",
+             (account_uid ? account_uid : "NULL"));
+
+    priv->connection = eas_connection_find (account_uid);
+    if (!priv->connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
+    }
+
+    g_debug ("eas_sync_sync_folder_hierarchy++ 1");
+
+    req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
+
+    g_debug ("eas_sync_sync__folder_hierarchy++ 2");
+
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    priv->connection);
+
+    g_debug ("eas_sync_sync_folder_hierarchy++ 3");
+
+    // Activate the request
+    ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
+
+    g_debug ("eas_sync_sync_folder_hierarchy--");
+	return TRUE;
 }
 
 

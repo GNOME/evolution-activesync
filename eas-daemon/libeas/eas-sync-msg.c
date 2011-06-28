@@ -330,7 +330,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     if (!doc)
     {
         g_warning ("folder_sync response XML is empty");
-        // Note not setting error here as empty doc is valid
+        // Note not setting error here as empty doc is valid, but copying old sync key so we 
+		//don't lose it
+		g_free(priv->sync_key_out);
+		priv->sync_key_out = g_strdup(priv->sync_key_in);
         goto finish;
     }
     node = xmlDocGetRootElement (doc);
