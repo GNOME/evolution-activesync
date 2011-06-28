@@ -16,13 +16,9 @@ const gchar *folder_separator = "\n";
 static void
 eas_folder_init (EasFolder *object)
 {
-    g_debug ("eas_folder_init++");
-    /* initialization code */
     object->parent_id = NULL;
     object->folder_id = NULL;
     object->display_name = NULL;
-
-    g_debug ("eas_folder_init--");
 }
 
 static void
@@ -30,28 +26,17 @@ eas_folder_finalize (GObject *object)
 {
     EasFolder *self = (EasFolder *) object;
 
-    g_debug ("eas_folder_finalize++");
-    /* deinitalization code here */
-
     g_free (self->parent_id);
     g_free (self->folder_id);
     g_free (self->display_name);
 
     G_OBJECT_CLASS (eas_folder_parent_class)->finalize (object);
-
-    g_debug ("eas_folder_finalize--");
 }
 
 static void
 eas_folder_class_init (EasFolderClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
-
     object_class->finalize = eas_folder_finalize;
 }
 
@@ -62,12 +47,7 @@ EasFolder *
 eas_folder_new()
 {
     EasFolder *object = NULL;
-    g_debug ("eas_folder_new++");
-
     object = g_object_new (EAS_TYPE_FOLDER , NULL);
-
-    g_debug ("eas_folder_new--");
-
     return object;
 }
 
@@ -81,7 +61,6 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
     gchar type[4] = "";
     gchar *strings[4] = {folder->parent_id, folder->folder_id, folder->display_name, type};
 
-    g_debug ("eas_folder_serialise++");
     g_assert (result);
     g_assert (*result == NULL);
 
@@ -96,15 +75,11 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 
     *result = strconcatwithseparator (strings, sizeof (strings) / sizeof (strings[0]), folder_separator);
 
-    g_debug ("serialise result: ");
-    g_debug ("%s", *result);
-
     if (!*result)
     {
         ret = FALSE;
     }
 
-    g_debug ("eas_folder_serialise--");
     return (*result ? TRUE : FALSE);
 }
 
@@ -117,7 +92,6 @@ eas_folder_deserialise (EasFolder* folder, const gchar *data)
     gchar *from = (gchar*) data;
     gchar *type = NULL;
 
-    g_debug ("eas_folder_deserialise++");
     g_assert (folder);
     g_assert (data);
 
@@ -180,15 +154,6 @@ cleanup:
         g_free (folder->display_name);
         folder->display_name = NULL;
     }
-
-    // TODO remove debug prints
-    g_debug ("deserialise result:");
-    g_debug ("parent_id = %s", folder->parent_id);
-    g_debug ("folder_id = %s", folder->folder_id);
-    g_debug ("display name = %s", folder->display_name);
-    g_debug ("type = %d", folder->type);
-
-    g_debug ("eas_folder_deserialise--");
 
     return ret;
 }
