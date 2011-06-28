@@ -429,6 +429,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar* collection_id,
                            const gchar *server_id,
                            const gchar *mime_directory,
+                           const guint request_id,			// lrm TODO this needs to be passed back with progress signal
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -463,7 +464,6 @@ eas_mail_fetch_email_body (EasMail* self,
 
 
 finish:
-
     if (!ret)
     {
         g_assert (error != NULL);

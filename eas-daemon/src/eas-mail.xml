@@ -64,6 +64,7 @@
 	<arg type="s" name="collection_id" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
+	<arg type="i" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
     <method name="fetch_attachment">

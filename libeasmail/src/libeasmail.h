@@ -57,6 +57,8 @@ struct _EasIdUpdate{
 	gchar *dest_id;
 };
 
+typedef void (*EasProgressFn) (gpointer object, gint percent);
+
 /*
 take the contents of the structure and turn it into a null terminated string
 */
@@ -167,6 +169,8 @@ gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
 					    const gchar *folder_id,
 					    const gchar *server_id,
 					    const gchar *mime_directory,
+                        EasProgressFn progress_fn,
+                        gpointer progress_data,                                            
 					    GError **error);
 
 

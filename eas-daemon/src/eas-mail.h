@@ -81,6 +81,7 @@ struct _EasMail
   	EasMailPrivate* priv;
 };
 
+
 GType eas_mail_get_type (void) G_GNUC_CONST;
 
 /* TODO:Insert your Mail Interface APIS here*/
@@ -130,6 +131,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
+                           const guint request_id,	
                            DBusGMethodInvocation* context);
 
 /*
