@@ -6,6 +6,7 @@ libeassync_CFLAGS = \
 	$(LIBXML_CFLAGS) \
 	$(EDATASERVER_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS)
+libeassync_LIBADD = -leassync -leas -leasmail
 
 AM_CPPFLAGS = \
 	-DHAVE_CONFIG_H \
@@ -28,6 +29,6 @@ SYNCACTIVESYNC_SOURCES = \
 	ActiveSyncSourceRegister.cpp
 
 syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)
-syncactivesync_la_LIBADD = $(ACTIVESYNC_LIBS) $(SYNCEVOLUTION_LIBS)
-syncactivesync_la_LDFLAGS = -module -avoid-version
+syncactivesync_la_LIBADD = $(SYNCEVOLUTION_LIBS) $(libeassync_LIBADD)
+syncactivesync_la_LDFLAGS = -no-undefined -module -avoid-version -export-dynamic
 syncactivesync_la_CXXFLAGS = $(SYNCEVOLUTION_CXXFLAGS)
