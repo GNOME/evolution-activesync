@@ -30,9 +30,9 @@ Configure access to the server:
 $ syncevolution --configure \
                 username=<ActiveSync account ID, as decimal or hexadecimal value> \
                 addressbook/backend=eas-contacts \
-                calendar/backends=eas-events \
-                todo/backends=eas-todos \
-                memo/backends=eas-memos \
+                calendar/backend=eas-events \
+                todo/backend=eas-todos \
+                memo/backend=eas-memos \
                 source-config@exchange
 
 List items:
