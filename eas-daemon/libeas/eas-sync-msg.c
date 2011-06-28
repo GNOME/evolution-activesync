@@ -55,7 +55,7 @@ eas_sync_msg_finalize (GObject *object)
     EasSyncMsgPrivate *priv = msg->priv;
 
     g_free (priv->sync_key_in);
-	g_free (priv->sync_key_out);
+	xmlFree (priv->sync_key_out);
     g_free (priv->folderID);
     g_free (priv->account_id);
 
@@ -441,7 +441,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
-            g_free(priv->sync_key_out);
+            xmlFree (priv->sync_key_out);
             priv->sync_key_out = (gchar *) xmlNodeGetContent (node);
             g_debug ("Got SyncKey = %s", priv->sync_key_out);
             continue;
@@ -476,7 +476,6 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     {
         for (node = node->children; node; node = node->next)
         {
-
             if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Add"))
             {
                 appData = node;
@@ -489,6 +488,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                         g_debug ("Found serverID for Item = %s", item_server_id);
                         continue;
                     }
+                    
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ApplicationData"))
                     {
                         gchar *flatItem = NULL;
@@ -503,13 +503,12 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             break;
                             case EAS_ITEM_MAIL:
                             {
-
-                                flatItem = eas_email_info_translator_add (appData, item_server_id);
+                                flatItem = eas_email_info_translator_add (appData, g_strdup(item_server_id));
                             }
                             break;
                             case EAS_ITEM_CALENDAR:
                             {
-                                flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
+                                flatItem = eas_cal_info_translator_parse_response (appData, g_strdup(item_server_id));
                             }
                             break;
                             case EAS_ITEM_CONTACT:
@@ -518,8 +517,6 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                                 //flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
                             }
                             break;
-
-
                         }
 
                         g_debug ("FlatItem = %s", flatItem);
@@ -531,7 +528,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
                         continue;
                     }
-                }
+                    xmlFree (item_server_id);
+                } // End for
                 continue;
             }
 

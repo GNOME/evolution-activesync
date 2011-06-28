@@ -64,19 +64,24 @@ parse_header (gchar *str, GSList **headers)
 }
 
 gchar *
-eas_email_info_translator_add (xmlNode *node, gchar *server_id)
+eas_email_info_translator_add (const xmlNode *node, gchar *server_id)
  {
     gchar *result = NULL;
     g_debug ("eas_email_info_translator_add++");
 
-    if (!node) return NULL;
+	if (!server_id) return NULL;
+    if (!node) 
+    {
+		g_free (server_id);
+		return NULL;
+    }
 
     // Parse the email specific (applicationdata) part of a sync response
     // and generate the app-specific parts of the EasEmailInfo structure
     if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ApplicationData")) 
     {
         EasEmailInfo *email_info = eas_email_info_new();
-        xmlNode *n = node;
+        xmlNode *n = (xmlNode *) node;
         GSList *headers = NULL;
         GSList *attachments = NULL;
 		guint32  flags = 0;
@@ -208,7 +213,7 @@ eas_email_info_translator_add (xmlNode *node, gchar *server_id)
 		xmlFree (xmlNodeContent);
 		} // end for 
 		
-		email_info->server_id = server_id;
+		email_info->server_id = server_id; // full transfer
 		email_info->headers = headers;
 		email_info->attachments = attachments;
 		email_info->categories = categories;
@@ -233,19 +238,24 @@ eas_email_info_translator_add (xmlNode *node, gchar *server_id)
 }
 
 gchar *
-eas_email_info_translator_update (xmlNode *node, gchar *server_id)
+eas_email_info_translator_update (const xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	g_debug("eas_email_info_translator_update++");
 	
-	if (!node) return NULL;
+	if (!server_id) return NULL;
+    if (!node) 
+    {
+		g_free (server_id);
+		return NULL;
+    }
 	
     if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char *)node->name, "ApplicationData")) 
 	{
 		EasEmailInfo *email_info = eas_email_info_new();
 		GSList *categories = NULL;
 		guint flags = 0;
-		xmlNode *n = node;
+		xmlNode *n = (xmlNode *) node;
 		
 		g_debug("found ApplicationData root");
 		
@@ -255,14 +265,15 @@ eas_email_info_translator_update (xmlNode *node, gchar *server_id)
 			//Read  
 			if (n->type == XML_ELEMENT_NODE && !g_strcmp0((char *)n->name, "Read")) 
 			{
-				gchar* tmp = (gchar*)xmlNodeGetContent(n);
+				xmlChar * xmlNodeContent = xmlNodeGetContent (n);
+				
 				g_debug("found read node");
-				if(g_strcmp0(tmp, "0"))   // not 0, therefore read
+				if(g_strcmp0((gchar *)xmlNodeContent, "0"))   // not 0, therefore read
 				{
 					flags |= EAS_EMAIL_READ;
 				}
 				flags |= EAS_VALID_READ;
-				g_free(tmp);
+				xmlFree (xmlNodeContent);
 				continue;
 			}			
 			//Categories 
@@ -271,8 +282,9 @@ eas_email_info_translator_update (xmlNode *node, gchar *server_id)
 				xmlNode *s = n;
 				for (s = s->children; s; s = s->next)
 				{				
-					if (s->type == XML_ELEMENT_NODE && !g_strcmp0((char *)s->name, "Category"))					
+					if (s->type == XML_ELEMENT_NODE && !g_strcmp0((char *)s->name, "Category"))
 					{
+						// Full transfer of xmlNodeGetContents()
 						categories = g_slist_append(categories, (char *)xmlNodeGetContent(s));
 					}
 				}
@@ -280,9 +292,9 @@ eas_email_info_translator_update (xmlNode *node, gchar *server_id)
 			}		
 		} // end for
 		
-		email_info->server_id = server_id;
+		email_info->server_id = server_id; // full transfer
 		email_info->categories = categories;
-		email_info->flags = flags;		
+		email_info->flags = flags;
 
 		// serialise the emailinfo
 		if(!eas_email_info_serialise(email_info, &result))
@@ -303,17 +315,22 @@ eas_email_info_translator_update (xmlNode *node, gchar *server_id)
 
 
 gchar *
-eas_email_info_translator_delete (xmlNode *node, gchar *server_id)
+eas_email_info_translator_delete (const xmlNode *node, gchar *server_id)
 {
     gchar *result = NULL;
 
-    if (!node) return NULL;
+	if (!server_id) return NULL;
+    if (!node) 
+    {
+		g_free (server_id);
+		return NULL;
+    }
 
     if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "ApplicationData"))
     {
         EasEmailInfo *email_info = eas_email_info_new();
 
-        email_info->server_id = server_id;
+        email_info->server_id = server_id; // full transfer
         // no other data supplied for deleted email, done
 
         if (!eas_email_info_serialise (email_info, &result))
@@ -362,7 +379,7 @@ create_node_from_categorylist (xmlNode *app_data, const GSList* categories)
 
 // translate the other way: take the emailinfo object and populate the ApplicationData node
 gboolean 
-eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, const EasEmailInfo *email_info)
+eas_email_info_translator_build_update_request(const xmlDocPtr doc, xmlNode *app_data, const EasEmailInfo *email_info)
 {
 	gboolean ret = FALSE;
 	g_debug("eas_email_info_translator_parse_request++");
@@ -403,12 +420,12 @@ eas_email_info_translator_build_update_request(xmlDoc *doc, xmlNode *app_data, c
 
     if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
 	{
-	xmlChar* dump_buffer;
-	int dump_buffer_size;
-	xmlIndentTreeOutput = 1;
-	xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
-	g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
-	xmlFree(dump_buffer);
+		xmlChar* dump_buffer;
+		int dump_buffer_size;
+		xmlIndentTreeOutput = 1;
+		xmlDocDumpFormatMemory(doc, &dump_buffer, &dump_buffer_size, 1);
+		g_debug("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+		xmlFree(dump_buffer);
 	}
 	
 	g_debug("eas_email_info_translator_parse_request--");
