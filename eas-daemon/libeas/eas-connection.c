@@ -27,6 +27,7 @@
 #include "eas-update-email-req.h"
 #include "eas-add-calendar-req.h"
 #include "eas-move-email-req.h"
+#include "eas-ping-req.h"
 
 #ifdef ACTIVESYNC_14
     #define AS_VERSION "14.0"
@@ -872,12 +873,18 @@ dump_wbxml_response (const WB_UTINY *wbxml, const WB_LONG wbxml_len)
     WB_ULONG xml_len = 0;
     gchar* tmp = NULL;
 
-    wbxml2xml (wbxml, wbxml_len, &xml, &xml_len);
-
-    tmp = g_strndup ( (gchar*) xml, xml_len);
-    g_debug ("\n=== dump start: xml_len [%d] ===\n%s=== dump end ===", xml_len, tmp);
-    if (tmp) g_free (tmp);
-    if (xml) free (xml);
+	if (0 != wbxml_len)
+	{
+		wbxml2xml (wbxml, wbxml_len, &xml, &xml_len);
+		tmp = g_strndup ( (gchar*) xml, xml_len);
+		g_debug ("\n=== dump start: xml_len [%d] ===\n%s=== dump end ===", xml_len, tmp);
+		if (tmp) g_free (tmp);
+		if (xml) free (xml);
+	}
+	else
+	{
+		g_warning("No WBXML to decode");
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1477,10 +1484,13 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         goto complete_request;
     }
 
-    if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
-    {
-        dump_wbxml_response ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
-    }
+	if (VALID_12_1_REPROVISION != validity)
+	{
+		if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
+		{
+		    dump_wbxml_response ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
+		}
+	}
 
     if (VALID_NON_EMPTY == validity)
     {
@@ -1613,6 +1623,11 @@ complete_request:
                 cleanupRequest = eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
             }
             break;
+			case EAS_REQ_PING:
+            {
+                cleanupRequest = eas_ping_req_MessageComplete ( (EasPingReq *) req, doc, error);
+            }
+            break;
         }
         //if cleanupRequest is set - we are done with this request, and should clean it up
         if(cleanupRequest)
@@ -1622,11 +1637,12 @@ complete_request:
     }
     else
     {
-        EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
+        EasProvisionReq *prov_req = eas_provision_req_new (NULL, NULL);
         g_debug ("  handle_server_response - parsed provisioning required");
 
+        eas_request_base_SetConnection (&prov_req->parent_instance, self);
         // Don't delete this request and create a provisioning request.
-        eas_provision_req_Activate (req, &error);   // TODO check return
+        eas_provision_req_Activate (prov_req, &error);   // TODO check return
     }
     g_debug ("eas_connection - handle_server_response--");
 }

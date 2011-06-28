@@ -9,7 +9,6 @@
 #include "ActiveSyncConfig.hpp"
 #include <MGConfItem>
 
-#include <QDebug>
 
 MeeGo::ActiveSync::Config::Config(QObject* parent)
   : QObject(parent)
@@ -40,8 +39,6 @@ MeeGo::ActiveSync::Config::setEmailAddress(QString s)
     m_email_address = s;
     completeInit();
     emit emailAddressChanged(s);
-
-    qDebug() << "************* EMAIL ADDRESS" << m_email_address;
 
     // @todo Where do we persistently store the e-mail address so that
     //       user isn't always prompted for it each time the
@@ -152,11 +149,6 @@ MeeGo::ActiveSync::Config::writeConfig(QString username,
 {
   if (m_email_address.isEmpty())
     return false;
-
-  qDebug() << "************* USERNAME: " << username;
-  qDebug() << "************* PASSWORD: " << password;
-  qDebug() << "************* SERVER URL: " << serverURL;
-
 
   // If we get here we know that the MGConfItem objects have been
   // instantiated.

@@ -73,6 +73,14 @@ gboolean eas_sync_add_items(EasSync* self,
                             const gchar **items,
                             DBusGMethodInvocation* context);
 
+/*
+	sync the entire  folder hierarchy 
+*/                            
+gboolean eas_sync_sync_folder_hierarchy(EasSync* self,
+                                          const gchar* account_uid,
+                                          const gchar* sync_key,
+                                          DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_SYNC_H_ */

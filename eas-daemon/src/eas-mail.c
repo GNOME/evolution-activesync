@@ -9,6 +9,7 @@
 #include "libeasmail.h"
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-req.h"
+#include "eas-ping-req.h"
 #include "eas-delete-email-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
@@ -673,5 +674,79 @@ finish:
         dbus_g_method_return (context, ret_updated_ids_array);			
     }
     g_debug ("eas_mail_move_emails_to_folder--");
+    return ret;
+}
+
+gboolean 
+eas_mail_watch_email_folders(EasMail* easMailObj,
+                                const gchar* account_uid,
+                                const gchar* heartbeat,
+                                const gchar **folder_array,
+                                DBusGMethodInvocation* context)
+{
+    gboolean ret = TRUE;
+    GError *error = NULL;
+    GSList *folder_ids_list = NULL;
+    int index = 0;
+    const gchar* id = NULL;
+    EasPingReq *req = NULL;
+    GSList *item = NULL;
+
+    g_debug ("eas_mail_watch_email_folders++");
+    g_assert (folder_array);
+
+    easMailObj->priv->connection = eas_connection_find (account_uid);
+    if (!easMailObj->priv->connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        ret = FALSE;
+        goto finish;
+    }
+
+	g_debug ("eas_mail_watch_email_folders1");
+    // Convert server_ids_array into GSList
+    while ( (id = folder_array[index++]))
+    {
+		g_debug("Folder id = [%s]", id);
+        folder_ids_list = g_slist_prepend (folder_ids_list, g_strdup (id));
+    }
+	g_debug ("eas_mail_watch_email_folders2");
+
+    // Create the request
+    req = eas_ping_req_new (account_uid, heartbeat, folder_ids_list, context);
+
+	g_debug ("eas_mail_watch_email_folders3");
+
+    // Cleanup the gslist
+    item = folder_ids_list;
+    for (; item; item = item->next)
+    {
+        g_free (item->data);
+        item->data = NULL;
+    }
+    g_slist_free (folder_ids_list);
+
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    easMailObj->priv->connection);
+
+	g_debug ("eas_mail_watch_email_folder4");
+    // Start the request
+    ret = eas_ping_req_Activate (req, &error);
+
+	g_debug ("eas_mail_watch_email_folders5");
+
+finish:
+    if (!ret)
+    {
+		g_debug ("eas_mail_watch_email_folders6");
+        g_assert (error != NULL);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    }
+    g_debug ("eas_mail_watch_email_folders--");
     return ret;
 }

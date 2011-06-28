@@ -299,6 +299,40 @@ gboolean eas_mail_handler_copy_to_folder(EasEmailHandler* this,
                                         const gchar *dest_folder_id,
                                         GError **error);
 
+/* function callback  prototype for Push Email. 
+ * params:
+ * GSList * data                A list of strings which provide the id's of folders which have 
+ *                              been updated. Sync these folders before re-issuing watch command.
+ * GError * error               error information if an error occurs.  If no
+ *                              error occurs this will be NULL.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/ 
+typedef void (*EasPushEmailCallback) (GSList* data, GError *error);
+
+/* function name:               eas_mail_handler_watch_email_folder
+ * function description:        this method allows the user to watch a number of email
+ *                              folders. Function will return when something has changed
+ *                              in one of the folders, and will include a list of folders
+ *                              which need syncing
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * const GSList *folder_ids (in):identifies the specific folders to watch.  This information is in 
+ *                              the form of folder_ids (gchar*) returned from the eas_mail_handler_sync_folder_hierarchy
+ *                              call
+ * const gchar *heartbeat (in): time between ping calls  
+ * EasPushEmailCallback (in):   callback function to be used to signal when a folder has been changed
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+gboolean eas_mail_handler_watch_email_folders(EasEmailHandler* self, 
+                                            const GSList *folder_ids,
+	                                        const gchar *heartbeat,
+	                                        EasPushEmailCallback cb,
+	                                        GError **error); 
 
 
 

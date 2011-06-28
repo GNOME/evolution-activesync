@@ -15,12 +15,17 @@
 #include <libedataserver/e-flag.h>
 
 #include "../../eas-daemon/src/activesyncd-common-defs.h"
+#include "../../libeasmail/src/eas-folder.h"
+#include "../../libeasmail/src/eas-mail-errors.h"
 #include "libeassync.h"
 #include "eas-item-info.h"
 
 #include "../../logger/eas-logger.h"
 
 G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
+
+static gchar* defaultCalFolder = NULL;
+static gchar* defaultConFolder = NULL;
 
 struct _EasSyncHandlerPrivate
 {
@@ -35,6 +40,68 @@ static gboolean
 build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error);
 
 // TODO - how much verification of args should happen
+
+static gchar* getDefaultFolder(EasSyncHandler* handler, EasItemType type, const gchar* syncKey)
+{
+	gchar *folder = NULL;
+	gboolean ret = FALSE;
+	GSList *created = NULL;
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+	GSList *item;
+    GError *error = NULL;
+	gchar *syncKeyOut = NULL;
+	
+	//if synckey is  zero then we must look up the defaults
+	if(!g_strcmp0(syncKey, "0"))
+	{
+		ret  = eas_sync_handler_sync_folder_hierarchy (handler,
+                                                   "0",
+		                                           &syncKeyOut,
+                                                   &created,
+                                                   &updated,
+                                                   &deleted,
+                                                   &error);
+		if(ret)
+		{
+			for (item = created; item; item = item->next)
+			{
+				EasFolder *folder = item->data;
+				if (EAS_FOLDER_TYPE_DEFAULT_CALENDAR == folder->type)
+				{
+					g_free(defaultCalFolder);
+				    defaultCalFolder = g_strdup(folder->folder_id);
+				}
+				else if (EAS_FOLDER_TYPE_DEFAULT_CONTACTS == folder->type)
+				{
+					g_free(defaultConFolder);
+				    defaultConFolder = g_strdup(folder->folder_id);
+				}
+			}
+		}
+	}
+	switch(type)
+	{
+		case EAS_ITEM_CALENDAR:
+		{
+			folder = g_strdup(defaultCalFolder);
+		}
+		break;
+		case EAS_ITEM_CONTACT:
+		{
+			folder = g_strdup(defaultConFolder);
+		}
+		break;
+		default:
+		{
+			//unknown type -no default folder, set GError & return_type
+		}
+	}
+	g_debug("Default Contact Folder ID is %s", defaultConFolder);
+	g_debug("Default Calendar Folder ID is %s", defaultCalFolder);
+	
+	return folder;
+}
 
 static void
 eas_sync_handler_init (EasSyncHandler *cnc)
@@ -189,23 +256,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
-		switch(type)
-		{
-			case EAS_ITEM_CALENDAR:
-			{
-				folder = g_strdup("1");
-			}
-			break;
-			case EAS_ITEM_CONTACT:
-			{
-				folder = g_strdup("2");
-			}
-			break;
-			default:
-			{
-				//unknown type -no default folder, set GError & return_type
-			}
-		}
+		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
 	}
 	else //use passed in folder_id
 	{
@@ -320,18 +371,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
-		switch(type)
-		{
-			case EAS_ITEM_CALENDAR:
-			{
-				folder = g_strdup("1");
-			}
-			break;
-			default:
-			{
-				//unknown type -no default folder, set GError & return_type
-			}
-		}
+		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
 	}
 	else //use passed in folder_id
 	{
@@ -394,18 +434,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
-		switch(type)
-		{
-			case EAS_ITEM_CALENDAR:
-			{
-				folder = g_strdup("1");
-			}
-			break;
-			default:
-			{
-				//unknown type -no default folder, set GError & return_type
-			}
-		}
+		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
 	}
 	else //use passed in folder_id
 	{
@@ -502,18 +531,7 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
-		switch(type)
-		{
-			case EAS_ITEM_CALENDAR:
-			{
-				folder = g_strdup("1");
-			}
-			break;
-			default:
-			{
-				//unknown type -no default folder, set GError & return_type
-			}
-		}
+		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
 	}
 	else //use passed in folder_id
 	{
@@ -566,6 +584,170 @@ eas_sync_handler_add_items (EasSyncHandler* self,
     g_debug ("eas_sync_handler_add_items--");
     return ret;
 }
+// takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
+static gboolean
+build_folder_list (const gchar **serialised_folder_array, GSList **folder_list, GError **error)
+{
+    gboolean ret = TRUE;
+    guint i = 0;
+
+    g_debug ("build_folder_list++");
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+    g_assert (folder_list);
+    g_assert (g_slist_length (*folder_list) == 0);
+
+    while (serialised_folder_array[i])
+    {
+        EasFolder *folder = eas_folder_new();
+        if (folder)
+        {
+            *folder_list = g_slist_append (*folder_list, folder);   // add it to the list first to aid cleanup
+            if (!folder_list)
+            {
+                g_free (folder);
+                ret = FALSE;
+                goto cleanup;
+            }
+            if (!eas_folder_deserialise (folder, serialised_folder_array[i]))
+            {
+                ret = FALSE;
+                goto cleanup;
+            }
+        }
+        else
+        {
+            ret = FALSE;
+            goto cleanup;
+        }
+        i++;
+    }
+
+cleanup:
+    if (!ret)
+    {
+        // set the error
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        // clean up on error
+        g_slist_foreach (*folder_list, (GFunc) g_free, NULL);
+        g_slist_free (*folder_list);
+    }
+
+    g_debug ("list has %d items", g_slist_length (*folder_list));
+    g_debug ("build_folder_list++");
+    return ret;
+}
+
+// pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
+gboolean
+eas_sync_handler_sync_folder_hierarchy (EasSyncHandler* self,
+                                        const gchar *sync_key,
+                                        gchar **sync_key_out,
+                                        GSList **folders_created,
+                                        GSList **folders_updated,
+                                        GSList **folders_deleted,
+                                        GError **error)
+{
+    gboolean ret = TRUE;
+    DBusGProxy *proxy = self->priv->remoteEas;
+    gchar **created_folder_array = NULL;
+    gchar **deleted_folder_array = NULL;
+    gchar **updated_folder_array = NULL;
+
+    g_debug ("eas_sync_handler_sync_folder_hierarchy++ : account_uid[%s]",
+             (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - stuff");
+    g_assert (self);
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - self");
+    g_assert (sync_key);
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - synckey");
+    g_assert (g_slist_length (*folders_created) == 0);
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - create");
+    g_assert (g_slist_length (*folders_updated) == 0);
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - update");
+    g_assert (g_slist_length (*folders_deleted) == 0);
+	g_debug ("eas_sync_handler_sync_folder_hierarchy - delete");
+
+    // call DBus API
+    ret = dbus_g_proxy_call (proxy, "sync_folder_hierarchy",
+                             error,
+                             G_TYPE_STRING, self->priv->account_uid,
+                             G_TYPE_STRING, sync_key,
+                             G_TYPE_INVALID,
+                             G_TYPE_STRING, sync_key_out,
+                             G_TYPE_STRV, &created_folder_array,
+                             G_TYPE_STRV, &deleted_folder_array,
+                             G_TYPE_STRV, &updated_folder_array,
+                             G_TYPE_INVALID);
+
+    g_debug ("eas_mail_handler_sync_folder_hierarchy - dbus proxy called");
+
+    if (!ret)
+    {
+        if (error && *error)
+        {
+            g_warning ("[%s][%d][%s]",
+                       g_quark_to_string ( (*error)->domain),
+                       (*error)->code,
+                       (*error)->message);
+        }
+        g_warning ("DBus dbus_g_proxy_call failed");
+        goto cleanup;
+    }
+
+    g_debug ("sync_email_folder_hierarchy called successfully");
+
+    // get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+    ret = build_folder_list ( (const gchar **) created_folder_array, folders_created, error);
+    if (!ret)
+    {
+        goto cleanup;
+    }
+    ret = build_folder_list ( (const gchar **) deleted_folder_array, folders_deleted, error);
+    if (!ret)
+    {
+        goto cleanup;
+    }
+    ret = build_folder_list ( (const gchar **) updated_folder_array, folders_updated, error);
+    if (!ret)
+    {
+        goto cleanup;
+    }
+
+
+cleanup:
+
+    free_string_array (created_folder_array);
+    free_string_array (updated_folder_array);
+    free_string_array (deleted_folder_array);
+
+    if (!ret)   // failed - cleanup lists
+    {
+        g_assert (error == NULL || *error != NULL);
+        if (error)
+        {
+            g_warning (" Error: %s", (*error)->message);
+        }
+        g_debug ("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
+        g_slist_foreach (*folders_created, (GFunc) g_free, NULL);
+        g_free (*folders_created);
+        *folders_created = NULL;
+        g_slist_foreach (*folders_updated, (GFunc) g_free, NULL);
+        g_free (*folders_updated);
+        *folders_updated = NULL;
+        g_slist_foreach (*folders_deleted, (GFunc) g_free, NULL);
+        g_free (*folders_deleted);
+        *folders_deleted = NULL;
+    }
+
+    g_debug ("eas_mail_handler_sync_folder_hierarchy--");
+    return ret;
+}
+
 
 
 

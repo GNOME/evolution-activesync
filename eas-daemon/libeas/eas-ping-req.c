@@ -1,6 +1,7 @@
 #include "eas-utils.h"
 #include "eas-ping-msg.h"
 #include "eas-ping-req.h"
+#include "eas-connection-errors.h"
 
 G_DEFINE_TYPE (EasPingReq, eas_ping_req, EAS_TYPE_REQUEST_BASE);
 
@@ -11,7 +12,8 @@ struct _EasPingReqPrivate
     EasPingMsg* ping_msg;
     gchar* account_id;
     gchar* heartbeat;
-    gchar** serialised_folder_array;
+    GSList* folder_array;
+	EasPingReqState state;
 };
 
 static void
@@ -27,7 +29,7 @@ eas_ping_req_init (EasPingReq *object)
     priv->ping_msg = NULL;
     priv->account_id = NULL;
     priv->heartbeat = NULL;
-    priv->serialised_folder_array = NULL;
+    priv->folder_array = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_PING);
@@ -50,7 +52,7 @@ eas_ping_req_finalize (GObject *object)
     g_free (priv->heartbeat);
 
     g_object_unref (priv->ping_msg);
-    free_string_array (priv->serialised_folder_array);
+	g_slist_free (priv->folder_array);
 
     G_OBJECT_CLASS (eas_ping_req_parent_class)->finalize (object);
 
@@ -69,46 +71,29 @@ eas_ping_req_class_init (EasPingReqClass *klass)
     g_debug ("eas_ping_req_class_init--");
 }
 
-EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const gchar **serialised_folder_array, DBusGMethodInvocation *context)
+EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, DBusGMethodInvocation *context)
 {
     EasPingReq* self = g_object_new (EAS_TYPE_PING_REQ, NULL);
     EasPingReqPrivate *priv = self->priv;
-    guint i;
-    guint num_serialised_folders = 0;
+	guint listCount;
+    guint listLen = g_slist_length ( (GSList*) folder_list);
+	gchar *server_id = NULL;
 
     g_debug ("eas_ping_req_new++");
     g_assert (heartbeat);
-    g_assert (serialised_folder_array);
+    g_assert (folder_list);
 
-    num_serialised_folders = array_length (serialised_folder_array);
     priv->heartbeat = g_strdup (heartbeat);
-    // TODO duplicate the string array
-    priv->serialised_folder_array = g_malloc0 ( (num_serialised_folders * sizeof (gchar*)) + 1); // allow for null terminate
-    if (!priv->serialised_folder_array)
+
+	for (listCount = 0; listCount < listLen; listCount++)
     {
-        goto cleanup;
+        server_id = g_slist_nth_data ( (GSList*) folder_list, listCount);
+        priv->folder_array = g_slist_append (priv->folder_array, g_strdup (server_id));
     }
-    for (i = 0; i < num_serialised_folders; i++)
-    {
-        priv->serialised_folder_array[i] = g_strdup (serialised_folder_array[i]);
-    }
-    priv->serialised_folder_array[i] = NULL;
 
     priv->account_id = g_strdup (account_id);
 
     eas_request_base_SetContext (&self->parent_instance, context);
-
-cleanup:
-    if (!priv->serialised_folder_array)
-    {
-        g_warning ("Failed to allocate memory!");
-        g_free (priv->heartbeat);
-        if (self)
-        {
-            g_object_unref (self);
-            self = NULL;
-        }
-    }
 
     g_debug ("eas_ping_req_new--");
     return self;
@@ -120,27 +105,17 @@ eas_ping_req_Activate (EasPingReq *self, GError** error)
     gboolean ret;
     EasPingReqPrivate *priv = self->priv;
     xmlDoc *doc;
-    GSList *pings = NULL;   // ping msg expects a list, we have an array
-    guint i = 0;
 
     g_debug ("eas_ping_req_Activate++");
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-    while (priv->serialised_folder_array[i])
-    {
-        g_debug ("append email to list");
-        pings = g_slist_append (pings, priv->serialised_folder_array[i]);
-        i++;
-    }
 
     //create sync msg object
     priv->ping_msg = eas_ping_msg_new ();
 
     g_debug ("build messsage");
     //build request msg
-    doc = eas_ping_msg_build_message (priv->ping_msg, priv->account_id, priv->heartbeat, pings);
-    g_slist_free (pings);
+    doc = eas_ping_msg_build_message (priv->ping_msg, priv->account_id, priv->heartbeat, priv->folder_array);
     if (!doc)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
@@ -174,6 +149,11 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
     GError *error = NULL;
     EasPingReqPrivate *priv = self->priv;
 	gboolean finished = FALSE;
+	gchar ** ret_changed_folders_array = NULL;
+	GSList *folder_array = NULL;
+	EasPingReqState state;
+	guint list_length = 0;
+    int loop = 0;
 
     g_debug ("eas_ping_req_MessageComplete++");
 
@@ -190,21 +170,63 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
     if (!ret)
     {
         g_assert (error != NULL);
-		goto finish;
 	}
 	//TODO: get status message - if status = 1 - re-issue message, if status = 
 	//      2 signal folder IDs to client.
+
+	state = eas_ping_msg_get_state (priv->ping_msg);
+	switch(state)
+	{
+		case EasPingReqSendHeartbeat:
+		{
+			g_debug ("send message but no body");
+			eas_ping_req_Activate(self, &error);
+			finished = FALSE;
+			ret = TRUE;
+		}
+		break;
+		case EasPingReqNotifyClient:
+		{
+				folder_array = eas_ping_msg_get_changed_folders(priv->ping_msg);
+			    list_length = g_slist_length (folder_array);
+				ret_changed_folders_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
+				if (!ret_changed_folders_array)
+				{
+        			g_set_error (&error, EAS_CONNECTION_ERROR,
+                     		EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                     		("out of memory"));
+					finished = TRUE;
+					ret = FALSE;
+					goto finish;
+				}
+				
+				for (; loop < list_length; ++loop)
+				{
+					ret_changed_folders_array[loop] = g_strdup (g_slist_nth_data (folder_array, loop));
+				}
+        		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+						                  ret_changed_folders_array);
+				
+				finished = TRUE;
+			    ret = TRUE;
+		}
+		break;
+		default:
+		{
+			ret = FALSE;
+			finished = TRUE;
+		}
+	}
+	
+	
 	
 
 finish:
     if(!ret)
 	{
+		g_debug ("eas_ping_req_Return Error");
         dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
         g_error_free (error);
-    }
-    else
-    {
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
     }
 
     g_debug ("eas_ping_req_MessageComplete--");
