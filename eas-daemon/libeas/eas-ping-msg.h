@@ -11,6 +11,7 @@
 #include <glib-object.h>
 #include "eas-msg-base.h"
 #include "eas-request-base.h"
+#include "eas-ping-req.h"
 
 G_BEGIN_DECLS
 
@@ -42,6 +43,8 @@ GType eas_ping_msg_get_type (void) G_GNUC_CONST;
 EasPingMsg* eas_ping_msg_new ();
 xmlDoc* eas_ping_msg_build_message (EasPingMsg* self, const gchar* accountId, const gchar *heartbeat, GSList *folders);
 gboolean eas_ping_msg_parse_response (EasPingMsg* self, xmlDoc *doc, GError** error);
+GSList* eas_ping_msg_get_changed_folders (EasPingMsg* self);
+EasPingReqState eas_ping_msg_get_state (EasPingMsg *self);
 
 
 G_END_DECLS

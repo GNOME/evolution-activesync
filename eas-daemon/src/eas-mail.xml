@@ -103,7 +103,16 @@
 		<arg type="s" name="dest_folder_id" direction="in"/>
 
 		<arg type="as" name="ret_updated_ids" direction="out"/>			
-	</method>	
+	</method>
+	
+	<method name="watch_email_folders">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="s" name="heartbeat" direction="in"/>
+      <arg type="as" name="folder_array" direction="in"/>
+      
+      <arg type="as" name="changed_folder_array" direction="out"/>		
+	</method>
 
   </interface>
 </node>

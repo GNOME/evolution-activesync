@@ -144,3 +144,17 @@ EasError itemoperations_status_error_map[] =
     {EAS_CONNECTION_ITEMOPERATIONS_ERROR_CREDENTIALSREQUIRED, "Credentials required."}
 };
 
+
+EasError ping_status_error_map[] =
+{
+    {EAS_CONNECTION_PING_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //0
+    {0, ""},  //1
+    {EAS_CONNECTION_PING_ERROR_FOLDERS_UPDATED, ""},
+    {EAS_CONNECTION_PING_ERROR_PARAMETER, "Parameter Error - one or more parameters missing from request"},
+    {EAS_CONNECTION_PING_ERROR_PROTOCOL, "Protocol error - protocol violation/XML validation error."},
+    {EAS_CONNECTION_PING_ERROR_HEARTBEAT_INTERVAL, "Heartbeat Interval outside of allowed parameters - modify and retry"},
+    {EAS_CONNECTION_PING_ERROR_FOLDER, "Too Many Folders Selected."},
+    {EAS_CONNECTION_PING_ERROR_FOLDER_SYNC, "Folder hierarchy is wrong - resync."}
+};
+	
+

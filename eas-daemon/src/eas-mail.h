@@ -125,6 +125,15 @@ gboolean eas_mail_move_emails_to_folder (EasMail* easMailObj,
                      const gchar *dest_folder_id,
                      DBusGMethodInvocation* context);
 
+/*
+    watch folders for updates 
+*/
+gboolean eas_mail_watch_email_folders(EasMail* easMailObj,
+                                const gchar* account_uid,
+                                const gchar * heartbeat,
+                                const gchar **folder_array,
+                                DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_MAIL_H_ */

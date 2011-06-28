@@ -13,6 +13,22 @@ gchar * g_account_id = "good.user@cstylianou.com";
 
 gchar * g_inbox_id = NULL;
 
+static GMainLoop *loop = NULL;
+
+static void
+test_push_email_cb (GSList * data, GError *error)
+{
+	GSList *folder_list = data;
+	fail_if (data == NULL,
+             "something has gone wrong!");
+	g_debug ("Response for test [%s]", folder_list->data);
+
+	g_main_loop_quit (loop);
+    g_main_loop_unref (loop);
+    loop = NULL;
+
+}
+
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
     GError *error = NULL;
@@ -915,6 +931,26 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 }
 END_TEST
 
+START_TEST (test_eas_mail_handler_watch_email_folders)
+{
+	const gchar* accountuid = g_account_id;;
+    EasEmailHandler *email_handler = NULL;
+	GSList *folder_list = NULL; //receives a list of EasMails
+    GSList *updates = NULL;
+	GError *error = NULL;
+
+	testGetMailHandler (&email_handler, accountuid);
+
+	folder_list = g_slist_append(folder_list, "7");
+
+	loop = g_main_loop_new (NULL, FALSE);
+
+	eas_mail_handler_watch_email_folders (email_handler, folder_list, "60", test_push_email_cb, &error);
+
+	if (loop) g_main_loop_run (loop);
+}
+END_TEST
+
 START_TEST (test_eas_mail_handler_delete_email)
 {
     const gchar* accountuid = g_account_id;
@@ -1053,15 +1089,16 @@ Suite* eas_libeasmail_suite (void)
     tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
     //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
+    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     //need an unread, high importance email with a single attachment at top of inbox for this to pass:
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
     // need at least one email in the inbox for this to pass:
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
 	// need a 'temp' folder created at the same level as Inbox and at least one email in the inbox for this test to work:
 	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
+	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
 	
     g_free(g_inbox_id);
     g_inbox_id = NULL;

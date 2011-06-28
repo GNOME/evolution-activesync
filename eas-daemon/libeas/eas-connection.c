@@ -27,6 +27,7 @@
 #include "eas-update-email-req.h"
 #include "eas-add-calendar-req.h"
 #include "eas-move-email-req.h"
+#include "eas-ping-req.h"
 
 #ifdef ACTIVESYNC_14
     #define AS_VERSION "14.0"
@@ -1611,6 +1612,11 @@ complete_request:
             case EAS_REQ_ADD_CALENDAR:
             {
                 cleanupRequest = eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
+            }
+            break;
+			case EAS_REQ_PING:
+            {
+                cleanupRequest = eas_ping_req_MessageComplete ( (EasPingReq *) req, doc, error);
             }
             break;
         }

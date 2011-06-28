@@ -946,3 +946,90 @@ eas_mail_handler_copy_to_folder (EasEmailHandler* self,
     return ret;
     /* TODO */
 }
+
+static void watch_email_folder_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
+{
+	GError *error = NULL;
+	gchar* id;
+	gchar **changed_folder_array = NULL;
+	gint index = 0;
+	GSList *folder_list = NULL;
+	EasPushEmailCallback callback = NULL;
+	
+	g_debug("watch_email_folder_completed");
+
+	dbus_g_proxy_end_call (proxy, call, &error, 
+	                       G_TYPE_STRV,&changed_folder_array, 
+	                       G_TYPE_INVALID);
+
+	while ( (id = changed_folder_array[index++]))
+    {
+		g_debug("Folder id = [%s]", id);
+        folder_list = g_slist_prepend (folder_list, g_strdup (id));
+    }
+	
+	callback = (EasPushEmailCallback)(user_data);
+	callback(folder_list, error);
+	
+	return;
+}
+
+gboolean eas_mail_handler_watch_email_folders(EasEmailHandler* self, 
+                                            const GSList *folder_ids,
+	                                        const gchar *heartbeat,
+	                                        EasPushEmailCallback cb,
+	                                        GError **error)
+{
+	gboolean ret = TRUE;
+    DBusGProxy *proxy = self->priv->remoteEas;
+	gchar **folder_array = NULL;
+    // Build string array from items_deleted GSList
+    guint list_length = g_slist_length ( (GSList*) folder_ids);
+    int loop = 0;
+	
+    g_debug ("eas_mail_handler_watch_email_folders++");
+
+	g_assert(self);
+	g_assert(folder_ids);
+	g_assert(heartbeat);
+
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	folder_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
+    if (!folder_array)
+    {
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+    }
+
+	for (; loop < list_length; ++loop)
+    {
+		g_debug ("eas_mail_watch 1");
+        folder_array[loop] = g_strdup (g_slist_nth_data ( (GSList*) folder_ids, loop));
+        g_debug ("Folder Id: [%s]", folder_array[loop]);
+    }
+
+
+	g_debug ("eas_mail_handler_watch_email_folders1");
+	// call dbus api
+	dbus_g_proxy_begin_call(proxy, "watch_email_folders", 
+	                         watch_email_folder_completed, 
+	                         cb, 				//callback pointer
+	                         NULL, 						// destroy notification 
+	                         G_TYPE_STRING, self->priv->account_uid,
+                             G_TYPE_STRING, heartbeat,
+                             G_TYPE_STRV, folder_array,
+	                         G_TYPE_INVALID);
+	g_strfreev(folder_array);
+
+	
+	
+    if (!ret)
+    {
+        g_assert (error == NULL || *error != NULL);
+    }
+    g_debug ("eas_mail_handler_watch_email_folders--");	
+    return ret;
+
+}
