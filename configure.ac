@@ -89,10 +89,13 @@ if (test "${have_syncevolution}" = "yes"); then
     AC_LANG_POP([C++])
 fi
 
-AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, [test "${have_syncevolution}" = "yes"])
+# Ignore the naming: it is called "ENABLE_ACTIVESYNC" because the code
+# also compiles inside SyncEvolution where that name is
+# necessary.
+AM_CONDITIONAL(ENABLE_ACTIVESYNC, [test "${have_syncevolution}" = "yes"])
 if (test "${have_syncevolution}" = "yes"); then
     AX_BOOST_BASE(1.34)
-    AC_DEFINE([ENABLE_SYNCEVOLUTION], [], [Description])
+    AC_DEFINE([ENABLE_ACTIVESYNC], [], [Description])
 
     # If syncevolution.pc has a backenddir variable (as it should), then use it
     # Otherwise, fall back to *its* $libdir/syncevolution/backends
@@ -110,6 +113,14 @@ AC_SUBST(syncevo_backenddir)
 # use the "build as module" part of syncevolution/Makefile.am,
 # unconditionally when compiling as part of activesyncd
 AM_CONDITIONAL([ENABLE_MODULES], [true])
+
+# Compile flags for syncevolution backend.
+# Don't hard-code them in syncevolution/Makefile.am, that file
+# is also used when compiling inside SyncEvolution.
+EASSYNC_CFLAGS='-DHAVE_CONFIG_H -DHAVE_GLIB -I. -I$(top_srcdir)/libeassync/src $(GLIB_CFLAGS) $(SOUP_CFLAGS) $(LIBXML_CFLAGS) $(EDATASERVER_CFLAGS) $(DBUS_GLIB_CFLAGS)'
+EASSYNC_LIBS='$(top_builddir)/libeasmail/src/libeasmail.la $(top_builddir)/eas-daemon/libeas/libeas.la'
+AC_SUBST(EASSYNC_CFLAGS)
+AC_SUBST(EASSYNC_LIBS)
 
 dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(dbus_servicesdir)

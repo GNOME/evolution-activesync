@@ -5,7 +5,8 @@ To compile this backend as part of SyncEvolution, ensure that this directory
 is visible at src/backends/activesync (symlink or copy), run ./autogen.sh at
 the top level, and use --enable-activesync in configure. To work around the
 missing libeassync.pc, on MeeGo install activesyncd-devel and use:
-ACTIVESYNC_CFLAGS="-I<path to sources>/libeassync/src/ -I/usr/include/libwbxml-1.0 -I/usr/include/libxml2/ -I/usr/include/evolution-data-server-2.32" ACTIVESYNC_LIBS=-leassync
+
+--enable-activesync EASSYNC_CFLAGS="-I/home/pohly/src/activesyncd/libeassync/src/ -I/usr/include/libwbxml-1.0 -I/usr/include/libxml2/ -I/usr/include/evolution-data-server-2.32 -I/usr/include/dbus-1.0" EASSYNC_LIBS="-leassync -leas -leasmail"
 
 Beware that the pre-compiled activesyncd must match the header files from
 the sources.

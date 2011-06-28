@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4 -I m4-repo
 #SUBDIRS = libeasmail/tests
 
-if ENABLE_SYNCEVOLUTION
+if ENABLE_ACTIVESYNC
   SYNCEVOLUTION_DIR = syncevolution
 endif
 

@@ -40,7 +40,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     isMe = sourceType.m_backend == "ActiveSync Address Book";
     if (isMe) {
         return
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
             new ActiveSyncContactSource(params)
 #else
             RegisterSyncSource::InactiveSource
@@ -51,7 +51,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     isMe = sourceType.m_backend == "ActiveSync Events";
     if (isMe) {
         return
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
             new ActiveSyncCalendarSource(params, EAS_ITEM_CALENDAR)
 #else
             RegisterSyncSource::InactiveSource
@@ -62,7 +62,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     isMe = sourceType.m_backend == "ActiveSync Todos";
     if (isMe) {
         return
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
             new ActiveSyncCalendarSource(params, EAS_ITEM_TODO)
 #else
             RegisterSyncSource::InactiveSource
@@ -73,7 +73,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     isMe = sourceType.m_backend == "ActiveSync Memos";
     if (isMe) {
         return
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
             new ActiveSyncCalendarSource(params, EAS_ITEM_JOURNAL)
 #else
             RegisterSyncSource::InactiveSource
@@ -85,7 +85,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
 }
 
 static RegisterSyncSource registerMe("ActiveSync",
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
                                      true,
 #else
                                      false,
@@ -101,7 +101,7 @@ static RegisterSyncSource registerMe("ActiveSync",
                                      (Aliases("ActiveSync Todos") + "eas-todos") +
                                      (Aliases("ActiveSync Memos") + "eas-memos"));
 
-#ifdef ENABLE_SYNCEVOLUTION
+#ifdef ENABLE_ACTIVESYNC
 #ifdef ENABLE_UNIT_TESTS
 
 class ActiveSyncsTest : public CppUnit::TestFixture {
@@ -181,6 +181,6 @@ public:
 } // anonymous namespace
 #endif // ENABLE_INTEGRATION_TESTS
 
-#endif // ENABLE_SYNCEVOLUTION
+#endif // ENABLE_ACTIVESYNC
 
 SE_END_CXX
