@@ -128,7 +128,7 @@ eas_connection_init (EasConnection *self)
     if (getenv ("EAS_SOUP_LOGGER") && (atoi (g_getenv ("EAS_SOUP_LOGGER")) >= 1))
     {
         SoupLogger *logger;
-        logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
+        logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE (logger));
     }
 
@@ -432,13 +432,11 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
     g_debug ("eas_connection_set_policy_key++");
 
 	eas_account_set_policy_key (priv->account, policyKey);
-	g_idle_add (eas_account_list_save_list, g_account_list);
-#if 0
-	/*TODO: save just the policy_key item rather than the list */
-	eas_account_list_save_item(account_list,
-								account02,
-								EAS_ACCOUNT_POLICY_KEY);	
-#endif
+	
+	eas_account_list_save_item(g_account_list,
+							   priv->account,
+							   EAS_ACCOUNT_POLICY_KEY);
+							   
     g_debug ("eas_connection_set_policy_key--");
 }
 
@@ -588,7 +586,7 @@ eas_connection_send_request (EasConnection* self,
 
 	policy_key = eas_account_get_policy_key (priv->account);
     // If we need to provision, and not the provisioning msg
-    if (!policy_key && g_strcmp0 (cmd, "Provision"))
+    if ( (!policy_key || !g_strcmp0("0",policy_key)) && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
         g_debug ("  eas_connection_send_request - Provisioning required");
@@ -641,6 +639,7 @@ eas_connection_send_request (EasConnection* self,
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
                                  policy_key?:"0");
+
 #ifndef ACTIVESYNC_14
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 if(g_strcmp0(cmd, "SendMail"))
