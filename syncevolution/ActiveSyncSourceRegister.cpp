@@ -20,6 +20,10 @@
 
 #include "ActiveSyncSource.h"
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #ifdef ENABLE_UNIT_TESTS
 # include <cppunit/extensions/TestFactoryRegistry.h>
 # include <cppunit/extensions/HelperMacros.h>

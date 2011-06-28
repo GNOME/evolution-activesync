@@ -70,10 +70,12 @@ if (test "${have_syncevolution}" = "yes"); then
                  AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)]),
                  ${SYNCEVOLUTION_LIBS})
 fi
-AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, test "${syncevolution_works}" = "yes")
 
+AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, [test "${syncevolution_works}" = "yes"])
 if (test "${syncevolution_works}" = "yes"); then
     AX_BOOST_BASE(1.34)
+    AC_DEFINE([ENABLE_SYNCEVOLUTION], [], [Description])
+
     # If syncevolution.pc has a backenddir variable (as it should), then use it
     # Otherwise, fall back to *its* $libdir/syncevolution/backends
     AC_MSG_CHECKING([where to install SyncEvolution plugin])

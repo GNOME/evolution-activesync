@@ -8,6 +8,9 @@ libeassync_CFLAGS = \
 	$(DBUS_GLIB_CFLAGS)
 
 AM_CPPFLAGS = \
+	-DHAVE_CONFIG_H \
+	-DHAVE_GLIB \
+	-I. \
 	$(SYNCEVOLUTION_CFLAGS) \
 	$(libeassync_CFLAGS)
 
@@ -21,7 +24,8 @@ MAINTAINERCLEANFILES = Makefile.in
 
 SYNCACTIVESYNC_SOURCES = \
 	ActiveSyncSource.h \
-	ActiveSyncSource.cpp
+	ActiveSyncSource.cpp \
+	ActiveSyncSourceRegister.cpp
 
 syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)
 syncactivesync_la_LIBADD = $(ACTIVESYNC_LIBS) $(SYNCEVOLUTION_LIBS)

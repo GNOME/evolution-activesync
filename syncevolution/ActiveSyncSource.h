@@ -24,7 +24,7 @@
 #include <config.h>
 #include <syncevo/SyncSource.h>
 
-#ifdef ENABLE_ACTIVESYNC
+#ifdef ENABLE_SYNCEVOLUTION
 
 #include <syncevo/PrefixConfigNode.h>
 #include <syncevo/SafeConfigNode.h>
@@ -226,5 +226,5 @@ class ActiveSyncCalendarSource : public ActiveSyncSource
 
 SE_END_CXX
 
-#endif // ENABLE_ACTIVESYNC
+#endif // ENABLE_SYNCEVOLUTION
 #endif // INCL_ACTIVESYNCSOURCE
