@@ -1,0 +1,8 @@
+		======================================
+		MeeGo ActiveSync Settings UI TODO List
+		======================================
+
+1. Only query the user for a password if necessary.  This may
+   ultimately be provided by the MeeGo SSO framework.
+2. Configure ActiveSync e-mail account.
+3. Add MeeGo save/restore support.

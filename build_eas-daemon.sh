@@ -14,11 +14,6 @@
 #   libical
 
 
-# the file accounts.cfg needs to be in your system configuration folder "/usr/local/etc"
-# type the following command in your terminal:
-#
-# sudo cp ./eas-daemon/data/accounts.cfg /usr/local/etc 
-
 export GLIB_GENMARSHAL=glib-genmarshal
 
 clear

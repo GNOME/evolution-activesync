@@ -70,6 +70,7 @@ static void parse_for_status (xmlNode *node);
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
 #define HTTP_STATUS_OK (200)
+#define HTTP_STATUS_PROVISION (449)
 
 static void
 eas_connection_accounts_init()
@@ -128,7 +129,7 @@ eas_connection_init (EasConnection *self)
     if (getenv ("EAS_SOUP_LOGGER") && (atoi (g_getenv ("EAS_SOUP_LOGGER")) >= 1))
     {
         SoupLogger *logger;
-        logger = soup_logger_new (SOUP_LOGGER_LOG_BODY, -1);
+        logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
         soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE (logger));
     }
 
@@ -432,13 +433,11 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
     g_debug ("eas_connection_set_policy_key++");
 
 	eas_account_set_policy_key (priv->account, policyKey);
-	g_idle_add (eas_account_list_save_list, g_account_list);
-#if 0
-	/*TODO: save just the policy_key item rather than the list */
-	eas_account_list_save_item(account_list,
-								account02,
-								EAS_ACCOUNT_POLICY_KEY);	
-#endif
+	
+	eas_account_list_save_item(g_account_list,
+							   priv->account,
+							   EAS_ACCOUNT_POLICY_KEY);
+							   
     g_debug ("eas_connection_set_policy_key--");
 }
 
@@ -588,7 +587,7 @@ eas_connection_send_request (EasConnection* self,
 
 	policy_key = eas_account_get_policy_key (priv->account);
     // If we need to provision, and not the provisioning msg
-    if (!policy_key && g_strcmp0 (cmd, "Provision"))
+    if ( (!policy_key || !g_strcmp0("0",policy_key)) && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
         g_debug ("  eas_connection_send_request - Provisioning required");
@@ -641,6 +640,7 @@ eas_connection_send_request (EasConnection* self,
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
                                  policy_key?:"0");
+
 #ifndef ACTIVESYNC_14
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 if(g_strcmp0(cmd, "SendMail"))
@@ -740,6 +740,7 @@ typedef enum
     INVALID = 0,
     VALID_NON_EMPTY,
     VALID_EMPTY,
+    VALID_12_1_REPROVISION,
 } RequestValidity;
 
 
@@ -750,6 +751,12 @@ isResponseValid (SoupMessage *msg)
     goffset header_content_length = 0;
 
     g_debug ("eas_connection - isResponseValid++");
+    
+    if (HTTP_STATUS_PROVISION == msg->status_code)
+    {
+		g_warning("Server instructed 12.1 style re-provision");
+		return VALID_12_1_REPROVISION;
+	}
 
     if (HTTP_STATUS_OK != msg->status_code)
     {
@@ -1453,12 +1460,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     WB_ULONG xml_len = 0;
     gboolean isProvisioningRequired = FALSE;
     GError *error = NULL;
-    RequestValidity validity = isResponseValid (msg);
+    RequestValidity validity = FALSE; 
 	gboolean cleanupRequest = FALSE;
 
     g_debug ("eas_connection - handle_server_response++");
 	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
 	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
+
+	validity = isResponseValid (msg);
 
     if (INVALID == validity)
     {
@@ -1499,12 +1508,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         if (doc)
         {
             xmlNode* node = xmlDocGetRootElement (doc);
-            parse_for_status (node);
+            parse_for_status (node); // TODO Set a flag for needing to provision in 14.0
         }
     }
 
-    // TODO Pre-process response status to see if provisioning is required
-    // isProvisioningRequired = ????
+	if (VALID_12_1_REPROVISION == validity)
+	{
+		isProvisioningRequired = TRUE;
+	}
 
 complete_request:
     if (!isProvisioningRequired)

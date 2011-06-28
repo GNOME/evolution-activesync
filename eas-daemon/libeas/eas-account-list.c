@@ -408,25 +408,27 @@ eas_account_gconf_save(EasAccountList *account_list, GConfClient *client, const 
 void
 eas_account_list_save_list (EasAccountList *account_list)
 {
-	g_debug("eas_account_list_save++");	
-
 	GSList *list = NULL;
-	EasAccount *account =NULL;
-	EIterator *iter =NULL;
+	EasAccount *account = NULL;
+	EIterator *iter = NULL;
+	
+	g_debug("eas_account_list_save++");
 
 	for (iter = e_list_get_iterator (E_LIST (account_list));
 	     e_iterator_is_valid (iter);
-	     e_iterator_next (iter)) {
+	     e_iterator_next (iter)) 
+	{
 		account = (EasAccount *)e_iterator_get (iter);
 		list = g_slist_append (list, account);
 	}
 	g_object_unref (iter);
 
 	eas_account_gconf_save(account_list, account_list->priv->gconf, list);
-	
+
 	while (list) {
-		g_free (list->data);
+	    gpointer data = list->data;
 		list = g_slist_remove (list, list->data);
+		g_object_unref (data);
 	}
 
 	gconf_client_suggest_sync (account_list->priv->gconf, NULL);
