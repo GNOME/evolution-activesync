@@ -24,22 +24,10 @@ export GLIB_GENMARSHAL=glib-genmarshal
 clear
 make clean
 
-
 ./autogen.sh
-aclocal
-autoconf
-autoheader
 touch NEWS README AUTHORS ChangeLog
 automake --add-missing
-#mkdir $HOME/eas-daemon-install
-#./configure $HOME/eas-daemon-install
 ./configure --enable-gconf-schemas-install
 
 make all
 ./gen-todo-list.sh
-#make install
-./eas-daemon/src/activesyncd &
-#./eas-daemon/src/.libs/activesyncd &
-make check
-killall lt-activesyncd
-
