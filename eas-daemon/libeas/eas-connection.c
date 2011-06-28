@@ -70,6 +70,7 @@ static void parse_for_status (xmlNode *node);
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
 #define HTTP_STATUS_OK (200)
+#define HTTP_STATUS_PROVISION (449)
 
 static void
 eas_connection_accounts_init()
@@ -739,6 +740,7 @@ typedef enum
     INVALID = 0,
     VALID_NON_EMPTY,
     VALID_EMPTY,
+    VALID_12_1_REPROVISION,
 } RequestValidity;
 
 
@@ -749,6 +751,12 @@ isResponseValid (SoupMessage *msg)
     goffset header_content_length = 0;
 
     g_debug ("eas_connection - isResponseValid++");
+    
+    if (HTTP_STATUS_PROVISION == msg->status_code)
+    {
+		g_warning("Server instructed 12.1 style re-provision");
+		return VALID_12_1_REPROVISION;
+	}
 
     if (HTTP_STATUS_OK != msg->status_code)
     {
@@ -1452,12 +1460,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     WB_ULONG xml_len = 0;
     gboolean isProvisioningRequired = FALSE;
     GError *error = NULL;
-    RequestValidity validity = isResponseValid (msg);
+    RequestValidity validity = FALSE; 
 	gboolean cleanupRequest = FALSE;
 
     g_debug ("eas_connection - handle_server_response++");
 	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
 	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
+
+	validity = isResponseValid (msg);
 
     if (INVALID == validity)
     {
@@ -1498,12 +1508,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         if (doc)
         {
             xmlNode* node = xmlDocGetRootElement (doc);
-            parse_for_status (node);
+            parse_for_status (node); // TODO Set a flag for needing to provision in 14.0
         }
     }
 
-    // TODO Pre-process response status to see if provisioning is required
-    // isProvisioningRequired = ????
+	if (VALID_12_1_REPROVISION == validity)
+	{
+		isProvisioningRequired = TRUE;
+	}
 
 complete_request:
     if (!isProvisioningRequired)
