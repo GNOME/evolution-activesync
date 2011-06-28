@@ -61,9 +61,18 @@ PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution,
 				 have_syncevolution="no")
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
-AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, test "${have_syncevolution}" = "yes")
-
+syncevolution_works="no"
 if (test "${have_syncevolution}" = "yes"); then
+    # Dummy compilation check. If it fails, it's almost certainly because
+    # syncevolution.pc specifies a -lsynthesissdk which doesn't exist.
+    AC_CHECK_LIB(syncevolution, main,
+                 syncevolution_works="yes",
+                 AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)]),
+                 ${SYNCEVOLUTION_LIBS})
+fi
+AM_CONDITIONAL(ENABLE_SYNCEVOLUTION, test "${syncevolution_works}" = "yes")
+
+if (test "${syncevolution_works}" = "yes"); then
     AX_BOOST_BASE(1.34)
     # If syncevolution.pc has a backenddir variable (as it should), then use it
     # Otherwise, fall back to *its* $libdir/syncevolution/backends
