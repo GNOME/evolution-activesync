@@ -1,21 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * code
- * Copyright (C)  2011 <>
- * 
- * code is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 
 #ifndef _EAS_UPDATE_EMAIL_REQ_H_
 #define _EAS_UPDATE_EMAIL_REQ_H_
@@ -50,14 +33,64 @@ struct _EasUpdateEmailReq
 
 GType eas_update_email_req_get_type (void) G_GNUC_CONST;
 
-// C'tor
-EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, DBusGMethodInvocation *context);
+/** 
+ * Create a new email update request GObject
+ *
+ * @param[in] account_id
+ *	  Unique identifier for a user account.
+ * @param[in] sync_key
+ *	  The current synchronisation key.
+ * @param[in] folder_id
+ *	  The identifer for the target server folder.
+ * @param[in] serialised_email_array
+ *	  An array of serialised email objects
+ * @param[in] context
+ *	  A dbus method invocation used to send the completed operation's results
+ *	  to the server. Used in MessageComplete
+ *
+ * @return An allocated EasAddCalendarReq GObject or NULL
+ */
+EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, 
+                                            const gchar *sync_key, 
+                                            const gchar *folder_id, 
+                                            const gchar **serialised_email_array, 
+                                            DBusGMethodInvocation *context);
 
-// start async request
-gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self, GError** error);
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasUpdateEmailReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self, 
+                                       GError** error);
 
-// async request completed
-gboolean eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, xmlDoc* doc, GError* error);
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then sending the response back across the dbus
+ *
+ * @param[in] self
+ *	  The EasUpdateEmailReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *	  Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if request is finished and needs cleaning up by connection 
+ *    object, otherwise FALSE. 
+ */
+gboolean eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, 
+                                              xmlDoc* doc, 
+                                              GError* error);
 
 
 G_END_DECLS

@@ -1,21 +1,5 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * code
- * Copyright (C)  2011 <>
- *
- * code is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+
 
 #include "eas-utils.h"
 #include "eas-sync-msg.h"
@@ -60,16 +44,33 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 }
 
 static void
+eas_update_email_req_dispose (GObject *object)
+{
+    EasUpdateEmailReq *req = (EasUpdateEmailReq *) object;
+    EasUpdateEmailReqPrivate *priv = req->priv;
+
+    g_debug ("eas_update_email_req_dispose++");
+
+    if (priv->sync_msg)
+	{
+		g_object_unref (priv->sync_msg);
+		priv->sync_msg = NULL;
+	}
+
+    G_OBJECT_CLASS (eas_update_email_req_parent_class)->dispose (object);
+
+    g_debug ("eas_update_email_req_dispose--");
+}
+
+static void
 eas_update_email_req_finalize (GObject *object)
 {
-    /* deinitalization code */
     EasUpdateEmailReq *req = (EasUpdateEmailReq *) object;
     EasUpdateEmailReqPrivate *priv = req->priv;
 
     g_debug ("eas_update_email_req_finalize++");
     g_free (priv->account_id);
 
-    g_object_unref (priv->sync_msg);
     free_string_array (priv->serialised_email_array);
 
     G_OBJECT_CLASS (eas_update_email_req_parent_class)->finalize (object);
@@ -81,21 +82,21 @@ static void
 eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_type_class_add_private (klass, sizeof (EasUpdateEmailReqPrivate));
 
     object_class->finalize = eas_update_email_req_finalize;
+    object_class->dispose = eas_update_email_req_dispose;
 
     g_debug ("eas_update_email_req_class_init--");
 }
 
 // TODO - update this to take a GSList of serialised emails? rem to copy the list
-EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gchar *sync_key, const gchar *folder_id, const gchar **serialised_email_array, DBusGMethodInvocation *context)
+EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, 
+                                                                                   const gchar *sync_key, 
+                                                                                   const gchar *folder_id, 
+                                                                                   const gchar **serialised_email_array, 
+                                                                                   DBusGMethodInvocation *context)
 {
     EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
     EasUpdateEmailReqPrivate *priv = self->priv;
@@ -103,23 +104,27 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gcha
     guint num_serialised_emails = 0;
 
     g_debug ("eas_update_email_req_new++");
-    g_assert (sync_key);
-    g_assert (folder_id);
-    g_assert (serialised_email_array);
 
-    num_serialised_emails = array_length (serialised_email_array);
+	g_assert (sync_key);
+    g_assert (folder_id);
+    g_assert (serialised_email_array);    
+
+	num_serialised_emails = array_length (serialised_email_array);
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
-    // TODO duplicate the string array
+
     priv->serialised_email_array = g_malloc0 ( (num_serialised_emails * sizeof (gchar*)) + 1); // allow for null terminate
     if (!priv->serialised_email_array)
     {
+        g_warning ("Failed to allocate memory!");
         goto cleanup;
     }
+    
     for (i = 0; i < num_serialised_emails; i++)
     {
         priv->serialised_email_array[i] = g_strdup (serialised_email_array[i]);
     }
+    
     priv->serialised_email_array[i] = NULL;
 
     priv->account_id = g_strdup (account_id);
@@ -129,7 +134,6 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, const gcha
 cleanup:
     if (!priv->serialised_email_array)
     {
-        g_warning ("Failed to allocate memory!");
         g_free (priv->sync_key);
         g_free (priv->folder_id);
         if (self)
@@ -176,6 +180,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
                      EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
                      ("out of memory"));
         ret = FALSE;
+        g_object_unref (priv->sync_msg); 
         goto finish;
     }
 
@@ -210,6 +215,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     {
 		ret = FALSE;
         error = error_in;
+		xmlFreeDoc (doc);
         goto finish;
     }
 
