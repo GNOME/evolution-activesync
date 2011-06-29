@@ -113,7 +113,7 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id,
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
 
-    priv->serialised_email_array = g_malloc0 ( (num_serialised_emails * sizeof (gchar*)) + 1); // allow for null terminate
+    priv->serialised_email_array = g_malloc0 ((num_serialised_emails + 1) * sizeof (gchar*)); // allow for null terminate
     if (!priv->serialised_email_array)
     {
         g_warning ("Failed to allocate memory!");
