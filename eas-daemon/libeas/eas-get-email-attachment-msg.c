@@ -1,8 +1,5 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- */
+
 #include <libwbxml-1.0/wbxml/wbxml.h>
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
@@ -52,10 +49,6 @@ static void
 eas_get_email_attachment_msg_class_init (EasGetEmailAttachmentMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
-
 
     g_debug ("eas_get_email_attachment_msg_class_init++");
     g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentMsgPrivate));
@@ -117,7 +110,9 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 }
 
 gboolean
-eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, xmlDoc *doc, GError** error)
+eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, 
+											 xmlDoc *doc, 
+											 GError** error)
 {
     EasError error_details;
     gboolean ret = TRUE;
