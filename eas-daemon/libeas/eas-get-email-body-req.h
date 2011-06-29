@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_GET_EMAIL_BODY_REQ_H_
 #define _EAS_GET_EMAIL_BODY_REQ_H_
@@ -38,6 +33,22 @@ struct _EasGetEmailBodyReq
 
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
+/** 
+ * Create a new email body request GObject
+ *
+ * @param[in] account_uid
+ *	  Unique identifier for a user account.
+ * @param[in] collection_id
+ *	  The identifer for the target server folder.
+ * @param server_id  
+ *      The server ID identifying the email on the Exchange Server.
+ * @param[in] mime_directory
+ *	  Full path to local file system directory where the retrieved email 
+ * @param[in] context
+ *	  DBus context token.
+ *
+ * @return An allocated EasGetEmailAttachmentReq GObject or NULL
+ */
 EasGetEmailBodyReq* 
 eas_get_email_body_req_new (const gchar* account_uid, 
                             const gchar *collection_id, 
@@ -45,8 +56,42 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *mime_directory,
                             DBusGMethodInvocation *context);
 
-gboolean eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error);
-gboolean eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, GError* error);
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasGetEmailBodyReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, 
+                                 GError** error);
+
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then returning the results across the dbus to the client 
+ *
+ * @param[in] self
+ *	  The EasGetEmailBodyReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *	  Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if finished and needs unreffing, FALSE otherwise.
+ */
+gboolean 
+eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, 
+                                        xmlDoc *doc, 
+                                        GError* error);
 
 G_END_DECLS
 

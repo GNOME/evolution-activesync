@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
@@ -36,8 +31,32 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
+	priv->mimeDirectory = NULL;
+	priv->serverId = NULL;
+	priv->collectionId = NULL;
+	
     g_debug ("eas_get_email_body_req_init--");
 }
+
+static void
+eas_get_email_body_req_dispose (GObject *object)
+{
+    EasGetEmailBodyReq* self = (EasGetEmailBodyReq *) object;
+    EasGetEmailBodyReqPrivate *priv = self->priv;
+
+    g_debug ("eas_get_email_body_req_dispose++");
+	
+    if (priv->emailBodyMsg)
+    {
+        g_object_unref (priv->emailBodyMsg);
+		priv->emailBodyMsg = NULL;
+    }
+	
+    G_OBJECT_CLASS (eas_get_email_body_req_parent_class)->dispose (object);
+	
+    g_debug ("eas_get_email_body_req_dispose--");
+}
+
 
 static void
 eas_get_email_body_req_finalize (GObject *object)
@@ -47,10 +66,6 @@ eas_get_email_body_req_finalize (GObject *object)
 
     g_debug ("eas_get_email_body_req_finalize++");
 
-    if (priv->emailBodyMsg)
-    {
-        g_object_unref (priv->emailBodyMsg);
-    }
     g_free (priv->serverId);
     g_free (priv->collectionId);
     g_free (priv->mimeDirectory);
@@ -64,15 +79,13 @@ static void
 eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
-    g_debug ("eas_get_email_body_req_class_init++");
+	g_debug ("eas_get_email_body_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasGetEmailBodyReqPrivate));
 
     object_class->finalize = eas_get_email_body_req_finalize;
+    object_class->dispose = eas_get_email_body_req_dispose;
     g_debug ("eas_get_email_body_req_class_init--");
 }
 
@@ -158,10 +171,9 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     }
 
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
-    xmlFree (doc);
-
 
 finish:
+    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
