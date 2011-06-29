@@ -104,6 +104,7 @@ email03 =lorna@mobica.com
 email04 =tez@mobica.com
 email05 =good.user@cstylianou.com
 email06 =jem@mobica.com
+email07 =Salvatore@cstylianou.com
 
 setaccounts: clearkeys
 	gconftool-2 --set --type string \
@@ -130,7 +131,10 @@ setaccounts: clearkeys
 	            $(gconf_root)/$(email06)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email06)/username jem
-
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email07)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type sting \
+				$(gconf_root)/$(email07)/username Salvatore
 
 #use this option if you need to create a new GConf account
 my_email= myname@mycompany.com
