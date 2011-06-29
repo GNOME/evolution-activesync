@@ -208,7 +208,6 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
 
 	// parse the response (for status)
     ret = eas_move_email_msg_parse_response (priv->move_email_msg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -216,6 +215,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
     }
 
 finish:
+    xmlFreeDoc (doc);
     // signal daemon we're done
     e_flag_set (eas_request_base_GetFlag (&self->parent_instance));
 

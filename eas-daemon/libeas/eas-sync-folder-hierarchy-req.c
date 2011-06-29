@@ -205,7 +205,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 
     // if an error occurs when parsing, store it
     ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -312,6 +311,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     }
 
 finish:
+    xmlFreeDoc (doc);
 	if (!ret)
 	{
 		g_assert (error != NULL);

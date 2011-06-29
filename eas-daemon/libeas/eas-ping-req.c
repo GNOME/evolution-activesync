@@ -166,7 +166,6 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
     }
 
     ret = eas_ping_msg_parse_response (priv->ping_msg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -222,6 +221,7 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 	
 
 finish:
+    xmlFreeDoc (doc);
     if(!ret)
 	{
 		g_debug ("eas_ping_req_Return Error");

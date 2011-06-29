@@ -197,7 +197,7 @@ finish:
         dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
                               ret_sync_key);
     }
-    xmlFree (doc);
+    xmlFreeDoc (doc);
 	g_free(ret_sync_key);
 
     g_debug ("eas_delete_email_req_MessageComplete--");

@@ -170,7 +170,7 @@ gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq*
     }
 
 finish:
-    xmlFree (doc);
+    xmlFreeDoc (doc);
 	if(!ret)
 	{
 		g_assert (error != NULL);

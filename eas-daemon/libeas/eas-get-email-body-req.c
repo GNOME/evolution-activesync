@@ -173,7 +173,7 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
 
 finish:
-    xmlFree (doc);
+    xmlFreeDoc (doc);
     if (!ret)
     {
         g_assert (error != NULL);

@@ -241,13 +241,13 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     }
 
     ret = eas_send_email_msg_parse_response (priv->send_email_msg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
     }
 
 finish:
+    xmlFreeDoc (doc);
     if (!ret)
 	{
         g_assert (error != NULL);

@@ -186,7 +186,7 @@ finish:
                               ret_added_items_array);
 	}
 	// We always need to free 'doc' and release the semaphore.
-    xmlFree (doc);
+    xmlFreeDoc (doc);
 
     g_debug ("eas_add_calendar_req_MessageComplete--");
 	return TRUE;
