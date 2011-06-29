@@ -409,7 +409,6 @@ eas_mail_update_emails (EasMail *self,
     ret = eas_update_email_req_Activate (req, &error);
 
 finish:
-	g_object_unref (req);	
     if (!ret)
     {
         g_assert (error != NULL);
