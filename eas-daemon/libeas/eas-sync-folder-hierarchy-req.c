@@ -224,6 +224,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
         {
             //get syncKey
             gchar* syncKey = g_strdup (eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
+			xmlDoc *newMsgDoc = NULL;
 
             //clean up old message
             if (priv->syncFolderMsg)
@@ -235,8 +236,8 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
 
             //build request msg
-            doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-			if (!doc)
+            newMsgDoc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+			if (!newMsgDoc)
 			{
 				ret = FALSE;
 				g_set_error (&error, EAS_CONNECTION_ERROR,
@@ -249,7 +250,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 
             ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                                "FolderSync",
-                                               doc,
+                                               newMsgDoc,
                                                (struct _EasRequestBase *) self,
                                                &error);
             if (!ret)
