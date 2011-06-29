@@ -64,6 +64,7 @@
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-req.h"
 #include "eas-move-email-req.h"
+#include "activesyncd-common-defs.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -111,6 +112,22 @@ eas_mail_class_init (EasMailClass *klass)
     g_debug (">>eas_mail_class_init 01");
     g_type_class_add_private (klass, sizeof (EasMailPrivate));
     g_debug (">>eas_mail_class_init 02");
+
+	// lrm
+	// create the progress signal we emit 
+	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,	// name of the signal
+	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
+	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
+	0,																		// class offset
+	NULL,																	// accumulator
+	NULL,																	// user data for accumulator
+	g_cclosure_marshal_VOID__UINT,   // Function to marshal the signal data into the parameters of the signal call
+	G_TYPE_NONE,															// handler return type
+	2,																		// Number of parameter GTypes to follow
+	// GTypes of the parameters
+	G_TYPE_UINT,
+	G_TYPE_UINT);
+	
     /* Binding to GLib/D-Bus" */
     dbus_g_object_type_install_info (EAS_TYPE_MAIL,
                                      &dbus_glib_eas_mail_object_info);
@@ -460,6 +477,8 @@ eas_mail_fetch_email_body (EasMail* self,
                                       context);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);	//lrm TODO
 
     ret = eas_get_email_body_req_Activate (req, &error);
 

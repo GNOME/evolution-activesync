@@ -58,6 +58,7 @@
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
+#include "../src/eas-mail.h"
 
 G_BEGIN_DECLS
 
@@ -160,9 +161,8 @@ struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
  */
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
 
-/**
- * Getter for soup message.
- *
+void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);
+EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
  * @param[in] self
  *      GObject Instance.
  *

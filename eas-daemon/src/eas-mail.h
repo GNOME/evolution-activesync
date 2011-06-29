@@ -72,6 +72,7 @@ typedef struct _EasMailPrivate EasMailPrivate;
 struct _EasMailClass
 {
 	GObjectClass parent_class;
+	guint signal_id;	// signal we emit
 };
 
 struct _EasMail

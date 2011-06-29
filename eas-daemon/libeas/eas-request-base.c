@@ -58,6 +58,7 @@ struct _EasRequestBasePrivate
     SoupMessage *soup_message;
     EFlag *flag;
 	DBusGMethodInvocation *context;
+	EasMail *dbus_interface;
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
@@ -80,6 +81,8 @@ eas_request_base_init (EasRequestBase *object)
     priv->soup_message = NULL;
     priv->flag = NULL;
     priv->context = NULL;
+    priv->connection = NULL;
+	priv->dbus_interface = NULL;
 
     g_debug ("eas_request_base_init--");
 }
@@ -157,6 +160,25 @@ eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* con
     priv->connection = connection;
     g_debug ("eas_request_base_SetConnection--");
 }
+
+// lrm
+void
+eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug ("eas_request_base_SetInterfaceObject++");
+    priv->dbus_interface = dbus_interface;
+    g_debug ("eas_request_base_SetInterfaceObject--");
+}
+
+EasMail* 
+eas_request_base_GetInterfaceObject (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug ("eas_request_base_SetInterfaceObject++");
+    return priv->dbus_interface;
+}
+
 
 SoupMessage *
 eas_request_base_GetSoupMessage(EasRequestBase *self)

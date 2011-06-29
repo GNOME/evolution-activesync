@@ -53,7 +53,7 @@
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
 #include "../src/activesyncd-common-defs.h"
-
+#include "../src/eas-mail.h"
 
 struct _EasGetEmailBodyReqPrivate
 {
@@ -143,21 +143,6 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 
     object_class->finalize = eas_get_email_body_req_finalize;
     object_class->dispose = eas_get_email_body_req_dispose;
-	// lrm TODO - does it make more sense to put all signals in the request base class?
-	// create the progress signal we emit 
-	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS, // name of the signal
-	G_OBJECT_CLASS_TYPE ( klass ),  	// type this signal pertains to
-	G_SIGNAL_RUN_LAST ,					// flags used to specify a signal's behaviour
-	0,		// class offset
-	NULL ,  // accumulator
-	NULL ,  // user data for accumulator
-	g_cclosure_marshal_VOID__UINT ,   // Function to marshal the signal data into the parameters of the signal call
-	G_TYPE_NONE ,   // handler return type
-	2,  // Number of parameter GTypes to follow
-	// GType (s) of the parameters
-	G_TYPE_UINT,
-	G_TYPE_UINT);
-
     g_debug ("eas_get_email_body_req_class_init--");
 }
 
@@ -206,15 +191,20 @@ eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
 {
 	EasGetEmailBodyReqPrivate *priv = self->priv;
 	EasGetEmailBodyReqClass* klass = EAS_GET_EMAIL_BODY_REQ_GET_CLASS (self);
-
+	EasMail* mail;
+	EasMailClass* mail_klass;
+	guint percent;
+	
 	g_debug("eas_get_email_body_req_GotChunk++");
 	priv->response_received += length;
 
-	guint percent = priv->response_received * 100 / priv->response_size;
-	
-	// lrm emit signal
-	g_signal_emit (self,
-	klass->signal_id,
+	percent = priv->response_received * 100 / priv->response_size;
+
+	mail = eas_request_base_GetInterfaceObject(self);
+	mail_klass = EAS_MAIL_GET_CLASS (mail);
+	// lrm emit signal TODO get EasMail object to use here:
+	g_signal_emit (mail,
+	mail_klass->signal_id,
 	0,
 	priv->request_id,
 	percent);
