@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-connection-errors.h"
 #include "eas-get-email-body-msg.h"
@@ -31,6 +26,7 @@ eas_get_email_body_msg_init (EasGetEmailBodyMsg *object)
 
     priv->serverUid = NULL;
     priv->collectionId = NULL;
+	priv->directoryPath = NULL;
 
     g_debug ("eas_get_email_body_msg_init--");
 }
@@ -40,7 +36,7 @@ eas_get_email_body_msg_finalize (GObject *object)
 {
     EasGetEmailBodyMsg* self = (EasGetEmailBodyMsg *) object;
     EasGetEmailBodyMsgPrivate* priv = self->priv;
-    /* TODO: Add deinitalization code here */
+	
     g_debug ("eas_get_email_body_msg_finalize++");
 
     g_free (priv->serverUid);
@@ -55,10 +51,6 @@ static void
 eas_get_email_body_msg_class_init (EasGetEmailBodyMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
-
     g_debug ("eas_get_email_body_msg_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasGetEmailBodyMsgPrivate));
@@ -94,9 +86,9 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
     xmlDoc* doc = NULL;
     xmlNode *root = NULL;
     xmlNode *fetch = NULL,
-                     *options = NULL,
-                                *body_pref = NULL,
-                                             *leaf = NULL;
+            *options = NULL,
+            *body_pref = NULL,
+            *leaf = NULL;
 
     g_debug ("eas_get_email_body_msg_build_message++");
 
@@ -124,9 +116,6 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
     body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
 
     leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
-    //The TruncationSize and AllOrNone doesn't work for Type MIME 4 (uncomment these for Plain text 1 or HTML 2)
-    //leaf = xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:TruncationSize", (xmlChar*) "5120");  //  Set the trancation size to 5KB
-    //leaf = xmlNewChild(body_pref, NULL, (xmlChar *)"airsyncbase:AllOrNone", (xmlChar*) "0");
 
     g_debug ("eas_get_email_body_msg_build_message--");
     return doc;
@@ -318,7 +307,13 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
             else
             {
                 g_critical ("Failed to open file!");
-                // TODO set error?
+                g_set_error (error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_FILEERROR,
+                             "Failed to open file [%s]", fullFilePath);
+                ret = FALSE;
+				g_free (fullFilePath);
+				xmlFree (xmlTmp);
+				goto finish;
             }
             g_free (fullFilePath);
             xmlFree (xmlTmp);
