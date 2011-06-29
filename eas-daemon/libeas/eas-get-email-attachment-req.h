@@ -73,7 +73,8 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self,
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client *
+ * then returning the results across the dbus to the client 
+ *
  * @param[in] self
  *	  The EasGetEmailAttachmentReq GObject instance whose messages are complete.
  * @param[in] doc
@@ -81,6 +82,7 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self,
  *	  xmlFreeDoc(). [full transfer]
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
+ *
  * @return TRUE if finished and needs unreffing, FALSE otherwise
  */
 gboolean 
