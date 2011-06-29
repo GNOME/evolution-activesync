@@ -43,10 +43,8 @@ GType eas_add_calendar_req_get_type (void) G_GNUC_CONST;
  *	  The identifer for the target server folder.
  * @param[in] serialised_calendar
  *	  A list of strings containing serialised EasItemInfo GObjects.
- * @param[in] flag
- *	  A semaphore used to make the request appear synchronous by waiting for the
- *	  server response. It should be set by the caller immediately after this 
- *	  function is called and cleared in this request's MessageComplete.
+ * @param[in] context
+ *	  DBus context token.
  *
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
