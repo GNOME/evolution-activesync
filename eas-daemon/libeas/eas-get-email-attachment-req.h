@@ -1,8 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- */
 
 #ifndef _EAS_GET_EMAIL_ATTACHMENT_REQ_H_
 #define _EAS_GET_EMAIL_ATTACHMENT_REQ_H_
@@ -36,14 +32,61 @@ struct _EasGetEmailAttachmentReq
 
 GType eas_get_email_attachment_req_get_type (void) G_GNUC_CONST;
 
+/** 
+ * Create a new delete email request GObject
+ *
+ * @param[in] account_id
+ *	  Unique identifier for a user account.
+ * @param[in] file_reference
+ *	  File identifer reference on the server.
+ * @param[in] mime_directory
+ *	  Full path to local file system directory where the retrieved email 
+ *	  attachment is to be written.
+ * @param[in] context
+ *	  DBus context token.
+ *
+ * @return An allocated EasGetEmailAttachmentReq GObject or NULL
+ */
 EasGetEmailAttachmentReq* 
 eas_get_email_attachment_req_new (const gchar* account_uid, 
-                            const gchar *file_reference,
-                            const gchar *mime_directory,
-                            DBusGMethodInvocation *context);
-                   
-gboolean eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** error);
-gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, xmlDoc *doc, GError* error);
+                                  const gchar *file_reference,
+                                  const gchar *mime_directory,
+                                  DBusGMethodInvocation *context);
+
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasGetEmailAttachmentReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, 
+                                       GError** error);
+
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then returning the results across the dbus to the client *
+ * @param[in] self
+ *	  The EasGetEmailAttachmentReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *	  Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ * @return TRUE if finished and needs unreffing, FALSE otherwise
+ */
+gboolean 
+eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, 
+                                              xmlDoc *doc, 
+                                              GError* error);
 
 G_END_DECLS
 

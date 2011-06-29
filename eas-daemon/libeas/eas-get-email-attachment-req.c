@@ -1,8 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- */
 
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
@@ -41,6 +37,24 @@ eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
 }
 
 static void
+eas_get_email_attachment_req_dispose (GObject *object)
+{
+    EasGetEmailAttachmentReq* self = (EasGetEmailAttachmentReq *) object;
+    EasGetEmailAttachmentReqPrivate *priv = self->priv;
+
+    g_debug ("eas_get_email_attachment_req_dispose++");
+
+    if (priv->emailAttachmentMsg)
+    {
+        g_object_unref (priv->emailAttachmentMsg);
+        priv->emailAttachmentMsg = NULL;
+    }
+
+    G_OBJECT_CLASS (eas_get_email_attachment_req_parent_class)->dispose (object);
+    g_debug ("eas_get_email_attachment_req_dispose--");
+}
+
+static void
 eas_get_email_attachment_req_finalize (GObject *object)
 {
     EasGetEmailAttachmentReq* self = (EasGetEmailAttachmentReq *) object;
@@ -48,10 +62,6 @@ eas_get_email_attachment_req_finalize (GObject *object)
 
     g_debug ("eas_get_email_attachment_req_finalize++");
 
-    if (priv->emailAttachmentMsg)
-    {
-        g_object_unref (priv->emailAttachmentMsg);
-    }
 
     g_free (priv->fileReference);
     g_free (priv->mimeDirectory);
@@ -65,14 +75,12 @@ static void
 eas_get_email_attachment_req_class_init (EasGetEmailAttachmentReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_debug ("eas_get_email_attachment_req_class_init++");
     g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentReqPrivate));
 
     object_class->finalize = eas_get_email_attachment_req_finalize;
+    object_class->dispose = eas_get_email_attachment_req_dispose;
 
     g_debug ("eas_get_email_attachment_req_class_init--");
 }
@@ -155,7 +163,6 @@ gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq*
     }
 
     ret = eas_get_email_attachment_msg_parse_response (priv->emailAttachmentMsg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -163,6 +170,7 @@ gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq*
     }
 
 finish:
+    xmlFree (doc);
 	if(!ret)
 	{
 		g_assert (error != NULL);
