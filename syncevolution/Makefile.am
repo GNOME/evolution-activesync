@@ -6,7 +6,10 @@ libeassync_CFLAGS = \
 	$(LIBXML_CFLAGS) \
 	$(EDATASERVER_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS)
-libeassync_LIBADD = -leassync -leas -leasmail
+libeassync_LIBADD = \
+	$(top_builddir)/libeasmail/src/libeasmail.la	\
+	$(top_builddir)/libeassync/src/libeassync.la	\
+	$(top_builddir)/eas-daemon/libeas
 
 AM_CPPFLAGS = \
 	-DHAVE_CONFIG_H \
