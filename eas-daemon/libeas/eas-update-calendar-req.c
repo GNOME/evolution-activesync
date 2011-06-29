@@ -4,7 +4,6 @@
 #include "eas-update-calendar-req.h"
 
 
-
 G_DEFINE_TYPE (EasUpdateCalendarReq, eas_update_calendar_req, EAS_TYPE_REQUEST_BASE);
 
 #define EAS_UPDATE_CALENDAR_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_UPDATE_CALENDAR_REQ, EasUpdateCalendarReqPrivate))
@@ -102,6 +101,10 @@ EasUpdateCalendarReq *eas_update_calendar_req_new (const gchar* account_id,
 
     g_debug ("eas_update_calendar_req_new++");
 
+	g_assert (sync_key);
+    g_assert (folder_id);
+    g_assert (serialised_calendar);
+	
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
     priv->serialised_calendar = (GSList *) serialised_calendar;
@@ -183,7 +186,7 @@ finish:
                               ret_sync_key);
     }
 	// We must always free doc and release the semaphore
-    xmlFree (doc);
+    xmlFreeDoc (doc);
     g_free(ret_sync_key);
 
     g_debug ("eas_update_calendar_req_MessageComplete--");
