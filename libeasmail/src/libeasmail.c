@@ -101,7 +101,10 @@ eas_mail_handler_finalize (GObject *object)
     g_main_loop_quit (priv->main_loop);
     dbus_g_connection_unref (priv->bus);
 	// free the hashtable
-	g_hash_table_remove_all(priv->fetch_email_body_progress_fns_table);
+	if(priv->fetch_email_body_progress_fns_table)
+	{
+		g_hash_table_remove_all(priv->fetch_email_body_progress_fns_table);
+	}
     // nothing to do to 'free' proxy
     g_free (priv);
     cnc->priv = NULL;
@@ -193,17 +196,17 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     object->priv->account_uid = g_strdup (account_uid);
 
 	// lrm
-	g_debug("register as observer of 'fetch_email_progress' signal");
+	g_debug("register as observer of %s signal", EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS);
 	// fetch_email_body signal setup:
 	dbus_g_proxy_add_signal(object->priv->remoteEas,						
                         EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,
-                        G_TYPE_UINT,	// request 'handle'
+                        G_TYPE_UINT,	// request id
 	                    G_TYPE_UINT,	// percent
                         G_TYPE_INVALID);	
 
 	// register for progress signals
 	dbus_g_proxy_connect_signal(object->priv->remoteEas,
-                            	"fetch_email_progress",
+                            	EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,
 	                            G_CALLBACK (fetch_email_progress_signal_handler),		// callback when signal emitted
 								object,													// userdata passed to above cb
 	                            NULL);
@@ -665,10 +668,11 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 }
 
 
-static void fetch_email_progress_signal_handler (DBusGProxy * proxy,
-                                                 	guint request_id,
-													guint percent,
-                                                 	gpointer user_data) 
+static void 
+fetch_email_progress_signal_handler (DBusGProxy* proxy,
+                                 	guint request_id,
+									guint percent,
+                                 	gpointer user_data) 
 {
 	EasProgressCallbackInfo *progress_callback_info;
 	EasEmailHandler* self = (EasEmailHandler*)user_data;
