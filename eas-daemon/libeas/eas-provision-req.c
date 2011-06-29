@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-provision-req.h"
 #include "eas-provision-msg.h"
@@ -43,16 +38,26 @@ eas_provision_req_init (EasProvisionReq *object)
 }
 
 static void
+eas_provision_req_dispose (GObject *object)
+{
+    EasProvisionReq *req = (EasProvisionReq *) object;
+    EasProvisionReqPrivate *priv = req->priv;
+	
+    if (priv->msg)
+    {
+        g_object_unref (priv->msg);
+        priv->msg = NULL;
+    }
+
+	G_OBJECT_CLASS (eas_provision_req_parent_class)->dispose (object);
+}
+
+
+static void
 eas_provision_req_finalize (GObject *object)
 {
     EasProvisionReq *req = (EasProvisionReq *) object;
     EasProvisionReqPrivate *priv = req->priv;
-
-    /* TODO: Add deinitalization code here */
-    if (priv->msg)
-    {
-        g_object_unref (priv->msg);
-    }
 
     G_OBJECT_CLASS (eas_provision_req_parent_class)->finalize (object);
 }
@@ -61,36 +66,41 @@ static void
 eas_provision_req_class_init (EasProvisionReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_type_class_add_private (klass, sizeof (EasProvisionReqPrivate));
 
     object_class->finalize = eas_provision_req_finalize;
+    object_class->dispose = eas_provision_req_dispose;
 }
 
 
 EasProvisionReq*
-eas_provision_req_new (gchar* policy_status, gchar* policy_key)
+eas_provision_req_new (const gchar* policy_status, const gchar* policy_key)
 {
-    EasProvisionReqPrivate *priv = NULL;
     EasProvisionReq* req = NULL;
 
     req = g_object_new (EAS_TYPE_PROVISION_REQ, NULL);
-    priv = req->priv;
+	if (req)
+	{
+        EasProvisionReqPrivate *priv = req->priv;
 
-    // Build the message
-    priv->msg = eas_provision_msg_new ();
-    eas_provision_msg_set_policy_status (priv->msg, policy_status);
-    eas_provision_msg_set_policy_key (priv->msg, policy_key);
+	    // Build the message
+		priv->msg = eas_provision_msg_new ();
+		if (priv->msg) 
+		{
+			eas_provision_msg_set_policy_status (priv->msg, policy_status);
+			eas_provision_msg_set_policy_key (priv->msg, policy_key);
+		}
+		else
+		{
+			g_object_unref(req);
+			req = NULL;
+		}
+	}
 
     return req;
 }
 
-/**
- * @return whether successful
-*/
 gboolean
 eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 {
@@ -110,21 +120,15 @@ eas_provision_req_Activate (EasProvisionReq* self, GError** error)
         goto finish;
     }
 
-    // TODO
     ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                        "Provision",
-                                       doc,
+                                       doc, // full transfer
                                        (struct _EasRequestBase *) self,
                                        error);
 finish:
     return ret;
 }
 
-/**
- * @param doc The protocol xml to be parsed. MUST be freed with xmlFree()
- * @param response_error set by caller for passing back to user
- * @return whether successful
- */
 gboolean
 eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* response_error)
 {
@@ -146,7 +150,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
     {
         default:
         {
-            g_assert (0);
+            g_critical("Unknown State");
         }
         break;
 
@@ -195,15 +199,8 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
     }
 
 finish:
-    xmlFree (doc);
+    xmlFreeDoc (doc);
     g_debug ("eas_provision_req_MessageComplete--");
 
     return cleanup;
-}
-
-gchar*
-eas_provision_req_GetPolicyKey (EasProvisionReq* self)
-{
-    /* TODO: Add public function implementation here */
-    return NULL;
 }
