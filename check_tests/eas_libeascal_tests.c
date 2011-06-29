@@ -7,6 +7,7 @@
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
 
+static gchar * g_account_id = "good.user@cstylianou.com";
 
 const char* TEST_VCALENDAR = "BEGIN:VCALENDAR\n\
 PRODID:-//Microsoft Corporation//Outlook 14.0 MIMEDIR//EN\n\
@@ -267,7 +268,7 @@ END_TEST
 
 START_TEST (test_get_sync_handler)
 {
-    const char* accountuid = "123456789@andygould";
+    const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 
     testGetCalendarHandler (&sync_handler, accountuid);
@@ -282,7 +283,7 @@ START_TEST (test_get_latest_calendar_items)
     // it should be hard coded to the value used by the daemon but later
     // there should be a mechanism for getting the value from the same place
     // that the daemon uses
-    const char* accountuid = "123456789@andygould";
+    const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 
     // get a handle to the DBus interface and associate the account ID with
@@ -338,7 +339,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_delete_cal)
 {
-    const char* accountuid = "123456789@andygould";
+    const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
@@ -421,7 +422,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_update_cal)
 {
-    const char* accountuid = "123456789@andygould";
+    const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
@@ -511,7 +512,7 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_add_cal)
 {
-    const char* accountuid = "123456789@andygould";
+    const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
