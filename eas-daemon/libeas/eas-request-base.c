@@ -3,12 +3,9 @@
 
 struct _EasRequestBasePrivate
 {
-    guint64 requestId;
-    gint requestType;
-    guint64 accountId;
+    EasRequestType requestType;
     struct _EasConnection* connection;
     SoupMessage *soup_message;
-    gpointer result;
     EFlag *flag;
 	DBusGMethodInvocation *context;
 };
@@ -27,7 +24,13 @@ eas_request_base_init (EasRequestBase *object)
     object->priv = priv = EAS_REQUEST_BASE_PRIVATE (object);
 
     g_debug ("eas_request_base_init++");
+
+    priv->requestType = EAS_REQ_BASE;
     priv->connection = NULL;
+    priv->soup_message = NULL;
+    priv->flag = NULL;
+    priv->context = NULL;
+
     g_debug ("eas_request_base_init--");
 }
 
@@ -41,7 +44,9 @@ eas_request_base_dispose (GObject *object)
 	if(priv->connection)
 	{
 		g_debug("not unrefing connection");
-		//g_object_unref(priv->connection);
+        // TODO Fix the unreff count.
+		// g_object_unref(priv->connection);
+        // priv->connection = NULL;
 	}
     G_OBJECT_CLASS (eas_request_base_parent_class)->dispose (object);
 	g_debug ("eas_request_base_dispose--");
@@ -59,9 +64,6 @@ static void
 eas_request_base_class_init (EasRequestBaseClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_debug ("eas_request_base_class_init++");
     g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
