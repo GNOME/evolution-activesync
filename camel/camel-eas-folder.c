@@ -57,6 +57,7 @@ struct _CamelEasFolderPrivate {
 	gboolean refreshing;
 	gboolean fetch_pending;
 	GMutex *state_lock;
+	GMutex *server_lock;
 	GCond *fetch_cond;
 	GHashTable *uid_eflags;
 };
@@ -186,7 +187,9 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 		goto exit;
 	}
 
+	g_mutex_lock (priv->server_lock);
 	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, error);
+	g_mutex_unlock (priv->server_lock);
 
 	if (!res) {
 		g_free (mime_dir);
@@ -354,6 +357,7 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 	EasEmailHandler *handler;
         gchar *folder_id;
 	gboolean success;
+        CamelEasFolderPrivate *priv = CAMEL_EAS_FOLDER(folder)->priv;
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
         handler = camel_eas_store_get_handler (eas_store);
@@ -363,9 +367,11 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 								     full_name);
 
 
+	g_mutex_lock (priv->server_lock);
 	success = eas_mail_handler_delete_email (handler,
 						 ((CamelEasSummary *) folder->summary)->sync_state,
 						 folder_id, deleted_uids, error);
+	g_mutex_unlock (priv->server_lock);
 	if (success) {
 		CamelFolderChangeInfo *changes = camel_folder_change_info_new ();
 		GSList *l;
@@ -398,6 +404,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	gboolean success = TRUE;
         const gchar *full_name;
         gchar *folder_id;
+        CamelEasFolderPrivate *priv = CAMEL_EAS_FOLDER(folder)->priv;
 	int i;
 	EVO2(GCancellable *cancellable = NULL);
 
@@ -454,18 +461,24 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 
 		/* Don't do too many at once */
 		if (item_list_len == 25) {
+			g_mutex_lock (priv->server_lock);
 			success = eas_mail_handler_update_email (handler,
 								 ((CamelEasSummary *) folder->summary)->sync_state,
 								 folder_id, item_list, error);
+			g_mutex_unlock (priv->server_lock);
 			item_list = NULL;
 			item_list_len = 0;
 		}
 	}
 
-	if (item_list_len)
+	if (item_list_len) {
+		g_mutex_lock (priv->server_lock);
 		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
 							 folder_id, item_list, error);
+		g_mutex_unlock (priv->server_lock);
+	}
+
 
 	g_free (folder_id);
 
@@ -579,10 +592,13 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		guint total, unread;
 		items_created = items_updated = items_deleted = NULL;
 
+		g_mutex_lock (priv->server_lock);
 		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
 							       &items_created,
 							       &items_updated, &items_deleted,
 							       &more_available, error);
+		g_mutex_unlock (priv->server_lock);
+
 		if (!res)
 			break;
 
@@ -707,6 +723,8 @@ eas_folder_dispose (GObject *object)
 	}
 
 	g_mutex_free (eas_folder->priv->search_lock);
+	g_mutex_free (eas_folder->priv->state_lock);
+	g_mutex_free (eas_folder->priv->server_lock);
 	g_hash_table_destroy (eas_folder->priv->uid_eflags);
 	g_cond_free (eas_folder->priv->fetch_cond);
 
@@ -777,6 +795,7 @@ camel_eas_folder_init (CamelEasFolder *eas_folder)
 
 	eas_folder->priv->search_lock = g_mutex_new ();
 	eas_folder->priv->state_lock = g_mutex_new ();
+	eas_folder->priv->server_lock = g_mutex_new ();
 	g_static_rec_mutex_init(&eas_folder->priv->cache_lock);
 
 	eas_folder->priv->refreshing = FALSE;
