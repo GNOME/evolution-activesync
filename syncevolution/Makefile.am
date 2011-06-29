@@ -10,7 +10,7 @@ LIBEASSYNC_CFLAGS = \
 	$(EDATASERVER_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS)
 
-LIBEASSYNC_LIBS = $(top_srcdir)/libeassync/src/libeassync.la
+LIBEASSYNC_LIBS = $(top_builddir)/libeassync/src/libeassync.la
  endif
 
 AM_CPPFLAGS = \
