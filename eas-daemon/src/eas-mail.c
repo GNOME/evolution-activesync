@@ -270,18 +270,17 @@ eas_mail_sync_folder_email (EasMail* self,
     }
 
     // Create Request
-    req = g_object_new (EAS_TYPE_SYNC_REQ, NULL);
+    req = eas_sync_req_new (sync_key,
+                                 account_uid,
+                                 collection_id,
+                                 EAS_ITEM_MAIL,
+                                 context);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
     // Activate Request
 
-    ret = eas_sync_req_Activate (req,
-                                 sync_key,
-                                 account_uid,
-                                 context,
-                                 collection_id,
-                                 EAS_ITEM_MAIL,
+    ret = eas_sync_req_Activate (req,                                 
                                  &error);
     
 

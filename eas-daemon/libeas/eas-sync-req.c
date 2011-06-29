@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-sync-req.h"
 #include "eas-sync-msg.h"
@@ -24,6 +19,7 @@ typedef enum
 struct _EasSyncReqPrivate
 {
     EasSyncMsg* syncMsg;
+    gchar* sync_key;
     EasSyncReqState state;
     gchar* accountID;
     gchar* folderID;
@@ -44,10 +40,30 @@ eas_sync_req_init (EasSyncReq *object)
     priv->state = EasSyncReqStep1;
     priv->accountID = NULL;
     priv->folderID = NULL;
+	priv->ItemType = EAS_ITEM_NOT_SPECIFIED;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC);
 
     g_debug ("eas_sync_req_init--");
+}
+
+static void
+eas_sync_req_dispose (GObject *object)
+{
+    EasSyncReq *req = (EasSyncReq*) object;
+    EasSyncReqPrivate *priv = req->priv;
+
+    g_debug ("eas_sync_req_dispose++");
+
+    if (priv->syncMsg)
+    {
+        g_object_unref (priv->syncMsg);
+    }
+
+	G_OBJECT_CLASS (eas_sync_req_parent_class)->dispose (object);
+
+    g_debug ("eas_sync_req_dispose--");
+
 }
 
 static void
@@ -58,10 +74,6 @@ eas_sync_req_finalize (GObject *object)
 
     g_debug ("eas_sync_req_finalize++");
 
-    if (priv->syncMsg)
-    {
-        g_object_unref (priv->syncMsg);
-    }
     g_free (priv->accountID);
     g_free (priv->folderID);
 
@@ -75,18 +87,41 @@ static void
 eas_sync_req_class_init (EasSyncReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 
     object_class->finalize = eas_sync_req_finalize;
 }
 
+EasSyncReq *eas_sync_req_new (const gchar* syncKey, 
+                              const gchar* accountID, 
+                              const gchar* folderId, 
+                              EasItemType type,
+                              DBusGMethodInvocation *context) 
+{
+    EasSyncReq* self = g_object_new (EAS_TYPE_SYNC_REQ, NULL);
+    EasSyncReqPrivate *priv = self->priv;
+
+    g_debug ("eas_sync_req_new++");
+
+	g_assert (syncKey);
+	g_assert (accountID);
+    g_assert (folderId);
+	
+    priv->sync_key = g_strdup (syncKey);
+    priv->accountID = g_strdup (accountID);
+    priv->folderID = g_strdup (folderId);
+    priv->ItemType = type;
+
+    eas_request_base_SetContext (&self->parent_instance, context);
+
+    g_debug ("eas_sync_req_new--");
+    return self;
+}
 
 gboolean
-eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* accountID, DBusGMethodInvocation *context, const gchar* folderId, EasItemType type, GError** error)
+eas_sync_req_Activate (EasSyncReq *self,
+                       GError** error)
 {
     gboolean ret = FALSE;
     EasSyncReqPrivate* priv;
@@ -99,17 +134,10 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* acco
 
     priv = self->priv;
 
-    eas_request_base_SetContext (&self->parent_instance, context);
-
-    priv->accountID = g_strdup (accountID);
-
-    priv->ItemType = type;
-
-    priv->folderID = g_strdup (folderId);
-
     g_debug ("eas_sync_req_activate - new Sync  mesg");
-    //create sync  msg type
-    priv->syncMsg = eas_sync_msg_new (syncKey, accountID, folderId, type);
+
+	//create sync  msg type
+    priv->syncMsg = eas_sync_msg_new (priv->sync_key, priv->accountID, priv->folderID, priv->ItemType);
     if (!priv->syncMsg)
     {
         ret = FALSE;
@@ -120,11 +148,11 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* acco
         goto finish;
     }
 
-    g_debug ("eas_sync_req_activate- syncKey = %s", syncKey);
+    g_debug ("eas_sync_req_activate- syncKey = %s", priv->sync_key);
 
     //if syncKey is not 0, then we are not doing a first time sync and only need to send one message
     // so we  move state machine forward
-    if (g_strcmp0 (syncKey, "0"))
+    if (g_strcmp0 (priv->sync_key, "0"))
     {
         g_debug ("switching state");
         priv->state = EasSyncReqStep2;
@@ -137,12 +165,11 @@ eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKey, const gchar* acco
     if (!doc)
     {
         ret = FALSE;
-        // set the error
+		
+		// set the error
         g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
                      ("out of memory"));
-        g_free (priv->syncMsg);
-        priv->syncMsg = NULL;
         goto finish;
     }
 
@@ -157,7 +184,14 @@ finish:
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
+
+        if (priv->syncMsg)
+		{
+			g_object_unref (priv->syncMsg);
+			priv->syncMsg = NULL;
+		}
     }
+	
     g_debug ("eas_sync_req_activate--");
 
     return ret;
@@ -185,13 +219,14 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
-    	ret = FALSE;
+		xmlFreeDoc (doc);
+		ret = FALSE;
         error = error_in;
         goto finish;
     }
 
     ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
-    xmlFree (doc);
+    xmlFreeDoc (doc);
     if (!ret)
     {
         g_assert (error != NULL);
@@ -202,7 +237,10 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     {
         default:
         {
-            g_assert (0);
+			ret = FALSE;
+			g_set_error (&error, EAS_CONNECTION_ERROR,
+				         EAS_CONNECTION_SYNC_ERROR_INVALIDSTATE,
+				         ("Invalid state"));
         }
         break;
 
@@ -294,10 +332,14 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 						}
 					}
 				}
-				break;
+				break;					
 				default:
 				{
-					//TODO: put some error in here for unknown type
+				ret = FALSE;
+				g_set_error (&error, EAS_CONNECTION_ERROR,
+						     EAS_CONNECTION_SYNC_ERROR_INVALIDTYPE,
+						     ("Invalid type"));
+				goto finish;
 				}
 			}
 			dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),

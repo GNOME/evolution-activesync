@@ -167,14 +167,14 @@ eas_sync_get_latest_items (EasSync* self,
 
 
     g_debug ("eas_sync_get_latest_calendar_items++");
-    syncReqObj = g_object_new (EAS_TYPE_SYNC_REQ , NULL);
+    syncReqObj = eas_sync_req_new (sync_key, account_uid, folder_id, type, context);
 
     eas_request_base_SetConnection (&syncReqObj->parent_instance,
                                     self->priv->connection);
 
     g_debug ("eas_sync_get_latest_items - new req");
 
-    eas_sync_req_Activate (syncReqObj, sync_key, account_uid, context, folder_id, type, &error);
+    eas_sync_req_Activate (syncReqObj, &error);
 
     g_debug ("eas_sync_get_latest_items  - activate req");
 

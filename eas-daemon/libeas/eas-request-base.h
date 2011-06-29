@@ -55,7 +55,8 @@ typedef enum {
 } EasRequestType;
 
 typedef enum {
-	EAS_ITEM_FOLDER=0,
+    EAS_ITEM_NOT_SPECIFIED=0,
+	EAS_ITEM_FOLDER,
 	EAS_ITEM_MAIL,
 	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
 	EAS_ITEM_CONTACT,     /**< vCard 3.0 contact */

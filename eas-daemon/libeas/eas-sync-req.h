@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_SYNC_REQ_H_
 #define _EAS_SYNC_REQ_H_
@@ -38,8 +33,65 @@ struct _EasSyncReq
 
 GType eas_sync_req_get_type (void) G_GNUC_CONST;
 
-gboolean eas_sync_req_Activate (EasSyncReq *self, const gchar* syncKeyin, const gchar* accountID, DBusGMethodInvocation *context, const gchar* folderId, EasItemType type, GError** error);
-gboolean eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error);
+
+/** 
+ * Create a new item update request GObject
+ *
+ * @param[in] syncKey
+ *	  The current synchronisation key.
+ * @param[in] accountId
+ *	  Unique identifier for a user account.
+ * @param[in] folderId
+ *	  The identifer for the target server folder.
+ * @param[in] type
+ *	  Identifies the type of update item. e.g. Calendar, Contact, Email
+ * @param[in] context
+ *	  A dbus method invocation used to send the completed operation's results
+ *	  to the server. Used in MessageComplete
+ *
+ * @return An allocated EasAddCalendarReq GObject or NULL
+ */
+EasSyncReq *eas_sync_req_new (const gchar* syncKey, 
+                              const gchar* accountID, 
+                              const gchar* folderId, 
+                              EasItemType type,
+                              DBusGMethodInvocation *context);
+
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasUpdateSyncReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean eas_sync_req_Activate (EasSyncReq *self, 
+                                GError** error);
+
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then sending the response back across the dbus
+ *
+ * @param[in] self
+ *	  The EasSyncReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *	  Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if request is finished and needs cleaning up by connection 
+ *    object, otherwise FALSE. 
+ */
+gboolean eas_sync_req_MessageComplete (EasSyncReq *self, 
+										  xmlDoc* doc, 
+										  GError* error);
 G_END_DECLS
 
 #endif /* _EAS_SYNC_REQ_H_ */
