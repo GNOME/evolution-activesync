@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_MSG_BASE_H_
 #define _EAS_MSG_BASE_H_
@@ -48,9 +43,6 @@ typedef enum {
 } EasMsgType;
 
 GType eas_msg_base_get_type (void) G_GNUC_CONST;
-
-xmlDoc* eas_msg_base_build_message (EasMsgBase *self) __attribute__ ((noreturn));
-void eas_msg_base_parse_response (EasMsgBase *self, xmlDoc* doc) __attribute__ ((noreturn));
 
 G_END_DECLS
 

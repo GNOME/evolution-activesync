@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-msg-base.h"
 
@@ -25,6 +20,9 @@ eas_msg_base_init (EasMsgBase *object)
     g_debug ("eas_msg_base_init++");
     object->priv = priv = EAS_MSG_BASE_PRIVATE (object);
 
+	priv->messageType = EAS_MSG_BASE;
+	priv->accountsObject = NULL;
+
     g_debug ("eas_msg_base_init--");
 }
 
@@ -40,9 +38,6 @@ static void
 eas_msg_base_class_init (EasMsgBaseClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-    void *tmp = object_class;
-    tmp = parent_class;
 
     g_debug ("eas_msg_base_class_init++");
 
@@ -52,24 +47,3 @@ eas_msg_base_class_init (EasMsgBaseClass *klass)
 
     g_debug ("eas_msg_base_class_init--");
 }
-
-/**
- * Should never be called. Exists to define the minium API required for derived
- * classes.
- */
-xmlDoc*
-eas_msg_base_build_message (EasMsgBase *self)
-{
-    g_error ("Base class function should never be used");
-}
-
-/**
- * Should never be called. Exists to define the minium API required for derived
- * classes.
- */
-void
-eas_msg_base_parse_response (EasMsgBase *self, xmlDoc* doc)
-{
-    g_error ("Base class function should never be used");
-}
-
