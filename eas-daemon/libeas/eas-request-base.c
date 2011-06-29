@@ -72,26 +72,6 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
     g_debug ("eas_request_base_class_init--");
 }
 
-/**
- * Should never be called. Exists to define the minium API required for derived
- * classes.
- */
-void
-eas_request_base_Activate (EasRequestBase *self)
-{
-    g_error ("Base class message should never be called");
-}
-
-/**
- * Should never be called. Exists to define the minium API required for derived
- * classes.
- */
-void
-eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc)
-{
-    g_error ("Base class message should never be called");
-}
-
 EasRequestType
 eas_request_base_GetRequestType (EasRequestBase* self)
 {
@@ -108,8 +88,6 @@ eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type)
     priv->requestType = type;
     g_debug ("eas_request_base_SetRequestType--");
 }
-
-
 
 struct _EasConnection*
 eas_request_base_GetConnection (EasRequestBase* self)
@@ -144,7 +122,6 @@ eas_request_base_SetSoupMessage(EasRequestBase *self, SoupMessage *soup_message)
     priv->soup_message = soup_message;
     g_debug("eas_request_base_SetSoupMessage--");
 }
-
 
 EFlag *
 eas_request_base_GetFlag (EasRequestBase* self)

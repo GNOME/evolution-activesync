@@ -37,19 +37,19 @@ struct _EasRequestBase
 
 typedef enum {
 	EAS_REQ_BASE = 0,
-    EAS_REQ_PROVISION,
+	EAS_REQ_PROVISION,
 	EAS_REQ_SYNC_FOLDER_HIERARCHY,
 	EAS_REQ_SYNC,
 	EAS_REQ_SEND_EMAIL,
 	EAS_REQ_DELETE_MAIL,
-    EAS_REQ_GET_EMAIL_BODY,
+	EAS_REQ_GET_EMAIL_BODY,
 	EAS_REQ_UPDATE_MAIL,
-    EAS_REQ_GET_EMAIL_ATTACHMENT,
-    EAS_REQ_UPDATE_CALENDAR,
+	EAS_REQ_GET_EMAIL_ATTACHMENT,
+	EAS_REQ_UPDATE_CALENDAR,
 	EAS_REQ_ADD_CALENDAR,
 	EAS_REQ_MOVE_EMAIL,
 	EAS_REQ_PING,
-	//TODO: add all other requests here
+	// Add other requests here
 	
 	EAS_REQ_LAST
 } EasRequestType;
@@ -60,31 +60,97 @@ typedef enum {
 	EAS_ITEM_MAIL,
 	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
 	EAS_ITEM_CONTACT,     /**< vCard 3.0 contact */
-        EAS_ITEM_TODO,        /**< iCalendar 2.0 VTODO */
-        EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
+	EAS_ITEM_TODO,        /**< iCalendar 2.0 VTODO */
+	EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
 
-	//TODO: add all other items here
+	// Add other items here
 	
 	EAS_ITEM_LAST
 }EasItemType;
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
 
-void eas_request_base_Activate (EasRequestBase *self) __attribute__((noreturn));
-void eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc) __attribute__((noreturn));
-
+/**
+ * Getter for request type.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The request type currently set for this instance.
+ */
 EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
+
+/**
+ * Setter for request type.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] type
+ *      The request type to be set.
+ */
 void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
 
+/**
+ * Getter for connection.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The connection currently set for this instance.
+ */
 struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
+
+/**
+ * Setter for request type.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] connection
+ *      The connection to be set.
+ */
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
 
+/**
+ * Getter for soup message.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The soup message currently set for this instance.
+ */
 SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
+
+/**
+ * Setter for soup message.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] soup_message
+ *      The soup message to be set.
+ */
 void eas_request_base_SetSoupMessage(EasRequestBase* self, SoupMessage *soup_message);
 
+/**
+ * Getter for DBus context token.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The DBus context token currently set for this instance.
+ */
 DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
+
+/**
+ * Setter for DBus context token.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] context
+ *      The DBus context token to be set.
+ */
 void eas_request_base_SetContext(EasRequestBase* self, DBusGMethodInvocation* context);
 
+// @@Deprecated, to be removed once move email is updated to not use this.
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
 void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);
 
