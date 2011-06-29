@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-provision-msg.h"
 #include "eas-connection-errors.h"
@@ -54,9 +49,6 @@ static void
 eas_provision_msg_class_init (EasProvisionMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_debug ("eas_provision_msg_class_init++");
 
@@ -75,8 +67,8 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
     xmlDoc *doc = NULL;
     xmlDtd *dtd = NULL;
     xmlNode *node = NULL,
-                    *child = NULL,
-                             *grandchild = NULL;
+            *child = NULL,
+            *grandchild = NULL;
     xmlNs *ns = NULL;
 
     g_debug ("eas_provision_msg_build_message++");
@@ -330,8 +322,6 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 
     g_debug ("eas_provision_msg_parse_response--");
 
-    g_assert (*error == NULL);
-
     return TRUE;
 }
 
@@ -366,13 +356,8 @@ eas_provision_msg_get_policy_status (EasProvisionMsg* self)
     return priv->policy_status;
 }
 
-/**
- * Setter for policy key
- * @param self the GObject
- * @param policyKey the new policy key [no transfer]
- */
 void
-eas_provision_msg_set_policy_key (EasProvisionMsg* self, gchar* policyKey)
+eas_provision_msg_set_policy_key (EasProvisionMsg* self, const gchar* policyKey)
 {
     EasProvisionMsgPrivate *priv = self->priv;
 
@@ -385,13 +370,8 @@ eas_provision_msg_set_policy_key (EasProvisionMsg* self, gchar* policyKey)
     g_debug ("eas_provision_msg_set_policy_key--");
 }
 
-/**
- * Setter for policy status
- * @param self the GObject
- * @param policyKey the new policy status [no transfer]
- */
 void
-eas_provision_msg_set_policy_status (EasProvisionMsg* self, gchar* policyStatus)
+eas_provision_msg_set_policy_status (EasProvisionMsg* self, const gchar* policyStatus)
 {
     EasProvisionMsgPrivate *priv = self->priv;
 

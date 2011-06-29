@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_PROVISION_MSG_H_
 #define _EAS_PROVISION_MSG_H_
@@ -37,13 +32,88 @@ struct _EasProvisionMsg
 };
 
 GType eas_provision_msg_get_type (void) G_GNUC_CONST;
-xmlDoc* eas_provision_msg_build_message (EasProvisionMsg* self);
-gboolean eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** error);
+
+
+/**
+ * Create a new provisioning message.
+ *
+ * @return NULL or a newly created EasProvisionMsg GObject.
+ */
 EasProvisionMsg* eas_provision_msg_new (void);
+
+/**
+ * Build the XML required for the message to be send in the request to the server.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ *
+ * @return NULL or libxml DOM tree structure containing the XML for the message 
+ *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
+ *		   [full transfer]
+ */
+xmlDoc* eas_provision_msg_build_message (EasProvisionMsg* self);
+
+/**
+ * Parses the response from the server, storing the email attachment according 
+ * to the parameters set when the EasProvisionMsg GObject instance was 
+ * created.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ * @param[in] doc
+ *	  libxml DOM tree structure containing the XML to be parsed. [no transfer]
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_provision_msg_parse_response (EasProvisionMsg* self, 
+                                  xmlDoc* doc, 
+                                  GError** error);
+
+/**
+ * Getter for policy key.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ *
+ * @return NULL or the policy_key. [no transfer]
+ */
 gchar* eas_provision_msg_get_policy_key (EasProvisionMsg* self);
+
+/**
+ * Getter for policy status.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ *
+ * @return NULL or the policy_status. [no transfer]
+ */
 gchar* eas_provision_msg_get_policy_status (EasProvisionMsg* self);
-void eas_provision_msg_set_policy_key (EasProvisionMsg* self, gchar* policyKey);
-void eas_provision_msg_set_policy_status (EasProvisionMsg* self, gchar* policyStatus);
+
+
+/**
+ * Setter for policy key.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ * @param[in] policyKey
+ *	  New policy key. [no transfer]
+ */
+void eas_provision_msg_set_policy_key (EasProvisionMsg* self, const gchar* policyKey);
+
+/**
+ * Setter for policy status.
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ * @param[in] policyStatus
+ *	  New policy status. [no transfer]
+ */
+void eas_provision_msg_set_policy_status (EasProvisionMsg* self, const gchar* policyStatus);
 
 G_END_DECLS
 
