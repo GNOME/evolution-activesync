@@ -125,7 +125,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     {
         xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
         xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "1");
-		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"25");
+		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
 
         if (priv->ItemType == EAS_ITEM_MAIL)
         {
