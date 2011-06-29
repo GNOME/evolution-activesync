@@ -72,6 +72,7 @@ typedef struct _EasGetEmailBodyReqPrivate EasGetEmailBodyReqPrivate;
 struct _EasGetEmailBodyReqClass
 {
 	EasRequestBaseClass parent_class;
+	guint signal_id;	// signal we emit
 };
 
 struct _EasGetEmailBodyReq
@@ -104,10 +105,11 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id, 
                             const gchar *server_id, 
                             const gchar *mime_directory,
+                            const guint request_id,
                             DBusGMethodInvocation *context);
 
-/**
- * Builds the messages required for the request and sends the request to the server.
+void eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size);
+void eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length);
  *
  * @param[in] self
  *	  The EasGetEmailBodyReq GObject instance to be Activated.

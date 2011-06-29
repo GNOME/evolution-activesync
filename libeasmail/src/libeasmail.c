@@ -193,6 +193,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     object->priv->account_uid = g_strdup (account_uid);
 
 	// lrm
+	g_debug("register as observer of 'fetch_email_progress' signal");
 	// fetch_email_body signal setup:
 	dbus_g_proxy_add_signal(object->priv->remoteEas,						
                         EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,
@@ -671,16 +672,20 @@ static void fetch_email_progress_signal_handler (DBusGProxy * proxy,
 {
 	EasProgressCallbackInfo *progress_callback_info;
 	EasEmailHandler* self = (EasEmailHandler*)user_data;
+
+	g_debug("fetch_email_progress_signal_handler++");
 	
 	// if there's a progress function for this request in our hashtable, call it:
-	progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);
+	progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
 	if(progress_callback_info)
 	{
+		g_debug("client has progress function, calling it with %d%", percent);
 		EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
 
 		progress_fn(progress_callback_info->progress_data, percent);
 	}
 
+	g_debug("fetch_email_progress_signal_handler++");
 	return;
 }
 

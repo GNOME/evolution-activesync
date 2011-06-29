@@ -604,11 +604,44 @@ eas_queue_soup_message (gpointer _request)
 
 static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 {
-	struct _EasRequestBase *request = data;
-
+	EasRequestBase *request = (EasRequestBase *) data;
+	EasRequestType request_type = eas_request_base_GetRequestType (request);
+	
 	if (msg->status_code != 200)
 		return;
+	switch (request_type)
+        {
+			case EAS_REQ_PROVISION:
+			case EAS_REQ_SYNC_FOLDER_HIERARCHY:
+			case EAS_REQ_SYNC:
+			case EAS_REQ_SEND_EMAIL:
+			case EAS_REQ_DELETE_MAIL:
+			case EAS_REQ_UPDATE_MAIL:
+			case EAS_REQ_GET_EMAIL_ATTACHMENT:
+			case EAS_REQ_UPDATE_CALENDAR:
+			case EAS_REQ_ADD_CALENDAR:
+			case EAS_REQ_MOVE_EMAIL:
+			case EAS_REQ_PING:		
+            {
+				g_debug("no progress signal yet for request type %d", request_type);
+            }
+            break;
 
+			case EAS_REQ_GET_EMAIL_BODY:
+			{
+				// lrm 
+				eas_get_email_body_req_GotChunk((EasGetEmailBodyReq *) request, chunk->length);
+			}
+			break;
+				
+            default:
+            {
+                g_debug ("  Unknown RequestType [%d]", request_type);
+            }
+            break;				
+		}//end switch
+
+	
 	g_debug ("Received %zd bytes for request %p", chunk->length, request);
 }
 
@@ -621,6 +654,9 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 											 "Content-Length");
 	if (size_hdr) {
 		gsize size = strtoull (size_hdr, NULL, 10);
+		// lrm store the response size in the request
+		eas_get_email_body_req_set_response_size((EasGetEmailBodyReq *) request, size_hdr);
+		
 		g_debug ("Response size of request %p is %zu bytes", request, size);
 		// We can stash this away and use it to provide progress updates
 		// as a percentage. If we don't have a Content-Length: header,

@@ -120,6 +120,12 @@
       <arg type="as" name="changed_folder_array" direction="out"/>		
 	</method>
 
+	<!-- signals -->
+	<signal name="fetch_email_progress">
+		<arg type="i" name="request_id" direction ="out"/>
+		<arg type="i" name="percent" direction ="out"/>
+	</signal>
+
   </interface>
 </node>
 

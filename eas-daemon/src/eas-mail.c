@@ -429,7 +429,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar* collection_id,
                            const gchar *server_id,
                            const gchar *mime_directory,
-                           const guint request_id,			// lrm TODO this needs to be passed back with progress signal
+                           const guint request_id,			// lrm passed back with progress signal
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -451,11 +451,12 @@ eas_mail_fetch_email_body (EasMail* self,
 		goto finish;
     }
 
-    // Create Request
+    // Create Request 
     req = eas_get_email_body_req_new (account_uid,
                                       collection_id,
                                       server_id,
                                       mime_directory,
+                                      request_id,	// lrm
                                       context);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);

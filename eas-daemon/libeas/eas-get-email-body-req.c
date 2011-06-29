@@ -52,6 +52,7 @@
 
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
+#include "../src/activesyncd-common-defs.h"
 
 
 struct _EasGetEmailBodyReqPrivate
@@ -61,6 +62,9 @@ struct _EasGetEmailBodyReqPrivate
     gchar* serverId;
     gchar* collectionId;
     gchar* mimeDirectory;
+	guint request_id;			// lrm passed back with progress signal
+	guint response_received;	// amount of response data received so far 
+	guint response_size;		// total size of response
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -81,8 +85,11 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
+	priv->response_size = 0;
 	priv->mimeDirectory = NULL;
 	priv->serverId = NULL;
+	priv->response_received = 0;
+	priv->request_id = 0;
 	priv->collectionId = NULL;
 	
     g_debug ("eas_get_email_body_req_init--");
@@ -129,13 +136,28 @@ static void
 eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
+	
 	g_debug ("eas_get_email_body_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasGetEmailBodyReqPrivate));
 
     object_class->finalize = eas_get_email_body_req_finalize;
     object_class->dispose = eas_get_email_body_req_dispose;
+	// lrm TODO - does it make more sense to put all signals in the request base class?
+	// create the progress signal we emit 
+	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS, // name of the signal
+	G_OBJECT_CLASS_TYPE ( klass ),  	// type this signal pertains to
+	G_SIGNAL_RUN_LAST ,					// flags used to specify a signal's behaviour
+	0,		// class offset
+	NULL ,  // accumulator
+	NULL ,  // user data for accumulator
+	g_cclosure_marshal_VOID__UINT ,   // Function to marshal the signal data into the parameters of the signal call
+	G_TYPE_NONE ,   // handler return type
+	2,  // Number of parameter GTypes to follow
+	// GType (s) of the parameters
+	G_TYPE_UINT,
+	G_TYPE_UINT);
+
     g_debug ("eas_get_email_body_req_class_init--");
 }
 
@@ -145,6 +167,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
                             const gchar *mime_directory,
+                            const guint request_id,			// lrm passed back with progress signal
                             DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
@@ -159,12 +182,47 @@ eas_get_email_body_req_new (const gchar* account_uid,
     priv->collectionId = g_strdup (collection_id);
     priv->serverId = g_strdup (server_id);
     priv->mimeDirectory = g_strdup (mime_directory);
+	priv->request_id = request_id;
     eas_request_base_SetContext(&req->parent_instance, context);
 
     g_debug ("eas_get_email_body_req_new--");
     return req;
 }
 
+
+void 
+eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size)
+{
+	EasGetEmailBodyReqPrivate *priv = self->priv;
+
+	g_debug("eas_get_email_body_req_set_response_size++");
+	priv->response_size = size;
+	g_debug("eas_get_email_body_req_set_response_size--");
+	return;
+}
+
+void 
+eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
+{
+	EasGetEmailBodyReqPrivate *priv = self->priv;
+	EasGetEmailBodyReqClass* klass = EAS_GET_EMAIL_BODY_REQ_GET_CLASS (self);
+
+	g_debug("eas_get_email_body_req_GotChunk++");
+	priv->response_received += length;
+
+	guint percent = priv->response_received * 100 / priv->response_size;
+	
+	// lrm emit signal
+	g_signal_emit (self,
+	klass->signal_id,
+	0,
+	priv->request_id,
+	percent);
+
+	g_debug("eas_get_email_body_req_GotChunk--");
+	
+	return;
+}
 
 gboolean
 eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)

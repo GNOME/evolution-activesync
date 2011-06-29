@@ -779,6 +779,8 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
                                                  g_inbox_id, // Inbox
                                                  email->server_id,
                                                  mime_directory,
+                                                 NULL,
+                                                 NULL,
                                                  &error);
         g_free (mime_directory);
 
