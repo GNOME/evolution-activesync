@@ -1,0 +1,94 @@
+# This is the Makefile for the GConf key watch example.
+# The default target will build the application.
+#
+# There are also two special targets:
+# primekeys : populate the GConf parameters with default values
+# clearkeys : remote all of the application GConf keys (recursively)
+# dumpkeys  : list all keys for this application (recursively)
+#
+# In order to use the targets, the GConf daemon will need to be
+# running in your system (af-sb-init.sh). The daemon is running
+# at all times on the device.
+
+# Define a variable for this so that the GConf root may be changed
+gconf_root := /apps/activesyncd/accounts
+
+# pkg-config packages that we'll need
+pkg_packages := glib-2.0 gconf-2.0 libxml-2.0 libedataserver-1.2
+
+PKG_CFLAGS  := $(shell pkg-config --cflags $(pkg_packages))
+PKG_LDFLAGS := $(shell pkg-config --libs $(pkg_packages))
+ADD_CFLAGS := -g -Wall
+
+# Combine user supplied, additional, and pkg-config flags
+CFLAGS  := $(PKG_CFLAGS) $(ADD_CFLAGS) $(CFLAGS)
+LDFLAGS := $(PKG_LDFLAGS) $(LDFLAGS)
+
+# Default targets
+targets := accounts-manager
+
+.PHONY: all phony primekeys clearkeys dumpkeys
+all: $(targets)
+
+# We define a define (PROGNAME) so that we can (or rename the program
+# later if necessary).
+accounts-manager: accounts-manager.c	\
+					eas-account.h eas-account.c	\
+					eas-account-list.h eas-account-list.c
+
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+
+#account uid represented by email
+email01 =andy@mobica.com
+email02 =brahim@mobica.com
+email03 =lorna@mobica.com
+email04 =tez@mobica.com
+email05 =good.user@cstylianou.com
+
+setaccounts: clearkeys
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email01)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email01)/username andy
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email02)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email02)/username brahim
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email03)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email03)/username lorna
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email04)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email04)/username tez
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email05)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(email05)/username good.user
+
+# Remove all application keys
+clearkeys:
+	@gconftool-2 --recursive-unset $(gconf_root)
+
+
+#use this option if you need to set only one GConf account
+my_email= myname@mycompany.com
+set-my-account:
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(my_email)/username MyUsername
+	gconftool-2 --set --type string \
+	            $(gconf_root)/$(my_email)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
+
+clear-my-account:
+	@gconftool-2 --recursive-unset $(gconf_root)/$(my_email)
+
+
+# Dump all application keys
+dumpkeys:
+	@echo Keys under $(gconf_root):
+	@gconftool-2 --recursive-list $(gconf_root)
+
+clean:
+	$(RM) $(targets)
