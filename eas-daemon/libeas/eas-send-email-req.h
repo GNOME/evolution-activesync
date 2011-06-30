@@ -1,21 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * code
- * Copyright (C)  2011 <>
- * 
- * code is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 
 #ifndef _EAS_SEND_EMAIL_REQ_H_
 #define _EAS_SEND_EMAIL_REQ_H_
@@ -51,14 +34,62 @@ struct _EasSendEmailReq
 
 GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 
-// C'tor
-EasSendEmailReq *eas_send_email_req_new(const gchar* account_id, DBusGMethodInvocation *context, const gchar* client_id, const gchar* mime_file);
+/** 
+ * Create a new send email request GObject
+ *
+ * @param[in] account_uid
+ *	  Unique identifier for a user account.
+ * @param[in] context
+ *	  DBus context token.
+ * @param client_id  
+ *      The client ID identifying the email on the local system.
+ * @param[in] mime_file
+ *	  Full path to local file system directory where the retrieved email.
+ *
+ * @return An allocated EasSendEmailReq GObject or NULL
+ */
+EasSendEmailReq *
+eas_send_email_req_new(const gchar* account_id, 
+                       DBusGMethodInvocation *context, 
+                       const gchar* client_id, 
+                       const gchar* mime_file);
 
-// start async request
-gboolean eas_send_email_req_Activate(EasSendEmailReq *self, GError** error);
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasSendEmailReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_send_email_req_Activate(EasSendEmailReq *self, 
+                            GError** error);
 
-// async request completed
-gboolean eas_send_email_req_MessageComplete(EasSendEmailReq *self, xmlDoc* doc, GError* error);
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then returning the results across the dbus to the client 
+ *
+ * @param[in] self
+ *	  The EasSendEmailReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *    Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if finished and needs unreffing, FALSE otherwise.
+ */
+gboolean 
+eas_send_email_req_MessageComplete(EasSendEmailReq *self, 
+                                   xmlDoc* doc, 
+                                   GError* error);
 
 
 G_END_DECLS
