@@ -1610,7 +1610,7 @@ complete_request:
             break;
             case EAS_REQ_MOVE_EMAIL:
             {
-                /*cleanupRequest =*/ eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
+                cleanupRequest = eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
             }
             break;				
             case EAS_REQ_UPDATE_CALENDAR:

@@ -58,7 +58,7 @@ EasMoveEmailReq *eas_move_email_req_new(const gchar* account_id, const GSList* s
 gboolean eas_move_email_req_Activate(EasMoveEmailReq *self, GError** error);
 
 // async request completed
-void eas_move_email_req_MessageComplete(EasMoveEmailReq *self, xmlDoc* doc, GError* error);
+gboolean eas_move_email_req_MessageComplete(EasMoveEmailReq *self, xmlDoc* doc, GError* error);
 
 G_END_DECLS
 

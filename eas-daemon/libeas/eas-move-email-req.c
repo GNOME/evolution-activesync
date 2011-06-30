@@ -242,7 +242,7 @@ finish:
 
 }
 
-void
+gboolean
 eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* error_in)
 {
     gboolean ret = TRUE;
@@ -261,6 +261,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
         goto finish;
     }
 
+	g_debug("parsing response");
 	// parse the response (for status)
     ret = eas_move_email_msg_parse_response (priv->move_email_msg, doc, &error);
     if (!ret)
@@ -292,6 +293,6 @@ finish:
 	}
     g_debug ("eas_move_email_req_MessageComplete--");
 
-    return;
+    return ret;
 }
 
