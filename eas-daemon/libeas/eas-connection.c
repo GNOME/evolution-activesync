@@ -120,6 +120,8 @@ eas_connection_init (EasConnection *self)
                                              TRUE,
                                              SOUP_SESSION_ASYNC_CONTEXT,
                                              priv->soup_context,
+											 SOUP_SESSION_TIMEOUT,
+											 120,
                                              NULL);
 
     g_signal_connect (priv->soup_session,
