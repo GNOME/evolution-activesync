@@ -244,6 +244,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     gchar **deleted_item_array = NULL;
     gchar **updated_item_array = NULL;
 	gchar *folder = NULL;
+	gchar *sync_key= NULL;
 
     g_debug ("eas_sync_handler_get_calendar_items++ ");
 	g_debug ("sync_key_in = %s", sync_key_in);
@@ -344,6 +345,8 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
         g_free (*items_deleted);
         *items_deleted = NULL;
     }
+	g_debug("sync_key = %s", *sync_key_out);
+	
 
     g_debug ("eas_sync_handler_get_items--");
     return ret;
@@ -364,7 +367,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 	
     g_debug ("eas_sync_handler_delete_items++");
 
-	if(sync_key_in ==NULL ||(strlen(folder_id)<=0) || !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL ||(strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
@@ -427,7 +430,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_update_items++");
 
-	if(sync_key_in ==NULL ||(strlen(folder_id)<=0) || !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL ||(strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
@@ -524,11 +527,11 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_add_items++");
 
-	if(sync_key_in == NULL || (strlen(folder_id)<=0) || !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in == NULL || (strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
-                     ("delete_items requires a valid sync key"));
+                     ("add_items requires a valid sync key"));
 		return FALSE;
 	}
 	if(folder_id ==NULL ||(strlen(folder_id)<=0))
@@ -663,17 +666,11 @@ eas_sync_handler_sync_folder_hierarchy (EasSyncHandler* self,
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - stuff");
     g_assert (self);
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - self");
     g_assert (sync_key);
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - synckey");
     g_assert (g_slist_length (*folders_created) == 0);
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - create");
     g_assert (g_slist_length (*folders_updated) == 0);
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - update");
     g_assert (g_slist_length (*folders_deleted) == 0);
-	g_debug ("eas_sync_handler_sync_folder_hierarchy - delete");
 
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "sync_folder_hierarchy",
