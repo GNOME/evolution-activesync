@@ -6,7 +6,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 #include "eas-connection-errors.h"
-#include "eas-account.h"
+#include "../../libeasaccount/src/eas-account.h"
 
 G_BEGIN_DECLS
 

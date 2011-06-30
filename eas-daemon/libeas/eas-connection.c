@@ -12,7 +12,7 @@
 #include <gnome-keyring.h>
 
 //#include "eas-accounts.h"
-#include "eas-account-list.h"
+#include "../../libeasaccount/src/eas-account-list.h"
 #include "eas-connection-errors.h"
 
 // List of includes for each request type
