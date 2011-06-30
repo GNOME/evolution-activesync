@@ -890,6 +890,9 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
 	gchar **updated_ids_array = NULL;
+	gchar **server_ids_array = NULL;
+	guint i = 0;
+	guint list_len = g_slist_length ((GSList*) server_ids);
 	
     g_debug ("eas_mail_handler_move_to_folder++");
 
@@ -900,22 +903,49 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	// convert lists to array for passing over dbus
+	server_ids_array = g_malloc0((list_len + 1) * sizeof (gchar*));
+    if (!server_ids_array)
+    {
+		ret = FALSE;
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        goto finish;
+    }
+
+    for (; i < list_len; ++i)
+    {
+        server_ids_array[i] = g_strdup (g_slist_nth_data ( (GSList*) server_ids, i));
+        g_debug ("server Id: [%s]", server_ids_array[i]);
+    }
+	
 // call dbus api
     ret = dbus_g_proxy_call (proxy, "move_emails_to_folder", error,
                              G_TYPE_STRING, self->priv->account_uid,
-                             G_TYPE_STRV, server_ids,
+                             G_TYPE_STRV, server_ids_array,
                              G_TYPE_STRING, src_folder_id,
                              G_TYPE_STRING, dest_folder_id,
                              G_TYPE_INVALID,
                              G_TYPE_STRV, &updated_ids_array,
                              G_TYPE_INVALID);    		
+
+    // Clean up string array
+    for (i = 0; i < list_len; ++i)
+    {
+        g_free (server_ids_array[i]);
+        server_ids_array[i] = NULL;
+    }
+    g_free (server_ids_array);
+    server_ids_array = NULL;	
 	
 	if(ret)
 	{	
 	 	ret = build_easidupdates_list ((const gchar**)updated_ids_array, updated_ids_list, error);	//why does this require a cast?
 	}
 	g_strfreev(updated_ids_array);
-	
+
+finish:	
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
