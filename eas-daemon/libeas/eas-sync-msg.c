@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-connection-errors.h"
 #include "eas-sync-msg.h"
@@ -56,7 +51,7 @@ eas_sync_msg_finalize (GObject *object)
     EasSyncMsgPrivate *priv = msg->priv;
 
     g_free (priv->sync_key_in);
-	xmlFree (priv->sync_key_out);
+	g_free (priv->sync_key_out);
     g_free (priv->folderID);
     g_free (priv->account_id);
 
@@ -67,9 +62,6 @@ static void
 eas_sync_msg_class_init (EasSyncMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_type_class_add_private (klass, sizeof (EasSyncMsgPrivate));
 
@@ -121,7 +113,10 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     collection = xmlNewChild (child, NULL, (xmlChar *) "Collection", NULL);
     xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key_in);
     xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) priv->folderID);
-    //if get changes = true - means we are pulling from the server
+
+    // TODO Refactor this function into subfunctions for each aspect.
+
+    // if get changes = true - means we are pulling from the server
     if (getChanges)
     {
         xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
@@ -238,7 +233,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                         break;
                         case EAS_ITEM_MAIL:
                         {
-							gchar *serialised_email = (gchar *)iterator->data;
+                            gchar *serialised_email = (gchar *)iterator->data;
                             EasEmailInfo *email_info = eas_email_info_new ();
 
                             xmlNewNs (node, (xmlChar *) "Email:", (xmlChar *) "email");
@@ -251,8 +246,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
                                 // call translator to get encoded application data
                                 eas_email_info_translator_build_update_request (doc, app_data, email_info);
-                                g_object_unref (email_info);
                             }
+                            g_object_unref (email_info);
                             // TODO error handling
                         }
                         break;
@@ -370,7 +365,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                     if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
                         status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
 
-                    error_details = sync_status_error_map[status_num];					
+                    error_details = sync_status_error_map[status_num];
                 }
                 g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
                 goto finish;
@@ -442,8 +437,12 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
-            xmlFree (priv->sync_key_out);
-            priv->sync_key_out = (gchar *) xmlNodeGetContent (node);
+            xmlChar* xmlSyncKeyOut = xmlNodeGetContent (node);
+
+            g_free (priv->sync_key_out);
+            priv->sync_key_out = g_strdup((gchar *) xmlSyncKeyOut);
+            xmlFree (xmlSyncKeyOut);
+
             g_debug ("Got SyncKey = %s", priv->sync_key_out);
             continue;
         }
