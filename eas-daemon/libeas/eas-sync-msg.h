@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * intelgit
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_SYNC_MSG_H_
 #define _EAS_SYNC_MSG_H_
@@ -39,13 +34,119 @@ struct _EasSyncMsg
 
 GType eas_sync_msg_get_type (void) G_GNUC_CONST;
 
-EasSyncMsg* eas_sync_msg_new (const gchar* syncKey, const gchar* accountId, const gchar *FolderID, const EasItemType type);
-xmlDoc* eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added, GSList *updated, GSList *deleted);
-gboolean eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error);
+/**
+ * Create a new sync message.
+ *
+ * @param[in] syncKey
+ *	  The client's current syncKey.
+ * @param[in] accountId
+ *	  Unique identifier for a user account.
+ * @param[in] FolderID
+ *	  Identifier for the folder on the exchange server.
+ * @param[in] type
+ *	  The type of item to be synced - Email, Calendar, Contact etc
+ *
+ * @return NULL or a newly created EasSyncMsg GObject.
+ */
+EasSyncMsg* 
+eas_sync_msg_new (const gchar* syncKey, 
+                  const gchar* accountId, 
+                  const gchar *FolderID, 
+                  const EasItemType type);
+
+/**
+ * Build the XML required for the message to be send in the request to the server.
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ * @param[in] getChanges
+ * @param[in] added
+ * @param[in] updated
+ * @param[in] deleted
+ *
+ * @return NULL or libxml DOM tree structure containing the XML for the message 
+ *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
+ *		   [full transfer]
+ */
+xmlDoc* 
+eas_sync_msg_build_message (EasSyncMsg* self, 
+                            gboolean getChanges, 
+                            GSList *added, 
+                            GSList *updated, 
+                            GSList *deleted);
+
+/**
+ * Parses the response from the server, storing the email attachment according 
+ * to the parameters set when the EasSyncMsg GObject instance was 
+ * created.
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ * @param[in] doc
+ *	  libxml DOM tree structure containing the XML to be parsed. [no transfer]
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_sync_msg_parse_response (EasSyncMsg* self, 
+                             xmlDoc *doc, 
+                             GError** error);
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return NULL or List of *serialized* GObjects determined by the instance's EasItemType. [no transfer]
+ *	  - EAS_ITEM_MAIL     EasEmailInfo
+ *	  - EAS_ITEM_CALENDAR EasItemInfo
+ *	  - EAS_ITEM_CONTACT  EasItemInfo
+ */
 GSList* eas_sync_msg_get_added_items (EasSyncMsg* self);
+
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return NULL or List of *serialized* GObjects determined by the instance's EasItemType. [no transfer]
+ *	  - EAS_ITEM_MAIL     EasEmailInfo
+ *	  - EAS_ITEM_CALENDAR EasItemInfo
+ *	  - EAS_ITEM_CONTACT  EasItemInfo
+ */
 GSList* eas_sync_msg_get_updated_items (EasSyncMsg* self);
+
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return NULL or List of *serialized* GObjects determined by the instance's EasItemType. [no transfer]
+ *	  - EAS_ITEM_MAIL     EasEmailInfo
+ *	  - EAS_ITEM_CALENDAR EasItemInfo
+ *	  - EAS_ITEM_CONTACT  EasItemInfo
+ */
 GSList* eas_sync_msg_get_deleted_items (EasSyncMsg* self);
+
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return NULL or The updated sync key supplied by the server response. [no transfer]
+ */
 gchar* eas_sync_msg_get_syncKey(EasSyncMsg* self);
+
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return TRUE if more available, otherwise FALSE. 
+ */
 gboolean eas_sync_msg_get_more_available(EasSyncMsg* self);
 
 G_END_DECLS
