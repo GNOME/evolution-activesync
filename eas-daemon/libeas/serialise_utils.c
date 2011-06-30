@@ -91,7 +91,7 @@ finish:
     {
         g_assert (error == NULL || *error != NULL);
     }
-
+    g_debug ("build email arrays--");
     return ret;
 }
 
