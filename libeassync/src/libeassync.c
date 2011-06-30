@@ -364,14 +364,14 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 	
     g_debug ("eas_sync_handler_delete_items++");
 
-	if(sync_key_in == NULL ||(strlen(sync_key_in)<=0))|| !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
-	if(folder_id ==NULL||(strlen(folder_id)<=0)))
+	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
 		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
@@ -427,14 +427,14 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_update_items++");
 
-	if(sync_key_in == NULL ||(strlen(sync_key_in)<=0))|| !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in ==NULL || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
                      ("update_items requires a valid sync key"));
 		return FALSE;
 	}
-	if(folder_id ==NULL||(strlen(folder_id)<=0)))
+	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
 		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
@@ -524,14 +524,14 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_add_items++");
 
-	if(sync_key_in == NULL ||(strlen(sync_key_in)<=0))|| !g_strcmp0 (sync_key_in, "0"))
+	if(sync_key_in == NULL || !g_strcmp0 (sync_key_in, "0"))
 	{
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
-	if(folder_id ==NULL||(strlen(folder_id)<=0)))
+	if(folder_id ==NULL)
 	{
 		//If folder_id is not set, then we set it to the default for the type
 		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
