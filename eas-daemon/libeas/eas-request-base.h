@@ -162,7 +162,12 @@ struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
 
 void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);
+
 EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
+
+
+/**
+ * Getter for soup message.
  * @param[in] self
  *      GObject Instance.
  *

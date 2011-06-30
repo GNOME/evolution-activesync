@@ -82,6 +82,10 @@ struct _EasGetEmailBodyReq
 	EasGetEmailBodyReqPrivate* priv;
 };
 
+void eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size);
+void eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length);
+
+
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
 /** 
@@ -108,8 +112,8 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const guint request_id,
                             DBusGMethodInvocation *context);
 
-void eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size);
-void eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length);
+/**
+ * Builds the messages required for the request and sends the request to the server.
  *
  * @param[in] self
  *	  The EasGetEmailBodyReq GObject instance to be Activated.
