@@ -60,9 +60,18 @@ eas_sync_msg_new (const gchar* syncKey,
  * @param[in] self
  *	  The EasSyncMsg GObject instance.
  * @param[in] getChanges
+ *	  TRUE if pulling changes from the exchange server.
+ *	  FALSE if sending changes to the exchange server.
  * @param[in] added
+ *	  Valid only where the instance has an EasItemType of EAS_ITEM_CALENDAR or EAS_ITEM_CONTACT.
+ *	  Caller provides a list of EasItemInfo GObjects, or NULL.
  * @param[in] updated
+ *	  Where the instance has an EasItemType of EAS_ITEM_MAIL:
+ *	  Caller provides a list of EasEmailInfo GObjects, or NULL.
+ *	  Where the instance has an EasItemType of EAS_ITEM_CALENDAR or EAS_ITEM_CONTACT.
+ *	  Caller provides a list of EasItemInfo GObjects, or NULL.
  * @param[in] deleted
+ *	  Caller provides a list of ServerId's for the items to be deleted, or NULL.
  *
  * @return NULL or libxml DOM tree structure containing the XML for the message 
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
