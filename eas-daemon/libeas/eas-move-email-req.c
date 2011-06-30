@@ -36,7 +36,6 @@ struct _EasMoveEmailReqPrivate
 	GSList *server_ids_list;
     gchar *src_folder_id;
     gchar* dest_folder_id;
-    GError *error;
 };
 
 static void
@@ -53,7 +52,6 @@ eas_move_email_req_init (EasMoveEmailReq *object)
 	priv->server_ids_list = NULL;
 	priv->dest_folder_id = NULL;
 	priv->src_folder_id = NULL;
-    priv->error = NULL;
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_MOVE_EMAIL);
@@ -90,10 +88,6 @@ eas_move_email_req_finalize (GObject *object)
 	g_slist_foreach (priv->server_ids_list, (GFunc) g_free, NULL);
 	g_slist_free(priv->server_ids_list);
     g_free (priv->account_id);
-    if (priv->error)
-    {
-        g_error_free (priv->error);
-    }
 
     req->priv = NULL;
 
@@ -256,8 +250,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
     // if an error occurred, store it and signal daemon
     if (error_in)
     {
-		ret = FALSE;
-        priv->error = error_in;
+        error = error_in;
         goto finish;
     }
 
@@ -267,7 +260,6 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
     if (!ret)
     {
         g_assert (error != NULL);
-        self->priv->error = error;
 		goto finish;
     }
 
@@ -293,6 +285,6 @@ finish:
 	}
     g_debug ("eas_move_email_req_MessageComplete--");
 
-    return ret;
+    return TRUE;	// indicates that we want req to be cleanedup - always TRUE
 }
 

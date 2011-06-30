@@ -588,7 +588,6 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
 
 	
 finish:
-	g_object_unref (req);	
     if (!ret)
     {
 		g_debug("dbus_g_method_return_error");
