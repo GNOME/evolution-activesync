@@ -106,6 +106,10 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	const gchar* keyname = NULL;
 	gchar* strValue = NULL;
 	gchar* uid = NULL;
+	gint last_token;
+	gchar **str_array = NULL; 
+	gulong string_Key_len;
+	
 	/* g_debug("eas_account_list_set_account_info++"); */
 	g_return_if_fail (acc_info != NULL);
 	g_return_if_fail (uid_path != NULL);
@@ -125,8 +129,8 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 
 	
 	/* strip the EAS_ACCOUNT_ROOT from the uid_path to get the uid only */
-	gint last_token = 4;
-	gchar **str_array = NULL;
+	last_token = 4;
+
 	str_array = g_strsplit(uid_path, "/", -1);
 	uid = g_strdup(str_array[last_token]);
 	/* free the vector */
@@ -136,7 +140,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	strValue = gconf_value_to_string(value); /* need to be freed */
 
 	/* Concatenate "ROOT + UID + KEY" */
-	gulong string_Key_len;
 	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + 1 + strlen(uid) + strlen(EAS_ACCOUNT_KEY_SERVERURI) + 1;
 	gchar serveruri_Key_path[string_Key_len];
 	g_snprintf(serveruri_Key_path, string_Key_len, "%s/%s%s", EAS_ACCOUNT_ROOT, uid, EAS_ACCOUNT_KEY_SERVERURI);
@@ -170,6 +173,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	/* g_debug("eas_account_list_set_account_info--"); */
 }
 
+#if 0
 void dump_accounts(EasAccountList *account_list)
 {
 	EIterator *iter = NULL;
@@ -197,7 +201,7 @@ void dump_accounts(EasAccountList *account_list)
 
 	g_object_unref (iter);
 }
-
+#endif
 
 static void
 gconf_accounts_changed (GConfClient *client, guint cnxn_id,
@@ -206,10 +210,10 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	GSList *list = NULL, *l= NULL, *ll = NULL, *new_accounts = NULL;
 	EasAccount *account = NULL;
 	EList *old_accounts = NULL;
-	EIterator *iter = NULL;;
-	gchar *uid = NULL;;	
+	EIterator *iter = NULL;
+	gchar *uid = NULL;
 	GSList* gconf_entry_list = NULL;
-	GSList *account_uids_list = NULL;	
+	GSList *account_uids_list = NULL;
 	EasAccountInfo* acc_info = NULL; 
 	EasAccountList *account_list = NULL;
 
@@ -324,7 +328,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		/*g_debug("Account Deleted: %s", eas_account_get_uid(account));*/
 	}
 
-	dump_accounts(account_list);
+	/* dump_accounts(account_list); */
 	
 	g_object_unref (iter);
 	g_object_unref (old_accounts);
