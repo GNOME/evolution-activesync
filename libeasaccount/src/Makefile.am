@@ -17,6 +17,7 @@ libeasaccount_la_SOURCES =	eas-account.h eas-account.c \
 							eas-account-list.h eas-account-list.c
 
 
+
 gconf_root = /apps/activesyncd/accounts
 
 #account uids (identified using email)
@@ -68,9 +69,6 @@ set-my-account:
 
 clear-my-account:
 	@gconftool-2 --recursive-unset $(gconf_root)/$(my_email)
-
-EXTRA_DIST = \
-	eas-connection-errors.h
 
 
 # Remove all application keys
