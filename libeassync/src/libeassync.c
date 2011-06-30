@@ -245,21 +245,24 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     gchar **updated_item_array = NULL;
 	gchar *folder = NULL;
 
-    g_debug ("eas_sync_handler_get_calendar_items++");
-
+    g_debug ("eas_sync_handler_get_calendar_items++ ");
+	g_debug ("sync_key_in = %s", sync_key_in);
 	//if sync_key not set - assign to 0 to re-initiate sync relationship
-	if(sync_key_in ==NULL)
+	if(sync_key_in ==NULL||(strlen(sync_key_in)<=0))
 	{
+		g_debug ("updating sync key to 0");
 		sync_key_in = g_strdup("0");
 	}
 
-	if(folder_id ==NULL)
+	if(folder_id ==NULL||(strlen(folder_id)<=0))
 	{
+		g_debug ("updating folder id");
 		//If folder_id is not set, then we set it to the default for the type
 		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
 	}
 	else //use passed in folder_id
 	{
+		g_debug ("using folder id = %s", folder_id);
 		folder = g_strdup(folder_id);
 	}
 

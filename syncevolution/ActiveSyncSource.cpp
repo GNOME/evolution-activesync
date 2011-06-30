@@ -78,11 +78,10 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
 
     GErrorCXX gerror;
     EASItemsCXX created, updated, deleted;
-    char buffer[128];
-    strncpy(buffer, m_startSyncKey.c_str(), sizeof(buffer));
+    gchar *buffer;
     if (!eas_sync_handler_get_items(m_handler,
-                                    buffer,
-                                    NULL,
+                                    m_startSyncKey.c_str(),
+                                    &buffer,
                                     getEasType(),
                                     m_folder.c_str(),
                                     created, updated, deleted,
@@ -117,6 +116,8 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
         addItem(luid, DELETED);
         m_ids->removeProperty(luid);
     }
+	// update key
+    m_currentSyncKey = buffer;
 }
 
 std::string ActiveSyncSource::endSync(bool success)
@@ -136,11 +137,10 @@ void ActiveSyncSource::deleteItem(const string &luid)
     items.push_front(item.release());
 
     GErrorCXX gerror;
-    char buffer[128];
-    strncpy(buffer, m_currentSyncKey.c_str(), sizeof(buffer));
+    char *buffer;
     if (!eas_sync_handler_delete_items(m_handler,
-                                       buffer,
-                                       NULL,
+                                       m_currentSyncKey.c_str(),
+                                       &buffer,
                                        getEasType(),
                                        m_folder.c_str(),
                                        items,
@@ -173,16 +173,15 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
     items.push_front(tmp.release());
 
     GErrorCXX gerror;
-    char buffer[128];
-    strncpy(buffer, m_currentSyncKey.c_str(), sizeof(buffer));
+    char *buffer;
 
     // distinguish between update (existing luid)
     // or creation (empty luid)
     if (luid.empty()) {
         // send item to server
         if (!eas_sync_handler_add_items(m_handler,
-                                        buffer,
-                                        NULL,
+                                        m_currentSyncKey.c_str(),
+                                        &buffer,
                                         getEasType(),
                                         m_folder.c_str(),
                                         items,
