@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * git
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_SYNC_FOLDER_HIERARCHY_REQ_H_
 #define _EAS_SYNC_FOLDER_HIERARCHY_REQ_H_
@@ -38,15 +33,58 @@ struct _EasSyncFolderHierarchyReq
 
 GType eas_sync_folder_hierarchy_req_get_type (void) G_GNUC_CONST;
 
+/** 
+ * Create a new sync folder hierarchy request GObject
+ *
+ * @param[in] syncKey
+ *	  Current sync key.
+ * @param[in] accountId
+ *	  Unique identifier for a user account.
+ * @param[in] context
+ *	  DBus context token.
+ *
+ * @return An allocated EasSyncFolderHierarchyReq GObject or NULL
+ */
 EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncKey,
                                                              const gchar* accountId,
-                                                             DBusGMethodInvocation*);
+                                                             DBusGMethodInvocation* context);
 
-gboolean eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error);
+/**
+ * Builds the messages required for the request and sends the request to the server.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderHierarchyReq GObject instance to be Activated.
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean 
+eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, 
+                                        GError** error);
 
-gboolean eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
-                                                    xmlDoc *doc, 
-                                                    GError* error_in);
+/**
+ * Called from the Soup thread when we have the final response from the server.
+ *
+ * Responsible for parsing the server response with the help of the message and
+ * then returning the results across the dbus to the client 
+ *
+ * @param[in] self
+ *	  The EasSyncFolderHierarchyReq GObject instance whose messages are complete.
+ * @param[in] doc
+ *    Document tree containing the server's response. This must be freed using
+ *	  xmlFreeDoc(). [full transfer]
+ * @param[in] error
+ *	  A GError code that has been propagated from the server response.
+ *
+ * @return TRUE if finished and needs unreffing, FALSE otherwise.
+ */
+gboolean 
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
+                                               xmlDoc *doc, 
+                                               GError* error_in);
 
 
 G_END_DECLS
