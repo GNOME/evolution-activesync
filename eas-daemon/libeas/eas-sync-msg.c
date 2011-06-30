@@ -50,12 +50,23 @@ eas_sync_msg_finalize (GObject *object)
     EasSyncMsg *msg = (EasSyncMsg *) object;
     EasSyncMsgPrivate *priv = msg->priv;
 
+	g_debug("eas_sync_msg_finalize++");
+
     g_free (priv->sync_key_in);
 	g_free (priv->sync_key_out);
     g_free (priv->folderID);
     g_free (priv->account_id);
 
+	g_slist_foreach (priv->added_items, (GFunc)g_free, NULL);
+	g_slist_foreach (priv->updated_items, (GFunc)g_free, NULL);
+	g_slist_foreach (priv->deleted_items, (GFunc)xmlFree, NULL);
+
+	g_slist_free(priv->added_items);
+	g_slist_free(priv->updated_items);
+	g_slist_free(priv->deleted_items);
+
     G_OBJECT_CLASS (eas_sync_msg_parent_class)->finalize (object);
+	g_debug("eas_sync_msg_finalize--");
 }
 
 static void
