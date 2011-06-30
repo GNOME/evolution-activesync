@@ -103,7 +103,7 @@ gconf_root = /apps/activesyncd/accounts
 
 #account uids (identified using email)
 email01 =andy@mobica.com
-email02 =brahim@mobica.com
+email02 =brahim@cstylianou.com
 email03 =lorna@mobica.com
 email04 =tez@mobica.com
 email05 =good.user@cstylianou.com
