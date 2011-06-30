@@ -746,7 +746,7 @@ typedef enum
 
 
 static RequestValidity
-isResponseValid (SoupMessage *msg)
+isResponseValid (SoupMessage *msg, GError **error)
 {
     const gchar *content_type = NULL;
     goffset header_content_length = 0;
@@ -762,12 +762,22 @@ isResponseValid (SoupMessage *msg)
     if (HTTP_STATUS_OK != msg->status_code)
     {
         g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+        g_set_error (error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_FAILED,
+                     "HTTP request failed: %d - %s",
+					 msg->status_code, msg->reason_phrase);
         return INVALID;
     }
 
     if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding (msg->response_headers))
     {
+		/* FIXME: Why the hell do we need this? */
         g_warning ("  Failed: Content-Length was not found");
+		g_set_error (error,
+					 EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_FAILED,
+					 "HTTP response used non-length encoding");
         return INVALID;
     }
 
@@ -776,6 +786,11 @@ isResponseValid (SoupMessage *msg)
     {
         g_warning ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match",
                    (long) header_content_length, (long) msg->response_body->length);
+		g_set_error (error,
+					 EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_FAILED,
+					 "HTTP response Header[%ld] and Body[%ld] Content-Length do not match",
+					 (long) header_content_length, (long) msg->response_body->length);
         return INVALID;
     }
 
@@ -790,6 +805,10 @@ isResponseValid (SoupMessage *msg)
     if (0 != g_strcmp0 ("application/vnd.ms-sync.wbxml", content_type))
     {
         g_warning ("  Failed: Content-Type did not match WBXML");
+		g_set_error (error,
+					 EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_FAILED,
+					 "HTTP response type was not WBXML");
         return INVALID;
     }
 
@@ -1474,13 +1493,11 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
 	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
 
-	validity = isResponseValid (msg);
+	validity = isResponseValid (msg, &error);
 
     if (INVALID == validity)
     {
-        g_set_error (&error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_SOUPERROR,
-                     ("Invalid soup message received"));
+		g_assert (error != NULL);
         goto complete_request;
     }
 
