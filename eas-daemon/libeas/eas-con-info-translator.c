@@ -1,6 +1,6 @@
 #include "eas-cal-info-translator.h"
 
-#include <evolution-data-server-2.32/libebook/e-vcard.h>
+#include <libebook/e-vcard.h>
 
 
 // EAS string value definitions
