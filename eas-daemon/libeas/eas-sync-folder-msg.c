@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- *
- */
 
 #include "eas-connection-errors.h"
 #include "eas-sync-folder-msg.h"
@@ -34,11 +29,14 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
     EasSyncFolderMsgPrivate *priv;
     g_debug ("eas_sync_folder_msg_init++");
 
-
     object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE (object);
 
     priv->sync_key = NULL;
     priv->account_id = NULL;
+    priv->added_folders = NULL;
+    priv->updated_folders = NULL;
+    priv->deleted_folders = NULL;
+
     g_debug ("eas_sync_folder_msg_init--");
 
 }
@@ -75,7 +73,7 @@ eas_sync_folder_msg_finalize (GObject *object)
 	// unref'd in dispose
 	g_slist_free (priv->added_folders);
 	g_slist_free (priv->updated_folders);
-	g_slist_free (priv->deleted_folders);	
+	g_slist_free (priv->deleted_folders);
 	
     G_OBJECT_CLASS (eas_sync_folder_msg_parent_class)->finalize (object);
 
@@ -122,7 +120,7 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
     EasSyncFolderMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
     xmlNode *node  = NULL,
-                     *child = NULL;
+            *child = NULL;
     xmlNs   *ns    = NULL;
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -195,8 +193,10 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "SyncKey"))
         {
-			g_free(priv->sync_key);
-            priv->sync_key = (gchar*) xmlNodeGetContent (node);
+            xmlChar *xmlSyncKey = xmlNodeGetContent (node);
+            g_free(priv->sync_key);
+            priv->sync_key = g_strdup((gchar *)xmlSyncKey);
+            xmlFree (xmlSyncKey);
             g_debug ("FolderSync syncKey:[%s]", priv->sync_key);
             continue;
         }
@@ -218,7 +218,6 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     {
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Count"))
         {
-            //gchar *count = (gchar *)xmlNodeGetContent(node);
             continue;
         }
 
@@ -261,9 +260,9 @@ eas_connection_parse_fs_add (EasSyncFolderMsg *self, xmlNode *node)
     {
         xmlNode *n = node;
         gchar *serverId = NULL,
-                          *parentId = NULL,
-                                      *displayName = NULL,
-                                                     *type = NULL;
+              *parentId = NULL,
+              *displayName = NULL,
+              *type = NULL;
 
         for (n = n->children; n; n = n->next)
         {
