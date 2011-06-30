@@ -92,9 +92,6 @@ static void
 eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-    void *tmp = parent_class;
-    tmp = object_class;
 
     g_debug ("eas_sync_folder_hierarchy_req_class_init++");
 
@@ -114,7 +111,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
 
     g_debug ("eas_sync_folder_hierarchy_req_new++");
 
-    g_assert (syncKey);
+    g_return_val_if_fail (syncKey, NULL);
 
     priv->syncKey = g_strdup (syncKey);
     priv->accountID = g_strdup (accountId);
@@ -139,8 +136,8 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
     xmlDoc *doc = NULL;
 
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
     g_debug ("eas_sync_folder_hierarchy_req_Activate++");
+    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
     // Create sync folder msg type
     priv->syncFolderMsg = eas_sync_folder_msg_new (priv->syncKey, priv->accountID);
@@ -165,7 +162,7 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
     }
     ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                        "FolderSync",
-                                       doc,
+                                       doc, // full transfer
                                        (struct _EasRequestBase *) self,
                                        error);
 
@@ -188,7 +185,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	GSList* updated_folders  = NULL;
 	GSList* deleted_folders  = NULL;
 
-	gchar*  ret_sync_key = NULL;
 	gchar** ret_created_folders_array = NULL;
 	gchar** ret_updated_folders_array = NULL;
 	gchar** ret_deleted_folders_array = NULL;
@@ -215,7 +211,11 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     {
         default:
         {
-            g_assert (0);
+            g_warning("Unknown state");
+			g_set_error (&error, EAS_CONNECTION_ERROR,
+			             EAS_CONNECTION_ERROR_BADREQUESTSTATE,
+			             "Unknown SyncFolderHierarchy state");
+			goto finish;
         }
         break;
 
@@ -223,8 +223,8 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
         case EasSyncFolderHierarchyStep1:
         {
             //get syncKey
-            gchar* syncKey = g_strdup (eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
-			xmlDoc *newMsgDoc = NULL;
+            const gchar* syncKey = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg);
+            xmlDoc *newMsgDoc = NULL;
 
             //clean up old message
             if (priv->syncFolderMsg)
@@ -237,20 +237,20 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 
             //build request msg
             newMsgDoc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-			if (!newMsgDoc)
-			{
-				ret = FALSE;
-				g_set_error (&error, EAS_CONNECTION_ERROR,
-				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-				             ("out of memory"));
-				goto finish;
-			}
+            if (!newMsgDoc)
+            {
+                ret = FALSE;
+                g_set_error (&error, EAS_CONNECTION_ERROR,
+                             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+                             ("out of memory"));
+                goto finish;
+            }
             //move to new state
             priv->state = EasSyncFolderHierarchyStep2;
 
             ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
                                                "FolderSync",
-                                               newMsgDoc,
+                                               newMsgDoc, // full transfer
                                                (struct _EasRequestBase *) self,
                                                &error);
             if (!ret)
@@ -264,49 +264,46 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
         //we did a proper sync, so we need to complete the dbus call
         case EasSyncFolderHierarchyStep2:
         {
-				//state machine finished, so tell connection object to clean this up.
-				cleanup = TRUE;
-				ret_sync_key    = g_strdup (eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg));
-				added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
-				updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
-				deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
-	
-                // Serialise the response data from GSList* to char** for transmission over Dbus
+            const gchar* ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
+			//state machine finished, so tell connection object to clean this up.
+			cleanup = TRUE;
+			
+			added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
+			updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
+			deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 
-				ret = build_serialised_folder_array (&ret_created_folders_array, added_folders, &error);
+            // Serialise the response data from GSList* to char** for transmission over Dbus
+
+			ret = build_serialised_folder_array (&ret_created_folders_array, added_folders, &error);
+			if (ret)
+			{
+				ret = build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error);
 				if (ret)
 				{
-					ret = build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error);
-					if (ret)
-					{
-						ret = build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error);
-					}
+					ret = build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error);
 				}
+			}
 
-				
-				// Return the error or the requested data to the mail client
-				if (!ret)
-				{
-					g_set_error (&error, EAS_CONNECTION_ERROR,
-				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-				             ("out of memory"));
-					goto finish;
-				}
-				else
-				{
-					dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
-						                  ret_sync_key,
-						                  ret_created_folders_array,
-						                  ret_updated_folders_array,
-						                  ret_deleted_folders_array);
-				}
-			    
+			// Return the error or the requested data to the mail client
+			if (!ret)
+			{
+				g_set_error (&error, EAS_CONNECTION_ERROR,
+			             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			             ("out of memory"));
+				goto finish;
+			}
+			else
+			{
+				dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+					                  ret_sync_key,
+					                  ret_created_folders_array,
+					                  ret_updated_folders_array,
+					                  ret_deleted_folders_array);
+			}
 
-				g_strfreev(ret_created_folders_array);
-				g_strfreev(ret_updated_folders_array);
-				g_strfreev(ret_deleted_folders_array);
-				g_free(ret_sync_key);
-			
+			g_strfreev(ret_created_folders_array);
+			g_strfreev(ret_updated_folders_array);
+			g_strfreev(ret_deleted_folders_array);
         }
         break;
     }
