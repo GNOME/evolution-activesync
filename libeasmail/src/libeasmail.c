@@ -262,7 +262,7 @@ cleanup:
         *emailinfo_list = NULL;
     }
 
-    g_debug ("build_emailinfo_list++");
+    g_debug ("build_emailinfo_list--");
     return ret;
 }
 
