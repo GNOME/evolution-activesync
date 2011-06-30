@@ -215,18 +215,17 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     {
 		ret = FALSE;
         error = error_in;
-		xmlFreeDoc (doc);
         goto finish;
     }
 
     ret = eas_sync_msg_parse_response (priv->sync_msg, doc, &error);
-    xmlFree (doc);
     if (!ret)
     {
         g_assert (error != NULL);
     }
 
 finish:
+	xmlFreeDoc (doc);
     if(!ret)
 	{
         dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
