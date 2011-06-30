@@ -1,9 +1,4 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-/*
- * eas-daemon
- * Copyright (C)  2011 <>
- * 
- */
 
 #ifndef _EAS_SYNC_FOLDER_MSG_H_
 #define _EAS_SYNC_FOLDER_MSG_H_
@@ -37,12 +32,89 @@ struct _EasSyncFolderMsg
 };
 
 GType eas_sync_folder_msg_get_type (void) G_GNUC_CONST;
+
+/**
+ * Create a new email body message.
+ *
+ * @param[in] accountId
+ *	  Unique identifier for a user account.
+ * @param[in] syncKey
+ *	  The client's current syncKey.
+ *
+ * @return NULL or a newly created EasSyncFolderMsg GObject.
+ */
 EasSyncFolderMsg* eas_sync_folder_msg_new (const gchar* syncKey, const gchar* accountId);
+
+/**
+ * Build the XML required for the message to be send in the request to the server.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or libxml DOM tree structure containing the XML for the message 
+ *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
+ *		   [full transfer]
+ */
 xmlDoc* eas_sync_folder_msg_build_message (EasSyncFolderMsg* self);
-gboolean eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, GError** error);
+
+/**
+ * Parses the response from the server, storing the email attachment according 
+ * to the parameters set when the EasSyncFolderMsg GObject instance was 
+ * created.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ * @param[in] doc
+ *	  libxml DOM tree structure containing the XML to be parsed. [no transfer]
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, 
+                                             const xmlDoc *doc, 
+                                             GError** error);
+
+/**
+ * Retrieves the response added folders.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or List of EasFolder GObjects that have been added.
+ */
 GSList* eas_sync_folder_msg_get_added_folders (EasSyncFolderMsg* self);
+
+/**
+ * Retrieves the response updated folders.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or List of EasFolder GObjects that have been updated.
+ */
 GSList* eas_sync_folder_msg_get_updated_folders (EasSyncFolderMsg* self);
+
+/**
+ * Retrieves the response deleted folders.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or List of EasFolder GObjects that have been deleted.
+ */
 GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);
+
+/**
+ * Retrieves the sync key in the response from the server.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or The updated sync key supplied by the server response. [no transfer]
+ */
 gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
 
 G_END_DECLS
