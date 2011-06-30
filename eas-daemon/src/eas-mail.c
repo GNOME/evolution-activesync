@@ -65,6 +65,7 @@
 #include "eas-get-email-attachment-req.h"
 #include "eas-move-email-req.h"
 #include "activesyncd-common-defs.h"
+#include "eas-marshal.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -121,7 +122,8 @@ eas_mail_class_init (EasMailClass *klass)
 	0,																		// class offset
 	NULL,																	// accumulator
 	NULL,																	// user data for accumulator
-	g_cclosure_marshal_VOID__UINT,   // Function to marshal the signal data into the parameters of the signal call
+    eas_marshal_VOID__UINT_UINT,
+	//g_cclosure_marshal_VOID__UINT,   // Function to marshal the signal data into the parameters of the signal call
 	G_TYPE_NONE,															// handler return type
 	2,																		// Number of parameter GTypes to follow
 	// GTypes of the parameters
