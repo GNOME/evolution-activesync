@@ -365,6 +365,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     gchar folder_hierarchy_sync_key[64] = "0\0";
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
+	gchar temp_folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -410,6 +411,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 
 	{
 		GSList *emails2_created = NULL; //receives a list of EasMails
+		GSList *emails2_deleted = NULL; 
 		GSList *server_ids = NULL;
         EasEmailInfo *email = NULL;
         gboolean rtn = FALSE;
@@ -440,11 +442,11 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         fail_if (emails_updated, "Not expecting updates in inbox after we moved an email");		
         fail_if (emails2_created, "Not expecting a new email in inbox after we move an email");
 
-		// TODO sync the temp folder and verify we get an added email
-        testGetFolderInfo (email_handler, folder_sync_key, tempfolder_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);		
+		// TODO sync the temp folder and verify we get an added email. what sync_key
+        testGetFolderInfo (email_handler, temp_folder_sync_key, tempfolder_id, &emails2_created, &emails_updated, &emails2_deleted, &more_available, &error);		
         fail_unless (emails2_created, "Expecting created emails in Temp folder after we moved an email");
         fail_if (emails_updated, "Not expecting updates in Temp folder after we moved an email");		
-        fail_if (emails_deleted, "Not expecting deleted emails for Temp folder after we move an email");
+        fail_if (emails2_deleted, "Not expecting deleted emails for Temp folder after we move an email");
 		
 		g_slist_foreach (emails2_created, (GFunc) g_object_unref, NULL);		
 		g_slist_free (emails2_created);
