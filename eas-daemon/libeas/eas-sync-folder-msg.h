@@ -34,7 +34,7 @@ struct _EasSyncFolderMsg
 GType eas_sync_folder_msg_get_type (void) G_GNUC_CONST;
 
 /**
- * Create a new email body message.
+ * Create a sync folder message.
  *
  * @param[in] accountId
  *	  Unique identifier for a user account.
