@@ -13,6 +13,7 @@ libeas_la_CPPFLAGS =			\
 		$(SOUP_CFLAGS)		\
 		$(WBXML_CFLAGS)		\
 		$(LIBICAL_CFLAGS)	\
+		$(LIBEBOOK_CFLAGS)	\
 		$(GNOMEKEYRING_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeas\" \
 		-I$(top_srcdir)/libeasmail/src/ \
@@ -27,6 +28,7 @@ libeas_la_LDFLAGS =			\
 		$(SOUP_LIBS)		\
 		$(WBXML_LIBS)		\
 		$(LIBICAL_LIBS)     \
+		$(LIBEBOOK_LIBS)     \
 		$(GNOMEKEYRING_LIBS)
 
 
@@ -90,7 +92,9 @@ libeas_la_SOURCES =		\
         eas-ping-msg.h \
         eas-ping-msg.c \
         eas-ping-req.h \
-        eas-ping-req.c
+        eas-ping-req.c \
+        eas-con-info-translator.h \
+        eas-con-info-translator.c
         
         
 

@@ -9,6 +9,7 @@
 #include "eas-sync-msg.h"
 #include "eas-email-info-translator.h"
 #include "eas-cal-info-translator.h"
+#include "eas-con-info-translator.h"
 
 struct _EasSyncMsgPrivate
 {
@@ -514,8 +515,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             break;
                             case EAS_ITEM_CONTACT:
                             {
-                                //TOD add contact transalator
-                                //flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
+                                flatItem = eas_con_info_translator_parse_response (appData, g_strdup(item_server_id));
                             }
                             break;
                         }
@@ -529,9 +529,11 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                     }
 
                 } // End for
-                xmlFree (item_server_id);
-                item_server_id = NULL;
-
+				if(item_server_id)
+				{
+	                xmlFree (item_server_id);
+	                item_server_id = NULL;
+				}
                 continue;
             }
 
