@@ -50,6 +50,7 @@ struct _EasEmailHandlerPrivate
     DBusGProxy *remoteEas;
     gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
     GMainLoop* main_loop;
+	GMainLoop* progress_loop;
 	GHashTable *fetch_email_body_progress_fns_table;	// hashtable of request progress functions
 	guint next_request_id;			// request id to be used for next dbus call
 	
@@ -85,6 +86,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
     priv->bus = NULL;
     priv->account_uid = NULL;
     priv->main_loop = NULL;
+	priv->progress_loop = NULL;
 	priv->next_request_id = 1;
 	priv->fetch_email_body_progress_fns_table = NULL;
     cnc->priv = priv;
@@ -704,12 +706,18 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 			}
 		}
 	}
+
+	if(percent == 100)
+	{
+		g_debug("quitting progress loop");
+		g_main_loop_quit(self->priv->progress_loop);
+	}
 	
 	g_debug("fetch_email_progress_signal_handler--");
 	return;
 }
 
-/*
+
 static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
 {
 	g_debug("fetch email body completed");
@@ -717,7 +725,7 @@ static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, 
 	g_debug("fetch_email_progress_signal_handler++");
  	return;
 }
-*/
+
 
 // get the entire email body for listed email
 // email body will be written to a file with the emailid as its name
@@ -772,6 +780,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
 	}
 
+	/*
     // call dbus api
     ret = dbus_g_proxy_call (proxy, "fetch_email_body", 
                              error,
@@ -782,8 +791,8 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
                              G_TYPE_UINT, request_id,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);
+	*/
 	
-	/*
 	call = dbus_g_proxy_begin_call(proxy, "fetch_email_body", 
 							fetch_email_body_completed, 
 							self, 							// userdata 
@@ -795,6 +804,10 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 							G_TYPE_UINT, request_id,
 							G_TYPE_INVALID);
 
+	// lrm TODO - figure out how to do this properly!
+	priv->progress_loop = g_main_loop_new (NULL, TRUE);
+	g_main_loop_run(priv->progress_loop);
+	
 	g_debug("get results (any error)");
 	
 	// blocks until results are available:
@@ -802,7 +815,8 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 	                       call, 
 	                       error, 
 	                       G_TYPE_INVALID);
-	*/
+	
+	
     g_debug ("eas_mail_handler_fetch_email_body--");
 
 finish:	
