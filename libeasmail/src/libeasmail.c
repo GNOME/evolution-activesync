@@ -59,6 +59,7 @@ struct _EasProgressCallbackInfo
 {
 	EasProgressFn progress_fn;
 	gpointer progress_data;
+	guint percent_last_sent;
 };
 typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
 
@@ -685,16 +686,22 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 
 	g_debug("fetch_email_progress_signal_handler++");
 
-	if(self->priv->fetch_email_body_progress_fns_table)
+	if((self->priv->fetch_email_body_progress_fns_table) && (percent > 0))
 	{
 		// if there's a progress function for this request in our hashtable, call it:
 		progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
 		if(progress_callback_info)
 		{
-			EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
-			g_debug("client has progress function, calling it with %d", percent);
+			if(percent > progress_callback_info->percent_last_sent)
+			{
+				g_debug("last update was %d/%, this one %d /%", percent, progress_callback_info->percent_last_sent);
+				progress_callback_info->percent_last_sent = percent;
+	
+				EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
+				g_debug("client has progress function, calling it with %d/%", percent);
 
-			progress_fn(progress_callback_info->progress_data, percent);
+				progress_fn(progress_callback_info->progress_data, percent);
+			}
 		}
 	}
 	
@@ -746,7 +753,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		// add progress fn/data structure to hash table
 		progress_info->progress_fn = progress_fn;
 		progress_info->progress_data = progress_data;
-
+		progress_info->percent_last_sent = 0;
 		
 		if (priv->fetch_email_body_progress_fns_table == NULL)
 		{
