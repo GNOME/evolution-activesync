@@ -684,26 +684,21 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 	EasEmailHandler* self = (EasEmailHandler*)user_data;
 
 	g_debug("fetch_email_progress_signal_handler++");
-	
-	// if there's a progress function for this request in our hashtable, call it:
-	progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, &request_id);	// lrm TODO arg 2 gives warning
-	if(progress_callback_info)
+
+	if(self->priv->fetch_email_body_progress_fns_table)
 	{
-		EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
-		g_debug("client has progress function, calling it with %d", percent);
+		// if there's a progress function for this request in our hashtable, call it:
+		progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
+		if(progress_callback_info)
+		{
+			EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
+			g_debug("client has progress function, calling it with %d", percent);
 
-		progress_fn(progress_callback_info->progress_data, percent);
+			progress_fn(progress_callback_info->progress_data, percent);
+		}
 	}
-
-	g_debug("fetch_email_progress_signal_handler++");
-	return;
-}
-
-
-static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
-{
-	g_debug("fetch email body completed");
 	
+	g_debug("fetch_email_progress_signal_handler++");
 	return;
 }
 
@@ -756,11 +751,11 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		{
 			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);	// lrm TODO NULL for key destroy function correct?
 		}
-		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, &request_id, progress_info);	// lrm TODO - is second arg correct?
+		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - is second arg correct?
 	}
 
     // call dbus api
-	/*
+	
     ret = dbus_g_proxy_call (proxy, "fetch_email_body", 
                              error,
                              G_TYPE_STRING, self->priv->account_uid,
@@ -770,26 +765,6 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
                              G_TYPE_UINT, request_id,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);
-	*/
-	// lrm - TODO use async version of dbus
-	// TOD - store the 
-	call = dbus_g_proxy_begin_call(proxy, "fetch_email_body", 
-							fetch_email_body_completed, 
-							self, 							// userdata 
-							NULL, 							// destroy notification 
-							G_TYPE_STRING, self->priv->account_uid,
-							G_TYPE_STRING, folder_id,
-							G_TYPE_STRING, server_id,
-							G_TYPE_STRING, mime_directory,
-							G_TYPE_UINT, request_id,
-							G_TYPE_INVALID);
-
-	g_debug("get results (any error)");
-	// blocks until results are available:
-	ret = dbus_g_proxy_end_call (proxy, 
-	                       call, 
-	                       error, 
-	                       G_TYPE_INVALID);
 	
     g_debug ("eas_mail_handler_fetch_email_body--");
 
