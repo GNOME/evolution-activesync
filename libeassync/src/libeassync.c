@@ -37,7 +37,7 @@ struct _EasSyncHandlerPrivate
 };
 
 static gboolean
-build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error);
+build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, gboolean add_client_ids, GError **error);
 
 // TODO - how much verification of args should happen
 
@@ -94,7 +94,7 @@ static gchar* getDefaultFolder(EasSyncHandler* handler, EasItemType type, const 
 		break;
 		default:
 		{
-			//unknown type -no default folder, set GError & return_type
+			g_debug("type not found - error");
 		}
 	}
 	g_debug("Default Contact Folder ID is %s", defaultConFolder);
@@ -244,7 +244,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     gchar **deleted_item_array = NULL;
     gchar **updated_item_array = NULL;
 	gchar *folder = NULL;
-	gchar *sync_key= NULL;
+	
 
     g_debug ("eas_sync_handler_get_calendar_items++ ");
 	g_debug ("sync_key_in = %s", sync_key_in);
@@ -390,7 +390,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "delete_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
-                             G_TYPE_STRING, folder_id,
+                             G_TYPE_STRING, folder,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, items_deleted,
                              G_TYPE_INVALID,
@@ -452,13 +452,13 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
     g_debug ("server_id = %s", ( (EasItemInfo*) (items_updated->data))->server_id);
 
-    build_serialised_calendar_info_array (&updated_item_array, items_updated, error);
+    build_serialised_calendar_info_array (&updated_item_array, items_updated, FALSE, error);
 
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "update_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_UINT64, (guint64) type,
-                             G_TYPE_STRING, folder_id,
+                             G_TYPE_STRING, folder,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, updated_item_array,
                              G_TYPE_INVALID,
@@ -484,7 +484,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 // allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
 // null terminates the array
 static gboolean
-build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, GError **error)
+build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, gboolean add_client_ids, GError **error)
 {
     gboolean ret = TRUE;
     guint i = 0;
@@ -502,6 +502,17 @@ build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const 
         EasItemInfo *calInfo = l->data;
         gchar *tstring = NULL;
         g_assert (l != NULL);
+		//if we're adding data, and it has no client id - make one up
+		if(add_client_ids &&calInfo->client_id == NULL)
+		{
+			const gchar client_id[21];
+			guint random_num;
+			/* initialize random generator */
+			srand (time (NULL));
+			random_num = rand();
+			snprintf (client_id, sizeof (client_id) / sizeof (client_id[0]), "%d", random_num);
+			calInfo->client_id = g_strdup(client_id);
+		}
         eas_item_info_serialise (calInfo, &tstring);
         (*serialised_cal_info_array) [i] = tstring;
         l = g_slist_next (l);
@@ -521,7 +532,7 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
-    gchar *folder = NULL;
+    gchar *folder = NULL;	
     gchar **added_item_array = NULL;
     gchar **created_item_array = NULL;
 
@@ -544,13 +555,15 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 		folder = g_strdup(folder_id);
 	}
 
-    build_serialised_calendar_info_array (&added_item_array, items_added, error);
+	g_debug ("eas_sync_handler_add_items to folder %s", folder);
+
+    build_serialised_calendar_info_array (&added_item_array, items_added, TRUE, error);
 
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "add_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_UINT64, (guint64) type,
-                             G_TYPE_STRING, folder_id,
+                             G_TYPE_STRING, folder,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, added_item_array,
                              G_TYPE_INVALID,

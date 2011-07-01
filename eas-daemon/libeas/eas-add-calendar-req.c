@@ -131,8 +131,10 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
                                            doc, // full transfer
                                            (struct _EasRequestBase *) self,
                                            error);
-
-	g_assert(error == NULL || (!success && *error != NULL));
+	if (!success)
+	{
+		g_assert(error == NULL || (*error != NULL));
+	}
 
     g_debug ("eas_add_calendar_req_Activate--");
 	return success;
