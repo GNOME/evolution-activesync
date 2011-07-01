@@ -39,6 +39,11 @@ SYNCACTIVESYNC_SOURCES = \
 	ActiveSyncSourceRegister.cpp
 
 syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)
-syncactivesync_la_LIBADD = $(SYNCEVOLUTION_LIBS) $(LIBEASSYNC_LIBS) $(top_builddir)/libeasmail/src/libeasmail.la $(top_builddir)/eas-daemon/libeas/libeas.la
+syncactivesync_la_LIBADD = \
+    $(SYNCEVOLUTION_LIBS) \
+    $(LIBEASSYNC_LIBS) \
+    $(top_builddir)/libeasmail/src/libeasmail.la \
+    $(top_builddir)/eas-daemon/libeas/libeas.la \
+    $(top_builddir)/libeasaccount/src/libeasaccount.la
 syncactivesync_la_LDFLAGS = -no-undefined -module -avoid-version -export-dynamic
 syncactivesync_la_CXXFLAGS = $(SYNCEVOLUTION_CXXFLAGS)
