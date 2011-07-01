@@ -175,7 +175,6 @@ EasMail*
 eas_request_base_GetInterfaceObject (EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetInterfaceObject++");
     return priv->dbus_interface;
 }
 
