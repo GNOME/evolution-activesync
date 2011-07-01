@@ -99,9 +99,11 @@ GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
  *      The server ID identifying the email on the Exchange Server.
  * @param[in] mime_directory
  *	  Full path to local file system directory where the retrieved email 
+ * @param[in] request_id
+ *    passed back with progress signal to allow caller to identify the call instance
  * @param[in] context
  *	  DBus context token.
- *
+ * 
  * @return An allocated EasGetEmailAttachmentReq GObject or NULL
  */
 EasGetEmailBodyReq* 
