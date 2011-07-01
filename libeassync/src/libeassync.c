@@ -52,8 +52,8 @@ static gchar* getDefaultFolder(EasSyncHandler* handler, EasItemType type, const 
     GError *error = NULL;
 	gchar *syncKeyOut = NULL;
 	
-	//if synckey is  zero then we must look up the defaults
-	if(!g_strcmp0(syncKey, "0"))
+	//if default values not yet set - look up
+	if(defaultCalFolder==NULL)
 	{
 		ret  = eas_sync_handler_sync_folder_hierarchy (handler,
                                                    "0",

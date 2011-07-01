@@ -77,7 +77,7 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     m_startSyncKey = lastToken;
 
     GErrorCXX gerror;
-    EASItemsCXX created, updated, deleted;
+	EASItemsCXX created, updated, deleted;
     gchar *buffer;
     if (!eas_sync_handler_get_items(m_handler,
                                     m_startSyncKey.c_str(),
@@ -89,6 +89,7 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
                                     gerror)) {
         gerror.throwError("reading ActiveSync changes");
     }
+	
     // TODO: Test that we really get an empty token here for an unexpected slow
     // sync. If not, we'll start an incremental sync here and later the engine
     // will ask us for older, unmodified item content which we won't have.
@@ -101,18 +102,21 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     // populate ID lists and content cache
     BOOST_FOREACH(EasItemInfo *item, created) {
         string luid(item->server_id);
+		addItem(luid, ANY);
         addItem(luid, NEW);
         m_ids->setProperty(luid, "1");
         m_items[luid] = item->data;
     }
     BOOST_FOREACH(EasItemInfo *item, updated) {
         string luid(item->server_id);
+		addItem(luid, ANY);
         addItem(luid, UPDATED);
         // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
         m_items[luid] = item->data;
     }
     BOOST_FOREACH(EasItemInfo *item, deleted) {
         string luid(item->server_id);
+		addItem(luid, ANY);
         addItem(luid, DELETED);
         m_ids->removeProperty(luid);
     }
