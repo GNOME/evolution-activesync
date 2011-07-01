@@ -155,7 +155,7 @@ ModalDialog {
             Text {
                 anchors.top:  serverUrlEntry.bottom
                 anchors.left:  serverUrlEntry.left
-                text: qsTr("Enter the ActiveSync server URL\ne.g. http://foo.example.com/ActiveSyncServer")
+                text: qsTr("Enter the ActiveSync server URL\ne.g. https://foo.example.com/Microsoft-Server-ActiveSync")
                 font.pixelSize: theme.fontPixelSizeSmall
             }
         }
