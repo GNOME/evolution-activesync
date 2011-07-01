@@ -11,20 +11,44 @@
 #define EAS_ELEMENT_TITLE                     "Title"
 #define EAS_ELEMENT_SUFFIX                    "Suffix"
 
+#define EAS_ELEMENT_HOMECITY                  "HomeCity"
+#define EAS_ELEMENT_HOMECOUNTRY               "HomeCountry"
+#define EAS_ELEMENT_HOMEPOSTALCODE            "HomePostalCode"
+#define EAS_ELEMENT_HOMESTATE                 "HomeRegion"
+#define EAS_ELEMENT_HOMESTREET                "HomeStreet"
+
+#define EAS_ELEMENT_BUSINESSCITY              "BusinessCity"
+#define EAS_ELEMENT_BUSINESSCOUNTRY           "BusinessCountry"
+#define EAS_ELEMENT_BUSINESSPOSTALCODE        "BusinessPostalCode"
+#define EAS_ELEMENT_BUSINESSSTATE             "BusinessRegion"
+#define EAS_ELEMENT_BUSINESSSTREET            "BusinessStreet"
+
+#define EAS_ELEMENT_BUSINESSPHONENUMBER       "BusinessPhoneNumber"
+#define EAS_ELEMENT_BUSINESS2PHONENUMBER      "Business2PhoneNumber"
+#define EAS_ELEMENT_BUSINESSFAXNUMBER         "BusinessFaxNumber"
+#define EAS_ELEMENT_HOMEPHONENUMBER           "HomePhoneNumber"
+#define EAS_ELEMENT_HOME2PHONENUMBER          "Home2PhoneNumber"
+#define EAS_ELEMENT_HOMEFAXNUMBER             "HomeFaxNumber"
+#define EAS_ELEMENT_MOBILEPHONENUMBER         "MobilePhoneNumber"
+#define EAS_ELEMENT_CARPHONENUMBER            "CarPhoneNumber"
+#define EAS_ELEMENT_RADIOPHONENUMBER          "RadioPhoneNumber"
+
+#define EAS_ELEMENT_EMAIL1ADDRESS             "Email1Address"
+#define EAS_ELEMENT_EMAIL2ADDRESS             "Email2Address"
+#define EAS_ELEMENT_EMAIL3ADDRESS             "Email3Address"
+
+
+
 void add_attr_value(EVCardAttribute *attr,xmlNodePtr *node,const gchar *sought)
 {
 	xmlNodePtr n = node;
 	gchar *value = NULL; 
-	g_debug("jba1");
-	g_debug(sought);
 
 	// find sought value 
 	while (n) 
 	{
-	g_debug((const gchar*)(n->name));
 		if (!xmlStrcmp((const gchar*)(n->name), (const xmlChar *)sought))
 		{
-	g_debug("jba2");
 			value = xmlNodeGetContent(n);
 			break;
 		}
@@ -34,7 +58,6 @@ void add_attr_value(EVCardAttribute *attr,xmlNodePtr *node,const gchar *sought)
 	if(!value)
 		return;
 	// add sought value
-	g_debug("jba3");
 	e_vcard_attribute_add_value(attr, value);
 }
 
@@ -47,8 +70,25 @@ void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 	add_attr_value(attr, node, EAS_ELEMENT_SUFFIX);
 }
 
-                    
-gchar* eas_con_info_translator_parse_response(xmlNodePtr node, 
+void add_home_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
+{
+	add_attr_value(attr, node, EAS_ELEMENT_HOMECITY);
+	add_attr_value(attr, node, EAS_ELEMENT_HOMECOUNTRY);
+	add_attr_value(attr, node, EAS_ELEMENT_HOMEPOSTALCODE);
+	add_attr_value(attr, node, EAS_ELEMENT_HOMESTATE);
+	add_attr_value(attr, node, EAS_ELEMENT_HOMESTREET);
+}
+
+void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
+{
+	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSCITY);
+	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSCOUNTRY);
+	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSPOSTALCODE);
+	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSSTATE);
+	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSSTREET);
+}
+
+	gchar* eas_con_info_translator_parse_response(xmlNodePtr node, 
                                               const gchar* server_id)
 {
 	// Variable for the return value
@@ -67,7 +107,9 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 		
 //		EasItemInfo* conInfo = NULL;
 
-		EVCardAttribute *Nattr = NULL;
+		gboolean nameElements = FALSE;
+		gboolean homeAddrElements = FALSE;
+		gboolean workAddrElements = FALSE;
 
 		// vCard object
 		vcard = e_vcard_new();
@@ -78,20 +120,159 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 			if (n->type == XML_ELEMENT_NODE)
 			{
 				const gchar* name = (const gchar*)(n->name);
+				EVCardAttributeParam *param = e_vcard_attribute_param_new("TYPE");
+				EVCardAttributeParam *param2 = e_vcard_attribute_param_new("TYPE");
 
 				//
-				// First Name
+				// Name elements
 				//				
-				if ((g_strcmp0(name, EAS_ELEMENT_FIRSTNAME) == 0) && (Nattr == NULL))
+				if (((g_strcmp0(name, EAS_ELEMENT_FIRSTNAME) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_MIDDLENAME) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_LASTNAME) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_TITLE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_SUFFIX) == 0))
+				    && (nameElements == FALSE))
 				{
-					Nattr = e_vcard_attribute_new(NULL, EVC_N);
-					add_name_attr_values(Nattr, node->children);
-					e_vcard_add_attribute(vcard, Nattr);
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_N);
+					add_name_attr_values(attr, node->children);
+					e_vcard_add_attribute(vcard, attr);
+					nameElements = TRUE;
+				}
+
+				//
+				// Home Address elements
+				//
+				if (((g_strcmp0(name, EAS_ELEMENT_HOMECITY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_HOMECOUNTRY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_HOMEPOSTALCODE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_HOMESTATE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_HOMESTREET) == 0))
+				    && (homeAddrElements == FALSE))
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_ADR);
+					add_home_address_attr_values(attr, node->children);
+					e_vcard_add_attribute(vcard, attr);
+					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
+					homeAddrElements = TRUE;
+				}
+
+				//
+				// Business Address elements
+				//
+				if (((g_strcmp0(name, EAS_ELEMENT_BUSINESSCITY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_BUSINESSCOUNTRY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_BUSINESSPOSTALCODE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_BUSINESSSTATE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_BUSINESSSTREET) == 0))
+				    && (workAddrElements == FALSE))
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_ADR);
+					add_business_address_attr_values(attr, node->children);
+					e_vcard_add_attribute(vcard, attr);
+					e_vcard_attribute_add_param_with_value(attr, param, "WORK");
+					workAddrElements = TRUE;
+				}
+				
+				//
+				// Contact number elements
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_BUSINESSPHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_BUSINESSPHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "WORK");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_BUSINESS2PHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_BUSINESS2PHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "WORK");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_BUSINESSFAXNUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_BUSINESSFAXNUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "WORK");
+					e_vcard_attribute_add_param_with_value(attr, param2, "FAX");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_HOMEPHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_HOMEPHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_HOME2PHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_HOME2PHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_HOMEFAXNUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_HOMEFAXNUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
+					e_vcard_attribute_add_param_with_value(attr, param, "FAX");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_MOBILEPHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_MOBILEPHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "CELL");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_CARPHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_CARPHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "CAR");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_RADIOPHONENUMBER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_RADIOPHONENUMBER);
+					e_vcard_attribute_add_param_with_value(attr, param, "CELL");
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_EMAIL1ADDRESS) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_EMAIL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL1ADDRESS);
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_EMAIL2ADDRESS) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_EMAIL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL2ADDRESS);
+				}
+				if (g_strcmp0(name, EAS_ELEMENT_EMAIL3ADDRESS) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_EMAIL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL3ADDRESS);
 				}
 			}			
 		}		
-		// Now insert the server ID and vCard into an EasItemInfo object and serialise it
-
 	}
 
 	result = e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30);
