@@ -117,7 +117,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
     priv->accountID = g_strdup (accountId);
     eas_request_base_SetContext (&self->parent_instance, context);
 
-    if (syncKey && !g_strcmp0 (syncKey, "0"))
+    if (syncKey && g_strcmp0 (syncKey, "0"))
     {
         priv->state = EasSyncFolderHierarchyStep2;
     }
@@ -225,12 +225,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             //get syncKey
             const gchar* syncKey = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg);
             xmlDoc *newMsgDoc = NULL;
-
-            //clean up old message
-            if (priv->syncFolderMsg)
-            {
-                g_object_unref (priv->syncFolderMsg);
-            }
 
             //create new message with new syncKey
             priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
