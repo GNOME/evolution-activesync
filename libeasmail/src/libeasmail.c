@@ -38,7 +38,7 @@
 #include "eas-mail-errors.h"
 #include "utils.h"
 #include "../../logger/eas-logger.h"
-#include "eas-marshal.h"	// lrm TODO
+#include "eas-marshal.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
@@ -746,16 +746,16 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		// add progress fn/data structure to hash table
 		progress_info->progress_fn = progress_fn;
 		progress_info->progress_data = progress_data;
+
 		
 		if (priv->fetch_email_body_progress_fns_table == NULL)
 		{
-			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);	// lrm TODO NULL for key destroy function correct?
+			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); //g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
 		}
-		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - is second arg correct?
+		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
 	}
 
     // call dbus api
-	
     ret = dbus_g_proxy_call (proxy, "fetch_email_body", 
                              error,
                              G_TYPE_STRING, self->priv->account_uid,
