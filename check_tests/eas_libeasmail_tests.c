@@ -691,9 +691,12 @@ END_TEST
 static void
 test_fetch_email_body_progress_cb (gpointer progress_data, guint percent)
 {
-	g_main_loop_quit (loop);
-    g_main_loop_unref (loop);
-    loop = NULL;
+	if(percent == 100)
+	{
+		g_main_loop_quit (loop);
+    	g_main_loop_unref (loop);
+    	loop = NULL;
+	}
 }
 
 START_TEST (test_eas_mail_handler_fetch_email_body)
@@ -783,7 +786,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
         mark_point();
 
 		EasProgressFn progress_cb = NULL;
-
+		
 		// comment out if progress reports not desired:
 		progress_cb = test_fetch_email_body_progress_cb;
 
