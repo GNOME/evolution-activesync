@@ -24,7 +24,7 @@ CFLAGS="$CFLAGS $WARNING_FLAGS"
 
 # This macro is defined in check.m4 and tests if check.h and
 # libcheck.a are installed in your system. It sets CHECK_CFLAGS and
-# CHECK_LIBS accordingly.  
+# CHECK_LIBS accordingly.
 #  AM_PATH_CHECK([MINIMUM-VERSION,
 #                [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 AM_PATH_CHECK()
@@ -52,7 +52,7 @@ PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
 PKG_CHECK_MODULES(DBUS, dbus-1)
 PKG_CHECK_MODULES(LIBXML, libxml-2.0)
 PKG_CHECK_MODULES(SOUP, libsoup-2.4)
-PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
+PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.10) # 0.11
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
@@ -61,6 +61,14 @@ PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution,
 				 have_syncevolution="yes",
 				 have_syncevolution="no")
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
+
+# Check for the MeeGo "mlite" library.  If it exists, enable the MeeGo
+# ActiveSync UI.
+PKG_CHECK_MODULES([MLITE],
+                  [mlite],
+		  [have_mlite="yes"],
+		  [have_mlite="no"
+                   AC_MSG_NOTICE([MeeGo ActiveSync Settings UI will not be built])])
 
 if (test "${have_syncevolution}" = "yes"); then
     # Dummy compilation check. If it fails, it's almost certainly because
@@ -110,26 +118,29 @@ AC_SUBST(camel_providerdir)
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
 
+MEEGO_UI_DIR=meego/meego-ux-settings-activesync
+AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
+
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
-    Makefile 
-    eas-daemon/data/Makefile 
+    Makefile
+    eas-daemon/data/Makefile
     eas-daemon/data/org.meego.activesyncd.service
-    eas-daemon/libeas/Makefile 
-    eas-daemon/src/Makefile 
-    eas-daemon/tests/Makefile 
-    libeasmail/src/Makefile 
-    libeassync/src/Makefile 
+    eas-daemon/libeas/Makefile
+    eas-daemon/src/Makefile
+    eas-daemon/tests/Makefile
+    libeasmail/src/Makefile
+    libeassync/src/Makefile
     libeasaccount/src/Makefile
     libeasaccount/tests/Makefile
     check_tests/Makefile
     logger/Makefile
     camel/Makefile
     syncevolution/Makefile
+    meego/Makefile
     ])
 
-
-
+AC_CONFIG_COMMANDS_POST([test "$have_mlite" = yes && cd ${srcdir}/${MEEGO_UI_DIR} && qmake])
 
 AC_OUTPUT
