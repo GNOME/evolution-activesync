@@ -152,7 +152,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
                             const gchar *mime_directory,
-                            const guint request_id,			// lrm passed back with progress signal
+                            const guint request_id,	
                             DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
