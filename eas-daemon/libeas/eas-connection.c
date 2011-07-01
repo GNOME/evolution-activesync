@@ -67,6 +67,7 @@ static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
 static gboolean wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
 static void parse_for_status (xmlNode *node);
+static gchar *device_type, *device_id;
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -95,6 +96,31 @@ eas_connection_accounts_init()
 			return;
 		}
 		g_debug("-->created account_list");
+
+		// Find the DeviceType and DeviceId from GConf, or create them
+		// if they don't already exist
+		device_type = gconf_client_get_string (g_gconf_client,
+											   "/apps/activesyncd/device_type",
+											   NULL);
+		if (!device_type) {
+			device_type = g_strdup("MeeGo");
+			gconf_client_set_string (g_gconf_client,
+									  "/apps/activesyncd/device_type",
+									  device_type, NULL);
+		}
+
+		device_id = gconf_client_get_string (g_gconf_client,
+											 "/apps/activesyncd/device_id",
+											 NULL);
+		if (!device_id) {
+			device_id = g_strdup_printf ("%08x%08x%08x%08x",
+										 g_random_int(), g_random_int(),
+										 g_random_int(), g_random_int());
+			gconf_client_set_string (g_gconf_client,
+									  "/apps/activesyncd/device_id",
+									  device_id, NULL);
+		}
+		g_debug ("device type %s, device id %s", device_type, device_id);
 	}
 	g_debug("eas_connection_accounts_init--");
 }
@@ -648,8 +674,8 @@ eas_connection_send_request (EasConnection* self,
     uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
                        "&User=", eas_account_get_username(priv->account),
-                       "&DeviceID=", "1234567890",   // TODO Need to get device type and id from the correct place.
-                       "&DeviceType=", "FakeDevice", // TODO Need to get device type and id from the correct place.
+                       "&DeviceID=", device_id,
+                       "&DeviceType=", device_type,
                        NULL);
 
     msg = soup_message_new ("POST", uri);
