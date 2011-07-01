@@ -263,6 +263,50 @@ eas_connection_class_init (EasConnectionClass *klass)
     g_debug ("eas_connection_class_init--");
 }
 
+static gboolean
+fetch_and_store_password (const gchar* username, const gchar * serverUri)
+{
+	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
+	gchar * description = NULL;
+	gchar * password = NULL;
+	GError * error = NULL;
+	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	gint exit_status = 0;
+
+	if (FALSE == g_spawn_sync (NULL, argv, NULL,
+	                           G_SPAWN_SEARCH_PATH,
+	                           NULL, NULL,
+	                           &password, NULL, 
+	                           &exit_status,
+	                           &error))
+	{
+		g_warning ("Failed to spawn : [%d][%s]", error->code, error->message);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	g_strchomp (password);
+	description = g_strdup_printf ("Exchange Server Password for %s@%s", 
+	                               username,
+	                               serverUri);
+	
+	result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
+	                                            NULL,
+	                                            description,
+	                                            password,
+	                                            "user", username,
+	                                            "server", serverUri,
+	                                            NULL);
+
+	g_free (description);
+
+	memset (password, 0, strlen(password));
+	g_free(password);
+	password = NULL;
+
+	return (result == GNOME_KEYRING_RESULT_OK);
+}
+
 
 static void 
 connection_authenticate (SoupSession *sess, 
@@ -272,68 +316,76 @@ connection_authenticate (SoupSession *sess,
                          gpointer data)
 {
     EasConnection* cnc = (EasConnection *) data;
-	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
+	const gchar * username = eas_account_get_username(cnc->priv->account);
+	const gchar * serverUri = eas_account_get_uri(cnc->priv->account);
+	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	gchar* password = NULL;
-	gint exit_status = 0;
-	GnomeKeyringResult result = GNOME_KEYRING_RESULT_OK;
-	gchar* description = NULL;
-	GError *error = NULL;
 
     g_debug ("  eas_connection - connection_authenticate++");
 
+	// @@FIX ME - Temporary grab of password from GConf
+
+	password = eas_account_get_password (cnc->priv->account);
+	if (password)
+	{
+		gchar * description = g_strdup_printf (
+		                          "Exchange Server Password for %s@%s", 
+	                              username,
+	                              serverUri);
+
+		g_warning("Found password in GConf, writting it to Gnome Keyring");
+		
+		result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
+			                                        NULL,
+			                                        description,
+			                                        password,
+			                                        "user", username,
+			                                        "server", serverUri,
+			                                        NULL);
+		g_free(description);
+
+		if (GNOME_KEYRING_RESULT_OK != result)
+		{
+			g_warning("Failed to store GConf password in Gnome Keyring");
+		}
+
+	}
+	password = NULL;
+
 	result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
 	                                           &password,
-	                                           "user", eas_account_get_username(cnc->priv->account) ,
-                                               "server", eas_account_get_uri(cnc->priv->account),
+	                                           "user", username,
+                                               "server", serverUri,
 	                                           NULL);
 
 	if (GNOME_KEYRING_RESULT_NO_MATCH == result)
 	{
 		g_warning("Failed to find password in Gnome Keyring");
 
-		if (FALSE == g_spawn_sync (NULL, argv, NULL,
-		                           G_SPAWN_SEARCH_PATH,
-		                           NULL, NULL,
-		                           &password, NULL, 
-		                           &exit_status,
-		                           &error))
+		if (fetch_and_store_password(eas_account_get_username(cnc->priv->account), eas_account_get_uri(cnc->priv->account)))
 		{
-			g_warning ("Failed to spawn : [%d][%s]",
-				error->code, error->message);
-			g_error_free (error);
-			return;
+			result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
+                                                       &password,
+                                                       "user", username,
+                                                       "server", serverUri,
+                                                       NULL);
+
+			if (GNOME_KEYRING_RESULT_OK == result)
+			{
+				soup_auth_authenticate (auth, 
+						                username,
+						                password);
+			}
+			else 
+			{
+				g_critical ("Failed to fetch and store password to gnome keyring [%d]", result);
+			}
+			
+			if (password)
+			{
+				gnome_keyring_free_password(password);
+			}
 		}
-
-		g_strchomp (password);
-
-		description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                               eas_account_get_username(cnc->priv->account),
-		                               eas_account_get_uri(cnc->priv->account));
-		
-		result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-		                                            NULL,
-		                                            description,
-		                                            password,
-		                                            "user", eas_account_get_username(cnc->priv->account),
-		                                            "server", eas_account_get_uri(cnc->priv->account),
-		                                            NULL);
-
-		g_free (description);
-
-		if (GNOME_KEYRING_RESULT_OK == result)
-		{
-			soup_auth_authenticate (auth, 
-				                    eas_account_get_username(cnc->priv->account),
-				                    password);
-		}
-		else 
-		{
-			g_critical ("Failed to store password to gnome keyring [%d]", result);
-		}
-
-		memset (password, 0, strlen(password));
-		g_free(password);
-		password = NULL;
 	}
 	else if (result != GNOME_KEYRING_RESULT_OK)
 	{
@@ -346,7 +398,7 @@ connection_authenticate (SoupSession *sess,
 			cnc->priv->retrying_asked = FALSE;
 
 			soup_auth_authenticate (auth, 
-				                    eas_account_get_username(cnc->priv->account),
+				                    username,
 				                    password);
 			if (password)
 			{
@@ -355,8 +407,6 @@ connection_authenticate (SoupSession *sess,
 		}
 		else if (!cnc->priv->retrying_asked)
 		{
-			gchar* description = NULL;
-
 			cnc->priv->retrying_asked = TRUE;
 			
 			if (password)
@@ -364,53 +414,34 @@ connection_authenticate (SoupSession *sess,
 				gnome_keyring_free_password(password);
 				password = NULL;
 			}
-			
-			if (FALSE == g_spawn_sync (NULL, argv, NULL,
-				                       G_SPAWN_SEARCH_PATH,
-				                       NULL, NULL,
-				                       &password, NULL, 
-				                       &exit_status,
-				                       &error))
+
+			if (fetch_and_store_password(eas_account_get_username(cnc->priv->account), eas_account_get_uri(cnc->priv->account)))
 			{
-				g_warning ("Failed to spawn : [%d][%s]",
-					error->code, error->message);
-				g_error_free (error);
-				return;
+				result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
+		                                                   &password,
+		                                                   "user", username,
+		                                                   "server", serverUri,
+		                                                   NULL);
+
+				if (GNOME_KEYRING_RESULT_OK == result)
+				{
+					soup_auth_authenticate (auth, 
+					                        username,
+					                        password);
+				}
+				else 
+				{
+					g_critical ("Failed to store password to gnome keyring [%d]", result);
+				}
+				
+				if (password)
+				{
+					gnome_keyring_free_password(password);
+					password = NULL;
+				}
 			}
-
-			g_strchomp (password);
-
-			description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-		                                   eas_account_get_username(cnc->priv->account),
-		                                   eas_account_get_uri(cnc->priv->account));
-		
-			result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-				                                        NULL,
-		    		                                    description,
-		        		                                password,
-		            		                            "user", eas_account_get_username(cnc->priv->account),
-		                		                        "server", eas_account_get_uri(cnc->priv->account),
-		                    		                    NULL);
-
-			g_free (description);
-
-			if (GNOME_KEYRING_RESULT_OK == result)
-			{
-				soup_auth_authenticate (auth, 
-			                            eas_account_get_username(cnc->priv->account),
-			                            password);
-			}
-			else 
-			{
-				g_critical ("Failed to store password to gnome keyring [%d]", result);
-			}
-
-			memset (password, 0, strlen (password));
-			g_free (password);
-			password = NULL;
 		}
 	}
-
     g_debug ("  eas_connection - connection_authenticate--");
 }
 
