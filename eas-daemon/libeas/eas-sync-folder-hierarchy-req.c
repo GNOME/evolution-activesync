@@ -117,7 +117,11 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
     priv->accountID = g_strdup (accountId);
     eas_request_base_SetContext (&self->parent_instance, context);
 
-    if (syncKey && g_strcmp0 (syncKey, "0"))
+	// Actually, we don't need the two-stage sync for folders.
+	// It gives us the folder list on the *first* attempt, and
+	// if we loop, we throw away that information and get
+	// "no changes" for the second call.
+    if (1 || syncKey && g_strcmp0 (syncKey, "0"))
     {
         priv->state = EasSyncFolderHierarchyStep2;
     }
