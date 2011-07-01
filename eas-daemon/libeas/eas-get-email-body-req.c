@@ -194,21 +194,19 @@ eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
 	EasMailClass* mail_klass;
 	guint percent;
 	
-	g_debug("eas_get_email_body_req_GotChunk++");
 	priv->response_received += length;
 
 	percent = priv->response_received * 100 / priv->response_size;
 
 	mail = eas_request_base_GetInterfaceObject(&self->parent_instance);
 	mail_klass = EAS_MAIL_GET_CLASS (mail);
+	g_debug("eas_get_email_body_req_GotChunk %d% received now", percent);	
 	// lrm emit signal TODO get EasMail object to use here:
 	g_signal_emit (mail,
 	mail_klass->signal_id,
 	0,
 	priv->request_id,
 	percent);
-
-	g_debug("eas_get_email_body_req_GotChunk--");
 	
 	return;
 }
