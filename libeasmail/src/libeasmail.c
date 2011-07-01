@@ -709,6 +709,16 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 	return;
 }
 
+/*
+static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
+{
+	g_debug("fetch email body completed");
+ 	
+	g_debug("fetch_email_progress_signal_handler++");
+ 	return;
+}
+*/
+
 // get the entire email body for listed email
 // email body will be written to a file with the emailid as its name
 gboolean
@@ -773,6 +783,26 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);
 	
+	/*
+	call = dbus_g_proxy_begin_call(proxy, "fetch_email_body", 
+							fetch_email_body_completed, 
+							self, 							// userdata 
+							NULL, 							// destroy notification 
+							G_TYPE_STRING, self->priv->account_uid,
+							G_TYPE_STRING, folder_id,
+							G_TYPE_STRING, server_id,
+							G_TYPE_STRING, mime_directory,
+							G_TYPE_UINT, request_id,
+							G_TYPE_INVALID);
+
+	g_debug("get results (any error)");
+	
+	// blocks until results are available:
+	ret = dbus_g_proxy_end_call (proxy, 
+	                       call, 
+	                       error, 
+	                       G_TYPE_INVALID);
+	*/
     g_debug ("eas_mail_handler_fetch_email_body--");
 
 finish:	
