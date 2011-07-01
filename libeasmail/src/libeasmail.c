@@ -686,7 +686,7 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 	g_debug("fetch_email_progress_signal_handler++");
 	
 	// if there's a progress function for this request in our hashtable, call it:
-	progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
+	progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, &request_id);	// lrm TODO arg 2 gives warning
 	if(progress_callback_info)
 	{
 		EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
@@ -756,7 +756,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		{
 			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);	// lrm TODO NULL for key destroy function correct?
 		}
-		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);
+		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, &request_id, progress_info);	// lrm TODO - is second arg correct?
 	}
 
     // call dbus api
@@ -788,7 +788,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 	// blocks until results are available:
 	ret = dbus_g_proxy_end_call (proxy, 
 	                       call, 
-	                       &error, 
+	                       error, 
 	                       G_TYPE_INVALID);
 	
     g_debug ("eas_mail_handler_fetch_email_body--");

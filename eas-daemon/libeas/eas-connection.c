@@ -655,7 +655,7 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 	if (size_hdr) {
 		gsize size = strtoull (size_hdr, NULL, 10);
 		// lrm store the response size in the request
-		eas_get_email_body_req_set_response_size((EasGetEmailBodyReq *) request, size_hdr);
+		eas_get_email_body_req_set_response_size((EasGetEmailBodyReq *) request, size);
 		
 		g_debug ("Response size of request %p is %zu bytes", request, size);
 		// We can stash this away and use it to provide progress updates

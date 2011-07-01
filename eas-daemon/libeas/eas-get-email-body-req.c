@@ -190,7 +190,6 @@ void
 eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
 {
 	EasGetEmailBodyReqPrivate *priv = self->priv;
-	EasGetEmailBodyReqClass* klass = EAS_GET_EMAIL_BODY_REQ_GET_CLASS (self);
 	EasMail* mail;
 	EasMailClass* mail_klass;
 	guint percent;
@@ -200,7 +199,7 @@ eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
 
 	percent = priv->response_received * 100 / priv->response_size;
 
-	mail = eas_request_base_GetInterfaceObject(self);
+	mail = eas_request_base_GetInterfaceObject(&self->parent_instance);
 	mail_klass = EAS_MAIL_GET_CLASS (mail);
 	// lrm emit signal TODO get EasMail object to use here:
 	g_signal_emit (mail,
