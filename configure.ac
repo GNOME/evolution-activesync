@@ -141,6 +141,6 @@ AC_CONFIG_FILES([
     meego/Makefile
     ])
 
-AC_CONFIG_COMMANDS_POST([test "$have_mlite" = yes && cd ${srcdir}/${MEEGO_UI_DIR} && qmake])
+AC_CONFIG_COMMANDS_POST([test "$have_mlite" = "yes" && pushd ${srcdir}/${MEEGO_UI_DIR} && qmake && popd])
 
 AC_OUTPUT
