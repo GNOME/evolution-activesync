@@ -710,7 +710,9 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 	if(percent == 100)
 	{
 		g_debug("quitting progress loop");
-		g_main_loop_quit(self->priv->progress_loop);
+		g_main_loop_quit (self->priv->progress_loop);
+		g_main_loop_unref (self->priv->progress_loop);
+		self->priv->progress_loop = NULL;
 	}
 	
 	g_debug("fetch_email_progress_signal_handler--");
@@ -721,8 +723,6 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
 {
 	g_debug("fetch email body completed");
- 	
-	g_debug("fetch_email_progress_signal_handler++");
  	return;
 }
 
@@ -805,8 +805,11 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 							G_TYPE_INVALID);
 
 	// lrm TODO - figure out how to do this properly!
-	priv->progress_loop = g_main_loop_new (NULL, TRUE);
-	g_main_loop_run(priv->progress_loop);
+	if(!priv->progress_loop)
+	{
+		priv->progress_loop = g_main_loop_new (NULL, TRUE);
+		g_main_loop_run(priv->progress_loop);
+	}
 	
 	g_debug("get results (any error)");
 	
