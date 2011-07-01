@@ -3,13 +3,14 @@
 #include <string.h>
 #include <check.h>
 
+#include "eas_test_user.h"
+
 #include "../libeasmail/src/libeasmail.h"
 #include "../libeasmail/src/eas-folder.h"
 #include "../libeasmail/src/eas-email-info.h"
 #include "../libeasmail/src/eas-attachment.h"
 
-gchar * g_account_id = "good.user@cstylianou.com";
-// Password: "G00dP@55w0rd"
+gchar * g_account_id = TEST_ACCOUNT_ID;
 
 gchar * g_inbox_id = NULL;
 

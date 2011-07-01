@@ -3,11 +3,13 @@
 #include <string.h>
 #include <check.h>
 
+#include "eas_test_user.h"
+
 #include "../libeassync/src/libeassync.h"
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
 
-static gchar * g_account_id = "good.user@cstylianou.com";
+static gchar * g_account_id = TEST_ACCOUNT_ID;
 
 const char* TEST_VCALENDAR = "BEGIN:VCALENDAR\n\
 PRODID:-//Microsoft Corporation//Outlook 14.0 MIMEDIR//EN\n\

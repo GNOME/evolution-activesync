@@ -4,9 +4,11 @@
 #include <check.h>
 #include <glib.h>
 
+#include "eas_test_user.h"
+
 #include "../libeassync/src/libeassync.h"
 
-gchar * g_contacts_account_id = "good.user@cstylianou.com";
+gchar * g_contacts_account_id = TEST_ACCOUNT_ID;
 
 static void testGetContactsHandler (EasSyncHandler **sync_handler, const gchar* accountuid)
 {
