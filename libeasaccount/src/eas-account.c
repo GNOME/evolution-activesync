@@ -20,6 +20,7 @@ struct	_EasAccountPrivate
 	 gchar* serverUri;
 	 gchar* username;
 	 gchar* policy_key;
+	 gchar* password;
 };
 	
 #define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
@@ -56,6 +57,7 @@ eas_account_init (EasAccount *account)
 	priv->serverUri = NULL;
 	priv->username = NULL;
 	priv->policy_key = NULL;
+	priv->password = NULL;
 	g_debug("eas_account_init--");
 }
 
@@ -71,6 +73,7 @@ finalize (GObject *object)
 	g_free (priv->serverUri);
 	g_free (priv->username);
 	g_free (priv->policy_key);
+	g_free (priv->password);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
 	g_debug("finalize--");		
@@ -232,6 +235,36 @@ eas_account_set_policy_key (EasAccount *account, const gchar* policy_key)
 	/* g_debug("eas_account_set_policy_key--"); */
 }
 
+void
+eas_account_set_password (EasAccount *account, const gchar* password)
+
+{
+	/*g_debug("eas_account_set_password++");*/
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+	if(account->priv->password == NULL){
+		if(password != NULL){
+			account->priv->password = g_strdup (password);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "password changed: [%s]\n", account->priv->password);
+		}
+	}else{
+		if(password != NULL){
+			if(strcmp(account->priv->password, password) != 0){
+				g_free(account->priv->password);
+				account->priv->password = g_strdup (password);
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "password changed: [%s]\n", account->priv->password);
+			}
+		}else{
+				g_free(account->priv->password);
+				account->priv->password = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "password changed: [%s]\n", account->priv->password);
+		}
+	} 
+	/*g_debug("eas_account_set_password--");*/
+}
+
 gchar*
 eas_account_get_uid (const EasAccount *account)
 {
@@ -256,6 +289,12 @@ eas_account_get_policy_key (const EasAccount *account)
 	return account->priv->policy_key;
 }
 
+gchar*
+eas_account_get_password (const EasAccount *account)
+{
+	return account->priv->password;
+}
+
 gboolean
 eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo)
 {
@@ -268,6 +307,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_uri (account, accountinfo->serverUri);
 	eas_account_set_username (account, accountinfo->username);
 	eas_account_set_policy_key (account, accountinfo->policy_key);
+	eas_account_set_password (account, accountinfo->password);
 	/* g_debug("eas_account_set_from_info--");	*/
 	return TRUE;
 }
@@ -286,6 +326,7 @@ eas_account_get_account_info(const EasAccount *account)
 		acc_info->serverUri = account->priv->serverUri;
 		acc_info->username = account->priv->username;
 		acc_info->policy_key = account->priv->policy_key;
+		acc_info->password = account->priv->password;		
 	}
 	return acc_info;
 }

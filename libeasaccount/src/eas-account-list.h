@@ -13,6 +13,7 @@
 #define EAS_ACCOUNT_KEY_SERVERURI	"/serverUri"
 #define EAS_ACCOUNT_KEY_USERNAME	"/username"
 #define EAS_ACCOUNT_KEY_POLICY_KEY	"/policy_key"
+#define EAS_ACCOUNT_KEY_PASSWORD	"/password"
 
 
 /* Standard GObject macros */
@@ -46,6 +47,7 @@ typedef enum _e_account_find_t {
 	EAS_ACCOUNT_FIND_SERVER_URI,
 	EAS_ACCOUNT_FIND_USER_NAME,
 	EAS_ACCOUNT_FIND_POLICY_KEY,
+	EAS_ACCOUNT_FIND_PASSWORD,
 } eas_account_find_t;
 
 /**
