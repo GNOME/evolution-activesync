@@ -38,6 +38,7 @@ libeas_la_LIBADD = ../../libeasaccount/src/libeasaccount.la
 libeas_la_SOURCES =		\
         eas-connection.c \
         eas-connection.h \
+        eas-connection-errors.h \
         eas-msg-base.h \
         eas-msg-base.c \
         eas-sync-folder-msg.h \
