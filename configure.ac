@@ -82,7 +82,7 @@ if (test "${have_syncevolution}" = "yes"); then
     AC_LANG_PUSH([C++])
     AC_CHECK_HEADER(syncevo/GLibSupport.h, ,
                  [have_syncevolution="no";
-                 AC_MSG_NOTICE([Your syncevolution installation lacks GLibSupport.h])],
+                 AC_MSG_NOTICE([Your syncevolution installation lacks GLibSupport.h (or boost-devel is not installed?)])],
                  ${SYNCEVOLUTION_CFLAGS})
     AC_LANG_POP([C++])
 fi
