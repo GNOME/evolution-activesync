@@ -61,6 +61,7 @@ struct _EasProgressCallbackInfo
 	gpointer progress_data;
 	guint percent_last_sent;
 };
+
 typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
 
 // fwd declaration
@@ -694,18 +695,17 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 		{
 			if(percent > progress_callback_info->percent_last_sent)
 			{
-				g_debug("last update was %d/%, this one %d /%", percent, progress_callback_info->percent_last_sent);
+				g_debug("last update was %d%, this one %d%, call progress function", progress_callback_info->percent_last_sent, percent);
 				progress_callback_info->percent_last_sent = percent;
 	
 				EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
-				g_debug("client has progress function, calling it with %d/%", percent);
 
 				progress_fn(progress_callback_info->progress_data, percent);
 			}
 		}
 	}
 	
-	g_debug("fetch_email_progress_signal_handler++");
+	g_debug("fetch_email_progress_signal_handler--");
 	return;
 }
 
@@ -757,7 +757,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		
 		if (priv->fetch_email_body_progress_fns_table == NULL)
 		{
-			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); //g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
+			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
 		}
 		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
 	}
