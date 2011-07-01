@@ -572,10 +572,12 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_add_items - dbus proxy called");
-	g_free(folder);
-    if (*error)
+    
+    g_free(folder);
+
+    if (error && *error)
     {
-        g_error (" Error: %s", (*error)->message);
+        g_warning (" Error: %s", (*error)->message);
     }
 
     if (ret)
