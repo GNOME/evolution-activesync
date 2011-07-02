@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+   Copyright © 2011 Intel Corporation
+   Dual-licensed under LGPLv2.1 and Apache v2 licences
+   For more details see the C source code files in this directory.
+-->
 
 <node>
 <!--
