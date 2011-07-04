@@ -692,15 +692,15 @@ progress_signal_handler (DBusGProxy* proxy,
 	if((self->priv->email_progress_fns_table) && (percent > 0))
 	{
 		// if there's a progress function for this request in our hashtable, call it:
-		progress_callback_info = g_hash_table_lookup(self->priv->email_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
+		progress_callback_info = g_hash_table_lookup(self->priv->email_progress_fns_table, (gpointer)request_id);	// lrm TODO arg 2 gives warning
 		if(progress_callback_info)
 		{
 			if(percent > progress_callback_info->percent_last_sent)
 			{
-				g_debug("last update was %d%, this one %d%, call progress function", progress_callback_info->percent_last_sent, percent);
-				progress_callback_info->percent_last_sent = percent;
-	
 				EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
+				
+				g_debug("call progress function with %d%", percent);
+				progress_callback_info->percent_last_sent = percent;
 
 				progress_fn(progress_callback_info->progress_data, percent);
 			}
@@ -777,7 +777,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		{
 			priv->email_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
 		}
-		g_hash_table_insert(priv->email_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
+		g_hash_table_insert(priv->email_progress_fns_table, (gpointer)request_id, progress_info);	// lrm TODO - warning
 	}
 
 	/*
