@@ -607,7 +607,6 @@ eas_queue_soup_message (gpointer _request)
 static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 {
 	EasRequestBase *request = (EasRequestBase *) data;
-	EasRequestType request_type = eas_request_base_GetRequestType (request);
 	guint request_id = eas_request_base_GetRequestId (request);
 	EasMail* dbus_interface;
 	EasMailClass* dbus_interface_klass;
