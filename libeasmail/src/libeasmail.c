@@ -699,7 +699,7 @@ progress_signal_handler (DBusGProxy* proxy,
 			{
 				EasProgressFn progress_fn = (EasProgressFn)(progress_callback_info->progress_fn);
 				
-				g_debug("call progress function with %d%", percent);
+				g_debug("call progress function with %d%c", percent, '%');
 				progress_callback_info->percent_last_sent = percent;
 
 				progress_fn(progress_callback_info->progress_data, percent);
