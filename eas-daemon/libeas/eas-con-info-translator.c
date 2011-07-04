@@ -275,7 +275,7 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_HOMEFAXNUMBER);
 					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
-					e_vcard_attribute_add_param_with_value(attr, param, "FAX");
+					e_vcard_attribute_add_param_with_value(attr, param2, "FAX");
 				}
 				if (g_strcmp0(name, EAS_ELEMENT_MOBILEPHONENUMBER) == 0)
 				{
