@@ -70,7 +70,8 @@ struct _EasSyncFolderMsgPrivate
 
 G_DEFINE_TYPE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
 
-static void eas_connection_parse_fs_add (EasSyncFolderMsg *self, xmlNode *node);
+static void eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName);
+static void eas_sync_folder_msg_parse_fs_delete (EasSyncFolderMsg *self, xmlNode *node);
 
 
 static void
@@ -271,23 +272,15 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
             continue;
         }
 
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Add"))
+        if (node->type == XML_ELEMENT_NODE && (!g_strcmp0 ( (char *) node->name, "Add") || !g_strcmp0 ( (char *) node->name, "Update")))
         {
-            eas_connection_parse_fs_add (self, node);
+            eas_sync_folder_msg_parse_fs_add_or_update (self, node, (const gchar*)node->name);
             continue;
         }
 
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Delete"))
         {
-            // TODO Parse deleted folders
-            g_assert (0);
-            continue;
-        }
-
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Update"))
-        {
-            // TODO Parse updated folders
-            g_assert (0);
+            eas_sync_folder_msg_parse_fs_delete (self, node);
             continue;
         }
     }
@@ -301,12 +294,45 @@ finish:
 }
 
 static void
-eas_connection_parse_fs_add (EasSyncFolderMsg *self, xmlNode *node)
+eas_sync_folder_msg_parse_fs_delete (EasSyncFolderMsg *self, xmlNode *node)
 {
     EasSyncFolderMsgPrivate *priv = self->priv;
 
     if (!node) return;
-    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Add"))
+    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Delete"))
+    {
+        xmlNode *n = node;
+        gchar *serverId = NULL;
+
+        for (n = n->children; n; n = n->next)
+        {
+            if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "ServerId"))
+            {
+                serverId = (gchar *) xmlNodeGetContent (n);
+                continue;
+            }
+        }
+
+        if (serverId)
+        {
+            EasFolder *f = NULL;
+
+            f = eas_folder_new ();
+            f->folder_id = g_strdup (serverId);
+
+            priv->deleted_folders = g_slist_append (priv->deleted_folders, f);
+            xmlFree (serverId);
+        }
+    }
+}
+
+static void
+eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName)
+{
+    EasSyncFolderMsgPrivate *priv = self->priv;
+
+    if (!node) return;
+    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, topNodeName)) // Add or Update
     {
         xmlNode *n = node;
         gchar *serverId = NULL,
@@ -350,7 +376,19 @@ eas_connection_parse_fs_add (EasSyncFolderMsg *self, xmlNode *node)
             f->display_name = g_strdup (displayName);
             f->type = atoi (type);
 
-            priv->added_folders = g_slist_append (priv->added_folders, f);
+			if (!g_strcmp0("Add", topNodeName))
+			{
+				priv->added_folders = g_slist_append (priv->added_folders, f);
+			}
+			else if (!g_strcmp0("Update", topNodeName))
+			{
+				priv->updated_folders = g_slist_append (priv->updated_folders, f);
+			}
+			else
+			{
+				g_warning("Node was not Add or Update");
+				g_object_unref (f);
+			}
         }
         else
         {
