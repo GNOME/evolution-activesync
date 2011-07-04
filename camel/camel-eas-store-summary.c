@@ -551,7 +551,7 @@ camel_eas_store_summary_get_folders (CamelEasStoreSummary *eas_summary,
 	for (i = 0; i < length; i++) {
 		if (!g_ascii_strcasecmp (groups [i], STORE_GROUP_NAME))
 			continue;
-		if (prefix) {
+		if (prefixlen) {
 			const gchar *fname = g_hash_table_lookup (eas_summary->priv->id_fname_hash, groups[i]);
 
 			if (!fname || strncmp(fname, prefix, prefixlen) ||

@@ -1,3 +1,7 @@
-Pending legal review.
 
-LGPLv2.1 for most parts, possibly Apache2 for EAS dæmon.
+This project is licensed under the version 2.1 of the GNU Lesser
+General Public License. Certain parts are also dual-licensed under
+the version 2 of the Apache License.
+
+For more details, see the copyright headers in the files themselves,
+and the README file for an overview.

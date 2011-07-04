@@ -1,5 +1,25 @@
 /*
- *  Filename: libeasmail.c
+ * ActiveSync client library for email access
+ *
+ * Copyright © 2011 Intel Corporation.
+ *
+ * Authors: Mobica Ltd. <www.mobica.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later
+ * version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301 USA
  *
  */
 
@@ -91,6 +111,8 @@ eas_mail_handler_new (const char* account_uid, GError **error)
     EasEmailHandler *object = NULL;
 
     g_type_init();
+
+    dbus_g_thread_init();
 
     g_log_set_handler (G_LOG_DOMAIN,
                        G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,

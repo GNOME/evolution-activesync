@@ -1,4 +1,54 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/*
+ * ActiveSync core protocol library
+ *
+ * Copyright © 2011 Intel Corporation.
+ *
+ * Authors: Mobica Ltd. <www.mobica.com>
+ *
+ * This file is provided under a dual Apache/LGPLv2.1 licence.  When
+ * using or redistributing this file, you may do so under either
+ * licence.
+ *
+ *
+ * LGPLv2.1 LICENCE SUMMARY
+ *
+ *   Copyright © Intel Corporation, dates as above.
+ *
+ *   This library is free software; you can redistribute it and/or
+ *   modify it under the terms of the GNU Lesser General Public
+ *   License as published by the Free Software Foundation; either
+ *   version 2.1 of the License, or (at your option) any later
+ *   version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *   Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ *   License along with this library; if not, write to the Free
+ *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *   Boston, MA 02110-1301 USA
+ *
+ *
+ * APACHE LICENCE SUMMARY
+ *
+ *   Copyright © Intel Corporation, dates as above.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
 
 #include "eas-connection.h"
 #include <glib.h>
@@ -67,6 +117,7 @@ static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
 static gboolean wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
 static void parse_for_status (xmlNode *node);
+static gchar *device_type, *device_id;
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -95,6 +146,31 @@ eas_connection_accounts_init()
 			return;
 		}
 		g_debug("-->created account_list");
+
+		// Find the DeviceType and DeviceId from GConf, or create them
+		// if they don't already exist
+		device_type = gconf_client_get_string (g_gconf_client,
+											   "/apps/activesyncd/device_type",
+											   NULL);
+		if (!device_type) {
+			device_type = g_strdup("MeeGo");
+			gconf_client_set_string (g_gconf_client,
+									  "/apps/activesyncd/device_type",
+									  device_type, NULL);
+		}
+
+		device_id = gconf_client_get_string (g_gconf_client,
+											 "/apps/activesyncd/device_id",
+											 NULL);
+		if (!device_id) {
+			device_id = g_strdup_printf ("%08x%08x%08x%08x",
+										 g_random_int(), g_random_int(),
+										 g_random_int(), g_random_int());
+			gconf_client_set_string (g_gconf_client,
+									  "/apps/activesyncd/device_id",
+									  device_id, NULL);
+		}
+		g_debug ("device type %s, device id %s", device_type, device_id);
 	}
 	g_debug("eas_connection_accounts_init--");
 }
@@ -648,8 +724,8 @@ eas_connection_send_request (EasConnection* self,
     uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
                        "&User=", eas_account_get_username(priv->account),
-                       "&DeviceID=", "1234567890",   // TODO Need to get device type and id from the correct place.
-                       "&DeviceType=", "FakeDevice", // TODO Need to get device type and id from the correct place.
+                       "&DeviceID=", device_id,
+                       "&DeviceType=", device_type,
                        NULL);
 
     msg = soup_message_new ("POST", uri);
