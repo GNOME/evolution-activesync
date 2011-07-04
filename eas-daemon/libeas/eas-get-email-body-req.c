@@ -52,8 +52,6 @@
 
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
-#include "../src/activesyncd-common-defs.h"
-#include "../src/eas-mail.h"
 
 struct _EasGetEmailBodyReqPrivate
 {
@@ -62,9 +60,6 @@ struct _EasGetEmailBodyReqPrivate
     gchar* serverId;
     gchar* collectionId;
     gchar* mimeDirectory;
-	guint request_id;			// lrm passed back with progress signal
-	guint response_received;	// amount of response data received so far 
-	guint response_size;		// total size of response
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -85,11 +80,8 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
-	priv->response_size = 0;
 	priv->mimeDirectory = NULL;
 	priv->serverId = NULL;
-	priv->response_received = 0;
-	priv->request_id = 0;
 	priv->collectionId = NULL;
 	
     g_debug ("eas_get_email_body_req_init--");
@@ -151,8 +143,7 @@ EasGetEmailBodyReq*
 eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
-                            const gchar *mime_directory,
-                            const guint request_id,	
+                            const gchar *mime_directory,	
                             DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
@@ -167,48 +158,10 @@ eas_get_email_body_req_new (const gchar* account_uid,
     priv->collectionId = g_strdup (collection_id);
     priv->serverId = g_strdup (server_id);
     priv->mimeDirectory = g_strdup (mime_directory);
-	priv->request_id = request_id;
     eas_request_base_SetContext(&req->parent_instance, context);
 
     g_debug ("eas_get_email_body_req_new--");
     return req;
-}
-
-
-void 
-eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size)
-{
-	EasGetEmailBodyReqPrivate *priv = self->priv;
-
-	g_debug("eas_get_email_body_req_set_response_size++");
-	priv->response_size = size;
-	g_debug("eas_get_email_body_req_set_response_size--");
-	return;
-}
-
-void 
-eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length)
-{
-	EasGetEmailBodyReqPrivate *priv = self->priv;
-	EasMail* mail;
-	EasMailClass* mail_klass;
-	guint percent;
-	
-	priv->response_received += length;
-
-	percent = priv->response_received * 100 / priv->response_size;
-
-	mail = eas_request_base_GetInterfaceObject(&self->parent_instance);
-	mail_klass = EAS_MAIL_GET_CLASS (mail);
-	g_debug("eas_get_email_body_req_GotChunk %d% received now", percent);	
-	// lrm emit signal TODO get EasMail object to use here:
-	g_signal_emit (mail,
-	mail_klass->signal_id,
-	0,
-	priv->request_id,
-	percent);
-	
-	return;
 }
 
 gboolean

@@ -72,7 +72,7 @@
 
 #define EAS_SERVICE_TEST_INTERFACE    "org.meego.activesyncd.EasTest"
 #define EAS_SERVICE_TEST_OBJECT_PATH  "/EasTest"
-#define EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS "fetch_email_progress"	// lrm TODO appropriate name/place for this?
+#define EAS_MAIL_SIGNAL_PROGRESS "mail_operation_progress"	// lrm 
 
 #endif /* ACTIVESYNCD_COMMON_DEFS_H */
 

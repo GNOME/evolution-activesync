@@ -120,17 +120,11 @@
       <arg type="as" name="changed_folder_array" direction="out"/>		
 	</method>
 
-	<!-- signals -->
-	<signal name="fetch_email_progress">
+	<!-- lrm signals -->
+	<signal name="mail_operation_progress">
 		<arg type="u" name="request_id" direction ="out"/>
 		<arg type="u" name="percent" direction ="out"/>
 	</signal>
-	
-	<!-- lrm temp: 
-    <signal name="changed_value1">
-      <arg type="s" name="change_source_name" direction="out"/>
-    </signal>	
-    -->
 
   </interface>
 </node>

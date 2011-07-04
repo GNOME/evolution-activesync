@@ -4,7 +4,7 @@ lib_LTLIBRARIES =  libeasmail.la
 
 MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
 
-# lrm TODO - this doesn't work:
+# lrm TODO - this doesn't always work; sometimes the marshal files aren't created:
 # generate marshal functions for progress signals:
 eas-marshal.h: eas-marshal.list
 	glib-genmarshal --header --prefix=eas_marshal eas-marshal.list > eas-marshal.h

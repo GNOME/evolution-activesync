@@ -116,7 +116,7 @@ eas_mail_class_init (EasMailClass *klass)
 
 	// lrm
 	// create the progress signal we emit 
-	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,	// name of the signal
+	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
 	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
 	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
 	0,																		// class offset
@@ -475,12 +475,13 @@ eas_mail_fetch_email_body (EasMail* self,
                                       collection_id,
                                       server_id,
                                       mime_directory,
-                                      request_id,	// lrm
                                       context);
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);	//lrm TODO
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm this should be stored elsewhere?
+
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 
     ret = eas_get_email_body_req_Activate (req, &error);
 

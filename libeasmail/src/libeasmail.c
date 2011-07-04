@@ -51,7 +51,7 @@ struct _EasEmailHandlerPrivate
     gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
     GMainLoop* main_loop;
 	GMainLoop* progress_loop;
-	GHashTable *fetch_email_body_progress_fns_table;	// hashtable of request progress functions
+	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
 	guint next_request_id;			// request id to be used for next dbus call
 	
 };
@@ -66,7 +66,7 @@ struct _EasProgressCallbackInfo
 typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
 
 // fwd declaration
-static void fetch_email_progress_signal_handler (DBusGProxy * proxy,
+static void progress_signal_handler (DBusGProxy * proxy,
                                                  	guint request_id,
 													guint percent,
                                                  	gpointer user_data);
@@ -88,7 +88,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
     priv->main_loop = NULL;
 	priv->progress_loop = NULL;
 	priv->next_request_id = 1;
-	priv->fetch_email_body_progress_fns_table = NULL;
+	priv->email_progress_fns_table = NULL;
     cnc->priv = priv;
     g_debug ("eas_mail_handler_init--");
 }
@@ -106,9 +106,9 @@ eas_mail_handler_finalize (GObject *object)
     g_main_loop_quit (priv->main_loop);
     dbus_g_connection_unref (priv->bus);
 	// free the hashtable
-	if(priv->fetch_email_body_progress_fns_table)
+	if(priv->email_progress_fns_table)
 	{
-		g_hash_table_remove_all(priv->fetch_email_body_progress_fns_table);
+		g_hash_table_remove_all(priv->email_progress_fns_table);
 	}
     // nothing to do to 'free' proxy
     g_free (priv);
@@ -206,18 +206,18 @@ eas_mail_handler_new (const char* account_uid, GError **error)
                                       G_TYPE_NONE, G_TYPE_UINT, G_TYPE_UINT, 
                                       G_TYPE_INVALID);
 	
-	g_debug("register as observer of %s signal", EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS);
-	// fetch_email_body signal setup:
+	g_debug("register as observer of %s signal", EAS_MAIL_SIGNAL_PROGRESS);
+	// progress signal setup:
 	dbus_g_proxy_add_signal(object->priv->remoteEas,						
-                        EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,
+                        EAS_MAIL_SIGNAL_PROGRESS,
                         G_TYPE_UINT,	// request id
 	                    G_TYPE_UINT,	// percent
                         G_TYPE_INVALID);	
 
 	// register for progress signals
 	dbus_g_proxy_connect_signal(object->priv->remoteEas,
-                            	EAS_MAIL_SIGNAL_FETCH_BODY_PROGRESS,
-	                            G_CALLBACK (fetch_email_progress_signal_handler),		// callback when signal emitted
+                            	EAS_MAIL_SIGNAL_PROGRESS,
+	                            G_CALLBACK (progress_signal_handler),		// callback when signal emitted
 								object,													// userdata passed to above cb
 	                            NULL);
 
@@ -679,7 +679,7 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 
 
 static void 
-fetch_email_progress_signal_handler (DBusGProxy* proxy,
+progress_signal_handler (DBusGProxy* proxy,
                                  	guint request_id,
 									guint percent,
                                  	gpointer user_data) 
@@ -687,12 +687,12 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 	EasProgressCallbackInfo *progress_callback_info;
 	EasEmailHandler* self = (EasEmailHandler*)user_data;
 
-	g_debug("fetch_email_progress_signal_handler++");
+	g_debug("progress_signal_handler++");
 
-	if((self->priv->fetch_email_body_progress_fns_table) && (percent > 0))
+	if((self->priv->email_progress_fns_table) && (percent > 0))
 	{
 		// if there's a progress function for this request in our hashtable, call it:
-		progress_callback_info = g_hash_table_lookup(self->priv->fetch_email_body_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
+		progress_callback_info = g_hash_table_lookup(self->priv->email_progress_fns_table, request_id);	// lrm TODO arg 2 gives warning
 		if(progress_callback_info)
 		{
 			if(percent > progress_callback_info->percent_last_sent)
@@ -715,7 +715,7 @@ fetch_email_progress_signal_handler (DBusGProxy* proxy,
 		self->priv->progress_loop = NULL;
 	}
 	
-	g_debug("fetch_email_progress_signal_handler--");
+	g_debug("progress_signal_handler--");
 	return;
 }
 
@@ -773,11 +773,11 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		progress_info->progress_data = progress_data;
 		progress_info->percent_last_sent = 0;
 		
-		if (priv->fetch_email_body_progress_fns_table == NULL)
+		if (priv->email_progress_fns_table == NULL)
 		{
-			priv->fetch_email_body_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
+			priv->email_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
 		}
-		g_hash_table_insert(priv->fetch_email_body_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
+		g_hash_table_insert(priv->email_progress_fns_table, request_id, progress_info);	// lrm TODO - warning
 	}
 
 	/*
