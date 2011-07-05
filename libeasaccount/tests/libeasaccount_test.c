@@ -5,8 +5,101 @@
 #include "../src/eas-account-list.h"
 #include "../src/eas-account.h"
 
-void
-test_backup_gconf(GConfClient* client, EasAccountList *account_list, GSList* bkp_list)
+/*Print all account in the eas account list*/
+static void
+print_all_accounts(EasAccountList *account_list)
+{
+	EIterator *iter = NULL;
+	EasAccount *account = NULL;
+	gint  num_of_accounts = 0;
+	gint i=0;
+	g_print("Test: print_all_accounts()\n");
+	g_assert(account_list != NULL);
+	num_of_accounts = e_list_length((EList*)account_list);
+		
+	g_print(" There are %d accounts in GConf \n", num_of_accounts );
+	
+	if (!num_of_accounts)
+		return;
+
+	for (iter = e_list_get_iterator (E_LIST ( account_list) ); e_iterator_is_valid (iter); e_iterator_next (iter)) {
+		account = EAS_ACCOUNT (e_iterator_get (iter));
+
+		g_print("Account %d Info: \n", ++i);
+		g_print("account->uid=%s\n", eas_account_get_uid(account));
+		g_print("account->uri=%s\n", eas_account_get_uri(account));
+		g_print("account->username=%s\n", eas_account_get_username(account));
+		g_print("account->password=%s\n", eas_account_get_password (account));		
+		g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
+	}
+
+	g_object_unref (iter);
+}	
+
+static void
+add_account(EasAccountList *account_list, EasAccount* account)
+{
+	g_print("Test: add_account()\n");
+	eas_account_list_add (account_list, account);
+	eas_account_list_save_list (account_list);
+}
+
+static void
+change_account(EasAccountList *account_list, EasAccount *account)
+{
+	g_print("Test: change_account()\n");
+	eas_account_list_change (account_list, account);
+	eas_account_list_save_account(account_list, account);
+}
+
+static void
+delete_account(EasAccountList *account_list, EasAccount *account)
+{
+	g_print("Test: delete_account()\n");
+	eas_account_list_remove (account_list, account);
+	eas_account_list_save_account(account_list, account);
+}
+
+static gboolean
+test_find_account(EasAccountList *account_list, const gchar* accountId)
+{
+
+	
+#if 0		
+	gboolean account_found =FALSE;
+	EIterator *iter = NULL;
+	EasAccount *account = NULL;
+	g_print("Test: test_find_account()\n");
+	
+	for (iter = e_list_get_iterator (E_LIST ( account_list) ); e_iterator_is_valid (iter); e_iterator_next (iter)) {
+		account = EAS_ACCOUNT (e_iterator_get (iter));
+		
+		if (strcmp (eas_account_get_uid(account), accountId)   == 0) {
+			g_print("Found account: \n");
+			g_print("account->uid=%s\n", eas_account_get_uid(account));
+			g_print("account->uri=%s\n", eas_account_get_uri(account));
+			g_print("account->username=%s\n", eas_account_get_username(account));
+			g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
+			account_found = TRUE;
+			break;
+		}
+	}
+
+	
+	g_object_unref (iter);
+#endif
+
+	const EasAccount * account =NULL;
+	account = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, accountId);
+	if(account == NULL)
+		return FALSE;
+			
+	return ((strcmp (eas_account_get_uid(account), accountId) == 0) ? TRUE : FALSE);
+}
+
+/* read containt of eas account list and make a copy of it */
+static void
+test_backup_gconf(EasAccountList *account_list, GSList* bkp_list)
 {
 	EIterator *iter = NULL;
 	EasAccount *account = NULL;
@@ -20,7 +113,8 @@ test_backup_gconf(GConfClient* client, EasAccountList *account_list, GSList* bkp
 	g_object_unref (iter);
 }
 
-void
+/* empty GConf account list directly (using GConf APIs directly)*/
+static void
 test_empty_gconf(GConfClient* client)
 {
 	g_print("TEST: test_empty_gconf \n");	
@@ -30,8 +124,8 @@ test_empty_gconf(GConfClient* client)
 								NULL);
 }
 
-void
-test_empty_list(GConfClient* client, EasAccountList *account_list)
+static void
+delete_all_accounts(EasAccountList *account_list)
 {
 	EIterator *iter = NULL;
 	EasAccount *account = NULL;
@@ -43,27 +137,59 @@ test_empty_list(GConfClient* client, EasAccountList *account_list)
 		eas_account_list_remove	(account_list, account);
 	}
 
+	eas_account_list_save_list (account_list);
+	
 	g_object_unref (iter);
 }
 
 /* test accounts list changes*/
-void
-test_scenario_01()
+static void
+test_scenario_01(GConfClient* client, EasAccountList *account_list)
 {
 	g_print("TEST: test_scenario_01 \n");
 
+	delete_all_accounts(account_list);
+	print_all_accounts(account_list);
 }
 
 /* test individual accounts changes*/
-void
-test_scenario_02()
+static void
+test_scenario_02(EasAccountList *account_list)
 {
+	EasAccount* account01= NULL;
+	g_print("TEST: test_scenario_02 \n");	
+	//add one account
+	account01 = eas_account_new();
+	eas_account_set_uid	(account01, "new.account01@mobica.com");
+	eas_account_set_uri	(account01, "https://cstylianou.com/Microsoft-Server-ActiveSync");
+	eas_account_set_username(account01, "new.account01-username");
+	eas_account_set_password (account01, "new.account01-password");
+	eas_account_set_policy_key(account01, "new.account01 policy_key");
+
+	g_print( " test uid=%s\n", 	eas_account_get_uid	(account01));
+	g_print( " test uri=%s\n", 	eas_account_get_uri	(account01));
+	g_print( " test username=%s\n", 	eas_account_get_username(account01));
+	g_print( " test password=%s\n", 	eas_account_get_password(account01));
+	g_print( " test policy_key=%s\n", 	eas_account_get_policy_key(account01));
+
+	add_account(account_list, account01);
+	print_all_accounts(account_list);
+
+	//change an existing account
+	eas_account_set_policy_key(account01, "new.account01 policy_key changed");
+	change_account(account_list, account01);
+	print_all_accounts(account_list);
+	
+	//test07: delete an existing account
+	delete_account(account_list, account01);
+	print_all_accounts(account_list);		                    
+
 	g_print("TEST: test_scenario_02 \n");
 }
 
 /* test account items changes*/
-void
-test_scenario_03()
+static void
+test_scenario_03(GConfClient* client, EasAccountList *account_list)
 {
 	g_print("TEST: test_scenario_03 \n");
 }
@@ -73,8 +199,8 @@ test_scenario_03()
 	accounts are added/changed/deleted using GConf APIs only
 	data ---> GConf repository ---> EasAccountList
  */
-void
-test_scenario_04(GConfClient* client)
+static void
+test_scenario_04(GConfClient* client, EasAccountList *account_list)
 {
 	g_print("Scenario 04 : Notifications from GConf \n");
 #if 0
@@ -145,122 +271,30 @@ test_scenario_04(GConfClient* client)
 
 }
 
-void
+/* search for an account in the list*/
+static void
+test_scenario_05(GConfClient* client, EasAccountList *account_list)
+{
+	const gchar* accountId = "good.user@cstylianou.com";
+	if(test_find_account(account_list, accountId))
+			g_print("TEST 05: Found Account\n");
+	else
+			g_print("TEST 05: Account Not Found\n");
+}
+
+
+static void
 test_restore_gconf(GConfClient* client, EasAccountList *account_list, GSList* bkp_list)
 {
 	g_print("TEST: test_restore_gconf \n");
 
-
 	while (bkp_list) {
-	gpointer data = bkp_list->data;
-	bkp_list = g_slist_remove (bkp_list, bkp_list->data);
-	g_object_unref (data);
-}
-}
-
-gboolean
-test_find_account(GConfClient* client, EasAccountList *account_list, const gchar* accountId)
-{
-/*TODO:
- shouldn't we just use the account_list exposed api: eas_account_list_find()
-
-*/	
-	gboolean account_found =FALSE;
-	EIterator *iter = NULL;
-	EasAccount *account = NULL;
-	g_print("Test: test_find_account()\n");
-	
-	for (iter = e_list_get_iterator (E_LIST ( account_list) ); e_iterator_is_valid (iter); e_iterator_next (iter)) {
-		account = EAS_ACCOUNT (e_iterator_get (iter));
-		
-		if (strcmp (eas_account_get_uid(account), accountId)   == 0) {
-			g_print("Found account: \n");
-			g_print("account->uid=%s\n", eas_account_get_uid(account));
-			g_print("account->uri=%s\n", eas_account_get_uri(account));
-			g_print("account->username=%s\n", eas_account_get_username(account));
-			g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
-			account_found = TRUE;
-			break;
-		}
+		gpointer data = bkp_list->data;
+		bkp_list = g_slist_remove (bkp_list, bkp_list->data);
+		g_object_unref (data);
 	}
-
-	
-	g_object_unref (iter);
-	return account_found;
 }
 
-void
-print_all_accounts(GConfClient* client, EasAccountList *account_list)
-{
-	EIterator *iter = NULL;
-	EasAccount *account = NULL;
-	gint  num_of_accounts = 0;
-	gint i=0;
-	g_print("Test: print_all_accounts()\n");
-	g_assert(client != NULL);
-	g_assert(account_list != NULL);
-	num_of_accounts = e_list_length((EList*)account_list);
-		
-	g_print(" There are %d accounts in GConf \n", num_of_accounts );
-	
-	if (!num_of_accounts)
-		return;
-
-	for (iter = e_list_get_iterator (E_LIST ( account_list) ); e_iterator_is_valid (iter); e_iterator_next (iter)) {
-		account = EAS_ACCOUNT (e_iterator_get (iter));
-
-		g_print("Account %d Info: \n", ++i);
-		g_print("account->uid=%s\n", eas_account_get_uid(account));
-		g_print("account->uri=%s\n", eas_account_get_uri(account));
-		g_print("account->username=%s\n", eas_account_get_username(account));
-		g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
-	}
-
-	g_object_unref (iter);
-}
-
-void
-add_account(GConfClient* client, EasAccountList *account_list, EasAccount* account)
-{
-	g_print("Test: add_account()\n");
-	eas_account_list_add (account_list, account);
-	eas_account_list_save_list (account_list);
-}
-
-void
-delete_account(GConfClient* client, EasAccountList *account_list, EasAccount *account)
-{
-	g_print("Test: delete_account()\n");
-	eas_account_list_remove (account_list, account);
-	eas_account_list_save_list (account_list); //TODO: save only the changes
-}
-
-void
-change_account(GConfClient* client, EasAccountList *account_list, EasAccount *account)
-{
-	g_print("Test: change_account()\n");
-	eas_account_list_change (account_list, account);
-//	eas_account_list_save (account_list);//TODO: save only the changes
-//	eas_account_list_save_account (account_list);//TODO: save only the changes
-}
-
-void
-delete_all_accounts(GConfClient* client, EasAccountList *account_list)
-{
-	g_print("Test: delete_all_accounts()\n");
-//TODO: loop through the list
-	//eas_account_list_remove (account_list, account)
-//Then save
-	//eas_account_list_save (account_list);
-
-}
-
-void
-add_list_of_accounts(GConfClient* client, EasAccountList *account_list)
-{
-		g_print("Test: add_list_of_accounts()\n");
-//TODO:
-}
 
 int main (int argc, char** argv) {
 	GMainLoop* mainloop = NULL;
@@ -285,12 +319,15 @@ int main (int argc, char** argv) {
 	account_list = eas_account_list_new (client);
 	g_assert(account_list != NULL);	
 
-	test_backup_gconf(client, account_list, bkp_list);
+	test_backup_gconf(account_list, bkp_list);
 	test_empty_gconf(client);
 	/* Add test scenarios here */
-	test_scenario_01();
-	test_scenario_02();
-	test_scenario_03();
+	test_scenario_01(client, account_list);
+	test_scenario_02(account_list);
+	test_scenario_03(client, account_list);
+	test_scenario_04(client, account_list);
+	test_scenario_05(client, account_list);
+	
 	/* End of test scenarios */
 	test_restore_gconf(client, account_list, bkp_list);
 
@@ -317,23 +354,6 @@ int main (int argc, char** argv) {
 
 
 
-	//test05: add one account
-	g_print( "Test01: Add new account\n");	
-	EasAccount* account01= NULL;
-	account01 = eas_account_new();
-	eas_account_set_uid	(account01, "new.account01@mobica.com");
-	eas_account_set_uri	(account01, "https://cstylianou.com/Microsoft-Server-ActiveSync");
-	eas_account_set_username(account01, "new.account01");
-	eas_account_set_policy_key(account01, "new.account01 policy_key");
-
-	g_print( " test uid=%s\n", 	eas_account_get_uid	(account01));
-	g_print( " test uri=%s\n", 	eas_account_get_uri	(account01));
-	g_print( " test username=%s\n", 	eas_account_get_username(account01));
-	g_print( " test password=%s\n", 	eas_account_get_password(account01));
-	g_print( " test policy_key=%s\n", 	eas_account_get_policy_key(account01));
-
-	eas_account_list_save_account(account_list, account01);
-	//print_all_accounts(client, account_list);
 #endif
 		                    
 #if 0
@@ -440,22 +460,7 @@ int main (int argc, char** argv) {
 		g_print( " account not found in GConf\n");
 	}
 
-	//test05: add one account
-	EasAccount* account= NULL;
-	//TODO: populate EasAccount	
-	add_account(client, account_list, account);
-	//print_all_accounts(client, account_list);
-	
-	//test06: change an existing account
-	//accountId ="brahim@mobica.com";
-	EasAccount *acc_to_change = NULL;
-	change_account(client, account_list, acc_to_change);
-	//print_all_accounts(client, account_list);
-	
-	//test07: delete an existing account
-	EasAccount *acc_to_delete = NULL;	
-	delete_account(client, account_list, acc_to_delete);
-	//print_all_accounts(client, account_list);
+
 #endif
 	g_main_loop_run(mainloop);
 

@@ -49,7 +49,7 @@
  *
  */
 
-#include "eas-cal-info-translator.h"
+#include "eas-con-info-translator.h"
 
 #include <libebook/e-vcard.h>
 
@@ -65,14 +65,20 @@
 #define EAS_ELEMENT_HOMECITY                  "HomeCity"
 #define EAS_ELEMENT_HOMECOUNTRY               "HomeCountry"
 #define EAS_ELEMENT_HOMEPOSTALCODE            "HomePostalCode"
-#define EAS_ELEMENT_HOMESTATE                 "HomeRegion"
+#define EAS_ELEMENT_HOMESTATE                 "HomeState"
 #define EAS_ELEMENT_HOMESTREET                "HomeStreet"
 
 #define EAS_ELEMENT_BUSINESSCITY              "BusinessCity"
 #define EAS_ELEMENT_BUSINESSCOUNTRY           "BusinessCountry"
 #define EAS_ELEMENT_BUSINESSPOSTALCODE        "BusinessPostalCode"
-#define EAS_ELEMENT_BUSINESSSTATE             "BusinessRegion"
+#define EAS_ELEMENT_BUSINESSSTATE             "BusinessState"
 #define EAS_ELEMENT_BUSINESSSTREET            "BusinessStreet"
+
+#define EAS_ELEMENT_OTHERCITY                 "OtherCity"
+#define EAS_ELEMENT_OTHERCOUNTRY              "OtherCountry"
+#define EAS_ELEMENT_OTHERPOSTALCODE           "OtherPostalCode"
+#define EAS_ELEMENT_OTHERSTATE                "OtherState"
+#define EAS_ELEMENT_OTHERSTREET               "OtherStreet"
 
 #define EAS_ELEMENT_BUSINESSPHONENUMBER       "BusinessPhoneNumber"
 #define EAS_ELEMENT_BUSINESS2PHONENUMBER      "Business2PhoneNumber"
@@ -88,9 +94,16 @@
 #define EAS_ELEMENT_EMAIL2ADDRESS             "Email2Address"
 #define EAS_ELEMENT_EMAIL3ADDRESS             "Email3Address"
 
+#define EAS_ELEMENT_BIRTHDAY                  "Birthday"
+#define EAS_ELEMENT_URL                       "WebPage"
+#define EAS_ELEMENT_NICKNAME                  "Alias"
+#define EAS_ELEMENT_ORG                       "CompanyName"
+#define EAS_ELEMENT_PAGER                     "PagerNumber"
+#define EAS_ELEMENT_ROLE                      "JobTitle"
+#define EAS_ELEMENT_PHOTO                     "Picture"
+#define EAS_ELEMENT_NOTE                      "airsyncbase:Body"
 
-
-void add_attr_value(EVCardAttribute *attr,xmlNodePtr *node,const gchar *sought)
+static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *sought)
 {
 	xmlNodePtr n = node;
 	gchar *value = NULL; 
@@ -98,9 +111,9 @@ void add_attr_value(EVCardAttribute *attr,xmlNodePtr *node,const gchar *sought)
 	// find sought value 
 	while (n) 
 	{
-		if (!xmlStrcmp((const gchar*)(n->name), (const xmlChar *)sought))
+		if (!xmlStrcmp((const xmlChar*)(n->name), (const xmlChar *)sought))
 		{
-			value = xmlNodeGetContent(n);
+			value = (gchar *)xmlNodeGetContent(n);
 			break;
 		}
 		n = n->next;
@@ -112,7 +125,7 @@ void add_attr_value(EVCardAttribute *attr,xmlNodePtr *node,const gchar *sought)
 	e_vcard_attribute_add_value(attr, value);
 }
 
-void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
+static void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 {
 	add_attr_value(attr, node, EAS_ELEMENT_FIRSTNAME);
 	add_attr_value(attr, node, EAS_ELEMENT_MIDDLENAME);
@@ -121,7 +134,7 @@ void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 	add_attr_value(attr, node, EAS_ELEMENT_SUFFIX);
 }
 
-void add_home_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
+static void add_home_address_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 {
 	add_attr_value(attr, node, EAS_ELEMENT_HOMECITY);
 	add_attr_value(attr, node, EAS_ELEMENT_HOMECOUNTRY);
@@ -130,7 +143,7 @@ void add_home_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 	add_attr_value(attr, node, EAS_ELEMENT_HOMESTREET);
 }
 
-void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
+static void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 {
 	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSCITY);
 	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSCOUNTRY);
@@ -139,7 +152,16 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 	add_attr_value(attr, node, EAS_ELEMENT_BUSINESSSTREET);
 }
 
-	gchar* eas_con_info_translator_parse_response(xmlNodePtr node, 
+static void add_other_address_attr_values(EVCardAttribute *attr,xmlNodePtr node)
+{
+	add_attr_value(attr, node, EAS_ELEMENT_OTHERCITY);
+	add_attr_value(attr, node, EAS_ELEMENT_OTHERCOUNTRY);
+	add_attr_value(attr, node, EAS_ELEMENT_OTHERPOSTALCODE);
+	add_attr_value(attr, node, EAS_ELEMENT_OTHERSTATE);
+	add_attr_value(attr, node, EAS_ELEMENT_OTHERSTREET);
+}
+	
+gchar* eas_con_info_translator_parse_response(xmlNodePtr node, 
                                               const gchar* server_id)
 {
 	// Variable for the return value
@@ -161,6 +183,7 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 		gboolean nameElements = FALSE;
 		gboolean homeAddrElements = FALSE;
 		gboolean workAddrElements = FALSE;
+		gboolean otherAddrElements = FALSE;
 
 		// vCard object
 		vcard = e_vcard_new();
@@ -223,6 +246,23 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 					e_vcard_attribute_add_param_with_value(attr, param, "WORK");
 					workAddrElements = TRUE;
 				}
+
+				//
+				// Other Address elements
+				//
+				if (((g_strcmp0(name, EAS_ELEMENT_OTHERCITY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_OTHERCOUNTRY) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_OTHERPOSTALCODE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_OTHERSTATE) == 0) ||
+				    (g_strcmp0(name, EAS_ELEMENT_OTHERSTREET) == 0))
+				    && (otherAddrElements == FALSE))
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_ADR);
+					add_other_address_attr_values(attr, node->children);
+					e_vcard_add_attribute(vcard, attr);
+					e_vcard_attribute_add_param_with_value(attr, param, "OTHER");
+					otherAddrElements = TRUE;
+				}
 				
 				//
 				// Contact number elements
@@ -275,7 +315,7 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_HOMEFAXNUMBER);
 					e_vcard_attribute_add_param_with_value(attr, param, "HOME");
-					e_vcard_attribute_add_param_with_value(attr, param, "FAX");
+					e_vcard_attribute_add_param_with_value(attr, param2, "FAX");
 				}
 				if (g_strcmp0(name, EAS_ELEMENT_MOBILEPHONENUMBER) == 0)
 				{
@@ -301,6 +341,19 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 					add_attr_value(attr,node->children,EAS_ELEMENT_RADIOPHONENUMBER);
 					e_vcard_attribute_add_param_with_value(attr, param, "CELL");
 				}
+				if (g_strcmp0(name, EAS_ELEMENT_PAGER) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TEL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_PAGER);
+					e_vcard_attribute_add_param_with_value(attr, param, "PAGER");
+				}
+
+				//
+				// Email
+				//
+				
 				if (g_strcmp0(name, EAS_ELEMENT_EMAIL1ADDRESS) == 0)
 				{
 					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_EMAIL);
@@ -322,13 +375,89 @@ void add_business_address_attr_values(EVCardAttribute *attr,xmlNodePtr *node)
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL3ADDRESS);
 				}
+
+				//
+				// Birthday
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_BIRTHDAY) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_BDAY);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_BIRTHDAY);
+				}
+
+				//
+				// URL
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_URL) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_URL);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_URL);
+				}
+
+				//
+				// Nickname
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_NICKNAME) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_NICKNAME);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_NICKNAME);
+				}
+
+				//
+				// Org
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_ORG) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_ORG);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_ORG);
+				}
+
+				//
+				// Role
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_ROLE) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_ROLE);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_ROLE);
+				}
+
+				//
+				// Photo
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_PHOTO) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_PHOTO);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_PHOTO);
+				}
+
+				//
+				// Note
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_NOTE) == 0)
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_NOTE);
+
+					e_vcard_add_attribute(vcard, attr);
+					add_attr_value(attr,node->children,EAS_ELEMENT_NOTE);
+				}
 			}			
 		}		
 	}
 
 	result = e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30);
 
-	g_debug(result);
 	g_debug("eas_con_info_translator_parse_response --");
 	return result;	
 }

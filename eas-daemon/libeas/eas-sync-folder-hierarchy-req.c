@@ -315,6 +315,11 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 			deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 
+			g_debug("Folder Hierarchy: A:%d, U:%d, D:%d", 
+			        g_slist_length (added_folders), 
+			        g_slist_length (updated_folders), 
+			        g_slist_length (deleted_folders));
+
             // Serialise the response data from GSList* to char** for transmission over Dbus
 
 			ret = build_serialised_folder_array (&ret_created_folders_array, added_folders, &error);
@@ -340,8 +345,8 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 				dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
 					                  ret_sync_key,
 					                  ret_created_folders_array,
-					                  ret_updated_folders_array,
-					                  ret_deleted_folders_array);
+				                      ret_deleted_folders_array,
+					                  ret_updated_folders_array);
 			}
 
 			g_strfreev(ret_created_folders_array);

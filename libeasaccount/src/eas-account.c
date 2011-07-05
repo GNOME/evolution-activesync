@@ -87,11 +87,10 @@ eas_account_init (EasAccount *account)
 
 static void
 finalize (GObject *object)
-{
-	g_debug("finalize++");	
+{	
 	EasAccount *account = EAS_ACCOUNT (object);
-	EasAccountPrivate *priv =account->priv;
-
+	EasAccountPrivate *priv = account->priv;
+	g_debug("finalize++");
 	g_free (priv->uid);
 	g_free (priv->serverUri);
 	g_free (priv->username);

@@ -23,7 +23,8 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     $(top_builddir)/libeasmail/src/libeasmail.h \
                     $(top_builddir)/libeassync/src/libeassync.h \
                     eas_libeassync_tests.c \
-                    eas_libeascon_tests.c
+                    eas_libeascon_tests.c \
+		    eas_folderhierarchy_tests.c
                     
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS)
 
