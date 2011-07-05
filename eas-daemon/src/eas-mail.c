@@ -479,9 +479,9 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm this should be stored elsewhere?
-
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm: should be stored elsewhere?
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 
     ret = eas_get_email_body_req_Activate (req, &error);
 
@@ -537,9 +537,9 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm: should be stored elsewhere?
-
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 	
 	ret = eas_get_email_attachment_req_Activate (req, &error);
 
@@ -562,6 +562,7 @@ eas_mail_send_email (EasMail* easMailObj,
                      const gchar* account_uid,
                      const gchar* clientid,
                      const gchar *mime_file,
+                     guint request_id,
                      DBusGMethodInvocation* context)
 {
     gboolean ret = TRUE;
@@ -588,6 +589,10 @@ eas_mail_send_email (EasMail* easMailObj,
     eas_request_base_SetConnection (&req->parent_instance,
                                     easMailObj->priv->connection);
 
+	eas_request_base_SetInterfaceObject (&req->parent_instance, easMailObj);	
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);	
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);//incoming progress updates
+	
     // Activate Request
     ret = eas_send_email_req_Activate (req, &error);
 

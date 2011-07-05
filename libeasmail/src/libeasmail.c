@@ -899,8 +899,8 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 {
     gboolean ret = TRUE;
 	DBusGProxyCall *call;
-    DBusGProxy *proxy = self->priv->remoteEas;
 	EasEmailHandlerPrivate *priv = self->priv;
+    DBusGProxy *proxy = priv->remoteEas;
 	guint request_id;
 	
     g_debug ("eas_mail_handler_fetch_email_attachment++");
@@ -1129,11 +1129,16 @@ gboolean
 eas_mail_handler_send_email (EasEmailHandler* self,
                              const gchar *client_email_id,   // unique message identifier supplied by client
                              const gchar *mime_file,         // the full path to the email (mime) to be sent
+							 EasProgressFn progress_fn,
+  							 gpointer progress_data,                              
                              GError **error)
 {
     gboolean ret = TRUE;
-    DBusGProxy *proxy = self->priv->remoteEas;
-
+	EasEmailHandlerPrivate *priv = self->priv;
+    DBusGProxy *proxy = priv->remoteEas;
+	guint request_id;
+	DBusGProxyCall *call;
+	
     g_debug ("eas_mail_handler_send_email++");
     g_assert (self);
     g_assert (client_email_id);
@@ -1141,16 +1146,50 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
+	request_id = priv->next_request_id++;
+
+	if(progress_fn)
+	{
+		ret = eas_mail_add_progress_info_to_table(self, request_id, progress_fn, progress_data, error);
+		if(!ret)
+			goto finish;
+	}	
+
     // call dbus api
+	/*
     ret = dbus_g_proxy_call (proxy, "send_email", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_STRING, client_email_id,
                              G_TYPE_STRING, mime_file,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);    // no out params
+	*/
+	call = dbus_g_proxy_begin_call(proxy, "send_email", 
+							dbus_call_completed, 
+							self, 							// userdata 
+							NULL, 							// destroy notification 
+							G_TYPE_STRING, self->priv->account_uid,
+                            G_TYPE_STRING, client_email_id,
+                            G_TYPE_STRING, mime_file,
+							G_TYPE_UINT, request_id,
+							G_TYPE_INVALID);
 
-    // nothing else to do
+	// lrm TODO - figure out how to do this properly!
+	if(!priv->progress_loop)
+	{
+		priv->progress_loop = g_main_loop_new (NULL, TRUE);
+		g_main_loop_run(priv->progress_loop);
+	}
 
+	g_debug("get results (any error)");
+	
+	// blocks until results are available:
+	ret = dbus_g_proxy_end_call (proxy, 
+	                       call, 
+	                       error, 
+	                       G_TYPE_INVALID);	
+finish:
     g_debug ("eas_mail_handler_send_email--");
 
     if (!ret)

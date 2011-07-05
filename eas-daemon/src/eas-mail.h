@@ -154,6 +154,7 @@ gboolean eas_mail_send_email(EasMail* self,
                              const gchar* account_uid,
                              const gchar* clientid,
                              const gchar *mime_file,
+                             guint request_id,
                              DBusGMethodInvocation* context);
 
 /*

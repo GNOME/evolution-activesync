@@ -59,6 +59,7 @@ struct _EasRequestBasePrivate
     EFlag *flag;
 	DBusGMethodInvocation *context;
 	EasMail *dbus_interface;
+	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
 	guint request_id;			// passed back with progress signal
 	guint data_length_so_far;	// amount of data received/sent so far 
 	guint data_size;			// total size of response/request data
@@ -164,6 +165,24 @@ eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
     EasRequestBasePrivate *priv = self->priv;
 
     priv->request_id = request_id;
+
+	return ;
+}
+
+gboolean
+eas_request_base_GetRequestProgressDirection (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->outgoing_progress;
+}
+
+void
+eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    priv->outgoing_progress = outgoing_progress;
 
 	return ;
 }

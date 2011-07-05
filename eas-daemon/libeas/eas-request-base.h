@@ -202,6 +202,26 @@ guint eas_request_base_GetRequestId (EasRequestBase* self);
 void eas_request_base_SetRequestId (EasRequestBase* self, guint request_id);
 
 /**
+ * Getter for outgoing.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The direction currently set for this instance (TRUE == outgoing, FALSE == incoming).
+ */
+gboolean eas_request_base_GetRequestProgressDirection (EasRequestBase* self);
+
+/**
+ * Setter for outgoing.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] outgoing_progress
+ *      The outgoing_progress to be set (TRUE == outgoing, FALSE == incoming)
+ */ 
+void eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress);
+
+/**
  * Getter for data_size.
  *
  * @param[in] self

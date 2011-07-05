@@ -82,7 +82,7 @@
       <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="clientid" direction="in"/>
       <arg type="s" name="mime_file" direction="in"/>
-
+	  <arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
 	<method name="delete_email">

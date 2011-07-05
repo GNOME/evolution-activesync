@@ -275,6 +275,8 @@ Note that the only valid changes are to the read flag and to categories (other c
 gboolean eas_mail_handler_send_email(EasEmailHandler* this, 
                                     const gchar *client_email_id,	 
                                     const gchar *mime_file,	
+									EasProgressFn progress_fn,
+									gpointer progress_data,                                      
                                     GError **error);
 
 
