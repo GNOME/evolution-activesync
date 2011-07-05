@@ -72,6 +72,7 @@
    	<arg type="s" name="account_uid" direction="in"/>
 	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
+	<arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->	
     </method>
 
 

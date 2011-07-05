@@ -132,7 +132,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
-                           const guint request_id,	
+                           guint request_id,	
                            DBusGMethodInvocation* context);
 
 /*
@@ -143,6 +143,7 @@ eas_mail_fetch_attachment (EasMail* self,
                           const gchar* account_uid, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
+                          guint request_id,
                           DBusGMethodInvocation* context);
 
 

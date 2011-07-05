@@ -448,7 +448,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar* collection_id,
                            const gchar *server_id,
                            const gchar *mime_directory,
-                           const guint request_id,			// lrm passed back with progress signal
+                           guint request_id,			// lrm passed back with progress signal
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -504,6 +504,7 @@ eas_mail_fetch_attachment (EasMail* self,
                            const gchar* account_uid,
                            const gchar *file_reference,
                            const gchar *mime_directory,
+                           guint request_id,
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -536,6 +537,10 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm: should be stored elsewhere?
+
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	
 	ret = eas_get_email_attachment_req_Activate (req, &error);
 
 

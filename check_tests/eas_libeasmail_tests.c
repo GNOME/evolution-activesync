@@ -689,7 +689,7 @@ START_TEST (test_get_eas_mail_info_in_inbox)
 END_TEST
 
 static void
-test_fetch_email_body_progress_cb (gpointer progress_data, guint percent)
+test_email_request_progress_cb (gpointer progress_data, guint percent)
 {
 	if(percent == 100)
 	{
@@ -788,7 +788,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 		EasProgressFn progress_cb = NULL;
 		
 		// comment out if progress reports not desired:
-		progress_cb = test_fetch_email_body_progress_cb;
+		progress_cb = test_email_request_progress_cb;
 
 		loop = g_main_loop_new (NULL, FALSE);	// lrm required only if we're passing in a progress function	
 		
@@ -963,11 +963,26 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
                 }
 
                 mark_point();
+
+				EasProgressFn progress_cb = NULL;
+		
+				// comment out if progress reports not desired:
+				progress_cb = test_email_request_progress_cb;
+
+				loop = g_main_loop_new (NULL, FALSE);	// lrm required only if we're passing in a progress function					
+				
                 // call method to get attachment
                 rtn = eas_mail_handler_fetch_email_attachment (email_handler,
                                                                (gchar*) attachmentObj->file_reference,
                                                                mime_directory,  // "$HOME/mimeresponses/"
+                                                               progress_cb,
+                                                               NULL,		// TODO pass in some user data and verify same comes back
                                                                &error);
+
+				if(progress_cb)
+				{
+					if (loop) g_main_loop_run (loop);
+				}
 
                 g_free (mime_directory);
 

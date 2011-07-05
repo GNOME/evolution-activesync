@@ -133,6 +133,39 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
     g_debug ("eas_mail_handler_class_init--");
 }
 
+
+static gboolean 
+eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, EasProgressFn progress_fn, gpointer progress_data, GError **error)
+{
+	gboolean ret = TRUE;
+	EasEmailHandlerPrivate *priv = self->priv;
+	EasProgressCallbackInfo *progress_info = g_malloc0(sizeof(EasProgressCallbackInfo));	
+	
+	if(!progress_info)
+	{
+	    g_set_error (error, EAS_MAIL_ERROR,
+	                 EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+	                 ("out of memory"));			
+		ret = FALSE;
+		goto finish;
+	}
+
+	// add progress fn/data structure to hash table
+	progress_info->progress_fn = progress_fn;
+	progress_info->progress_data = progress_data;
+	progress_info->percent_last_sent = 0;
+	
+	if (priv->email_progress_fns_table == NULL)
+	{
+		priv->email_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
+	}
+	g_debug("insert progress function into table");
+	g_hash_table_insert(priv->email_progress_fns_table, (gpointer)request_id, progress_info);
+
+finish:
+	return ret;
+}
+
 EasEmailHandler *
 eas_mail_handler_new (const char* account_uid, GError **error)
 {
@@ -720,9 +753,9 @@ progress_signal_handler (DBusGProxy* proxy,
 }
 
 
-static void fetch_email_body_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
+static void dbus_call_completed(DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data) 
 {
-	g_debug("fetch email body completed");
+	g_debug("dbus call completed");
  	return;
 }
 
@@ -758,26 +791,9 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 
 	if(progress_fn)
 	{
-		EasProgressCallbackInfo *progress_info = g_malloc0(sizeof(EasProgressCallbackInfo));	
-		if(!progress_info)
-		{
-		    g_set_error (error, EAS_MAIL_ERROR,
-		                 EAS_MAIL_ERROR_NOTENOUGHMEMORY,
-		                 ("out of memory"));			
-			ret = FALSE;
+		ret = eas_mail_add_progress_info_to_table(self, request_id, progress_fn, progress_data, error);
+		if(!ret)
 			goto finish;
-		}
-
-		// add progress fn/data structure to hash table
-		progress_info->progress_fn = progress_fn;
-		progress_info->progress_data = progress_data;
-		progress_info->percent_last_sent = 0;
-		
-		if (priv->email_progress_fns_table == NULL)
-		{
-			priv->email_progress_fns_table = g_hash_table_new_full(NULL, NULL, NULL, g_free); 
-		}
-		g_hash_table_insert(priv->email_progress_fns_table, (gpointer)request_id, progress_info);	// lrm TODO - warning
 	}
 
 	/*
@@ -794,7 +810,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 	*/
 	
 	call = dbus_g_proxy_begin_call(proxy, "fetch_email_body", 
-							fetch_email_body_completed, 
+							dbus_call_completed, 
 							self, 							// userdata 
 							NULL, 							// destroy notification 
 							G_TYPE_STRING, self->priv->account_uid,
@@ -877,11 +893,16 @@ gboolean
 eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
                                          const gchar *file_reference,
                                          const gchar *mime_directory,
+									     EasProgressFn progress_fn,
+									     gpointer progress_data,                                          
                                          GError **error)
 {
     gboolean ret = TRUE;
+	DBusGProxyCall *call;
     DBusGProxy *proxy = self->priv->remoteEas;
-
+	EasEmailHandlerPrivate *priv = self->priv;
+	guint request_id;
+	
     g_debug ("eas_mail_handler_fetch_email_attachment++");
     g_assert (self);
     g_assert (file_reference);
@@ -889,17 +910,54 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
+	request_id = priv->next_request_id++;
+
+	if(progress_fn)
+	{
+		ret = eas_mail_add_progress_info_to_table(self, request_id, progress_fn, progress_data, error);
+		if(!ret)
+			goto finish;
+	}
+	
     // call dbus api
+	/*
     ret = dbus_g_proxy_call (proxy, "fetch_attachment", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_STRING, file_reference,
                              G_TYPE_STRING, mime_directory,
                              G_TYPE_INVALID,
                              G_TYPE_INVALID);
+	*/
+	call = dbus_g_proxy_begin_call(proxy, "fetch_attachment", 
+							dbus_call_completed, 
+							self, 							// userdata 
+							NULL, 							// destroy notification 
+                            G_TYPE_STRING, self->priv->account_uid,
+                            G_TYPE_STRING, file_reference,
+                            G_TYPE_STRING, mime_directory,
+							G_TYPE_UINT, request_id,
+							G_TYPE_INVALID);
 
+	// lrm TODO - figure out how to do this properly!
+	if(!priv->progress_loop)
+	{
+		priv->progress_loop = g_main_loop_new (NULL, TRUE);
+		g_main_loop_run(priv->progress_loop);
+	}
+	
+	g_debug("get results (any error)");
+	
+	// blocks until results are available:
+	ret = dbus_g_proxy_end_call (proxy, 
+	                       call, 
+	                       error, 
+	                       G_TYPE_INVALID);
+	
     // nothing else to do
 
-    g_debug ("eas_mail_handler_fetch_email_attachments--");
+finish:
+	g_debug ("eas_mail_handler_fetch_email_attachments--");
 
     if (!ret)
     {

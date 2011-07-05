@@ -193,7 +193,9 @@ gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
 */ 
 gboolean eas_mail_handler_fetch_email_attachment(EasEmailHandler* this, 
                                                 const gchar *file_reference, 	
-                                                const gchar *mime_directory,	 
+                                                const gchar *mime_directory,	
+												EasProgressFn progress_fn,
+												gpointer progress_data,                                                  
                                                 GError **error);
 
 /* function name:               eas_mail_handler_delete_email
