@@ -65,19 +65,19 @@
 #define EAS_ELEMENT_HOMECITY                  "HomeCity"
 #define EAS_ELEMENT_HOMECOUNTRY               "HomeCountry"
 #define EAS_ELEMENT_HOMEPOSTALCODE            "HomePostalCode"
-#define EAS_ELEMENT_HOMESTATE                 "HomeRegion"
+#define EAS_ELEMENT_HOMESTATE                 "HomeState"
 #define EAS_ELEMENT_HOMESTREET                "HomeStreet"
 
 #define EAS_ELEMENT_BUSINESSCITY              "BusinessCity"
 #define EAS_ELEMENT_BUSINESSCOUNTRY           "BusinessCountry"
 #define EAS_ELEMENT_BUSINESSPOSTALCODE        "BusinessPostalCode"
-#define EAS_ELEMENT_BUSINESSSTATE             "BusinessRegion"
+#define EAS_ELEMENT_BUSINESSSTATE             "BusinessState"
 #define EAS_ELEMENT_BUSINESSSTREET            "BusinessStreet"
 
 #define EAS_ELEMENT_OTHERCITY                 "OtherCity"
 #define EAS_ELEMENT_OTHERCOUNTRY              "OtherCountry"
 #define EAS_ELEMENT_OTHERPOSTALCODE           "OtherPostalCode"
-#define EAS_ELEMENT_OTHERSTATE                "OtherRegion"
+#define EAS_ELEMENT_OTHERSTATE                "OtherState"
 #define EAS_ELEMENT_OTHERSTREET               "OtherStreet"
 
 #define EAS_ELEMENT_BUSINESSPHONENUMBER       "BusinessPhoneNumber"
