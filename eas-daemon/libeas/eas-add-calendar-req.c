@@ -53,8 +53,6 @@
 #include "eas-sync-msg.h"
 #include "eas-add-calendar-req.h"
 #include "serialise_utils.h"
-#include "../../libeasaccount/src/eas-account-list.h"
-#include <string.h>
 
 G_DEFINE_TYPE (EasAddCalendarReq, eas_add_calendar_req, EAS_TYPE_REQUEST_BASE);
 
@@ -173,22 +171,6 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	if(priv->folder_id == NULL|| strlen(priv->folder_id)<=0)
-	{
-		EasAccount* acc = NULL;
-		EasAccountList *account_list = NULL;
-		GConfClient* client = NULL;
-
-		client = gconf_client_get_default();
-		g_assert(client != NULL);
-		/* Get list of accounts from gconf repository */
-		account_list = eas_account_list_new (client);
-		g_assert(account_list != NULL);
-
-		acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);
-		priv->folder_id = eas_account_get_calendar_folder (acc);
-
-	}
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_CALENDAR);
 

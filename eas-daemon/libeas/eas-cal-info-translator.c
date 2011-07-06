@@ -1983,54 +1983,21 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 					
 				// DTSTAMP
 				case ICAL_DTSTAMP_PROPERTY:
-				{
-					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
-					if(!g_str_has_suffix (timestamp, "Z"))
-					   {
-						  modified = g_strconcat(time, "Z", NULL);
-						  timestamp = modified;
-					   }
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)timestamp);
- 					g_debug("dtstamp cleanup");
-					g_free(modified);
-				}
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// DTSTART
 				case ICAL_DTSTART_PROPERTY:
-				{
-					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
-					if(!g_str_has_suffix (timestamp, "Z"))
-				   {
-					  modified = g_strconcat(timestamp, "Z", NULL);
-					  timestamp = modified;
-				   }
-
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)timestamp);
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					// And additionally store the start time so we can calculate the AllDayEvent value later
 					startTime = icalproperty_get_dtstart(prop);
-					g_debug("dtstart cleanup");
-					g_free(modified);
-				   }
-					   break;
+					break;
 					
 				// DTEND
 				case ICAL_DTEND_PROPERTY:
-				{
-					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
-					if(!g_str_has_suffix (timestamp, "Z"))
-					{
-					  modified = g_strconcat(timestamp, "Z", NULL);
-					  timestamp = modified;
-					}
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)timestamp);
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					// And additionally store the end time so we can calculate the AllDayEvent value later
 					endTime = icalproperty_get_dtend(prop);
-					g_free(modified);
-				}
 					break;
 					
 				// LOCATION
@@ -2448,9 +2415,9 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		//timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
-		//xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)timezoneBase64);
-		//g_free(timezoneBase64);
+		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
+		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)timezoneBase64);
+		g_free(timezoneBase64);
 	}
 }
 
