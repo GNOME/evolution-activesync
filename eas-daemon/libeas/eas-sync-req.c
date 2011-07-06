@@ -152,6 +152,7 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 
     g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 
+    object_class->dispose = eas_sync_req_dispose;
     object_class->finalize = eas_sync_req_finalize;
 }
 
