@@ -121,24 +121,24 @@ sync_deleted_folders (CamelEasStore *store, GSList *deleted_folders)
 	GSList *l;
 
 	for (l = deleted_folders; l != NULL; l = g_slist_next (l)) {
-		const gchar *fid = l->data;
+		EasFolder *folder = l->data;
 		CamelFolderInfo *fi;
 		GError *error = NULL;
 
-		if (!camel_eas_store_summary_has_folder (eas_summary, fid))
+		printf("Delete folder %s?\n", folder->folder_id);
+		if (!camel_eas_store_summary_has_folder (eas_summary, folder->folder_id)) {
+			printf("no exist\n");
 			continue;
-
-		camel_eas_store_summary_remove_folder (eas_summary, fid, NULL);
-#if 0
-		ftype = camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL);
-		if (ftype == EAS_FOLDER_TYPE_MAILBOX) {
-			fi = camel_eas_utils_build_folder_info (store, fid);
-
-			camel_store_folder_deleted ((CamelStore *) store, fi);
 		}
-#endif
+
+		fi = camel_eas_utils_build_folder_info (store, folder->folder_id);
+		camel_store_folder_deleted ((CamelStore *) store, fi);
+
+		printf("remove from summary...\n");
+		camel_eas_store_summary_remove_folder (eas_summary, folder->folder_id, NULL);
 	}
 }
+
 #if 0
 static gboolean eas_utils_rename_folder (CamelEasStore *store, 
 					 const gchar *fid, const gchar *changekey,
