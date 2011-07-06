@@ -81,8 +81,6 @@ eas_ping_msg_init (EasPingMsg *object)
 static void
 eas_ping_msg_finalize (GObject *object)
 {
-	EasPingMsg *msg = (EasPingMsg *) object;
-	
 	G_OBJECT_CLASS (eas_ping_msg_parent_class)->finalize (object);
 }
 
