@@ -60,6 +60,7 @@ GQuark eas_connection_error_quark (void);
 
 #define EAS_CONNECTION_ERROR (eas_connection_error_quark ())
 
+// note: the error values in this enum do not match anything in MSFT docs, the values are our own:
 enum _EasConnectionError{
     EAS_CONNECTION_ERROR_FAILED,
 	EAS_CONNECTION_ERROR_FILEERROR,
@@ -98,7 +99,16 @@ enum _EasConnectionError{
 	EAS_CONNECTION_SYNC_ERROR_STATUSUNRECOGNIZED,
     EAS_CONNECTION_SYNC_ERROR_INVALIDSTATE,
     EAS_CONNECTION_SYNC_ERROR_INVALIDTYPE,
-    
+
+	/* FolderSync status errors */
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_SERVERERROR,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_TIMEOUT,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_INVALIDSYNCKEY,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_BADLYFORMATTEDREQUEST,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_UNKNOWNERROR,
+	EAS_CONNECTION_FOLDER_SYNC_ERROR_CODEUNKNOWN,
+	 
 	/* ItemOperations status errors */
 	EAS_CONNECTION_ITEMOPERATIONS_ERROR_PROTOCOLERROR,
 	EAS_CONNECTION_ITEMOPERATIONS_ERROR_SERVERERROR,
@@ -117,6 +127,8 @@ enum _EasConnectionError{
 	EAS_CONNECTION_ITEMOPERATIONS_ERROR_PARTIALCOMPLETE,
 	EAS_CONNECTION_ITEMOPERATIONS_ERROR_CREDENTIALSREQUIRED,
 	EAS_CONNECTION_ITEMOPERATIONS_ERROR_STATUSUNRECOGNIZED,
+
+	/* Ping status errors */
 	EAS_CONNECTION_PING_ERROR_STATUSUNRECOGNIZED,
     EAS_CONNECTION_PING_ERROR_FOLDERS_UPDATED,
     EAS_CONNECTION_PING_ERROR_PARAMETER,
@@ -124,7 +136,8 @@ enum _EasConnectionError{
     EAS_CONNECTION_PING_ERROR_HEARTBEAT_INTERVAL,
     EAS_CONNECTION_PING_ERROR_FOLDER,
     EAS_CONNECTION_PING_ERROR_FOLDER_SYNC,
-	
+
+	/* MoveItems status errors */
 	EAS_CONNECTION_MOVEITEMS_ERROR_INVALID_SRC_ID,
 	EAS_CONNECTION_MOVEITEMS_ERROR_INVALID_DST_ID,
 	EAS_CONNECTION_MOVEITEMS_ERROR_SRC_AND_DST_SAME,
@@ -132,7 +145,7 @@ enum _EasConnectionError{
 	EAS_CONNECTION_MOVEITEMS_ERROR_SRC_OR_DST_LOCKED,
 	EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED,
 
-		/* */
+	/* */
 } ;
 
 typedef enum _EasConnectionError EasConnectionError;
@@ -219,6 +232,12 @@ enum _EasCommonStatus
 	EAS_COMMON_STATUS_EXCEEDSSTATUSLIMIT	// no common status above 177 currently
 };
 
+
+// All enums from this point are for internal use only and will not be returned on the APIs:
+
+// note: the following status enums are mainly for documentation (they show the status codes defined by msft)
+// only the last item in each enum is used elsewhere in code:
+
 enum _EasItemOperationsStatus
 {
 	EAS_ITEMOPERATIONS_STATUS_PROTOCOLERROR = 2,
@@ -257,6 +276,18 @@ enum _EasSyncStatus
 	EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 16 currently
 };
 
+enum _EasFolderSyncStatus
+{
+	EAS_FOLDER_SYNC_STATUS_SERVERERROR = 6,
+	EAS_FOLDER_SYNC_STATUS_TIMEOUT = 8,
+	EAS_FOLDER_SYNC_STATUS_INVALIDSYNCKEY = 9,
+	EAS_FOLDER_SYNC_STATUS_BADLYFORMATTEDREQUEST = 10,
+	EAS_FOLDER_SYNC_STATUS_UNKNOWNERROR = 11,
+	EAS_FOLDER_SYNC_STATUS_CODEUNKNOWN = 12,
+	EAS_FOLDER_SYNC_STATUS_EXCEEDSSTATUSLIMIT = 13,   // no sync status spec'd above 12 currently
+};
+
+
 enum _EasPingStatus
 {
 	EAS_PING_STATUS_FOLDERS_UPDATED = 2,
@@ -294,6 +325,7 @@ extern EasError itemoperations_status_error_map[];
 extern EasError moveitems_status_error_map[];
 extern EasError common_status_error_map[];
 extern EasError ping_status_error_map[];
+extern EasError folder_sync_status_error_map[];
 
 G_END_DECLS
 

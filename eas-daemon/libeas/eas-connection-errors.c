@@ -170,6 +170,25 @@ EasError sync_status_error_map[] =
     {EAS_CONNECTION_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"}  //17
 };
 
+EasError folder_sync_status_error_map[] =
+{
+    {EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //0
+    {0, ""},  //1, not an error case
+    {EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //2
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //3
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //4
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //5
+    {EAS_CONNECTION_FOLDER_SYNC_ERROR_SERVERERROR, "SyncFolder error: Server misconfiguration, temporary system issue, or bad item"}, //6
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //7	
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_TIMEOUT, "SyncFolder error: The server took too long to respond to the request, retry"}, //8
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_INVALIDSYNCKEY, "SyncFolder error: Invalid synchronization key"}, //9
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_BADLYFORMATTEDREQUEST, "SyncFolder error: the FolderSync request contains a semantic or syntactic error."}, //10
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_UNKNOWNERROR, "SyncFolder error: Server misconfiguration, temporary system issue, or bad item. Retry or return to sync key zero"}, //11
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_CODEUNKNOWN, "SyncFolder error: Unusual back-end issue"}, //12
+	{EAS_CONNECTION_FOLDER_SYNC_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"}  //13
+};
+
+
 
 EasError itemoperations_status_error_map[] =
 {
