@@ -251,7 +251,7 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 		            ret = FALSE;
 
 					g_free(updated_id);
-					// lrm TODO convert status code to GError
+					// convert status code to GError
 		            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
 		            {
 		                error_details = common_status_error_map[status_num - 100];

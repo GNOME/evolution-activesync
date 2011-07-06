@@ -227,6 +227,16 @@ eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length)
     return;
 }
 
+void
+eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+	priv->data_length_so_far = length;
+	
+    return;
+}
+
 struct _EasConnection*
 eas_request_base_GetConnection (EasRequestBase* self)
 {
@@ -244,7 +254,7 @@ eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* con
     g_debug ("eas_request_base_SetConnection--");
 }
 
-// lrm
+
 void
 eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface)
 {

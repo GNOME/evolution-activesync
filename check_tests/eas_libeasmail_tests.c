@@ -153,7 +153,7 @@ static void testSendEmail (EasEmailHandler *email_handler,
 	// comment out if progress reports not desired:
 	progress_cb = test_email_request_progress_cb;
 
-	loop = g_main_loop_new (NULL, FALSE);	// lrm required only if we're passing in a progress function
+	loop = g_main_loop_new (NULL, FALSE);	
 	
     ret = eas_mail_handler_send_email (email_handler,
                                        client_id,
@@ -806,7 +806,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 		// comment out if progress reports not desired:
 		progress_cb = test_email_request_progress_cb;
 
-		loop = g_main_loop_new (NULL, FALSE);	// lrm required only if we're passing in a progress function	
+		loop = g_main_loop_new (NULL, FALSE);	
 		
         // call method to get body
         rtn = eas_mail_handler_fetch_email_body (email_handler,
@@ -985,7 +985,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 				// comment out if progress reports not desired:
 				progress_cb = test_email_request_progress_cb;
 
-				loop = g_main_loop_new (NULL, FALSE);	// lrm required only if we're passing in a progress function					
+				loop = g_main_loop_new (NULL, FALSE);	
 				
                 // call method to get attachment
                 rtn = eas_mail_handler_fetch_email_attachment (email_handler,

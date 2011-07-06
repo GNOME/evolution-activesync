@@ -179,7 +179,7 @@ EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
  * @param[in] dbus_interface
  *      The interface object to be set.
  */ 
-void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);	// lrm TODO better name than dbus_interface
+void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);	
 
 /**
  * Getter for request id.
@@ -260,6 +260,16 @@ guint eas_request_base_GetDataLengthSoFar (EasRequestBase* self);
  *      The length to increase data_length_so_far by.
  */ 
 void eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length);
+
+/**
+ * Setter for data_length_so_far.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] length
+ *      The length to be set.
+ */ 
+void eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length);
 
 /**
  * Getter for soup message.

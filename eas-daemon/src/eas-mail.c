@@ -114,7 +114,6 @@ eas_mail_class_init (EasMailClass *klass)
     g_type_class_add_private (klass, sizeof (EasMailPrivate));
     g_debug (">>eas_mail_class_init 02");
 
-	// lrm
 	// create the progress signal we emit 
 	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
 	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
@@ -448,7 +447,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar* collection_id,
                            const gchar *server_id,
                            const gchar *mime_directory,
-                           guint request_id,			// lrm passed back with progress signal
+                           guint request_id,			// passed back with progress signal
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -479,7 +478,7 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		// lrm: should be stored elsewhere?
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 

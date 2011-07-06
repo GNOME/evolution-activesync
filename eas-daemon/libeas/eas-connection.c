@@ -624,13 +624,14 @@ static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
 		eas_request_base_UpdateDataLengthSoFar(request, chunk->length);
 		so_far = eas_request_base_GetDataLengthSoFar(request);
 
-		// lrm TODO what should we send if percentage not possible?
+		// TODO what should we send if percentage not possible?
 		if(total)
 		{
 			percent = so_far * 100 / total;
 
-			g_debug ("emit signal");
-			// lrm emit signal
+			g_debug("emit signal with percent: %d * 100 / %d = %d", so_far, total, percent);
+			
+			//emit signal
 			g_signal_emit (dbus_interface,
 			dbus_interface_klass->signal_id,
 			0,
@@ -669,7 +670,7 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 											 "Content-Length");
 	if (size_hdr) {
 		gsize size = strtoull (size_hdr, NULL, 10);
-		// lrm store the response size in the request base
+		// store the response size in the request base
 		if(!outgoing_progress)  // want incoming progress, so store size
 		{
 			eas_request_base_SetDataSize(request, size);
@@ -727,11 +728,11 @@ static void soap_wrote_headers (SoupMessage *msg, gpointer data)
 		{	
 			gsize size = strtoull (size_hdr, NULL, 10);
 
-			// lrm 
 			// store the request size in the request base
 			if(outgoing_progress)
 			{
 				eas_request_base_SetDataSize(request, size);
+				eas_request_base_SetDataLengthSoFar(request, 0);	// reset 
 			}
 		
 			g_debug ("Request size of request %p is %zu bytes", request, size);
