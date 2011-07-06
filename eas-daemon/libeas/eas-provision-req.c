@@ -106,9 +106,6 @@ eas_provision_req_dispose (GObject *object)
 static void
 eas_provision_req_finalize (GObject *object)
 {
-    EasProvisionReq *req = (EasProvisionReq *) object;
-    EasProvisionReqPrivate *priv = req->priv;
-
     G_OBJECT_CLASS (eas_provision_req_parent_class)->finalize (object);
 }
 
