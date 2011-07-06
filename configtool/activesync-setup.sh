@@ -18,5 +18,8 @@ gconftool-2 --set --type=string /apps/activesyncd/accounts/$EMAILADDR/serverUri 
 # Add Evolution account in /apps/evolution/mail/accounts with URL
 # eas:///account_uid=$EMAILADDR;check_all
 # Again, we *really* do need to append, not overwrite.
+#
+# gconftool-2 --set /apps/evolution/mail/accounts --type=list --list-type=string '[<?xml version="1.0"?>  
+# <account name="David Woodhouse" uid="1309534230.10835.2@localhost.localdomain" enabled="true"><identity><name>David Woodhouse</name><addr-spec>david.woodhouse@intel.com</addr-spec><signature uid=""/></identity><source save-passwd="false" keep-on-server="false" auto-check="false" auto-check-timeout="0"><url>eas://david.woodhouse@intel.com/;sync_offline=1;account_uid=david.woodhouse@intel.com</url></source><transport save-passwd="false"><url>eas://david.woodhouse@intel.com/;account_uid=david.woodhouse@intel.com</url></transport><drafts-folder>mbox:/home/meego/.local/share/evolution/mail/local#Drafts</drafts-folder><sent-folder>mbox:/home/meego/.local/share/evolution/mail/local#Sent</sent-folder><auto-cc always="false"><recipients></recipients></auto-cc><auto-bcc always="false"><recipients></recipients></auto-bcc><receipt-policy policy="never"/><pgp encrypt-to-self="false" always-trust="false" always-sign="false" no-imip-sign="false"/><smime sign-default="false" encrypt-default="false" encrypt-to-self="false"/></account>]'
 
 # Add SyncEvolution account
