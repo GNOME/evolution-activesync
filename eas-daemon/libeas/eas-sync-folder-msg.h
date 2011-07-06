@@ -167,6 +167,26 @@ GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);
  */
 gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
 
+/**
+ * Retrieves the default contact folder id in the response from the server.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or The updated default contact folder id supplied by the server response. [no transfer]
+ */
+gchar* eas_sync_folder_msg_get_def_con_folder(EasSyncFolderMsg* self);
+
+/**
+ * Retrieves the default calendar folder id in the response from the server.
+ *
+ * @param[in] self
+ *	  The EasSyncFolderMsg GObject instance.
+ *
+ * @return NULL or The updated default calendar folder id supplied by the server response. [no transfer]
+ */
+gchar* eas_sync_folder_msg_get_def_cal_folder(EasSyncFolderMsg* self); 
+
 G_END_DECLS
 
 #endif /* _EAS_SYNC_FOLDER_MSG_H_ */

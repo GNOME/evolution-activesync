@@ -58,68 +58,6 @@ build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const 
 
 // TODO - how much verification of args should happen
 
-static gchar* getDefaultFolder(EasSyncHandler* handler, EasItemType type, const gchar* syncKey)
-{
-	gchar *folder = NULL;
-	gboolean ret = FALSE;
-	GSList *created = NULL;
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
-	GSList *item;
-    GError *error = NULL;
-	gchar *syncKeyOut = NULL;
-	
-	//if default values not yet set - look up
-	if(defaultCalFolder==NULL)
-	{
-		ret  = eas_sync_handler_sync_folder_hierarchy (handler,
-                                                   "0",
-		                                           &syncKeyOut,
-                                                   &created,
-                                                   &updated,
-                                                   &deleted,
-                                                   &error);
-		if(ret)
-		{
-			for (item = created; item; item = item->next)
-			{
-				EasFolder *folder = item->data;
-				if (EAS_FOLDER_TYPE_DEFAULT_CALENDAR == folder->type)
-				{
-					g_free(defaultCalFolder);
-				    defaultCalFolder = g_strdup(folder->folder_id);
-				}
-				else if (EAS_FOLDER_TYPE_DEFAULT_CONTACTS == folder->type)
-				{
-					g_free(defaultConFolder);
-				    defaultConFolder = g_strdup(folder->folder_id);
-				}
-			}
-		}
-	}
-	switch(type)
-	{
-		case EAS_ITEM_CALENDAR:
-		{
-			folder = g_strdup(defaultCalFolder);
-		}
-		break;
-		case EAS_ITEM_CONTACT:
-		{
-			folder = g_strdup(defaultConFolder);
-		}
-		break;
-		default:
-		{
-			g_debug("type not found - error");
-		}
-	}
-	g_debug("Default Contact Folder ID is %s", defaultConFolder);
-	g_debug("Default Calendar Folder ID is %s", defaultCalFolder);
-	
-	return folder;
-}
-
 static void
 eas_sync_handler_init (EasSyncHandler *cnc)
 {
@@ -260,7 +198,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     gchar **created_item_array = NULL;
     gchar **deleted_item_array = NULL;
     gchar **updated_item_array = NULL;
-	gchar *folder = NULL;
 	
 
     g_debug ("eas_sync_handler_get_calendar_items++ ");
@@ -272,17 +209,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 		sync_key_in = g_strdup("0");
 	}
 
-	if(folder_id ==NULL||(strlen(folder_id)<=0))
-	{
-		g_debug ("updating folder id");
-		//If folder_id is not set, then we set it to the default for the type
-		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
-	}
-	else //use passed in folder_id
-	{
-		g_debug ("using folder id = %s", folder_id);
-		folder = g_strdup(folder_id);
-	}
 
     g_debug ("eas_sync_handler_get_latest_items - dbus proxy ok");
 
@@ -294,7 +220,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     ret = dbus_g_proxy_call (proxy, "get_latest_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_UINT64, (guint64) type,
-                             G_TYPE_STRING, folder,
+                             G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_INVALID,
                              G_TYPE_STRING, sync_key_out,
@@ -306,7 +232,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_get_latest_items - dbus proxy called");
 
-	g_free(folder);
 
 	if (*error)
     {
@@ -380,7 +305,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
-	gchar *folder = NULL;
 	
     g_debug ("eas_sync_handler_delete_items++");
 
@@ -391,15 +315,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
-	if(folder_id ==NULL ||(strlen(folder_id)<=0))
-	{
-		//If folder_id is not set, then we set it to the default for the type
-		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
-	}
-	else //use passed in folder_id
-	{
-		folder = g_strdup(folder_id);
-	}
 
 
     g_debug ("eas_sync_handler_delete_items - dbus proxy ok");
@@ -407,7 +322,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "delete_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
-                             G_TYPE_STRING, folder,
+                             G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, items_deleted,
                              G_TYPE_INVALID,
@@ -415,7 +330,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_delete_items - dbus proxy called");
-	g_free(folder);
 	
     if (*error)
     {
@@ -442,7 +356,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
-    gchar *folder = NULL;
     gchar **updated_item_array = NULL;
 
     g_debug ("eas_sync_handler_update_items++");
@@ -453,15 +366,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
                      EAS_CONNECTION_ERROR_BADARG,
                      ("update_items requires a valid sync key"));
 		return FALSE;
-	}
-	if(folder_id ==NULL ||(strlen(folder_id)<=0))
-	{
-		//If folder_id is not set, then we set it to the default for the type
-		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
-	}
-	else //use passed in folder_id
-	{
-		folder = g_strdup(folder_id);
 	}
 
 
@@ -475,7 +379,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
     ret = dbus_g_proxy_call (proxy, "update_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_UINT64, (guint64) type,
-                             G_TYPE_STRING, folder,
+                             G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, updated_item_array,
                              G_TYPE_INVALID,
@@ -483,7 +387,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_update_items - dbus proxy called");
-	g_free(folder);
     if (*error)
     {
         g_error (" Error: %s", (*error)->message);
@@ -549,7 +452,6 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
-    gchar *folder = NULL;	
     gchar **added_item_array = NULL;
     gchar **created_item_array = NULL;
 
@@ -562,17 +464,8 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                      ("add_items requires a valid sync key"));
 		return FALSE;
 	}
-	if(folder_id ==NULL ||(strlen(folder_id)<=0))
-	{
-		//If folder_id is not set, then we set it to the default for the type
-		folder = g_strdup(getDefaultFolder(self, type, sync_key_in));
-	}
-	else //use passed in folder_id
-	{
-		folder = g_strdup(folder_id);
-	}
 
-	g_debug ("eas_sync_handler_add_items to folder %s", folder);
+	g_debug ("eas_sync_handler_add_items to folder %s", folder_id);
 
     build_serialised_calendar_info_array (&added_item_array, items_added, TRUE, error);
 
@@ -580,7 +473,7 @@ eas_sync_handler_add_items (EasSyncHandler* self,
     ret = dbus_g_proxy_call (proxy, "add_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
                              G_TYPE_UINT64, (guint64) type,
-                             G_TYPE_STRING, folder,
+                             G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, added_item_array,
                              G_TYPE_INVALID,
@@ -589,8 +482,6 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_add_items - dbus proxy called");
-    
-    g_free(folder);
 
     if (error && *error)
     {

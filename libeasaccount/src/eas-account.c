@@ -43,6 +43,8 @@ struct	_EasAccountPrivate
 	 gchar* serverUri;
 	 gchar* username;
 	 gchar* policy_key;
+	 gchar* calendar_folder;
+	 gchar* contact_folder;
 	 gchar* password;
 };
 	
@@ -80,6 +82,8 @@ eas_account_init (EasAccount *account)
 	priv->serverUri = NULL;
 	priv->username = NULL;
 	priv->policy_key = NULL;
+	priv->calendar_folder = NULL;
+	priv->contact_folder = NULL;
 	priv->password = NULL;
 	g_debug("eas_account_init--");
 }
@@ -95,6 +99,8 @@ finalize (GObject *object)
 	g_free (priv->serverUri);
 	g_free (priv->username);
 	g_free (priv->policy_key);
+	g_free (priv->calendar_folder);
+	g_free (priv->contact_folder);
 	g_free (priv->password);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
@@ -256,6 +262,68 @@ eas_account_set_policy_key (EasAccount *account, const gchar* policy_key)
 
 	/* g_debug("eas_account_set_policy_key--"); */
 }
+void
+eas_account_set_calendar_folder (EasAccount *account, const gchar* calendar_folder)
+{
+	/* g_debug("eas_account_set_calendar_folder++"); */
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+
+	if(account->priv->calendar_folder == NULL){
+		if(calendar_folder != NULL){
+			account->priv->calendar_folder = g_strdup (calendar_folder);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "calendar_folder changed: [%s]\n", account->priv->calendar_folder);
+		}
+	}else{
+		if(calendar_folder != NULL){
+			if(strcmp(account->priv->calendar_folder, calendar_folder) != 0){
+				g_free(account->priv->calendar_folder);
+				account->priv->calendar_folder = g_strdup (calendar_folder);
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "calendar_folder changed: [%s]\n", account->priv->calendar_folder);
+				}
+		}else{
+				g_free(account->priv->calendar_folder);
+				account->priv->calendar_folder = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "calendar_folder changed: [%s]\n", account->priv->calendar_folder);
+		}
+	}
+
+	/* g_debug("eas_account_set_calendar_folder--"); */
+}
+void
+eas_account_set_contact_folder (EasAccount *account, const gchar* contact_folder)
+{
+	/* g_debug("eas_account_set_contact_folder++"); */
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+
+	if(account->priv->contact_folder == NULL){
+		if(contact_folder != NULL){
+			account->priv->contact_folder = g_strdup (contact_folder);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "contact_folder changed: [%s]\n", account->priv->contact_folder);
+		}
+	}else{
+		if(contact_folder != NULL){
+			if(strcmp(account->priv->contact_folder, contact_folder) != 0){
+				g_free(account->priv->contact_folder);
+				account->priv->contact_folder = g_strdup (contact_folder);
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "contact_folder changed: [%s]\n", account->priv->contact_folder);
+				}
+		}else{
+				g_free(account->priv->contact_folder);
+				account->priv->contact_folder = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "contact_folder changed: [%s]\n", account->priv->contact_folder);
+		}
+	}
+
+	/* g_debug("eas_account_set_contact_folder--"); */
+}
+
+
 
 void
 eas_account_set_password (EasAccount *account, const gchar* password)
@@ -312,6 +380,18 @@ eas_account_get_policy_key (const EasAccount *account)
 }
 
 gchar*
+eas_account_get_calendar_folder (const EasAccount *account)
+{
+	return account->priv->calendar_folder;
+}
+
+gchar*
+eas_account_get_contact_folder (const EasAccount *account)
+{
+	return account->priv->contact_folder;
+}
+
+gchar*
 eas_account_get_password (const EasAccount *account)
 {
 	return account->priv->password;
@@ -329,6 +409,8 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_uri (account, accountinfo->serverUri);
 	eas_account_set_username (account, accountinfo->username);
 	eas_account_set_policy_key (account, accountinfo->policy_key);
+	eas_account_set_calendar_folder(account, accountinfo->calendar_folder);
+	eas_account_set_contact_folder(account, accountinfo->contact_folder);
 	eas_account_set_password (account, accountinfo->password);
 	/* g_debug("eas_account_set_from_info--");	*/
 	return TRUE;
