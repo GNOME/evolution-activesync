@@ -70,6 +70,8 @@
 #define EAS_SERVICE_MAIL_INTERFACE   "org.meego.activesyncd.EasMail"
 #define EAS_SERVICE_MAIL_OBJECT_PATH	 "/EasMail"
 
+#define EAS_SERVICE_TEST_INTERFACE    "org.meego.activesyncd.EasTest"
+#define EAS_SERVICE_TEST_OBJECT_PATH  "/EasTest"
 
 
 #endif /* ACTIVESYNCD_COMMON_DEFS_H */

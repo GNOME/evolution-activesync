@@ -63,6 +63,7 @@
 #include "eas-sync.h"
 #include "eas-common.h"
 #include "eas-mail.h"
+#include "eas-test.h"
 
 #include "../../logger/eas-logger.h"
 
@@ -153,10 +154,10 @@ int main (int argc, char** argv)
 {
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
-//    EasConnection* EasConnObj = NULL;
     EasSync* EasSyncObj = NULL;
     EasCommon* EasCommonObj = NULL;
     EasMail*EasMailObj = NULL;
+    EasTest* EasTestObj = NULL;
 
     GMainLoop* mainloop = NULL;
     guint result;
@@ -220,11 +221,13 @@ int main (int argc, char** argv)
         exit (EXIT_FAILURE);
     }
 
-    g_debug ("Pass a EasConnection handle to the exposed GObjects");
-    // eas_sync_set_eas_connection(EasSyncObj, EasConnObj);
-    // ret = eas_common_set_eas_connection(EasCommonObj, EasConnObj);
-    // ret = eas_contact_set_eas_connection(EasContactObj, EasConnObj);
-    // eas_mail_set_eas_connection(EasMailObj, EasConnObj);
+    EasTestObj = eas_test_new ();
+    if (NULL == EasTestObj)
+    {
+        g_debug("Failed to make EasTest instance");
+        g_main_loop_quit (mainloop);
+        exit (EXIT_FAILURE);
+    }
 
     g_debug ("Connecting to the session DBus");
     bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
@@ -274,16 +277,6 @@ int main (int argc, char** argv)
         exit (EXIT_FAILURE);
     }
 
-
-    /*
-     //we don't want EasConnObj to be exposed on DBus Interface anymore
-        g_debug("Registering Gobjects on the D-Bus.");
-        dbus_g_connection_register_g_object(bus,
-                                          EAS_SERVICE_OBJECT_PATH,
-                                          G_OBJECT(EasConnObj));
-
-    */
-
     //  Registering  calendar Gobject
     dbus_g_connection_register_g_object (bus,
                                          EAS_SERVICE_SYNC_OBJECT_PATH,
@@ -300,6 +293,9 @@ int main (int argc, char** argv)
                                          EAS_SERVICE_MAIL_OBJECT_PATH,
                                          G_OBJECT (EasMailObj));
 
+    dbus_g_connection_register_g_object (bus,
+                                         EAS_SERVICE_TEST_OBJECT_PATH,
+                                         G_OBJECT (EasTestObj));
 
     g_debug ("Ready to serve requests");
 

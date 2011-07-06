@@ -187,6 +187,19 @@ gboolean eas_connection_send_request(EasConnection* self,
                                      GError** error);
 
 
+/**
+ * Substitutes xml body responses from the server with prefabricated responses
+ * that are located in a directory named 'eas-test-responses' in the user's 
+ * HOME directory.
+ *
+ * Purely a debug API intended to allow the insertion of various 'status' level
+ * server responses.
+ *
+ * @param[in] reponse_file_list [no transfer]
+ *	  A NULL terminated array of NULL terminated strings of filenames.
+ *
+ */
+void eas_connection_add_mock_responses (const gchar** response_file_list);
 
 G_END_DECLS
 

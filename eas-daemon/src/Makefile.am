@@ -2,17 +2,20 @@
 
 libexec_PROGRAMS = activesyncd
 
-BUILT_SOURCES = eas-sync-stub.h eas-common-stub.h eas-mail-stub.h
+BUILT_SOURCES = eas-sync-stub.h eas-common-stub.h eas-mail-stub.h eas-test-stub.h
 
 eas-sync-stub.h: eas-sync.xml
 	dbus-binding-tool --prefix=eas_sync --mode=glib-server $< > $@
-
 
 eas-common-stub.h: eas-common.xml
 	dbus-binding-tool --prefix=eas_common --mode=glib-server $< > $@
 
 eas-mail-stub.h: eas-mail.xml
 	dbus-binding-tool --prefix=eas_mail --mode=glib-server $< > $@
+
+eas-test-stub.h: eas-test.xml
+	dbus-binding-tool --prefix=eas_test --mode=glib-server $< > $@
+
 
 activesyncd_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
@@ -45,10 +48,18 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-common.h \
 		      eas-common.c \
 		      eas-mail.h \
-		      eas-mail.c
+		      eas-mail.c \
+		      eas-test.h \
+		      eas-test.c
 		      
 
-activesyncd_LDADD = ../../logger/libeaslogger.la ../libeas/libeas.la ../../libeasmail/src/libeasmail.la ../../libeassync/src/libeassync.la $(INTI_LIBS)
+activesyncd_LDADD = \
+    ../../logger/libeaslogger.la \
+    ../libeas/libeas.la \
+    ../../libeasmail/src/libeasmail.la \
+    ../../libeassync/src/libeassync.la \
+    ../../libeastest/src/libeastest.la \
+    $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
-EXTRA_DIST = eas-sync.xml eas-common.xml eas-mail.xml
+EXTRA_DIST = eas-sync.xml eas-common.xml eas-mail.xml eas-test.xml

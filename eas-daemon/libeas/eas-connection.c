@@ -61,6 +61,8 @@
 #include <unistd.h>
 #include <gnome-keyring.h>
 
+#include <sys/stat.h>
+
 //#include "eas-accounts.h"
 #include "../../libeasaccount/src/eas-account-list.h"
 #include "eas-connection-errors.h"
@@ -109,6 +111,7 @@ static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
 static GHashTable *g_open_connections = NULL;
 static GConfClient* g_gconf_client = NULL;
 static EasAccountList* g_account_list = NULL;
+static GSList* g_mock_response_list = NULL;
 
 static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      SoupAuth *auth, gboolean retrying,
@@ -116,8 +119,11 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
 static gboolean wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
-static void parse_for_status (xmlNode *node);
+static void parse_for_status (xmlNode *node, gboolean *isErrorStatus);
 static gchar *device_type, *device_id;
+
+static void write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len);
+
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
@@ -128,6 +134,7 @@ static void
 eas_connection_accounts_init()
 {
 	g_debug("eas_connection_accounts_init++");
+
 	if (!g_gconf_client)
 	{
 		// At this point we don't have an account Id so just load the list of accounts
@@ -293,7 +300,6 @@ eas_connection_finalize (GObject *object)
     g_debug ("eas_connection_finalize++");
 
     g_free (priv->accountUid);
-
 
     if (priv->request_doc)
     {
@@ -781,7 +787,6 @@ if(g_strcmp0(cmd, "SendMail"))
         goto finish;
     }
 
-
     soup_message_headers_set_content_length (msg->request_headers, wbxml_len);
 
     soup_message_set_request (msg,
@@ -970,7 +975,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
     }
 
     wbxml_conv_wbxml2xml_set_language (conv, WBXML_LANG_ACTIVESYNC);
-    wbxml_conv_wbxml2xml_set_indent (conv, 1);
+    wbxml_conv_wbxml2xml_set_indent (conv, 2);
 
     wbxml_ret = wbxml_conv_wbxml2xml_run (conv,
                                           (WB_UTINY *) wbxml,
@@ -1553,34 +1558,37 @@ eas_connection_new (EasAccount* account, GError** error)
 }
 
 static void
-parse_for_status (xmlNode *node)
+parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 {
     xmlNode *child = NULL;
     xmlNode *sibling = NULL;
 
+	*isErrorStatus = FALSE;
+
     if (!node) return;
     if ( (child = node->children))
     {
-        parse_for_status (child);
+        parse_for_status (child, isErrorStatus);
     }
 
-    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
+    if (*isErrorStatus == FALSE && node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
     {
         gchar* status = (gchar*) xmlNodeGetContent (node);
-        if (!g_strcmp0 (status, "1"))
+        if (!g_strcmp0 (status, "1") || (!g_strcmp0 (status, "3") && !g_strcmp0 ((gchar *)node->parent->name, "Response")) )
         {
             g_message ("parent_name[%s] status = [%s]", (char*) node->parent->name , status);
         }
         else
         {
             g_critical ("parent_name[%s] status = [%s]", (char*) node->parent->name , status);
+            *isErrorStatus = TRUE;
         }
         xmlFree (status);
     }
 
-    if ( (sibling = node->next))
+    if ( (sibling = node->next) && *isErrorStatus == FALSE)
     {
-        parse_for_status (sibling);
+        parse_for_status (sibling, isErrorStatus);
     }
 }
 
@@ -1598,15 +1606,15 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     RequestValidity validity = FALSE; 
 	gboolean cleanupRequest = FALSE;
 
-    g_debug ("eas_connection - handle_server_response++");
-	g_debug("  eas_connection - handle_server_response self[%lx]", (unsigned long)self);
-	g_debug("  eas_connection - handle_server_response priv[%lx]", (unsigned long)self->priv);
+    g_debug ("eas_connection - handle_server_response++ self [%lx], priv[%lx]", 
+             (unsigned long)self, (unsigned long)self->priv );
 
 	validity = isResponseValid (msg, &error);
 
     if (INVALID == validity)
     {
 		g_assert (error != NULL);
+		write_response_to_file ((WB_UTINY*) msg->response_body->data, msg->response_body->length);
         goto complete_request;
     }
 
@@ -1620,6 +1628,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
     if (VALID_NON_EMPTY == validity)
     {
+        gboolean isStatusError = FALSE;
         if (!wbxml2xml ( (WB_UTINY*) msg->response_body->data,
                          msg->response_body->length,
                          &xml,
@@ -1631,21 +1640,65 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
             goto complete_request;
         }
 
-        g_debug ("  handle_server_response - pre-xmlReadMemory");
+        if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
+		{
+			write_response_to_file (xml, xml_len);
+		}
 
-        doc = xmlReadMemory ( (const char*) xml,
-                              xml_len,
-                              "sync.xml",
-                              NULL,
-                              0);
+        g_debug ("handle_server_response - pre-xmlReadMemory");
 
-        if (xml) free (xml);
+		// @@TRICKY - If we have entries in the mocked body list, 
+		//            feed that response back instead of the real server
+		//            response.
+		if (g_mock_response_list)
+		{
+			gchar *filename = g_slist_nth_data (g_mock_response_list, 0);
+			gchar* fullPath = g_strconcat(g_getenv("HOME"), 
+			                              "/eas-test-responses/", 
+			                              filename, 
+			                              NULL);
+			
+			g_debug ("Queued mock responses [%u]", g_slist_length (g_mock_response_list));
+			
+			g_mock_response_list = g_slist_remove (g_mock_response_list, filename);
+			g_free (filename);
+
+			g_debug ("Loading mock:[%s]", fullPath);
+			
+			doc = xmlReadFile (fullPath,
+			                   NULL,
+			                   0);
+			if (!doc)
+			{
+				g_critical("Failed to read mock response!");
+			}
+			g_free (fullPath);
+		}
+		else
+		{
+			// Otherwise proccess the server response
+		    doc = xmlReadMemory ( (const char*) xml,
+		                          xml_len,
+		                          "sync.xml",
+		                          NULL,
+		                          0);
+		}
 
         if (doc)
         {
             xmlNode* node = xmlDocGetRootElement (doc);
-            parse_for_status (node); // TODO Set a flag for needing to provision in 14.0
+            parse_for_status (node, &isStatusError); // TODO Also catch provisioning for 14.0
         }
+
+        if (TRUE == isStatusError || !doc)
+        {
+            if (!getenv ("EAS_CAPTURE_RESPONSE") || (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) == 0)))
+			{
+        		write_response_to_file (xml, xml_len);
+			}
+        }
+
+        if (xml) free (xml);
     }
 
 	if (VALID_12_1_REPROVISION == validity)
@@ -1773,4 +1826,50 @@ complete_request:
     g_debug ("eas_connection - handle_server_response--");
 }
 
+static void
+write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len)
+{
+	static gulong sequence_number = 0;
+	FILE *file = NULL;
+	gchar *path = g_strdup_printf("%s/eas-debug/", g_getenv("HOME"));
+	gchar *filename = NULL;
+	gchar *fullPath = NULL; 
 
+	if (!sequence_number)
+	{
+		mkdir(path, S_IFDIR | S_IRWXU | S_IXGRP | S_IXOTH);
+	}
+	sequence_number++;
+
+	filename = g_strdup_printf("%010lu.%lu.xml", (gulong) sequence_number, (gulong) getpid ());
+	fullPath = g_strconcat(path, filename, NULL);
+
+	if ( (file = fopen(fullPath, "w")) )
+	{
+		fwrite (xml, 1, xml_len, file);
+		fclose (file);
+	}
+
+	g_free(path);
+	g_free(filename);
+	g_free(fullPath);
+}
+
+void
+eas_connection_add_mock_responses (const gchar** response_file_list)
+{
+	const gchar* filename = NULL;
+	guint index = 0;
+
+	g_debug ("eas_connection_add_mock_responses++");
+	
+	if (!response_file_list) return;
+
+	while ( (filename = response_file_list[index++]) )
+	{
+		g_debug("Adding [%s] to the mock list", filename);
+		g_mock_response_list = g_slist_append (g_mock_response_list, g_strdup(filename));
+	}
+
+	g_debug ("eas_connection_add_mock_responses--");
+}

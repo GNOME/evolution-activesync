@@ -22,14 +22,16 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_main_tests.c \
                     $(top_builddir)/libeasmail/src/libeasmail.h \
                     $(top_builddir)/libeassync/src/libeassync.h \
+                    $(top_builddir)/libeastest/src/libeastest.h \
                     eas_libeassync_tests.c \
                     eas_libeascon_tests.c \
-		    eas_folderhierarchy_tests.c
+                    eas_folderhierarchy_tests.c
                     
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS)
 
 check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
                   $(top_builddir)/libeassync/src/libeassync.la \
+                  $(top_builddir)/libeastest/src/libeastest.la \
                   $(top_builddir)/eas-daemon/libeas/libeas.la \
                   @CHECK_LIBS@ $(GLIB_LIBS)
 

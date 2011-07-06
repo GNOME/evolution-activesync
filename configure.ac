@@ -130,6 +130,7 @@ AC_CONFIG_FILES([
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
     eas-daemon/tests/Makefile
+    libeastest/src/Makefile
     libeasmail/src/Makefile
     libeassync/src/Makefile
     libeasaccount/src/Makefile
