@@ -148,8 +148,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	gchar* serveruri_Key_path = NULL;
 	gchar* username_Key_path = NULL;
 	gchar* policy_key_Key_path = NULL;
-	gchar* calendar_folder_Key_path = NULL;
-	gchar* contact_folder_Key_path = NULL;
 	gchar* password_Key_path = NULL;
 
 	/* g_debug("eas_account_list_set_account_info++"); */
@@ -182,8 +180,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	serveruri_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
 	username_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
 	policy_key_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-	contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-	calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
 	password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
 
 	acc_info->uid = g_strdup(uid);
@@ -196,19 +192,13 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	} else if (strcmp(keyname, policy_key_Key_path) == 0) {
 		acc_info->policy_key = g_strdup(strValue);
 		//g_debug( "policy_key  changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, calendar_folder_Key_path) == 0) {
-		acc_info->calendar_folder = g_strdup(strValue);
-		//g_debug( "calendar_folder  changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, contact_folder_Key_path) == 0) {
-		acc_info->contact_folder = g_strdup(strValue);
-		//g_debug( "contact_folder  changed: [%s]\n", strValue);
 	} else if (strcmp(keyname, password_Key_path) == 0){
 		acc_info->password = g_strdup(strValue); 
 		//g_debug( "username changed: [%s]\n", strValue);
 	}else {
 		g_warning( "Unknown key: %s (value: [%s])\n", keyname, strValue);
 	}
-	
+
 	g_free (uid);
 	uid = NULL;
 	g_free (serveruri_Key_path);
@@ -217,10 +207,6 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	username_Key_path = NULL;
 	g_free (policy_key_Key_path);
 	policy_key_Key_path = NULL;	
-	g_free (calendar_folder_Key_path);
-	calendar_folder_Key_path = NULL;	
-	g_free (contact_folder_Key_path);
-	contact_folder_Key_path = NULL;	
 	g_free (password_Key_path);
 	password_Key_path  = NULL;
 	g_free (username_Key_path);
@@ -256,8 +242,6 @@ void dump_accounts(EasAccountList *account_list)
 		g_print("account->uri=%s\n", eas_account_get_uri(account));
 		g_print("account->username=%s\n", eas_account_get_username(account));
 		g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
-		g_print("account->calendar_folder=%s\n", eas_account_get_calendar_folder(account));
-		g_print("account->contact_folder=%s\n", eas_account_get_contact_folder(account));
 		g_print("account->password=%s\n", eas_account_get_password(account));
 	}
 
@@ -309,8 +293,6 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	g_debug("serverUri =%s", acc_info->serverUri);
 	g_debug("username =%s", acc_info->username);
 	g_debug("policy_key =%s", acc_info->policy_key);
-	g_debug("calendar_folder =%s", acc_info->calendar_folder;
-	g_debug("contact_folder =%s", acc_info->contact_folder;
 	g_debug("password =%s", acc_info->password);
 	g_debug("check 02");
 #endif		
@@ -521,26 +503,6 @@ eas_account_list_save_account(EasAccountList *account_list,
 		g_free(policy_key_Key_path);
 		policy_key_Key_path = NULL;
 	}
-	if (eas_account_get_contact_folder(account)){
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								eas_account_get_contact_folder(account),
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
-	}
-	if (eas_account_get_calendar_folder(account)){
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								eas_account_get_calendar_folder(account),
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
-	}
 
 	if (eas_account_get_password(account)){
 		gchar* password_Key_path = NULL;
@@ -607,30 +569,6 @@ eas_account_list_save_account_from_info(EasAccountList *account_list,
 
 	}
 
-	if (acc_info->contact_folder){
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								acc_info->contact_folder,
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
-
-	}
-
-	if (acc_info->calendar_folder){
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								acc_info->calendar_folder,
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
-
-	}
-
 	if (acc_info->password){
 		gchar* password_Key_path = NULL;
 		password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
@@ -676,8 +614,6 @@ eas_account_list_save_list (EasAccountList *account_list)
 		acc_info->serverUri = strdup(eas_account_get_uri(account));
 		acc_info->username = strdup(eas_account_get_username(account));
 		acc_info->policy_key = strdup(eas_account_get_policy_key(account));
-		acc_info->calendar_folder = strdup(eas_account_get_calendar_folder(account));
-		acc_info->contact_folder = strdup(eas_account_get_contact_folder(account));
 		acc_info->password = strdup(eas_account_get_password(account));		
 #endif
 		list = g_slist_append (list, acc_info);
@@ -749,32 +685,6 @@ eas_account_list_save_item(EasAccountList *account_list,
 									NULL);
 		g_free(policy_key_Key_path);
 		policy_key_Key_path = NULL;
-
-		}
-		break;
-	case EAS_ACCOUNT_CALENDAR_FOLDER:
-		{
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								eas_account_get_calendar_folder(account),
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
-
-		}
-		break;
-	case EAS_ACCOUNT_CONTACT_FOLDER:
-		{
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								eas_account_get_contact_folder(account),
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
 
 		}
 		break;
@@ -913,14 +823,6 @@ eas_account_list_find (EasAccountList *account_list,
 		case EAS_ACCOUNT_FIND_POLICY_KEY:
 			if (eas_account_get_policy_key(account))
 				found = strcmp (eas_account_get_policy_key(account), key) == 0;
-			break;
-		case EAS_ACCOUNT_FIND_CALENDAR_FOLDER:
-			if (eas_account_get_calendar_folder(account))
-				found = strcmp (eas_account_get_calendar_folder(account), key) == 0;
-			break;
-		case EAS_ACCOUNT_FIND_CONTACT_FOLDER:
-			if (eas_account_get_contact_folder(account))
-				found = strcmp (eas_account_get_contact_folder(account), key) == 0;
 			break;
 		case EAS_ACCOUNT_FIND_PASSWORD:
 			if (eas_account_get_password(account))

@@ -73,8 +73,6 @@ typedef struct	_EasAccountInfo
 	 gchar* serverUri;
 	 gchar* username;
 	 gchar* policy_key;
-	 gchar* contact_folder;
-	 gchar* calendar_folder;
 	 gchar* password;
 } EasAccountInfo;
 
@@ -85,8 +83,6 @@ typedef enum _eas_account_item_t {
 	EAS_ACCOUNT_USERNAME,
 	EAS_ACCOUNT_POLICY_KEY,
 	EAS_ACCOUNT_PASSWORD,
-	EAS_ACCOUNT_CONTACT_FOLDER,
-	EAS_ACCOUNT_CALENDAR_FOLDER,
 
 	E_ACCOUNT_ITEM_LAST
 } eas_account_item_t;
@@ -98,8 +94,6 @@ void	eas_account_set_uid			(EasAccount *account, const gchar* uid);
 void	eas_account_set_uri			(EasAccount *account, const gchar* uri);
 void	eas_account_set_username	(EasAccount *account, const gchar* username);
 void	eas_account_set_policy_key	(EasAccount *account, const gchar* policy_key);
-void	eas_account_set_contact_folder	(EasAccount *account, const gchar* contact_folder);
-void	eas_account_set_calendar_folder	(EasAccount *account, const gchar* calendar_folder);
 void	eas_account_set_password	(EasAccount *account, const gchar* password);
 gboolean	eas_account_set_from_info	(EasAccount *account, const EasAccountInfo* accountinfo);
 
@@ -107,8 +101,6 @@ gchar*	eas_account_get_uid			(const EasAccount *account);
 gchar*	eas_account_get_uri			(const EasAccount *account);
 gchar*	eas_account_get_username	(const EasAccount *account);
 gchar*	eas_account_get_policy_key	(const EasAccount *account);
-gchar*	eas_account_get_contact_folder	(const EasAccount *account);
-gchar*	eas_account_get_calendar_folder	(const EasAccount *account);
 gchar*	eas_account_get_password	(const EasAccount *account);
 EasAccountInfo*	eas_account_get_account_info(const EasAccount *account);
 
