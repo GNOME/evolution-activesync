@@ -233,12 +233,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 
     g_debug ("eas_sync_handler_get_latest_items - dbus proxy called");
 
-
-	if (*error)
-    {
-        g_error (" Error: %s", (*error)->message);
-    }
-
     if (ret)
     {
         guint i = 0;
@@ -331,11 +325,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_delete_items - dbus proxy called");
-	
-    if (*error)
-    {
-        g_error (" Error: %s", (*error)->message);
-    }
 
     if (ret)
     {
@@ -388,10 +377,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
                              G_TYPE_INVALID);
 
     g_debug ("eas_sync_handler_update_items - dbus proxy called");
-    if (*error)
-    {
-        g_error (" Error: %s", (*error)->message);
-    }
 
     if (ret)
     {
