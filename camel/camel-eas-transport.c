@@ -69,6 +69,7 @@ eas_send_to_sync (CamelTransport *transport,
 		  GError **error)
 {
 	EVO2(GCancellable *cancellable = NULL;)
+	gpointer progress_data;
 	CamelService *service;
 	EasEmailHandler *handler;
 	CamelStream *mimefile, *filtered;
@@ -78,6 +79,9 @@ eas_send_to_sync (CamelTransport *transport,
 	const gchar *msgid;
 	int fd;
 	gboolean res;
+
+	EVO3(progress_data = cancellable);
+	EVO2(progress_data = camel_operation_registered());
 
 	service = CAMEL_SERVICE (transport);
 	account_uid = camel_url_get_param (service->url, "account_uid");
@@ -122,7 +126,8 @@ eas_send_to_sync (CamelTransport *transport,
 	g_object_unref (filtered);
 
 	msgid = camel_mime_message_get_message_id (message);
-	res = eas_mail_handler_send_email(handler, msgid, fname, NULL, NULL, error);
+	res = eas_mail_handler_send_email(handler, msgid, fname,
+					  camel_operation_progress, progress_data, error);
 
 	unlink (fname);
 	g_free (fname);
