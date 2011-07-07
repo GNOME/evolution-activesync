@@ -65,6 +65,7 @@ struct _EasAddCalendarReqPrivate
     EasSyncMsg* sync_msg;
     gchar* account_id;
     gchar* sync_key;
+	EasItemType item_type;
     gchar* folder_id;
     GSList *serialised_calendar;
 };
@@ -81,6 +82,7 @@ eas_add_calendar_req_init (EasAddCalendarReq *object)
     priv->sync_msg = NULL;
     priv->account_id = NULL;
     priv->sync_key = NULL;
+	priv->item_type = EAS_ITEM_LAST;
     priv->folder_id = NULL;
     priv->serialised_calendar = NULL;
 
@@ -142,7 +144,8 @@ eas_add_calendar_req_class_init (EasAddCalendarReqClass *klass)
 EasAddCalendarReq *
 eas_add_calendar_req_new (const gchar* account_id, 
                           const gchar *sync_key, 
-                          const gchar *folder_id, 
+                          const gchar *folder_id,
+                          const EasItemType item_type,
                           const GSList* serialised_calendar, 
                           DBusGMethodInvocation *context)
 {
@@ -155,6 +158,7 @@ eas_add_calendar_req_new (const gchar* account_id,
     priv->folder_id = g_strdup (folder_id);
     priv->serialised_calendar = (GSList *) serialised_calendar;
     priv->account_id = g_strdup (account_id);
+	priv->item_type = item_type;
 
     eas_request_base_SetContext (&self->parent_instance, context);
 
@@ -190,7 +194,7 @@ eas_add_calendar_req_Activate (EasAddCalendarReq *self, GError **error)
 
 	}
     //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_CALENDAR);
+    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
 
     //build request msg
     doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, priv->serialised_calendar, NULL, NULL);

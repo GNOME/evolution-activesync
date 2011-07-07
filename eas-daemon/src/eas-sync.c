@@ -395,7 +395,7 @@ eas_sync_add_items (EasSync* self,
     }
 
     // Create the request
-    req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, items, context);
+    req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, type, items, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     eas_sync_get_eas_connection (self));

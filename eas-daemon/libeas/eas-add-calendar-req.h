@@ -100,7 +100,8 @@ GType eas_add_calendar_req_get_type (void) G_GNUC_CONST;
  */
 EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id, 
                                             const gchar *sync_key, 
-                                            const gchar *folder_id, 
+                                            const gchar *folder_id,
+                                            const EasItemType item_type,
                                             const GSList *serialised_calendar, 
                                             DBusGMethodInvocation *context);
 
