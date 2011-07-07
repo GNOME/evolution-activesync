@@ -309,7 +309,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 		if (g_strcmp0 (priv->sync_key, "0"))
 		{
 		    g_debug ("switching state");
-		    priv->state = EasSyncReqStep2;
+		    priv->state = EasSyncReqStep3;
 		    getChanges = TRUE;
 		}
 
@@ -514,7 +514,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			}
 			//finished state machine - req needs to be cleanup up by connection object
 			cleanup = TRUE;
-            g_debug ("eas_sync_req_MessageComplete step 2");
+            g_debug ("eas_sync_req_MessageComplete step 3");
 			ret_more_available = eas_sync_msg_get_more_available(priv->syncMsg);
 			ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
 			added_items   = eas_sync_msg_get_added_items (priv->syncMsg);
