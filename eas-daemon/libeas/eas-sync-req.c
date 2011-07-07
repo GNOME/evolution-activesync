@@ -116,10 +116,12 @@ eas_sync_req_dispose (GObject *object)
     if (priv->syncMsg)
     {
         g_object_unref (priv->syncMsg);
+		priv->syncMsg = NULL;
     }
 	if (priv->acc)
     {
         g_object_unref (priv->acc);
+		priv->acc = NULL;
     }
 
 	G_OBJECT_CLASS (eas_sync_req_parent_class)->dispose (object);
@@ -182,7 +184,9 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 	
     priv->sync_key = g_strdup (syncKey);
     priv->accountID = g_strdup (accountID);
-	if(folderId != NULL)
+
+	// If we have a folderId which isn't NULL or an empty string
+	if (folderId && g_strcmp0("", folderId))
 	{
 		priv->folderID = g_strdup (folderId);
 	}
@@ -215,8 +219,8 @@ eas_sync_req_Activate (EasSyncReq *self,
 	// if Folder Id is not set, then for contacts, we get a default,
 	// if the default has not been set yet, then call sync folder hierarchy,
 	// which will write them to gconf 
-	if(priv->folderID ==NULL||(strlen(priv->folderID)<=0))
-	{		
+	if(priv->folderID == NULL)
+	{
 		g_debug("folder id missing - look for default");
 		priv->state = EasSyncReqStep1;
 		switch(priv->ItemType)
@@ -224,7 +228,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 			case EAS_ITEM_CALENDAR:
 			{
 				g_debug("get calendar folder");
-				priv->folderID = eas_account_get_calendar_folder(priv->acc);
+				priv->folderID = g_strdup(eas_account_get_calendar_folder(priv->acc));
 				if(priv->folderID != NULL)
 				{
 					g_debug("default folder id for calendar = [%s]", priv->folderID);
@@ -235,7 +239,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 			case EAS_ITEM_CONTACT:
 			{
 				g_debug("default folder id for contacts = [%s]", priv->folderID);
-				priv->folderID = eas_account_get_contact_folder(priv->acc);
+				priv->folderID = g_strdup(eas_account_get_contact_folder(priv->acc));
 				if(priv->folderID != NULL)
 				{
 					priv->state = EasSyncReqStep2;
@@ -393,7 +397,11 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
         break;
 		case EasSyncReqStep1:
 		{
+			// We do some direct assigns lower down so this should always be true.
+			g_assert(!priv->folderID);
+			
 			ret = eas_sync_folder_msg_parse_response ((EasSyncFolderMsg*)priv->syncMsg, doc, &error);
+
 			xmlFreeDoc (doc);
 			if (!ret)
 			{
@@ -414,6 +422,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             if (priv->syncMsg)
             {
                 g_object_unref (priv->syncMsg);
+				priv->syncMsg = NULL;
             }
 			//create sync  msg type
 			priv->syncMsg = eas_sync_msg_new (priv->sync_key, priv->accountID, priv->folderID, priv->ItemType);
@@ -456,6 +465,8 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
         //We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
         case EasSyncReqStep2:
         {
+			gchar * syncKey = NULL;
+			
 			ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
 			xmlFreeDoc (doc);
 			if (!ret)
@@ -464,7 +475,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				goto finish;
 			}
             //get syncKey
-            gchar* syncKey = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
+            syncKey = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
 
             g_debug ("eas_sync_req synckey = %s", syncKey);
 
@@ -472,6 +483,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             if (priv->syncMsg)
             {
                 g_object_unref (priv->syncMsg);
+                priv->syncMsg = NULL;
             }
 
             //create new message with new syncKey
@@ -555,7 +567,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 						}
 					}
 				}
-				break;					
+				break;
 				default:
 				{
 				ret = FALSE;
