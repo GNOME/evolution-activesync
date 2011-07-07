@@ -174,7 +174,7 @@ static void
 free_string_array (gchar **array)
 {
     guint i = 0;
-    while (array[i])
+    while (array && array[i])
     {
         g_free (array[i]);
         i++;
