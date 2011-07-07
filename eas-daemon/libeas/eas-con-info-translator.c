@@ -168,17 +168,11 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 	gchar* result = NULL;
 	EVCard *vcard;
 	g_debug("eas_con_info_translator_parse_response ++");
-
-
-	// Variable for property values as they're read from the XML
-//	gchar* value  = NULL;
+    EasItemInfo* conInfo = NULL;
 
 	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), EAS_ELEMENT_APPLICATIONDATA)))
 	{
 		xmlNodePtr n = node;
-//		VObject *prop;
-		
-//		EasItemInfo* conInfo = NULL;
 
 		gboolean nameElements = FALSE;
 		gboolean homeAddrElements = FALSE;
@@ -187,7 +181,6 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 
 		// vCard object
 		vcard = e_vcard_new();
-//		nameProp = addProp(vcard,VCNameProp);
 
 		for (n = n->children; n; n = n->next)
 		{
@@ -196,7 +189,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 				const gchar* name = (const gchar*)(n->name);
 				EVCardAttributeParam *param = e_vcard_attribute_param_new("TYPE");
 				EVCardAttributeParam *param2 = e_vcard_attribute_param_new("TYPE");
-
+eas_item_info_new();
 				//
 				// Name elements
 				//				
@@ -455,9 +448,17 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 			}			
 		}		
 	}
+	conInfo = eas_item_info_new();
+	conInfo->server_id = (gchar*)server_id;
+	conInfo->data = e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30);
 
-	result = e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30);
-
+	if (!eas_item_info_serialise(conInfo, &result))
+	{
+		// TODO: log error
+		result = NULL;
+	}
+	// Free the EasItemInfo GObject
+	g_object_unref(conInfo);
 	g_debug("eas_con_info_translator_parse_response --");
 	return result;	
 }
