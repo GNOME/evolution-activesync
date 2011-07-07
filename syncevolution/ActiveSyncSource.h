@@ -120,7 +120,7 @@ class ActiveSyncSource :
     /* partial implementation of SyncSource */
     virtual void enableServerMode();
     virtual bool serverModeEnabled() const;
-    virtual Databases getDatabases() { return Databases(); } // not supported
+    virtual Databases getDatabases();
     virtual void open();
     virtual void close();
     virtual std::string getPeerMimeType() const { return getMimeType(); }

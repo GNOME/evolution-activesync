@@ -45,6 +45,15 @@ bool ActiveSyncSource::serverModeEnabled() const
     return m_operations.m_loadAdminData;
 }
 
+ActiveSyncSource::Databases ActiveSyncSource::getDatabases()
+{
+    Databases result;
+    // empty string always selects the default database
+    result.push_back(Database("", "", true));
+    return result;
+}
+
+
 void ActiveSyncSource::open()
 {
     // extract account ID and throw error if missing
