@@ -64,6 +64,8 @@
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-req.h"
 #include "eas-move-email-req.h"
+#include "activesyncd-common-defs.h"
+#include "eas-marshal.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -111,6 +113,22 @@ eas_mail_class_init (EasMailClass *klass)
     g_debug (">>eas_mail_class_init 01");
     g_type_class_add_private (klass, sizeof (EasMailPrivate));
     g_debug (">>eas_mail_class_init 02");
+
+	// create the progress signal we emit 
+	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
+	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
+	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
+	0,																		// class offset
+	NULL,																	// accumulator
+	NULL,																	// user data for accumulator
+    eas_marshal_VOID__UINT_UINT,
+	//g_cclosure_marshal_VOID__UINT,   // Function to marshal the signal data into the parameters of the signal call
+	G_TYPE_NONE,															// handler return type
+	2,																		// Number of parameter GTypes to follow
+	// GTypes of the parameters
+	G_TYPE_UINT,
+	G_TYPE_UINT);
+	
     /* Binding to GLib/D-Bus" */
     dbus_g_object_type_install_info (EAS_TYPE_MAIL,
                                      &dbus_glib_eas_mail_object_info);
@@ -429,6 +447,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar* collection_id,
                            const gchar *server_id,
                            const gchar *mime_directory,
+                           guint request_id,			// passed back with progress signal
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -450,7 +469,7 @@ eas_mail_fetch_email_body (EasMail* self,
 		goto finish;
     }
 
-    // Create Request
+    // Create Request 
     req = eas_get_email_body_req_new (account_uid,
                                       collection_id,
                                       server_id,
@@ -459,11 +478,14 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
+
     ret = eas_get_email_body_req_Activate (req, &error);
 
 
 finish:
-
     if (!ret)
     {
         g_assert (error != NULL);
@@ -481,6 +503,7 @@ eas_mail_fetch_attachment (EasMail* self,
                            const gchar* account_uid,
                            const gchar *file_reference,
                            const gchar *mime_directory,
+                           guint request_id,
                            DBusGMethodInvocation* context)
 {
     gboolean ret;
@@ -513,6 +536,10 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, priv->connection);
 
+	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
+	
 	ret = eas_get_email_attachment_req_Activate (req, &error);
 
 
@@ -534,6 +561,7 @@ eas_mail_send_email (EasMail* easMailObj,
                      const gchar* account_uid,
                      const gchar* clientid,
                      const gchar *mime_file,
+                     guint request_id,
                      DBusGMethodInvocation* context)
 {
     gboolean ret = TRUE;
@@ -560,6 +588,10 @@ eas_mail_send_email (EasMail* easMailObj,
     eas_request_base_SetConnection (&req->parent_instance,
                                     easMailObj->priv->connection);
 
+	eas_request_base_SetInterfaceObject (&req->parent_instance, easMailObj);	
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);	
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);//incoming progress updates
+	
     // Activate Request
     ret = eas_send_email_req_Activate (req, &error);
 

@@ -1,6 +1,22 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES =  libeasmail.la
 
+
+MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
+
+# TODO - this doesn't always work; sometimes the marshal files aren't created until these commands are run manually:
+# generate marshal functions for progress signals:
+eas-marshal.h: eas-marshal.list
+	( glib-genmarshal --prefix=eas_marshal eas-marshal.list --header > eas-marshal.tmp \
+ 	&& mv eas-marshal.tmp eas-marshal.h ) || ( rm -f eas-marshal.tmp && exit 1 )
+
+eas-marshal.c: eas-marshal.h
+	( (echo '#include "eas-marshal.h"'; glib-genmarshal --prefix=eas_marshal eas-marshal.list --body) > eas-marshal.tmp \
+	&& mv eas-marshal.tmp eas-marshal.c ) \
+	|| ( rm -f eas-marshal.tmp && exit 1  )
+	
+libeasmail.c: $(MARSHAL_GENERATED)
+
 # TODO remove unnecessary includes
 libeasmail_la_CPPFLAGS =		\
 		$(GLIB_CFLAGS)		\
@@ -31,7 +47,9 @@ libeasmail_la_SOURCES =		\
         eas-attachment.c	\
 		eas-mail-errors.h	\
         utils.h				\
-		utils.c
+		utils.c				\
+		eas-marshal.h 		\
+		eas-marshal.c		
         
 interface_xml =  ../../eas-daemon/src/eas-mail.xml
 
@@ -46,6 +64,6 @@ AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 libeasmail_la_LIBADD = ../../logger/libeaslogger.la
 
 # Correctly clean the generated headers, but keep the xml description
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) $(MARSHAL_GENERATED)
 MOSTLYCLEANFILES = libeasmail.la
 MAINTAINERCLEANFILES = Makefile.in

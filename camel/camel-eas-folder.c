@@ -188,7 +188,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	}
 
 	g_mutex_lock (priv->server_lock);
-	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, error);
+	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, NULL, NULL, error);
 	g_mutex_unlock (priv->server_lock);
 
 	if (!res) {

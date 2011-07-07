@@ -53,7 +53,6 @@
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
 
-
 struct _EasGetEmailBodyReqPrivate
 {
     EasGetEmailBodyMsg* emailBodyMsg;
@@ -129,7 +128,7 @@ static void
 eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
+	
 	g_debug ("eas_get_email_body_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasGetEmailBodyReqPrivate));
@@ -144,7 +143,7 @@ EasGetEmailBodyReq*
 eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
-                            const gchar *mime_directory,
+                            const gchar *mime_directory,	
                             DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
@@ -164,7 +163,6 @@ eas_get_email_body_req_new (const gchar* account_uid,
     g_debug ("eas_get_email_body_req_new--");
     return req;
 }
-
 
 gboolean
 eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)

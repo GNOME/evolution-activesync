@@ -58,6 +58,11 @@ struct _EasRequestBasePrivate
     SoupMessage *soup_message;
     EFlag *flag;
 	DBusGMethodInvocation *context;
+	EasMail *dbus_interface;
+	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
+	guint request_id;			// passed back with progress signal
+	guint data_length_so_far;	// amount of data received/sent so far 
+	guint data_size;			// total size of response/request data
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
@@ -80,7 +85,12 @@ eas_request_base_init (EasRequestBase *object)
     priv->soup_message = NULL;
     priv->flag = NULL;
     priv->context = NULL;
-
+    priv->connection = NULL;
+	priv->dbus_interface = NULL;
+	priv->data_length_so_far = 0;
+	priv->data_size = 0;
+	priv->request_id = 0;
+	
     g_debug ("eas_request_base_init--");
 }
 
@@ -141,6 +151,92 @@ eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type)
     g_debug ("eas_request_base_SetRequestType--");
 }
 
+guint
+eas_request_base_GetRequestId (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->request_id;
+}
+
+void
+eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    priv->request_id = request_id;
+
+	return ;
+}
+
+gboolean
+eas_request_base_GetRequestProgressDirection (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->outgoing_progress;
+}
+
+void
+eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    priv->outgoing_progress = outgoing_progress;
+
+	return ;
+}
+
+guint
+eas_request_base_GetDataSize (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->data_size;
+}
+
+void
+eas_request_base_SetDataSize (EasRequestBase* self, guint size)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+	g_debug ("eas_request_base_SetDataSize++");
+	
+	priv->data_size = size;
+
+	g_debug ("eas_request_base_SetDataSize--");
+	
+    return;
+}
+
+guint
+eas_request_base_GetDataLengthSoFar (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    return priv->data_length_so_far;
+}
+
+void
+eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+	priv->data_length_so_far += length;
+	
+    return;
+}
+
+void
+eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+	priv->data_length_so_far = length;
+	
+    return;
+}
+
 struct _EasConnection*
 eas_request_base_GetConnection (EasRequestBase* self)
 {
@@ -157,6 +253,24 @@ eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* con
     priv->connection = connection;
     g_debug ("eas_request_base_SetConnection--");
 }
+
+
+void
+eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    g_debug ("eas_request_base_SetInterfaceObject++");
+    priv->dbus_interface = dbus_interface;
+    g_debug ("eas_request_base_SetInterfaceObject--");
+}
+
+EasMail* 
+eas_request_base_GetInterfaceObject (EasRequestBase* self)
+{
+    EasRequestBasePrivate *priv = self->priv;
+    return priv->dbus_interface;
+}
+
 
 SoupMessage *
 eas_request_base_GetSoupMessage(EasRequestBase *self)

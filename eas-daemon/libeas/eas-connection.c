@@ -80,6 +80,8 @@
 #include "eas-add-calendar-req.h"
 #include "eas-move-email-req.h"
 #include "eas-ping-req.h"
+#include "../src/activesyncd-common-defs.h"
+#include "../src/eas-mail.h"
 
 #ifdef ACTIVESYNC_14
     #define AS_VERSION "14.0"
@@ -601,14 +603,59 @@ eas_queue_soup_message (gpointer _request)
 	return FALSE;
 }
 
+/*
+emits a signal (if the dbus interface object has been set)
+
+*/
+static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
+{
+	guint request_id = eas_request_base_GetRequestId (request);
+	EasMail* dbus_interface;
+	EasMailClass* dbus_interface_klass;
+	guint percent, total, so_far;
+
+	dbus_interface = eas_request_base_GetInterfaceObject(request); 
+	if(dbus_interface)
+	{
+		dbus_interface_klass = EAS_MAIL_GET_CLASS (dbus_interface);	
+
+		total = eas_request_base_GetDataSize(request);
+
+		eas_request_base_UpdateDataLengthSoFar(request, chunk->length);
+		so_far = eas_request_base_GetDataLengthSoFar(request);
+
+		// TODO what should we send if percentage not possible?
+		if(total)
+		{
+			percent = so_far * 100 / total;
+
+			g_debug("emit signal with percent: %d * 100 / %d = %d", so_far, total, percent);
+			
+			//emit signal
+			g_signal_emit (dbus_interface,
+			dbus_interface_klass->signal_id,
+			0,
+			request_id,
+			percent);	
+		}
+	}	
+}
 
 static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 {
-	struct _EasRequestBase *request = data;
-
+	EasRequestBase *request	 = (EasRequestBase *) data;
+	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection(request);
+	
+	g_debug("soap_got_chunk");
+	
 	if (msg->status_code != 200)
 		return;
 
+	if(!outgoing_progress)// want incoming progress updates
+	{
+		emit_signal(chunk, request);
+	}
+	
 	g_debug ("Received %zd bytes for request %p", chunk->length, request);
 }
 
@@ -616,23 +663,86 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 {
 	struct _EasRequestBase *request = data;
 	const gchar *size_hdr;
-
+	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection(request);
+	
+	g_debug("soap_got_headers");
 	size_hdr = soup_message_headers_get_one (msg->response_headers,
 											 "Content-Length");
 	if (size_hdr) {
 		gsize size = strtoull (size_hdr, NULL, 10);
+		// store the response size in the request base
+		if(!outgoing_progress)  // want incoming progress, so store size
+		{
+			eas_request_base_SetDataSize(request, size);
+		}
+		
 		g_debug ("Response size of request %p is %zu bytes", request, size);
 		// We can stash this away and use it to provide progress updates
 		// as a percentage. If we don't have a Content-Length: header,
 		// for example if the server uses chunked encoding, then we cannot
 		// do percentages.
 	} else {
+		if(!outgoing_progress)
+		{
+			eas_request_base_SetDataSize(request, 0);
+		}
 		g_debug ("Response size of request %p is unknown", request);
 		// Note that our got_headers signal handler may be called more than
 		// once for a given request, if it fails once with 'authentication
 		// needed' then succeeds on being resubmitted. So if the *first*
 		// response has a Content-Length but the second one doesn't, we have
 		// to do the right thing and not keep using the first length.
+	}
+}
+
+
+static void 
+soap_wrote_body_data (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
+{
+	struct _EasRequestBase *request = data;
+	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection(request);
+	
+	g_debug("soap_wrote_body_data %d", chunk->length);
+
+	if(outgoing_progress)
+	{
+		emit_signal(chunk, request);
+	}
+	
+	g_debug ("Wrote %zd bytes for request %p", chunk->length, request);
+}
+
+static void soap_wrote_headers (SoupMessage *msg, gpointer data)
+{
+	struct _EasRequestBase *request = data;
+	const gchar *size_hdr;
+	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection(request);
+	
+	g_debug("soap_wrote_headers");
+
+	if(outgoing_progress)
+	{
+		size_hdr = soup_message_headers_get_one (msg->request_headers,
+												 "Content-Length");	
+		if (size_hdr) 
+		{	
+			gsize size = strtoull (size_hdr, NULL, 10);
+
+			// store the request size in the request base
+			if(outgoing_progress)
+			{
+				eas_request_base_SetDataSize(request, size);
+				eas_request_base_SetDataLengthSoFar(request, 0);	// reset 
+			}
+		
+			g_debug ("Request size of request %p is %zu bytes", request, size);
+
+		} 
+		else 
+		{
+			eas_request_base_SetDataSize(request, 0);
+			g_debug ("Request size of request %p is unknown", request);
+		}		
 	}
 }
 
@@ -815,7 +925,8 @@ else
 
     g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
     g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
-
+    g_signal_connect (msg, "wrote-body-data", G_CALLBACK (soap_wrote_body_data), request);
+    g_signal_connect (msg, "wrote-headers", G_CALLBACK (soap_wrote_headers), request);
     // We have to call soup_session_queue_message() from the soup thread,
     // or libsoup screws up (https://bugzilla.gnome.org/642573)
 	source = g_idle_source_new ();

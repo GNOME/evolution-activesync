@@ -72,7 +72,7 @@
 
 #define EAS_SERVICE_TEST_INTERFACE    "org.meego.activesyncd.EasTest"
 #define EAS_SERVICE_TEST_OBJECT_PATH  "/EasTest"
-
+#define EAS_MAIL_SIGNAL_PROGRESS "mail_operation_progress"	
 
 #endif /* ACTIVESYNCD_COMMON_DEFS_H */
 

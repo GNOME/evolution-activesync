@@ -122,7 +122,7 @@ eas_send_to_sync (CamelTransport *transport,
 	g_object_unref (filtered);
 
 	msgid = camel_mime_message_get_message_id (message);
-	res = eas_mail_handler_send_email(handler, msgid, fname, error);
+	res = eas_mail_handler_send_email(handler, msgid, fname, NULL, NULL, error);
 
 	unlink (fname);
 	g_free (fname);

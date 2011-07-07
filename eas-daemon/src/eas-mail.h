@@ -72,6 +72,7 @@ typedef struct _EasMailPrivate EasMailPrivate;
 struct _EasMailClass
 {
 	GObjectClass parent_class;
+	guint signal_id;	// signal we emit
 };
 
 struct _EasMail
@@ -80,6 +81,7 @@ struct _EasMail
 	
   	EasMailPrivate* priv;
 };
+
 
 GType eas_mail_get_type (void) G_GNUC_CONST;
 
@@ -130,6 +132,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            const gchar *collection_id, 
                            const gchar *server_id, 
                            const gchar *mime_directory, 
+                           guint request_id,	
                            DBusGMethodInvocation* context);
 
 /*
@@ -140,6 +143,7 @@ eas_mail_fetch_attachment (EasMail* self,
                           const gchar* account_uid, 
                           const gchar *file_reference,
                           const gchar *mime_directory,
+                          guint request_id,
                           DBusGMethodInvocation* context);
 
 
@@ -150,6 +154,7 @@ gboolean eas_mail_send_email(EasMail* self,
                              const gchar* account_uid,
                              const gchar* clientid,
                              const gchar *mime_file,
+                             guint request_id,
                              DBusGMethodInvocation* context);
 
 /*

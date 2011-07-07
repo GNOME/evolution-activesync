@@ -58,6 +58,7 @@
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
+#include "../src/eas-mail.h"
 
 G_BEGIN_DECLS
 
@@ -161,8 +162,117 @@ struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
 void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
 
 /**
- * Getter for soup message.
+ * Getter for dbus interface.
  *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The interface object currently set for this instance.
+ */
+EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
+
+/**
+ * Setter for dbus interface.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] dbus_interface
+ *      The interface object to be set.
+ */ 
+void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);	
+
+/**
+ * Getter for request id.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The request_id currently set for this instance.
+ */
+guint eas_request_base_GetRequestId (EasRequestBase* self);
+
+/**
+ * Setter for request id.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] request_id
+ *      The request_id to be set.
+ */ 
+void eas_request_base_SetRequestId (EasRequestBase* self, guint request_id);
+
+/**
+ * Getter for outgoing.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The direction currently set for this instance (TRUE == outgoing, FALSE == incoming).
+ */
+gboolean eas_request_base_GetRequestProgressDirection (EasRequestBase* self);
+
+/**
+ * Setter for outgoing.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] outgoing_progress
+ *      The outgoing_progress to be set (TRUE == outgoing, FALSE == incoming)
+ */ 
+void eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress);
+
+/**
+ * Getter for data_size.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The data_size currently set for this instance.
+ */
+guint eas_request_base_GetDataSize (EasRequestBase* self);
+
+/**
+ * Setter for data_size.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] request_id
+ *      The data_size to be set.
+ */ 
+void eas_request_base_SetDataSize (EasRequestBase* self, guint size);
+
+/**
+ * Getter for data_length_so_far.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The data_length_so_far currently set for this instance.
+ */
+guint eas_request_base_GetDataLengthSoFar (EasRequestBase* self);
+
+/**
+ * Updater for data_length_so_far.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] length
+ *      The length to increase data_length_so_far by.
+ */ 
+void eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length);
+
+/**
+ * Setter for data_length_so_far.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] length
+ *      The length to be set.
+ */ 
+void eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length);
+
+/**
+ * Getter for soup message.
  * @param[in] self
  *      GObject Instance.
  *

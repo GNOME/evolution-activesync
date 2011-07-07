@@ -203,8 +203,8 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
     } else {
         // update item on server
         if (!eas_sync_handler_update_items(m_handler,
-                                           buffer,
-                                           NULL,
+                                           m_currentSyncKey.c_str(),
+                                           &buffer,
                                            getEasType(),
                                            m_folder.c_str(),
                                            items,

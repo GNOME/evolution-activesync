@@ -64,6 +64,7 @@
 	<arg type="s" name="collection_id" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
+	<arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
     <method name="fetch_attachment">
@@ -71,6 +72,7 @@
    	<arg type="s" name="account_uid" direction="in"/>
 	<arg type="s" name="file_reference" direction="in"/>	<!-- filereference of attachment to get -->
 	<arg type="s" name="mime_directory" direction="in"/><!-- directory where email body file should be written. Name of file should match server_id -->
+	<arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->	
     </method>
 
 
@@ -80,7 +82,7 @@
       <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="clientid" direction="in"/>
       <arg type="s" name="mime_file" direction="in"/>
-
+	  <arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
 	<method name="delete_email">
@@ -118,6 +120,12 @@
       
       <arg type="as" name="changed_folder_array" direction="out"/>		
 	</method>
+
+	<!-- lrm signals -->
+	<signal name="mail_operation_progress">
+		<arg type="u" name="request_id" direction ="out"/>
+		<arg type="u" name="percent" direction ="out"/>
+	</signal>
 
   </interface>
 </node>

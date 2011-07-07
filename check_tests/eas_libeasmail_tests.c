@@ -35,6 +35,17 @@ test_push_email_cb (GSList * data, GError *error)
 
 }
 
+static void
+test_email_request_progress_cb (gpointer progress_data, guint percent)
+{
+	if(percent == 100)
+	{
+		g_main_loop_quit (loop);
+    	g_main_loop_unref (loop);
+    	loop = NULL;
+	}
+}
+
 static void testGetMailHandler (EasEmailHandler **email_handler, const char* accountuid)
 {
     GError *error = NULL;
@@ -136,11 +147,26 @@ static void testSendEmail (EasEmailHandler *email_handler,
                            GError **error)
 {
     gboolean ret = FALSE;
+
+	EasProgressFn progress_cb = NULL;
+	
+	// comment out if progress reports not desired:
+	progress_cb = test_email_request_progress_cb;
+
+	loop = g_main_loop_new (NULL, FALSE);	
+	
     ret = eas_mail_handler_send_email (email_handler,
                                        client_id,
                                        mime_file,
+                                       progress_cb,
+                                       NULL,
                                        & (*error));
 
+	if(progress_cb)
+	{
+		if (loop) g_main_loop_run (loop);		
+	}
+	
     // if the call to the daemon returned an error, report and drop out of the test
     if ( (*error) != NULL)
     {
@@ -774,12 +800,27 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
         }
 
         mark_point();
+
+		EasProgressFn progress_cb = NULL;
+		
+		// comment out if progress reports not desired:
+		progress_cb = test_email_request_progress_cb;
+
+		loop = g_main_loop_new (NULL, FALSE);	
+		
         // call method to get body
         rtn = eas_mail_handler_fetch_email_body (email_handler,
                                                  g_inbox_id, // Inbox
                                                  email->server_id,
                                                  mime_directory,
+                                                 progress_cb,
+                                                 NULL,		//data passed to cb
                                                  &error);
+		if(progress_cb)
+		{
+			if (loop) g_main_loop_run (loop);		
+		}
+	
         g_free (mime_directory);
 
         if (rtn == TRUE)
@@ -938,11 +979,26 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
                 }
 
                 mark_point();
+
+				EasProgressFn progress_cb = NULL;
+		
+				// comment out if progress reports not desired:
+				progress_cb = test_email_request_progress_cb;
+
+				loop = g_main_loop_new (NULL, FALSE);	
+				
                 // call method to get attachment
                 rtn = eas_mail_handler_fetch_email_attachment (email_handler,
                                                                (gchar*) attachmentObj->file_reference,
                                                                mime_directory,  // "$HOME/mimeresponses/"
+                                                               progress_cb,
+                                                               NULL,		// TODO pass in some user data and verify same comes back
                                                                &error);
+
+				if(progress_cb)
+				{
+					if (loop) g_main_loop_run (loop);
+				}
 
                 g_free (mime_directory);
 

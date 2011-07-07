@@ -3,6 +3,17 @@
 libexec_PROGRAMS = activesyncd
 
 BUILT_SOURCES = eas-sync-stub.h eas-common-stub.h eas-mail-stub.h eas-test-stub.h
+MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
+
+# generate marshal functions for progress signals:
+eas-marshal.h: eas-marshal.list
+	( glib-genmarshal --prefix=eas_marshal eas-marshal.list --header > eas-marshal.tmp \
+ 	&& mv eas-marshal.tmp eas-marshal.h ) || ( rm -f eas-marshal.tmp && exit 1 )
+
+eas-marshal.c: eas-marshal.h
+	( (echo '#include "eas-marshal.h"'; glib-genmarshal --prefix=eas_marshal eas-marshal.list --body) > eas-marshal.tmp \
+	&& mv eas-marshal.tmp eas-marshal.c ) \
+	|| ( rm -f eas-marshal.tmp && exit 1  )
 
 eas-sync-stub.h: eas-sync.xml
 	dbus-binding-tool --prefix=eas_sync --mode=glib-server $< > $@
@@ -50,7 +61,9 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-mail.h \
 		      eas-mail.c \
 		      eas-test.h \
-		      eas-test.c
+		      eas-test.c \
+		      eas-marshal.h \
+		      eas-marshal.c
 		      
 
 activesyncd_LDADD = \
@@ -61,5 +74,5 @@ activesyncd_LDADD = \
     ../../libeastest/src/libeastest.la \
     $(INTI_LIBS)
 
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) $(MARSHAL_GENERATED)
 EXTRA_DIST = eas-sync.xml eas-common.xml eas-mail.xml eas-test.xml
