@@ -7,10 +7,13 @@ MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
 
 # generate marshal functions for progress signals:
 eas-marshal.h: eas-marshal.list
-	glib-genmarshal --header --prefix=eas_marshal eas-marshal.list > eas-marshal.h
+	( glib-genmarshal --prefix=eas_marshal eas-marshal.list --header > eas-marshal.tmp \
+ 	&& mv eas-marshal.tmp eas-marshal.h ) || ( rm -f eas-marshal.tmp && exit 1 )
 
-eas-marshal.c: eas-marshal.list
-	glib-genmarshal --body --prefix=eas_marshal eas-marshal.list > eas-marshal.c
+eas-marshal.c: eas-marshal.h
+	( (echo '#include "eas-marshal.h"'; glib-genmarshal --prefix=eas_marshal eas-marshal.list --body) > eas-marshal.tmp \
+	&& mv eas-marshal.tmp eas-marshal.c ) \
+	|| ( rm -f eas-marshal.tmp && exit 1  )
 
 eas-sync-stub.h: eas-sync.xml
 	dbus-binding-tool --prefix=eas_sync --mode=glib-server $< > $@
@@ -57,6 +60,8 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-common.c \
 		      eas-mail.h \
 		      eas-mail.c \
+		      eas-test.h \
+		      eas-test.c \
 		      eas-marshal.h \
 		      eas-marshal.c
 		      

@@ -7,11 +7,16 @@ MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
 # TODO - this doesn't always work; sometimes the marshal files aren't created until these commands are run manually:
 # generate marshal functions for progress signals:
 eas-marshal.h: eas-marshal.list
-	glib-genmarshal --header --prefix=eas_marshal eas-marshal.list > eas-marshal.h
+	( glib-genmarshal --prefix=eas_marshal eas-marshal.list --header > eas-marshal.tmp \
+ 	&& mv eas-marshal.tmp eas-marshal.h ) || ( rm -f eas-marshal.tmp && exit 1 )
 
-eas-marshal.c: eas-marshal.list
-	glib-genmarshal --body --prefix=eas_marshal eas-marshal.list > eas-marshal.c
+eas-marshal.c: eas-marshal.h
+	( (echo '#include "eas-marshal.h"'; glib-genmarshal --prefix=eas_marshal eas-marshal.list --body) > eas-marshal.tmp \
+	&& mv eas-marshal.tmp eas-marshal.c ) \
+	|| ( rm -f eas-marshal.tmp && exit 1  )
 	
+libeasmail.c: $(MARSHAL_GENERATED)
+
 # TODO remove unnecessary includes
 libeasmail_la_CPPFLAGS =		\
 		$(GLIB_CFLAGS)		\
