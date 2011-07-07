@@ -116,6 +116,7 @@ eas_sync_handler_new (const gchar* account_uid)
     EasSyncHandler *object = NULL;
 
     g_type_init();
+    dbus_g_thread_init();
 
     g_log_set_handler (G_LOG_DOMAIN,
                        G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
