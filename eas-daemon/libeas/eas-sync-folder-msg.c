@@ -53,6 +53,7 @@
 #include "eas-connection-errors.h"
 #include "eas-sync-folder-msg.h"
 #include "../../libeasmail/src/eas-folder.h"
+#include "../../libeasaccount/src/eas-account-list.h"
 
 struct _EasSyncFolderMsgPrivate
 {
@@ -62,6 +63,8 @@ struct _EasSyncFolderMsgPrivate
 
     gchar* sync_key;
     gchar* account_id;
+	gchar* def_cal_folder;
+	gchar* def_con_folder;
 };
 
 #define EAS_SYNC_FOLDER_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_MSG, EasSyncFolderMsgPrivate))
@@ -70,7 +73,7 @@ struct _EasSyncFolderMsgPrivate
 
 G_DEFINE_TYPE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
 
-static void eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName);
+static void eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName, EasAccount *acc, EasAccountList *account_list);
 static void eas_sync_folder_msg_parse_fs_delete (EasSyncFolderMsg *self, xmlNode *node);
 
 
@@ -120,6 +123,8 @@ eas_sync_folder_msg_finalize (GObject *object)
 	
     g_free (priv->sync_key);
     g_free (priv->account_id);
+	g_free (priv->def_cal_folder);
+    g_free (priv->def_con_folder);
 
 	// unref'd in dispose
 	g_slist_free (priv->added_folders);
@@ -161,6 +166,8 @@ eas_sync_folder_msg_new (const gchar* syncKey, const gchar* accountId)
 
     priv->sync_key = g_strdup (syncKey);
     priv->account_id = g_strdup (accountId);
+	priv->def_cal_folder = NULL;
+    priv->def_con_folder = NULL;
 
     return msg;
 }
@@ -197,6 +204,17 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     EasSyncFolderMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;
     EasError error_details;
+	EasAccount * acc = NULL;
+	EasAccountList *account_list = NULL;
+	GConfClient* client = NULL;
+
+	client = gconf_client_get_default();
+	g_assert(client != NULL);
+	/* Get list of accounts from gconf repository */
+	account_list = eas_account_list_new (client);
+	g_assert(account_list != NULL);
+
+	acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -274,7 +292,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 
         if (node->type == XML_ELEMENT_NODE && (!g_strcmp0 ( (char *) node->name, "Add") || !g_strcmp0 ( (char *) node->name, "Update")))
         {
-            eas_sync_folder_msg_parse_fs_add_or_update (self, node, (const gchar*)node->name);
+            eas_sync_folder_msg_parse_fs_add_or_update (self, node, (const gchar*)node->name, acc, account_list);
             continue;
         }
 
@@ -327,7 +345,7 @@ eas_sync_folder_msg_parse_fs_delete (EasSyncFolderMsg *self, xmlNode *node)
 }
 
 static void
-eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName)
+eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName , EasAccount* acc, EasAccountList* account_list)
 {
     EasSyncFolderMsgPrivate *priv = self->priv;
 
@@ -376,9 +394,28 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
             f->display_name = g_strdup (displayName);
             f->type = atoi (type);
 
+            if(f->type == EAS_FOLDER_TYPE_DEFAULT_CALENDAR && eas_account_get_calendar_folder (acc)== NULL)
+			{
+				g_debug("setting default calendar account");
+				eas_account_set_calendar_folder(acc, f->folder_id);
+				eas_account_list_save_item(account_list,
+							   acc,
+							   EAS_ACCOUNT_CALENDAR_FOLDER);
+				priv->def_cal_folder = g_strdup(serverId);
+			}
+			else if (f->type == EAS_FOLDER_TYPE_DEFAULT_CONTACTS && eas_account_get_contact_folder(acc)== NULL)
+			{
+				g_debug("setting default contact account");
+				eas_account_set_contact_folder(acc, f->folder_id);
+				eas_account_list_save_item(account_list,
+							   acc,
+							   EAS_ACCOUNT_CONTACT_FOLDER);
+				priv->def_con_folder = g_strdup(serverId);
+			}
+
 			if (!g_strcmp0("Add", topNodeName))
 			{
-				priv->added_folders = g_slist_append (priv->added_folders, f);
+            priv->added_folders = g_slist_append (priv->added_folders, f);
 			}
 			else if (!g_strcmp0("Update", topNodeName))
 			{
@@ -431,3 +468,16 @@ eas_sync_folder_msg_get_syncKey (EasSyncFolderMsg* self)
     return priv->sync_key;
 }
 
+gchar*
+eas_sync_folder_msg_get_def_con_folder (EasSyncFolderMsg* self)
+{
+    EasSyncFolderMsgPrivate *priv = self->priv;
+    return priv->def_con_folder;
+}
+
+gchar*
+eas_sync_folder_msg_get_def_cal_folder (EasSyncFolderMsg* self)
+{
+    EasSyncFolderMsgPrivate *priv = self->priv;
+    return priv->def_cal_folder;
+}
