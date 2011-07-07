@@ -73,9 +73,12 @@ PKG_CHECK_MODULES([MLITE],
 if (test "${have_syncevolution}" = "yes"); then
     # Dummy compilation check. If it fails, it's almost certainly because
     # syncevolution.pc specifies a -lsynthesissdk which doesn't exist.
-    AC_CHECK_LIB(syncevolution, main, ,
-		 [have_syncevolution="no";
-                 AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)])],
+    AC_CHECK_LIB(syncevolution, main,
+                 [ ],
+                 [
+                    have_syncevolution="no";
+                    AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)])
+                 ],
                  ${SYNCEVOLUTION_LIBS})
 fi
 if (test "${have_syncevolution}" = "yes"); then
