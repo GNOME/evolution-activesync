@@ -121,6 +121,7 @@ static CamelMimeMessage *
 camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid, 
 			      GCancellable *cancellable, GError **error)
 {
+	gpointer progress_data;
 	const gchar *full_name;
 	gchar *fid;
 	CamelEasFolder *eas_folder;
@@ -137,6 +138,9 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	const gchar *temp;
 	gboolean res;
 	gchar *mime_fname_new = NULL;
+
+	EVO3(progress_data = cancellable);
+	EVO2(progress_data = camel_operation_registered());
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
 	eas_folder = (CamelEasFolder *) folder;
@@ -188,7 +192,8 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	}
 
 	g_mutex_lock (priv->server_lock);
-	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir, NULL, NULL, error);
+	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir,
+						 camel_operation_progress, progress_data, error);
 	g_mutex_unlock (priv->server_lock);
 
 	if (!res) {
