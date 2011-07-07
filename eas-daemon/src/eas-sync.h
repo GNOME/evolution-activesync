@@ -100,7 +100,7 @@ gboolean eas_sync_delete_items(EasSync* self,
                                const gchar* account_uid,
                                const gchar* folder_id,
                                const gchar* sync_key, 
-                               const GSList *deleted_items_array,
+                               const gchar** deleted_items_array,
                                DBusGMethodInvocation* context);
 
 gboolean eas_sync_update_items(EasSync* self,

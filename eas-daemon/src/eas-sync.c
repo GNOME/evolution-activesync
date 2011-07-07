@@ -242,12 +242,15 @@ eas_sync_delete_items (EasSync* self,
                        const gchar* account_uid,
                        const gchar* folder_id,
                        const gchar* sync_key,
-                       const GSList *deleted_items_array,
+                       const gchar** deleted_items_array,
                        DBusGMethodInvocation* context)
 {
     GError *error = NULL;
     EasDeleteEmailReq *req = NULL;
-
+    GSList *server_ids_list = NULL;
+	const gchar* id = NULL;
+	int index = 0;
+	
     g_debug ("eas_sync_delete_items++");
 
     self->priv->connection = eas_connection_find (account_uid);
@@ -263,7 +266,13 @@ eas_sync_delete_items (EasSync* self,
         return FALSE;
     }
 
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, deleted_items_array, context);
+	// Convert server_ids_array into GSList
+    while ( (id = deleted_items_array[index++]))
+    {
+        server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
+    }
+
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     self->priv->connection);

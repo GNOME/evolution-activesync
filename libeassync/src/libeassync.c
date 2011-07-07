@@ -300,6 +300,10 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 {
     gboolean ret = TRUE;
     DBusGProxy *proxy = self->priv->remoteEas;
+	// Build string array from items_deleted GSList
+    guint list_length = g_slist_length ( (GSList*) items_deleted);
+	 gchar **deleted_items_array = NULL;
+	int loop = 0;
 	
     g_debug ("eas_sync_handler_delete_items++");
 
@@ -310,6 +314,21 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
+
+	deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
+    if (!deleted_items_array)
+    {
+        g_set_error (error, EAS_MAIL_ERROR,
+                     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+                     ("out of memory"));
+        return FALSE;
+    }
+
+    for (; loop < list_length; ++loop)
+    {
+        deleted_items_array[loop] = g_strdup (g_slist_nth_data ( (GSList*) items_deleted, loop));
+        g_debug ("Deleted Id: [%s]", deleted_items_array[loop]);
+    }
 
 
     g_debug ("eas_sync_handler_delete_items - dbus proxy ok");
