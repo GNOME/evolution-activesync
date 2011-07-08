@@ -99,9 +99,6 @@ static void
 eas_sync_handler_class_init (EasSyncHandlerClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_debug ("eas_sync_handler_class_init++");
 

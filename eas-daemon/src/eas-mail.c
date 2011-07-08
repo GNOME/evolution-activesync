@@ -101,11 +101,6 @@ static void
 eas_mail_class_init (EasMailClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_debug ("eas_mail_class_init++");
 

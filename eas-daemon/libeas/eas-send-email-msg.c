@@ -103,11 +103,6 @@ static void
 eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_type_class_add_private (klass, sizeof (EasSendEmailMsgPrivate));
 

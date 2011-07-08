@@ -73,9 +73,6 @@ static void
 eas_common_class_init (EasCommonClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    (void) parent_class; // remove warning
 
     object_class->finalize = eas_common_finalize;
 
