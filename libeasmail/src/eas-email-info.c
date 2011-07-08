@@ -70,7 +70,6 @@ eas_email_info_finalize (GObject *object)
     g_slist_free (self->headers);
 
     g_slist_foreach (self->attachments, (GFunc) g_object_unref, NULL);	// TODO - these should be done in dispose?
-
     g_slist_free (self->attachments); // list of EasAttachments
 
     g_slist_foreach (self->categories, (GFunc) xmlFree, NULL);
@@ -232,6 +231,7 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 			goto cleanup;
 		}
 		headers = g_slist_append(headers, header);
+        header = NULL;
 	}
 	self->headers = headers;
 	
@@ -257,8 +257,10 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 		from += eas_attachment_serialised_length (attachment);//attachment deserialise doesn't move pointer along
 
 		attachments = g_slist_append(attachments, attachment);
+        attachment = NULL;
 	}
 	self->attachments = attachments;
+    attachments = NULL;
 	
 	//flags
 	flags_as_string = get_next_field(&from, sep);
@@ -293,6 +295,7 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 		categories = g_slist_append(categories, category);
 	}	
 	self->categories = categories;
+    categories = NULL;
 
 	//estimated_size
 	flags_as_string = get_next_field(&from, sep);
@@ -340,11 +343,22 @@ eas_email_info_deserialise(EasEmailInfo* self, const gchar *data)
 	g_debug("importance = %d", self->importance);
 
 cleanup:
-	
+    g_free (header);
+    if (attachment) g_object_unref (attachment);
+    if (attachments)
+    {
+        g_slist_foreach (attachments, (GFunc) g_object_unref, NULL);
+        g_slist_free (attachments);
+    }
+    if (categories)
+    {
+        g_slist_foreach (categories, (GFunc) xmlFree, NULL);
+        g_slist_free (categories);
+    }
+    
 	if(!ret)
 	{
-		g_debug("failed!");
-		//TODO cleanup
+		g_warning("failed!");
 	}
 
 	g_debug("eas_email_info_deserialise--");
