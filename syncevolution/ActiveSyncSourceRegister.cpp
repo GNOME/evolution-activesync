@@ -153,6 +153,7 @@ public:
 
     virtual void updateConfig(ClientTestConfig &config) const
     {
+        config.type = "eas-events";
     }
 } ActiveSyncEventTest;
 
@@ -164,6 +165,7 @@ public:
 
     virtual void updateConfig(ClientTestConfig &config) const
     {
+        config.type = "eas-todos";
     }
 } ActiveSyncTodoTest;
 
@@ -175,6 +177,7 @@ public:
 
     virtual void updateConfig(ClientTestConfig &config) const
     {
+        config.type = "eas-memos";
     }
 } ActiveSyncMemoTest;
 
