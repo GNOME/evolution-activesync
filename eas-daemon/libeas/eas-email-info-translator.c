@@ -392,7 +392,7 @@ eas_email_info_translator_delete (const xmlNode *node, gchar *server_id)
     }
     else
     {
-        g_error ("Failed! Expected ApplicationData node at root");
+        g_critical ("Failed! Expected ApplicationData node at root");
     }
 
     return result;
