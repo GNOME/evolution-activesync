@@ -46,7 +46,9 @@ get_next_field (gchar **data, const gchar *separator)
     {
         strncpy (result, (*data), len);
         result[len] = 0;
-        *data += len + 1;
+	// If we hit a final NUL, don't go past it. Only increment by
+	// len+1 if we actually hit a *separator*.
+        *data += len + (!!*to);
     }
 
     //g_debug("get_next_field result = %s", result);
