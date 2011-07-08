@@ -52,6 +52,7 @@
     <method name="delete_items">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="account_uid" direction="in"/>	<!-- t == UINT64-->
+      <arg type="t" name="type" direction="in"/>	<!-- t == UINT64-->
       <arg type="s" name="folder_id" direction="in"/>	
       <arg type="s" name="sync_key" direction="in"/>
       <arg type="as" name="deleted_items_array" direction="in"/>

@@ -336,6 +336,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
     // call DBus API
     ret = dbus_g_proxy_call (proxy, "delete_items", error,
                              G_TYPE_STRING, self->priv->account_uid,
+                             G_TYPE_UINT64, (guint64) type,
                              G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
                              G_TYPE_STRV, items_deleted,

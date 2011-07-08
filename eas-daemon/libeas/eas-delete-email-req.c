@@ -52,6 +52,8 @@
 
 #include "eas-delete-email-req.h"
 #include "eas-sync-msg.h"
+#include "../../libeasaccount/src/eas-account-list.h"
+#include <string.h>
 
 struct _EasDeleteEmailReqPrivate
 {
@@ -147,6 +149,33 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	if(priv->folder_id == NULL|| strlen(priv->folder_id)<=0)
+	{
+		EasAccount* acc = NULL;
+		EasAccountList *account_list = NULL;
+		GConfClient* client = NULL;
+
+		client = gconf_client_get_default();
+		g_assert(client != NULL);
+		/* Get list of accounts from gconf repository */
+		account_list = eas_account_list_new (client);
+		g_assert(account_list != NULL);
+
+		acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->accountID);
+		switch (priv->itemType)
+		{
+			case EAS_ITEM_CALENDAR:
+				priv->folder_id = eas_account_get_calendar_folder (acc);
+				break;
+			case EAS_ITEM_CONTACT:
+				priv->folder_id = eas_account_get_contact_folder (acc);
+				break;
+			default:
+				g_warning("trying to get default folder for unspecified item type");
+		}
+
+	}
+
     //create sync  msg type
     priv->syncMsg = eas_sync_msg_new (priv->syncKey, priv->accountID, priv->folder_id, priv->itemType);
 
@@ -180,7 +209,7 @@ finish:
     return ret;
 }
 
-EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, DBusGMethodInvocation *context)
+EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EasItemType itemType, DBusGMethodInvocation *context)
 {
     EasDeleteEmailReq* self = g_object_new (EAS_TYPE_DELETE_EMAIL_REQ, NULL);
     EasDeleteEmailReqPrivate *priv = self->priv;
@@ -193,6 +222,8 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar
 
     priv->syncKey = g_strdup (syncKey);
     priv->folder_id = g_strdup (folderId);
+
+	priv->itemType = itemType;
 
     for (listCount = 0; listCount < listLen; listCount++)
     {

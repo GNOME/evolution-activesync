@@ -345,7 +345,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     }
 
     // Create the request
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, context);
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
 
     // Cleanup the gslist
     item = server_ids_list;

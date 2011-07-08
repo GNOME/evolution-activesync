@@ -98,6 +98,7 @@ void eas_sync_get_latest_items(EasSync* self,
 
 gboolean eas_sync_delete_items(EasSync* self,
                                const gchar* account_uid,
+                               const guint64 type,
                                const gchar* folder_id,
                                const gchar* sync_key, 
                                const gchar** deleted_items_array,

@@ -162,10 +162,9 @@ void ActiveSyncSource::deleteItem(const string &luid)
 {
     // send delete request
     // TODO (?): batch delete requests
-    EASItemPtr item(eas_item_info_new(), "EasItem");
-    item->server_id = g_strdup(luid.c_str());
-    EASItemsCXX items;
-    items.push_front(item.release());
+	g_debug("delete item luid:%s", luid.c_str());
+    GSList* items;
+    items = g_slist_prepend(items, (char*)luid.c_str());
 
     GErrorCXX gerror;
     char *buffer;

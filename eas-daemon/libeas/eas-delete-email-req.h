@@ -94,17 +94,16 @@ GType eas_delete_email_req_get_type (void) G_GNUC_CONST;
  *	  The identifer for the target server folder.
  * @param[in] server_ids_array
  *	  A list of email item server ids to be deleted.
- * @param[in] flag
- *	  A semaphore used to make the request appear synchronous by waiting for the
- *	  server response. It should be set by the caller immediately after this 
- *	  function is called and cleared in this request's MessageComplete.
- *
+ * @param[in] EasItemType
+ *	  Tell the server which type we are deleting. 
+ *    Must be present if using default folders
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
 EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, 
                                              const gchar *syncKey, 
                                              const gchar *folderId, 
-                                             const GSList *server_ids_array, 
+                                             const GSList *server_ids_array,
+                                             const EasItemType itemType,
                                              DBusGMethodInvocation *context);
 
 /**

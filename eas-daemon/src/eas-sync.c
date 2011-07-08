@@ -240,6 +240,7 @@ eas_sync_get_latest_items (EasSync* self,
 gboolean
 eas_sync_delete_items (EasSync* self,
                        const gchar* account_uid,
+                       const guint64 type,
                        const gchar* folder_id,
                        const gchar* sync_key,
                        const gchar** deleted_items_array,
@@ -272,7 +273,7 @@ eas_sync_delete_items (EasSync* self,
         server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
     }
 
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, context);
+    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, type, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     self->priv->connection);
