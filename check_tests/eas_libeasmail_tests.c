@@ -13,7 +13,7 @@
 /** Uncomment for to enable Mocks **/
 // #include "../libeastest/src/libeastest.h"
 
-gchar * g_account_id = (gchar*)TEST_ACCOUNT_ID;
+static gchar * g_account_id = (gchar*)TEST_ACCOUNT_ID;
 
 gchar * g_inbox_id = NULL;
 
@@ -168,9 +168,9 @@ static void testSendEmail (EasEmailHandler *email_handler,
 	}
 	
     // if the call to the daemon returned an error, report and drop out of the test
-    if ( (*error) != NULL)
+    if (!ret)
     {
-        fail_if (ret == FALSE, "%s", & (*error)->message);
+        fail_if (ret == FALSE, "%s", (error && *error ? (*error)->message : "GError NULL"));
     }
     // TODO - what does success look like for sent email when automated?
 }
