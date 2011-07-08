@@ -85,16 +85,6 @@ take the contents of the object and turn it into a null terminated string
 */
 gboolean eas_attachment_serialise (EasAttachment *attachment, gchar **result);
 
-/*
-populate the object from a null terminated string
-*/
-gboolean eas_attachment_deserialise (EasAttachment *attachment, const gchar *data);
-
-/*
-returns the length of the data when serialised (including null terminator)
-*/
-guint eas_attachment_serialised_length (EasAttachment *attachment);
-
 G_END_DECLS
 
 #endif /* _EAS_ATTACHMENT_H_ */
