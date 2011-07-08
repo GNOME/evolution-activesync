@@ -57,3 +57,60 @@ $ syncevolution exchange
 Sync only events:
 $ syncevolution exchange calendar
 
+
+Backend Testing
+===============
+
+Configure "local" testing (backend is covered, no syncing involved):
+./syncevolution --configure username=<email adddress identifying the account> \
+                --template SyncEvolution target-config@client-test
+
+On MeeGo:
+- install syncevolution-test and syncevolution-synccompare
+- create an empty directory, enter it
+- copy /usr/share/doc/syncevolution/testcases
+- CLIENT_TEST_UNIQUE_UID=1 \
+  CLIENT_TEST_SERVER=exchange \
+  client-test Client::Source::eas_event
+
+When compiling SyncEvolution:
+- enter the src directory
+- CLIENT_TEST_UNIQUE_UID=1 \
+  CLIENT_TEST_SERVER=exchange \
+  PATH=.:$PATH \
+  ./client-test Client::Source::eas_event
+
+CLIENT_TEST_UNIQUE_UID is necessary to avoid a UID conflict in a
+simple-minded insertion test. The proper solution is to add an "item
+exists" error to activesyncd and handle that in
+ActiveSyncSource::insertItem().
+
+The test data that is used for testImport is in:
+  testcases/eds_event.ics
+
+This data was meant for Evolution. Because it is standard iCalendar 2.0,
+it is a suitable starting point for Exchange. If it turns out that this
+data doesn't work with Exchange, then a simplified/adapter version of
+the file can be put into:
+  testcases/eds_event.ics.exchange.tem
+
+
+Sync Testing
+============
+
+- Configure target-config@exchange with source 'calendar'.
+- Create two sync configs:
+  syncevolution --configure username= password= \
+                syncURL=local://@exchange uri=calendar \
+                backend=evolution-calendar \
+                --template SyncEvolution_Client exchange_1@client-test-1 eds_event
+  syncevolution --configure username= password= \
+                syncURL=local://@exchange uri=calendar \
+                backend=evolution-calendar \
+                --template SyncEvolution_Client exchange_2@client-test-2 eds_event
+- Create calendars named as follows in Evolution:
+  SyncEvolution_Test_eds_event_1
+  SyncEvolution_Test_eds_event_2
+- run test (see above for invoking client-test and setting up "testcases"):
+  CLIENT_TEST_UNIQUE_UID=1 CLIENT_TEST_SERVER=exchange \
+  client-test Client::Sync::eds_event::testCopy
