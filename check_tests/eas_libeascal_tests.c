@@ -246,10 +246,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
                                                 & (*error));
     mark_point();
     // if the call to the daemon returned an error, report and drop out of the test
-    if ( (*error) != NULL)
-    {
-        fail_if (ret == FALSE, "%s", (*error)->message);
-    }
+    fail_if (ret == FALSE, "%s", (error && *error ? (*error)->message : "NULL GError"));
 
     // the exchange server should increment the sync key and send back to the
     // client so that the client can track where it is with regard to sync.
@@ -585,14 +582,14 @@ Suite* eas_libeascal_suite (void)
     /* tc_libeascal test case */
     TCase *tc_libeascal = tcase_create ("core");
     suite_add_tcase (s, tc_libeascal);
-    //tcase_add_test (tc_libeascal, test_cal);
 
+    tcase_add_test (tc_libeascal, test_cal);
     tcase_add_test (tc_libeascal, test_get_sync_handler);
     tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
-//  tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
-    //tcase_add_test (tc_libeascal, test_eas_sync_handler_delete_cal);
-    //tcase_add_test (tc_libeascal, test_eas_sync_handler_update_cal);
-    //tcase_add_test (tc_libeascal, test_eas_sync_handler_add_cal);
+    tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
+    tcase_add_test (tc_libeascal, test_eas_sync_handler_delete_cal);
+    tcase_add_test (tc_libeascal, test_eas_sync_handler_update_cal);
+    tcase_add_test (tc_libeascal, test_eas_sync_handler_add_cal);
 
     return s;
 }
