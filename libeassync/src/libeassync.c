@@ -131,7 +131,7 @@ eas_sync_handler_new (const gchar* account_uid)
 
     if (object == NULL)
     {
-        g_error ("Error: Couldn't create sync handler");
+        g_critical ("Error: Couldn't create sync handler");
         return NULL;
     }
 
@@ -139,7 +139,8 @@ eas_sync_handler_new (const gchar* account_uid)
 
     if (object->priv->main_loop == NULL)
     {
-        g_error ("Error: Failed to create the mainloop");
+        g_object_unref (object);
+        g_critical ("Error: Failed to create the mainloop");
         return NULL;
     }
 
@@ -147,7 +148,8 @@ eas_sync_handler_new (const gchar* account_uid)
     object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
     if (error != NULL)
     {
-        g_error ("Error: Couldn't connect to the Session bus (%s) ", error->message);
+        g_object_unref (object);
+        g_critical ("Error: Couldn't connect to the Session bus (%s) ", error->message);
         return NULL;
     }
 
@@ -158,7 +160,8 @@ eas_sync_handler_new (const gchar* account_uid)
                                                           EAS_SERVICE_SYNC_INTERFACE);
     if (object->priv->remoteEas == NULL)
     {
-        g_error ("Error: Couldn't create the proxy object");
+        g_critical ("Error: Couldn't create the proxy object");
+        g_object_unref (object);
         return NULL;
     }
 
@@ -167,7 +170,6 @@ eas_sync_handler_new (const gchar* account_uid)
 
     g_debug ("eas_sync_handler_new--");
     return object;
-
 }
 
 static void
