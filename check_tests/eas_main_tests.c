@@ -15,16 +15,18 @@ int main (void)
 
     SRunner* sr = srunner_create (eas_daemon_suite());
 
-// Only to be used manually, updating the sync key to see manual 
-// changes on the server reflected to the client
-//   srunner_add_suite (sr, eas_folderhierarchy_suite());
+    /** Only to be used manually, updating the sync key to see manual 
+     *  changes on the server reflected to the client
+     */
+//    srunner_add_suite (sr, eas_folderhierarchy_suite());
 
     srunner_add_suite (sr, eas_autodiscover_suite());
     srunner_add_suite (sr, eas_libeasmail_suite());
     srunner_add_suite (sr, eas_libeascal_suite());
-//    srunner_add_suite (sr, eas_libeassync_suite());
+    srunner_add_suite (sr, eas_libeassync_suite());
     srunner_add_suite (sr, eas_libeascon_suite()); 
-	srunner_set_xml (sr, "eas-daemon_test.xml");
+
+    srunner_set_xml (sr, "eas-daemon_test.xml");
     srunner_set_log (sr, "eas-daemon_test.log");
     srunner_run_all (sr, CK_NORMAL);
     number_failed = srunner_ntests_failed (sr);
