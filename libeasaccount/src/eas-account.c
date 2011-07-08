@@ -33,7 +33,7 @@ enum {
 
 static guint signals[LAST_SIGNAL];
 
-static void finalize (GObject *);
+static void eas_account_finalize (GObject *);
 
 G_DEFINE_TYPE (EasAccount, eas_account, G_TYPE_OBJECT)
 
@@ -56,7 +56,7 @@ eas_account_class_init (EasAccountClass *account_class)
 	GObjectClass *object_class = G_OBJECT_CLASS (account_class);
 
 	/* virtual method override */
-	object_class->finalize = finalize;
+	object_class->finalize = eas_account_finalize;
 
 	g_type_class_add_private (account_class, sizeof (EasAccountPrivate));
 	
@@ -90,11 +90,11 @@ eas_account_init (EasAccount *account)
 
 
 static void
-finalize (GObject *object)
+eas_account_finalize (GObject *object)
 {	
 	EasAccount *account = EAS_ACCOUNT (object);
 	EasAccountPrivate *priv = account->priv;
-	g_debug("finalize++");
+	g_debug("eas_account_finalize++");
 	g_free (priv->uid);
 	g_free (priv->serverUri);
 	g_free (priv->username);
@@ -104,7 +104,7 @@ finalize (GObject *object)
 	g_free (priv->password);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
-	g_debug("finalize--");		
+	g_debug("eas_account_finalize--");
 }
 
 /**
