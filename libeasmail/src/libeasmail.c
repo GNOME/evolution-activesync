@@ -435,6 +435,7 @@ eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 		goto out;
 	}
 
+	ret = TRUE;
 	updated_id->src_id = strv[0];
 	/* This one might be NULL; that's OK */
 	updated_id->dest_id = strv[1];
