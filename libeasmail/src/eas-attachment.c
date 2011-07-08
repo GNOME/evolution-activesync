@@ -109,57 +109,39 @@ eas_attachment_serialise (EasAttachment *attachment, gchar **result)
 gboolean
 eas_attachment_deserialise (EasAttachment *attachment, const gchar *data)
 {
-	gboolean ret = TRUE;
-	gchar *from = (gchar*) data;
-	gchar *est_size = NULL;
+	gboolean ret = FALSE;
+	gchar **strv;
 
 	g_debug ("eas_attachment_deserialise++");
 	g_assert (attachment);
 	g_assert (data);
 
-	// file_reference
-	if (attachment->file_reference != NULL) { //just in case
-		g_free (attachment->file_reference);
+	/* We'll actually be given *more* data than we need, and we're
+	   expected to use only the first three lines. And then our
+	   caller will call eas_attachment_serialised_length() to calculate
+	   how many bytes we ate when we were doing so, and add that number
+	   rather than just letting us advance the pointer! */
+	strv = g_strsplit (data, attachment_separator, 4);
+	if (!strv || g_strv_length (strv) < 3) {
+		g_warning ("Received invalid eas_attachment: '%s'", data);
+		g_strfreev (strv);
+		goto out;
 	}
-	attachment->file_reference = (xmlChar*) get_next_field (&from, attachment_separator);
-	if (!attachment->file_reference) {
-		ret = FALSE;
-		goto cleanup;
-	}
+
+	attachment->file_reference = strv[0];
+	attachment->display_name = strv[1];
+	attachment->estimated_size = atoi (strv[2]);
+
+	g_free (strv[2]);
+	g_free (strv[3]);
+	g_free (strv);
+	ret = TRUE;
+
 	g_debug ("file_reference = %s", attachment->file_reference);
-
-	// display_name
-	if (attachment->display_name != NULL) {
-		g_free (attachment->display_name);
-	}
-	attachment->display_name = (xmlChar*) get_next_field (&from, attachment_separator);
-	if (!attachment->display_name) {
-		ret = FALSE;
-		goto cleanup;
-	}
 	g_debug ("display name = %s", attachment->display_name);
-
-	//estimated_size
-	est_size = get_next_field (&from, attachment_separator);
-	if (!est_size) {
-		ret = FALSE;
-		goto cleanup;
-	}
-	if (strlen (est_size)) {
-		attachment->estimated_size = atoi (est_size);
-		g_free (est_size);
-	}
 	g_debug ("estimated_size = %d", attachment->estimated_size);
 
-cleanup:
-	if (!ret) {
-		g_free (attachment->file_reference);
-		attachment->file_reference = NULL;
-		g_free (attachment->display_name);
-		attachment->display_name = NULL;
-		attachment->estimated_size = 0;
-	}
-
+ out:
 	g_debug ("eas_attachment_deserialise--");
 
 	return ret;
