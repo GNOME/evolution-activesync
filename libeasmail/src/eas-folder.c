@@ -73,8 +73,8 @@ eas_folder_new()
 }
 
 // take the contents of the object and turn it into a null terminated string
-// fields are separated by a separator (eg ',') and there is a trailing separator
-// empty fields included, eg "5,1,Inbox,2," or ",1,,,"
+// fields are separated by a separator (eg ',') and there is no trailing separator
+// empty fields included, eg "5,1,Inbox,2" or ",1,,"
 gboolean
 eas_folder_serialise (EasFolder* folder, gchar **result)
 {
