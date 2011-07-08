@@ -32,25 +32,23 @@
 gchar*
 get_next_field (gchar **data, const gchar *separator)
 {
-    gchar *result = NULL, *to = *data;
-    guint len = 0;  // length of string
+	gchar *result = NULL, *to = *data;
+	guint len = 0;  // length of string
 
-    while (*to && (*to != *separator))
-    {
-        to++;
-    }
-    len = (to - *data);
+	while (*to && (*to != *separator)) {
+		to++;
+	}
+	len = (to - *data);
 
-    result = (gchar*) g_malloc0 ( (len * sizeof (gchar)) + 1); // allow for null terminate
-    if (result)
-    {
-        strncpy (result, (*data), len);
-        result[len] = 0;
-	// If we hit a final NUL, don't go past it. Only increment by
-	// len+1 if we actually hit a *separator*.
-        *data += len + (!!*to);
-    }
+	result = (gchar*) g_malloc0 ( (len * sizeof (gchar)) + 1); // allow for null terminate
+	if (result) {
+		strncpy (result, (*data), len);
+		result[len] = 0;
+		// If we hit a final NUL, don't go past it. Only increment by
+		// len+1 if we actually hit a *separator*.
+		*data += len + (!!*to);
+	}
 
-    //g_debug("get_next_field result = %s", result);
-    return result;
+	//g_debug("get_next_field result = %s", result);
+	return result;
 }

@@ -40,11 +40,11 @@ G_BEGIN_DECLS
 typedef struct _EasFolderClass EasFolderClass;
 typedef struct _EasFolder EasFolder;
 
-struct _EasFolderClass{
+struct _EasFolderClass {
 	GObjectClass parent_class;
 };
 
-enum{
+enum {
 	EAS_FOLDER_TYPE_USER_CREATED_GENERIC = 1,
 	EAS_FOLDER_TYPE_DEFAULT_INBOX,
 	EAS_FOLDER_TYPE_DEFAULT_DRAFTS,
@@ -67,9 +67,9 @@ enum{
 	EAS_FOLDER_TYPE_MAX
 };
 
-struct _EasFolder{
+struct _EasFolder {
 	GObject parent_instance;
-	
+
 	gchar *parent_id;
 	gchar *folder_id;		// from AS server. string up to 64 characters
 	gchar *display_name;
@@ -80,11 +80,11 @@ struct _EasFolder{
 static inline gboolean eas_folder_type_is_mail (int type)
 {
 	return type == EAS_FOLDER_TYPE_USER_CREATED_MAIL ||
-		type == EAS_FOLDER_TYPE_DEFAULT_INBOX ||
-		type == EAS_FOLDER_TYPE_DEFAULT_DRAFTS ||
-		type == EAS_FOLDER_TYPE_DEFAULT_DELETED_ITEMS ||
-		type == EAS_FOLDER_TYPE_DEFAULT_SENT_ITEMS ||
-		type == EAS_FOLDER_TYPE_DEFAULT_OUTBOX;
+	       type == EAS_FOLDER_TYPE_DEFAULT_INBOX ||
+	       type == EAS_FOLDER_TYPE_DEFAULT_DRAFTS ||
+	       type == EAS_FOLDER_TYPE_DEFAULT_DELETED_ITEMS ||
+	       type == EAS_FOLDER_TYPE_DEFAULT_SENT_ITEMS ||
+	       type == EAS_FOLDER_TYPE_DEFAULT_OUTBOX;
 }
 
 GType eas_folder_get_type (void) G_GNUC_CONST;
@@ -95,12 +95,12 @@ EasFolder *eas_folder_new();
 /*
 take the contents of the object and turn it into a null terminated string
 */
-gboolean eas_folder_serialise(EasFolder* folder, gchar **result);
+gboolean eas_folder_serialise (EasFolder* folder, gchar **result);
 
 /*
 populate the object from a string
 */
-gboolean eas_folder_deserialise(EasFolder* folder, const gchar *data);
+gboolean eas_folder_deserialise (EasFolder* folder, const gchar *data);
 
 
 G_END_DECLS

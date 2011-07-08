@@ -41,8 +41,7 @@ typedef struct _EasEmailInfoClass EasEmailInfoClass;
 typedef struct _EasEmailInfo EasEmailInfo;
 typedef struct _EasEmailHeader EasEmailHeader;
 
-struct _EasEmailInfoClass
-{
+struct _EasEmailInfoClass {
 	GObjectClass parent_class;
 };
 
@@ -62,25 +61,25 @@ struct _EasEmailInfoClass
 #define EAS_IMPORTANCE_NORMAL	1
 #define EAS_IMPORTANCE_HIGH	2
 
-struct _EasEmailHeader{
+struct _EasEmailHeader {
 	gchar *name;
 	gchar *value;
 };
 
-struct _EasEmailInfo{
+struct _EasEmailInfo {
 	GObject parent_instance;
 
 	gchar *server_id;		    // from AS server
 	GSList *headers;			// list of EasEmailHeaders eg To, From (in the order they're listed in the eas xml)
 	GSList *attachments;		// list of EasAttachments this email has. AS calls id the 'file reference'. Immutable
 	guint32	flags;			    // bitmap. eg EAS_EMAIL_READ | EAS_EMAIL_ANSWERED TODO not clear where in the EAS xml some of these come from
-	GSList *categories;		    // list of categories (strings) that the email belongs to 	
+	GSList *categories;		    // list of categories (strings) that the email belongs to
 	gsize estimated_size;
 	time_t date_received;
 	int importance;
 	/*
 	conversation_id
-    conversation_index
+	conversation_index
 	...
 	TODO which, if any, of the other fields supplied by exchange should be included?
 	*/
@@ -97,12 +96,12 @@ EasEmailInfo *eas_email_info_new();
 /*
 take the contents of the object and turn it into a null terminated string
 */
-gboolean eas_email_info_serialise(EasEmailInfo* self, gchar **result);
+gboolean eas_email_info_serialise (EasEmailInfo* self, gchar **result);
 
 /*
 populate the object from a string
 */
-gboolean eas_email_info_deserialise(EasEmailInfo* self, const gchar *data);
+gboolean eas_email_info_deserialise (EasEmailInfo* self, const gchar *data);
 
 
 G_END_DECLS
