@@ -179,162 +179,134 @@ gboolean
 eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 {
 	// TODO proper error handling - eg deal with get_next_field returning null
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	guint list_len = 0, i = 0;
-	gchar *list_len_as_string = NULL;
 	EasEmailHeader *header = NULL;
 	EasAttachment *attachment = NULL;
 	GSList *headers = NULL;
 	GSList *attachments = NULL;
 	GSList *categories = NULL;
-	gchar *from = (gchar*) data;
-	gchar *flags_as_string = NULL;
+	gchar **strv;
+	int strvlen;
+	int idx = 0;
 
 	g_debug ("eas_email_info_deserialise++");
 	g_assert (self);
 	g_assert (data);
 
-	// turn string into object
-	// server_id
-	if (self->server_id != NULL) { //just in case
-		g_free (self->server_id);
-	}
-	self->server_id = get_next_field (&from, sep);
-	if (!self->server_id) {
-		ret = FALSE;
-		goto cleanup;
-	}
+	strv = g_strsplit (data, sep, 0);
+	if (!strv)
+		goto out;
+
+	strvlen = g_strv_length (strv);
+
+	idx = 0;
+	self->server_id = strv[idx++];
 	g_debug ("server_id = %s", self->server_id);
 
 	//headers
-	list_len_as_string = get_next_field (&from, sep);
-	list_len = atoi (list_len_as_string);
-	g_free (list_len_as_string);
-	list_len_as_string = NULL;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
+	}
+	list_len = atoi (strv[idx]);
+	g_free (strv[idx++]);
 	g_debug ("%d headers", list_len);
 
+	if (strvlen < idx + (2 * list_len)) {
+		g_warning ("More headers than actual data");
+		goto out;
+	}
 	for (i = 0; i < list_len; i++) {
 		header = g_malloc0 (sizeof (EasEmailHeader));
-		header->name = get_next_field (&from, sep);
-		if (!header->name) {
-			ret = FALSE;
-			goto cleanup;
-		}
-		header->value = get_next_field (&from, sep);
-		if (!header->value) {
-			ret = FALSE;
-			goto cleanup;
-		}
+		header->name = strv[idx++];
+		header->value = strv[idx++];
 		headers = g_slist_append (headers, header);
-		header = NULL;
 	}
 	self->headers = headers;
 
 	//attachments
-	list_len_as_string = get_next_field (&from, sep);
-	if (!list_len_as_string) {
-		ret = FALSE;
-		goto cleanup;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
 	}
-	list_len = atoi (list_len_as_string);
-	g_free (list_len_as_string);
-	list_len_as_string = NULL;
+	list_len = atoi (strv[idx]);
+	g_free (strv[idx++]);
 	g_debug ("%d attachments", list_len);
+
+	if (strvlen < idx + (3 * list_len)) {
+		g_warning ("More attachments than actual data");
+		goto out;
+	}
 	for (i = 0; i < list_len; i++) {
 		attachment = eas_attachment_new ();
-		if (!eas_attachment_deserialise (attachment, from)) {
-			ret = FALSE;
-			goto cleanup;
-		}
-		from += eas_attachment_serialised_length (attachment);//attachment deserialise doesn't move pointer along
-
+		attachment->file_reference = (xmlChar *)strv[idx++];
+		attachment->display_name = (xmlChar *)strv[idx++];
+		attachment->estimated_size = atoi (strv[idx]);
+		g_free (strv[idx++]);
 		attachments = g_slist_append (attachments, attachment);
-		attachment = NULL;
 	}
 	self->attachments = attachments;
-	attachments = NULL;
 
 	//flags
-	flags_as_string = get_next_field (&from, sep);
-	if (!flags_as_string) {
-		ret = FALSE;
-		goto cleanup;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
 	}
-	if (strlen (flags_as_string)) {
-		self->flags = atoi (flags_as_string);
-	}
-	g_free (flags_as_string);
-	flags_as_string = NULL;
-	g_debug ("flags = %d", self->flags);
+	self->flags = atoi (strv[idx]);
+	g_free (strv[idx++]);
+	g_debug ("flags = %x", self->flags);
 
 	//categories
-	list_len_as_string = get_next_field (&from, sep);
-	list_len = atoi (list_len_as_string);
-	g_free (list_len_as_string);
-	list_len_as_string = NULL;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
+	}
+	list_len = atoi (strv[idx]);
+	g_free (strv[idx++]);
 	g_debug ("%d categories", list_len);
 
+	if (strvlen < idx + list_len) {
+		g_warning ("More categories than actual data");
+		goto out;
+	}
 	for (i = 0; i < list_len; i++) {
-		gchar *category = get_next_field (&from, sep);
-		if (!category) {
-			ret = FALSE;
-			goto cleanup;
-		}
-		categories = g_slist_append (categories, category);
+		categories = g_slist_append (categories, strv[idx++]);
 	}
 	self->categories = categories;
-	categories = NULL;
 
 	//estimated_size
-	flags_as_string = get_next_field (&from, sep);
-	if (!flags_as_string) {
-		ret = FALSE;
-		goto cleanup;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
 	}
-	if (strlen (flags_as_string)) {
-		self->estimated_size = strtoul (flags_as_string, NULL, 10);
-	}
-	g_free (flags_as_string);
-	flags_as_string = NULL;
+	self->estimated_size = strtoul (strv[idx], NULL, 10);
+	g_free (strv[idx++]);
 	g_debug ("estimated size = %zu", self->estimated_size);
 
 	//date_received
-	flags_as_string = get_next_field (&from, sep);
-	if (!flags_as_string) {
-		ret = FALSE;
-		goto cleanup;
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
 	}
-	if (strlen (flags_as_string)) {
-		self->date_received = strtoul (flags_as_string, NULL, 10);
-	}
-	g_free (flags_as_string);
-	flags_as_string = NULL;
+	self->date_received = strtoul (strv[idx], NULL, 10);
+	g_free (strv[idx++]);
 	g_debug ("date received = %ld", self->date_received);
 
-	//date_received
-	flags_as_string = get_next_field (&from, sep);
-	if (!flags_as_string) {
-		ret = FALSE;
-		goto cleanup;
+	//importance
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
 	}
-	if (strlen (flags_as_string)) {
-		self->importance = strtoul (flags_as_string, NULL, 10);
-	}
-	g_free (flags_as_string);
-	flags_as_string = NULL;
+	self->importance = strtoul (strv[idx], NULL, 10);
+	g_free (strv[idx++]);
 	g_debug ("importance = %d", self->importance);
 
-cleanup:
-	g_free (header);
-	if (attachment) g_object_unref (attachment);
-	if (attachments) {
-		g_slist_foreach (attachments, (GFunc) g_object_unref, NULL);
-		g_slist_free (attachments);
-	}
-	if (categories) {
-		g_slist_foreach (categories, (GFunc) xmlFree, NULL);
-		g_slist_free (categories);
-	}
+	ret = TRUE;
+ out:
+	while (strv[idx])
+		g_free (strv[idx++]);
+	g_free (strv[idx]);
 
 	if (!ret) {
 		g_warning ("failed!");
