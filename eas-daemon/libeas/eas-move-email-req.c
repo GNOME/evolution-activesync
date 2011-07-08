@@ -131,15 +131,13 @@ static void
 eas_move_email_req_class_init (EasMoveEmailReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    EasRequestBaseClass* parent_class = EAS_REQUEST_BASE_CLASS (klass);
-
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
     g_debug ("eas_move_email_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasMoveEmailReqPrivate));
+	
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_move_email_req_MessageComplete;
 
     object_class->finalize = eas_move_email_req_finalize;
 	object_class->dispose = eas_move_email_req_dispose;

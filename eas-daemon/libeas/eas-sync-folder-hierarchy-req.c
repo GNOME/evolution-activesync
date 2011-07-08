@@ -137,10 +137,13 @@ static void
 eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
     g_debug ("eas_sync_folder_hierarchy_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyReqPrivate));
+
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_sync_folder_hierarchy_req_MessageComplete;
 
     object_class->finalize = eas_sync_folder_hierarchy_req_finalize;
 	object_class->dispose = eas_sync_folder_hierarchy_req_dispose;

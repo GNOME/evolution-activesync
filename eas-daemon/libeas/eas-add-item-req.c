@@ -130,8 +130,11 @@ static void
 eas_add_item_req_class_init (EasAddItemReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
     g_type_class_add_private (klass, sizeof (EasAddItemReqPrivate));
+
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_add_item_req_MessageComplete;
 
     object_class->finalize = eas_add_item_req_finalize;
     object_class->dispose = eas_add_item_req_dispose;

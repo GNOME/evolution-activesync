@@ -128,10 +128,13 @@ static void
 eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
+
 	g_debug ("eas_get_email_body_req_class_init++");
 
     g_type_class_add_private (klass, sizeof (EasGetEmailBodyReqPrivate));
+
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_get_email_body_req_MessageComplete;
 
     object_class->finalize = eas_get_email_body_req_finalize;
     object_class->dispose = eas_get_email_body_req_dispose;

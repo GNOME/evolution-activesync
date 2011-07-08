@@ -114,9 +114,13 @@ static void
 eas_ping_req_class_init (EasPingReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
+    g_debug ("eas_ping_req_class_init++");
+    
     g_type_class_add_private (klass, sizeof (EasPingReqPrivate));
-
+    base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_ping_req_MessageComplete;
+    
     object_class->finalize = eas_ping_req_finalize;
 
     g_debug ("eas_ping_req_class_init--");

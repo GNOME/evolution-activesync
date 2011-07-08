@@ -124,8 +124,11 @@ static void
 eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
-    g_debug ("eas_send_email_req_class_init++");
+	g_debug ("eas_send_email_req_class_init++");
+
+    base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_send_email_req_MessageComplete;
 
     g_type_class_add_private (klass, sizeof (EasSendEmailReqPrivate));
 

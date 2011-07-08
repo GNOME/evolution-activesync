@@ -113,6 +113,9 @@ static void
 eas_provision_req_class_init (EasProvisionReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
+
+    base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_provision_req_MessageComplete;
 
     g_type_class_add_private (klass, sizeof (EasProvisionReqPrivate));
 

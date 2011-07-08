@@ -158,7 +158,10 @@ static void
 eas_sync_req_class_init (EasSyncReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
+    base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_sync_req_MessageComplete;
+	
     g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 
     object_class->dispose = eas_sync_req_dispose;
