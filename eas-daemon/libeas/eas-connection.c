@@ -68,18 +68,8 @@
 #include "eas-connection-errors.h"
 
 // List of includes for each request type
-#include "eas-sync-folder-hierarchy-req.h"
 #include "eas-provision-req.h"
-#include "eas-sync-req.h"
-#include "eas-get-email-body-req.h"
-#include "eas-get-email-attachment-req.h"
-#include "eas-send-email-req.h"
-#include "eas-delete-req.h"
-#include "eas-update-item-req.h"
-#include "eas-update-email-req.h"
-#include "eas-add-item-req.h"
-#include "eas-move-email-req.h"
-#include "eas-ping-req.h"
+
 #include "../src/activesyncd-common-defs.h"
 #include "../src/eas-mail.h"
 
@@ -1891,77 +1881,8 @@ complete_request:
             priv->request_error = NULL;
         }
 
-        switch (request_type)
-        {
-            default:
-            {
-                g_debug ("  Unknown RequestType [%d]", request_type);
-            }
-            break;
+        cleanupRequest = eas_request_base_MessageComplete (req, doc, error);
 
-            case EAS_REQ_PROVISION:
-            {
-                cleanupRequest = eas_provision_req_MessageComplete ( (EasProvisionReq *) req, doc, error);
-            }
-            break;
-
-            case EAS_REQ_SYNC_FOLDER_HIERARCHY:
-            {
-                 cleanupRequest = eas_sync_folder_hierarchy_req_MessageComplete ( (EasSyncFolderHierarchyReq *) req, doc, error);
-            }
-            break;
-
-            case EAS_REQ_SYNC:
-            {
-                cleanupRequest = eas_sync_req_MessageComplete ( (EasSyncReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_GET_EMAIL_BODY:
-            {
-                cleanupRequest = eas_get_email_body_req_MessageComplete ( (EasGetEmailBodyReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_GET_EMAIL_ATTACHMENT:
-            {
-                cleanupRequest = eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_DELETE_ITEM:
-            {
-                cleanupRequest = eas_delete_req_MessageComplete ( (EasDeleteReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_SEND_EMAIL:
-            {
-                cleanupRequest = eas_send_email_req_MessageComplete ( (EasSendEmailReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_UPDATE_MAIL:
-            {
-                cleanupRequest = eas_update_email_req_MessageComplete ( (EasUpdateEmailReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_MOVE_EMAIL:
-            {
-                cleanupRequest = eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
-            }
-            break;				
-            case EAS_REQ_UPDATE_ITEM:
-            {
-                cleanupRequest = eas_update_item_req_MessageComplete ( (EasUpdateItemReq *) req, doc, error);
-            }
-            break;
-            case EAS_REQ_ADD_ITEM:
-            {
-                cleanupRequest = eas_add_item_req_MessageComplete ( (EasAddItemReq *) req, doc, error);
-            }
-            break;
-			case EAS_REQ_PING:
-            {
-                cleanupRequest = eas_ping_req_MessageComplete ( (EasPingReq *) req, doc, error);
-            }
-            break;
-        }
         //if cleanupRequest is set - we are done with this request, and should clean it up
         if(cleanupRequest)
         {
