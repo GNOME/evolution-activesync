@@ -36,9 +36,4 @@
 // eg data == ",1,Inbox,2" or "5,1,,2"
 gchar* get_next_field(gchar **data, const gchar *separator);
 
-
-// takes an array of (potentially empty/null) strings and num items in the array and concats the strings with separators
-// eg "a,b,c"
-gchar * strconcatwithseparator(gchar **strings, guint num, const gchar *sep);
-
 #endif // _EAS_MAIL_UTILS_H_
