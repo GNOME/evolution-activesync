@@ -118,6 +118,8 @@ eas_test_handler_new (void)
 		return NULL;
 	}
 
+	dbus_g_proxy_set_default_timeout (self->priv->remoteEas, 1000000);
+
 	g_debug ("eas_test_handler_new--");
 	return self;
 }
