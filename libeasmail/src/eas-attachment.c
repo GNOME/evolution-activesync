@@ -85,7 +85,7 @@ gboolean
 eas_attachment_serialise (EasAttachment *attachment, gchar **result)
 {
     gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";
-    gchar *strings[3] = {0, 0, 0};
+    gchar *strings[4] = {0, 0, 0, 0};
     g_debug ("eas_attachment_serialise++");
     g_assert (attachment->estimated_size);
 
@@ -95,7 +95,7 @@ eas_attachment_serialise (EasAttachment *attachment, gchar **result)
     strings[1] = (gchar*)attachment->display_name;
     strings[2] = est_size;
 
-    *result = strconcatwithseparator (strings, sizeof (strings) / sizeof (strings[0]), attachment_separator);
+    *result = g_strjoinv (attachment_separator, strings);
 
     if (!*result)
     {
