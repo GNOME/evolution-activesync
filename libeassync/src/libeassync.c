@@ -41,6 +41,9 @@
 
 G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
 
+#define EAS_SYNC_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_HANDLER, EasSyncHandlerPrivate))
+
+
 static gchar* defaultCalFolder = NULL;
 static gchar* defaultConFolder = NULL;
 
@@ -65,7 +68,7 @@ eas_sync_handler_init (EasSyncHandler *cnc)
     g_debug ("eas_sync_handler_init++");
 
     /* allocate internal structure */
-    priv = g_new0 (EasSyncHandlerPrivate, 1);
+    cnc->priv = priv = EAS_SYNC_HANDLER_PRIVATE (cnc);
 
     priv->remoteEas = NULL;
     priv->bus = NULL;
@@ -79,17 +82,14 @@ static void
 eas_sync_handler_finalize (GObject *object)
 {
     EasSyncHandler *cnc = (EasSyncHandler *) object;
-    EasSyncHandlerPrivate *priv;
+    EasSyncHandlerPrivate *priv = cnc->priv;
 
     g_debug ("eas_sync_handler_finalize++");
 
-    priv = cnc->priv;
     g_free (priv->account_uid);
 
     g_main_loop_quit (priv->main_loop);
     dbus_g_connection_unref (priv->bus);
-    g_free (priv);
-    cnc->priv = NULL;
 
     G_OBJECT_CLASS (eas_sync_handler_parent_class)->finalize (object);
     g_debug ("eas_sync_handler_finalize--");
@@ -101,6 +101,8 @@ eas_sync_handler_class_init (EasSyncHandlerClass *klass)
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
     g_debug ("eas_sync_handler_class_init++");
+    
+    g_type_class_add_private (klass, sizeof (EasSyncHandlerPrivate));
 
     object_class->finalize = eas_sync_handler_finalize;
     g_debug ("eas_sync_handler_class_init--");
