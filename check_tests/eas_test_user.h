@@ -4,5 +4,7 @@
 #define TEST_ACCOUNT_ID ("good.user@cstylianou.com")
 // Password: "G00dP@55w0rd"
 
+// #define TEST_ACCOUNT_ID ("bad.user@cstylianou.com")
+
 #endif
 
