@@ -42,6 +42,8 @@
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
+#define EAS_EMAIL_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_EMAIL_HANDLER, EasEmailHandlerPrivate))
+
 const gchar *updated_id_separator = ",";
 
 struct _EasEmailHandlerPrivate
@@ -125,7 +127,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
     g_debug ("eas_mail_handler_init++");
 
     /* allocate internal structure */
-    priv = g_new0 (EasEmailHandlerPrivate, 1);
+    cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
     priv->remoteEas = NULL;
     priv->bus = NULL;
@@ -133,7 +135,6 @@ eas_mail_handler_init (EasEmailHandler *cnc)
     priv->main_loop = NULL;
 	priv->next_request_id = 1;
 	priv->email_progress_fns_table = NULL;
-    cnc->priv = priv;
     g_debug ("eas_mail_handler_init--");
 }
 
@@ -162,8 +163,6 @@ eas_mail_handler_finalize (GObject *object)
 		g_hash_table_remove_all(priv->email_progress_fns_table);
 	}
     // nothing to do to 'free' proxy
-    g_free (priv);
-    cnc->priv = NULL;
 
     G_OBJECT_CLASS (eas_mail_handler_parent_class)->finalize (object);
     g_debug ("eas_mail_handler_finalize--");
@@ -173,12 +172,10 @@ static void
 eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-    // get rid of warnings about above 2 lines
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     g_debug ("eas_mail_handler_class_init++");
+
+    g_type_class_add_private (klass, sizeof (EasEmailHandlerPrivate));
 
     object_class->finalize = eas_mail_handler_finalize;
     g_debug ("eas_mail_handler_class_init--");
