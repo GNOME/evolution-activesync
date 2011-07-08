@@ -1951,9 +1951,9 @@ complete_request:
                 cleanupRequest = eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
             }
             break;
-            case EAS_REQ_ADD_CALENDAR:
+            case EAS_REQ_ADD_ITEM:
             {
-                cleanupRequest = eas_add_calendar_req_MessageComplete ( (EasAddCalendarReq *) req, doc, error);
+                cleanupRequest = eas_add_item_req_MessageComplete ( (EasAddItemReq *) req, doc, error);
             }
             break;
 			case EAS_REQ_PING:

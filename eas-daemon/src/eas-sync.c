@@ -363,7 +363,7 @@ eas_sync_add_items (EasSync* self,
 {
     GError* error = NULL;
     GSList *items = NULL;
-    EasAddCalendarReq *req = NULL;
+    EasAddItemReq *req = NULL;
 
     g_debug ("eas_sync_add_items++");
 
@@ -396,13 +396,13 @@ eas_sync_add_items (EasSync* self,
     }
 
     // Create the request
-    req = eas_add_calendar_req_new (account_uid, sync_key, folder_id, type, items, context);
+    req = eas_add_item_req_new (account_uid, sync_key, folder_id, type, items, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
-    eas_add_calendar_req_Activate (req, &error);
+    eas_add_item_req_Activate (req, &error);
 
     // TODO Check for error
     if (error)

@@ -50,40 +50,40 @@
  *
  */
 
-#ifndef _EAS_ADD_CALENDAR_REQ_H_
-#define _EAS_ADD_CALENDAR_REQ_H_
+#ifndef _EAS_ADD_ITEM_REQ_H_
+#define _EAS_ADD_ITEM_REQ_H_
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-#define EAS_TYPE_ADD_CALENDAR_REQ             (eas_add_calendar_req_get_type ())
-#define EAS_ADD_CALENDAR_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_ADD_CALENDAR_REQ, EasAddCalendarReq))
-#define EAS_ADD_CALENDAR_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_ADD_CALENDAR_REQ, EasAddCalendarReqClass))
-#define EAS_IS_ADD_CALENDAR_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_ADD_CALENDAR_REQ))
-#define EAS_IS_ADD_CALENDAR_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_ADD_CALENDAR_REQ))
-#define EAS_ADD_CALENDAR_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_ADD_CALENDAR_REQ, EasAddCalendarReqClass))
+#define EAS_TYPE_ADD_ITEM_REQ             (eas_add_item_req_get_type ())
+#define EAS_ADD_ITEM_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_ADD_ITEM_REQ, EasAddItemReq))
+#define EAS_ADD_ITEM_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_ADD_ITEM_REQ, EasAddItemReqClass))
+#define EAS_IS_ADD_ITEM_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_ADD_ITEM_REQ))
+#define EAS_IS_ADD_ITEM_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_ADD_ITEM_REQ))
+#define EAS_ADD_ITEM_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_ADD_ITEM_REQ, EasAddItemReqClass))
 
-typedef struct _EasAddCalendarReqClass EasAddCalendarReqClass;
-typedef struct _EasAddCalendarReq EasAddCalendarReq;
-typedef struct _EasAddCalendarReqPrivate EasAddCalendarReqPrivate;
+typedef struct _EasAddItemReqClass EasAddItemReqClass;
+typedef struct _EasAddItemReq EasAddItemReq;
+typedef struct _EasAddItemReqPrivate EasAddItemReqPrivate;
 
-struct _EasAddCalendarReqClass
+struct _EasAddItemReqClass
 {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasAddCalendarReq
+struct _EasAddItemReq
 {
 	EasRequestBase parent_instance;
 	
-	EasAddCalendarReqPrivate * priv;
+	EasAddItemReqPrivate * priv;
 };
 
-GType eas_add_calendar_req_get_type (void) G_GNUC_CONST;
+GType eas_add_item_req_get_type (void) G_GNUC_CONST;
 
 /** 
- * Create a new calendar request GObject
+ * Create a new item request GObject
  *
  * @param[in] account_id
  *	  Unique identifier for a user account.
@@ -96,9 +96,9 @@ GType eas_add_calendar_req_get_type (void) G_GNUC_CONST;
  * @param[in] context
  *	  DBus context token.
  *
- * @return An allocated EasAddCalendarReq GObject or NULL
+ * @return An allocated EasAddItemReq GObject or NULL
  */
-EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id, 
+EasAddItemReq *eas_add_item_req_new(const gchar* account_id, 
                                             const gchar *sync_key, 
                                             const gchar *folder_id,
                                             const EasItemType item_type,
@@ -109,7 +109,7 @@ EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id,
  * Builds the messages required for the request and sends the request to the server.
  *
  * @param[in] self
- *	  The EasAddCalendarReq GObject instance to be Activated.
+ *	  The EasAddItemReq GObject instance to be Activated.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
  *	  will be populated with error details if the function returns FALSE. Caller
@@ -117,7 +117,7 @@ EasAddCalendarReq *eas_add_calendar_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_add_calendar_req_Activate(EasAddCalendarReq *self, GError **error);
+gboolean eas_add_item_req_Activate(EasAddItemReq *self, GError **error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -127,7 +127,7 @@ gboolean eas_add_calendar_req_Activate(EasAddCalendarReq *self, GError **error);
  * to continue.
  *
  * @param[in] self
- *	  The EasAddCalendarReq GObject instance whose messages are complete.
+ *	  The EasAddItemReq GObject instance whose messages are complete.
  * @param[in] doc
  *	  Document tree containing the server's response. This must be freed using
  *	  xmlFreeDoc(). [full transfer]
@@ -138,7 +138,7 @@ gboolean eas_add_calendar_req_Activate(EasAddCalendarReq *self, GError **error);
  *    object, otherwise FALSE.
  */
 gboolean
-eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self, 
+eas_add_item_req_MessageComplete(EasAddItemReq *self, 
                                      xmlDoc* doc, 
                                      GError* error);
 
@@ -146,4 +146,4 @@ eas_add_calendar_req_MessageComplete(EasAddCalendarReq *self,
 
 G_END_DECLS
 
-#endif /* _EAS_ADD_CALENDAR_REQ_H_ */
+#endif /* _EAS_ADD_ITEM_REQ_H_ */
