@@ -107,7 +107,6 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 gboolean
 eas_folder_deserialise (EasFolder* folder, const gchar *data)
 {
-	gboolean ret = FALSE;
 	gchar *type = NULL;
 	gchar **strv;
 
@@ -117,6 +116,7 @@ eas_folder_deserialise (EasFolder* folder, const gchar *data)
 	strv = g_strsplit (data, folder_separator, 0);
 	if (!strv || g_strv_length(strv) != 4) {
 		g_warning ("Received invalid eas_folder: '%s'", data);
+		g_strfreev (strv);
 		return FALSE;
 	}
 
