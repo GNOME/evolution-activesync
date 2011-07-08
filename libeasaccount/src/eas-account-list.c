@@ -43,8 +43,8 @@ enum {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-static void dispose (GObject *);
-static void finalize (GObject *);
+static void eas_account_list_dispose (GObject *);
+static void eas_account_list_finalize (GObject *);
 
 G_DEFINE_TYPE (EasAccountList, eas_account_list, E_TYPE_LIST)
 
@@ -54,8 +54,8 @@ eas_account_list_class_init (EasAccountListClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	g_debug("eas_account_list_class_init++");
 	/* virtual method override */
-	object_class->dispose = dispose;
-	object_class->finalize = finalize;
+	object_class->dispose = eas_account_list_dispose;
+	object_class->finalize = eas_account_list_finalize;
 
 	/* signals */
 	signals[ACCOUNT_ADDED] =
@@ -95,10 +95,10 @@ eas_account_list_init (EasAccountList *account_list)
 }
 
 static void
-dispose (GObject *object)
+eas_account_list_dispose (GObject *object)
 {
 	EasAccountList *account_list = EAS_ACCOUNT_LIST (object);
-	g_debug("dispose++");
+	g_debug("eas_account_list_dispose++");
 	if (account_list->priv->gconf) {
 		if (account_list->priv->notify_id) {
 			gconf_client_notify_remove (account_list->priv->gconf,
@@ -107,17 +107,17 @@ dispose (GObject *object)
 		g_object_unref (account_list->priv->gconf);
 		account_list->priv->gconf = NULL;
 	}
-	g_debug("dispose--");
+	g_debug("eas_account_list_dispose--");
 	G_OBJECT_CLASS (eas_account_list_parent_class)->dispose (object);
 }
 
 static void
-finalize (GObject *object)
+eas_account_list_finalize (GObject *object)
 {
 	EasAccountList *account_list = EAS_ACCOUNT_LIST (object);
-	g_debug("finalize++");
+	g_debug("eas_account_list_finalize++");
 	g_free (account_list->priv);
-	g_debug("finalize--");
+	g_debug("eas_account_list_finalize--");
 	G_OBJECT_CLASS (eas_account_list_parent_class)->finalize (object);
 }
 
