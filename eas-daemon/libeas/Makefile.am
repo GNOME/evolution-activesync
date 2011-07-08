@@ -79,8 +79,8 @@ libeas_la_SOURCES =		\
         eas-update-calendar-req.c \
         eas-utils.h \
         eas-utils.c \
-        eas-add-calendar-req.h \
-        eas-add-calendar-req.c \
+        eas-add-item-req.h \
+        eas-add-item-req.c \
         eas-connection-errors.c \
         eas-move-email-req.h \
         eas-move-email-req.c \
