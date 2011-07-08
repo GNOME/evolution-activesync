@@ -74,9 +74,13 @@ typedef struct _EasRequestBase EasRequestBase;
 typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
 
 
+typedef gboolean (*EasRequestBaseMessageCompleteFp)(EasRequestBase *self, xmlDoc* doc, GError* error_in);
+
 struct _EasRequestBaseClass
 {
 	GObjectClass parent_class;
+
+    EasRequestBaseMessageCompleteFp do_MessageComplete;
 };
 
 struct _EasRequestBase
@@ -120,6 +124,8 @@ typedef enum {
 }EasItemType;
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
+
+gboolean eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc, GError* error_in);
 
 /**
  * Getter for request type.

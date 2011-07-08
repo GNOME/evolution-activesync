@@ -131,6 +131,8 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
     object_class->finalize = eas_request_base_finalize;
     object_class->dispose = eas_request_base_dispose;
 
+    klass->do_MessageComplete = NULL;
+
     g_debug ("eas_request_base_class_init--");
 }
 
@@ -140,6 +142,18 @@ eas_request_base_GetRequestType (EasRequestBase* self)
     EasRequestBasePrivate *priv = self->priv;
 
     return priv->requestType;
+}
+
+gboolean 
+eas_request_base_MessageComplete (EasRequestBase *self, 
+                                  xmlDoc* doc, 
+                                  GError* error_in)
+{
+    g_return_val_if_fail (EAS_IS_REQUEST_BASE (self), TRUE);
+
+    g_debug ("eas_request_base_MessageComplete+-");
+
+    return EAS_REQUEST_BASE_GET_CLASS (self)->do_MessageComplete (self, doc, error_in);
 }
 
 void
