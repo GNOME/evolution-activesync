@@ -50,41 +50,41 @@
  *
  */
 
-#ifndef _EAS_DELETE_EMAIL_REQ_H_
-#define _EAS_DELETE_EMAIL_REQ_H_
+#ifndef _EAS_DELETE_REQ_H_
+#define _EAS_DELETE_REQ_H_
 
 #include <glib-object.h>
 #include "eas-request-base.h"
 
 G_BEGIN_DECLS
 
-#define EAS_TYPE_DELETE_EMAIL_REQ             (eas_delete_email_req_get_type ())
-#define EAS_DELETE_EMAIL_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReq))
-#define EAS_DELETE_EMAIL_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqClass))
-#define EAS_IS_DELETE_EMAIL_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_DELETE_EMAIL_REQ))
-#define EAS_IS_DELETE_EMAIL_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_DELETE_EMAIL_REQ))
-#define EAS_DELETE_EMAIL_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqClass))
+#define EAS_TYPE_DELETE_REQ             (eas_delete_req_get_type ())
+#define EAS_DELETE_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_DELETE_REQ, EasDeleteReq))
+#define EAS_DELETE_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_DELETE_REQ, EasDeleteReqClass))
+#define EAS_IS_DELETE_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_DELETE_REQ))
+#define EAS_IS_DELETE_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_DELETE_REQ))
+#define EAS_DELETE_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_DELETE_REQ, EasDeleteReqClass))
 
-typedef struct _EasDeleteEmailReqClass EasDeleteEmailReqClass;
-typedef struct _EasDeleteEmailReq EasDeleteEmailReq;
-typedef struct _EasDeleteEmailReqPrivate EasDeleteEmailReqPrivate;
+typedef struct _EasDeleteReqClass EasDeleteReqClass;
+typedef struct _EasDeleteReq EasDeleteReq;
+typedef struct _EasDeleteReqPrivate EasDeleteReqPrivate;
 
-struct _EasDeleteEmailReqClass
+struct _EasDeleteReqClass
 {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasDeleteEmailReq
+struct _EasDeleteReq
 {
 	EasRequestBase parent_instance;
 
-	EasDeleteEmailReqPrivate* priv;	
+	EasDeleteReqPrivate* priv;	
 };
 
-GType eas_delete_email_req_get_type (void) G_GNUC_CONST;
+GType eas_delete_req_get_type (void) G_GNUC_CONST;
 
 /** 
- * Create a new delete email request GObject
+ * Create a new delete request GObject
  *
  * @param[in] account_id
  *	  Unique identifier for a user account.
@@ -93,13 +93,13 @@ GType eas_delete_email_req_get_type (void) G_GNUC_CONST;
  * @param[in] folder_id
  *	  The identifer for the target server folder.
  * @param[in] server_ids_array
- *	  A list of email item server ids to be deleted.
+ *	  A list of item server ids to be deleted.
  * @param[in] EasItemType
  *	  Tell the server which type we are deleting. 
  *    Must be present if using default folders
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
-EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, 
+EasDeleteReq *eas_delete_req_new (const gchar* accountId, 
                                              const gchar *syncKey, 
                                              const gchar *folderId, 
                                              const GSList *server_ids_array,
@@ -110,7 +110,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId,
  * Builds the messages required for the request and sends the request to the server.
  *
  * @param[in] self
- *	  The EasDeleteEmailReq GObject instance to be Activated.
+ *	  The EasDeleteReq GObject instance to be Activated.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
  *	  will be populated with error details if the function returns FALSE. Caller
@@ -118,7 +118,7 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self, 
+gboolean eas_delete_req_Activate (EasDeleteReq *self, 
                                         GError** error);
 
 /**
@@ -127,7 +127,7 @@ gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self,
  * Responsible for parsing the server response with the help of the message and
  * then returning the results across the dbus to the client *
  * @param[in] self
- *	  The EasDeleteEmailReq GObject instance whose messages are complete.
+ *	  The EasDeleteReq GObject instance whose messages are complete.
  * @param[in] doc
  *	  Document tree containing the server's response. This must be freed using
  *	  xmlFreeDoc(). [full transfer]
@@ -135,10 +135,10 @@ gboolean eas_delete_email_req_Activate (EasDeleteEmailReq *self,
  *	  A GError code that has been propagated from the server response.
  * @return TRUE if finished and needs unreffing, FALSE otherwise
  */
-gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, 
+gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, 
                                            xmlDoc* doc, 
                                            GError* error);
 
 G_END_DECLS
 
-#endif /* _EAS_DELETE_EMAIL_REQ_H_ */
+#endif /* _EAS_DELETE_REQ_H_ */

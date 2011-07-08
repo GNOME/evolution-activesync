@@ -67,8 +67,8 @@ libeas_la_SOURCES =		\
         eas-get-email-body-msg.c \
         eas-cal-info-translator.h \
         eas-cal-info-translator.c \
-        eas-delete-email-req.h \
-        eas-delete-email-req.c \
+        eas-delete-req.h \
+        eas-delete-req.c \
         eas-update-email-req.h \
         eas-update-email-req.c \
         eas-get-email-attachment-req.h \

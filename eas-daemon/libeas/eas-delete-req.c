@@ -50,12 +50,12 @@
  *
  */
 
-#include "eas-delete-email-req.h"
+#include "eas-delete-req.h"
 #include "eas-sync-msg.h"
 #include "../../libeasaccount/src/eas-account-list.h"
 #include <string.h>
 
-struct _EasDeleteEmailReqPrivate
+struct _EasDeleteReqPrivate
 {
     EasSyncMsg* syncMsg;
     gchar* accountID;
@@ -65,34 +65,34 @@ struct _EasDeleteEmailReqPrivate
     EasItemType itemType;
 };
 
-#define EAS_DELETE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_EMAIL_REQ, EasDeleteEmailReqPrivate))
+#define EAS_DELETE_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_REQ, EasDeleteReqPrivate))
 
-G_DEFINE_TYPE (EasDeleteEmailReq, eas_delete_email_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE (EasDeleteReq, eas_delete_req, EAS_TYPE_REQUEST_BASE);
 
 static void
-eas_delete_email_req_init (EasDeleteEmailReq *object)
+eas_delete_req_init (EasDeleteReq *object)
 {
-    EasDeleteEmailReqPrivate *priv;
+    EasDeleteReqPrivate *priv;
 
-    object->priv = priv = EAS_DELETE_EMAIL_REQ_PRIVATE (object);
+    object->priv = priv = EAS_DELETE_REQ_PRIVATE (object);
 
-    g_debug ("eas_delete_email_req_init++");
+    g_debug ("eas_delete_req_init++");
     priv->accountID = NULL;
     priv->syncKey = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
-                                     EAS_REQ_DELETE_MAIL);
+                                     EAS_REQ_DELETE_ITEM);
 
-    g_debug ("eas_delete_email_req_init--");
+    g_debug ("eas_delete_req_init--");
 }
 
 static void
-eas_delete_email_req_dispose (GObject *object)
+eas_delete_req_dispose (GObject *object)
 {
-    EasDeleteEmailReq *req = (EasDeleteEmailReq *) object;
-    EasDeleteEmailReqPrivate *priv = req->priv;
+    EasDeleteReq *req = (EasDeleteReq *) object;
+    EasDeleteReqPrivate *priv = req->priv;
 	GSList *item = NULL;
 
-    g_debug ("eas_delete_email_req_dispose++");
+    g_debug ("eas_delete_req_dispose++");
 
 	for (item = priv->server_ids_array; item; item = item->next)
 	{
@@ -103,49 +103,49 @@ eas_delete_email_req_dispose (GObject *object)
 		}
 	}
 
-    g_debug ("eas_delete_email_req_dispose--");
-    G_OBJECT_CLASS (eas_delete_email_req_parent_class)->dispose (object);
+    g_debug ("eas_delete_req_dispose--");
+    G_OBJECT_CLASS (eas_delete_req_parent_class)->dispose (object);
 }
 
 static void
-eas_delete_email_req_finalize (GObject *object)
+eas_delete_req_finalize (GObject *object)
 {
-    EasDeleteEmailReq *req = (EasDeleteEmailReq *) object;
-    EasDeleteEmailReqPrivate *priv = req->priv;
+    EasDeleteReq *req = (EasDeleteReq *) object;
+    EasDeleteReqPrivate *priv = req->priv;
 
-    g_debug ("eas_delete_email_req_finalize++");
+    g_debug ("eas_delete_req_finalize++");
 
     g_free (priv->syncKey);
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
-    g_debug ("eas_delete_email_req_finalize--");
-    G_OBJECT_CLASS (eas_delete_email_req_parent_class)->finalize (object);
+    g_debug ("eas_delete_req_finalize--");
+    G_OBJECT_CLASS (eas_delete_req_parent_class)->finalize (object);
 }
 
 static void
-eas_delete_email_req_class_init (EasDeleteEmailReqClass *klass)
+eas_delete_req_class_init (EasDeleteReqClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-    g_debug ("eas_delete_email_req_class_init++");
+    g_debug ("eas_delete_req_class_init++");
 
-    g_type_class_add_private (klass, sizeof (EasDeleteEmailReqPrivate));
+    g_type_class_add_private (klass, sizeof (EasDeleteReqPrivate));
 
-    object_class->finalize = eas_delete_email_req_finalize;
-    object_class->dispose = eas_delete_email_req_dispose;
-    g_debug ("eas_delete_email_req_class_init--");
+    object_class->finalize = eas_delete_req_finalize;
+    object_class->dispose = eas_delete_req_dispose;
+    g_debug ("eas_delete_req_class_init--");
 
 }
 
 gboolean
-eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
+eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 {
     gboolean ret;
-    EasDeleteEmailReqPrivate *priv = self->priv;
+    EasDeleteReqPrivate *priv = self->priv;
     xmlDoc *doc;
     gboolean getChanges = FALSE;
 
-    g_debug ("eas_delete_email_req_Activate++");
+    g_debug ("eas_delete_req_Activate++");
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -179,7 +179,7 @@ eas_delete_email_req_Activate (EasDeleteEmailReq *self, GError** error)
     //create sync  msg type
     priv->syncMsg = eas_sync_msg_new (priv->syncKey, priv->accountID, priv->folder_id, priv->itemType);
 
-    g_debug ("eas_delete_email_req_Activate- syncKey = %s", priv->syncKey);
+    g_debug ("eas_delete_req_Activate- syncKey = %s", priv->syncKey);
 
     //build request msg
     doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, priv->server_ids_array);
@@ -204,20 +204,20 @@ finish:
         g_assert (error == NULL || *error != NULL);
     }
 
-    g_debug ("eas_delete_email_req_Activate--");
+    g_debug ("eas_delete_req_Activate--");
 
     return ret;
 }
 
-EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EasItemType itemType, DBusGMethodInvocation *context)
+EasDeleteReq *eas_delete_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EasItemType itemType, DBusGMethodInvocation *context)
 {
-    EasDeleteEmailReq* self = g_object_new (EAS_TYPE_DELETE_EMAIL_REQ, NULL);
-    EasDeleteEmailReqPrivate *priv = self->priv;
+    EasDeleteReq* self = g_object_new (EAS_TYPE_DELETE_REQ, NULL);
+    EasDeleteReqPrivate *priv = self->priv;
     guint listCount;
     guint listLen = g_slist_length ( (GSList*) server_ids_array);
     gchar *server_id = NULL;
 
-    g_debug ("eas_delete_email_req_new++");
+    g_debug ("eas_delete_req_new++");
 	g_return_val_if_fail(syncKey != NULL, NULL);
 
     priv->syncKey = g_strdup (syncKey);
@@ -234,19 +234,19 @@ EasDeleteEmailReq *eas_delete_email_req_new (const gchar* accountId, const gchar
     priv->accountID = g_strdup (accountId);
     eas_request_base_SetContext (&self->parent_instance, context);
 
-    g_debug ("eas_delete_email_req_new--");
+    g_debug ("eas_delete_req_new--");
     return self;
 }
 
 
-gboolean eas_delete_email_req_MessageComplete (EasDeleteEmailReq *self, xmlDoc* doc, GError* error_in)
+gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, xmlDoc* doc, GError* error_in)
 {
     gboolean ret = TRUE;
-    EasDeleteEmailReqPrivate *priv = self->priv;
+    EasDeleteReqPrivate *priv = self->priv;
     GError *error = NULL;
 	gchar *ret_sync_key = NULL;
 	
-    g_debug ("eas_delete_email_req_MessageComplete++");
+    g_debug ("eas_delete_req_MessageComplete++");
 
     // if an error occurred, store it and signal daemon
     if (error_in)
@@ -281,7 +281,7 @@ finish:
     xmlFreeDoc (doc);
 	g_free(ret_sync_key);
 
-    g_debug ("eas_delete_email_req_MessageComplete--");
+    g_debug ("eas_delete_req_MessageComplete--");
 	return TRUE;
 }
 

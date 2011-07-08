@@ -57,7 +57,7 @@
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-sync-req.h"
 #include "eas-ping-req.h"
-#include "eas-delete-email-req.h"
+#include "eas-delete-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
 #include "eas-update-email-req.h"
@@ -315,7 +315,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     GSList *server_ids_list = NULL;
     int index = 0;
     const gchar* id = NULL;
-    EasDeleteEmailReq *req = NULL;
+    EasDeleteReq *req = NULL;
     GSList *item = NULL;
 
     g_debug ("eas_mail_delete_email++");
@@ -340,7 +340,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     }
 
     // Create the request
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
+    req = eas_delete_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
 
     // Cleanup the gslist
     item = server_ids_list;
@@ -355,7 +355,7 @@ eas_mail_delete_email (EasMail *easMailObj,
                                     easMailObj->priv->connection);
 
     // Start the request
-    ret = eas_delete_email_req_Activate (req, &error);
+    ret = eas_delete_req_Activate (req, &error);
 
 finish:
     if (!ret)

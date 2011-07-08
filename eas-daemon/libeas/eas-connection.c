@@ -74,7 +74,7 @@
 #include "eas-get-email-body-req.h"
 #include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
-#include "eas-delete-email-req.h"
+#include "eas-delete-req.h"
 #include "eas-update-item-req.h"
 #include "eas-update-email-req.h"
 #include "eas-add-item-req.h"
@@ -1926,9 +1926,9 @@ complete_request:
                 cleanupRequest = eas_get_email_attachment_req_MessageComplete ( (EasGetEmailAttachmentReq *) req, doc, error);
             }
             break;
-            case EAS_REQ_DELETE_MAIL:
+            case EAS_REQ_DELETE_ITEM:
             {
-                cleanupRequest = eas_delete_email_req_MessageComplete ( (EasDeleteEmailReq *) req, doc, error);
+                cleanupRequest = eas_delete_req_MessageComplete ( (EasDeleteReq *) req, doc, error);
             }
             break;
             case EAS_REQ_SEND_EMAIL:

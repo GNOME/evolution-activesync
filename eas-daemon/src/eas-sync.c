@@ -52,7 +52,7 @@
 #include "eas-sync.h"
 #include "eas-sync-stub.h"
 #include "eas-sync-req.h"
-#include "eas-delete-email-req.h"
+#include "eas-delete-req.h"
 #include "eas-update-item-req.h"
 #include "eas-add-item-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
@@ -244,7 +244,7 @@ eas_sync_delete_items (EasSync* self,
                        DBusGMethodInvocation* context)
 {
     GError *error = NULL;
-    EasDeleteEmailReq *req = NULL;
+    EasDeleteReq *req = NULL;
     GSList *server_ids_list = NULL;
 	const gchar* id = NULL;
 	int index = 0;
@@ -270,13 +270,13 @@ eas_sync_delete_items (EasSync* self,
         server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
     }
 
-    req = eas_delete_email_req_new (account_uid, sync_key, folder_id, server_ids_list, type, context);
+    req = eas_delete_req_new (account_uid, sync_key, folder_id, server_ids_list, type, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     self->priv->connection);
 
     // Start the request
-    eas_delete_email_req_Activate (req, &error);
+    eas_delete_req_Activate (req, &error);
 
 
     if (error)
