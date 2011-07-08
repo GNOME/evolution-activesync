@@ -1,10 +1,8 @@
-indent=spaces=4
-brackets=break
-convert-tabs
+style=linux
+indent=force-tab=8
 pad-oper
 unpad-paren
 pad-paren-out
-indent-switches
 indent-labels
 indent-preprocessor
-max-instatement-indent=60
+max-instatement-indent=80
