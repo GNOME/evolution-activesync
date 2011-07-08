@@ -84,18 +84,14 @@ eas_attachment_new()
 gboolean
 eas_attachment_serialise (EasAttachment *attachment, gchar **result)
 {
-	gchar est_size[MAX_LEN_OF_INT32_AS_STRING] = "";
-	gchar *strings[4] = {0, 0, 0, 0};
 	g_debug ("eas_attachment_serialise++");
-	g_assert (attachment->estimated_size);
 
-	snprintf (est_size, sizeof (est_size) / sizeof (est_size[0]), "%d", attachment->estimated_size);
-
-	strings[0] = (gchar*) attachment->file_reference;
-	strings[1] = (gchar*) attachment->display_name;
-	strings[2] = est_size;
-
-	*result = g_strjoinv (attachment_separator, strings);
+	*result = g_strdup_printf("%s%s%s%s%d",
+				  attachment->file_reference,
+				  attachment_separator,
+				  attachment->display_name,
+				  attachment_separator,
+				  attachment->estimated_size);
 
 	if (!*result) {
 		g_debug ("eas_attachment_serialise--");
