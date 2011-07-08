@@ -231,8 +231,9 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                         break;
                         case EAS_ITEM_MAIL:
                         {
-                            g_error ("Trying to do Add with Mail type - This is not allowed");
+                            g_critical ("Trying to do Add with Mail type - This is not allowed");
                         }
+                        break;
                         case EAS_ITEM_CALENDAR:
                         {
                             xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
