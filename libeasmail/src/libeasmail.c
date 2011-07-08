@@ -36,7 +36,6 @@
 #include "eas-mail-client-stub.h"
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
-#include "utils.h"
 #include "../../logger/eas-logger.h"
 #include "eas-marshal.h"
 

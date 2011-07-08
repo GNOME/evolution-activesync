@@ -30,7 +30,6 @@
 
 #include "eas-email-info.h"
 #include "eas-attachment.h"
-#include "utils.h"
 
 G_DEFINE_TYPE (EasEmailInfo, eas_email_info, G_TYPE_OBJECT);
 

@@ -28,7 +28,6 @@
 #include <stdlib.h>
 
 #include "eas-folder.h"
-#include "utils.h"
 
 G_DEFINE_TYPE (EasFolder, eas_folder, G_TYPE_OBJECT);
 

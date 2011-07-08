@@ -30,7 +30,6 @@
 #include <libxml/globals.h>
 
 #include "eas-attachment.h"
-#include "utils.h"
 
 G_DEFINE_TYPE (EasAttachment, eas_attachment, G_TYPE_OBJECT);
 
