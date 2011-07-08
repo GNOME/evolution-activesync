@@ -145,6 +145,13 @@ eas_mail_handler_finalize (GObject *object)
     g_debug ("eas_mail_handler_finalize++");
 
     priv = cnc->priv;
+
+    // register for progress signals
+    dbus_g_proxy_disconnect_signal(cnc->priv->remoteEas,
+				   EAS_MAIL_SIGNAL_PROGRESS,
+				   G_CALLBACK (progress_signal_handler),
+				   cnc);
+
     g_free (priv->account_uid);
 
     g_main_loop_quit (priv->main_loop);
