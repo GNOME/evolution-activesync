@@ -73,6 +73,7 @@ typedef enum
 struct _EasSyncReqPrivate
 {
     EasSyncMsg* syncMsg;
+    EasSyncFolderMsg* syncFolderMsg;
     gchar* sync_key;
     EasSyncReqState state;
     gchar* accountID;
@@ -93,6 +94,7 @@ eas_sync_req_init (EasSyncReq *object)
 
     g_debug ("eas_sync_req_init++");
     priv->syncMsg = NULL;
+    priv->syncFolderMsg = NULL;
     priv->state = EasSyncReqStep1;
     priv->accountID = NULL;
     priv->folderID = NULL;
@@ -117,6 +119,11 @@ eas_sync_req_dispose (GObject *object)
     {
         g_object_unref (priv->syncMsg);
 		priv->syncMsg = NULL;
+    }
+    if (priv->syncFolderMsg)
+    {
+        g_object_unref (priv->syncFolderMsg);
+		priv->syncFolderMsg = NULL;
     }
 	if (priv->acc)
     {
@@ -175,7 +182,7 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 	account_list = eas_account_list_new (client);
 	g_assert(account_list != NULL);
 
-	priv->acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, accountID);
+	priv->acc = eas_account_list_find (account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, accountID);
 
     g_debug ("eas_sync_req_new++");
 
@@ -246,6 +253,9 @@ eas_sync_req_Activate (EasSyncReq *self,
 				}
 			}
 			break;
+			default:
+			g_warning("Unexpected state");
+			break;
 		}
 	}
 	else
@@ -259,8 +269,8 @@ eas_sync_req_Activate (EasSyncReq *self,
 	{
 		g_debug("default folder id missing - do folder sync");
 		//we don't have a default folder ID so we must do a folder sync first
-		priv->syncMsg = eas_sync_folder_msg_new ("0", priv->accountID);
-		if (!priv->syncMsg)
+		priv->syncFolderMsg = eas_sync_folder_msg_new ("0", priv->accountID);
+		if (!priv->syncFolderMsg)
 		{
 		    ret = FALSE;
 		    // set the error
@@ -270,7 +280,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 		    goto finish;
 		}
 		//build request msg
-		doc = eas_sync_folder_msg_build_message (priv->syncMsg);
+		doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
 		if (!doc)
 		{
 		    ret = FALSE;
@@ -400,7 +410,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			// We do some direct assigns lower down so this should always be true.
 			g_assert(!priv->folderID);
 			
-			ret = eas_sync_folder_msg_parse_response ((EasSyncFolderMsg*)priv->syncMsg, doc, &error);
+			ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
 
 			xmlFreeDoc (doc);
 			if (!ret)
@@ -412,25 +422,27 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			if(priv->ItemType == EAS_ITEM_CALENDAR)
 			{
 				// cannot get from gconf - as the update takes too long - get from sync msg response
-				priv->folderID = g_strdup(eas_sync_folder_msg_get_def_cal_folder((EasSyncFolderMsg*)priv->syncMsg));
+				priv->folderID = g_strdup(eas_sync_folder_msg_get_def_cal_folder(priv->syncFolderMsg));
 			}else
 			{
 				// cannot get from gconf - as the update takes too long - get from sync msg response
-				priv->folderID = g_strdup(eas_sync_folder_msg_get_def_con_folder((EasSyncFolderMsg*)priv->syncMsg));
+				priv->folderID = g_strdup(eas_sync_folder_msg_get_def_con_folder(priv->syncFolderMsg));
 			}
 			 //clean up old message
-            if (priv->syncMsg)
+            if (priv->syncFolderMsg)
             {
-                g_object_unref (priv->syncMsg);
-				priv->syncMsg = NULL;
+                g_object_unref (priv->syncFolderMsg);
+				priv->syncFolderMsg = NULL;
             }
+
+			g_assert (NULL == priv->syncMsg);
 			//create sync  msg type
 			priv->syncMsg = eas_sync_msg_new (priv->sync_key, priv->accountID, priv->folderID, priv->ItemType);
 			if (!priv->syncMsg)
 			{
 				ret = FALSE;
 				// set the error
-				g_set_error (error, EAS_CONNECTION_ERROR,
+				g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 				goto finish;
@@ -446,7 +458,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				ret = FALSE;
 		
 				// set the error
-				g_set_error (error, EAS_CONNECTION_ERROR,
+				g_set_error (&error, EAS_CONNECTION_ERROR,
 				             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 				             ("out of memory"));
 				goto finish;
@@ -457,7 +469,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				                               "Sync",
 				                               doc,
 				                               (struct _EasRequestBase *) self,
-				                               error);
+				                               &error);
 			
 		}
 		break;
