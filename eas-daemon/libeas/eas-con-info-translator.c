@@ -167,8 +167,9 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 	// Variable for the return value
 	gchar* result = NULL;
 	EVCard *vcard;
-	g_debug("eas_con_info_translator_parse_response ++");
     EasItemInfo* conInfo = NULL;
+
+    g_debug("eas_con_info_translator_parse_response ++");
 
 	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), EAS_ELEMENT_APPLICATIONDATA)))
 	{
