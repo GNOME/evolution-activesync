@@ -1,2 +1,2 @@
-astyle --recursive --options=astyle.options *.c *.h
+astyle --recursive --exclude=syncevolution --options=astyle.options "*.c" "*.h"
 
