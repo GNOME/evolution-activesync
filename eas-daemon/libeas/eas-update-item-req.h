@@ -50,38 +50,38 @@
  *
  */
 
-#ifndef _EAS_UPDATE_CALENDAR_REQ_H_
-#define _EAS_UPDATE_CALENDAR_REQ_H_
+#ifndef _EAS_UPDATE_ITEM_REQ_H_
+#define _EAS_UPDATE_ITEM_REQ_H_
 
 #include <glib-object.h>
 #include "eas-request-base.h"
 
 G_BEGIN_DECLS
 
-#define EAS_TYPE_UPDATE_CALENDAR_REQ            (eas_update_calendar_req_get_type ())
-#define EAS_UPDATE_CALENDAR_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_UPDATE_CALENDAR_REQ EasUpdateCalendarReq))
-#define EAS_UPDATE_CALENDAR_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_UPDATE_CALENDAR_REQ, EasUpdateCalendarReqClass))
-#define EAS_IS_UPDATE_CALENDAR_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_UPDATE_CALENDAR_REQ))
-#define EAS_IS_UPDATE_CALENDAR_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_UPDATE_CALENDAR_REQ))
-#define EAS_UPDATE_CALENDAR_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_UPDATE_CALENDAR_REQ, EasUpdateCalendarReqClass))
+#define EAS_TYPE_UPDATE_ITEM_REQ            (eas_update_item_req_get_type ())
+#define EAS_UPDATE_ITEM_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_UPDATE_ITEM_REQ EasUpdateItemReq))
+#define EAS_UPDATE_ITEM_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_UPDATE_ITEM_REQ, EasUpdateItemReqClass))
+#define EAS_IS_UPDATE_ITEM_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_UPDATE_ITEM_REQ))
+#define EAS_IS_UPDATE_ITEM_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_UPDATE_ITEM_REQ))
+#define EAS_UPDATE_ITEM_REQ_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), EAS_TYPE_UPDATE_ITEM_REQ, EasUpdateItemReqClass))
 
-typedef struct _EasUpdateCalendarReqClass EasUpdateCalendarReqClass;
-typedef struct _EasUpdateCalendarReq EasUpdateCalendarReq;
-typedef struct _EasUpdateCalendarReqPrivate EasUpdateCalendarReqPrivate;
+typedef struct _EasUpdateItemReqClass EasUpdateItemReqClass;
+typedef struct _EasUpdateItemReq EasUpdateItemReq;
+typedef struct _EasUpdateItemReqPrivate EasUpdateItemReqPrivate;
 
-struct _EasUpdateCalendarReqClass
+struct _EasUpdateItemReqClass
 {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasUpdateCalendarReq
+struct _EasUpdateItemReq
 {
 	EasRequestBase parent_instance;
 	
-	EasUpdateCalendarReqPrivate * priv;
+	EasUpdateItemReqPrivate * priv;
 };
 
-GType eas_update_calendar_req_get_type (void) G_GNUC_CONST;
+GType eas_update_item_req_get_type (void) G_GNUC_CONST;
 
 /** 
  * Create a new item update request GObject
@@ -100,9 +100,9 @@ GType eas_update_calendar_req_get_type (void) G_GNUC_CONST;
  *	  A dbus method invocation used to send the completed operation's results
  *	  to the server. Used in MessageComplete
  *
- * @return An allocated EasAddCalendarReq GObject or NULL
+ * @return An allocated EasUpdateItemReq GObject or NULL
  */
-EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id, 
+EasUpdateItemReq *eas_update_item_req_new(const gchar* account_id, 
                                                   const gchar *sync_key, 
                                                   const EasItemType item_type, 
                                                   const gchar *folder_id, 
@@ -113,7 +113,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id,
  * Builds the messages required for the request and sends the request to the server.
  *
  * @param[in] self
- *	  The EasUpdateCalendarReq GObject instance to be Activated.
+ *	  The EasUpdateItemReq GObject instance to be Activated.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
  *	  will be populated with error details if the function returns FALSE. Caller
@@ -121,7 +121,7 @@ EasUpdateCalendarReq *eas_update_calendar_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_update_calendar_req_Activate(EasUpdateCalendarReq *self, 
+gboolean eas_update_item_req_Activate(EasUpdateItemReq *self, 
                                           GError** error);
 
 /**
@@ -131,7 +131,7 @@ gboolean eas_update_calendar_req_Activate(EasUpdateCalendarReq *self,
  * then sending the response back across the dbus
  *
  * @param[in] self
- *	  The EasUpdateCalendarReq GObject instance whose messages are complete.
+ *	  The EasUpdateItemReq GObject instance whose messages are complete.
  * @param[in] doc
  *	  Document tree containing the server's response. This must be freed using
  *	  xmlFreeDoc(). [full transfer]
@@ -141,7 +141,7 @@ gboolean eas_update_calendar_req_Activate(EasUpdateCalendarReq *self,
  * @return TRUE if request is finished and needs cleaning up by connection 
  *    object, otherwise FALSE. 
  */
-gboolean eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self, 
+gboolean eas_update_item_req_MessageComplete(EasUpdateItemReq *self, 
                                              xmlDoc* doc, 
                                              GError* error);
 
@@ -149,5 +149,5 @@ gboolean eas_update_calendar_req_MessageComplete(EasUpdateCalendarReq *self,
 
 G_END_DECLS
 
-#endif /* _EAS_UPDATE_CALENDAR_REQUEST_H_ */
+#endif /* _EAS_UPDATE_ITEM_REQUEST_H_ */
 

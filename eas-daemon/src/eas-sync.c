@@ -53,7 +53,7 @@
 #include "eas-sync-stub.h"
 #include "eas-sync-req.h"
 #include "eas-delete-email-req.h"
-#include "eas-update-calendar-req.h"
+#include "eas-update-item-req.h"
 #include "eas-add-item-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
 #include "../../libeassync/src/eas-item-info.h"
@@ -302,7 +302,7 @@ eas_sync_update_items (EasSync* self,
 {
     GError* error = NULL;
     GSList *items = NULL;
-    EasUpdateCalendarReq *req = NULL;
+    EasUpdateItemReq *req = NULL;
 
     g_debug ("eas_sync_update_calendar_items++");
 
@@ -333,13 +333,13 @@ eas_sync_update_items (EasSync* self,
         }
     }
     // Create the request
-    req = eas_update_calendar_req_new (account_uid, sync_key, type, folder_id, items, context);
+    req = eas_update_item_req_new (account_uid, sync_key, type, folder_id, items, context);
 
     eas_request_base_SetConnection (&req->parent_instance,
                                     eas_sync_get_eas_connection (self));
 
     // Start the request
-    eas_update_calendar_req_Activate (req, &error);
+    eas_update_item_req_Activate (req, &error);
 
     if (error)
     {

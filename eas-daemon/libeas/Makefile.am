@@ -75,8 +75,8 @@ libeas_la_SOURCES =		\
         eas-get-email-attachment-req.c \
         eas-get-email-attachment-msg.h \
         eas-get-email-attachment-msg.c \
-        eas-update-calendar-req.h \
-        eas-update-calendar-req.c \
+        eas-update-item-req.h \
+        eas-update-item-req.c \
         eas-utils.h \
         eas-utils.c \
         eas-add-item-req.h \

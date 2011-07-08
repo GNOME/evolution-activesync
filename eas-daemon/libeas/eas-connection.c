@@ -75,7 +75,7 @@
 #include "eas-get-email-attachment-req.h"
 #include "eas-send-email-req.h"
 #include "eas-delete-email-req.h"
-#include "eas-update-calendar-req.h"
+#include "eas-update-item-req.h"
 #include "eas-update-email-req.h"
 #include "eas-add-item-req.h"
 #include "eas-move-email-req.h"
@@ -1946,9 +1946,9 @@ complete_request:
                 cleanupRequest = eas_move_email_req_MessageComplete ( (EasMoveEmailReq *) req, doc, error);
             }
             break;				
-            case EAS_REQ_UPDATE_CALENDAR:
+            case EAS_REQ_UPDATE_ITEM:
             {
-                cleanupRequest = eas_update_calendar_req_MessageComplete ( (EasUpdateCalendarReq *) req, doc, error);
+                cleanupRequest = eas_update_item_req_MessageComplete ( (EasUpdateItemReq *) req, doc, error);
             }
             break;
             case EAS_REQ_ADD_ITEM:
