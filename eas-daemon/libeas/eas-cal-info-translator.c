@@ -1988,7 +1988,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 					gchar* timestamp = icalproperty_get_value_as_string(prop);
 					if(!g_str_has_suffix (timestamp, "Z"))
 					   {
-						  modified = g_strconcat(time, "Z", NULL);
+						  modified = g_strconcat(timestamp, "Z", NULL);
 						  timestamp = modified;
 					   }
 					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)timestamp);
@@ -2313,7 +2313,17 @@ static void _ical2eas_process_xstandard_xdaylight(icalcomponent* subcomponent, E
 			int byDayPosition = icalrecurrencetype_day_position(byDayRaw);
 
 			easTimeStruct->Year = 0; // Always 0 if we have recurrence
-			easTimeStruct->Month = byMonth;
+
+			//AG - We can't assume that the month field is in the RRULE, so check if the month is valid
+			// and if not, then get it from the dtStartValue
+			if(1 <= byMonth && byMonth <= 12)
+			{
+				easTimeStruct->Month = byMonth;
+			}
+			else
+			{
+				easTimeStruct->Month = dtStartValue.month;
+			}
 
 			// The day is the tricky bit...
 			// Both formats use this to represent nth occurrence of a day in the month
@@ -2448,9 +2458,11 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 		}
 
 		// Write the timezone into the XML, base64-encoded
-		//timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
-		//xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)timezoneBase64);
-		//g_free(timezoneBase64);
+
+		
+		timezoneBase64 = g_base64_encode((const guchar *)(&timezoneStruct), sizeof(EasTimeZone));
+		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)timezoneBase64);
+		g_free(timezoneBase64);
 	}
 }
 
