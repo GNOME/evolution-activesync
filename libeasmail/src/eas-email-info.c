@@ -84,11 +84,6 @@ static void
 eas_email_info_class_init (EasEmailInfoClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-    GObjectClass* parent_class = G_OBJECT_CLASS (klass);
-
-    // TODO better way to get rid of warnings about above 2 lines?
-    void *temp = (void*) object_class;
-    temp = (void*) parent_class;
 
     object_class->finalize = eas_email_info_finalize;
 }
