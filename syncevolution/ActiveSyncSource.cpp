@@ -77,6 +77,11 @@ void EASItemUnref(EasItemInfo *info) { g_object_unref(&info->parent_instance); }
 /** non-copyable list of EasItemInfo pointers, owned by list */
 typedef GListCXX<EasItemInfo, GSList, EASItemUnref> EASItemsCXX;
 
+void GStringUnref(char *str) { g_free(str); }
+
+/** non-copyable list of strings, owned by list */
+typedef GListCXX<char, GSList, GStringUnref> EASIdsCXX;
+
 /** non-copyable smart pointer to an EasItemInfo, unrefs when going out of scope */
 typedef eptr<EasItemInfo, GObject> EASItemPtr;
 
@@ -91,7 +96,8 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     }
 
     GErrorCXX gerror;
-    EASItemsCXX created, updated, deleted;
+    EASItemsCXX created, updated;
+    EASIdsCXX deleted;
     gchar *buffer;
     if (!eas_sync_handler_get_items(m_handler,
                                     m_startSyncKey.c_str(),
@@ -124,8 +130,8 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
         // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
         m_items[luid] = item->data;
     }
-    BOOST_FOREACH(EasItemInfo *item, deleted) {
-        string luid(item->server_id);
+    BOOST_FOREACH(const char *serverID, deleted) {
+        string luid(serverID);
         SE_LOG_DEBUG(this, NULL, "deleted item %s", luid.c_str());
         addItem(luid, DELETED);
         m_ids->removeProperty(luid);
