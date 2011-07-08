@@ -121,14 +121,14 @@ gboolean eas_provision_req_Activate (EasProvisionReq* self, GError** error);
  * @param[in] doc
  *	  Document tree containing the server's response. This must be freed using
  *	  xmlFreeDoc(). [full transfer]
- * @param[in] error
+ * @param[in] error_in
  *	  A GError code that has been propagated from the server response.
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise.
  */
 gboolean eas_provision_req_MessageComplete (EasProvisionReq* self, 
                                             xmlDoc *doc, 
-                                            GError* error);
+                                            GError* error_in);
 
 G_END_DECLS
 

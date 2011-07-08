@@ -177,19 +177,27 @@ finish:
 }
 
 gboolean
-eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* response_error)
+eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* error_in)
 {
     GError* error = NULL;
-    gboolean ret;
+    gboolean ret = FALSE;
     EasProvisionReqPrivate *priv = self->priv;
 	gboolean cleanup = FALSE;
 
     g_debug ("eas_provision_req_MessageComplete++");
 
+    // if an error occurred, store it and signal daemon
+    if (error_in)
+    {
+        ret = FALSE;
+        error = error_in;
+        goto finish;
+    }
+
     ret = eas_provision_msg_parse_response (priv->msg, doc, &error);
     if (!ret)
     {
-        g_warning ("throwing away provisioning error");
+        g_warning ("Failed to parse provisioning response");
         goto finish;
     }
 
@@ -197,7 +205,12 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
     {
         default:
         {
-            g_critical("Unknown State");
+			g_set_error (&error, 
+			             EAS_CONNECTION_ERROR, 
+			             EAS_CONNECTION_ERROR_BADREQUESTSTATE, 
+			             "Unknown Provision Request state [%d]", 
+			             priv->state);
+			ret = FALSE;
         }
         break;
 
@@ -224,7 +237,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
             ret = eas_provision_req_Activate (self, &error);
             if (!ret)
             {
-                g_warning ("throwing away provisioning error");
+                g_warning ("Failed to activate provision request");
                 goto finish;
             }
         }
@@ -239,7 +252,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
 
             eas_connection_set_policy_key (eas_request_base_GetConnection (&self->parent_instance),
                                            eas_provision_msg_get_policy_key (priv->msg));
-            eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance));
+            eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance), TRUE);
 	        cleanup = TRUE;
         }
         break;
@@ -247,7 +260,18 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* r
 
 finish:
     xmlFreeDoc (doc);
-    g_debug ("eas_provision_req_MessageComplete--");
+	if (!ret)
+	{
+		g_assert (error != NULL);
+		// @@TRICKY For provisioning the context belongs to the original request.
+		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		g_error_free (error);
+		// There has been an error - ensure that we clean this request up
+		cleanup = TRUE;
+		// We also need to clean up the 'resume request'
+		eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance), FALSE);
+	}
 
+    g_debug ("eas_provision_req_MessageComplete--");
     return cleanup;
 }

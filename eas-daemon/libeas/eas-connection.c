@@ -456,6 +456,7 @@ connection_authenticate (SoupSession *sess,
 
 			if (GNOME_KEYRING_RESULT_OK == result)
 			{
+				g_debug("First authentication attempt with newly set password");
 				soup_auth_authenticate (auth, 
 						                username,
 						                password);
@@ -477,8 +478,11 @@ connection_authenticate (SoupSession *sess,
 	}
 	else
 	{
+		g_debug ("Found password in Gnome Keyring");
 		if (!retrying)
 		{
+			g_debug ("First authentication attempt");
+
 			cnc->priv->retrying_asked = FALSE;
 
 			soup_auth_authenticate (auth, 
@@ -491,6 +495,7 @@ connection_authenticate (SoupSession *sess,
 		}
 		else if (!cnc->priv->retrying_asked)
 		{
+			g_debug ("Second authentication attempt - original password was incorrect");
 			cnc->priv->retrying_asked = TRUE;
 			
 			if (password)
@@ -509,6 +514,7 @@ connection_authenticate (SoupSession *sess,
 
 				if (GNOME_KEYRING_RESULT_OK == result)
 				{
+					g_debug ("Second authentication with newly set password");
 					soup_auth_authenticate (auth, 
 					                        username,
 					                        password);
@@ -524,6 +530,10 @@ connection_authenticate (SoupSession *sess,
 					password = NULL;
 				}
 			}
+		}
+		else
+		{
+			g_debug("Failed too many times, authentication aborting");
 		}
 	}
     g_debug ("  eas_connection - connection_authenticate--");
@@ -559,30 +569,59 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
     g_debug ("eas_connection_set_policy_key--");
 }
 
-void eas_connection_resume_request (EasConnection* self)
+void eas_connection_resume_request (EasConnection* self, gboolean provisionSuccessful)
 {
     EasConnectionPrivate *priv = self->priv;
-    const gchar *_cmd;
-    struct _EasRequestBase *_request;
-    xmlDoc *_doc;
-    GError **_error;
 
     g_debug ("eas_connection_resume_request++");
 
-    // If these aren't set it's all gone horribly wrong
-	g_return_if_fail (priv->request_cmd && priv->request && priv->request_doc);
+	if (!priv->request_cmd && !priv->request && 
+	    !priv->request_doc && !priv->request_error)
+	{
+		g_warning("Attempting to resume when no request stored, have we double provisioned?");
+	}
+	else
+	{
+		if (provisionSuccessful)
+		{
+			const gchar *_cmd = priv->request_cmd;
+			struct _EasRequestBase *_request = priv->request;
+			xmlDoc *_doc = priv->request_doc;
+			GError **_error = priv->request_error;
 
-    _cmd     = priv->request_cmd;
-    _request = priv->request;
-    _doc     = priv->request_doc;
-    _error   = priv->request_error;
+			priv->request_cmd   = NULL;
+			priv->request       = NULL;
+			priv->request_doc   = NULL;
+			priv->request_error = NULL;
 
-    priv->request_cmd   = NULL;
-    priv->request       = NULL;
-    priv->request_doc   = NULL;
-    priv->request_error = NULL;
+			g_debug ("Provisioning was successful - resending original request");
+		
+			eas_connection_send_request (self, _cmd, _doc, _request, _error);
+		}
+		else
+		{
+			g_debug ("Provisioning failed - cleaning up original request");
 
-    eas_connection_send_request (self, _cmd, _doc, _request, _error);
+			// Clean up request data
+			#ifndef ACTIVESYNC_14
+			if (!g_strcmp0("SendMail", priv->request_cmd))
+			{
+				g_free((gchar*)priv->request_doc);
+			}
+			else
+			{
+				xmlFreeDoc (priv->request_doc);
+			}
+			#else
+				xmlFreeDoc (priv->request_doc);
+			#endif
+
+			priv->request_cmd   = NULL;
+			priv->request       = NULL;
+			priv->request_doc   = NULL;
+			priv->request_error = NULL;
+		}
+	}
 
     g_debug ("eas_connection_resume_request--");
 }
@@ -819,6 +858,10 @@ eas_connection_send_request (EasConnection* self,
         g_debug ("  eas_connection_send_request - Provisioning required");
 
         eas_request_base_SetConnection (&req->parent_instance, self);
+		// For provisioning copy the DBus Context of the original request.
+		eas_request_base_SetContext (&req->parent_instance,
+		                             eas_request_base_GetContext (&request->parent_instance));
+
         ret = eas_provision_req_Activate (req, error);
         if (!ret)
         {

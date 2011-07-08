@@ -161,7 +161,7 @@ EasConnection* eas_connection_new (EasAccount* account,
 void eas_connection_set_policy_key(EasConnection* self, 
                                    const gchar* policyKey);
 
-void eas_connection_resume_request(EasConnection* self);
+void eas_connection_resume_request(EasConnection* self, gboolean provisionSuccessful);
 /**
  * Send the fully formed request over the connection to the server.
  *
