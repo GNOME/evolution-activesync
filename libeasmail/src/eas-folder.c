@@ -107,64 +107,28 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 gboolean
 eas_folder_deserialise (EasFolder* folder, const gchar *data)
 {
-	gboolean ret = TRUE;
-	gchar *from = (gchar*) data;
+	gboolean ret = FALSE;
 	gchar *type = NULL;
+	gchar **strv;
 
 	g_assert (folder);
 	g_assert (data);
 
-	// parent_id
-	if (folder->parent_id != NULL) { //expect empty structure, but just in case
-		g_free (folder->parent_id);
-	}
-	folder->parent_id = get_next_field (&from, folder_separator);
-	if (!folder->parent_id) {
-		ret = FALSE;
-		goto cleanup;
+	strv = g_strsplit (data, folder_separator, 0);
+	if (!strv || g_strv_length(strv) != 4) {
+		g_warning ("Received invalid eas_folder: '%s'", data);
+		return FALSE;
 	}
 
-	// server_id
-	if (folder->folder_id != NULL) {
-		g_free (folder->folder_id);
-	}
-	folder->folder_id = get_next_field (&from, folder_separator);
-	if (!folder->folder_id) {
-		ret = FALSE;
-		goto cleanup;
-	}
+	folder->parent_id = strv[0];
+	folder->folder_id = strv[1];
+	folder->display_name = strv[2];
+	folder->type = atoi (strv[3]);
 
-	// display_name
-	if (folder->display_name != NULL) {
-		g_free (folder->display_name);
-	}
-	folder->display_name = get_next_field (&from, folder_separator);
-	if (!folder->display_name) {
-		ret = FALSE;
-		goto cleanup;
-	}
-
-	//type
-	type = get_next_field (&from, folder_separator);
-	if (!type) {
-		ret = FALSE;
-		goto cleanup;
-	}
-	if (strlen (type)) {
-		folder->type = atoi (type);
-		g_free (type);
-	}
-
-cleanup:
-	if (!ret) {
-		g_free (folder->parent_id);
-		folder->parent_id = NULL;
-		g_free (folder->folder_id);
-		folder->folder_id = NULL;
-		g_free (folder->display_name);
-		folder->display_name = NULL;
-	}
-
-	return ret;
+	/* We don't use g_strfreev() because we actually stole most of the
+	   strings. So free the type string and the array, but not the rest. */
+	g_free (strv[3]);
+	g_free (strv);
+	return TRUE;
 }
 
