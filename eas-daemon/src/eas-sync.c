@@ -54,7 +54,7 @@
 #include "eas-sync-req.h"
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
-#include "eas-add-calendar-req.h"
+#include "eas-add-item-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
 #include "../../libeassync/src/eas-item-info.h"
 

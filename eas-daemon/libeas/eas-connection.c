@@ -77,7 +77,7 @@
 #include "eas-delete-email-req.h"
 #include "eas-update-calendar-req.h"
 #include "eas-update-email-req.h"
-#include "eas-add-calendar-req.h"
+#include "eas-add-item-req.h"
 #include "eas-move-email-req.h"
 #include "eas-ping-req.h"
 #include "../src/activesyncd-common-defs.h"

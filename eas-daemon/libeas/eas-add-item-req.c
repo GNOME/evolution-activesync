@@ -51,7 +51,7 @@
  */
 
 #include "eas-sync-msg.h"
-#include "eas-add-calendar-req.h"
+#include "eas-add-item-req.h"
 #include "serialise_utils.h"
 #include "../../libeasaccount/src/eas-account-list.h"
 #include <string.h>
