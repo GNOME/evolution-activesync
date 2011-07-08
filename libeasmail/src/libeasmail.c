@@ -418,7 +418,8 @@ populate the object from a string
 static gboolean
 eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 {
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
+	gchar **strv;
 	gchar *from = (gchar*) data;
 
 	g_debug ("eas_updatedid_deserialise++");
@@ -427,20 +428,20 @@ eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 	g_assert (updated_id->dest_id == NULL);
 	g_assert (updated_id->src_id == NULL);
 
-	updated_id->src_id = get_next_field (&from, updated_id_separator);
-	if (!updated_id->src_id) {
-		ret = FALSE;
-		goto cleanup;
+	strv = g_strsplit (data, updated_id_separator, 0);
+	if (!strv || g_strv_length (strv) > 2) {
+		g_warning ("Received invalid updateid: '%s'", data);
+		g_strfreev (strv);
+		goto out;
 	}
-	updated_id->dest_id = get_next_field (&from, updated_id_separator);// optional, may be NULL
 
-cleanup:
-	if (!ret) {
-		g_free (updated_id->src_id);
-		updated_id->src_id = NULL;
-		g_free (updated_id->dest_id);
-		updated_id->dest_id = NULL;
-	}
+	updated_id->src_id = strv[0];
+	/* This one might be NULL; that's OK */
+	updated_id->dest_id = strv[1];
+
+	g_free (strv);
+
+ out:
 	g_debug ("eas_updatedid_deserialise++");
 	return ret;
 }
