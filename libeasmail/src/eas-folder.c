@@ -80,7 +80,7 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 {
     gboolean ret = TRUE;
     gchar type[4] = "";
-    gchar *strings[4] = {folder->parent_id, folder->folder_id, folder->display_name, type};
+    gchar *strings[5] = {folder->parent_id, folder->folder_id, folder->display_name, type, 0};
 
     g_assert (result);
     g_assert (*result == NULL);
@@ -94,7 +94,7 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
         snprintf (type, sizeof (type) / sizeof (type[0]), "%d", folder->type);
     }
 
-    *result = strconcatwithseparator (strings, sizeof (strings) / sizeof (strings[0]), folder_separator);
+    *result = g_strjoinv (folder_separator, strings);
 
     if (!*result)
     {
