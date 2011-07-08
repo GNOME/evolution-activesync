@@ -7,7 +7,7 @@
 #include "../libeasmail/src/libeasmail.h"
 #include "../libeasmail/src/eas-folder.h"
 
-extern gchar * g_account_id;
+static gchar * g_account_id = TEST_ACCOUNT_ID;
 Suite* eas_folderhierarchy_suite (void);
 
 static void
