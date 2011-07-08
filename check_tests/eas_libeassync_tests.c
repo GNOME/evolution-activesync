@@ -3,9 +3,13 @@
 #include <string.h>
 #include <check.h>
 
+#include "eas_test_user.h"
+
 #include "../libeassync/src/libeassync.h"
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
+
+static gchar * g_account_id = (gchar*)TEST_ACCOUNT_ID;
 
 static void testGetContactHandler (EasSyncHandler **sync_handler, const gchar* accountuid)
 {
@@ -57,10 +61,9 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
 
 START_TEST (test_get_sync_handler)
 {
-    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
 
-    testGetContactHandler (&sync_handler, accountuid);
+    testGetContactHandler (&sync_handler, g_account_id);
 
     g_object_unref (sync_handler);
 }
@@ -72,12 +75,11 @@ START_TEST (test_get_latest_contact_items)
     // it should be hard coded to the value used by the daemon but later
     // there should be a mechanism for getting the value from the same place
     // that the daemon uses
-    const char* accountuid = "123456789@andygould";
     EasSyncHandler *sync_handler = NULL;
 
     // get a handle to the DBus interface and associate the account ID with
     // this object
-    testGetContactHandler (&sync_handler, accountuid);
+    testGetContactHandler (&sync_handler, g_account_id);
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
