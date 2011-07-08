@@ -251,6 +251,8 @@ int main (int argc, char** argv)
         exit (EXIT_FAILURE);
     }
 
+    dbus_g_proxy_set_default_timeout (busProxy, 1000000);
+
     /* register the well-known name.*/
     g_debug ("D-Bus RequestName RPC ");
     if (!dbus_g_proxy_call (busProxy,
