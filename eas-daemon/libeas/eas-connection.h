@@ -201,6 +201,19 @@ gboolean eas_connection_send_request(EasConnection* self,
  */
 void eas_connection_add_mock_responses (const gchar** response_file_list);
 
+
+/**
+ * Returns the EasAccount associated with a given connection
+ *
+ * @param[in] self
+ *	  GObject instance of EasConnection.
+ *
+ * @return EasAccount object
+ *
+ */
+EasAccount *eas_connection_get_account (EasConnection *self);
+
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */

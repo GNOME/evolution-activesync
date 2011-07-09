@@ -632,6 +632,14 @@ void eas_connection_set_policy_key (EasConnection* self, const gchar* policyKey)
     g_debug ("eas_connection_set_policy_key--");
 }
 
+EasAccount *
+eas_connection_get_account (EasConnection *self)
+{
+    EasConnectionPrivate *priv = self->priv;
+
+	return priv->account;
+}
+
 void eas_connection_resume_request (EasConnection* self, gboolean provisionSuccessful)
 {
     EasConnectionPrivate *priv = self->priv;
