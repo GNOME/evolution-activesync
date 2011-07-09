@@ -79,7 +79,6 @@ struct _EasSyncReqPrivate
     gchar* accountID;
     gchar* folderID;
     EasItemType ItemType;
-	EasConnection* cnc;
 };
 
 
@@ -97,7 +96,6 @@ eas_sync_req_init (EasSyncReq *object)
     priv->state = EasSyncReqStep1;
     priv->accountID = NULL;
     priv->folderID = NULL;
-	priv->cnc = NULL;
 	priv->ItemType = EAS_ITEM_NOT_SPECIFIED;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC);
@@ -184,8 +182,6 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 		priv->folderID = g_strdup (folderId);
 	}
     priv->ItemType = type;
-
-	priv->cnc = eas_request_base_GetConnection (&self->parent_instance);
 
     eas_request_base_SetContext (&self->parent_instance, context);
 
