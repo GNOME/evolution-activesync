@@ -205,7 +205,8 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 
 	//headers
 	if (!strv[idx]) {
-		g_warning ("Insufficient data in eas_email_info_serialise");
+		// This is permitted; for deleted mail we get *only* the ID
+		ret = TRUE;
 		goto out;
 	}
 	list_len = atoi (strv[idx]);
