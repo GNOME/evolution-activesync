@@ -377,7 +377,7 @@ cleanup:
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));
 		// clean up on error
-		g_slist_foreach (*emailinfo_list, (GFunc) g_free, NULL);
+		g_slist_foreach (*emailinfo_list, (GFunc) g_object_unref, NULL);
 		g_slist_free (*emailinfo_list);
 		*emailinfo_list = NULL;
 	}
