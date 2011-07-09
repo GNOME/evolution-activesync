@@ -80,7 +80,6 @@ struct _EasSyncReqPrivate
     gchar* folderID;
     EasItemType ItemType;
 	EasConnection* cnc;
-	EasAccount* acc;
 };
 
 
@@ -99,7 +98,6 @@ eas_sync_req_init (EasSyncReq *object)
     priv->accountID = NULL;
     priv->folderID = NULL;
 	priv->cnc = NULL;
-	priv->acc = NULL;
 	priv->ItemType = EAS_ITEM_NOT_SPECIFIED;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_SYNC);
@@ -124,11 +122,6 @@ eas_sync_req_dispose (GObject *object)
     {
         g_object_unref (priv->syncFolderMsg);
 		priv->syncFolderMsg = NULL;
-    }
-	if (priv->acc)
-    {
-        g_object_unref (priv->acc);
-		priv->acc = NULL;
     }
 
 	G_OBJECT_CLASS (eas_sync_req_parent_class)->dispose (object);
@@ -176,16 +169,6 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 {
     EasSyncReq* self = g_object_new (EAS_TYPE_SYNC_REQ, NULL);
     EasSyncReqPrivate *priv = self->priv;
-	EasAccountList *account_list = NULL;
-	GConfClient* client = NULL;
-
-	client = gconf_client_get_default();
-	g_assert(client != NULL);
-	/* Get list of accounts from gconf repository */
-	account_list = eas_account_list_new (client);
-	g_assert(account_list != NULL);
-
-	priv->acc = eas_account_list_find (account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, accountID);
 
     g_debug ("eas_sync_req_new++");
 
