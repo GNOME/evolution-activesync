@@ -155,17 +155,9 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 
 	if(priv->folder_id == NULL|| strlen(priv->folder_id)<=0)
 	{
-		EasAccount* acc = NULL;
-		EasAccountList *account_list = NULL;
-		GConfClient* client = NULL;
+		EasAccount *acc;
 
-		client = gconf_client_get_default();
-		g_assert(client != NULL);
-		/* Get list of accounts from gconf repository */
-		account_list = eas_account_list_new (client);
-		g_assert(account_list != NULL);
-
-		acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->accountID);
+		acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
 		switch (priv->itemType)
 		{
 			case EAS_ITEM_CALENDAR:
