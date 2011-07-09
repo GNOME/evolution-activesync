@@ -232,6 +232,8 @@ eas_sync_req_Activate (EasSyncReq *self,
 	// which will write them to gconf 
 	if(priv->folderID == NULL)
 	{
+		EasAccount *acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
+
 		g_debug("folder id missing - look for default");
 		priv->state = EasSyncReqStep1;
 		switch(priv->ItemType)
@@ -239,7 +241,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 			case EAS_ITEM_CALENDAR:
 			{
 				g_debug("get calendar folder");
-				priv->folderID = g_strdup(eas_account_get_calendar_folder(priv->acc));
+				priv->folderID = g_strdup(eas_account_get_calendar_folder(acc));
 				if(priv->folderID != NULL)
 				{
 					g_debug("default folder id for calendar = [%s]", priv->folderID);
@@ -250,7 +252,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 			case EAS_ITEM_CONTACT:
 			{
 				g_debug("default folder id for contacts = [%s]", priv->folderID);
-				priv->folderID = g_strdup(eas_account_get_contact_folder(priv->acc));
+				priv->folderID = g_strdup(eas_account_get_contact_folder(acc));
 				if(priv->folderID != NULL)
 				{
 					priv->state = EasSyncReqStep2;
