@@ -176,6 +176,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 			default:
 				g_warning("trying to get default folder for unspecified item type");
 		}
+		g_object_unref (acc);
 
 	}
 

@@ -204,7 +204,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 			default:
 				g_warning("trying to get default folder for unspecified item type");
 		}
-
+		g_object_unref (acc);
 	}
     //create sync msg object
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);

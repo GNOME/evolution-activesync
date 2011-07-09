@@ -304,6 +304,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     }
 
 finish:
+	g_object_unref (acc);
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);

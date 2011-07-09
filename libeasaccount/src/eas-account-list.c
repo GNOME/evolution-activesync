@@ -936,6 +936,8 @@ eas_account_list_find (EasAccountList *account_list,
 	}
 	g_object_unref (it);
 
+	if (account)
+		g_object_ref (account);
 	g_debug("eas_account_list_find--");
 	return account;
 }

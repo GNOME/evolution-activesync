@@ -193,6 +193,7 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
                g_assert(account_list != NULL);
                acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);
                priv->folder_id = eas_account_get_calendar_folder (acc);
+			   g_object_unref (acc);
        }
 
 	g_debug ("eas_update_item_req_Activate1");
