@@ -184,15 +184,8 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
        if(priv->folder_id == NULL|| strlen(priv->folder_id)<=0)
        {
-               EasAccount* acc = NULL;
-               EasAccountList *account_list = NULL;
-               GConfClient* client = NULL;
-               client = gconf_client_get_default();
-               g_assert(client != NULL);
-               /* Get list of accounts from gconf repository */
-               account_list = eas_account_list_new (client);
-               g_assert(account_list != NULL);
-               acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);
+               EasAccount *acc;
+			   acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
                switch (priv->item_type)
 				{
 					case EAS_ITEM_CALENDAR:
