@@ -209,7 +209,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 	if(sync_key_in ==NULL||(strlen(sync_key_in)<=0))
 	{
 		g_debug ("updating sync key to 0");
-		sync_key_in = g_strdup("0");
+		sync_key_in = "0";
 	}
 
 
@@ -283,9 +283,9 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
         g_slist_foreach (*items_deleted, (GFunc) g_free, NULL);
         g_free (*items_deleted);
         *items_deleted = NULL;
-    }
+    } else {
 	g_debug("sync_key = %s", *sync_key_out);
-	
+    }
 
     g_debug ("eas_sync_handler_get_items--");
     return ret;
