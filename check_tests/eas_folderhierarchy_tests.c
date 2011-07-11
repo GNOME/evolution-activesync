@@ -31,7 +31,7 @@ START_TEST (test_get_folder_hierarchy)
 {
     GSList *added = NULL, *updated = NULL, *deleted = NULL;
     EasEmailHandler *email_handler = NULL;
-    gchar syncKey[64] = "1";
+    gchar syncKey[64] = "0";
     GError *error = NULL;
     gboolean result = FALSE;
 
