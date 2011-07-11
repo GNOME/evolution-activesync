@@ -60,6 +60,7 @@ START_TEST (test_get_folder_hierarchy)
 
     g_message("Updated sync key = [%s]", syncKey);
 
+    g_message("Display name:type:folder_id:parent_id");
     g_message("======== Added   ========");
     g_slist_foreach (added,   (GFunc)log_and_free, NULL);
     g_message("======== Updated ========");
