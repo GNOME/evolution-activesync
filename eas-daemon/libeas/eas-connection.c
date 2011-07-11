@@ -619,7 +619,7 @@ void eas_connection_resume_request (EasConnection* self, gboolean provisionSucce
 static gboolean
 eas_queue_soup_message (gpointer _request)
 {
-	struct _EasRequestBase *request = _request;
+	EasRequestBase *request = EAS_REQUEST_BASE (_request);
 	EasConnection *self = eas_request_base_GetConnection (request);
 	SoupMessage *msg = eas_request_base_GetSoupMessage (request);
 	EasConnectionPrivate *priv = self->priv;
@@ -799,7 +799,7 @@ gboolean
 eas_connection_send_request (EasConnection* self, 
                              const gchar* cmd, 
                              xmlDoc* doc, 
-                             struct _EasRequestBase *request, 
+                             EasRequestBase *request, 
                              GError** error)
 {
     gboolean ret = TRUE;
@@ -845,12 +845,13 @@ eas_connection_send_request (EasConnection* self,
     if ( (!policy_key || !g_strcmp0("0",policy_key)) && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
+		EasRequestBase *req_base = EAS_REQUEST_BASE (&req->parent_instance);
         g_debug ("  eas_connection_send_request - Provisioning required");
 
         eas_request_base_SetConnection (&req->parent_instance, self);
 		// For provisioning copy the DBus Context of the original request.
-		eas_request_base_SetContext (&req->parent_instance,
-		                             eas_request_base_GetContext (&request->parent_instance));
+		eas_request_base_SetContext (req_base,
+		                             eas_request_base_GetContext (request));
 
         ret = eas_provision_req_Activate (req, error);
         if (!ret)
@@ -1739,8 +1740,8 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 void
 handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 {
-    EasRequestBase *req = (EasRequestBase *) data;
-    EasConnection *self = (EasConnection *) eas_request_base_GetConnection (req);
+    EasRequestBase *req = EAS_REQUEST_BASE (data);
+    EasConnection *self = EAS_CONNECTION (eas_request_base_GetConnection (req));
     EasConnectionPrivate *priv = self->priv;
     xmlDoc *doc = NULL;
     WB_UTINY *xml = NULL;
