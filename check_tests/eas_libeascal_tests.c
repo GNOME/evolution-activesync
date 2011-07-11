@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <check.h>
 
 #include "eas_test_user.h"
@@ -91,8 +93,7 @@ METHOD:PUBLISH\n\
 BEGIN:VEVENT\n\
 DTSTART:20110628T103000Z\n\
 SUMMARY:this is test item 1 - updated\n\
-UID:040001008200E00074C5B7601A82Esdfgfd7D1FCCasdfdsfasd\n\
- 0100000000B9C7DF6EBB049448E3D99B8CC68E560\n\
+UID: %s\n\
 LOCATION:\n\
 DTEND:20110628T113000Z\n\
 DESCRIPTION:\n\
@@ -212,6 +213,23 @@ DESCRIPTION:Reminder\n\
 END:VALARM\n\
 END:VEVENT\n\
 END:VCALENDAR\n";
+
+gchar *
+random_uid_new (void)
+{
+	static gint serial;
+	static gchar *hostname;
+
+	if (!hostname) {
+		hostname = (gchar *) g_get_host_name ();
+	}
+
+	return g_strdup_printf ("%luA%luB%dC%s",
+				(gulong) time (NULL),
+				(gulong) getpid (),
+				serial++,
+				hostname);
+}
 
 
 static void testGetCalendarHandler (EasSyncHandler **sync_handler, const gchar* accountuid)
@@ -538,16 +556,17 @@ START_TEST (test_eas_sync_handler_add_cal)
     GSList *calitemToUpdate = NULL;
     EasItemInfo *updatedcalitem = NULL;
     gboolean rtn = FALSE;
-
-
+    gchar *random_uid = random_uid_new();
 
     updatedcalitem = eas_item_info_new();
-    updatedcalitem->client_id = g_strdup ("sdfasdfsdf");
-    updatedcalitem->data = g_strdup (TEST_VCALENDAR3);
+    updatedcalitem->client_id = random_uid; // Pass ownership
+    updatedcalitem->data = g_strdup_printf(TEST_VCALENDAR3, random_uid);
+
+    g_debug("Random UID:     [%s]", random_uid);
+    g_debug("TEST_VCALENDAR3 [%s]", updatedcalitem->data);
 
     calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 
-	
 	g_free(folder_sync_key_in);
 	folder_sync_key_in = g_strdup(folder_sync_key_out);
 	g_free(folder_sync_key_out);
