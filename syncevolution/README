@@ -61,8 +61,14 @@ $ syncevolution exchange calendar
 Backend Testing
 ===============
 
+In addition to an activesyncd account called <EAS account ID> (usually
+an email adddress), also create an activesyncd account called <EAS
+account ID>_B ("_B" appended) with the same settings. This is required
+for Client::Source::*::testChanges, which must simulate two
+independent ActiveSync clients.
+
 Configure "local" testing (backend is covered, no syncing involved):
-./syncevolution --configure username=<email adddress identifying the account> \
+./syncevolution --configure username=<EAS account ID> \
                 --template SyncEvolution target-config@client-test
 
 On MeeGo:

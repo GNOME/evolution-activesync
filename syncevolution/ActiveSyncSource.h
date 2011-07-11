@@ -113,7 +113,13 @@ class ActiveSyncSource :
         m_ids(new PrefixConfigNode("item-",
                                    boost::shared_ptr<ConfigNode>(new SafeConfigNode(params.m_nodes.getTrackingNode()))))
         {
+            if (!m_context) {
+                m_context.reset(new SyncConfig());
+            }
         }
+
+    /** sync config used by this instance, never NULL */
+    SyncConfig &getSyncConfig() { return *m_context; }
 
  protected:
 

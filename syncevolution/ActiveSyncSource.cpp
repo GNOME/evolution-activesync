@@ -261,7 +261,7 @@ void ActiveSyncSource::readItem(const std::string &luid, std::string &item)
     // return straight from cache
     std::map<std::string, std::string>::iterator it = m_items.find(luid);
     if (it == m_items.end()) {
-        throwError("internal error: item data not available");
+        throwError(std::string("internal error: item data for ") + luid + " not available");
     }
     item = it->second;
 }

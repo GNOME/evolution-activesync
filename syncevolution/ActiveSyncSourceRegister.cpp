@@ -133,6 +133,17 @@ static TestingSyncSource *createEASSource(const ClientTestConfig::createsource_t
                                           ClientTest &client, int source, bool isSourceA)
 {
     TestingSyncSource *res = create(client, source, isSourceA);
+
+    // Mangle username: if the base username in the config is account
+    // "foo", then source B uses "foo_B", because otherwise it'll end
+    // up sharing change tracking with source A.
+    if (!isSourceA) {
+        ActiveSyncSource *eassource = static_cast<ActiveSyncSource *>(res);
+        std::string account = eassource->getSyncConfig().getSyncUsername();
+        account += "_B";
+        eassource->getSyncConfig().setSyncUsername(account, true);
+    }
+
     if (boost::ends_with(res->getDatabaseID(), "_1")) {
         // only default database currently supported,
         // use that instead of first named database
