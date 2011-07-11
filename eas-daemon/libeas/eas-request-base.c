@@ -156,6 +156,23 @@ eas_request_base_MessageComplete (EasRequestBase *self,
     return EAS_REQUEST_BASE_GET_CLASS (self)->do_MessageComplete (self, doc, error_in);
 }
 
+gboolean
+eas_request_base_SendRequest (EasRequestBase* self, 
+                              const gchar* cmd, 
+                              xmlDoc *doc, 
+                              GError **error)
+{
+    EasRequestBasePrivate *priv = self->priv;
+
+    g_debug ("eas_request_base_SendRequest");
+
+    return eas_connection_send_request (priv->connection,
+                                       cmd,
+                                       doc, // full transfer
+                                       self,
+                                       error);
+}
+
 void
 eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type)
 {

@@ -127,6 +127,9 @@ GType eas_request_base_get_type (void) G_GNUC_CONST;
 
 gboolean eas_request_base_MessageComplete (EasRequestBase *self, xmlDoc* doc, GError* error_in);
 
+gboolean eas_request_base_SendRequest (EasRequestBase* self, const gchar* cmd, xmlDoc *doc, GError **error);
+
+
 /**
  * Getter for request type.
  *
