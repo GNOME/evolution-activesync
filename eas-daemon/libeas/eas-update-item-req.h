@@ -59,7 +59,7 @@
 G_BEGIN_DECLS
 
 #define EAS_TYPE_UPDATE_ITEM_REQ            (eas_update_item_req_get_type ())
-#define EAS_UPDATE_ITEM_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_UPDATE_ITEM_REQ EasUpdateItemReq))
+#define EAS_UPDATE_ITEM_REQ(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_UPDATE_ITEM_REQ, EasUpdateItemReq))
 #define EAS_UPDATE_ITEM_REQ_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), EAS_TYPE_UPDATE_ITEM_REQ, EasUpdateItemReqClass))
 #define EAS_IS_UPDATE_ITEM_REQ(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), EAS_TYPE_UPDATE_ITEM_REQ))
 #define EAS_IS_UPDATE_ITEM_REQ_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), EAS_TYPE_UPDATE_ITEM_REQ))
@@ -103,11 +103,11 @@ GType eas_update_item_req_get_type (void) G_GNUC_CONST;
  * @return An allocated EasUpdateItemReq GObject or NULL
  */
 EasUpdateItemReq *eas_update_item_req_new(const gchar* account_id, 
-                                                  const gchar *sync_key, 
-                                                  const EasItemType item_type, 
-                                                  const gchar *folder_id, 
-                                                  const GSList *serialised_calendar, 
-                                                  DBusGMethodInvocation *context);
+                                          const gchar *sync_key, 
+                                          const EasItemType item_type, 
+                                          const gchar *folder_id, 
+                                          const GSList *serialised_calendar, 
+                                          DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
