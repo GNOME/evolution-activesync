@@ -55,6 +55,7 @@
 #include <libical/icalcomponent.h>
 #include <libical/icaltypes.h>
 #include <libical/icalduration.h>
+#include <libical/icaltimezone.h>
 
 #include <libwbxml-1.0/wbxml/wbxml.h>
 
@@ -1959,7 +1960,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
+static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, icaltimezone* icaltz)
 {
 	if (vevent)
 	{
@@ -1985,13 +1986,16 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				case ICAL_DTSTAMP_PROPERTY:
 				{
 					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
+					const gchar* timestamp = icalproperty_get_value_as_string(prop);
 					if(!g_str_has_suffix (timestamp, "Z"))
-					   {
-						  modified = g_strconcat(timestamp, "Z", NULL);
-						  timestamp = modified;
-					   }
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)timestamp);
+					{
+					  modified = g_strconcat(timestamp, "Z", NULL);
+					}
+					else
+					{
+						modified = g_strdup(timestamp);
+					}
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)modified);
  					g_debug("dtstamp cleanup");
 					g_free(modified);
 				}
@@ -2000,15 +2004,26 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				// DTSTART
 				case ICAL_DTSTART_PROPERTY:
 				{
+					int utc_offset, isDaylight;
+					struct icaltimetype tt;
 					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
+					const gchar* timestamp =NULL;
+					
+					//get start time, convert it to UTC and suffix Z onto it
+					tt = icalproperty_get_dtstart(prop);
+					utc_offset = icaltimezone_get_utc_offset(icaltz, &tt, &isDaylight);
+					icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
+					timestamp = icaltime_as_ical_string(tt);
 					if(!g_str_has_suffix (timestamp, "Z"))
 				   {
 					  modified = g_strconcat(timestamp, "Z", NULL);
-					  timestamp = modified;
 				   }
+					else
+					{
+						modified = g_strdup(timestamp);
+					}
 
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)timestamp);
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)modified);
 					// And additionally store the start time so we can calculate the AllDayEvent value later
 					startTime = icalproperty_get_dtstart(prop);
 					g_debug("dtstart cleanup");
@@ -2019,14 +2034,25 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData)
 				// DTEND
 				case ICAL_DTEND_PROPERTY:
 				{
+					int utc_offset, isDaylight;
+					struct icaltimetype tt;
 					gchar* modified=NULL;
-					gchar* timestamp = icalproperty_get_value_as_string(prop);
+					const gchar* timestamp =NULL;
+					
+					//get end time, convert it to UTC and suffix Z onto it
+					tt = icalproperty_get_dtend(prop);
+					utc_offset = icaltimezone_get_utc_offset(icaltz, &tt, &isDaylight);
+					icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
+					timestamp = icaltime_as_ical_string(tt);
 					if(!g_str_has_suffix (timestamp, "Z"))
 					{
 					  modified = g_strconcat(timestamp, "Z", NULL);
-					  timestamp = modified;
 					}
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)timestamp);
+					else
+					{
+						modified = g_strdup(timestamp);
+					}
+					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)modified);
 					// And additionally store the end time so we can calculate the AllDayEvent value later
 					endTime = icalproperty_get_dtend(prop);
 					g_free(modified);
@@ -2466,7 +2492,6 @@ static void _ical2eas_process_vtimezone(icalcomponent* vtimezone, xmlNodePtr app
 	}
 }
 
-
 /**
  * Parse an EasCalInfo structure and convert to EAS XML format
  *
@@ -2490,12 +2515,25 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 	    (ical = icalparser_parse_string(calInfo->data)) &&
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
-		icalcomponent* vevent = NULL;
+		icalcomponent* vevent= NULL;
+		icalcomponent* vtimezone = NULL;
+		icaltimezone* icaltz = NULL;
+		icalproperty* tzid = NULL;
+
+		vtimezone = icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT);
+
+		tzid = icalcomponent_get_first_property(vtimezone, ICAL_TZID_PROPERTY);
+	
+		if (tzid)
+		{
+			icaltz = icaltimezone_get_builtin_timezone(icalproperty_get_value_as_string(tzid));
+		}
+
 		
 		// Process the components of the VCALENDAR
-		_ical2eas_process_vtimezone(icalcomponent_get_first_component(ical, ICAL_VTIMEZONE_COMPONENT), appData);
+		_ical2eas_process_vtimezone(vtimezone, appData);
 		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
-		_ical2eas_process_vevent(vevent, appData);
+		_ical2eas_process_vevent(vevent, appData, icaltz);
 		_ical2eas_process_valarm(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
 
 		if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 4))
