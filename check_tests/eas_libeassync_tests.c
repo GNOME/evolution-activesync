@@ -9,7 +9,73 @@
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
 
+#include "../libeasmail/src/libeasmail.h"
+#include "../libeasmail/src/eas-folder.h"
+
 static gchar * g_account_id = (gchar*)TEST_ACCOUNT_ID;
+
+static gchar * g_contacts_id = NULL;
+
+static void getFolderHierarchy (void)
+{
+    gboolean ret = FALSE;
+    GSList *item = NULL;
+    GError *error = NULL;
+    GSList *created = NULL, *updated = NULL, *deleted = NULL;
+    gchar sync_key[64] = "0";
+
+    EasEmailHandler *email_handler = eas_mail_handler_new (g_account_id, &error);
+
+    mark_point();
+    ret  = eas_mail_handler_sync_folder_hierarchy (email_handler,
+                                                   sync_key,
+                                                   &created,
+                                                   &updated,
+                                                   &deleted,
+                                                   &error);
+    mark_point();
+    
+    // if the call to the daemon returned an error, report and drop out of the test
+
+    if (!ret)
+    {
+        fail_if(!error, "eas_mail_handler_sync_folder_hierarchy failed but no error was set.");
+        fail_if (error, "%s", error->message);
+    }
+
+    fail_if (created == NULL);
+
+    // the exchange server should increment the sync key and send back to the
+    // client so that the client can track where it is with regard to sync.
+    // therefore the key must not be zero as this is the seed value for this test
+    
+    fail_if (!g_strcmp0 (sync_key, "0"),
+             "Sync Key not updated by call the exchange server %s", sync_key);
+             
+    for (item = created; item; item = item->next)
+    {
+        EasFolder *folder = item->data;
+        if (!g_strcmp0("Contacts", folder->display_name))
+        {
+            g_free(g_contacts_id);
+            g_contacts_id = g_strdup(folder->folder_id);
+            break;
+        }
+    }
+
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (email_handler);
+
+    fail_if(g_contacts_id == NULL);
+    g_message("Contacts Id = [%s]", g_contacts_id);
+}
 
 static void testGetContactHandler (EasSyncHandler **sync_handler, const gchar* accountuid)
 {
@@ -33,14 +99,22 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
                                    GError **error)
 {
     gboolean ret = FALSE;
+    gboolean more = FALSE;
+
     mark_point();
-	gboolean more =FALSE;
-    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, &sync_key_out, EAS_ITEM_CONTACT, "2",
-                                                & (*created),
-                                                & (*updated),
-                                                & (*deleted),
-                                                & more,
-                                                & (*error));
+    getFolderHierarchy ();
+    mark_point();
+
+    ret  = eas_sync_handler_get_items (sync_handler, 
+                                       sync_key_in, 
+                                       &sync_key_out, 
+                                       EAS_ITEM_CONTACT, 
+                                       g_contacts_id,
+                                       created,
+                                       updated,
+                                       deleted,
+                                       &more,
+                                       error);
     mark_point();
     // if the call to the daemon returned an error, report and drop out of the test
     if ( (*error) != NULL)
@@ -51,10 +125,9 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
     // the exchange server should increment the sync key and send back to the
     // client so that the client can track where it is with regard to sync.
     // therefore the key must not be zero as this is the seed value for this test
-    fail_if (sync_key_out==NULL, "Sync Key not updated by call the exchange server");
-    fail_if (g_slist_length (*created) == 0, "list length =0");
-    EasItemInfo *cal = (*created)->data;
-
+    fail_if (sync_key_out == NULL, "Sync Key not updated by call the exchange server");
+    fail_if ((*created) == 0, "list length = 0");
+//    EasItemInfo *cal = (*created)->data;
 }
 
 
@@ -95,8 +168,15 @@ START_TEST (test_get_latest_contact_items)
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetLatestContacts (sync_handler, sync_key_in, sync_key_out, &created, &updated, &deleted, &error);
+    testGetLatestContacts (sync_handler, 
+                           sync_key_in, 
+                           sync_key_out, 
+                           &created, 
+                           &updated, 
+                           &deleted, 
+                           &error);
 
+    mark_point();
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
     g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
