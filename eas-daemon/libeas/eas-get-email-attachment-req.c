@@ -89,7 +89,7 @@ eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
 static void
 eas_get_email_attachment_req_dispose (GObject *object)
 {
-    EasGetEmailAttachmentReq* self = (EasGetEmailAttachmentReq *) object;
+    EasGetEmailAttachmentReq* self = EAS_GET_EMAIL_ATTACHMENT_REQ (object);
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
 
     g_debug ("eas_get_email_attachment_req_dispose++");
@@ -107,11 +107,10 @@ eas_get_email_attachment_req_dispose (GObject *object)
 static void
 eas_get_email_attachment_req_finalize (GObject *object)
 {
-    EasGetEmailAttachmentReq* self = (EasGetEmailAttachmentReq *) object;
+    EasGetEmailAttachmentReq* self = EAS_GET_EMAIL_ATTACHMENT_REQ (object);
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
 
     g_debug ("eas_get_email_attachment_req_finalize++");
-
 
     g_free (priv->fileReference);
     g_free (priv->mimeDirectory);
@@ -167,6 +166,7 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** 
     gboolean ret;
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
     xmlDoc *doc = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_get_email_attachment_req_Activate++");
 
@@ -184,10 +184,9 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** 
         goto finish;
     }
 
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "ItemOperations",
                                        doc,
-                                       (struct _EasRequestBase *) self,
                                        error);
 finish:
     if (!ret)
@@ -204,6 +203,7 @@ gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq*
     gboolean ret = TRUE;
     EasGetEmailAttachmentReqPrivate *priv = self->priv;
     GError *error = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_get_email_attachment_req_MessageComplete++");
 
@@ -227,12 +227,12 @@ finish:
 	if(!ret)
 	{
 		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
 	}
 	else
 	{
-		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+		dbus_g_method_return (eas_request_base_GetContext (parent));
 	}
     g_debug ("eas_get_email_attachment_req_MessageComplete--");
 	return TRUE;

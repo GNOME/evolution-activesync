@@ -95,7 +95,7 @@ eas_update_item_req_init (EasUpdateItemReq *object)
 static void
 eas_update_item_req_dispose (GObject *object)
 {
-    EasUpdateItemReq *req = (EasUpdateItemReq *) object;
+    EasUpdateItemReq *req = EAS_UPDATE_ITEM_REQ (object);
     EasUpdateItemReqPrivate *priv = req->priv;
 
     g_debug ("eas_update_item_req_dispose++");
@@ -114,7 +114,7 @@ eas_update_item_req_dispose (GObject *object)
 static void
 eas_update_item_req_finalize (GObject *object)
 {
-    EasUpdateItemReq *req = (EasUpdateItemReq *) object;
+    EasUpdateItemReq *req = EAS_UPDATE_ITEM_REQ (object);
     EasUpdateItemReqPrivate *priv = req->priv;
 
     g_debug ("eas_update_item_req_finalize++");
@@ -178,6 +178,7 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
     EasUpdateItemReqPrivate *priv = self->priv;
     xmlDoc *doc = NULL;
 	gboolean success = FALSE;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_update_item_req_Activate++");
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -205,10 +206,9 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
     doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
 
 	g_debug ("eas_update_item_req_Activate3");
-    success = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    success = eas_request_base_SendRequest (parent,
                                            "Sync",
                                            doc,
-                                           (struct _EasRequestBase *) self,
                                            error);
 
 	g_debug ("eas_update_item_req_Activate4");
@@ -229,7 +229,9 @@ gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 	GError *local_error = NULL;
     EasUpdateItemReqPrivate *priv = self->priv;
 	gchar *ret_sync_key = NULL;
-    g_debug ("eas_update_item_req_MessageComplete++");
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+
+	g_debug ("eas_update_item_req_MessageComplete++");
 
 	if (error)
 	{
@@ -246,12 +248,12 @@ gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 finish:
 	if (local_error)
     {
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), local_error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), local_error);
         g_error_free (local_error);
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+        dbus_g_method_return (eas_request_base_GetContext (parent),
                               ret_sync_key);
     }
 	// We must always free doc and release the semaphore

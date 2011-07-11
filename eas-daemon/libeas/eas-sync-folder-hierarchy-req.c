@@ -169,10 +169,10 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
 	// It gives us the folder list on the *first* attempt, and
 	// if we loop, we throw away that information and get
 	// "no changes" for the second call.
-    if (1 || syncKey && g_strcmp0 (syncKey, "0"))
-    {
+//    if (1 || syncKey && g_strcmp0 (syncKey, "0"))
+//    {
         priv->state = EasSyncFolderHierarchyStep2;
-    }
+//    }
 
     g_debug ("eas_sync_folder_hierarchy_req_new--");
     return self;
@@ -187,6 +187,7 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
     gboolean ret = FALSE;
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
     xmlDoc *doc = NULL;
+    EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_sync_folder_hierarchy_req_Activate++");
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -212,11 +213,8 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
         priv->syncFolderMsg = NULL;
         goto finish;
     }
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                       "FolderSync",
-                                       doc, // full transfer
-                                       (struct _EasRequestBase *) self,
-                                       error);
+
+    ret = eas_request_base_SendRequest (parent, "FolderSync", doc, error);
 
 finish:
     g_debug ("eas_sync_folder_hierarchy_req_Activate--");
@@ -240,6 +238,9 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	gchar** ret_created_folders_array = NULL;
 	gchar** ret_updated_folders_array = NULL;
 	gchar** ret_deleted_folders_array = NULL;
+
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+
 
     // if an error occurred, store it and signal daemon
     if (error_in)
@@ -294,11 +295,11 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
             //move to new state
             priv->state = EasSyncFolderHierarchyStep2;
 
-            ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-                                               "FolderSync",
-                                               newMsgDoc, // full transfer
-                                               (struct _EasRequestBase *) self,
-                                               &error);
+            ret = eas_request_base_SendRequest (parent, 
+                                                "FolderSync", 
+                                                newMsgDoc, // full transfer
+                                                &error);
+
             if (!ret)
             {
                 g_assert (error != NULL);
@@ -345,7 +346,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			}
 			else
 			{
-				dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+				dbus_g_method_return (eas_request_base_GetContext (parent),
 					                  ret_sync_key,
 					                  ret_created_folders_array,
 				                      ret_deleted_folders_array,
@@ -364,7 +365,7 @@ finish:
 	if (!ret)
 	{
 		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 		//there has been an error - ensure that we clean this request up
 		cleanup = TRUE;

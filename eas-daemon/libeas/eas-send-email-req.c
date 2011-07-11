@@ -91,7 +91,7 @@ eas_send_email_req_init (EasSendEmailReq *object)
 static void 
 eas_send_email_req_dispose (GObject *object)
 {
-    EasSendEmailReq *req = (EasSendEmailReq *) object;
+    EasSendEmailReq *req = EAS_SEND_EMAIL_REQ (object);
     EasSendEmailReqPrivate *priv = req->priv;
 
     g_debug ("eas_send_email_req_dispose++");
@@ -108,7 +108,7 @@ eas_send_email_req_dispose (GObject *object)
 static void
 eas_send_email_req_finalize (GObject *object)
 {
-    EasSendEmailReq *req = (EasSendEmailReq *) object;
+    EasSendEmailReq *req = EAS_SEND_EMAIL_REQ (object);
     EasSendEmailReqPrivate *priv = req->priv;
 
     g_debug ("eas_send_email_req_finalize++");
@@ -171,6 +171,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     guint64 size = 0;
     size_t result = 0;
 	gchar* mime_string = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     // store flag in base (doesn't set the flag as in signal the waiters)
     g_debug ("eas_send_email_req_Activate++");
@@ -242,10 +243,9 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
         goto finish;
     }
     g_debug ("send message");
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "SendMail",
                                        doc, // full transfer
-                                       (struct _EasRequestBase *) self,
                                        error);
 finish:
     if (file == NULL)
@@ -267,6 +267,7 @@ eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* 
     gboolean ret = TRUE;
     GError *error = NULL;
     EasSendEmailReqPrivate *priv = self->priv;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_send_email_req_MessageComplete++");
 
@@ -289,12 +290,12 @@ finish:
     if (!ret)
 	{
         g_assert (error != NULL);
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+        dbus_g_method_return (eas_request_base_GetContext (parent));
     }
 
     g_debug ("eas_send_email_req_MessageComplete--");

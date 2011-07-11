@@ -90,7 +90,7 @@ eas_provision_req_init (EasProvisionReq *object)
 static void
 eas_provision_req_dispose (GObject *object)
 {
-    EasProvisionReq *req = (EasProvisionReq *) object;
+    EasProvisionReq *req = EAS_PROVISION_REQ (object);
     EasProvisionReqPrivate *priv = req->priv;
 	
     if (priv->msg)
@@ -157,6 +157,7 @@ eas_provision_req_Activate (EasProvisionReq* self, GError** error)
     gboolean ret = FALSE;
     EasProvisionReqPrivate *priv = self->priv;
     xmlDoc *doc = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -170,10 +171,9 @@ eas_provision_req_Activate (EasProvisionReq* self, GError** error)
         goto finish;
     }
 
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "Provision",
                                        doc, // full transfer
-                                       (struct _EasRequestBase *) self,
                                        error);
 finish:
     return ret;
@@ -186,6 +186,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
     gboolean ret = FALSE;
     EasProvisionReqPrivate *priv = self->priv;
 	gboolean cleanup = FALSE;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_provision_req_MessageComplete++");
 
@@ -253,9 +254,9 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
         {
             g_debug ("eas_provision_req_MessageComplete - EasProvisionStep2");
 
-            eas_connection_set_policy_key (eas_request_base_GetConnection (&self->parent_instance),
+            eas_connection_set_policy_key (eas_request_base_GetConnection (parent),
                                            eas_provision_msg_get_policy_key (priv->msg));
-            eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance), TRUE);
+            eas_connection_resume_request (eas_request_base_GetConnection (parent), TRUE);
 	        cleanup = TRUE;
         }
         break;
@@ -267,12 +268,12 @@ finish:
 	{
 		g_assert (error != NULL);
 		// @@TRICKY For provisioning the context belongs to the original request.
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 		// There has been an error - ensure that we clean this request up
 		cleanup = TRUE;
 		// We also need to clean up the 'resume request'
-		eas_connection_resume_request (eas_request_base_GetConnection (&self->parent_instance), FALSE);
+		eas_connection_resume_request (eas_request_base_GetConnection (parent), FALSE);
 	}
 
     g_debug ("eas_provision_req_MessageComplete--");

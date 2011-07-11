@@ -110,7 +110,7 @@ eas_sync_req_init (EasSyncReq *object)
 static void
 eas_sync_req_dispose (GObject *object)
 {
-    EasSyncReq *req = (EasSyncReq*) object;
+    EasSyncReq *req = EAS_SYNC_REQ (object);
     EasSyncReqPrivate *priv = req->priv;
 
     g_debug ("eas_sync_req_dispose++");
@@ -140,7 +140,7 @@ eas_sync_req_dispose (GObject *object)
 static void
 eas_sync_req_finalize (GObject *object)
 {
-    EasSyncReq *req = (EasSyncReq*) object;
+    EasSyncReq *req = EAS_SYNC_REQ (object);
     EasSyncReqPrivate *priv = req->priv;
 
     g_debug ("eas_sync_req_finalize++");
@@ -218,6 +218,7 @@ eas_sync_req_Activate (EasSyncReq *self,
     EasSyncReqPrivate* priv;
     xmlDoc *doc;
     gboolean getChanges = FALSE;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_sync_req_activate++");
 
@@ -296,10 +297,9 @@ eas_sync_req_Activate (EasSyncReq *self,
 		}
 
 		g_debug ("eas_sync_req_activate - send message");
-		ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+		ret = eas_request_base_SendRequest (parent,
 		                                   "FolderSync",
-		                                   doc,
-		                                   (struct _EasRequestBase *) self,
+		                                   doc, // full transfer
 		                                   error);
 		
 	}
@@ -346,10 +346,9 @@ eas_sync_req_Activate (EasSyncReq *self,
 		}
 
 		g_debug ("eas_sync_req_activate - send message");
-		ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+		ret = eas_request_base_SendRequest (parent,
 		                                   "Sync",
-		                                   doc,
-		                                   (struct _EasRequestBase *) self,
+		                                   doc, // full transfer
 		                                   error);
 	}
 finish:
@@ -385,6 +384,8 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 	GSList* added_items = NULL;
     GSList* updated_items = NULL;
     GSList* deleted_items = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+
 
     g_debug ("eas_sync_req_MessageComplete++");
 
@@ -468,11 +469,10 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			}
 
 			g_debug ("eas_sync_req_MEssageCompete - send  sync message");
-			ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
-				                               "Sync",
-				                               doc,
-				                               (struct _EasRequestBase *) self,
-				                               &error);
+			ret = eas_request_base_SendRequest (parent,
+				                                "Sync",
+				                                doc,
+				                                &error);
 			
 		}
 		break;
@@ -517,9 +517,9 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             //move to new state
             priv->state = EasSyncReqStep3;
 
-            ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+            ret = eas_request_base_SendRequest (parent,
                                                "Sync",
-                                               doc, (struct _EasRequestBase *) self,
+                                               doc,
                                                &error);
             if (!ret)
             {
@@ -592,7 +592,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				goto finish;
 				}
 			}
-			dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+			dbus_g_method_return (eas_request_base_GetContext (parent),
                               ret_sync_key,
                               ret_more_available,
                               ret_added_item_array,
@@ -608,7 +608,7 @@ finish:
     {
         g_debug ("returning error %s", error->message);
         g_assert (error != NULL);
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
 		error = NULL;
 		

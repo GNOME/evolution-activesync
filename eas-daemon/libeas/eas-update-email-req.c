@@ -96,7 +96,7 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 static void
 eas_update_email_req_dispose (GObject *object)
 {
-    EasUpdateEmailReq *req = (EasUpdateEmailReq *) object;
+    EasUpdateEmailReq *req = EAS_UPDATE_EMAIL_REQ (object);
     EasUpdateEmailReqPrivate *priv = req->priv;
 
     g_debug ("eas_update_email_req_dispose++");
@@ -115,7 +115,7 @@ eas_update_email_req_dispose (GObject *object)
 static void
 eas_update_email_req_finalize (GObject *object)
 {
-    EasUpdateEmailReq *req = (EasUpdateEmailReq *) object;
+    EasUpdateEmailReq *req = EAS_UPDATE_EMAIL_REQ (object);
     EasUpdateEmailReqPrivate *priv = req->priv;
 
     g_debug ("eas_update_email_req_finalize++");
@@ -146,10 +146,10 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 
 // TODO - update this to take a GSList of serialised emails? rem to copy the list
 EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id, 
-                                                                                   const gchar *sync_key, 
-                                                                                   const gchar *folder_id, 
-                                                                                   const gchar **serialised_email_array, 
-                                                                                   DBusGMethodInvocation *context)
+                                             const gchar *sync_key, 
+                                             const gchar *folder_id, 
+                                             const gchar **serialised_email_array, 
+                                             DBusGMethodInvocation *context)
 {
     EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
     EasUpdateEmailReqPrivate *priv = self->priv;
@@ -208,6 +208,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
     xmlDoc *doc;
     GSList *update_emails = NULL;   // sync msg expects a list, we have an array
     guint i = 0;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_update_email_req_Activate++");
 
@@ -238,10 +239,9 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
     }
 
     g_debug ("send message");
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "Sync",
-                                       doc,
-                                       (struct _EasRequestBase *) self,
+                                       doc, // full transfer
                                        error);
 
 finish:
@@ -260,6 +260,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     gboolean ret = TRUE;
     GError *error = NULL;
     EasUpdateEmailReqPrivate *priv = self->priv;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_update_email_req_MessageComplete++");
 
@@ -281,12 +282,12 @@ finish:
 	xmlFreeDoc (doc);
     if(!ret)
 	{
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+        dbus_g_method_return (eas_request_base_GetContext (parent));
     }
 
     g_debug ("eas_update_email_req_MessageComplete--");

@@ -96,7 +96,7 @@ static void
 eas_move_email_req_dispose (GObject *object)
 {
     /* deinitalization code */
-    EasMoveEmailReq *req = (EasMoveEmailReq *) object;
+    EasMoveEmailReq *req = EAS_MOVE_EMAIL_REQ (object);
 
     EasMoveEmailReqPrivate *priv = req->priv;
 
@@ -113,7 +113,7 @@ static void
 eas_move_email_req_finalize (GObject *object)
 {
     /* deinitalization code */
-    EasMoveEmailReq *req = (EasMoveEmailReq *) object;
+    EasMoveEmailReq *req = EAS_MOVE_EMAIL_REQ (object);
 
     EasMoveEmailReqPrivate *priv = req->priv;
     g_free (priv->dest_folder_id);
@@ -179,6 +179,7 @@ eas_move_email_req_Activate (EasMoveEmailReq *self, GError** error)
     gboolean ret = TRUE;
     EasMoveEmailReqPrivate* priv = self->priv;
     xmlDoc *doc;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_move_email_req_Activate++");
 
@@ -200,10 +201,9 @@ eas_move_email_req_Activate (EasMoveEmailReq *self, GError** error)
         goto finish;
     }
     g_debug ("send message");
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "MoveItems",
                                        doc,
-                                       (struct _EasRequestBase *) self,
                                        error);
 finish:
     if (!ret)
@@ -275,6 +275,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
     EasMoveEmailReqPrivate *priv = self->priv;
 	GSList *updated_ids_list = NULL;
 	gchar **ret_updated_ids_array = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 	
     g_debug ("eas_move_email_req_MessageComplete++");
 
@@ -307,12 +308,12 @@ finish:
 	// send dbus response
 	if(!ret)
 	{
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	}
     else
 	{
-		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance), ret_updated_ids_array);
+		dbus_g_method_return (eas_request_base_GetContext (parent), ret_updated_ids_array);
 	}
     g_debug ("eas_move_email_req_MessageComplete--");
 

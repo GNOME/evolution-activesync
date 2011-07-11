@@ -90,7 +90,7 @@ eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 static void
 eas_get_email_body_req_dispose (GObject *object)
 {
-    EasGetEmailBodyReq* self = (EasGetEmailBodyReq *) object;
+    EasGetEmailBodyReq* self = EAS_GET_EMAIL_BODY_REQ (object);
     EasGetEmailBodyReqPrivate *priv = self->priv;
 
     g_debug ("eas_get_email_body_req_dispose++");
@@ -110,7 +110,7 @@ eas_get_email_body_req_dispose (GObject *object)
 static void
 eas_get_email_body_req_finalize (GObject *object)
 {
-    EasGetEmailBodyReq* self = (EasGetEmailBodyReq *) object;
+    EasGetEmailBodyReq* self = EAS_GET_EMAIL_BODY_REQ (object);
     EasGetEmailBodyReqPrivate *priv = self->priv;
 
     g_debug ("eas_get_email_body_req_finalize++");
@@ -173,6 +173,7 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
     gboolean ret;
     EasGetEmailBodyReqPrivate *priv = self->priv;
     xmlDoc *doc = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_get_email_body_req_Activate++");
 
@@ -188,10 +189,9 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 		ret = FALSE;
 		goto finish;
 	}
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "ItemOperations",
-                                       doc,
-                                       (struct _EasRequestBase *) self,
+                                       doc, // full transfer
                                        error);
 
     g_debug ("eas_get_email_body_req_Activate--");
@@ -210,6 +210,7 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     gboolean ret = TRUE;
     GError *error = NULL;
     EasGetEmailBodyReqPrivate *priv = self->priv;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_get_email_body_req_MessageComplete++");
 
@@ -229,13 +230,13 @@ finish:
     {
         g_assert (error != NULL);
         g_warning ("eas_mail_fetch_email_body - failed to get data from message");
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
     }
     else
     {
         g_debug ("eas_mail_fetch_email_body - return for dbus");
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance));
+        dbus_g_method_return (eas_request_base_GetContext (parent));
     }
 
     g_debug ("eas_get_email_body_req_MessageComplete--");

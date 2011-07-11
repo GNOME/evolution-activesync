@@ -88,7 +88,7 @@ eas_delete_req_init (EasDeleteReq *object)
 static void
 eas_delete_req_dispose (GObject *object)
 {
-    EasDeleteReq *req = (EasDeleteReq *) object;
+    EasDeleteReq *req = EAS_DELETE_REQ (object);
     EasDeleteReqPrivate *priv = req->priv;
 	GSList *item = NULL;
 
@@ -110,7 +110,7 @@ eas_delete_req_dispose (GObject *object)
 static void
 eas_delete_req_finalize (GObject *object)
 {
-    EasDeleteReq *req = (EasDeleteReq *) object;
+    EasDeleteReq *req = EAS_DELETE_REQ (object);
     EasDeleteReqPrivate *priv = req->priv;
 
     g_debug ("eas_delete_req_finalize++");
@@ -147,6 +147,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
     EasDeleteReqPrivate *priv = self->priv;
     xmlDoc *doc;
     gboolean getChanges = FALSE;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_delete_req_Activate++");
 
@@ -196,10 +197,9 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 		goto finish;
 	}
 	
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "Sync",
                                        doc, // full transfer
-                                       (struct _EasRequestBase *) self,
                                        error);
 
 finish:	
@@ -213,7 +213,12 @@ finish:
     return ret;
 }
 
-EasDeleteReq *eas_delete_req_new (const gchar* accountId, const gchar *syncKey, const gchar *folderId, const GSList *server_ids_array, EasItemType itemType, DBusGMethodInvocation *context)
+EasDeleteReq *eas_delete_req_new (const gchar* accountId, 
+                                  const gchar *syncKey, 
+                                  const gchar *folderId, 
+                                  const GSList *server_ids_array, 
+                                  EasItemType itemType, 
+                                  DBusGMethodInvocation *context)
 {
     EasDeleteReq* self = g_object_new (EAS_TYPE_DELETE_REQ, NULL);
     EasDeleteReqPrivate *priv = self->priv;
@@ -249,7 +254,8 @@ gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, xmlDoc* doc, GError
     EasDeleteReqPrivate *priv = self->priv;
     GError *error = NULL;
 	gchar *ret_sync_key = NULL;
-	
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+
     g_debug ("eas_delete_req_MessageComplete++");
 
     // if an error occurred, store it and signal daemon
@@ -272,14 +278,14 @@ gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, xmlDoc* doc, GError
 finish:
     if(!ret)
 	{
-		dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
 	}
     else
     {
         //TODO: make sure this stuff is ok to go over dbus.
 
-        dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+        dbus_g_method_return (eas_request_base_GetContext (parent),
                               ret_sync_key);
     }
     xmlFreeDoc (doc);

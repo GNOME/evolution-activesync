@@ -95,7 +95,7 @@ static void
 eas_ping_req_finalize (GObject *object)
 {
     /* deinitalization code */
-    EasPingReq *req = (EasPingReq *) object;
+    EasPingReq *req = EAS_PING_REQ (object);
     EasPingReqPrivate *priv = req->priv;
 
     g_debug ("eas_ping_req_finalize++");
@@ -160,6 +160,7 @@ eas_ping_req_Activate (EasPingReq *self, GError** error)
     gboolean ret;
     EasPingReqPrivate *priv = self->priv;
     xmlDoc *doc;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_ping_req_Activate++");
 
@@ -181,10 +182,9 @@ eas_ping_req_Activate (EasPingReq *self, GError** error)
     }
 
     g_debug ("send message");
-    ret = eas_connection_send_request (eas_request_base_GetConnection (&self->parent_instance),
+    ret = eas_request_base_SendRequest (parent,
                                        "Ping",
-                                       doc,
-                                       (struct _EasRequestBase *) self,
+                                       doc, // full transfer
                                        error);
 
 finish:
@@ -209,6 +209,7 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 	EasPingReqState state;
 	guint list_length = 0;
     int loop = 0;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
     g_debug ("eas_ping_req_MessageComplete++");
 
@@ -258,7 +259,7 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 				{
 					ret_changed_folders_array[loop] = g_strdup (g_slist_nth_data (folder_array, loop));
 				}
-        		dbus_g_method_return (eas_request_base_GetContext (&self->parent_instance),
+        		dbus_g_method_return (eas_request_base_GetContext (parent),
 						                  ret_changed_folders_array);
 				
 				finished = TRUE;
@@ -280,7 +281,7 @@ finish:
     if(!ret)
 	{
 		g_debug ("eas_ping_req_Return Error");
-        dbus_g_method_return_error (eas_request_base_GetContext (&self->parent_instance), error);
+        dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
         g_error_free (error);
     }
 
