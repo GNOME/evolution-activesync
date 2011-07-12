@@ -45,6 +45,8 @@ G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
 const gchar *updated_id_separator = ",";
 
+static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
+
 struct _EasEmailHandlerPrivate {
 	DBusGConnection *bus;
 	DBusGProxy *remoteEas;
@@ -193,11 +195,13 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 	progress_info->progress_data = progress_data;
 	progress_info->percent_last_sent = 0;
 
+	g_static_mutex_lock (&progress_table);	
 	if (priv->email_progress_fns_table == NULL) {
 		priv->email_progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	}
 	g_debug ("insert progress function into table");
 	g_hash_table_insert (priv->email_progress_fns_table, (gpointer) request_id, progress_info);
+	g_static_mutex_unlock (&progress_table);
 finish:
 	return ret;
 }
@@ -206,6 +210,7 @@ EasEmailHandler *
 eas_mail_handler_new (const char* account_uid, GError **error)
 {
 	EasEmailHandler *object = NULL;
+	EasEmailHandlerPrivate *priv = NULL;
 
 	g_type_init();
 
@@ -233,36 +238,36 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 		g_debug ("eas_mail_handler_new--");
 		return NULL;
 	}
+	priv = object->priv;
+	priv->main_loop = g_main_loop_new (NULL, FALSE);
 
-	object->priv->main_loop = g_main_loop_new (NULL, FALSE);
-
-	if (object->priv->main_loop == NULL) {
+	if (priv->main_loop == NULL) {
 		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
 			     "Failed to create mainloop");
 		return NULL;
 	}
 
 	g_debug ("Connecting to Session D-Bus.");
-	object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
-	if (object->priv->bus == NULL) {
+	priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
+	if (priv->bus == NULL) {
 		g_warning ("Error: Couldn't connect to the Session bus (%s) ", error ? (*error)->message : "<discarded error>");
 		return NULL;
 	}
 
 	g_debug ("Creating a GLib proxy object for Eas.");
-	object->priv->remoteEas =  dbus_g_proxy_new_for_name (object->priv->bus,
+	priv->remoteEas =  dbus_g_proxy_new_for_name (priv->bus,
 							      EAS_SERVICE_NAME,
 							      EAS_SERVICE_MAIL_OBJECT_PATH,
 							      EAS_SERVICE_MAIL_INTERFACE);
-	if (object->priv->remoteEas == NULL) {
+	if (priv->remoteEas == NULL) {
 		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
 			     "Failed to create mainloop");
 		g_warning ("Error: Couldn't create the proxy object");
 		return NULL;
 	}
 
-	dbus_g_proxy_set_default_timeout (object->priv->remoteEas, 1000000);
-	object->priv->account_uid = g_strdup (account_uid);
+	dbus_g_proxy_set_default_timeout (priv->remoteEas, 1000000);
+	priv->account_uid = g_strdup (account_uid);
 
 
 	/* Register dbus signal marshaller */
@@ -272,14 +277,14 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 
 	g_debug ("register as observer of %s signal", EAS_MAIL_SIGNAL_PROGRESS);
 	// progress signal setup:
-	dbus_g_proxy_add_signal (object->priv->remoteEas,
+	dbus_g_proxy_add_signal (priv->remoteEas,
 				 EAS_MAIL_SIGNAL_PROGRESS,
 				 G_TYPE_UINT,	// request id
 				 G_TYPE_UINT,	// percent
 				 G_TYPE_INVALID);
 
 	// register for progress signals
-	dbus_g_proxy_connect_signal (object->priv->remoteEas,
+	dbus_g_proxy_connect_signal (priv->remoteEas,
 				     EAS_MAIL_SIGNAL_PROGRESS,
 				     G_CALLBACK (progress_signal_handler),		// callback when signal emitted
 				     object,													// userdata passed to above cb
@@ -720,7 +725,9 @@ progress_signal_handler (DBusGProxy* proxy,
 
 	if ( (self->priv->email_progress_fns_table) && (percent > 0)) {
 		// if there's a progress function for this request in our hashtable, call it:
+		g_static_mutex_lock (&progress_table);
 		progress_callback_info = g_hash_table_lookup (self->priv->email_progress_fns_table, (gpointer) request_id);
+		g_static_mutex_unlock (&progress_table);
 		if (progress_callback_info) {
 			if (percent > progress_callback_info->percent_last_sent) {
 				EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
