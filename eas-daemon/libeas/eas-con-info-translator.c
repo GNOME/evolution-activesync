@@ -52,7 +52,7 @@
 #include "eas-con-info-translator.h"
 
 #include <libebook/e-vcard.h>
-
+#include <string.h>
 
 // EAS string value definitions
 #define EAS_ELEMENT_APPLICATIONDATA           "ApplicationData"
@@ -100,8 +100,108 @@
 #define EAS_ELEMENT_ORG                       "CompanyName"
 #define EAS_ELEMENT_PAGER                     "PagerNumber"
 #define EAS_ELEMENT_ROLE                      "JobTitle"
-#define EAS_ELEMENT_PHOTO                     "Picture"
+#define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
 #define EAS_ELEMENT_NOTE                      "airsyncbase:Body"
+
+
+//@
+//TODO:
+/* ActiveSync protocol message definition for contact */
+/* targetNamespace for Contacts (from AS contacts schema) */
+#define EAS_NAMESPACE_CONTACTS					"contacts:"
+ 
+#define EAS_ELEMENT_ANNIVERSARY					"Anniversary"
+
+#define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
+#define EAS_ELEMENT_ASSISTANTPHONENUMBER		"AssistantPhoneNumber"
+//#define EAS_ELEMENT_SUFFIX					"Suffix"
+//#define EAS_ELEMENT_BIRTHDAY					"Birthday"
+
+//#define EAS_ELEMENT_BUSINESSPHONENUMBER		"BusinessPhoneNumber"
+//#define EAS_ELEMENT_BUSINESS2PHONENUMBER		"Business2PhoneNumber"
+//#define EAS_ELEMENT_BUSINESSFAXNUMBER			"BusinessFaxNumber"
+
+
+
+#define EAS_ELEMENT_DEPARTMENT					"Department"
+
+#define EAS_ELEMENT_WEBPAGE						"WebPage"
+//#define EAS_ELEMENT_EMAIL1ADDRESS				"Email1Address"
+//#define EAS_ELEMENT_EMAIL2ADDRESS				"Email2Address"
+//#define EAS_ELEMENT_EMAIL3ADDRESS				"Email3Address"
+
+#define EAS_ELEMENT_FILEAS						"FileAs"
+//#define EAS_ELEMENT_ALIAS						"Alias"
+#define EAS_ELEMENT_WEIGHTEDRANK				"WeightedRank"
+
+//#define EAS_ELEMENT_FIRSTNAME					"FirstName"
+//#define EAS_ELEMENT_MIDDLENAME				"MiddleName"
+
+#define EAS_ELEMENT_HOMEADDRESSCITY				"HomeAddressCity"
+#define EAS_ELEMENT_HOMEADDRESSCOUNTRY			"HomeAddressCountry"
+#define EAS_ELEMENT_HOMEADDRESSPOSTALCODE		"HomeAddressPostalCode"
+#define EAS_ELEMENT_HOMEADDRESSSTATE			"HomeAddressState"
+#define EAS_ELEMENT_HOMEADDRESSSTREET			"HomeAddressStreet"
+
+//#define EAS_ELEMENT_HOMEFAXNUMBER				"HomeFaxNumber"
+//#define EAS_ELEMENT_HOMEPHONENUMBER			"HomePhoneNumber"
+//#define EAS_ELEMENT_HOME2PHONENUMBER			"Home2PhoneNumber"
+//#define EAS_ELEMENT_MOBILEPHONENUMBER			"MobilePhoneNumber"
+
+#define EAS_ELEMENT_COMPANYNAME					"CompanyName"
+
+
+#define EAS_ELEMENT_OTHERADDRESSCITY			"OtherAddressCity"
+#define EAS_ELEMENT_OTHERADDRESSCOUNTRY			"OtherAddressCountry"
+//#define EAS_ELEMENT_CARPHONENUMBER				"CarPhoneNumber"
+#define EAS_ELEMENT_OTHERADDRESSPOSTALCODE		"OtherAddressPostalCode"
+#define EAS_ELEMENT_OTHERADDRESSSTATE			"OtherAddressState"
+#define EAS_ELEMENT_OTHERADDRESSSTREET			"OtherAddressStreet"
+//#define EAS_ELEMENT_PAGERNUMBER					"PagerNumber"
+
+//#define EAS_ELEMENT_TITLE						"Title"
+#define EAS_ELEMENT_BUSINESSADDRESSPOSTALCODE	"BusinessAddressPostalCode"
+#define EAS_ELEMENT_BUSINESSADDRESSSTATE		"BusinessAddressState"
+#define EAS_ELEMENT_BUSINESSADDRESSSTREET		"BusinessAddressStreet"
+#define EAS_ELEMENT_BUSINESSADDRESSCITY			"BusinessAddressCity"
+#define EAS_ELEMENT_BUSINESSADDRESSCOUNTRY		"BusinessAddressCountry"
+
+//#define EAS_ELEMENT_LASTNAME					"LastName"
+#define EAS_ELEMENT_SPOUSE						"Spouse"
+#define EAS_ELEMENT_JOBTITLE					"JobTitle"
+
+#define EAS_ELEMENT_YOMIFIRSTNAME				"YomiFirstName"
+#define EAS_ELEMENT_YOMILASTNAME				"YomiLastName"
+#define EAS_ELEMENT_YOMICOMPANYNAME				"YomiCompanyName"
+
+#define EAS_ELEMENT_OFFICELOCATION				"OfficeLocation"
+//#define EAS_ELEMENT_RADIOPHONENUMBER			"RadioPhoneNumber"
+#define EAS_ELEMENT_PICTURE						"Picture"
+#define EAS_ELEMENT_CATEGORIES					"Categories"
+#define EAS_ELEMENT_CATEGORY					"Category"
+#define EAS_ELEMENT_CHILDREN					"Children"
+#define EAS_ELEMENT_CHILD						"Child"
+
+//#define EAS_ELEMENT_BODY						"Body"
+/* targetNamespace for Contacts2 (from AS contacts schema) */
+#define EAS_NAMESPACE_CONTACTS2					"contacts2:"
+#define EAS_ELEMENT_CONTACTS2_CUSTOMERID		"CustomerId"
+#define EAS_ELEMENT_CONTACTS2_GOVERNMENTID		"GovernmentId"
+#define EAS_ELEMENT_CONTACTS2_IMADDRESS			"IMAddress"
+#define EAS_ELEMENT_CONTACTS2_IMADDRESS2		"IMAddress2"
+#define EAS_ELEMENT_CONTACTS2_IMADDRESS3		"IMAddress3"
+#define EAS_ELEMENT_CONTACTS2_MANAGERNAME		"ManagerName"
+#define EAS_ELEMENT_CONTACTS2_COMPANYMAINPHONE	"CompanyMainPhone"
+#define EAS_ELEMENT_CONTACTS2_ACCOUNTNAME		"AccountName"
+#define EAS_ELEMENT_CONTACTS2_NICKNAME			"NickName"
+#define EAS_ELEMENT_CONTACTS2_MMS				"MMS"
+
+
+/* vCard attribute names and types*/
+/* This list is an addition to the one defined in e-vcard.h */
+#define VC_ATT_NAME_BEGIN	"BEGIN"
+
+
 
 static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *sought)
 {
@@ -464,12 +564,429 @@ eas_item_info_new();
 	return result;	
 }
 
+static const char *
+property_get_nth_value(EVCardAttributeParam *param, int nth)
+{
+	const char *ret = NULL;
+	GList *values = e_vcard_attribute_param_get_values(param);
+	if (!values)
+		return NULL;
+	ret = g_list_nth_data(values, nth);
+	//g_list_free(values);
+	return ret;
+}
 
-gboolean eas_con_info_translator_parse_request(xmlDocPtr doc, 
-                                               xmlNodePtr app_data, 
-                                               EasItemInfo* cal_info)
+
+static const char *
+attribute_get_nth_value(EVCardAttribute *attr, int nth)
+{
+	GList *values = NULL;
+	GString *retstr = NULL;
+	
+	values = e_vcard_attribute_get_values_decoded(attr);
+	if (!values)
+		return NULL;
+	retstr = (GString *)g_list_nth_data(values, nth);
+	if (!retstr)
+		return NULL;
+
+	if (!g_utf8_validate(retstr->str, -1, NULL)) {
+		values = e_vcard_attribute_get_values(attr);
+		if (!values)
+			return NULL;
+		return g_list_nth_data(values, nth);
+	}
+
+	return retstr->str;
+}
+
+typedef enum _EncodingType {
+	EAS_UNKNOWN,
+	EAS_BASE64,
+	EAS_8BIT
+} EncodingType;
+
+/* Address type as defined by ActiveSync */
+typedef enum _EasAddType {
+	EAS_ADD_UNKNOWN,
+	EAS_ADD_WORK,
+	EAS_ADD_HOME,
+	EAS_ADD_OTHER
+} EasAddType;
+
+
+static void
+set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* value, EncodingType encodingType)
+{
+	if (encodingType == EAS_BASE64)
+	{
+		gchar* base64value = NULL;
+
+		//g_debug("base64encoder: size = %d", strlen(value));
+
+		base64value = g_base64_encode((const guchar *)(&value), sizeof(value));
+		xmlNewTextChild(appData, NULL, (const xmlChar*) name, (const xmlChar*)base64value);
+
+		//g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
+        //g_debug ("data encoded   =--->:[%s]",   base64value);
+
+		g_free(base64value);
+	}
+	else
+	{
+		xmlNewTextChild(appData, NULL, name, value);
+	}
+}
+
+static EncodingType
+get_encoding_type(EVCardAttribute *attr)
+{
+	GList *params = NULL;
+	GList *p = NULL;
+	EncodingType encoding;
+	encoding  = EAS_8BIT;
+
+	params = e_vcard_attribute_get_params(attr);
+
+	for (p = params; p; p = p->next)
+	{
+		EVCardAttributeParam *param = p->data;
+		if (!strcmp("ENCODING", e_vcard_attribute_param_get_name(param)))
+		{
+			if (!g_ascii_strcasecmp(property_get_nth_value(param, 0), "b"))
+				encoding = EAS_BASE64;
+		}
+	}
+	return encoding;
+}
+
+static void 
+set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType, EncodingType encoding)
+{
+
+	if (easAddType == EAS_ADD_WORK)
+	{
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
+		g_warning("TODO:AS Does not support PostalBox");
+
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
+		g_warning("TODO:AS Does not support ExtendedAddress");
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSSTREET,
+        (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSCITY,
+        (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSSTATE,
+        (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSPOSTALCODE,
+        (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSCOUNTRY,
+        (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
+	}
+	else if (easAddType == EAS_ADD_HOME)
+	{
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
+		g_warning("TODO:AS Does not support PostalBox");
+
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
+			g_warning("TODO:AS Does not support ExtendedAddress");
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSSTREET,
+        (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSCITY,
+        (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
+	
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSSTATE,
+        (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
+	
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSPOSTALCODE,
+        (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
+	
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSCOUNTRY,
+        (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
+	}
+	else
+	{
+		/* deal with possible other vCard type of addresses:
+		 "dom", "intl", "postal", "parcel", "pref" / iana-type / x-name */
+
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
+		g_warning("TODO:AS Does not support PostalBox");
+
+		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
+		g_warning("TODO:AS Does not support ExtendedAddress");
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSSTREET,
+        (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
+		
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSCITY,
+        (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSSTATE,
+        (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSPOSTALCODE,
+        (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
+
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSCOUNTRY,
+        (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
+	}
+
+}
+
+
+gboolean 
+eas_con_info_translator_parse_request(	xmlDocPtr doc, 
+										xmlNodePtr appData,
+										EasItemInfo* contactInfo)
 {
 	gboolean success = FALSE;
+	EVCard* vcard = NULL;
+	GList *p = NULL;
+	GList *a = NULL;
+	GList *attributes = NULL;
+	EncodingType encoding;
 
+	g_return_val_if_fail (doc != NULL && appData != NULL && contactInfo != NULL, FALSE);
+	g_return_val_if_fail (appData->type == XML_ELEMENT_NODE, FALSE);
+	g_return_val_if_fail (appData->name != NULL, FALSE);
+	g_return_val_if_fail (g_strcmp0((char*)(appData->name), EAS_ELEMENT_APPLICATIONDATA) == 0, FALSE);
+
+	g_debug("eas_con_info_translator_parse_request ++");
+
+	g_type_init();
+
+	vcard = e_vcard_new_from_string (contactInfo->data);
+	g_return_val_if_fail (vcard != NULL, FALSE);
+
+	e_vcard_dump_structure (vcard); /* TODO: Debug only*/
+	
+	attributes = e_vcard_get_attributes(vcard);
+
+	for (a = attributes; a; a = a->next) {
+		const char *name = NULL;
+		GList *params= NULL; 
+		EVCardAttribute *attr = a->data;
+		encoding = get_encoding_type(attr);
+		name = e_vcard_attribute_get_name(attr);
+
+		g_debug("e_vcard_attribute_get_name=%s", name);
+#if 0
+		if (!strcmp(name, "BEGIN")) {
+			root = osxml_node_add_root(doc, "contact");
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
+			continue;
+		}
+#endif
+		if (!strcmp(name, EVC_VERSION))
+			continue;
+
+		params = e_vcard_attribute_get_params(attr);
+
+		/* process attributes that have no param */
+		/* FullName */
+		if (!strcmp(name, EVC_FN)) {
+			//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
+			g_warning("TODO:AS Does not support FullName");
+			continue;
+		}
+
+		/* Name */
+		if (!strcmp(name, EVC_N)) {
+			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_LASTNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_FIRSTNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
+			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Additional",
+							(const xmlChar*)attribute_get_nth_value(attr, 2), encoding);*/
+			g_warning("TODO: AS Does not support Additional");
+			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Prefix",
+							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
+			g_warning("TODO: AS Does not support Prefix");
+			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_SUFFIX,
+			                (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
+
+			continue;
+		}
+
+		//Company
+		if (!strcmp(name, EVC_ORG)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_COMPANYNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			/*set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Unit",
+							(const xmlChar*)attribute_get_nth_value(attr, 1), encoding);*/
+			g_warning("TODO:AS Does not support ORG->Unit");
+			continue;
+		}
+
+		/* Url */
+		if (!strcmp(name, EVC_URL)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_WEBPAGE,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* Birthday */
+		if (!strcmp(name, EVC_BDAY)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BIRTHDAY,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+		
+		/* Title */
+		if (!strcmp(name, EVC_TITLE)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_TITLE,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* Role */
+		if (!strcmp(name, EVC_ROLE)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_JOBTITLE,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* Uid */
+		if (!strcmp(name, EVC_UID)) {
+			/*set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Uid",
+						(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);*/
+			g_warning("TODO:AS Does not support Uid");
+			continue;
+		}
+
+		/* Note */
+		if (!strcmp(name, EVC_NOTE)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_NOTE,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* Photo (AS: name is "Picture") */
+		if (!strcmp(name, EVC_PHOTO)) {
+			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_PICTURE,
+		                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+
+		/* process attributes that have param */
+		for (p = params; p; p = p->next) {
+			EVCardAttributeParam *param = p->data;
+			/* Address */
+			if (!strcmp(name, EVC_ADR)) {
+				const char *propname = property_get_nth_value(param, 0);
+ 				if (!strcmp(propname, "WORK"))
+					set_xml_address(appData, attr, EAS_ADD_WORK, encoding);
+				else if (!strcmp(propname, "HOME"))
+					set_xml_address(appData, attr, EAS_ADD_HOME, encoding);
+				else
+					set_xml_address(appData, attr, EAS_ADD_OTHER, encoding);
+
+				continue;
+			}
+
+			/* Address Labeling */
+			if (!strcmp(name, EVC_LABEL)) {
+				g_warning("TODO: LABEL  not implemented yet");
+				continue;
+			}
+
+			/* Telephone */
+			if (!strcmp(name, EVC_TEL)) {
+				#if 0
+				// TODO:
+				#define EAS_ELEMENT_BUSINESSPHONENUMBER       "BusinessPhoneNumber"
+				#define EAS_ELEMENT_BUSINESS2PHONENUMBER      "Business2PhoneNumber"
+				#define EAS_ELEMENT_BUSINESSFAXNUMBER         "BusinessFaxNumber"
+				#define EAS_ELEMENT_HOMEPHONENUMBER           "HomePhoneNumber"
+				#define EAS_ELEMENT_HOME2PHONENUMBER          "Home2PhoneNumber"
+				#define EAS_ELEMENT_HOMEFAXNUMBER             "HomeFaxNumber"
+				#define EAS_ELEMENT_MOBILEPHONENUMBER         "MobilePhoneNumber"
+				#define EAS_ELEMENT_CARPHONENUMBER            "CarPhoneNumber"
+				#define EAS_ELEMENT_RADIOPHONENUMBER          "RadioPhoneNumber"
+
+				set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_PICTURE,
+					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+				#endif
+				g_warning("TODO: TEL not implemented yet");
+				continue;
+			}
+
+			/* EMail */
+			if (!strcmp(name, EVC_EMAIL )) {
+				g_warning("TODO: EMAIL not implemented yet");
+				continue;
+			}
+
+			/* Mailer */
+			if (!strcmp(name, EVC_MAILER)) {
+				g_warning("TODO: MAILER not implemented yet");
+				continue;
+			}
+
+			/* Timezone */
+			if (!strcmp(name, "TZ")) {
+				g_warning("TODO:AS Does not support TZ");
+				continue;
+			}
+
+			/* Location */
+			if (!strcmp(name, EVC_GEO)) {
+				g_warning("TODO:AS Does not support GEO");
+				continue;
+			}
+
+			/* Logo */
+			if (!strcmp(name, EVC_LOGO)) {
+				g_warning("TODO:AS Does not support LOGO");
+				continue;
+			}
+
+			/* Revision */
+			if (!strcmp(name, EVC_REV)) {
+				g_warning("AS Does not support %s", name);
+				//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Revision", (const xmlChar*)attribute_get_nth_value(attr, 0));
+				continue;
+			}
+
+			/* Sound */
+			if (!strcmp(name, "SOUND")) {
+				g_warning("TODO:AS Does not support SOUND");
+				continue;
+			}
+
+			/* Public Key */
+			if (!strcmp(name, EVC_KEY)) {
+				g_warning("TODO:AS Does not support KEY");
+				//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Key", (const xmlChar*)attribute_get_nth_value(attr, 0));
+				continue;
+			}
+		}
+	}
+
+
+	if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 4))
+	{
+		xmlChar* dump_buffer = NULL;
+		int dump_buffer_size = 0;
+		xmlIndentTreeOutput = 1;
+		xmlDocDumpFormatMemory (doc, &dump_buffer, &dump_buffer_size, 1);
+		g_debug ("XML DOCUMENT DUMPED:\n%s", dump_buffer);
+		xmlFree (dump_buffer);
+	}
+
+	g_debug("eas_con_info_translator_parse_request --");
 	return success;
 }
