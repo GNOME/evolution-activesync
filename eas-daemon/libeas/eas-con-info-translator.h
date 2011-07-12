@@ -65,13 +65,13 @@
  *
  * @param app_data  
  *      <ApplicationData> element from the Exchange ActiveSync XML response
- * @param server_id  
- *      The server ID from the Exchange ActiveSync XML response
+ * @param[in] server_id [full transfer]
+ *      The server ID from the Exchange ActiveSync XML response, will be freed by g_free()
  *
  * @return Serialised EasItemInfo structure
  */
 gchar* eas_con_info_translator_parse_response(xmlNodePtr app_data, 
-                                              const gchar* server_id);
+                                              gchar* server_id);
 
 
 /**

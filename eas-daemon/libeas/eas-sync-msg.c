@@ -644,17 +644,17 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             case EAS_ITEM_MAIL:
                             {
                                 g_debug ("calling email appdata translator for update");
-                                flatItem = eas_email_info_translator_update (appData, item_server_id);
+                                flatItem = eas_email_info_translator_update (appData, g_strdup(item_server_id));
                             }
                             break;
                             case EAS_ITEM_CALENDAR:
                             {
-                                flatItem = eas_cal_info_translator_parse_response (appData, item_server_id);
+                                flatItem = eas_cal_info_translator_parse_response (appData, g_strdup(item_server_id));
                             }
                             case EAS_ITEM_CONTACT:
                             {
                                 //TODO: add contact translator
-                                flatItem = eas_con_info_translator_parse_response (appData, item_server_id);
+                                flatItem = eas_con_info_translator_parse_response (appData, g_strdup(item_server_id));
                             }
                             break;
 

@@ -247,7 +247,7 @@ static void add_other_address_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 }
 	
 gchar* eas_con_info_translator_parse_response(xmlNodePtr node, 
-                                              const gchar* server_id)
+                                              gchar* server_id)
 {
 	// Variable for the return value
 	gchar* result = NULL;

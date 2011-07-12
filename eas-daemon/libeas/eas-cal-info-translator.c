@@ -1275,7 +1275,7 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
  * @param  server_id
  *      The ActiveSync server ID from the response
  */
-gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, const gchar* server_id)
+gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, gchar* server_id)
 {
 	// Variable for the return value
 	gchar* result = NULL;
