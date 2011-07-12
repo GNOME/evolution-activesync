@@ -955,7 +955,7 @@ eas_connection_send_request (EasConnection* self,
     uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
                        "&User=", eas_account_get_username(priv->account),
-                       "&DeviceID=", device_id,
+                       "&DeviceId=", device_id,
                        "&DeviceType=", device_type,
                        NULL);
 
