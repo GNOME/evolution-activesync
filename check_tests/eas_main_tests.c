@@ -24,7 +24,8 @@ int main (void)
     srunner_add_suite (sr, eas_libeasmail_suite());
     srunner_add_suite (sr, eas_libeascal_suite());
     srunner_add_suite (sr, eas_libeassync_suite());
-    srunner_add_suite (sr, eas_libeascon_suite()); 
+    srunner_add_suite (sr, eas_libeascon_suite());
+    srunner_add_suite(sr,eas_con_info_translator_suite());
 
     srunner_set_xml (sr, "eas-daemon_test.xml");
     srunner_set_log (sr, "eas-daemon_test.log");
