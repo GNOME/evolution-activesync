@@ -99,6 +99,13 @@ struct _EasConnectionPrivate
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
 
+typedef struct _EasGnomeKeyringResponse
+{
+	GnomeKeyringResult result;
+	gchar* password;
+	EFlag *semaphore;
+} EasGnomeKeyringResponse;
+
 static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
 static GHashTable *g_open_connections = NULL;
 static GConfClient* g_gconf_client = NULL;
@@ -182,8 +189,6 @@ eas_connection_init (EasConnection *self)
 
     g_debug ("eas_connection_init++");
 
-	dbus_g_thread_init();
-
     priv->soup_context = g_main_context_new ();
     priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
 
@@ -195,8 +200,8 @@ eas_connection_init (EasConnection *self)
                                              TRUE,
                                              SOUP_SESSION_ASYNC_CONTEXT,
                                              priv->soup_context,
-											 SOUP_SESSION_TIMEOUT,
-											 120,
+                                             SOUP_SESSION_TIMEOUT,
+                                             120,
                                              NULL);
 
     g_signal_connect (priv->soup_session,
@@ -337,15 +342,85 @@ eas_connection_class_init (EasConnectionClass *klass)
     g_debug ("eas_connection_class_init--");
 }
 
+static void
+storePasswordCallback (GnomeKeyringResult result, gpointer data)
+{
+	EasGnomeKeyringResponse *response = data;
+
+	g_debug("storePasswordCallback++");
+	
+	g_assert (response);
+	g_assert (response->semaphore);
+	g_assert (!response->password);
+	
+	response->result = result;
+	e_flag_set (response->semaphore);
+	g_debug("storePasswordCallback--");
+}
+
+static GnomeKeyringResult 
+writePasswordToKeyring (const gchar *password, const gchar* username, const gchar* serverUri)
+{
+	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	EasGnomeKeyringResponse *response = g_malloc0(sizeof(EasGnomeKeyringResponse));
+	gchar * description = g_strdup_printf ("Exchange Server Password for %s@%s", 
+	                                       username,
+	                                       serverUri);
+
+	g_debug("writePasswordToKeyring++");
+	response->semaphore = e_flag_new ();
+	g_assert (response->semaphore);
+	g_debug("writePasswordToKeyring++ 1");
+	gnome_keyring_store_password (GNOME_KEYRING_NETWORK_PASSWORD,
+                                  NULL,
+                                  description,
+                                  password,
+                                  storePasswordCallback,
+                                  response,
+                                  NULL,
+                                  "user", username,
+                                  "server", serverUri,
+                                  NULL);
+	g_debug("writePasswordToKeyring++ 2");
+	g_free (description);
+	e_flag_wait(response->semaphore);
+	g_debug("writePasswordToKeyring++ 3");
+	e_flag_free (response->semaphore);
+	g_debug("writePasswordToKeyring++ 4");
+	result = response->result;
+	g_free (response);
+
+	g_debug("writePasswordToKeyring--");
+	return result;
+}
+
+static void
+getPasswordCallback (GnomeKeyringResult result, const char* password, gpointer data)
+{
+	EasGnomeKeyringResponse *response = data;
+
+	g_debug("getPasswordCallback++");
+
+	g_assert (response);
+	g_assert (response->semaphore);
+
+	response->result = result;
+	response->password = g_strdup (password);
+	e_flag_set (response->semaphore);
+	
+	g_debug("getPasswordCallback--");
+}
+
 static gboolean
 fetch_and_store_password (const gchar* username, const gchar * serverUri)
 {
 	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
-	gchar * description = NULL;
 	gchar * password = NULL;
 	GError * error = NULL;
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	gint exit_status = 0;
+
+	g_debug("fetch_and_store_password++");
 
 	if (FALSE == g_spawn_sync (NULL, argv, NULL,
 	                           G_SPAWN_SEARCH_PATH,
@@ -360,27 +435,47 @@ fetch_and_store_password (const gchar* username, const gchar * serverUri)
 	}
 
 	g_strchomp (password);
-	description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-	                               username,
-	                               serverUri);
+
+	result = writePasswordToKeyring (password, username, serverUri);
 	
-	result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-	                                            NULL,
-	                                            description,
-	                                            password,
-	                                            "user", username,
-	                                            "server", serverUri,
-	                                            NULL);
-
-	g_free (description);
-
 	memset (password, 0, strlen(password));
 	g_free(password);
 	password = NULL;
 
+	g_debug("fetch_and_store_password--");
 	return (result == GNOME_KEYRING_RESULT_OK);
 }
 
+static GnomeKeyringResult 
+getPasswordFromKeyring (const gchar* username, const gchar* serverUri, char** password)
+{
+	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	EFlag *semaphore = NULL;
+	EasGnomeKeyringResponse *response = g_malloc0(sizeof(EasGnomeKeyringResponse));
+
+	g_debug("getPasswordFromKeyring++");
+
+	g_assert (password && *password == NULL);
+
+	response->semaphore = semaphore = e_flag_new ();
+
+	gnome_keyring_find_password (GNOME_KEYRING_NETWORK_PASSWORD,
+	                             getPasswordCallback,
+	                             response,
+	                             NULL,
+	                             "user", username,
+	                             "server", serverUri,
+	                             NULL);
+
+	e_flag_wait (response->semaphore);
+	e_flag_free (response->semaphore);
+	result = response->result;
+	*password = response->password;
+	g_free (response);
+
+	g_debug("getPasswordFromKeyring--");
+	return result;
+}
 
 static void 
 connection_authenticate (SoupSession *sess, 
@@ -402,51 +497,28 @@ connection_authenticate (SoupSession *sess,
 	password = eas_account_get_password (cnc->priv->account);
 	if (password)
 	{
-		gchar * description = g_strdup_printf (
-		                          "Exchange Server Password for %s@%s", 
-	                              username,
-	                              serverUri);
-
 		g_warning("Found password in GConf, writting it to Gnome Keyring");
-		
-		result = gnome_keyring_store_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-			                                        NULL,
-			                                        description,
-			                                        password,
-			                                        "user", username,
-			                                        "server", serverUri,
-			                                        NULL);
-		g_free(description);
 
-		if (GNOME_KEYRING_RESULT_OK != result)
+		if (GNOME_KEYRING_RESULT_OK != writePasswordToKeyring(password, username, serverUri))
 		{
 			g_warning("Failed to store GConf password in Gnome Keyring");
 		}
-
 	}
+
 	password = NULL;
 
-	result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-	                                           &password,
-	                                           "user", username,
-                                               "server", serverUri,
-	                                           NULL);
+	result = getPasswordFromKeyring (username, serverUri, &password);
 
 	if (GNOME_KEYRING_RESULT_NO_MATCH == result)
 	{
 		g_warning("Failed to find password in Gnome Keyring");
 
-		if (fetch_and_store_password(eas_account_get_username(cnc->priv->account), eas_account_get_uri(cnc->priv->account)))
+		if (fetch_and_store_password(username, serverUri))
 		{
-			result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-                                                       &password,
-                                                       "user", username,
-                                                       "server", serverUri,
-                                                       NULL);
-
-			if (GNOME_KEYRING_RESULT_OK == result)
+			if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password))
 			{
 				g_debug("First authentication attempt with newly set password");
+				cnc->priv->retrying_asked = FALSE;
 				soup_auth_authenticate (auth, 
 						                username,
 						                password);
@@ -458,7 +530,9 @@ connection_authenticate (SoupSession *sess,
 			
 			if (password)
 			{
-				gnome_keyring_free_password(password);
+				memset (password, 0 , strlen(password));
+				g_free (password);
+				password = NULL;
 			}
 		}
 	}
@@ -480,7 +554,9 @@ connection_authenticate (SoupSession *sess,
 				                    password);
 			if (password)
 			{
-				gnome_keyring_free_password(password);
+				memset (password, 0 , strlen(password));
+				g_free (password);
+				password = NULL;
 			}
 		}
 		else if (!cnc->priv->retrying_asked)
@@ -490,19 +566,14 @@ connection_authenticate (SoupSession *sess,
 			
 			if (password)
 			{
-				gnome_keyring_free_password(password);
+				memset (password, 0 , strlen(password));
+				g_free (password);
 				password = NULL;
 			}
 
-			if (fetch_and_store_password(eas_account_get_username(cnc->priv->account), eas_account_get_uri(cnc->priv->account)))
+			if (fetch_and_store_password(username, serverUri))
 			{
-				result = gnome_keyring_find_password_sync (GNOME_KEYRING_NETWORK_PASSWORD,
-		                                                   &password,
-		                                                   "user", username,
-		                                                   "server", serverUri,
-		                                                   NULL);
-
-				if (GNOME_KEYRING_RESULT_OK == result)
+				if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password))
 				{
 					g_debug ("Second authentication with newly set password");
 					soup_auth_authenticate (auth, 
@@ -516,7 +587,8 @@ connection_authenticate (SoupSession *sess,
 				
 				if (password)
 				{
-					gnome_keyring_free_password(password);
+					memset (password, 0 , strlen(password));
+					g_free (password);
 					password = NULL;
 				}
 			}
@@ -526,7 +598,8 @@ connection_authenticate (SoupSession *sess,
 			g_debug("Failed too many times, authentication aborting");
 		}
 	}
-    g_debug ("  eas_connection - connection_authenticate--");
+
+	g_debug ("  eas_connection - connection_authenticate--");
 }
 
 static gpointer
@@ -1451,6 +1524,9 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 
     g_debug ("eas_connection_autodiscover++");
 
+    g_type_init();
+    dbus_g_thread_init();
+
     if (!email)
     {
         g_set_error (&error,
@@ -1568,6 +1644,9 @@ eas_connection_find (const gchar* accountId)
     g_debug ("eas_connection_find++ : account_uid[%s]",
              (accountId ? accountId : "NULL"));
 
+    g_type_init();
+    dbus_g_thread_init();
+
     if (!accountId) return NULL;
 
     eas_connection_accounts_init();
@@ -1640,7 +1719,8 @@ eas_connection_new (EasAccount* account, GError** error)
 
     g_debug ("eas_connection_new++");
 
-    g_type_init ();
+    g_type_init();
+    dbus_g_thread_init();
 
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
