@@ -101,7 +101,7 @@
 #define EAS_ELEMENT_PAGER                     "PagerNumber"
 #define EAS_ELEMENT_ROLE                      "JobTitle"
 #define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
-#define EAS_ELEMENT_NOTE                      "airsyncbase:Body"
+#define EAS_ELEMENT_NOTE                      "Body"
 
 
 //@
@@ -290,7 +290,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 				const gchar* name = (const gchar*)(n->name);
 				EVCardAttributeParam *param = e_vcard_attribute_param_new("TYPE");
 				EVCardAttributeParam *param2 = e_vcard_attribute_param_new("TYPE");
-eas_item_info_new();
+				
 				//
 				// Name elements
 				//				
@@ -804,9 +804,9 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Name */
 		if (!strcmp(name, EVC_N)) {
-			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_LASTNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_LASTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_FIRSTNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
 			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Additional",
 							(const xmlChar*)attribute_get_nth_value(attr, 2), encoding);*/
@@ -814,7 +814,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Prefix",
 							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
 			g_warning("TODO: AS Does not support Prefix");
-			set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_SUFFIX,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
 			                (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
 
 			continue;
@@ -822,7 +822,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		//Company
 		if (!strcmp(name, EVC_ORG)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_COMPANYNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			/*set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Unit",
 							(const xmlChar*)attribute_get_nth_value(attr, 1), encoding);*/
@@ -832,28 +832,28 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Url */
 		if (!strcmp(name, EVC_URL)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_WEBPAGE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
 
 		/* Birthday */
 		if (!strcmp(name, EVC_BDAY)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BIRTHDAY,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			//set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BIRTHDAY,
+			//                (const xmlChar*)/*attribute_get_nth_value(attr, 0)*/"20110628T000000", encoding);
 			continue;
 		}
 		
 		/* Title */
 		if (!strcmp(name, EVC_TITLE)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_TITLE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_TITLE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
 
 		/* Role */
 		if (!strcmp(name, EVC_ROLE)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_JOBTITLE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_JOBTITLE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
@@ -868,14 +868,14 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Note */
 		if (!strcmp(name, EVC_NOTE)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_NOTE,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			//set_xml_element(appData, (const xmlChar*)EAS_ELEMENT_NOTE,
+			//                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
 
 		/* Photo (AS: name is "Picture") */
 		if (!strcmp(name, EVC_PHOTO)) {
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_PICTURE,
+			set_xml_element(appData, (const xmlChar*)EAS_ELEMENT_PICTURE,
 		                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
