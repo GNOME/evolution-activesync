@@ -111,47 +111,15 @@
 #define EAS_NAMESPACE_CONTACTS					"contacts:"
  
 #define EAS_ELEMENT_ANNIVERSARY					"Anniversary"
-
 #define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
 #define EAS_ELEMENT_ASSISTANTPHONENUMBER		"AssistantPhoneNumber"
-//#define EAS_ELEMENT_SUFFIX					"Suffix"
-//#define EAS_ELEMENT_BIRTHDAY					"Birthday"
-
-//#define EAS_ELEMENT_BUSINESSPHONENUMBER		"BusinessPhoneNumber"
-//#define EAS_ELEMENT_BUSINESS2PHONENUMBER		"Business2PhoneNumber"
-//#define EAS_ELEMENT_BUSINESSFAXNUMBER			"BusinessFaxNumber"
-
-
-
 #define EAS_ELEMENT_DEPARTMENT					"Department"
-
 #define EAS_ELEMENT_WEBPAGE						"WebPage"
-//#define EAS_ELEMENT_EMAIL1ADDRESS				"Email1Address"
-//#define EAS_ELEMENT_EMAIL2ADDRESS				"Email2Address"
-//#define EAS_ELEMENT_EMAIL3ADDRESS				"Email3Address"
-
 #define EAS_ELEMENT_FILEAS						"FileAs"
-//#define EAS_ELEMENT_ALIAS						"Alias"
 #define EAS_ELEMENT_WEIGHTEDRANK				"WeightedRank"
-
-//#define EAS_ELEMENT_FIRSTNAME					"FirstName"
-//#define EAS_ELEMENT_MIDDLENAME				"MiddleName"
-
-//#define EAS_ELEMENT_HOMEFAXNUMBER				"HomeFaxNumber"
-//#define EAS_ELEMENT_HOMEPHONENUMBER			"HomePhoneNumber"
-//#define EAS_ELEMENT_HOME2PHONENUMBER			"Home2PhoneNumber"
-//#define EAS_ELEMENT_MOBILEPHONENUMBER			"MobilePhoneNumber"
 
 #define EAS_ELEMENT_COMPANYNAME					"CompanyName"
 
-
-//#define EAS_ELEMENT_CARPHONENUMBER				"CarPhoneNumber"
-
-//#define EAS_ELEMENT_PAGERNUMBER					"PagerNumber"
-
-//#define EAS_ELEMENT_TITLE						"Title"
-
-//#define EAS_ELEMENT_LASTNAME					"LastName"
 #define EAS_ELEMENT_SPOUSE						"Spouse"
 #define EAS_ELEMENT_JOBTITLE					"JobTitle"
 
@@ -160,7 +128,6 @@
 #define EAS_ELEMENT_YOMICOMPANYNAME				"YomiCompanyName"
 
 #define EAS_ELEMENT_OFFICELOCATION				"OfficeLocation"
-//#define EAS_ELEMENT_RADIOPHONENUMBER			"RadioPhoneNumber"
 #define EAS_ELEMENT_PICTURE						"Picture"
 #define EAS_ELEMENT_CATEGORIES					"Categories"
 #define EAS_ELEMENT_CATEGORY					"Category"
@@ -599,6 +566,26 @@ typedef enum _EasAddType {
 	EAS_ADD_OTHER
 } EasAddType;
 
+/* Address type as defined by ActiveSync */
+typedef enum _EasTelType {
+	EAS_TEL_UNKNOWN,
+	EAS_TEL_WORK,
+	EAS_TEL_HOME,
+	EAS_TEL_PREF,
+	EAS_TEL_VOICE,
+	EAS_TEL_FAX,
+	EAS_TEL_MSG,
+	EAS_TEL_CELL,
+	EAS_TEL_PAGER,
+	EAS_TEL_BBS,
+	EAS_TEL_MODEM,
+	EAS_TEL_CAR,
+	EAS_TEL_ISDN,
+	EAS_TEL_VIDEO,
+	EAS_TEL_PCS,
+	EAS_TEL_IANA_TOKEN,
+	EAS_TEL_X_NAME,
+} EasTelType;
 
 static void
 set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* value, EncodingType encodingType)
@@ -730,6 +717,27 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType
 
 }
 
+static void
+set_xml_tel(xmlNodePtr appData, EVCardAttribute *attr, EasTelType easTelType, EncodingType encoding)
+{
+	if (easTelType ==  EAS_TEL_WORK)
+	{
+		/* TODO:
+		EAS_ELEMENT_BUSINESSPHONENUMBER
+		EAS_ELEMENT_BUSINESS2PHONENUMBER
+		EAS_ELEMENT_BUSINESSFAXNUMBER
+		*/
+
+	}
+	else if (easTelType == EAS_TEL_HOME)
+	{
+		/* TODO:
+		EAS_ELEMENT_HOMEPHONENUMBER
+		EAS_ELEMENT_HOME2PHONENUMBER
+		EAS_ELEMENT_HOMEFAXNUMBER
+		*/	
+	}
+}
 
 gboolean 
 eas_con_info_translator_parse_request(	xmlDocPtr doc, 
@@ -767,13 +775,12 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		name = e_vcard_attribute_get_name(attr);
 
 		g_debug("e_vcard_attribute_get_name=%s", name);
+
 #if 0
-		if (!strcmp(name, "BEGIN")) {
-			root = osxml_node_add_root(doc, "contact");
-			set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
+		if (!strcmp(name, "BEGIN"))
 			continue;
-		}
 #endif
+
 		if (!strcmp(name, EVC_VERSION))
 			continue;
 
@@ -782,7 +789,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		/* process attributes that have no param */
 		/* FullName */
 		if (!strcmp(name, EVC_FN)) {
-			//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
+			//set_xml_element(appData, (const xmlChar*) "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
 			g_warning("TODO:AS Does not support FullName");
 			continue;
 		}
@@ -793,10 +800,10 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
-			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Additional",
+			/*set_as_xml_element(appData, (const xmlChar*) "Additional",
 							(const xmlChar*)attribute_get_nth_value(attr, 2), encoding);*/
 			g_warning("TODO: AS Does not support Additional");
-			/*set_as_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Prefix",
+			/*set_as_xml_element(appData, (const xmlChar*) "Prefix",
 							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
 			g_warning("TODO: AS Does not support Prefix");
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
@@ -804,8 +811,16 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 			continue;
 		}
+		
 
-		//Company
+		/* NICKNAME */
+		if (!strcmp(name, EVC_NICKNAME)) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_NICKNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+		
+		/* Company */
 		if (!strcmp(name, EVC_ORG)) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
@@ -815,6 +830,9 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			continue;
 		}
 
+
+
+		
 		/* Url */
 		if (!strcmp(name, EVC_URL)) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
@@ -845,7 +863,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Uid */
 		if (!strcmp(name, EVC_UID)) {
-			/*set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Uid",
+			/*set_xml_element(appData, (const xmlChar*) "Uid",
 						(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);*/
 			g_warning("TODO:AS Does not support Uid");
 			continue;
@@ -865,14 +883,13 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			continue;
 		}
 
-
 		/* process attributes that have param */
 		for (p = params; p; p = p->next) {
 			EVCardAttributeParam *param = p->data;
 			/* Address */
 			if (!strcmp(name, EVC_ADR)) {
 				const char *propname = property_get_nth_value(param, 0);
- 				if (!strcmp(propname, "WORK"))
+				if (!strcmp(propname, "WORK"))
 					set_xml_address(appData, attr, EAS_ADD_WORK, encoding);
 				else if (!strcmp(propname, "HOME"))
 					set_xml_address(appData, attr, EAS_ADD_HOME, encoding);
@@ -890,22 +907,32 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 			/* Telephone */
 			if (!strcmp(name, EVC_TEL)) {
-				#if 0
-				// TODO:
-				#define EAS_ELEMENT_BUSINESSPHONENUMBER       "BusinessPhoneNumber"
-				#define EAS_ELEMENT_BUSINESS2PHONENUMBER      "Business2PhoneNumber"
-				#define EAS_ELEMENT_BUSINESSFAXNUMBER         "BusinessFaxNumber"
-				#define EAS_ELEMENT_HOMEPHONENUMBER           "HomePhoneNumber"
-				#define EAS_ELEMENT_HOME2PHONENUMBER          "Home2PhoneNumber"
-				#define EAS_ELEMENT_HOMEFAXNUMBER             "HomeFaxNumber"
-				#define EAS_ELEMENT_MOBILEPHONENUMBER         "MobilePhoneNumber"
-				#define EAS_ELEMENT_CARPHONENUMBER            "CarPhoneNumber"
-				#define EAS_ELEMENT_RADIOPHONENUMBER          "RadioPhoneNumber"
+				const char *propname = property_get_nth_value(param, 0);
 
-				set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS EAS_ELEMENT_PICTURE,
+				if (!strcmp(propname, "WORK"))
+				{
+					set_xml_tel(appData, attr, EAS_TEL_WORK, encoding);
+				}
+				else if (!strcmp(propname, "HOME"))
+				{
+					set_xml_tel(appData, attr, EAS_TEL_HOME, encoding);
+				}
+				else if (!strcmp(propname, "CELL"))
+				{
+					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
 					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-				#endif
-				g_warning("TODO: TEL not implemented yet");
+				}
+				else if (!strcmp(propname, "CAR"))
+				{
+					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
+					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+				}
+				else if (!strcmp(propname, "RADIO"))
+				{
+					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
+					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+				}
+
 				continue;
 			}
 
