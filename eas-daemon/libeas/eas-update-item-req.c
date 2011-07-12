@@ -193,7 +193,17 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
                account_list = eas_account_list_new (client);
                g_assert(account_list != NULL);
                acc = eas_account_list_find(account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);
-               priv->folder_id = eas_account_get_calendar_folder (acc);
+               switch (priv->item_type)
+				{
+					case EAS_ITEM_CALENDAR:
+						priv->folder_id = eas_account_get_calendar_folder (acc);
+						break;
+					case EAS_ITEM_CONTACT:
+						priv->folder_id = eas_account_get_contact_folder (acc);
+						break;
+					default:
+						g_warning("trying to get default folder for unspecified item type");
+				}
 			   g_object_unref (acc);
        }
 
