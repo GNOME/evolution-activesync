@@ -137,12 +137,6 @@
 //#define EAS_ELEMENT_FIRSTNAME					"FirstName"
 //#define EAS_ELEMENT_MIDDLENAME				"MiddleName"
 
-#define EAS_ELEMENT_HOMEADDRESSCITY				"HomeAddressCity"
-#define EAS_ELEMENT_HOMEADDRESSCOUNTRY			"HomeAddressCountry"
-#define EAS_ELEMENT_HOMEADDRESSPOSTALCODE		"HomeAddressPostalCode"
-#define EAS_ELEMENT_HOMEADDRESSSTATE			"HomeAddressState"
-#define EAS_ELEMENT_HOMEADDRESSSTREET			"HomeAddressStreet"
-
 //#define EAS_ELEMENT_HOMEFAXNUMBER				"HomeFaxNumber"
 //#define EAS_ELEMENT_HOMEPHONENUMBER			"HomePhoneNumber"
 //#define EAS_ELEMENT_HOME2PHONENUMBER			"Home2PhoneNumber"
@@ -151,20 +145,11 @@
 #define EAS_ELEMENT_COMPANYNAME					"CompanyName"
 
 
-#define EAS_ELEMENT_OTHERADDRESSCITY			"OtherAddressCity"
-#define EAS_ELEMENT_OTHERADDRESSCOUNTRY			"OtherAddressCountry"
 //#define EAS_ELEMENT_CARPHONENUMBER				"CarPhoneNumber"
-#define EAS_ELEMENT_OTHERADDRESSPOSTALCODE		"OtherAddressPostalCode"
-#define EAS_ELEMENT_OTHERADDRESSSTATE			"OtherAddressState"
-#define EAS_ELEMENT_OTHERADDRESSSTREET			"OtherAddressStreet"
+
 //#define EAS_ELEMENT_PAGERNUMBER					"PagerNumber"
 
 //#define EAS_ELEMENT_TITLE						"Title"
-#define EAS_ELEMENT_BUSINESSADDRESSPOSTALCODE	"BusinessAddressPostalCode"
-#define EAS_ELEMENT_BUSINESSADDRESSSTATE		"BusinessAddressState"
-#define EAS_ELEMENT_BUSINESSADDRESSSTREET		"BusinessAddressStreet"
-#define EAS_ELEMENT_BUSINESSADDRESSCITY			"BusinessAddressCity"
-#define EAS_ELEMENT_BUSINESSADDRESSCOUNTRY		"BusinessAddressCountry"
 
 //#define EAS_ELEMENT_LASTNAME					"LastName"
 #define EAS_ELEMENT_SPOUSE						"Spouse"
@@ -674,19 +659,19 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
 		g_warning("TODO:AS Does not support ExtendedAddress");
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSSTREET,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSCITY,
+		set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_BUSINESSCITY,
         (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSSTATE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSSTATE,
         (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSPOSTALCODE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSPOSTALCODE,
         (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_BUSINESSADDRESSCOUNTRY,
+		set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_BUSINESSCOUNTRY,
         (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
 	}
 	else if (easAddType == EAS_ADD_HOME)
@@ -699,19 +684,19 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
 			g_warning("TODO:AS Does not support ExtendedAddress");
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSSTREET,
+		set_xml_element(appData, (const xmlChar*)EAS_ELEMENT_HOMESTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSCITY,
+		set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_HOMECITY,
         (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
 	
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSSTATE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMESTATE,
         (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
 	
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSPOSTALCODE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMEPOSTALCODE,
         (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
 	
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_HOMEADDRESSCOUNTRY,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMECOUNTRY,
         (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
 	}
 	else
@@ -727,19 +712,19 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
 		g_warning("TODO:AS Does not support ExtendedAddress");
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSSTREET,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OTHERSTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
 		
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSCITY,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OTHERCITY,
         (const xmlChar*)attribute_get_nth_value(attr, 3), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSSTATE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OTHERSTATE,
         (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSPOSTALCODE,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OTHERPOSTALCODE,
         (const xmlChar*)attribute_get_nth_value(attr, 5), encoding);
 
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS EAS_ELEMENT_OTHERADDRESSCOUNTRY,
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OTHERCOUNTRY,
         (const xmlChar*)attribute_get_nth_value(attr, 6), encoding);
 	}
 
