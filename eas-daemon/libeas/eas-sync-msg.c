@@ -56,6 +56,8 @@
 #include "eas-cal-info-translator.h"
 #include "eas-con-info-translator.h"
 
+#include <string.h>
+
 struct _EasSyncMsgPrivate
 {
     GSList* added_items;
@@ -159,6 +161,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
             *options = NULL,
             *body_pref = NULL;
     xmlNs   *ns    = NULL;
+	int protover = eas_connection_get_protocol_version (priv->connection);
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     node = xmlNewDocNode (doc, NULL, (xmlChar*) "Sync", NULL);
@@ -174,6 +177,16 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     child = xmlNewChild (node, NULL, (xmlChar *) "Collections", NULL);
     collection = xmlNewChild (child, NULL, (xmlChar *) "Collection", NULL);
 
+
+	if (protover <= 120) {
+		// Include <Class> element; protocol 12.0 seems to require it */
+		if (priv->ItemType == EAS_ITEM_MAIL)
+			xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar *) "Email");
+		else if (priv->ItemType == EAS_ITEM_CONTACT)
+			xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar *) "Contact");
+		else if (priv->ItemType == EAS_ITEM_CALENDAR)
+			xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar *) "Calendar");
+	}
     xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key_in);
     xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) priv->folderID);
 
@@ -213,8 +226,14 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
     else
     {
         GSList * iterator;
+
         xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
-        xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "0");
+
+		// In protocol 12.0, do not include <GetChanges> node when SyncKey is zero.
+		// The server doesn't like it.
+		if (protover > 120 || strcmp (priv->sync_key_in, "0"))
+			xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "0");
+
         //if any of the lists are not null we need to add commands element
         if (added || updated || deleted)
         {
