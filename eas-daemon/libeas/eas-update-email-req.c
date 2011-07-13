@@ -209,6 +209,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
     GSList *update_emails = NULL;   // sync msg expects a list, we have an array
     guint i = 0;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+	EasConnection *conn = eas_request_base_GetConnection (parent);
 
     g_debug ("eas_update_email_req_Activate++");
 
@@ -222,7 +223,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
     }
 
     //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, EAS_ITEM_MAIL);
+    priv->sync_msg = eas_sync_msg_new (priv->sync_key, conn, priv->folder_id, EAS_ITEM_MAIL);
 
     g_debug ("build messsage");
     //build request msg

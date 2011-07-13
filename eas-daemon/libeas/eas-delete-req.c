@@ -148,6 +148,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
     xmlDoc *doc;
     gboolean getChanges = FALSE;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+	EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
 
     g_debug ("eas_delete_req_Activate++");
 
@@ -174,7 +175,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 	}
 
     //create sync  msg type
-    priv->syncMsg = eas_sync_msg_new (priv->syncKey, priv->accountID, priv->folder_id, priv->itemType);
+    priv->syncMsg = eas_sync_msg_new (priv->syncKey, conn, priv->folder_id, priv->itemType);
 
     g_debug ("eas_delete_req_Activate- syncKey = %s", priv->syncKey);
 

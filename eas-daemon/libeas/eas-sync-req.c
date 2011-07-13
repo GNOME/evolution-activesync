@@ -286,11 +286,11 @@ eas_sync_req_Activate (EasSyncReq *self,
 	}
 	else 
 	{
-
+		EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
 		g_debug ("eas_sync_req_activate - new Sync  mesg");
 
 		//create sync  msg type
-		priv->syncMsg = eas_sync_msg_new (priv->sync_key, priv->accountID, priv->folderID, priv->ItemType);
+		priv->syncMsg = eas_sync_msg_new (priv->sync_key, conn, priv->folderID, priv->ItemType);
 		if (!priv->syncMsg)
 		{
 		    ret = FALSE;
@@ -366,7 +366,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
     GSList* updated_items = NULL;
     GSList* deleted_items = NULL;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-
+	EasConnection *conn = eas_request_base_GetConnection (parent);
 
     g_debug ("eas_sync_req_MessageComplete++");
 
@@ -422,7 +422,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
 			g_assert (NULL == priv->syncMsg);
 			//create sync  msg type
-			priv->syncMsg = eas_sync_msg_new (priv->sync_key, priv->accountID, priv->folderID, priv->ItemType);
+			priv->syncMsg = eas_sync_msg_new (priv->sync_key, conn, priv->folderID, priv->ItemType);
 			if (!priv->syncMsg)
 			{
 				ret = FALSE;
@@ -483,7 +483,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             }
 
             //create new message with new syncKey
-            priv->syncMsg = eas_sync_msg_new (syncKey, priv->accountID, priv->folderID, priv->ItemType);
+            priv->syncMsg = eas_sync_msg_new (syncKey, conn, priv->folderID, priv->ItemType);
 			g_free(syncKey);
             //build request msg
             doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);

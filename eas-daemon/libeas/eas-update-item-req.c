@@ -202,7 +202,8 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
 
 	g_debug ("eas_update_item_req_Activate1");
     //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
+    priv->sync_msg = eas_sync_msg_new (priv->sync_key, eas_request_base_GetConnection (parent),
+									   priv->folder_id, priv->item_type);
 
 	g_debug ("eas_update_item_req_Activate2");
     //build request msg

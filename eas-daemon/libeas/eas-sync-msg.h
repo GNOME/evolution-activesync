@@ -56,6 +56,7 @@
 #include <glib-object.h>
 #include "eas-msg-base.h"
 #include "eas-request-base.h"
+#include "eas-connection.h"
 
 G_BEGIN_DECLS
 
@@ -89,8 +90,8 @@ GType eas_sync_msg_get_type (void) G_GNUC_CONST;
  *
  * @param[in] syncKey
  *	  The client's current syncKey.
- * @param[in] accountId
- *	  Unique identifier for a user account.
+ * @param[in] connection
+ *	  EasConnection object used for this message.
  * @param[in] FolderID
  *	  Identifier for the folder on the exchange server.
  * @param[in] type
@@ -100,7 +101,7 @@ GType eas_sync_msg_get_type (void) G_GNUC_CONST;
  */
 EasSyncMsg* 
 eas_sync_msg_new (const gchar* syncKey, 
-                  const gchar* accountId, 
+                  EasConnection *connection,
                   const gchar *FolderID, 
                   const EasItemType type);
 

@@ -176,7 +176,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
     xmlDoc *doc = NULL;
     gboolean success = FALSE;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-
+	EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
     g_debug ("eas_add_item_req_Activate++");
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -185,7 +185,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 	{
 		EasAccount *acc;
 
-		acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
+		acc = eas_connection_get_account (conn);
 		switch (priv->item_type)
 		{
 			case EAS_ITEM_CALENDAR:
@@ -200,7 +200,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 		g_object_unref (acc);
 	}
     //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, priv->account_id, priv->folder_id, priv->item_type);
+    priv->sync_msg = eas_sync_msg_new (priv->sync_key, conn, priv->folder_id, priv->item_type);
 
     //build request msg
     doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, priv->serialised_calendar, NULL, NULL);

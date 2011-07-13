@@ -66,7 +66,7 @@ struct _EasSyncMsgPrivate
     gchar* sync_key_in;
 	gchar* sync_key_out;
     gchar* folderID;
-    gchar* account_id;
+    EasConnection *connection;
 
     EasItemType ItemType;
 };
@@ -90,7 +90,7 @@ eas_sync_msg_init (EasSyncMsg *object)
     priv->sync_key_in = NULL;
 	priv->sync_key_out = NULL;
     priv->folderID = NULL;
-    priv->account_id = NULL;
+    priv->connection = NULL;
     g_debug ("eas_sync_msg_init--");
 }
 
@@ -105,7 +105,8 @@ eas_sync_msg_finalize (GObject *object)
     g_free (priv->sync_key_in);
 	g_free (priv->sync_key_out);
     g_free (priv->folderID);
-    g_free (priv->account_id);
+    if (priv->connection)
+		g_object_unref (priv->connection);
 
 	g_slist_foreach (priv->added_items, (GFunc)g_free, NULL);
 	g_slist_foreach (priv->updated_items, (GFunc)g_free, NULL);
@@ -130,7 +131,7 @@ eas_sync_msg_class_init (EasSyncMsgClass *klass)
 }
 
 EasSyncMsg*
-eas_sync_msg_new (const gchar* syncKey, const gchar* accountId, const gchar *folderID, const EasItemType type)
+eas_sync_msg_new (const gchar* syncKey, EasConnection *conn, const gchar *folderID, const EasItemType type)
 {
     EasSyncMsg* msg = NULL;
     EasSyncMsgPrivate *priv = NULL;
@@ -140,7 +141,7 @@ eas_sync_msg_new (const gchar* syncKey, const gchar* accountId, const gchar *fol
 
 	priv->more_available = FALSE;
     priv->sync_key_in = g_strdup (syncKey);
-    priv->account_id = g_strdup (accountId);
+    priv->connection = g_object_ref (conn);
     priv->folderID = g_strdup (folderID);
     priv->ItemType = type;
 
