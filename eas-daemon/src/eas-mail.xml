@@ -100,6 +100,7 @@
 		<arg type="s" name="sync_key" direction="in"/>
 		<arg type="s" name="folder_id" direction="in"/>		
 		<arg type="as" name="update_email_array" direction="in"/>		
+		<arg type="s" name="ret_sync_key" direction="out"/>
 	</method>
 	
 	<method name="move_emails_to_folder">
