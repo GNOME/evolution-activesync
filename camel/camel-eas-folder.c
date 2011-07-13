@@ -405,6 +405,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	EasEmailHandler *handler;
 	GPtrArray *uids;
 	GSList *item_list = NULL, *deleted_uids = NULL;
+	GSList *changing_mis = NULL, *l;
 	int item_list_len = 0;
 	gboolean success = TRUE;
         const gchar *full_name;
@@ -456,7 +457,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 					item->importance = EAS_IMPORTANCE_LOW;
 			}
 #endif
-			camel_message_info_free (mi);
+			changing_mis = g_slist_append (changing_mis, mi);
 			item_list = g_slist_append (item_list, item);
 			item_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {
@@ -470,6 +471,17 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 			success = eas_mail_handler_update_email (handler,
 								 ((CamelEasSummary *) folder->summary)->sync_state,
 								 folder_id, item_list, error);
+			for (l = changing_mis; l; l = l->next) {
+				CamelEasMessageInfo *mi = l->data;
+				if (success) {
+					mi->server_flags = mi->info.flags;
+					mi->info.dirty = TRUE;
+				}
+				camel_message_info_free (mi);
+			}
+			g_slist_free (changing_mis);
+			changing_mis = NULL;
+
 			g_mutex_unlock (priv->server_lock);
 			item_list = NULL;
 			item_list_len = 0;
@@ -481,6 +493,17 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
 							 folder_id, item_list, error);
+		for (l = changing_mis; l; l = l->next) {
+			CamelEasMessageInfo *mi = l->data;
+			if (success) {
+				mi->server_flags = mi->info.flags;
+				mi->info.dirty = TRUE;
+			}
+			camel_message_info_free (mi);
+		}
+		g_slist_free (changing_mis);
+		changing_mis = NULL;
+
 		g_mutex_unlock (priv->server_lock);
 	}
 
