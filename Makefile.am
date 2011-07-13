@@ -9,6 +9,6 @@ if ENABLE_MEEGO_UI
   MEEGO_DIR = meego
 endif
 
-SUBDIRS = . logger libeasaccount/src libeasaccount/tests eas-daemon/libeas libeastest/src libeassync/src libeasmail/src eas-daemon/src eas-daemon/tests eas-daemon/data check_tests camel $(SYNCEVOLUTION_DIR) $(MEEGO_DIR)
+SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/tests eas-daemon/data check_tests camel $(SYNCEVOLUTION_DIR) $(MEEGO_DIR)
 
 EXTRA_DIST = autogen.sh
