@@ -46,6 +46,7 @@ struct	_EasAccountPrivate
 	 gchar* calendar_folder;
 	 gchar* contact_folder;
 	 gchar* password;
+         int protocol_version;
 };
 	
 #define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
@@ -355,6 +356,19 @@ eas_account_set_password (EasAccount *account, const gchar* password)
 	/*g_debug("eas_account_set_password--");*/
 }
 
+void
+eas_account_set_protocol_version (EasAccount *account, int protocol_version)
+{
+	/*g_debug("eas_account_set_protocol_version++");*/
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+	if(account->priv->protocol_version != protocol_version){
+		account->priv->protocol_version = protocol_version;
+		g_signal_emit (account, signals[CHANGED], 0, -1);
+		g_debug( "protocol_version changed: [%d]\n", account->priv->protocol_version);
+	}
+	/*g_debug("eas_account_set_protocol_version--");*/
+}
+
 gchar*
 eas_account_get_uid (const EasAccount *account)
 {
@@ -397,6 +411,12 @@ eas_account_get_password (const EasAccount *account)
 	return account->priv->password;
 }
 
+int
+eas_account_get_protocol_version (const EasAccount *account)
+{
+	return account->priv->protocol_version;
+}
+
 gboolean
 eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo)
 {
@@ -412,6 +432,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_calendar_folder(account, accountinfo->calendar_folder);
 	eas_account_set_contact_folder(account, accountinfo->contact_folder);
 	eas_account_set_password (account, accountinfo->password);
+	eas_account_set_protocol_version (account, accountinfo->protocol_version);
 	/* g_debug("eas_account_set_from_info--");	*/
 	return TRUE;
 }

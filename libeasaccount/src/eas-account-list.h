@@ -38,7 +38,7 @@
 #define EAS_ACCOUNT_KEY_CONTACT_FOLDER	"/contact_folder"
 #define EAS_ACCOUNT_KEY_CALENDAR_FOLDER	"/calendar_folder"
 #define EAS_ACCOUNT_KEY_PASSWORD	"/password"
-
+#define EAS_ACCOUNT_KEY_PROTOCOL_VERSION "/protocol_version"
 
 /* Standard GObject macros */
 #define EAS_TYPE_ACCOUNT_LIST \
