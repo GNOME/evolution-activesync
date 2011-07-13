@@ -242,6 +242,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 			g_warning("Unexpected state");
 			break;
 		}
+		g_object_unref(acc);
 	}
 	else
 	{

@@ -643,7 +643,7 @@ eas_connection_get_account (EasConnection *self)
 {
     EasConnectionPrivate *priv = self->priv;
 
-	return priv->account;
+	return g_object_ref(priv->account);
 }
 
 int
@@ -966,6 +966,7 @@ eas_connection_send_request (EasConnection* self,
                        "&DeviceId=", device_id,
                        "&DeviceType=", device_type,
                        NULL);
+
 
     msg = soup_message_new ("POST", uri);
     g_free (uri);
