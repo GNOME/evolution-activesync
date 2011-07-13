@@ -262,6 +262,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     GError *error = NULL;
     EasUpdateEmailReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+	gchar *ret_sync_key;
 
     g_debug ("eas_update_email_req_MessageComplete++");
 
@@ -279,6 +280,8 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
         g_assert (error != NULL);
     }
 
+	ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
+
 finish:
 	xmlFreeDoc (doc);
     if(!ret)
@@ -288,7 +291,7 @@ finish:
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (parent));
+        dbus_g_method_return (eas_request_base_GetContext (parent), ret_sync_key);
     }
 
     g_debug ("eas_update_email_req_MessageComplete--");

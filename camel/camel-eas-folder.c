@@ -405,6 +405,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	EasEmailHandler *handler;
 	GPtrArray *uids;
 	GSList *item_list = NULL, *deleted_uids = NULL;
+	GSList *changing_mis = NULL, *l;
 	int item_list_len = 0;
 	gboolean success = TRUE;
         const gchar *full_name;
@@ -429,7 +430,9 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	folder_id = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
 								     full_name);
 
-	for (i = 0; success && i < uids->len; i++) {
+	i = 0;
+ more:
+	for ( ; success && i < uids->len && item_list_len < 25; i++) {
 		guint32 flags_changed;
 		CamelEasMessageInfo *mi = (void *)camel_folder_summary_uid (folder->summary, uids->pdata[i]);
 		if (!mi)
@@ -456,34 +459,40 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 					item->importance = EAS_IMPORTANCE_LOW;
 			}
 #endif
-			camel_message_info_free (mi);
+			changing_mis = g_slist_append (changing_mis, mi);
 			item_list = g_slist_append (item_list, item);
 			item_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {
 			deleted_uids = g_slist_prepend (deleted_uids, (gpointer) camel_pstring_strdup (uids->pdata [i]));
 			camel_message_info_free (mi);
 		}
-
-		/* Don't do too many at once */
-		if (item_list_len == 25) {
-			g_mutex_lock (priv->server_lock);
-			success = eas_mail_handler_update_email (handler,
-								 ((CamelEasSummary *) folder->summary)->sync_state,
-								 folder_id, item_list, error);
-			g_mutex_unlock (priv->server_lock);
-			item_list = NULL;
-			item_list_len = 0;
-		}
 	}
 
+	/* Don't do too many at once */
 	if (item_list_len) {
 		g_mutex_lock (priv->server_lock);
 		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
 							 folder_id, item_list, error);
-		g_mutex_unlock (priv->server_lock);
-	}
+		for (l = changing_mis; l; l = l->next) {
+			CamelEasMessageInfo *mi = l->data;
+			if (success) {
+				mi->server_flags = mi->info.flags;
+				mi->info.dirty = TRUE;
+			}
+			camel_message_info_free (mi);
+		}
+		g_slist_free (changing_mis);
+		changing_mis = NULL;
 
+		g_mutex_unlock (priv->server_lock);
+		item_list = NULL;
+		item_list_len = 0;
+	}
+	/* If we broke out of the loop just because we had a batch to
+	   send already, not because we're done, then keep going */
+	if (success && i < uids->len)
+		goto more;
 
 	g_free (folder_id);
 
