@@ -222,8 +222,7 @@ eas_connection_init (EasConnection *self)
     priv->accountUid = NULL;
 	priv->account = NULL; // Just a reference
 	priv->protocol_version = AS_DEFAULT_PROTOCOL;
-	priv->proto_str = g_strdup_printf ("%d.%d", priv->protocol_version / 10,
-									   priv->protocol_version % 10);
+	priv->proto_str = NULL;
     priv->request_cmd = NULL;
     priv->request_doc = NULL;
     priv->request = NULL;
@@ -1746,6 +1745,12 @@ eas_connection_new (EasAccount* account, GError** error)
         g_static_mutex_unlock (&connection_list);
         return NULL;
     }
+
+	priv->protocol_version = eas_account_get_protocol_version (account);
+	if (!priv->protocol_version)
+		priv->protocol_version = AS_DEFAULT_PROTOCOL;
+	priv->proto_str = g_strdup_printf ("%d.%d", priv->protocol_version / 10,
+									   priv->protocol_version % 10);
 
 	// Just a reference to the global account list
 	priv->account = account;
