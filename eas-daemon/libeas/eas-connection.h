@@ -213,6 +213,17 @@ void eas_connection_add_mock_responses (const gchar** response_file_list);
  */
 EasAccount *eas_connection_get_account (EasConnection *self);
 
+/**
+ * Returns the ActiveSync protocol version used for a given connection
+ *
+ * @param[in] self
+ *	  GObject instance of EasConnection.
+ *
+ * @return int ActiveSync protocol version multiplied by 10 (e.g. 121 for 12.1)
+ *
+ */
+int eas_connection_get_protocol_version (EasConnection *self);
+
 
 G_END_DECLS
 

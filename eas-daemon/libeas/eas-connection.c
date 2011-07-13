@@ -647,6 +647,14 @@ eas_connection_get_account (EasConnection *self)
 	return priv->account;
 }
 
+int
+eas_connection_get_protocol_version (EasConnection *self)
+{
+    EasConnectionPrivate *priv = self->priv;
+
+	return priv->protocol_version;
+}
+
 void eas_connection_resume_request (EasConnection* self, gboolean provisionSuccessful)
 {
     EasConnectionPrivate *priv = self->priv;
