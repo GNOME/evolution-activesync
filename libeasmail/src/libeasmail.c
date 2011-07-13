@@ -1072,6 +1072,7 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	guint num_emails = g_slist_length ( (GSList *) update_emails);
 	gchar **serialised_email_array = g_malloc0 ( (num_emails * sizeof (gchar*)) + 1);  // null terminated array of strings
 	gchar *serialised_email = NULL;
+	gchar *ret_sync_key = NULL;
 	guint i;
 	GSList *l = (GSList *) update_emails;
 
@@ -1112,7 +1113,13 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 				 G_TYPE_STRING, folder_id,
 				 G_TYPE_STRV, serialised_email_array,
 				 G_TYPE_INVALID,
+				 G_TYPE_STRING, &ret_sync_key,
 				 G_TYPE_INVALID);
+
+	if (ret && ret_sync_key && ret_sync_key[0]) {
+		g_debug ("%s ret_Sync_key %s", __func__, ret_sync_key);
+		strcpy (sync_key, ret_sync_key);
+	}
 
 cleanup:
 	// free all strings in the array
@@ -1120,7 +1127,7 @@ cleanup:
 		g_free (serialised_email_array[i]);
 	}
 	g_free (serialised_email_array);
-
+	g_free (ret_sync_key);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
