@@ -1089,7 +1089,6 @@ static RequestValidity
 isResponseValid (SoupMessage *msg, GError **error)
 {
     const gchar *content_type = NULL;
-    goffset header_content_length = 0;
 
     g_debug ("eas_connection - isResponseValid++");
     
@@ -1110,31 +1109,7 @@ isResponseValid (SoupMessage *msg, GError **error)
         return INVALID;
     }
 
-    if (SOUP_ENCODING_CONTENT_LENGTH != soup_message_headers_get_encoding (msg->response_headers))
-    {
-		/* FIXME: Why the hell do we need this? */
-        g_warning ("  Failed: Content-Length was not found");
-		g_set_error (error,
-					 EAS_CONNECTION_ERROR,
-					 EAS_CONNECTION_ERROR_FAILED,
-					 "HTTP response used non-length encoding");
-        return INVALID;
-    }
-
-    header_content_length = soup_message_headers_get_content_length (msg->response_headers);
-    if (header_content_length != msg->response_body->length)
-    {
-        g_warning ("  Failed: Header[%ld] and Body[%ld] Content-Length do not match",
-                   (long) header_content_length, (long) msg->response_body->length);
-		g_set_error (error,
-					 EAS_CONNECTION_ERROR,
-					 EAS_CONNECTION_ERROR_FAILED,
-					 "HTTP response Header[%ld] and Body[%ld] Content-Length do not match",
-					 (long) header_content_length, (long) msg->response_body->length);
-        return INVALID;
-    }
-
-    if (!header_content_length)
+    if (!msg->response_body->length)
     {
         g_debug ("Empty Content");
         return VALID_EMPTY;
