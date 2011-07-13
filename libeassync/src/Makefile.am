@@ -22,6 +22,7 @@ libeassync_la_LDFLAGS =			\
 		$(SOUP_LIBS)
 
 libeassync_la_SOURCES =		\
+	eas-sync-errors.h	\
         libeassync.h			\
         libeassync.c                     \
         eas-item-info.h                     \

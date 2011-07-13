@@ -36,6 +36,7 @@
 #include "../../libeasmail/src/eas-mail-errors.h"
 #include "libeassync.h"
 #include "eas-item-info.h"
+#include "eas-sync-errors.h"
 
 #include "../../logger/eas-logger.h"
 
@@ -43,6 +44,18 @@ G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
 
 #define EAS_SYNC_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_HANDLER, EasSyncHandlerPrivate))
 
+GQuark
+eas_sync_error_quark (void)
+{
+	static GQuark quark = 0;
+
+	if (G_UNLIKELY (quark == 0)) {
+		const gchar *string = "eas-sync-error-quark";
+		quark = g_quark_from_static_string (string);
+	}
+
+	return quark;
+}
 
 static gchar* defaultCalFolder = NULL;
 static gchar* defaultConFolder = NULL;
@@ -311,8 +324,8 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 
 	if(sync_key_in ==NULL ||(strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
-		g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_BADARG,
+		g_set_error (error, EAS_SYNC_ERROR,
+                     EAS_SYNC_ERROR_BADARG,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
@@ -374,8 +387,8 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
 	if(sync_key_in ==NULL ||(strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
-		g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_BADARG,
+		g_set_error (error, EAS_SYNC_ERROR,
+                     EAS_SYNC_ERROR_BADARG,
                      ("update_items requires a valid sync key"));
 		return FALSE;
 	}
@@ -467,8 +480,8 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 
 	if(sync_key_in == NULL || (strlen(sync_key_in)<=0) || !g_strcmp0 (sync_key_in, "0"))
 	{
-		g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_BADARG,
+		g_set_error (error, EAS_SYNC_ERROR,
+                     EAS_SYNC_ERROR_BADARG,
                      ("add_items requires a valid sync key"));
 		return FALSE;
 	}
