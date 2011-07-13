@@ -118,7 +118,7 @@ AM_CONDITIONAL([ENABLE_MODULES], [true])
 # Don't hard-code them in syncevolution/Makefile.am, that file
 # is also used when compiling inside SyncEvolution.
 EASSYNC_CFLAGS='-DHAVE_CONFIG_H -DHAVE_GLIB -I. -I$(top_srcdir)/libeassync/src $(GLIB_CFLAGS) $(SOUP_CFLAGS) $(LIBXML_CFLAGS) $(EDATASERVER_CFLAGS) $(DBUS_GLIB_CFLAGS)'
-EASSYNC_LIBS='$(top_builddir)/libeasmail/src/libeasmail.la $(top_builddir)/eas-daemon/libeas/libeas.la'
+EASSYNC_LIBS='$(top_builddir)/libeassync/src/libeassync.la'
 AC_SUBST(EASSYNC_CFLAGS)
 AC_SUBST(EASSYNC_LIBS)
 
