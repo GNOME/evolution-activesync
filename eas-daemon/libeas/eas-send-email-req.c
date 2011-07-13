@@ -198,7 +198,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
     rewind (file);
 
     // allocate memory to contain the whole file:
-    mime_string = (gchar*) g_malloc0 (sizeof (gchar) * size);
+    mime_string = (gchar*) g_malloc (size + 1);
     if (mime_string == NULL)
     {
         ret = FALSE;
@@ -209,6 +209,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
         goto finish;
     }
 
+	mime_string[size] = 0;
     // copy the file into the buffer:
     result = fread (mime_string, 1, size, file);
     if (result != size)
