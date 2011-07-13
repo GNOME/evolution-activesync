@@ -219,6 +219,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
         g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_FILEERROR,
                      ("failed to open file %s"), priv->mime_file);
+		g_free (mime_string);
         goto finish;
     }
 
