@@ -53,12 +53,16 @@
 #define EAS_ERRORS_H
 
 #include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
 GQuark eas_connection_error_quark (void);
 
 #define EAS_CONNECTION_ERROR (eas_connection_error_quark ())
+
+#define EAS_TYPE_CONNECTION_ERROR (eas_connection_error_get_type ())
+GType eas_connection_error_get_type (void);
 
 // note: the error values in this enum do not match anything in MSFT docs, the values are our own:
 enum _EasConnectionError{
@@ -146,6 +150,7 @@ enum _EasConnectionError{
 	EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED,
 
 	/* */
+    EAS_CONNECTION_ERROR_LAST
 } ;
 
 typedef enum _EasConnectionError EasConnectionError;

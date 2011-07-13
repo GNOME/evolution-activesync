@@ -51,7 +51,7 @@
 
 #include "eas-common.h"
 #include "eas-common-stub.h"
-
+#include "../libeas/eas-connection-errors.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, G_TYPE_OBJECT);
 
@@ -79,7 +79,9 @@ eas_common_class_init (EasCommonClass *klass)
     /* Binding to GLib/D-Bus" */
     dbus_g_object_type_install_info (EAS_TYPE_COMMON,
                                      &dbus_glib_eas_common_object_info);
-
+    dbus_g_error_domain_register (EAS_CONNECTION_ERROR,
+				  "org.meego.activesyncd",
+				  EAS_TYPE_CONNECTION_ERROR);
 }
 
 gboolean eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error)
