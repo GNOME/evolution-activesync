@@ -32,7 +32,9 @@ libeas_la_LDFLAGS =			\
 		$(GNOMEKEYRING_LIBS)
 
 
-libeas_la_LIBADD = ../../libeasaccount/src/libeasaccount.la
+# We need libeassync for eas_item_info_serialise()
+libeas_la_LIBADD = ../../libeasaccount/src/libeasaccount.la \
+		   ../../libeassync/src/libeassync.la
 
 
 libeas_la_SOURCES =		\
