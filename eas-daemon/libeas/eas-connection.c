@@ -305,18 +305,18 @@ eas_connection_finalize (GObject *object)
 
     if (priv->request_doc)
     {
-#ifndef ACTIVESYNC_14
-		if (!g_strcmp0 ("SendMail", priv->request_cmd))
-		{
-			g_free ((gchar*)priv->request_doc);
-		}
-		else
-		{
+		if (priv->protocol_version < 140) {
+			if (!g_strcmp0 ("SendMail", priv->request_cmd))
+			{
+				g_free ((gchar*)priv->request_doc);
+			}
+			else
+			{
+				xmlFreeDoc (priv->request_doc);
+			}
+		} else {
 			xmlFreeDoc (priv->request_doc);
 		}
-#else
-        xmlFreeDoc (priv->request_doc);
-#endif
 		priv->request_doc = NULL;
     }
 	
@@ -681,8 +681,8 @@ void eas_connection_resume_request (EasConnection* self, gboolean provisionSucce
 			g_debug ("Provisioning failed - cleaning up original request");
 
 			// Clean up request data
-			#ifndef ACTIVESYNC_14
-			if (!g_strcmp0("SendMail", priv->request_cmd))
+			if (priv->protocol_version < 140 &&
+				!g_strcmp0("SendMail", priv->request_cmd))
 			{
 				g_free((gchar*)priv->request_doc);
 			}
@@ -690,9 +690,6 @@ void eas_connection_resume_request (EasConnection* self, gboolean provisionSucce
 			{
 				xmlFreeDoc (priv->request_doc);
 			}
-			#else
-				xmlFreeDoc (priv->request_doc);
-			#endif
 
 			priv->request_cmd   = NULL;
 			priv->request       = NULL;
@@ -911,8 +908,8 @@ eas_connection_send_request (EasConnection* self,
 		g_debug("store the request");
         priv->request_cmd = g_strdup (cmd);
 
-#ifndef ACTIVESYNC_14
-		if(!g_strcmp0(cmd, "SendMail"))
+		if(priv->protocol_version < 140 &&
+		   !g_strcmp0(cmd, "SendMail"))
 		{
 			priv->request_doc = (gpointer)g_strdup((gchar*) doc);
 		}
@@ -920,9 +917,6 @@ eas_connection_send_request (EasConnection* self,
 		{
 			priv->request_doc = xmlCopyDoc (doc, recursive);
 		}
-#else
-        priv->request_doc = xmlCopyDoc (doc, recursive);
-#endif
 
         priv->request = request;
         priv->request_error = error;
@@ -988,12 +982,9 @@ eas_connection_send_request (EasConnection* self,
     soup_message_headers_append (msg->request_headers,
                                  "X-MS-PolicyKey",
                                  policy_key?:"0");
-
-#ifndef ACTIVESYNC_14
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
-if(g_strcmp0(cmd, "SendMail"))
+if( priv->protocol_version >= 140 || g_strcmp0(cmd, "SendMail"))
 {
-#endif
 	// Convert doc into a flat xml string
     xmlDocDumpFormatMemoryEnc (doc, &dataptr, &data_len, (gchar*) "utf-8", 1);
     wbxml_conv_xml2wbxml_disable_public_id (conv);
@@ -1026,7 +1017,6 @@ if(g_strcmp0(cmd, "SendMail"))
                               SOUP_MEMORY_COPY,
                               (gchar*) wbxml,
                               wbxml_len);
-#ifndef ACTIVESYNC_14
 }
 else
 {
@@ -1042,7 +1032,7 @@ else
 	//Avoid double-free in handle_server_response()
 	priv->request_doc = NULL;
 }
-#endif
+
     eas_request_base_SetSoupMessage (request, msg);
 
     g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
@@ -1058,8 +1048,7 @@ else
 finish:
 	// @@WARNING - doc must always be freed before exiting this function.
 
-#ifndef ACTIVESYNC_14
-if(!g_strcmp0(cmd, "SendMail"))
+if(priv->protocol_version < 140 && !g_strcmp0(cmd, "SendMail"))
 	{
 		g_free ((gchar*)doc);
 	}
@@ -1067,9 +1056,6 @@ if(!g_strcmp0(cmd, "SendMail"))
 	{
 		xmlFreeDoc(doc);
 	}
-#else
-	xmlFreeDoc (doc);
-#endif
 
     if (wbxml) free (wbxml);
     if (conv) wbxml_conv_xml2wbxml_destroy (conv);
@@ -1932,8 +1918,7 @@ complete_request:
         if (request_type != EAS_REQ_PROVISION)
         {
             // Clean up request data
-#ifndef ACTIVESYNC_14
-			if (!g_strcmp0("SendMail", priv->request_cmd))
+			if (priv->protocol_version < 140 && !g_strcmp0("SendMail", priv->request_cmd))
 			{
 				g_free((gchar*)priv->request_doc);
 			}
@@ -1941,10 +1926,6 @@ complete_request:
 			{
         		xmlFreeDoc (priv->request_doc);
 			}
-#else
-			xmlFreeDoc (priv->request_doc);
-#endif
-	
 
             priv->request_cmd = NULL;
             priv->request_doc = NULL;
