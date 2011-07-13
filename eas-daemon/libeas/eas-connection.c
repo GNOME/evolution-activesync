@@ -74,9 +74,9 @@
 #include "../src/eas-mail.h"
 
 #ifdef ACTIVESYNC_14
-    #define AS_VERSION "14.0"
+#define AS_DEFAULT_PROTOCOL 140
 #else
-    #define AS_VERSION "12.1"
+#define AS_DEFAULT_PROTOCOL 121
 #endif
 
 struct _EasConnectionPrivate
@@ -95,6 +95,9 @@ struct _EasConnectionPrivate
     xmlDoc* request_doc;
     struct _EasRequestBase* request;
     GError **request_error;
+
+	int protocol_version;
+	gchar *proto_str;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -218,7 +221,9 @@ eas_connection_init (EasConnection *self)
 
     priv->accountUid = NULL;
 	priv->account = NULL; // Just a reference
-
+	priv->protocol_version = AS_DEFAULT_PROTOCOL;
+	priv->proto_str = g_strdup_printf ("%d.%d", priv->protocol_version / 10,
+									   priv->protocol_version % 10);
     priv->request_cmd = NULL;
     priv->request_doc = NULL;
     priv->request = NULL;
@@ -321,6 +326,8 @@ eas_connection_finalize (GObject *object)
     {
         g_error_free (*priv->request_error);
     }
+
+	g_free (priv->proto_str);
 
     G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
     g_debug ("eas_connection_finalize--");
@@ -972,7 +979,7 @@ eas_connection_send_request (EasConnection* self,
 
     soup_message_headers_append (msg->request_headers,
                                  "MS-ASProtocolVersion",
-                                AS_VERSION);
+                                priv->proto_str);
 
     soup_message_headers_append (msg->request_headers,
                                  "User-Agent",
