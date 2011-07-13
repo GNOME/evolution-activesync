@@ -19,6 +19,9 @@ gchar * g_inbox_id = NULL;
 
 static GMainLoop *loop = NULL;
 
+static GThread *sync_calls_thread = NULL;
+static GMainLoop *progress_loop = NULL;	// mainloop used to receive progress updates on for tests that require progress updates
+
 Suite* eas_libeasmail_suite (void);
 
 static void
@@ -38,11 +41,14 @@ test_push_email_cb (GSList * data, GError *error)
 static void
 test_email_request_progress_cb (gpointer progress_data, guint percent)
 {
+	g_debug("test got progress update");
 	if(percent == 100)
 	{
-		g_main_loop_quit (loop);
-    	g_main_loop_unref (loop);
-    	loop = NULL;
+		g_thread_join(sync_calls_thread); // don't quit until the sync call has completed
+		g_debug("quit progress loop");
+		g_main_loop_quit (progress_loop);
+    	g_main_loop_unref (progress_loop);
+    	progress_loop = NULL;
 	}
 }
 
@@ -141,38 +147,79 @@ static void testGetFolderInfo (EasEmailHandler *email_handler,
 //      "Folder Sync Key not updated by call the exchange server");
 }
 
+
+struct _TrySendEmailParams 
+{
+	EasEmailHandler *email_handler;
+	EasProgressFn progress_fn;
+	gpointer progress_data;
+	GError **error;	
+	const gchar *client_id;
+	const gchar *mime_file;
+};
+
+typedef struct _TrySendEmailParams TrySendEmailParams;
+
+static void try_send_email(gpointer data)
+{
+	TrySendEmailParams *params = data;
+	gboolean rtn;
+
+    rtn = eas_mail_handler_send_email (params->email_handler,
+                                       params->client_id,
+                                       params->mime_file,
+                                       params->progress_fn,
+                                       params->progress_data,		
+                                       params->error);											 
+
+	g_debug("eas_mail_handler_send_email returned");
+
+	if (!rtn)
+	{
+		fail_if(TRUE, "%s", (*params->error)->message);
+	}
+
+	g_free(params);
+	
+	return;
+}
+
+static gboolean spawn_send_email_thread (gpointer data)
+{
+	sync_calls_thread = g_thread_create(try_send_email, data, TRUE, NULL);
+
+	return FALSE;	// run once (don't put back on mainloop again)
+}
+
+
 static void testSendEmail (EasEmailHandler *email_handler,
                            const gchar *client_id,
                            const gchar *mime_file,
                            GError **error)
 {
     gboolean ret = FALSE;
-
 	EasProgressFn progress_cb = NULL;
+	progress_loop = g_main_loop_new (NULL, FALSE);
 	
 	// comment out if progress reports not desired:
 	progress_cb = test_email_request_progress_cb;
 
-	loop = g_main_loop_new (NULL, FALSE);	
-	
-    ret = eas_mail_handler_send_email (email_handler,
-                                       client_id,
-                                       mime_file,
-                                       progress_cb,
-                                       NULL,
-                                       & (*error));
+	TrySendEmailParams *send_params = g_new0 (TrySendEmailParams, 1);
+	send_params->email_handler = email_handler;
+	send_params->client_id = client_id;
+	send_params->mime_file = mime_file;
+	send_params->progress_fn = progress_cb;
+	send_params->progress_data = NULL;
+	send_params->error = error;		
 
-	if(progress_cb)
-	{
-		if (loop) g_main_loop_run (loop);		
-	}
+	g_idle_add(spawn_send_email_thread, send_params);	// spawns a new thread to make the sync call
+
+	mark_point();
+
+	g_debug("run mainloop");
 	
-    // if the call to the daemon returned an error, report and drop out of the test
-    if (!ret)
-    {
-        fail_if (ret == FALSE, "%s", (error && *error ? (*error)->message : "GError NULL"));
-    }
-    // TODO - what does success look like for sent email when automated?
+	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+  
 }
 
 
@@ -508,6 +555,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 
 END_TEST
 
+
 START_TEST (test_eas_mail_handler_send_email)
 {
     EasEmailHandler *email_handler = NULL;
@@ -714,6 +762,58 @@ START_TEST (test_get_eas_mail_info_in_inbox)
 }
 END_TEST
 
+struct _TryFetchBodyParams 
+{
+	EasEmailHandler *email_handler;
+	EasProgressFn progress_fn;
+	gpointer progress_data;
+	GError **error;	
+	const gchar *folder_id;
+	const gchar *server_id;
+	const gchar *mime_directory;
+};
+
+typedef struct _TryFetchBodyParams TryFetchBodyParams;
+
+static void try_fetch_email_body(gpointer data)
+{
+	TryFetchBodyParams *params = data;
+	gboolean rtn;
+
+	rtn = eas_mail_handler_fetch_email_body (params->email_handler,
+                                                 params->folder_id, 
+                                                 params->server_id,
+                                                 params->mime_directory,
+                                                 params->progress_fn,
+                                                 params->progress_data,		
+                                                 params->error);
+
+	g_debug("eas_mail_handler_fetch_email_body");
+	if (!rtn)
+	{
+		fail_if(TRUE, "%s", (*params->error)->message);
+	}
+
+	g_free(params);
+	
+	return;
+}
+
+static gboolean temp_func()
+{
+	g_debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! running in mainloop");
+	g_usleep(500000);
+	return TRUE;	// run once (don't put back on mainloop again)
+}
+
+static gboolean spawn_fetch_email_thread (gpointer data)
+{
+	sync_calls_thread = g_thread_create(try_fetch_email_body, data, TRUE, NULL);
+
+	//g_idle_add(temp_func, NULL);
+	
+	return FALSE;	// run once (don't put back on mainloop again)
+}
 
 START_TEST (test_eas_mail_handler_fetch_email_body)
 {
@@ -736,7 +836,8 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 //    EasFolder *folder = NULL;
     gboolean testMailFound = FALSE;
 //    guint folderIndex;
-
+	progress_loop = g_main_loop_new (NULL, FALSE);	
+	
     // get a handle to the DBus interface and associate the account ID with
     // this object
     testGetMailHandler (&email_handler, accountuid);
@@ -801,40 +902,32 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
         mark_point();
 
-		EasProgressFn progress_cb = NULL;
-		
-		// comment out if progress reports not desired:
-		progress_cb = test_email_request_progress_cb;
+		EasProgressFn progress_cb = test_email_request_progress_cb;
 
-		loop = g_main_loop_new (NULL, FALSE);	
+		TryFetchBodyParams *fetch_params = g_new0 (TryFetchBodyParams, 1);
+		fetch_params->email_handler = email_handler;
+		fetch_params->folder_id = g_inbox_id;
+		fetch_params->server_id = email->server_id;
+		fetch_params->mime_directory = mime_directory;
+		fetch_params->progress_fn = progress_cb;
+		fetch_params->progress_data = NULL;
+		fetch_params->error = &error;		
+
+		g_idle_add(spawn_fetch_email_thread, fetch_params);	// spawns a new thread to make the sync call
+
+		mark_point();
 		
-        // call method to get body
-        rtn = eas_mail_handler_fetch_email_body (email_handler,
-                                                 g_inbox_id, // Inbox
-                                                 email->server_id,
-                                                 mime_directory,
-                                                 progress_cb,
-                                                 NULL,		//data passed to cb
-                                                 &error);
-		if(progress_cb)
-		{
-			if (loop) g_main_loop_run (loop);		
-		}
-	
+		g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+
+		mark_point();
+		
         g_free (mime_directory);
 
-        if (rtn == TRUE)
-        {
-            testMailFound = TRUE;
-            // if reported success check if body file exists
-            hBody = fopen (mime_file, "r");
-            fail_if (hBody == NULL, "email body file not created in specified directory");
-            fclose (hBody);
-        }
-        else
-        {
-            fail_if (1, "%s", error->message);
-        }
+        testMailFound = TRUE;
+        // if reported success check if body file exists
+        hBody = fopen (mime_file, "r");
+        fail_if (hBody == NULL, "email body file not created in specified directory");
+        fclose (hBody);
     }
     else
     {
@@ -864,6 +957,50 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 }
 END_TEST
 
+struct _TryFetchAttachmentParams {
+	EasEmailHandler *email_handler;
+	EasProgressFn progress_fn;
+	gpointer progress_data;
+	GError **error;
+	const gchar *file_reference;
+	const gchar *mime_directory;	
+};
+
+typedef struct _TryFetchAttachmentParams TryFetchAttachmentParams;
+
+void try_fetch_email_attachment(gpointer data)
+{
+	TryFetchAttachmentParams *params = data;
+	gboolean rtn;
+
+	g_debug("call eas_mail_handler_fetch_email_attachment");
+	
+    rtn = eas_mail_handler_fetch_email_attachment (params->email_handler,
+                                                   params->file_reference,
+                                                   params->mime_directory,  
+                                                   params->progress_fn,
+                                                   params->progress_data,		
+                                                   params->error);	
+
+	g_debug("eas_mail_handler_fetch_email_attachment returned");
+	
+	if (!rtn)
+	{
+		fail_if(TRUE, "%s", (*params->error)->message);
+	}
+
+	g_free(params);
+	
+	return;
+}
+
+gboolean spawn_fetch_attachment_thread (gpointer data)
+{
+	sync_calls_thread = g_thread_create(try_fetch_email_attachment, data, TRUE, NULL);
+
+	return FALSE;	// run once (don't put back on mainloop again)
+}
+
 START_TEST (test_eas_mail_handler_fetch_email_attachments)
 {
     const gchar* accountuid = g_account_id;
@@ -890,7 +1027,8 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     EasEmailInfo *email = NULL;
     gint number_of_emails_created = 0;
     gint i = 0;
-
+	progress_loop = g_main_loop_new (NULL, FALSE);
+	
     // get a handle to the DBus interface and associate the account ID with
     // this object
     testGetMailHandler (&email_handler, accountuid);
@@ -985,35 +1123,31 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 				// comment out if progress reports not desired:
 				progress_cb = test_email_request_progress_cb;
 
-				loop = g_main_loop_new (NULL, FALSE);	
+				TryFetchAttachmentParams *fetch_params = g_new0 (TryFetchAttachmentParams, 1);
+				fetch_params->email_handler = email_handler;
+				fetch_params->file_reference = attachmentObj->file_reference;
+				fetch_params->mime_directory = mime_directory;
+				fetch_params->progress_fn = progress_cb;
+				fetch_params->progress_data = NULL;
+				fetch_params->error = &error;
 				
-                // call method to get attachment
-                rtn = eas_mail_handler_fetch_email_attachment (email_handler,
-                                                               (gchar*) attachmentObj->file_reference,
-                                                               mime_directory,  // "$HOME/mimeresponses/"
-                                                               progress_cb,
-                                                               NULL,		// TODO pass in some user data and verify same comes back
-                                                               &error);
+				g_idle_add(spawn_fetch_attachment_thread, fetch_params);
+				
+				mark_point();
 
-				if(progress_cb)
-				{
-					if (loop) g_main_loop_run (loop);
-				}
+				g_debug("run mainloop");
+				
+				g_main_loop_run (progress_loop);
 
+				mark_point();
+				
                 g_free (mime_directory);
 
-                if (rtn == TRUE)
-                {
-                    testMailFound = TRUE;
-                    // if reported success check if attachment file exists
-                    hAttachment = fopen (mime_file, "r");
-                    fail_if (hAttachment == NULL, "email attachment file not created in specified directory");
-                    fclose (hAttachment);
-                }
-                else
-                {
-                    fail_if (1, "%s", error->message);
-                }
+                testMailFound = TRUE;
+                // if reported success check if attachment file exists
+                hAttachment = fopen (mime_file, "r");
+                fail_if (hAttachment == NULL, "email attachment file not created in specified directory");
+                fclose (hAttachment);
 
             } //-end of attachment loop
         }//-end of emails_created loop
