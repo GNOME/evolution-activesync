@@ -16,11 +16,13 @@ PKGCONFIG += mlite
 QT += declarative xml
 
 HEADERS = \
-    ActiveSyncConfig.hpp \
+    Config.hpp \
+    ConfigModel.hpp \
     Plugin.hpp
 
 SOURCES = \
-    ActiveSyncConfig.cpp \
+    Config.cpp \
+    ConfigModel.cpp \
     Plugin.cpp
 
 qmlfiles.files += *.qml settings/

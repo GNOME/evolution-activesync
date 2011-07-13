@@ -29,21 +29,18 @@ namespace MeeGo {
     class Config : public QObject
     {
       Q_OBJECT
-      Q_PROPERTY(QString emailAddress READ emailAddress WRITE setEmailAddress NOTIFY emailAddressChanged)
-      Q_PROPERTY(QString username READ username NOTIFY usernameChanged)
-      Q_PROPERTY(QString password READ password NOTIFY passwordChanged)
-      Q_PROPERTY(QString serverURL READ serverURL NOTIFY serverURLChanged)
+      // Q_PROPERTY(QString emailAddress READ emailAddress NOTIFY emailAddressChanged)
+      // Q_PROPERTY(QString username READ username NOTIFY usernameChanged)
+      // Q_PROPERTY(QString password READ password NOTIFY passwordChanged)
+      // Q_PROPERTY(QString serverURL READ serverURL NOTIFY serverURLChanged)
 
     public:
 
-      Config(QObject* parent = 0);
+      Config(QString key, QObject* parent = 0);
       virtual ~Config();
 
       /// Retrieve ActiveSync e-mail address.
       QString emailAddress() const;
-
-      /// Set ActiveSync e-mail Address.
-      void setEmailAddress(QString s);
 
       /// Retrieve ActiveSync username.
       QString username() const;
@@ -64,10 +61,6 @@ namespace MeeGo {
 				   QString serverURL);
 
     signals:
-
-      /// Signal emitted when the ActiveSync e-mail address has
-      /// changed.
-      void emailAddressChanged(QString s);
 
       /// Signal emitted when the ActiveSync username has changed.
       void usernameChanged(QString s);
@@ -90,18 +83,8 @@ namespace MeeGo {
 
     private:
 
-      /// Complete deferred initialization.
-      /**
-       * Deferred initialized operations, such as MGConfItem
-       * initialization and retrieval of values from GConf are
-       * performed here.
-       */
-      void completeInit();
-
-    private:
-
       /// E-mail address GConf bridge.
-      QString m_email_address;
+      QString const m_email;
 
       /// Username GConf bridge.
       QString m_username;
@@ -127,6 +110,8 @@ namespace MeeGo {
 
     };
 
+    // Base of all ActiveSync GConf keys.
+    char const KEY_BASE[] = "/apps/activesyncd/accounts";
   }
 }
 

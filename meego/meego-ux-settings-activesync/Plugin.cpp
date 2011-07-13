@@ -7,7 +7,7 @@
  */
 
 #include "Plugin.hpp"
-#include "ActiveSyncConfig.hpp"
+#include "ConfigModel.hpp"
 
 #include <qdeclarative.h>
 
@@ -18,13 +18,12 @@ MeeGo::ActiveSync::Plugin::registerTypes(char const * uri)
   static int const MAJOR_VERSION = 0;
   static int const MINOR_VERSION = 1;
 
-  // Register the class the exposes the ActiveSync configuration
+  // Register the class that exposes the ActiveSync configuration
   // operations to the QML with the metatype system.
-  qmlRegisterType<Config>(uri,
-			  MAJOR_VERSION,
-			  MINOR_VERSION,
-			  "ActiveSyncConfig");
-
+  qmlRegisterType<ConfigModel>(uri,
+			       MAJOR_VERSION,
+			       MINOR_VERSION,
+			       "ActiveSyncConfigModel");
 }
 
 
