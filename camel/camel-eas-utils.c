@@ -313,6 +313,40 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	g_slist_free (items_deleted);
 	g_slist_free (uids_deleted);
 }
+
+void
+camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
+{
+	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
+	const gchar *full_name;
+	GSList *uids_deleted = NULL;
+	CamelFolderChangeInfo *ci;
+	CamelEasStore *eas_store;
+	gchar *uid;
+
+	if (!camel_folder_summary_count (folder->summary))
+		return;
+
+	ci = camel_folder_change_info_new ();
+	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
+
+	folder = (CamelFolder *) eas_folder;
+	full_name = camel_folder_get_full_name (folder);
+
+	while ( (uid = camel_folder_summary_uid_from_index (folder->summary, 0)) ) {
+		camel_eas_summary_delete_id (folder->summary, uid);
+		camel_folder_change_info_remove_uid (ci, uid);
+		uids_deleted = g_slist_prepend (uids_deleted, uid);
+	}
+	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+
+	camel_folder_changed ((CamelFolder *) eas_folder, ci);
+	camel_folder_change_info_free (ci);
+
+	g_slist_foreach (uids_deleted, (GFunc) g_free, NULL);
+	g_slist_free (uids_deleted);
+}
+
 #if 0
 static gint
 eas_utils_get_server_flags (EEasItem *item)
