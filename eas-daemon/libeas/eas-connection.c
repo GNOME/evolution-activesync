@@ -709,6 +709,16 @@ void eas_connection_resume_request (EasConnection* self, gboolean provisionSucce
 }
 
 static gboolean
+call_handle_server_response (gpointer data)
+{
+	EasRequestBase *req = EAS_REQUEST_BASE (data);
+
+	g_debug("call_handle_server_response");
+	handle_server_response (NULL, NULL, req);
+	return FALSE;   // don't put back on main loop
+}
+
+static gboolean
 eas_queue_soup_message (gpointer _request)
 {
 	EasRequestBase *request = EAS_REQUEST_BASE (_request);
@@ -1043,16 +1053,23 @@ else
 
     eas_request_base_SetSoupMessage (request, msg);
 
-    g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
-    g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
-    g_signal_connect (msg, "wrote-body-data", G_CALLBACK (soap_wrote_body_data), request);
-    g_signal_connect (msg, "wrote-headers", G_CALLBACK (soap_wrote_headers), request);
-    // We have to call soup_session_queue_message() from the soup thread,
-    // or libsoup screws up (https://bugzilla.gnome.org/642573)
-	source = g_idle_source_new ();
-	g_source_set_callback (source, eas_queue_soup_message, request, NULL);
-	g_source_attach (source, priv->soup_context);
-
+	if(g_mock_response_list)	// call handle_server_response directly from soup thread
+	{
+		g_debug("put call_handle_server_response on soup loop");
+		g_idle_add(call_handle_server_response, request);
+	}
+	else	// send request via libsoup
+	{
+		g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
+		g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
+		g_signal_connect (msg, "wrote-body-data", G_CALLBACK (soap_wrote_body_data), request);
+		g_signal_connect (msg, "wrote-headers", G_CALLBACK (soap_wrote_headers), request);
+		// We have to call soup_session_queue_message() from the soup thread,
+		// or libsoup screws up (https://bugzilla.gnome.org/642573)
+		source = g_idle_source_new ();
+		g_source_set_callback (source, eas_queue_soup_message, request, NULL);
+		g_source_attach (source, priv->soup_context);
+	}
 finish:
 	// @@WARNING - doc must always be freed before exiting this function.
 
@@ -1824,7 +1841,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     g_debug ("eas_connection - handle_server_response++ self [%lx], priv[%lx]", 
              (unsigned long)self, (unsigned long)self->priv );
 
-	validity = isResponseValid (msg, &error);
+	if(g_mock_response_list)
+	{	
+		validity = VALID_NON_EMPTY;
+	}
+	else
+	{
+		validity = isResponseValid (msg, &error);
+	}
 
     if (INVALID == validity)
     {
@@ -1833,7 +1857,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         goto complete_request;
     }
 
-	if (VALID_12_1_REPROVISION != validity)
+	if (VALID_12_1_REPROVISION != validity && !g_mock_response_list)
 	{
 		if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5))
 		{
@@ -1843,24 +1867,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
     if (VALID_NON_EMPTY == validity)
     {
-        gboolean isStatusError = FALSE;
-        if (!wbxml2xml ( (WB_UTINY*) msg->response_body->data,
-                         msg->response_body->length,
-                         &xml,
-                         &xml_len))
-        {
-            g_set_error (&error, EAS_CONNECTION_ERROR,
-                         EAS_CONNECTION_ERROR_WBXMLERROR,
-                         ("Converting wbxml failed"));
-            goto complete_request;
-        }
-
-        if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
-		{
-			write_response_to_file (xml, xml_len);
-		}
-
-        g_debug ("handle_server_response - pre-xmlReadMemory");
+	    gboolean isStatusError = FALSE;
 
 		// @@TRICKY - If we have entries in the mocked body list, 
 		//            feed that response back instead of the real server
@@ -1891,14 +1898,32 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		}
 		else
 		{
-			// Otherwise proccess the server response
-		    doc = xmlReadMemory ( (const char*) xml,
-		                          xml_len,
-		                          "sync.xml",
-		                          NULL,
-		                          0);
-		}
+		    if (!wbxml2xml ( (WB_UTINY*) msg->response_body->data,
+		                     msg->response_body->length,
+		                     &xml,
+		                     &xml_len))
+		    {
+		        g_set_error (&error, EAS_CONNECTION_ERROR,
+		                     EAS_CONNECTION_ERROR_WBXMLERROR,
+		                     ("Converting wbxml failed"));
+		        goto complete_request;
+		    }
 
+		    if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
+			{
+				write_response_to_file (xml, xml_len);
+			}
+
+		    g_debug ("handle_server_response - pre-xmlReadMemory");
+
+			// Otherwise proccess the server response
+			doc = xmlReadMemory ( (const char*) xml,
+			                      xml_len,
+			                      "sync.xml",
+			                      NULL,
+			                      0);
+		}
+		
         if (doc)
         {
             xmlNode* node = xmlDocGetRootElement (doc);
