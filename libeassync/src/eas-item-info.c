@@ -49,7 +49,7 @@ static void eas_item_info_init (EasItemInfo *object)
 
 static void eas_item_info_finalize (GObject* object)
 {
-    EasItemInfo* self = (EasItemInfo*) object;
+    EasItemInfo* self = EAS_ITEM_INFO(object);
 
     g_free (self->client_id);
     g_free (self->server_id);
