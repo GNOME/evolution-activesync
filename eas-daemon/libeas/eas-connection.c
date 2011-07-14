@@ -1914,7 +1914,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				write_response_to_file (xml, xml_len);
 			}
 
-		    g_debug ("handle_server_response - pre-xmlReadMemory");
+    		g_debug ("handle_server_response - performing xmlReadMemory");
 
 			// Otherwise proccess the server response
 			doc = xmlReadMemory ( (const char*) xml,
@@ -1926,6 +1926,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		
         if (doc)
         {
+            g_debug ("handle_server_response - doc created - parse for status");
             xmlNode* node = xmlDocGetRootElement (doc);
             parse_for_status (node, &isStatusError); // TODO Also catch provisioning for 14.0
         }
@@ -1933,9 +1934,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
         if (TRUE == isStatusError || !doc)
         {
             if (!getenv ("EAS_CAPTURE_RESPONSE") || (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) == 0)))
-			{
-        		write_response_to_file (xml, xml_len);
-			}
+            {
+                write_response_to_file (xml, xml_len);
+            }
         }
 
         if (xml) free (xml);
