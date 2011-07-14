@@ -1,0 +1,22 @@
+BEGIN:VCARD
+VERSION:3.0
+ROLE:bricky
+TEL;TYPE=WORK:00123 345 345
+TEL;TYPE=WORK:0161 111 2222
+TEL;TYPE=PAGER:pager #
+TEL;TYPE=CAR:0987 654 321
+ADR;TYPE=OTHER:other city;other country;other post code;other state;other s
+ treet
+ORG:Company 1
+TEL;TYPE=CELL:0777 333 4444
+TEL;TYPE=HOME:567573
+TEL;TYPE=HOME:0161 222 3333
+TEL;TYPE=HOME,FAX:0123 456 789
+ADR;TYPE=HOME:home city;home country;home post code;home state;home street
+N:firstName;middleName;lastName
+EMAIL:"example@example.com" <example@example.com>
+ADR;TYPE=WORK:Business City;Business Country;Business Postal Code;Business 
+ State;Business Address Street
+URL:www.example.com
+NOTE:note number 1
+END:VCARD

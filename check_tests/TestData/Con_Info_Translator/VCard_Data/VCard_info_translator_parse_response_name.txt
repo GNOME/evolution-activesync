@@ -1,0 +1,4 @@
+BEGIN:VCARD
+VERSION:3.0
+N:firstName;middleName;lastName
+END:VCARD

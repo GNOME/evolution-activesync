@@ -1,0 +1,5 @@
+BEGIN:VCARD
+VERSION:3.0
+ADR;TYPE=OTHER:other city;other country;other post code;other state;other s
+ treet
+END:VCARD
