@@ -37,6 +37,8 @@
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
 
+#include <dbus/dbus-glib.h>
+
 #include "../libeasmail/src/libeasmail.h"
 #include "camel-eas-compat.h"
 #include "camel-eas-folder.h"
@@ -577,6 +579,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	gboolean res = TRUE;
 	gboolean more_available = TRUE;
 	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
+	gboolean resynced = FALSE;
         EVO2(GCancellable *cancellable = NULL);
 
         full_name = camel_folder_get_full_name (folder);
@@ -606,17 +609,43 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
 	do {
 		guint total, unread;
+		GError *local_error = NULL;
+
 		items_created = items_updated = items_deleted = NULL;
 
 		g_mutex_lock (priv->server_lock);
 		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
 							       &items_created,
 							       &items_updated, &items_deleted,
-							       &more_available, error);
+							       &more_available, &local_error);
+		if (!res) {
+			/* We use strcasecmp() instead of dbus_g_error_has_name() because
+			   the error names will probably become CamelCase when we manage
+			   to auto-generate the list on the server side. */
+			if (!resynced && !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
+							     "org.meego.activesyncd.SyncError.INVALIDSYNCKEY")) {
+				/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
+				   wipe the folder and start again */
+				g_warning ("Invalid SyncKey!!!");
+				camel_eas_utils_clear_folder (eas_folder);
+				strcpy (sync_state, "0");
+
+				g_mutex_unlock (priv->server_lock);
+				g_clear_error (&local_error);
+
+
+				/* Make it go round again. But only once; we don't want to
+				   loop for ever if the server really hates us */
+				resynced = TRUE;
+				more_available = TRUE;
+				continue;
+			}
+			g_mutex_unlock (priv->server_lock);
+			g_propagate_error (error, local_error);
+			break;
+		}
 		g_mutex_unlock (priv->server_lock);
 
-		if (!res)
-			break;
 
 		if (items_deleted)
 			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
