@@ -725,9 +725,9 @@ static gboolean
 call_handle_server_response (gpointer data)
 {
 	EasRequestBase *req = EAS_REQUEST_BASE (data);
+	SoupMessage *msg = eas_request_base_GetSoupMessage (req);
 
-	g_debug("call_handle_server_response");
-	handle_server_response (NULL, NULL, req);
+	handle_server_response (NULL, msg, req);
 	return FALSE;   // don't put back on main loop
 }
 
@@ -1925,6 +1925,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				g_critical("Failed to read mock response!");
 			}
 			g_free (fullPath);
+
+			g_object_unref(msg);
 		}
 		else
 		{
