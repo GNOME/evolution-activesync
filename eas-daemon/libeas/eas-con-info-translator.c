@@ -516,6 +516,10 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 	return result;	
 }
 
+
+ /* ------------------------------------------------------ */
+ /* Functionality to deal with Contacts request translator */
+ /* -------------------------------------------------------*/
 static const char *
 property_get_nth_value(EVCardAttributeParam *param, int nth)
 {
@@ -527,7 +531,6 @@ property_get_nth_value(EVCardAttributeParam *param, int nth)
 	//g_list_free(values);
 	return ret;
 }
-
 
 static const char *
 attribute_get_nth_value(EVCardAttribute *attr, int nth)
@@ -566,26 +569,6 @@ typedef enum _EasAddType {
 	EAS_ADD_OTHER
 } EasAddType;
 
-/* Address type as defined by ActiveSync */
-typedef enum _EasTelType {
-	EAS_TEL_UNKNOWN,
-	EAS_TEL_WORK,
-	EAS_TEL_HOME,
-	EAS_TEL_PREF,
-	EAS_TEL_VOICE,
-	EAS_TEL_FAX,
-	EAS_TEL_MSG,
-	EAS_TEL_CELL,
-	EAS_TEL_PAGER,
-	EAS_TEL_BBS,
-	EAS_TEL_MODEM,
-	EAS_TEL_CAR,
-	EAS_TEL_ISDN,
-	EAS_TEL_VIDEO,
-	EAS_TEL_PCS,
-	EAS_TEL_IANA_TOKEN,
-	EAS_TEL_X_NAME,
-} EasTelType;
 
 static void
 set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* value, EncodingType encodingType)
@@ -632,10 +615,40 @@ get_encoding_type(EVCardAttribute *attr)
 	return encoding;
 }
 
+/* Check if an contact field allready set in the applicationdata xml children*/
+static gboolean
+is_element_set(xmlNodePtr appData, const gchar* name)
+{
+	xmlNodePtr node = NULL;
+	node = appData;
+
+	for(node = appData->children; node ; node = node->next)
+		if(!strcmp((char*) node->name, name))
+			return TRUE;
+
+	return FALSE;
+}
+
 static void 
 set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType, EncodingType encoding)
 {
 
+/*
+	ActiveSync protocol limits the addresses to 3 only:
+	 -one for home,
+	 -one for business,
+	 -one for other.
+
+	vcard defines the following values in sequence: 
+	post office box;
+	extended address;
+	street address;
+	locality (e.g., city);
+	region (e.g., state or province);
+	postal code;
+	country name.
+*/
+	
 	if (easAddType == EAS_ADD_WORK)
 	{
 		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
@@ -717,26 +730,120 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType
 
 }
 
-static void
-set_xml_tel(xmlNodePtr appData, EVCardAttribute *attr, EasTelType easTelType, EncodingType encoding)
-{
-	if (easTelType ==  EAS_TEL_WORK)
-	{
-		/* TODO:
-		EAS_ELEMENT_BUSINESSPHONENUMBER
-		EAS_ELEMENT_BUSINESS2PHONENUMBER
-		EAS_ELEMENT_BUSINESSFAXNUMBER
-		*/
 
+static void
+set_xml_tel(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param, EncodingType encoding)
+{
+	const char *propname0 = NULL;
+	const char *propname1 = NULL;
+	
+	propname0 = property_get_nth_value(param, 0);
+	propname1 = property_get_nth_value(param, 1);
+
+	if(strcmp(propname0, "WORK") == 0 && strcmp(propname1, "VOICE") == 0)
+	{	
+		if(!is_element_set(appData, EAS_ELEMENT_BUSINESSPHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSPHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+		else if(!is_element_set(appData, EAS_ELEMENT_BUSINESS2PHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESS2PHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
 	}
-	else if (easTelType == EAS_TEL_HOME)
+	else if(strcmp(propname0, "WORK") == 0 && strcmp(propname1, "FAX") == 0)
+	{	
+		if(!is_element_set(appData, EAS_ELEMENT_BUSINESSFAXNUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSFAXNUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if(strcmp(propname0, "HOME") == 0 && strcmp(propname1, "VOICE") == 0)
 	{
-		/* TODO:
-		EAS_ELEMENT_HOMEPHONENUMBER
-		EAS_ELEMENT_HOME2PHONENUMBER
-		EAS_ELEMENT_HOMEFAXNUMBER
-		*/	
+		if(!is_element_set(appData, EAS_ELEMENT_HOMEPHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMEPHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+		else if(!is_element_set(appData, EAS_ELEMENT_HOME2PHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOME2PHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
 	}
+	else if(strcmp(propname0, "HOME") == 0 && strcmp(propname1, "FAX") == 0)
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_HOMEFAXNUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMEFAXNUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if (!strcmp(propname0, "CELL"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_MOBILEPHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if (!strcmp(propname0, "CAR"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_CARPHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if (!strcmp(propname0, "RADIO"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_RADIOPHONENUMBER))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else
+		g_debug("Tel Type not supported by ActiveSync: %s", propname0);
+
+}
+
+static void
+set_xml_email(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param, EncodingType encoding)
+{
+	const char *propname0 = NULL;
+	propname0 = property_get_nth_value(param, 0);
+
+	 if (!strcmp(propname0, "WORK"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_EMAIL1ADDRESS))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if (!strcmp(propname0, "HOME"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_EMAIL2ADDRESS))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL2ADDRESS,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else if (!strcmp(propname0, "OTHER") || !strcmp(propname0, "INTERNET"))
+	{ 
+		if(!is_element_set(appData, EAS_ELEMENT_EMAIL3ADDRESS))
+		{
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
+				(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		}
+	}
+	else
+		g_debug("Email type not Supported by ActiveSync: %s", propname0);
+	
 }
 
 gboolean 
@@ -796,26 +903,27 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Name */
 		if (!strcmp(name, EVC_N)) {
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_LASTNAME,
+			set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_LASTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
+			set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_FIRSTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
-			/*set_as_xml_element(appData, (const xmlChar*) "Additional",
-							(const xmlChar*)attribute_get_nth_value(attr, 2), encoding);*/
-			g_warning("TODO: AS Does not support Additional");
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
+							(const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
 			/*set_as_xml_element(appData, (const xmlChar*) "Prefix",
 							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
 			g_warning("TODO: AS Does not support Prefix");
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
+			set_xml_element(appData, (const xmlChar*)  EAS_ELEMENT_SUFFIX,
 			                (const xmlChar*)attribute_get_nth_value(attr, 4), encoding);
-
 			continue;
 		}
-		
 
 		/* NICKNAME */
+		/* TODO: -NickName (Contacts2)-> does not show in Exchange Outlook
+		 		 -Alias -> causes AS malformed item error:
+		  				MS-ASWBXML and wbxml (in wbxml_tables.c) indicate that this
+						itme is not supported when the MS-ASProtocolVersion header is set to 12.1 */
 		if (!strcmp(name, EVC_NICKNAME)) {
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_NICKNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_NICKNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 			continue;
 		}
@@ -829,8 +937,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			g_warning("TODO:AS Does not support ORG->Unit");
 			continue;
 		}
-
-
 
 		
 		/* Url */
@@ -907,38 +1013,13 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 			/* Telephone */
 			if (!strcmp(name, EVC_TEL)) {
-				const char *propname = property_get_nth_value(param, 0);
-
-				if (!strcmp(propname, "WORK"))
-				{
-					set_xml_tel(appData, attr, EAS_TEL_WORK, encoding);
-				}
-				else if (!strcmp(propname, "HOME"))
-				{
-					set_xml_tel(appData, attr, EAS_TEL_HOME, encoding);
-				}
-				else if (!strcmp(propname, "CELL"))
-				{
-					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
-					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-				}
-				else if (!strcmp(propname, "CAR"))
-				{
-					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
-					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-				}
-				else if (!strcmp(propname, "RADIO"))
-				{
-					set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
-					(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-				}
-
+				set_xml_tel(appData, attr, param, encoding);
 				continue;
 			}
 
 			/* EMail */
 			if (!strcmp(name, EVC_EMAIL )) {
-				g_warning("TODO: EMAIL not implemented yet");
+				set_xml_email(appData, attr, param, encoding);
 				continue;
 			}
 
