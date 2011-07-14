@@ -297,7 +297,7 @@ build_folder_list (const gchar **serialised_folder_array, GSList **folder_list, 
 	g_debug ("build_folder_list++");
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_assert (folder_list);
-	g_assert (g_slist_length (*folder_list) == 0);
+	g_assert (*folder_list == NULL);
 
 	while (serialised_folder_array[i]) {
 		EasFolder *folder = eas_folder_new();
@@ -328,6 +328,7 @@ cleanup:
 		// clean up on error
 		g_slist_foreach (*folder_list, (GFunc) g_free, NULL);
 		g_slist_free (*folder_list);
+		*folder_list = NULL;
 	}
 
 	g_debug ("list has %d items", g_slist_length (*folder_list));
@@ -346,7 +347,7 @@ build_emailinfo_list (const gchar **serialised_emailinfo_array, GSList **emailin
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	g_assert (g_slist_length (*emailinfo_list) == 0);
+	g_assert (*emailinfo_list == NULL);
 
 	while (serialised_emailinfo_array[i]) {
 		EasEmailInfo *emailinfo = eas_email_info_new ();
@@ -453,7 +454,7 @@ build_easidupdates_list (const gchar **updated_ids_array, GSList **updated_ids_l
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	g_assert (g_slist_length (*updated_ids_list) == 0);
+	g_assert (*updated_ids_list == 0);
 
 	while (updated_ids_array[i]) {
 		EasIdUpdate *updated_id = g_malloc0 (sizeof (EasIdUpdate));
@@ -532,9 +533,9 @@ eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* self,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_assert (self);
 	g_assert (sync_key);
-	g_assert (g_slist_length (*folders_created) == 0);
-	g_assert (g_slist_length (*folders_updated) == 0);
-	g_assert (g_slist_length (*folders_deleted) == 0);
+	g_assert (*folders_created == NULL);
+	g_assert (*folders_updated == NULL);
+	g_assert (*folders_deleted == NULL);
 
 	// call DBus API
 	ret = dbus_g_proxy_call (proxy, "sync_email_folder_hierarchy",
