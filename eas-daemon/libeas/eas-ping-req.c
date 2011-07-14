@@ -92,6 +92,19 @@ eas_ping_req_init (EasPingReq *object)
 }
 
 static void
+eas_ping_req_dispose (GObject *object)
+{
+    EasPingReq *req = EAS_PING_REQ (object);
+    EasPingReqPrivate *priv = req->priv;
+	if(priv->ping_msg)
+	{
+	    g_object_unref (priv->ping_msg);
+		priv->ping_msg = NULL;
+	}
+    G_OBJECT_CLASS (eas_ping_req_parent_class)->dispose (object);
+}
+
+static void
 eas_ping_req_finalize (GObject *object)
 {
     /* deinitalization code */
@@ -102,7 +115,6 @@ eas_ping_req_finalize (GObject *object)
     g_free (priv->account_id);
     g_free (priv->heartbeat);
 
-    g_object_unref (priv->ping_msg);
 	g_slist_free (priv->folder_array);
 
     G_OBJECT_CLASS (eas_ping_req_parent_class)->finalize (object);
@@ -122,6 +134,7 @@ eas_ping_req_class_init (EasPingReqClass *klass)
     base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_ping_req_MessageComplete;
     
     object_class->finalize = eas_ping_req_finalize;
+    object_class->dispose = eas_ping_req_dispose;
 
     g_debug ("eas_ping_req_class_init--");
 }
