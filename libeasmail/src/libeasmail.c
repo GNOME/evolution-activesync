@@ -104,25 +104,46 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 }
 
 static void
+eas_mail_handler_dispose (GObject *object)
+{
+	EasEmailHandler *cnc = EAS_EMAIL_HANDLER(object);
+	EasEmailHandlerPrivate *priv;
+	priv = cnc->priv;
+
+	if(priv->bus)
+	{
+		dbus_g_connection_unref (priv->bus);
+		priv->bus = NULL;
+	}
+
+	G_OBJECT_CLASS (eas_mail_handler_parent_class)->dispose (object);	
+}
+
+static void
 eas_mail_handler_finalize (GObject *object)
 {
-	EasEmailHandler *cnc = (EasEmailHandler *) object;
+	EasEmailHandler *cnc = EAS_EMAIL_HANDLER(object);
 	EasEmailHandlerPrivate *priv;
 	g_debug ("eas_mail_handler_finalize++");
 
 	priv = cnc->priv;
 
-	// register for progress signals
-	dbus_g_proxy_disconnect_signal (cnc->priv->remoteEas,
+	// register for progress signals#
+	if(priv->remoteEas)
+	{
+		dbus_g_proxy_disconnect_signal (priv->remoteEas,
 					EAS_MAIL_SIGNAL_PROGRESS,
 					G_CALLBACK (progress_signal_handler),
 					cnc);
+	}
 
 	g_free (priv->account_uid);
 
-	dbus_g_connection_unref (priv->bus);
+
+
 	// free the hashtable
-	if (priv->email_progress_fns_table) {
+	if (priv->email_progress_fns_table) 
+	{
 		g_hash_table_remove_all (priv->email_progress_fns_table);
 	}
 	// nothing to do to 'free' proxy
@@ -141,6 +162,7 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 	g_type_class_add_private (klass, sizeof (EasEmailHandlerPrivate));
 
 	object_class->finalize = eas_mail_handler_finalize;
+	object_class->dispose = eas_mail_handler_dispose;
 	g_debug ("eas_mail_handler_class_init--");
 }
 
