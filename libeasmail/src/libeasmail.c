@@ -165,7 +165,7 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 	progress_info->progress_data = progress_data;
 	progress_info->percent_last_sent = 0;
 
-	g_static_mutex_lock (&progress_table);	
+	g_static_mutex_lock (&progress_table);
 	if (priv->email_progress_fns_table == NULL) {
 		priv->email_progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	}
@@ -227,9 +227,9 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 
 	g_debug ("Creating a GLib proxy object for Eas.");
 	priv->remoteEas =  dbus_g_proxy_new_for_name (priv->bus,
-							      EAS_SERVICE_NAME,
-							      EAS_SERVICE_MAIL_OBJECT_PATH,
-							      EAS_SERVICE_MAIL_INTERFACE);
+						      EAS_SERVICE_NAME,
+						      EAS_SERVICE_MAIL_OBJECT_PATH,
+						      EAS_SERVICE_MAIL_INTERFACE);
 	if (priv->remoteEas == NULL) {
 		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
 			     "Failed to create mainloop");
@@ -416,7 +416,7 @@ eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 
 	g_free (strv);
 
- out:
+out:
 	g_debug ("eas_updatedid_deserialise++");
 	return ret;
 }
@@ -739,7 +739,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 	EasEmailHandlerPrivate *priv = self->priv;
 	guint request_id;
 	DBusGProxyCall *call;
-	
+
 	g_debug ("eas_mail_handler_fetch_email_body++");
 	g_assert (self);
 	g_assert (folder_id);
@@ -757,19 +757,19 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 			goto finish;
 	}
 
-	call = dbus_g_proxy_begin_call (priv->remoteEas, 
-	                                "fetch_email_body",
-									dbus_call_completed,
-									NULL, 							// userdata passed to callback
-									NULL, 							// destroy notification
-									G_TYPE_STRING, priv->account_uid,
-									G_TYPE_STRING, folder_id,
-									G_TYPE_STRING, server_id,
-									G_TYPE_STRING, mime_directory,
-									G_TYPE_UINT, request_id,
-									G_TYPE_INVALID);
-	
-	g_debug("block until results available");
+	call = dbus_g_proxy_begin_call (priv->remoteEas,
+					"fetch_email_body",
+					dbus_call_completed,
+					NULL, 							// userdata passed to callback
+					NULL, 							// destroy notification
+					G_TYPE_STRING, priv->account_uid,
+					G_TYPE_STRING, folder_id,
+					G_TYPE_STRING, server_id,
+					G_TYPE_STRING, mime_directory,
+					G_TYPE_UINT, request_id,
+					G_TYPE_INVALID);
+
+	g_debug ("block until results available");
 	// blocks until results are available:
 	ret = dbus_g_proxy_end_call (priv->remoteEas,
 				     call,
@@ -780,7 +780,7 @@ finish:
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
-	g_debug ("eas_mail_handler_fetch_email_body--");	
+	g_debug ("eas_mail_handler_fetch_email_body--");
 	return ret;
 }
 
@@ -797,7 +797,7 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 	EasEmailHandlerPrivate *priv = self->priv;
 	guint request_id;
 	DBusGProxyCall *call;
-	
+
 	g_debug ("eas_mail_handler_fetch_email_attachment++");
 	g_assert (self);
 	g_assert (file_reference);
@@ -824,12 +824,12 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 					G_TYPE_UINT, request_id,
 					G_TYPE_INVALID);
 
-	g_debug("block until results available");
+	g_debug ("block until results available");
 	// blocks until results are available:
 	ret = dbus_g_proxy_end_call (priv->remoteEas,
 				     call,
 				     error,
-				     G_TYPE_INVALID);	
+				     G_TYPE_INVALID);
 
 finish:
 	g_debug ("eas_mail_handler_fetch_email_attachments--");
@@ -1007,7 +1007,7 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 	EasEmailHandlerPrivate *priv = self->priv;
 	guint request_id;
 	DBusGProxyCall *call;
-	
+
 	g_debug ("eas_mail_handler_send_email++");
 	g_assert (self);
 	g_assert (client_email_id);
@@ -1034,12 +1034,12 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 					G_TYPE_UINT, request_id,
 					G_TYPE_INVALID);
 
-	g_debug("block until results available");
+	g_debug ("block until results available");
 	// blocks until results are available:
 	ret = dbus_g_proxy_end_call (priv->remoteEas,
 				     call,
 				     error,
-				     G_TYPE_INVALID);	
+				     G_TYPE_INVALID);
 
 finish:
 	g_debug ("eas_mail_handler_send_email--");

@@ -240,8 +240,8 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	}
 	for (i = 0; i < list_len; i++) {
 		attachment = eas_attachment_new ();
-		attachment->file_reference = (xmlChar *)strv[idx++];
-		attachment->display_name = (xmlChar *)strv[idx++];
+		attachment->file_reference = (xmlChar *) strv[idx++];
+		attachment->display_name = (xmlChar *) strv[idx++];
 		attachment->estimated_size = atoi (strv[idx]);
 		g_free (strv[idx++]);
 		attachments = g_slist_append (attachments, attachment);
@@ -303,7 +303,7 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	g_debug ("importance = %d", self->importance);
 
 	ret = TRUE;
- out:
+out:
 	while (strv[idx])
 		g_free (strv[idx++]);
 	g_free (strv[idx]);

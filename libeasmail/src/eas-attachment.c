@@ -85,12 +85,12 @@ eas_attachment_serialise (EasAttachment *attachment, gchar **result)
 {
 	g_debug ("eas_attachment_serialise++");
 
-	*result = g_strdup_printf("%s%s%s%s%d",
-				  attachment->file_reference,
-				  attachment_separator,
-				  attachment->display_name,
-				  attachment_separator,
-				  attachment->estimated_size);
+	*result = g_strdup_printf ("%s%s%s%s%d",
+				   attachment->file_reference,
+				   attachment_separator,
+				   attachment->display_name,
+				   attachment_separator,
+				   attachment->estimated_size);
 
 	if (!*result) {
 		g_debug ("eas_attachment_serialise--");
