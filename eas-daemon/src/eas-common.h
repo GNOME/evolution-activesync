@@ -52,6 +52,7 @@
 #ifndef _EAS_COMMON_H_
 #define _EAS_COMMON_H_
 
+#include <dbus/dbus-glib.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -80,6 +81,10 @@ GType eas_common_get_type (void) G_GNUC_CONST;
 
 /* TODO:Insert your Common Interface APIS here*/
 gboolean eas_common_start_sync(EasCommon* obj, gint valueIn, GError** error) ;
+
+gboolean eas_common_get_protocol_version (EasCommon *obj,
+					  const gchar *account_uid,
+					  gchar **ret, GError **error);
 
 G_END_DECLS
 

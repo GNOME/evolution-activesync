@@ -16,6 +16,12 @@
       <arg type="i" name="new_value" direction="in"/>
     </method>
 
+    <!-- Obtain the ActiveSync protocol version used for a given
+	 account.  -->
+    <method name="get_protocol_version">
+      <arg type="s" name="account_id" direction="in"/>
+      <arg type="s" name="version" direction="out"/>
+    </method>
 
   <!-- TODO: Insert your common exposed APIs here -->
 

@@ -52,6 +52,7 @@
 #include "eas-common.h"
 #include "eas-common-stub.h"
 #include "../libeas/eas-connection-errors.h"
+#include "eas-connection.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, G_TYPE_OBJECT);
 
@@ -89,3 +90,23 @@ gboolean eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error)
     return TRUE;
 }
 
+gboolean eas_common_get_protocol_version (EasCommon *obj,
+					  const gchar *account_uid,
+					  gchar **ret, GError **error)
+{
+	EasConnection *connection = eas_connection_find (account_uid);
+	gint proto_ver;
+
+	if (!connection) {
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		return FALSE;
+	}
+	proto_ver = eas_connection_get_protocol_version (connection);
+	*ret = g_strdup_printf ("%d.%d", proto_ver / 10, proto_ver % 10);
+
+	return TRUE;
+}
