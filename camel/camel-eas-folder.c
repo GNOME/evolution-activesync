@@ -125,8 +125,6 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 			      GCancellable *cancellable, GError **error)
 {
 	gpointer progress_data;
-	const gchar *full_name;
-	gchar *fid;
 	CamelEasFolder *eas_folder;
 	CamelEasFolderPrivate *priv;
 	EasEmailHandler *handler;
@@ -179,9 +177,6 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	g_mutex_unlock (priv->state_lock);
 
 	handler = camel_eas_store_get_handler (eas_store);
-        full_name = camel_folder_get_full_name (folder);
-        fid = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
-		 full_name);
 
 	mime_dir = g_build_filename (camel_data_cache_get_path (eas_folder->cache),
 				     "mimecontent", NULL);
@@ -195,7 +190,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	}
 
 	g_mutex_lock (priv->server_lock);
-	res = eas_mail_handler_fetch_email_body (handler, fid, uid, mime_dir,
+	res = eas_mail_handler_fetch_email_body (handler, priv->server_id, uid, mime_dir,
 						 camel_operation_progress, progress_data, error);
 	g_mutex_unlock (priv->server_lock);
 
@@ -361,24 +356,17 @@ static gboolean
 eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge, GCancellable *cancellable, GError **error)
 {
 	CamelEasStore *eas_store;
-	const gchar *full_name;
 	EasEmailHandler *handler;
-        gchar *folder_id;
 	gboolean success;
         CamelEasFolderPrivate *priv = CAMEL_EAS_FOLDER(folder)->priv;
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
         handler = camel_eas_store_get_handler (eas_store);
 
-	full_name = camel_folder_get_full_name (folder);
-	folder_id = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
-								     full_name);
-
-
 	g_mutex_lock (priv->server_lock);
 	success = eas_mail_handler_delete_email (handler,
 						 ((CamelEasSummary *) folder->summary)->sync_state,
-						 folder_id, deleted_uids, error);
+						 priv->server_id, deleted_uids, error);
 	g_mutex_unlock (priv->server_lock);
 	if (success) {
 		CamelFolderChangeInfo *changes = camel_folder_change_info_new ();
@@ -411,8 +399,6 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	GSList *changing_mis = NULL, *l;
 	int item_list_len = 0;
 	gboolean success = TRUE;
-        const gchar *full_name;
-        gchar *folder_id;
         CamelEasFolderPrivate *priv = CAMEL_EAS_FOLDER(folder)->priv;
 	int i;
 	EVO2(GCancellable *cancellable = NULL);
@@ -428,10 +414,6 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		camel_folder_free_uids (folder, uids);
 		return TRUE;
 	}
-
-	full_name = camel_folder_get_full_name (folder);
-	folder_id = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary,
-								     full_name);
 
 	i = 0;
  more:
@@ -476,7 +458,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		g_mutex_lock (priv->server_lock);
 		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
-							 folder_id, item_list, error);
+							 priv->server_id, item_list, error);
 		for (l = changing_mis; l; l = l->next) {
 			CamelEasMessageInfo *mi = l->data;
 			if (success) {
@@ -496,8 +478,6 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 	   send already, not because we're done, then keep going */
 	if (success && i < uids->len)
 		goto more;
-
-	g_free (folder_id);
 
 	if (deleted_uids)
 		success = eas_delete_messages (folder, deleted_uids, FALSE, cancellable, error);
@@ -578,8 +558,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         CamelEasFolderPrivate *priv;
         EasEmailHandler *handler;
         CamelEasStore *eas_store;
-        const gchar *full_name;
-        gchar *id;
         gchar *sync_state;
 	gboolean res = TRUE;
 	gboolean more_available = TRUE;
@@ -587,7 +565,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	gboolean resynced = FALSE;
         EVO2(GCancellable *cancellable = NULL);
 
-        full_name = camel_folder_get_full_name (folder);
         eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
 
         eas_folder = (CamelEasFolder *) folder;
@@ -607,9 +584,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         g_mutex_unlock (priv->state_lock);
 
         handler = camel_eas_store_get_handler (eas_store);
-        id = camel_eas_store_summary_get_folder_id_from_name
-                                                (eas_store->summary,
-                                                 full_name);
 
         sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
 	do {
@@ -619,7 +593,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		items_created = items_updated = items_deleted = NULL;
 
 		g_mutex_lock (priv->server_lock);
-		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, id,
+		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, priv->server_id,
 							       &items_created,
 							       &items_updated, &items_deleted,
 							       &more_available, &local_error);
@@ -667,8 +641,8 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
                 total = camel_folder_summary_count (folder->summary);
                 unread = folder->summary->unread_count;
 
-                camel_eas_store_summary_set_folder_total (eas_store->summary, id, total);
-                camel_eas_store_summary_set_folder_unread (eas_store->summary, id, unread);
+                camel_eas_store_summary_set_folder_total (eas_store->summary, priv->server_id, total);
+                camel_eas_store_summary_set_folder_unread (eas_store->summary, priv->server_id, unread);
                 camel_eas_store_summary_save (eas_store->summary, NULL);
 
                 camel_folder_summary_save_to_db (folder->summary, NULL);
@@ -679,7 +653,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         priv->refreshing = FALSE;
         g_mutex_unlock (priv->state_lock);
         g_object_unref (handler);
-        g_free (id);
 
 	return res;
 }
