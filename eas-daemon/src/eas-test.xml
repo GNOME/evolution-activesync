@@ -10,6 +10,7 @@
     <method name="add_mock_responses">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="as" name="mock_responses_array" direction="in"/>
+      <arg type="au" name="mock_status_codes_array" direction="in"/>
     </method>
   </interface>
 </node>

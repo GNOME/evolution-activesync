@@ -32,7 +32,7 @@ struct _EasTest
 
 GType eas_test_get_type (void) G_GNUC_CONST;
 EasTest* eas_test_new (void);
-void eas_test_add_mock_responses (EasTest* self, const gchar** mock_responses_array, DBusGMethodInvocation* context);
+void eas_test_add_mock_responses (EasTest* self, const gchar** mock_responses_array, const GArray *status_codes, DBusGMethodInvocation* context);
 
 G_END_DECLS
 

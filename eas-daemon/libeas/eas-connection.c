@@ -114,6 +114,7 @@ static GHashTable *g_open_connections = NULL;
 static GConfClient* g_gconf_client = NULL;
 static EasAccountList* g_account_list = NULL;
 static GSList* g_mock_response_list = NULL;
+static GArray *g_mock_status_codes = NULL;
 
 static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
                                      SoupAuth *auth, gboolean retrying,
@@ -1080,6 +1081,27 @@ else
 	priv->request_doc = NULL;
 }
 
+	if(g_mock_response_list)
+	{
+		// TODO fake complete response (wrong content type etc), not just status codes
+		gchar *response_body = "mock response body";	
+		
+		soup_message_set_response(msg, "application/vnd.ms-sync.wbxml",
+                              SOUP_MEMORY_COPY,
+                              response_body,
+                              strlen(response_body));
+		// lrm fake the status code in the soupmessage response
+		if(g_mock_status_codes)
+		{
+			guint status_code = g_array_index(g_mock_status_codes, guint, 0);
+			g_array_remove_index(g_mock_status_codes, 0);
+			soup_message_set_status(msg, status_code);
+		}
+		else
+		{
+			soup_message_set_status(msg, SOUP_STATUS_OK);
+		}
+	}
     eas_request_base_SetSoupMessage (request, msg);
 
 	if(g_mock_response_list)	// call handle_server_response directly from soup thread
@@ -1871,14 +1893,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     g_debug ("eas_connection - handle_server_response++ self [%lx], priv[%lx]", 
              (unsigned long)self, (unsigned long)self->priv );
 
-	if(g_mock_response_list)
-	{	
-		validity = VALID_NON_EMPTY;
-	}
-	else
-	{
-		validity = isResponseValid (msg, &error);
-	}
+	validity = isResponseValid (msg, &error);
 
     if (INVALID == validity)
     {
@@ -2063,11 +2078,12 @@ write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len)
 }
 
 void
-eas_connection_add_mock_responses (const gchar** response_file_list)
+eas_connection_add_mock_responses (const gchar** response_file_list, const GArray *mock_soup_status_codes)
 {
 	const gchar* filename = NULL;
 	guint index = 0;
-
+	guint status_code;
+	
 	g_debug ("eas_connection_add_mock_responses++");
 	
 	if (!response_file_list) return;
@@ -2078,5 +2094,19 @@ eas_connection_add_mock_responses (const gchar** response_file_list)
 		g_mock_response_list = g_slist_append (g_mock_response_list, g_strdup(filename));
 	}
 
+	if(!mock_soup_status_codes) return;
+
+	if(NULL == g_mock_status_codes)
+	{
+		g_mock_status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
+	}
+	
+	for (index = 0; index < mock_soup_status_codes->len; index ++)
+	{
+		status_code = g_array_index(mock_soup_status_codes, guint, index);
+		g_debug("adding mock status code %d", status_code);
+		g_array_append_val(g_mock_status_codes, status_code);
+	}
+	
 	g_debug ("eas_connection_add_mock_responses--");
 }

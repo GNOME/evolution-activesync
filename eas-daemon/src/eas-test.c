@@ -47,6 +47,7 @@ eas_test_new (void)
 void
 eas_test_add_mock_responses (EasTest* self, 
                              const gchar** mock_responses_array, 
+                             const GArray *mock_status_codes,
                              DBusGMethodInvocation* context)
 {
 	g_debug("eas_test_add_mock_responses++");
@@ -63,7 +64,7 @@ eas_test_add_mock_responses (EasTest* self,
 	}
 	else
 	{
-		eas_connection_add_mock_responses (mock_responses_array);
+		eas_connection_add_mock_responses (mock_responses_array, mock_status_codes);
 		dbus_g_method_return (context);
 	}
 	

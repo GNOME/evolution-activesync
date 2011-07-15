@@ -198,8 +198,11 @@ gboolean eas_connection_send_request(EasConnection* self,
  * @param[in] reponse_file_list [no transfer]
  *	  A NULL terminated array of NULL terminated strings of filenames.
  *
+ * @param[in] mock_status_codes [no transfer]
+ *	  An array of guints. 
+ *
  */
-void eas_connection_add_mock_responses (const gchar** response_file_list);
+void eas_connection_add_mock_responses (const gchar** response_file_list, const GArray *mock_status_codes);
 
 
 /**

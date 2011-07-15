@@ -126,7 +126,8 @@ eas_test_handler_new (void)
 
 void
 eas_test_handler_add_mock_responses (EasTestHandler* self, 
-                                     const gchar** mock_responses_array)
+                                     const gchar** mock_responses_array,
+                                     GArray *status_codes)
 {
 	GError *error = NULL;
 	gboolean success = FALSE;
@@ -139,6 +140,7 @@ eas_test_handler_add_mock_responses (EasTestHandler* self,
     success = dbus_g_proxy_call (proxy, "add_mock_responses",
                                  &error,
                                  G_TYPE_STRV, mock_responses_array,
+                                 DBUS_TYPE_G_UINT_ARRAY, status_codes,
                                  G_TYPE_INVALID);
 
 	g_debug("Check DBus Success");

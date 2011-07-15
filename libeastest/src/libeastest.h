@@ -32,7 +32,7 @@ struct _EasTestHandler
 
 GType eas_test_handler_get_type (void) G_GNUC_CONST;
 EasTestHandler* eas_test_handler_new (void);
-void eas_test_handler_add_mock_responses (EasTestHandler* self, const gchar** mock_responses_array);
+void eas_test_handler_add_mock_responses (EasTestHandler* self, const gchar** mock_responses_array, GArray *status_codes);
 
 G_END_DECLS
 
