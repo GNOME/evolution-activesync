@@ -69,19 +69,11 @@
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
-struct _EasMailPrivate
-{
-};
-
-#define EAS_MAIL_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
-
 
 static void
 eas_mail_init (EasMail *object)
 {
-    EasMailPrivate *priv;
     g_debug ("eas_mail_init++");
-    object->priv = priv = EAS_MAIL_PRIVATE (object);
 
     g_debug ("eas_mail_init--");
 }
@@ -102,9 +94,6 @@ eas_mail_class_init (EasMailClass *klass)
     g_debug ("eas_mail_class_init++");
 
     object_class->finalize = eas_mail_finalize;
-    g_debug (">>eas_mail_class_init 01");
-    g_type_class_add_private (klass, sizeof (EasMailPrivate));
-    g_debug (">>eas_mail_class_init 02");
 
 	// create the progress signal we emit 
 	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
@@ -188,7 +177,6 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                       const gchar* sync_key,
                                       DBusGMethodInvocation* context)
 {
-    EasMailPrivate* priv = self->priv;
     EasConnection *connection;
     GError *error = NULL;
     EasSyncFolderHierarchyReq *req = NULL;
@@ -245,7 +233,6 @@ eas_mail_sync_folder_email (EasMail* self,
                             const gchar *collection_id,
                             DBusGMethodInvocation* context)
 {
-    EasMailPrivate* priv = self->priv;
     EasConnection *connection;
     GError *error = NULL;
     EasSyncReq *req = NULL;
@@ -440,7 +427,6 @@ eas_mail_fetch_email_body (EasMail* self,
 {
     EasConnection *connection;
     gboolean ret;
-    EasMailPrivate *priv = self->priv;
     GError *error = NULL;
     EasGetEmailBodyReq *req = NULL;
 
@@ -497,7 +483,6 @@ eas_mail_fetch_attachment (EasMail* self,
 {
     EasConnection *connection;
     gboolean ret;
-    EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
     GError *error = NULL;
     EasGetEmailAttachmentReq *req = NULL;

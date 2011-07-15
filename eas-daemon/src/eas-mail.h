@@ -66,7 +66,6 @@ G_BEGIN_DECLS
 
 typedef struct _EasMailClass EasMailClass;
 typedef struct _EasMail EasMail;
-typedef struct _EasMailPrivate EasMailPrivate;
 
 
 struct _EasMailClass
@@ -79,7 +78,6 @@ struct _EasMail
 {
 	GObject parent_instance;
 	
-  	EasMailPrivate* priv;
 };
 
 
