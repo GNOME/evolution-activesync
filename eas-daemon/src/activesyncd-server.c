@@ -61,7 +61,6 @@
 #include "activesyncd-common-defs.h"
 #include "../libeas/eas-connection.h"
 #include "eas-sync.h"
-#include "eas-common.h"
 #include "eas-mail.h"
 #include "eas-test.h"
 
@@ -155,7 +154,7 @@ int main (int argc, char** argv)
     DBusGConnection* bus = NULL;
     DBusGProxy* busProxy = NULL;
     EasSync* EasSyncObj = NULL;
-    EasCommon* EasCommonObj = NULL;
+//    EasCommon* EasCommonObj = NULL;
     EasMail*EasMailObj = NULL;
     EasTest* EasTestObj = NULL;
 
@@ -199,15 +198,6 @@ int main (int argc, char** argv)
     if (EasSyncObj == NULL)
     {
         g_debug ("Error: Failed to create calendar  instance");
-        g_main_loop_quit (mainloop);
-        exit (EXIT_FAILURE);
-    }
-
-    g_debug ("Creating common  gobject.");
-    EasCommonObj = g_object_new (EAS_TYPE_COMMON , NULL);
-    if (EasCommonObj == NULL)
-    {
-        g_debug ("Error: Failed to create common  instance");
         g_main_loop_quit (mainloop);
         exit (EXIT_FAILURE);
     }
@@ -283,12 +273,6 @@ int main (int argc, char** argv)
     dbus_g_connection_register_g_object (bus,
                                          EAS_SERVICE_SYNC_OBJECT_PATH,
                                          G_OBJECT (EasSyncObj));
-
-    //  Registering  common Gobject
-    dbus_g_connection_register_g_object (bus,
-                                         EAS_SERVICE_COMMON_OBJECT_PATH,
-                                         G_OBJECT (EasCommonObj));
-
 
     //  Registering  mail Gobject
     dbus_g_connection_register_g_object (bus,
