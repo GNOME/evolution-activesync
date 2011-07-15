@@ -93,18 +93,34 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 }
 
 static void
-eas_sync_handler_finalize (GObject *object)
+eas_sync_handler_dispose (GObject *object)
 {
     EasSyncHandler *cnc = (EasSyncHandler *) object;
+    EasSyncHandlerPrivate *priv = cnc->priv;
+
+	if(priv->bus)
+	{
+		dbus_g_connection_unref (priv->bus);
+		priv->bus = NULL;
+	}
+    G_OBJECT_CLASS (eas_sync_handler_parent_class)->dispose (object);
+}
+
+static void
+eas_sync_handler_finalize (GObject *object)
+{
+    EasSyncHandler *cnc = EAS_SYNC_HANDLER(object);
     EasSyncHandlerPrivate *priv = cnc->priv;
 
     g_debug ("eas_sync_handler_finalize++");
 
     g_free (priv->account_uid);
 
-    g_main_loop_quit (priv->main_loop);
-    dbus_g_connection_unref (priv->bus);
-
+	if(priv->main_loop)
+	{
+	    g_main_loop_quit (priv->main_loop);
+	}
+	
     G_OBJECT_CLASS (eas_sync_handler_parent_class)->finalize (object);
     g_debug ("eas_sync_handler_finalize--");
 }
@@ -119,6 +135,7 @@ eas_sync_handler_class_init (EasSyncHandlerClass *klass)
     g_type_class_add_private (klass, sizeof (EasSyncHandlerPrivate));
 
     object_class->finalize = eas_sync_handler_finalize;
+    object_class->finalize = eas_sync_handler_dispose;
     g_debug ("eas_sync_handler_class_init--");
 }
 
