@@ -618,7 +618,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 
 			g_clear_error (&local_error);
 			res = TRUE;
-			continue;
 		}
 
 		g_mutex_unlock (priv->server_lock);
