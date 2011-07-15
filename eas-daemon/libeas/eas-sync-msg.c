@@ -400,6 +400,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 
     gchar *item_server_id = NULL;
     gchar *item_client_id = NULL;
+	gchar *item_status = NULL;
 
     g_debug ("eas_sync_msg_parse_response ++");
 
@@ -719,38 +720,20 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                     }
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "Status"))
                     {
-                        gchar *status = (gchar *) xmlNodeGetContent (appData);
-                        guint status_num = atoi (status);
-                        xmlFree (status);
-                        if (status_num != EAS_COMMON_STATUS_OK) // not success
-                        {
-                            EasError error_details;
-                            ret = FALSE;
-
-                            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
-                            {
-                                error_details = common_status_error_map[status_num - 100];
-                            }
-                            else
-                            {
-						        if (status_num > EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-						            status_num = EAS_SYNC_STATUS_EXCEEDSSTATUSLIMIT;
-
-						        error_details = sync_status_error_map[status_num];
-                            }
-                            g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
-                            goto finish;
-                        }
+                        item_status = (gchar *) xmlNodeGetContent (appData);
+                        g_debug ("Found Status for Item  = %s", item_status);
                         continue;
                     }
                 }
                 info = eas_item_info_new ();
                 info->client_id = item_client_id;
                 info->server_id = item_server_id;
+				info->status = item_status;
                 eas_item_info_serialise (info, &flatItem);
                 g_object_unref (info);
                 item_client_id = NULL;
                 item_server_id = NULL;
+				item_status = NULL;
                 if (flatItem)
                 {
                     g_debug ("appending to added_items");
