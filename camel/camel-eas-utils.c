@@ -303,6 +303,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 		camel_eas_summary_delete_id (folder->summary, item->server_id);
 		camel_folder_change_info_remove_uid (ci, item->server_id);
 		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
+		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
 	}
 	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 
@@ -337,6 +338,7 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 		camel_eas_summary_delete_id (folder->summary, uid);
 		camel_folder_change_info_remove_uid (ci, uid);
 		uids_deleted = g_slist_prepend (uids_deleted, uid);
+		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
 	}
 	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 
