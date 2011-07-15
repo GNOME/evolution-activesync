@@ -136,7 +136,7 @@
 
 //#define EAS_ELEMENT_BODY						"Body"
 /* targetNamespace for Contacts2 (from AS contacts schema) */
-#define EAS_NAMESPACE_CONTACTS2					"contacts2:"
+//#define EAS_NAMESPACE_CONTACTS2					"contacts2:"
 #define EAS_ELEMENT_CONTACTS2_CUSTOMERID		"CustomerId"
 #define EAS_ELEMENT_CONTACTS2_GOVERNMENTID		"GovernmentId"
 #define EAS_ELEMENT_CONTACTS2_IMADDRESS			"IMAddress"
@@ -577,13 +577,14 @@ set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* value, E
 	{
 		gchar* base64value = NULL;
 
-		//g_debug("base64encoder: size = %d", strlen(value));
+		g_debug("base64encoder: len = %d", strlen(value));
+		
+		base64value = g_base64_encode((const guchar *)(&value), strlen(value));
 
-		base64value = g_base64_encode((const guchar *)(&value), sizeof(value));
 		xmlNewTextChild(appData, NULL, (const xmlChar*) name, (const xmlChar*)base64value);
 
-		//g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
-        //g_debug ("data encoded   =--->:[%s]",   base64value);
+		g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
+        g_debug ("data encoded   =--->:[%s]",   base64value);
 
 		g_free(base64value);
 	}
@@ -883,10 +884,8 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		g_debug("e_vcard_attribute_get_name=%s", name);
 
-#if 0
 		if (!strcmp(name, "BEGIN"))
 			continue;
-#endif
 
 		if (!strcmp(name, EVC_VERSION))
 			continue;
@@ -932,9 +931,10 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		if (!strcmp(name, EVC_ORG)) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-			/*set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Unit",
-							(const xmlChar*)attribute_get_nth_value(attr, 1), encoding);*/
-			g_warning("TODO:AS Does not support ORG->Unit");
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_DEPARTMENT,
+			                (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
+			                (const xmlChar*)attribute_get_nth_value(attr, 2), encoding);
 			continue;
 		}
 
@@ -948,8 +948,8 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Birthday */
 		if (!strcmp(name, EVC_BDAY)) {
-			//set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BIRTHDAY,
-			//                (const xmlChar*)/*attribute_get_nth_value(attr, 0)*/"20110628T000000", encoding);
+//			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BIRTHDAY,
+//			                (const xmlChar*)/*attribute_get_nth_value(attr, 0)*/"20110628T000000", EAS_BASE64);
 			continue;
 		}
 		
@@ -967,6 +967,73 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			continue;
 		}
 
+		/* Spouse - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
+		if (!strcmp(name, "X-EVOLUTION-SPOUSE")) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SPOUSE,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* FileAs - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
+		if (!strcmp(name, "X-EVOLUTION-FILE-AS")) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FILEAS,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
+		if (!strcmp(name, "X-EVOLUTION-ASSISTANT")) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_ASSISTANTNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
+		if (!strcmp(name, "X-EVOLUTION-MANAGER")) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_MANAGERNAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
+		/* Anniversary - vCard does not support Anniversary so we use X-EVOLUTION-ANNIVERSARY*/
+		if (!strcmp(name, "X-EVOLUTION-ANNIVERSARY")) {
+			
+
+#if 0			
+			gchar* anni = attribute_get_nth_value(attr, 0);
+
+			g_debug("base64encoder: size = %d", strlen(anniTZ));
+			GTimeZone *anniTZ = g_time_zone_new(anni);
+
+		gchar* base64value = NULL;
+
+		g_debug("base64encoder: size = %d", strlen(anniTZ));
+		g_debug("base64encoder: size = %d", sizeof(anniTZ));
+
+		base64value = g_base64_encode((const guchar *)(&anniTZ), sizeof(anniTZ));
+//		base64value = g_base64_encode((const guchar *)(&value), strlen(value));
+
+		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY, (const xmlChar*)base64value);
+
+		g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
+        g_debug ("data encoded   =--->:[%s]",   base64value);
+
+		g_free(base64value);
+			/*set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), EAS_BASE64);*/
+			
+			g_time_zone_unref(anniTZ) ;
+#endif
+			continue;
+		}
+
+		/* Office Location - vCard does not support it, so we use X-EVOLUTION-OFFICE*/
+		if (!strcmp(name, "X-EVOLUTION-OFFICE")) {
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			continue;
+		}
+
 		/* Uid */
 		if (!strcmp(name, EVC_UID)) {
 			/*set_xml_element(appData, (const xmlChar*) "Uid",
@@ -976,9 +1043,15 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		}
 
 		/* Note */
-		if (!strcmp(name, EVC_NOTE)) {
-			//set_xml_element(appData, (const xmlChar*)EAS_ELEMENT_NOTE,
-			//                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+		if (!strcmp(name, EVC_NOTE)) { 
+			/*TODO:
+			  -if we use airsyncbase:Body server reports "malformed or invalid item sent"
+			  -if we use Note the wbxml reports an error = 100 
+			 */
+			
+			/* set_xml_element(appData, (const xmlChar*)"EAS_ELEMENT_NOTE",
+			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+			*/
 			continue;
 		}
 
