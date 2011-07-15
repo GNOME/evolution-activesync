@@ -52,6 +52,7 @@
 	((obj), CAMEL_TYPE_EAS_FOLDER, CamelEasFolderPrivate))
 
 struct _CamelEasFolderPrivate {
+	gchar *server_id;
 	GMutex *search_lock;	/* for locking the search object */
 	GStaticRecMutex cache_lock;	/* for locking the cache object */
 
@@ -562,6 +563,10 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
                 return NULL;
         }
 
+	eas_folder->priv->server_id =
+		camel_eas_store_summary_get_folder_id_from_name (CAMEL_EAS_STORE (store)->summary,
+								 folder_name);
+
         return folder;
 }
 
@@ -775,6 +780,9 @@ eas_folder_dispose (GObject *object)
 	g_mutex_free (eas_folder->priv->server_lock);
 	g_hash_table_destroy (eas_folder->priv->uid_eflags);
 	g_cond_free (eas_folder->priv->fetch_cond);
+
+	g_free (eas_folder->priv->server_id);
+	eas_folder->priv->server_id = NULL;
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (camel_eas_folder_parent_class)->dispose (object);
