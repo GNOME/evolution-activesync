@@ -278,7 +278,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                         case EAS_ITEM_CONTACT:
                         {
                             xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
-                            //xmlNewNs (node, (xmlChar *) "Contacts:", (xmlChar *) "contacts");
+                            xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
                             if (iterator->data)
                             {
                                 //TODO: call translator to get client ID and  encoded application data
@@ -290,7 +290,6 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
                                 xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
                                 app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
                                 // translator deals with app data
-                                // TODO: need to add contact translator
                                  eas_con_info_translator_parse_request (doc, app_data, cal_info);
                                 // TODO error handling and freeing
                             }
