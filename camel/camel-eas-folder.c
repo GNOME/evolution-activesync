@@ -618,35 +618,37 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 							       &items_created,
 							       &items_updated, &items_deleted,
 							       &more_available, &local_error);
+
+		/* We use strcasecmp() instead of dbus_g_error_has_name() because
+		   the error names will probably become CamelCase when we manage
+		   to auto-generate the list on the server side. */
+		if (!res && !resynced && local_error->domain == DBUS_GERROR &&
+		    local_error->code == DBUS_GERROR_REMOTE_EXCEPTION &&
+		    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
+					"org.meego.activesyncd.SyncError.INVALIDSYNCKEY")) {
+			/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
+			   wipe the folder and start again */
+			g_warning ("Invalid SyncKey!!!");
+			camel_eas_utils_clear_folder (eas_folder);
+			strcpy (sync_state, "0");
+
+			/* Make it go round again. But only once; we don't want to
+			   loop for ever if the server really hates us */
+			resynced = TRUE;
+			more_available = TRUE;
+
+			g_clear_error (&local_error);
+			res = TRUE;
+			continue;
+		}
+
+		g_mutex_unlock (priv->server_lock);
+
 		if (!res) {
-			/* We use strcasecmp() instead of dbus_g_error_has_name() because
-			   the error names will probably become CamelCase when we manage
-			   to auto-generate the list on the server side. */
-			if (!resynced && local_error->domain == DBUS_GERROR &&
-			    local_error->code == DBUS_GERROR_REMOTE_EXCEPTION &&
-			    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
-						"org.meego.activesyncd.SyncError.INVALIDSYNCKEY")) {
-				/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
-				   wipe the folder and start again */
-				g_warning ("Invalid SyncKey!!!");
-				camel_eas_utils_clear_folder (eas_folder);
-				strcpy (sync_state, "0");
-
-				g_mutex_unlock (priv->server_lock);
-				g_clear_error (&local_error);
-
-				/* Make it go round again. But only once; we don't want to
-				   loop for ever if the server really hates us */
-				resynced = TRUE;
-				more_available = TRUE;
-				continue;
-			}
 			g_mutex_unlock (priv->server_lock);
 			g_propagate_error (error, local_error);
 			break;
 		}
-		g_mutex_unlock (priv->server_lock);
-
 
 		if (items_deleted)
 			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
