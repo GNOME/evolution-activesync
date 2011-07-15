@@ -89,6 +89,7 @@ eas_sync_handler_init (EasSyncHandler *cnc)
     priv->main_loop = NULL;
     cnc->priv = priv;
     g_debug ("eas_sync_handler_init--");
+	srand (time (NULL));
 }
 
 static void
@@ -448,8 +449,6 @@ build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const 
 		{
 			const gchar client_id[21];
 			guint random_num;
-			/* initialize random generator */
-			srand (time (NULL));
 			random_num = rand();
 			snprintf (client_id, sizeof (client_id) / sizeof (client_id[0]), "%d", random_num);
 			calInfo->client_id = g_strdup(client_id);
