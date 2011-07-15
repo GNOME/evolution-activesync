@@ -46,6 +46,7 @@ struct	_EasAccountPrivate
 	 gchar* calendar_folder;
 	 gchar* contact_folder;
 	 gchar* password;
+	gchar* device_id;
          int protocol_version;
 };
 	
@@ -86,6 +87,7 @@ eas_account_init (EasAccount *account)
 	priv->calendar_folder = NULL;
 	priv->contact_folder = NULL;
 	priv->password = NULL;
+	priv->device_id = NULL;
 	g_debug("eas_account_init--");
 }
 
@@ -103,6 +105,7 @@ eas_account_finalize (GObject *object)
 	g_free (priv->calendar_folder);
 	g_free (priv->contact_folder);
 	g_free (priv->password);
+	g_free (priv->device_id);
 
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
 	g_debug("eas_account_finalize--");
@@ -357,6 +360,36 @@ eas_account_set_password (EasAccount *account, const gchar* password)
 }
 
 void
+eas_account_set_device_id (EasAccount *account, const gchar* device_id)
+
+{
+	g_debug("eas_account_set_device_id++");
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+	if(account->priv->device_id == NULL){
+		if(device_id != NULL){
+			account->priv->device_id = g_strdup (device_id);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "device_id changed: [%s]\n", account->priv->device_id);
+		}
+	}else{
+		if(device_id != NULL){
+			if(strcmp(account->priv->device_id, device_id) != 0){
+				g_free(account->priv->device_id);
+				account->priv->device_id = g_strdup (device_id);
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "device_id changed: [%s]\n", account->priv->device_id);
+			}
+		}else{
+				g_free(account->priv->device_id);
+				account->priv->device_id = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "device_id changed: [%s]\n", account->priv->device_id);
+		}
+	} 
+	g_debug("eas_account_set_device_id--");
+}
+
+void
 eas_account_set_protocol_version (EasAccount *account, int protocol_version)
 {
 	/*g_debug("eas_account_set_protocol_version++");*/
@@ -411,6 +444,13 @@ eas_account_get_password (const EasAccount *account)
 	return account->priv->password;
 }
 
+gchar*
+eas_account_get_device_id (const EasAccount *account)
+{
+	g_debug("Getting device_id %s", account->priv->device_id);
+	return account->priv->device_id;
+}
+
 int
 eas_account_get_protocol_version (const EasAccount *account)
 {
@@ -432,6 +472,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_calendar_folder(account, accountinfo->calendar_folder);
 	eas_account_set_contact_folder(account, accountinfo->contact_folder);
 	eas_account_set_password (account, accountinfo->password);
+	eas_account_set_device_id (account, accountinfo->device_id);
 	eas_account_set_protocol_version (account, accountinfo->protocol_version);
 	/* g_debug("eas_account_set_from_info--");	*/
 	return TRUE;

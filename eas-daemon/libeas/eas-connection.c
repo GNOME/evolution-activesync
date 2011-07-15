@@ -916,6 +916,7 @@ eas_connection_send_request (EasConnection* self,
     int data_len = 0;
 	GSource *source = NULL;
 	const gchar *policy_key;
+	gchar *fake_device_id = NULL;
 
     g_debug ("eas_connection_send_request++");
     // If not the provision request, store the request
@@ -970,13 +971,28 @@ eas_connection_send_request (EasConnection* self,
         goto finish;
     }
 
-    uri = g_strconcat (eas_account_get_uri(priv->account),
+	fake_device_id = eas_account_get_device_id(priv->account);
+	if(fake_device_id)
+	{
+		g_debug("using fake_device_id");
+				uri = g_strconcat (eas_account_get_uri(priv->account),
+                       "?Cmd=", cmd,
+                       "&User=", eas_account_get_username(priv->account),
+                       "&DeviceId=", fake_device_id,
+                       "&DeviceType=", device_type,
+                       NULL);
+
+	}
+	else
+	{
+
+		uri = g_strconcat (eas_account_get_uri(priv->account),
                        "?Cmd=", cmd,
                        "&User=", eas_account_get_username(priv->account),
                        "&DeviceId=", device_id,
                        "&DeviceType=", device_type,
                        NULL);
-
+	}
 
     msg = soup_message_new ("POST", uri);
     g_free (uri);
@@ -1672,9 +1688,10 @@ eas_connection_find (const gchar* accountId)
     g_static_mutex_lock (&connection_list);
     if (g_open_connections)
     {
-		gchar *hashkey = g_strdup_printf("%s@%s", 
+		gchar *hashkey = g_strdup_printf("%s@%s@%s", 
                                          eas_account_get_username(account), 
-                                         eas_account_get_uri(account));
+                                         eas_account_get_uri(account),
+		                                 eas_account_get_device_id (account));
 
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
@@ -1738,7 +1755,7 @@ eas_connection_new (EasAccount* account, GError** error)
     g_static_mutex_lock (&connection_list);
     if (g_open_connections)
     {
-        hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
+        hashkey = g_strdup_printf ("%s@%s@%s", eas_account_get_username(account), eas_account_get_uri(account), eas_account_get_device_id (account));
         cnc = g_hash_table_lookup (g_open_connections, hashkey);
         g_free (hashkey);
 
@@ -1773,7 +1790,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	// Just a reference to the global account list
 	priv->account = account;
 
-    hashkey = g_strdup_printf ("%s@%s", eas_account_get_username(account), eas_account_get_uri(account));
+    hashkey = g_strdup_printf ("%s@%s@%s", eas_account_get_username(account), eas_account_get_uri(account), eas_account_get_device_id (account));
 
     if (!g_open_connections)
     {

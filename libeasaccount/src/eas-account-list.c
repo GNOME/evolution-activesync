@@ -151,6 +151,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	gchar* contact_folder_Key_path = NULL;
 	gchar* password_Key_path = NULL;
 	gchar* protover_Key_path = NULL;
+	gchar* devover_Key_path = NULL;
 
 	/* g_debug("eas_account_list_set_account_info++"); */
 	g_return_if_fail (acc_info != NULL);
@@ -184,6 +185,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
 	password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
 	protover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
+	devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
 
 	acc_info->uid = g_strdup(uid);
 	if (strcmp(keyname, serveruri_Key_path) == 0) {
@@ -207,6 +209,9 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	} else if (strcmp(keyname, protover_Key_path) == 0){
 		acc_info->protocol_version = gconf_value_get_int(value);
 		//g_debug( "protocol_version changed: [%s]\n", strValue);
+	} else if (strcmp(keyname, devover_Key_path) == 0){
+		acc_info->device_id = gconf_value_to_string(value);
+		//g_debug( "device_id changed: [%s]\n", strValue);
 	}else {
 		g_warning( "Unknown key: %s (value: [%s])\n", keyname,
 			   gconf_value_get_string (value));
@@ -230,6 +235,8 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	username_Key_path = NULL;
 	g_free (protover_Key_path);
 	protover_Key_path = NULL;
+	g_free (devover_Key_path);
+	devover_Key_path = NULL;
 
 	/* g_debug("eas_account_list_set_account_info--"); */
 }
@@ -569,6 +576,17 @@ eas_account_list_save_account(EasAccountList *account_list,
 		g_free (protover_Key_path);
 		protover_Key_path = NULL;
 	}
+	if (eas_account_get_device_id(account)){
+		gchar* devover_Key_path = NULL;
+		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
+
+		gconf_client_set_int (account_list->priv->gconf,
+					  devover_Key_path,
+					  eas_account_get_device_id(account),
+					  NULL);
+		g_free (devover_Key_path);
+		devover_Key_path = NULL;
+	}
 
 	g_debug("eas_account_list_save_account--");
 }
@@ -669,6 +687,18 @@ eas_account_list_save_account_from_info(EasAccountList *account_list,
 				      NULL);
 		g_free (protover_Key_path);
 		protover_Key_path = NULL;
+	}
+
+	if (acc_info->device_id){
+		gchar* devover_Key_path = NULL;
+		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
+
+		gconf_client_set_string (account_list->priv->gconf,
+						devover_Key_path,
+						acc_info->device_id,
+						NULL);
+		g_free (devover_Key_path);
+		devover_Key_path = NULL;
 	}
 	
 	
@@ -831,6 +861,19 @@ eas_account_list_save_item(EasAccountList *account_list,
 		g_free(protover_Key_path);
 		protover_Key_path = NULL;
 
+		}
+		break;
+	case EAS_ACCOUNT_DEVICE_ID:
+		{
+		gchar* devover_Key_path = NULL;
+		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
+		gconf_client_set_string (account_list->priv->gconf,
+								devover_Key_path,
+								eas_account_get_device_id(account),
+								NULL);
+
+		g_free (devover_Key_path);
+		devover_Key_path = NULL;
 		}
 		break;
 	default:
