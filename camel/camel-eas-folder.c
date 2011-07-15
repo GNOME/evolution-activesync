@@ -638,10 +638,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
                 total = camel_folder_summary_count (folder->summary);
                 unread = folder->summary->unread_count;
 
-                camel_eas_store_summary_set_folder_total (eas_store->summary, priv->server_id, total);
-                camel_eas_store_summary_set_folder_unread (eas_store->summary, priv->server_id, unread);
-                camel_eas_store_summary_save (eas_store->summary, NULL);
-
                 camel_folder_summary_save_to_db (folder->summary, NULL);
 
         } while (more_available);

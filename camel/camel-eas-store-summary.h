@@ -82,14 +82,6 @@ void		camel_eas_store_summary_set_parent_folder_id
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 const gchar *parent_id);
-void		camel_eas_store_summary_set_folder_unread
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 guint64 unread);
-void		camel_eas_store_summary_set_folder_total
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 guint64 total);
 void		camel_eas_store_summary_set_folder_type
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
@@ -104,14 +96,6 @@ gchar *camel_eas_store_summary_get_folder_full_name
 						 const gchar *folder_id,
 						 GError **error);
 gchar *	camel_eas_store_summary_get_parent_folder_id
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 GError **error);
-guint64		camel_eas_store_summary_get_folder_unread
-						(CamelEasStoreSummary *eas_summary,
-						 const gchar *folder_id,
-						 GError **error);
-guint64		camel_eas_store_summary_get_folder_total
 						(CamelEasStoreSummary *eas_summary,
 						 const gchar *folder_id,
 						 GError **error);

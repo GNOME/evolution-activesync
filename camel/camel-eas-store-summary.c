@@ -353,34 +353,6 @@ camel_eas_store_summary_set_parent_folder_id (CamelEasStoreSummary *eas_summary,
 }
 
 void
-camel_eas_store_summary_set_folder_unread (CamelEasStoreSummary *eas_summary,
-					   const gchar *folder_id,
-					   guint64 unread)
-{
-	S_LOCK(eas_summary);
-
-	g_key_file_set_uint64	(eas_summary->priv->key_file, folder_id,
-				 "UnRead", unread);
-	eas_summary->priv->dirty = TRUE;
-
-	S_UNLOCK(eas_summary);
-}
-
-void
-camel_eas_store_summary_set_folder_total (CamelEasStoreSummary *eas_summary,
-					  const gchar *folder_id,
-					  guint64 total)
-{
-	S_LOCK(eas_summary);
-
-	g_key_file_set_uint64	(eas_summary->priv->key_file, folder_id,
-				 "Total", total);
-	eas_summary->priv->dirty = TRUE;
-
-	S_UNLOCK(eas_summary);
-}
-
-void
 camel_eas_store_summary_set_folder_type (CamelEasStoreSummary *eas_summary,
 					 const gchar *folder_id,
 					 guint64 eas_folder_type)
@@ -455,40 +427,6 @@ camel_eas_store_summary_get_parent_folder_id (CamelEasStoreSummary *eas_summary,
 
 	ret = g_key_file_get_string	(eas_summary->priv->key_file, folder_id,
 					 "ParentFolderId", error);
-
-	S_UNLOCK(eas_summary);
-
-	return ret;
-}
-
-guint64
-camel_eas_store_summary_get_folder_unread (CamelEasStoreSummary *eas_summary,
-					   const gchar *folder_id,
-					   GError **error)
-{
-	guint64 ret;
-
-	S_LOCK(eas_summary);
-
-	ret = g_key_file_get_uint64	(eas_summary->priv->key_file, folder_id,
-					 "UnRead", error);
-
-	S_UNLOCK(eas_summary);
-
-	return ret;
-}
-
-guint64
-camel_eas_store_summary_get_folder_total (CamelEasStoreSummary *eas_summary,
-					  const gchar *folder_id,
-					  GError **error)
-{
-	guint64 ret;
-
-	S_LOCK(eas_summary);
-
-	ret = g_key_file_get_uint64	(eas_summary->priv->key_file, folder_id,
-					 "Total", error);
 
 	S_UNLOCK(eas_summary);
 
