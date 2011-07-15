@@ -71,7 +71,6 @@ G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
 struct _EasMailPrivate
 {
-    EasConnection* connection;
 };
 
 #define EAS_MAIL_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
@@ -83,8 +82,6 @@ eas_mail_init (EasMail *object)
     EasMailPrivate *priv;
     g_debug ("eas_mail_init++");
     object->priv = priv = EAS_MAIL_PRIVATE (object);
-
-    priv->connection = NULL;
 
     g_debug ("eas_mail_init--");
 }
@@ -136,14 +133,6 @@ EasMail* eas_mail_new (void)
     easMail = g_object_new (EAS_TYPE_MAIL, NULL);
     return easMail;
 }
-
-#if 0
-void eas_mail_set_eas_connection (EasMail* self, EasConnection* easConnObj)
-{
-    EasMailPrivate* priv = self->priv;
-    priv->connection = easConnObj;
-}
-#endif
 
 gboolean
 eas_mail_start_sync (EasMail* easMailObj, gint valueIn, GError** error)
@@ -200,6 +189,7 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
                                       DBusGMethodInvocation* context)
 {
     EasMailPrivate* priv = self->priv;
+    EasConnection *connection;
     GError *error = NULL;
     EasSyncFolderHierarchyReq *req = NULL;
     gboolean ret;
@@ -207,8 +197,8 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
     g_debug ("eas_mail_sync_email_folder_hierarchy++ : account_uid[%s]",
              (account_uid ? account_uid : "NULL"));
 
-    priv->connection = eas_connection_find (account_uid);
-    if (!priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -227,7 +217,7 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
     g_debug ("eas_mail_sync_email_folder_hierarchy++ 2");
 
     eas_request_base_SetConnection (&req->parent_instance,
-                                    priv->connection);
+                                    connection);
 
     g_debug ("eas_mail_sync_email_folder_hierarchy++ 3");
 
@@ -256,14 +246,15 @@ eas_mail_sync_folder_email (EasMail* self,
                             DBusGMethodInvocation* context)
 {
     EasMailPrivate* priv = self->priv;
+    EasConnection *connection;
     GError *error = NULL;
     EasSyncReq *req = NULL;
     gboolean ret = TRUE;
 
     g_debug ("eas_mail_sync_folder_email++");
 
-    priv->connection = eas_connection_find (account_uid);
-    if (!priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -281,7 +272,7 @@ eas_mail_sync_folder_email (EasMail* self,
                                  EAS_ITEM_MAIL,
                                  context);
 
-    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+    eas_request_base_SetConnection (&req->parent_instance, connection);
 
     // Activate Request
 
@@ -310,6 +301,7 @@ eas_mail_delete_email (EasMail *easMailObj,
                        const gchar **server_ids_array,
                        DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret = TRUE;
     GError *error = NULL;
     GSList *server_ids_list = NULL;
@@ -321,8 +313,8 @@ eas_mail_delete_email (EasMail *easMailObj,
     g_debug ("eas_mail_delete_email++");
     g_assert (server_ids_array);
 
-    easMailObj->priv->connection = eas_connection_find (account_uid);
-    if (!easMailObj->priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -352,7 +344,7 @@ eas_mail_delete_email (EasMail *easMailObj,
     g_slist_free (server_ids_list);
 
     eas_request_base_SetConnection (&req->parent_instance,
-                                    easMailObj->priv->connection);
+				    connection);
 
     // Start the request
     ret = eas_delete_req_Activate (req, &error);
@@ -376,14 +368,15 @@ eas_mail_update_emails (EasMail *self,
                         const gchar **serialised_email_array,
                         DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     GError *error = NULL;
     EasUpdateEmailReq *req = NULL;
     gboolean ret = TRUE;
 
     g_debug ("eas_mail_update_email++");
 
-    self->priv->connection = eas_connection_find (account_uid);
-    if (!self->priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -407,7 +400,7 @@ eas_mail_update_emails (EasMail *self,
     }
 
     eas_request_base_SetConnection (&req->parent_instance,
-                                    self->priv->connection);
+                                    connection);
 
     // Start the request
     g_debug ("start request");
@@ -445,6 +438,7 @@ eas_mail_fetch_email_body (EasMail* self,
                            guint request_id,			// passed back with progress signal
                            DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret;
     EasMailPrivate *priv = self->priv;
     GError *error = NULL;
@@ -452,8 +446,8 @@ eas_mail_fetch_email_body (EasMail* self,
 
     g_debug ("eas_mail_fetch_email_body++");
 
-    priv->connection = eas_connection_find (account_uid);
-    if (!priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -471,7 +465,7 @@ eas_mail_fetch_email_body (EasMail* self,
                                       mime_directory,
                                       context);
 
-    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+    eas_request_base_SetConnection (&req->parent_instance, connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
@@ -501,6 +495,7 @@ eas_mail_fetch_attachment (EasMail* self,
                            guint request_id,
                            DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret;
     EasMailPrivate *priv = self->priv;
     EFlag *flag = NULL;
@@ -509,8 +504,8 @@ eas_mail_fetch_attachment (EasMail* self,
 
     g_debug ("eas_mail_fetch_attachment++");
 
-    priv->connection = eas_connection_find (account_uid);
-    if (!priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -529,7 +524,7 @@ eas_mail_fetch_attachment (EasMail* self,
                                             mime_directory,
                                             context);
 
-    eas_request_base_SetConnection (&req->parent_instance, priv->connection);
+    eas_request_base_SetConnection (&req->parent_instance, connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
@@ -559,14 +554,15 @@ eas_mail_send_email (EasMail* easMailObj,
                      guint request_id,
                      DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret = TRUE;
     GError *error = NULL;
     EasSendEmailReq *req = NULL;
 
     g_debug ("eas_mail_send_email++");
 
-    easMailObj->priv->connection = eas_connection_find (account_uid);
-    if (!easMailObj->priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -581,7 +577,7 @@ eas_mail_send_email (EasMail* easMailObj,
     req = eas_send_email_req_new (account_uid, context, clientid, mime_file);
 
     eas_request_base_SetConnection (&req->parent_instance,
-                                    easMailObj->priv->connection);
+                                    connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, easMailObj);	
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);	
@@ -611,6 +607,7 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
                      const gchar *dest_folder_id,
                      DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret = TRUE;
     GError *error = NULL;
     EasMoveEmailReq *req = NULL;
@@ -620,8 +617,8 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
 		
 	g_debug ("eas_mail_move_emails_to_folder++");
 
-    easMailObj->priv->connection = eas_connection_find (account_uid);
-    if (!easMailObj->priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -651,7 +648,7 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
     g_slist_free (server_ids_list);
 	
     eas_request_base_SetConnection (&req->parent_instance,
-                                    easMailObj->priv->connection);
+                                    connection);
 
     // Activate Request
     ret = eas_move_email_req_Activate (req, &error);
@@ -681,6 +678,7 @@ eas_mail_watch_email_folders(EasMail* easMailObj,
                                 const gchar **folder_array,
                                 DBusGMethodInvocation* context)
 {
+    EasConnection *connection;
     gboolean ret = TRUE;
     GError *error = NULL;
     GSList *folder_ids_list = NULL;
@@ -692,8 +690,8 @@ eas_mail_watch_email_folders(EasMail* easMailObj,
     g_debug ("eas_mail_watch_email_folders++");
     g_assert (folder_array);
 
-    easMailObj->priv->connection = eas_connection_find (account_uid);
-    if (!easMailObj->priv->connection)
+    connection = eas_connection_find (account_uid);
+    if (!connection)
     {
         g_set_error (&error,
                      EAS_CONNECTION_ERROR,
@@ -728,7 +726,7 @@ eas_mail_watch_email_folders(EasMail* easMailObj,
     g_slist_free (folder_ids_list);
 
     eas_request_base_SetConnection (&req->parent_instance,
-                                    easMailObj->priv->connection);
+                                    connection);
 
 	g_debug ("eas_mail_watch_email_folder4");
     // Start the request
