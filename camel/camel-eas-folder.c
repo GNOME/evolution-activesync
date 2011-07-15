@@ -488,7 +488,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 }
 
 CamelFolder *
-camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, GCancellable *cancellable, GError **error)
+camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, gchar *folder_id, GCancellable *cancellable, GError **error)
 {
         CamelFolder *folder;
         CamelEasFolder *eas_folder;
@@ -543,9 +543,7 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
                 return NULL;
         }
 
-	eas_folder->priv->server_id =
-		camel_eas_store_summary_get_folder_id_from_name (CAMEL_EAS_STORE (store)->summary,
-								 folder_name);
+	eas_folder->priv->server_id = g_strdup (folder_id);
 
         return folder;
 }

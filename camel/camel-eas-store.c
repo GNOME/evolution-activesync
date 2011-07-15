@@ -264,20 +264,21 @@ eas_get_folder_sync (CamelStore *store, const gchar *folder_name, guint32 flags,
 			return NULL;
 
 		camel_folder_info_free (fi);
-	} else if (!fid) {
+		fid = camel_eas_store_summary_get_folder_id_from_name (eas_store->summary, folder_name);
+	}
+
+	if (!fid) {
 		g_set_error (error, CAMEL_STORE_ERROR,
 			     CAMEL_ERROR_GENERIC,
 			     _("No such folder: %s"), folder_name);
 		return NULL;
-	} else {
-		/* We don't actually care what it is; only that it exists */
-		g_free (fid);
 	}
 
 	folder_dir = g_build_filename (eas_store->storage_path, "folders", folder_name, NULL);
-	folder = camel_eas_folder_new (store, folder_name, folder_dir, cancellable, error);
+	folder = camel_eas_folder_new (store, folder_name, folder_dir, fid, cancellable, error);
 
 	g_free (folder_dir);
+	g_free (fid);
 
 	return folder;
 }
