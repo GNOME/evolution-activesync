@@ -81,10 +81,6 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	default:
 		;
 	}
-	fi->unread = camel_eas_store_summary_get_folder_unread (eas_summary,
-								fid, NULL);
-	fi->total = camel_eas_store_summary_get_folder_total (eas_summary,
-							      fid, NULL);
 
 	g_free (url);
 

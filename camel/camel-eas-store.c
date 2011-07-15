@@ -290,6 +290,7 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 	GSList *folders, *l;
 	GPtrArray *folder_infos;
 	CamelFolderInfo *root_fi = NULL;
+	CamelFolderSummary *s;
 
 	eas_summary = store->summary;
 	folders = camel_eas_store_summary_get_folders (eas_summary, top);
@@ -299,6 +300,7 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 
 	folder_infos = g_ptr_array_new ();
 
+	s = g_object_new (CAMEL_TYPE_EAS_SUMMARY, NULL);
 	for (l = folders; l != NULL; l = g_slist_next (l)) {
 		CamelFolderInfo *fi;
 		gint64 ftype;
@@ -309,6 +311,11 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 			continue;
 
 		fi = camel_eas_utils_build_folder_info (store, l->data);
+		if (!camel_folder_summary_header_load_from_db (s, CAMEL_STORE (store),
+							       fi->full_name, NULL)) {
+			fi->unread = s->unread_count;
+			fi->total = s->saved_count;
+		}
 		g_ptr_array_add	(folder_infos, fi);
 	}
 
@@ -317,6 +324,7 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 	g_ptr_array_free (folder_infos, TRUE);
 	g_slist_foreach (folders, (GFunc) g_free, NULL);
 	g_slist_free (folders);
+	g_object_unref (s);
 
 	return root_fi;
 }
