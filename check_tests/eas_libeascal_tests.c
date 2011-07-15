@@ -256,7 +256,7 @@ static void testGetLatestCalendar (EasSyncHandler *sync_handler,
     gboolean ret = FALSE;
     mark_point();
 	gboolean more = FALSE;
-    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CALENDAR, "1",
+    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CALENDAR, NULL,
                                                 & (*created),
                                                 & (*updated),
                                                 & (*deleted),
@@ -602,13 +602,13 @@ Suite* eas_libeascal_suite (void)
     TCase *tc_libeascal = tcase_create ("core");
     suite_add_tcase (s, tc_libeascal);
 
-    tcase_add_test (tc_libeascal, test_cal);
-    tcase_add_test (tc_libeascal, test_get_sync_handler);
+//    tcase_add_test (tc_libeascal, test_cal);
+//    tcase_add_test (tc_libeascal, test_get_sync_handler);
     tcase_add_test (tc_libeascal, test_get_latest_calendar_items);
-    tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
-    tcase_add_test (tc_libeascal, test_eas_sync_handler_delete_cal);
-    tcase_add_test (tc_libeascal, test_eas_sync_handler_update_cal);
-    tcase_add_test (tc_libeascal, test_eas_sync_handler_add_cal);
+//    tcase_add_test (tc_libeascal, test_translate_ical_to_xml);
+//    tcase_add_test (tc_libeascal, test_eas_sync_handler_delete_cal);
+//    tcase_add_test (tc_libeascal, test_eas_sync_handler_update_cal);
+//    tcase_add_test (tc_libeascal, test_eas_sync_handler_add_cal);
 
     return s;
 }
