@@ -293,7 +293,7 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
         while (deleted_item_array[i])
         {
             g_debug ("deleted item = %s", deleted_item_array[i]);
-            *items_deleted = g_slist_append (*items_deleted, deleted_item_array[i]);
+            *items_deleted = g_slist_append (*items_deleted, g_strdup(deleted_item_array[i]));
             i++;
         }
 
@@ -301,8 +301,8 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 
     free_string_array (created_item_array);
     free_string_array (updated_item_array);
-    free_string_array (deleted_item_array);
-
+	free_string_array (deleted_item_array);
+    
     if (!ret)   // failed - cleanup lists
     {
         g_slist_foreach (*items_created, (GFunc) g_free, NULL);
