@@ -35,6 +35,10 @@ check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
                   $(top_builddir)/libeassync/src/libeassync.la \
                   $(top_builddir)/libeastest/src/libeastest.la \
                   $(top_builddir)/eas-daemon/libeas/libeas.la \
+                  $(top_builddir)/libeasaccount/src/libeasaccount.la \
+                  $(top_builddir)/eas-daemon/src/activesyncd-eas-mail.o \
+                  $(top_builddir)/eas-daemon/src/activesyncd-eas-sync.o \
+                  $(top_builddir)/eas-daemon/src/activesyncd-eas-test.o \
                   @CHECK_LIBS@ $(GLIB_LIBS)
 
 #eas_daemon_tests.c eas_daemon_tests.h 
