@@ -59,6 +59,8 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      activesyncd-server.c \
 		      eas-sync.h \
 		      eas-sync.c \
+		      eas-common.h \
+		      eas-common.c \
 		      eas-mail.h \
 		      eas-mail.c \
 		      eas-test.h \
