@@ -943,7 +943,7 @@ gboolean
 eas_mail_handler_update_email (EasEmailHandler* self,
 			       gchar *sync_key,            // sync_key for the folder containing the emails
 			       const gchar *folder_id,     // folder that contains email to delete
-			       const GSList *update_emails,        // emails to update
+			       GSList *update_emails,        // emails to update
 			       GError **error)
 {
 	gboolean ret = TRUE;

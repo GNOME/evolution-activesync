@@ -102,8 +102,7 @@ cleanup:
     return ret;
 }
 
-// allocates an array of ptrs to strings and the strings it points to and populates each string with serialised folder details
-// null terminates the array
+// creates a null terminated array of strings from a list of strings
 gboolean
 build_serialised_email_info_array (gchar ***serialised_email_info_array, const GSList *email_list, GError **error)
 {

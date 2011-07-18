@@ -77,6 +77,7 @@ struct _EasEmailInfo {
 	gsize estimated_size;
 	time_t date_received;
 	int importance;
+	gchar* status;				// if non-NULL indicates a problem with this item during a sync
 	/*
 	conversation_id
 	conversation_index

@@ -238,7 +238,8 @@ Note that the only valid changes are to the read flag and to categories (other c
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in/out):  	use value returned from exchange server from previous requests
  * gchar *folder_id (in):		id of folder that contains email to update
- * const GSList *email (in): 	identifies the emails to update. List of EasEmailInfos
+ * const GSList *update_emails (in/out): identifies the emails to update. List of EasEmailInfos. 
+ *								The 'status' field for an individual EasEmailInfo may be set to reflect a problem with that email if the update is (otherwise) successful
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
@@ -247,7 +248,7 @@ Note that the only valid changes are to the read flag and to categories (other c
 gboolean eas_mail_handler_update_email (EasEmailHandler* this,
 					gchar *sync_key,
 					const gchar *folder_id,
-					const GSList *update_emails,
+					GSList *update_emails,
 					GError **error);
 
 

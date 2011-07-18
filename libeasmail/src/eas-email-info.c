@@ -44,6 +44,7 @@ eas_email_info_init (EasEmailInfo *object)
 	object->headers = NULL;
 	object->attachments = NULL;
 	object->categories = NULL;
+	object->status = NULL;
 	object->flags = 0;
 	g_debug ("eas_email_info_init--");
 }
@@ -64,6 +65,7 @@ eas_email_info_finalize (GObject *object)
 	g_debug ("eas_email_info_finalize++");
 	/* deinitalization code */
 	g_free (self->server_id);
+	g_free (self->status);
 
 	g_slist_foreach (self->headers, (GFunc) eas_email_free_header, NULL);
 	g_slist_free (self->headers);
@@ -112,6 +114,8 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 	EasAttachment *attachment = NULL;
 	gchar *category = NULL;
 
+	g_debug ("eas_email_info_serialise++");
+	
 	// serialise everything:
 	//server_id
 	g_debug ("serialising serverid");
@@ -159,8 +163,12 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 		g_string_append_printf (ser, "%s\n", category);
 	}
 	// estimated size, date received
-	g_string_append_printf (ser, "%zu\n%ld\n%d", self->estimated_size, self->date_received, self->importance);
+	g_string_append_printf (ser, "%zu\n%ld\n%d\n", self->estimated_size, self->date_received, self->importance);
 
+	// status
+	g_debug("serialising status %s", self->status);
+	g_string_append_printf (ser, "%s", (self->status?:""));
+	
 	if (ret) {
 		*result = ser->str;
 		g_string_free (ser, FALSE);
@@ -302,6 +310,14 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	g_free (strv[idx++]);
 	g_debug ("importance = %d", self->importance);
 
+	//status
+	if (!strv[idx]) {
+		g_warning ("Insufficient data in eas_email_info_serialise");
+		goto out;
+	}
+	self->status = strv[idx++];
+	g_debug ("status = %s", self->status);
+	
 	ret = TRUE;
 out:
 	while (strv[idx])
