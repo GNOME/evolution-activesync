@@ -116,7 +116,7 @@ X-EVOLUTION-BLOG-URL;X-COUCHDB-UUID=\"8930d503-0794-454b-9c4e-f30b093654fc\":\
 myWebLog\n\
 URL;X-COUCHDB-UUID=\"84fb728f-9e33-4dbb-af66-e62dedfbcc1c\":http://www.myHome\
 Page.com\n\
-NOTE:myNotes: this is a test contact for the Contacts translator\n\
+NOTE:myNotes this is a test contact for the Contacts translator\n\
 CATEGORIES:Competition,Favorites,Birthday,Anniversary,Business\n\
 X-EVOLUTION-ASSISTANT:myAssistant\n\
 X-EVOLUTION-MANAGER:myManager\n\
@@ -130,6 +130,8 @@ N:myLastName;myFirstName;myMiddleName;Mr.;Sr.\n\
 UID:pas-id-4E1E1CFD00000000\n\
 X-COUCHDB-REVISION:3-27f3c9f29571145454ce17f436b948c3\n\
 END:VCARD\n";
+
+
 
 #if 0
 const char* TEST_VCARD = "BEGIN:vCard\n\
