@@ -79,13 +79,17 @@ EasItemInfo* eas_item_info_new ()
 
 gboolean eas_item_info_serialise (EasItemInfo* self, gchar** result)
 {
-    GString* str = g_string_new (self->client_id);
+    GString* str = NULL;
+
+	
+
+	str = g_string_new ((self->client_id?:""));
     str = g_string_append_c (str, SERVER_ID_SEPARATOR);
-    str = g_string_append (str, self->server_id);
+	str = g_string_append (str, (self->server_id?:""));
 	str = g_string_append_c (str, SERVER_ID_SEPARATOR);
-    str = g_string_append (str, self->status);
+    str = g_string_append (str, (self->status?:""));
     str = g_string_append_c (str, SERVER_ID_SEPARATOR);
-    str = g_string_append (str, self->data);
+    str = g_string_append (str, (self->data?:""));
     *result = g_string_free (str, FALSE); // Destroy the GString but not the buffer (which is returned with ownership)
     return TRUE;
 }
@@ -96,6 +100,7 @@ gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data)
     gboolean separator_found = FALSE;
     guint i = 0;
     gchar *tempString = NULL;
+	gchar *tempString2 = NULL;
 
     g_debug ("eas_item_info_deserialise++");
     // Look for the separator character
@@ -126,14 +131,14 @@ gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data)
     }
 	if (separator_found)
     {
-        self->server_id = g_strndup (data, i);
-        tempString = g_strdup (data + (i + 1));
+        self->server_id = g_strndup (tempString, i);
+        tempString2 = g_strdup (tempString + (i + 1));
         separator_found = FALSE;
     }
     i = 0;
-    for (; tempString[i]; i++)
+    for (; tempString2[i]; i++)
     {
-        if (tempString[i] == SERVER_ID_SEPARATOR)
+        if (tempString2[i] == SERVER_ID_SEPARATOR)
         {
             separator_found = TRUE;
             break;
@@ -142,11 +147,12 @@ gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data)
 
     if (separator_found)
     {
-        self->status = g_strndup (tempString, i);
-        self->data = g_strdup (data + (i + 1));
+        self->status = g_strndup (tempString2, i);
+        self->data = g_strdup (tempString2 + (i + 1));
     }
 
     g_free (tempString);
+	g_free (tempString2);
 
     return separator_found;
 }
