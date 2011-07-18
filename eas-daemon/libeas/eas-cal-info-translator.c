@@ -570,7 +570,8 @@ static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 
 			// If timeZoneStruct.StandardDate.Year == 0 we need to convert it into
 			// the start date of a recurring sequence, and add an RRULE.
-			if (timeZoneStruct.StandardDate.Year == 0)
+			if (timeZoneStruct.StandardDate.Year == 0 &&
+			    timeZoneStruct.StandardDate.Month != 0)
 			{
 				_eas2ical_convert_relative_timezone_date(&timeZoneStruct.StandardDate, &rrule);
 			}
@@ -618,7 +619,10 @@ static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 			//
 			// DAYLIGHT component
 			//
-		
+			// FIXME: How does it indicate that the daylight zone doesn't
+			//        really exist?
+			if (timeZoneStruct.DaylightDate.Month != 0) {
+
 			xdaylight = icalcomponent_new(ICAL_XDAYLIGHT_COMPONENT);
 
 			// Reset the RRULE
@@ -669,6 +673,7 @@ static void _eas2ical_process_timezone(xmlNodePtr n, icalcomponent* vtimezone, g
 
 			// And now add the DAYLIGHT component to the VTIMEZONE
 			icalcomponent_add_component(vtimezone, xdaylight);
+			}
 		}
 	} // timeZoneRawBytesSize == sizeof(timeZoneStruct)
 	else
