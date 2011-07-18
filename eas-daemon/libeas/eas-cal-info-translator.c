@@ -109,21 +109,21 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_ELEMENT_CATEGORIES                "Categories"
 #define EAS_ELEMENT_CATEGORY                  "Category"
 #define EAS_ELEMENT_RECURRENCE                "Recurrence"
-#define EAS_ELEMENT_TYPE                      "Type"
-#define EAS_ELEMENT_OCCURRENCES               "Occurrences"
-#define EAS_ELEMENT_INTERVAL                  "Interval"
-#define EAS_ELEMENT_WEEKOFMONTH               "WeekOfMonth"
-#define EAS_ELEMENT_DAYOFWEEK                 "DayOfWeek"
-#define EAS_ELEMENT_MONTHOFYEAR               "MonthOfYear"
-#define EAS_ELEMENT_UNTIL                     "Until"
-#define EAS_ELEMENT_DAYOFMONTH                "DayOfMonth"
+#define EAS_ELEMENT_TYPE                      "Recurrence_Type"
+#define EAS_ELEMENT_OCCURRENCES               "Recurrence_Occurrences"
+#define EAS_ELEMENT_INTERVAL                  "Recurrence_Interval"
+#define EAS_ELEMENT_WEEKOFMONTH               "Recurrence_WeekOfMonth"
+#define EAS_ELEMENT_DAYOFWEEK                 "Recurrence_DayOfWeek"
+#define EAS_ELEMENT_MONTHOFYEAR               "Recurrence_MonthOfYear"
+#define EAS_ELEMENT_UNTIL                     "Recurrence_Until"
+#define EAS_ELEMENT_DAYOFMONTH                "Recurrence_DayOfMonth"
 #define EAS_ELEMENT_CALENDARTYPE              "CalendarType"
 #define EAS_ELEMENT_ISLEAPMONTH               "IsLeapMonth"
 #define EAS_ELEMENT_FIRSTDAYOFWEEK            "FirstDayOfWeek"
 #define EAS_ELEMENT_EXCEPTIONS                "Exceptions"
 #define EAS_ELEMENT_EXCEPTION                 "Exception"
-#define EAS_ELEMENT_DELETED                   "Deleted"
-#define EAS_ELEMENT_EXCEPTIONSTARTTIME        "ExceptionStartTime"
+#define EAS_ELEMENT_DELETED                   "Exception_Deleted"
+#define EAS_ELEMENT_EXCEPTIONSTARTTIME        "Exception_StartTime"
 #define EAS_ELEMENT_APPOINTMENTREPLYTIME      "AppointmentReplyTime"
 #define EAS_ELEMENT_RESPONSETYPE              "ResponseType"
 #define EAS_ELEMENT_BODY                      "Body"
@@ -133,6 +133,7 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK "OnlineMeetingExternalLink"
 #define EAS_ELEMENT_DATA                      "Data"
 #define EAS_ELEMENT_TRUNCATED                 "Truncated"
+#define EAS_ELEMENT_BODY_TYPE                 "Type"
 
 #define EAS_SENSITIVITY_NORMAL                "0"
 #define EAS_SENSITIVITY_PERSONAL              "1"
@@ -1707,7 +1708,7 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, gchar* server_id)
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
+static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData, struct icaltimetype *startTime)
 {
 	// Get the iCal RRULE property
 	struct icalrecurrencetype rrule = icalproperty_get_rrule(prop);
@@ -1892,14 +1893,14 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 	//
 	// WKST
 	//
-	if (rrule.week_start)
+	/*if (rrule.week_start)
 	{
 		// EAS value is 0=Sunday..6=Saturday
 		// libical value is 0=NoDay, 1=Sunday..7=Saturday
 		xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
 		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_FIRSTDAYOFWEEK, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
-	}
+	}*/
 
 	//
 	// BYMONTH
@@ -1919,6 +1920,13 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 			g_warning("DATA LOSS: Already set to recur on month %d, discarding recurrence info for month %d", monthOfYear, rrule.by_month[index]);
 		}
 	}
+
+	if (monthOfYear <=0 && ( recurType==5 || recurType==6))
+	{
+		//if we have yearly recurrence, it is mandatory to have a month item - get it from startTime
+		monthOfYear = startTime->month;
+	}
+	
 	if (monthOfYear > 0)
 	{
 		xmlValue = g_strdup_printf("%d", monthOfYear);
@@ -1943,12 +1951,23 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData)
 			g_warning("DATA LOSS: Already set to recur on day %d of the month, discarding recurrence info for day %d of month", dayOfMonth, rrule.by_month_day[index]);
 		}
 	}
+	if (dayOfMonth <=0 && (recurType==2 || recurType ==5))
+	{
+		//if we have monthly or yearly recurrence, but have not yet set the day, we need to do this
+		//get it from start date
+		dayOfMonth = startTime->day;
+	}
+
+
+	
 	if (dayOfMonth > 0)
 	{
 		xmlValue = g_strdup_printf("%d", dayOfMonth);
 		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DAYOFMONTH, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
 	}
+
+	
 }
 
 
@@ -2011,16 +2030,38 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 					
 					//get start time, convert it to UTC and suffix Z onto it
 					tt = icalproperty_get_dtstart(prop);
+						
 					utc_offset = icaltimezone_get_utc_offset(icaltz, &tt, &isDaylight);
 					icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
 					timestamp = icaltime_as_ical_string(tt);
 					if(!g_str_has_suffix (timestamp, "Z"))
-				   {
-					  modified = g_strconcat(timestamp, "Z", NULL);
-				   }
+					{
+					  if(strlen(timestamp)<=8)
+					  {
+						  //need to add midnight timestamp and Z for UTC
+						  modified = g_strconcat(timestamp, "T000000", "Z", NULL);
+					  }
+					  else
+					  {
+						  //just add Z
+						  modified = g_strconcat(timestamp, "Z", NULL);
+					  }
+					}
 					else
 					{
-						modified = g_strdup(timestamp);
+						if(strlen(timestamp)<=9)
+						{
+							//need to add midnight timestamp before last characters
+							//first remove last character
+							gchar * temp = g_strndup(timestamp, (strlen(timestamp)-1));
+							//then concatenate timestamp + "Z"
+							modified = g_strconcat(temp, "T000000", "Z", NULL);
+							g_free(temp);
+						}
+						else
+						{
+							modified = g_strdup(timestamp);
+						}
 					}
 
 					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*)modified);
@@ -2046,11 +2087,32 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 					timestamp = icaltime_as_ical_string(tt);
 					if(!g_str_has_suffix (timestamp, "Z"))
 					{
-					  modified = g_strconcat(timestamp, "Z", NULL);
+					  if(strlen(timestamp)<=8)
+					  {
+						  //need to add midnight timestamp and Z for UTC
+						  modified = g_strconcat(timestamp, "T000000", "Z", NULL);
+					  }
+					  else
+					  {
+						  //just add Z
+						  modified = g_strconcat(timestamp, "Z", NULL);
+					  }
 					}
 					else
 					{
-						modified = g_strdup(timestamp);
+						if(strlen(timestamp)<=9)
+						{
+							//need to add midnight timestamp before last characters
+							//first remove last character
+							gchar * temp = g_strndup(timestamp, (strlen(timestamp)-1));
+							//then concatenate timestamp + "Z"
+							modified = g_strconcat(temp, "T000000", "Z", NULL);
+							g_free(temp);
+						}
+						else
+						{
+							modified = g_strdup(timestamp);
+						}
 					}
 					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*)modified);
 					// And additionally store the end time so we can calculate the AllDayEvent value later
@@ -2135,7 +2197,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 				// RRULE
 				case ICAL_RRULE_PROPERTY:
 					{
-						_ical2eas_process_rrule(prop, appData);
+						_ical2eas_process_rrule(prop, appData, &startTime);
 					}
 					break;
 
@@ -2152,6 +2214,8 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						// EXDATE consists of a list of date/times, comma separated.
 						// However, libical breaks this up for us and converts it into
 						// a number of single-value properties.
+						const gchar* start = NULL;
+						gchar *modified = NULL;
 						
 						xmlNodePtr exception = NULL;
 
@@ -2164,7 +2228,37 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						// Now create the <Exception> element
 						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
 						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DELETED, (const xmlChar*)EAS_BOOLEAN_TRUE);
-						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*)icalproperty_get_value_as_string(prop));
+
+						start = icalproperty_get_value_as_string(prop);
+						if(strlen(start)<=9)
+						{
+							if(!g_str_has_suffix (start, "Z"))
+							{
+								modified = g_strconcat(start, "T000000Z", NULL);
+							}
+							else
+							{
+								//need to add midnight timestamp before last characters
+								//first remove last character
+								gchar * temp = g_strndup(start, (strlen(start)-1));
+								//then concatenate timestamp + "Z"
+								modified = g_strconcat(temp, "T000000", "Z", NULL);
+								g_free(temp);
+							}
+						}
+						else
+						{
+							if(!g_str_has_suffix (start, "Z"))
+							{
+								modified = g_strconcat(start, "Z", NULL);
+							}
+							else
+							{
+								modified = g_strdup(start);
+							}
+						}
+						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*)modified);
+						g_free(modified);
 					}
 					break;
 
@@ -2174,7 +2268,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						// See [MS-ASAIRS] for format of the <Body> element:
 						// http://msdn.microsoft.com/en-us/library/dd299454(v=EXCHG.80).aspx
 						xmlNodePtr bodyNode = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
-						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TYPE, (const xmlChar*)EAS_BODY_TYPE_PLAINTEXT);
+						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE, (const xmlChar*)EAS_BODY_TYPE_PLAINTEXT);
 						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*)EAS_BOOLEAN_FALSE);
 						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*)icalproperty_get_value_as_string(prop));
 						// All other fields are optional
@@ -2206,12 +2300,14 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 			}// end of switch
 		}// end of for loop
 
+		
+
 		// Add an <AllDayEvent> element if both the start and end dates have no times
 		// (ie. just dates, with time set to midnight) and are 1 day apart
 		// (from [MS-ASCAL]: "An item marked as an all day event is understood to begin
 		// on midnight of the current day and to end on midnight of the next day.")
-		if (icaltime_is_null_time(startTime) &&
-		    icaltime_is_null_time(endTime) &&
+		if (strlen(icaltime_as_ical_string(startTime))<=9 &&
+		    strlen(icaltime_as_ical_string(endTime))<=9 &&
 		    (icaltime_as_timet(endTime) - icaltime_as_timet(startTime)) == (time_t)SECONDS_PER_DAY)
 		{
 			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_TRUE);
@@ -2506,6 +2602,8 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 {
 	gboolean success = FALSE;
 	icalcomponent* ical = NULL;
+
+	g_debug(" Cal Data: %s", calInfo->data);
 	
 	if (doc &&
 	    appData &&
