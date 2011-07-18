@@ -268,12 +268,23 @@ eas_connection_dispose (GObject *object)
         g_object_unref (priv->soup_session);
         priv->soup_session = NULL;
 
-        g_main_loop_quit (priv->soup_loop);
+		if (g_main_is_running (priv->soup_loop))
+		{
+	        g_main_loop_quit (priv->soup_loop);
+		}
+		else
+		{
+			g_main_loop_unref (priv->soup_loop);
+			priv->soup_loop = NULL;
+		}
         g_thread_join (priv->soup_thread);
         priv->soup_thread = NULL;
 
-        g_main_loop_unref (priv->soup_loop);
-        priv->soup_loop = NULL;
+		if(priv->soup_loop)
+		{
+		    g_main_loop_unref (priv->soup_loop);
+		    priv->soup_loop = NULL;
+		}
         g_main_context_unref (priv->soup_context);
         priv->soup_context = NULL;
     }
@@ -615,10 +626,12 @@ eas_soup_thread (gpointer user_data)
 
     g_debug ("  eas_connection - eas_soup_thread++");
 
-    g_main_context_push_thread_default (priv->soup_context);
-    g_main_loop_run (priv->soup_loop);
-    g_main_context_pop_thread_default (priv->soup_context);
-
+	if(priv->soup_context && priv->soup_loop)
+	{
+		g_main_context_push_thread_default (priv->soup_context);
+		g_main_loop_run (priv->soup_loop);
+		g_main_context_pop_thread_default (priv->soup_context);
+	}
     g_debug ("  eas_connection - eas_soup_thread--");
     return NULL;
 }
