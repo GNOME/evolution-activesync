@@ -671,6 +671,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                             {
                                 flatItem = eas_cal_info_translator_parse_response (appData, g_strdup(item_server_id));
                             }
+							break;
                             case EAS_ITEM_CONTACT:
                             {
                                 //TODO: add contact translator
