@@ -941,7 +941,7 @@ TODO - should this be changed to support updating multiple emails at once?
 */
 gboolean
 eas_mail_handler_update_email (EasEmailHandler* self,
-			       const gchar *sync_key,            // sync_key for the folder containing the emails
+			       gchar *sync_key,            // sync_key for the folder containing the emails
 			       const gchar *folder_id,     // folder that contains email to delete
 			       const GSList *update_emails,        // emails to update
 			       GError **error)
