@@ -432,7 +432,7 @@ gboolean
 eas_email_info_translator_build_update_request(const xmlDocPtr doc, xmlNode *app_data, const EasEmailInfo *email_info)
 {
 	gboolean ret = FALSE;
-	g_debug("eas_email_info_translator_parse_request++");
+	g_debug("eas_email_info_translator_build_update_request++");
 	
 	if (!(doc &&
 	    app_data &&
@@ -478,6 +478,6 @@ eas_email_info_translator_build_update_request(const xmlDocPtr doc, xmlNode *app
 		xmlFree(dump_buffer);
 	}
 	
-	g_debug("eas_email_info_translator_parse_request--");
+	g_debug("eas_email_info_translator_build_update_request--");
 	return ret;
 }

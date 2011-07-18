@@ -378,6 +378,10 @@ START_TEST (test_eas_mail_handler_update_email)
         emails = g_slist_append (emails, email);
 
         // update the first mail in the folder
+		gchar folder_sync_key_pre_update[64];
+		strcpy(folder_sync_key_pre_update, folder_sync_key);
+		
+		g_debug("folder sync key = %s (before eas_mail_handler_update_email)", folder_sync_key);
         rtn = eas_mail_handler_update_email (email_handler, folder_sync_key, g_inbox_id, emails, &error);
         if (error)
         {
@@ -387,9 +391,10 @@ START_TEST (test_eas_mail_handler_update_email)
         mark_point();
 
         
-        // verify that we get updates with the next sync:
-        testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
+        // verify that we get the update if we sync with the pre-update sync_key:
+        testGetFolderInfo (email_handler, folder_sync_key_pre_update, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
 
+		
         fail_if (emails2_created, "Not expecting any new emails");
         fail_if (emails_deleted, "Not expecting any deletions");
         fail_unless (NULL != emails_updated, "No updates from exchange server sync after we updated");
@@ -623,18 +628,25 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
      * @@ NOTE - You'll need to uncomment the libeastest.h header at the top of
      * the file.
      */
-    /**
+    /** 
     {
+		g_debug("mocking response");
+
+		guint status_code = 200;
+		GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
+		g_array_append_val(status_codes, status_code);
         const gchar *mocks[] = {"folder-hierarchy-resp.xml", 0};
         EasTestHandler *test_handler = eas_test_handler_new ();
         if (test_handler)
         {
-            eas_test_handler_add_mock_responses (test_handler, mocks);
+			//eas_test_handler_add_mock_responses (test_handler, mocks, NULL);
+            eas_test_handler_add_mock_responses (test_handler, mocks, status_codes);
             g_object_unref (test_handler);
             test_handler = NULL;
         }
+		g_array_free(status_codes, TRUE);
     }
-    ** End example. */
+	/** End example. */
     
     // call into the daemon to get the folder hierarchy from the exchange server
     testGetFolderHierarchy (email_handler, sync_key, &created, &updated, &deleted, &error);
@@ -1337,7 +1349,7 @@ Suite* eas_libeasmail_suite (void)
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
     
     /* need at least one email in the inbox for this to pass: */
-    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
+    tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
     
 	/* need a 'temp' folder created at the same level as Inbox and at least two emails in the inbox for this test to work: */
 	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
