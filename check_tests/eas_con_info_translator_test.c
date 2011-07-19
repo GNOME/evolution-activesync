@@ -25,7 +25,7 @@ static void test_eas_con_info_translator_parse_request(xmlDocPtr doc,
 //   Input Vcard file it shoulde use UTF-8 with CR+LF format   //
 //   To do that, you can use on linux  Leafpad 0.8.17          //
 //-------------------------------------------------------------//
-void test_info_translator_parse_response(char* vcardName, char* xmlName)
+static void test_info_translator_parse_response(const char* vcardName, const char* xmlName)
 {
 //region init variable
 	xmlDocPtr doc;
@@ -37,6 +37,8 @@ void test_info_translator_parse_response(char* vcardName, char* xmlName)
 	long lSize;
 	gchar * buffer=NULL;
 	struct stat stFileInfo;
+	EasItemInfo *item;
+	size_t readResult;
 //endregion
 //check the VCard file, did the VCard file exists
 
@@ -54,18 +56,14 @@ void test_info_translator_parse_response(char* vcardName, char* xmlName)
 	fr = fopen(g_strconcat (ptr, "/TestData/Con_Info_Translator/VCard_Data/",vcardName,NULL), "r");
 	fail_if(fr==NULL,"The test file from VCard_Data folder does not have good structure.", "Please check your VCard_Data folder.(check_tests/TestData/Con_Info_Translator/VCard_Data)");
 	
-	gchar* temporarybuffer=NULL;
 	fseek (fr , 0 , SEEK_END);
 	lSize = ftell (fr);
 	rewind (fr);
-	temporarybuffer = (gchar*) malloc (sizeof(gchar)*lSize+1);
-	fread (temporarybuffer,sizeof(gchar),lSize,fr);
-	temporarybuffer[lSize]='\0';
-	
-	char headofVcard[]={(char)10,temp[0],temp[1],temp[2],(char)10,NULL};
-	buffer = (gchar *)malloc(sizeof(gchar)*lSize+2);
-	buffer=g_strconcat (headofVcard, temporarybuffer,NULL);
-	//endregion
+	buffer = (gchar*) malloc (sizeof(gchar)*lSize+1);
+	readResult=fread (buffer,sizeof(gchar),lSize,fr);
+	fail_if(readResult == 0);
+	buffer[lSize]='\0';
+//endregion
 
 //check the xml file, did the xml file exists
 	fail_if(!stat(g_strconcat (ptr, "/TestData/Con_Info_Translator/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Con_Info_Translator/XML_Data");
@@ -84,7 +82,10 @@ void test_info_translator_parse_response(char* vcardName, char* xmlName)
 	res = eas_con_info_translator_parse_response(nodeLevel1, serv);
 	fclose (fr);
 
-	fail_if(g_strcmp0 (buffer,res)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
+	item = eas_item_info_new();
+	eas_item_info_deserialise(item,res);
+	
+	fail_if(g_strcmp0 (buffer,item->data)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
 	
 	xmlFreeDoc(doc);
 
