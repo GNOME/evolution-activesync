@@ -371,12 +371,22 @@ START_TEST (test_eas_mail_handler_update_email)
             email->flags |= EAS_EMAIL_READ;
         }
 
-        // TODO - something a bit more exciting than toggle of read flag (add/remove a category)?
+        // TODO - something a bit more exciting than toggle of read flag (add/remove a category)
 
         mark_point();
 
         emails = g_slist_append (emails, email);
 
+		/*
+		// add an email that doesn't exist to produce an item level error (update should still pass):
+		EasEmailInfo *email2 = g_new0(EasEmailInfo, 1);
+
+		email2->server_id = "5:123";
+		email2->flags |= EAS_VALID_READ;
+		email2->flags |= EAS_EMAIL_READ;
+		emails = g_slist_append (emails, email2);
+		*/
+		
         // update the first mail in the folder
 		gchar folder_sync_key_pre_update[64];
 		strcpy(folder_sync_key_pre_update, folder_sync_key);
@@ -388,12 +398,19 @@ START_TEST (test_eas_mail_handler_update_email)
             fail_if (rtn == FALSE, "%s", error->message);
         }
 
+		/*
+		EasEmailInfo *temp = (g_slist_nth (emails, 0))->data;
+		g_debug("email1 status = %s", temp->status);
+		temp = (g_slist_nth (emails, 1))->data;
+		g_debug("email2 status = %s", temp->status);
+		
+		g_free(email2);
+		*/
+		
         mark_point();
 
-        
         // verify that we get the update if we sync with the pre-update sync_key:
         testGetFolderInfo (email_handler, folder_sync_key_pre_update, g_inbox_id, &emails2_created, &emails_updated, &emails_deleted, &more_available, &error);
-
 		
         fail_if (emails2_created, "Not expecting any new emails");
         fail_if (emails_deleted, "Not expecting any deletions");
@@ -1245,6 +1262,8 @@ START_TEST (test_eas_mail_handler_delete_email)
         testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
         // if the emails_created list contains email
+		fail_if(!emails_created, "need at least one email in the inbox for this test to pass");
+		
         if (emails_created)
         {
             GSList *emailToDel = NULL;
