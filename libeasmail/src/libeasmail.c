@@ -1003,14 +1003,47 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 		strcpy (sync_key, ret_sync_key);
 	}
 	
-	// TODO update status codes in update_emails where necessary
+	// update status codes in update_emails where necessary
+    for (i = 0; ret_failed_updates_array[i] != NULL; i++)//nb: looks like eas only provides a response when the status != ok
+    {
+		// get the update response
+		EasEmailInfo *email_failed = eas_email_info_new();
 
+		g_debug("ret_failed_updates_array[%d] = %s", i, ret_failed_updates_array[i]);
+
+		eas_email_info_deserialise (email_failed, ret_failed_updates_array[i]);		
+
+		if(email_failed->status && strlen(email_failed->status))
+		{
+			int idx;
+			g_debug("got status %s for update of %s", email_failed->status, email_failed->server_id);
+			l = (GSList *) update_emails;			
+			
+			for (idx = 0; idx < num_emails; idx++) 
+			{
+				EasEmailInfo *email = l->data;
+				if(strcmp(email_failed->server_id, email->server_id) == 0)
+				{
+					email->status = g_strdup(email_failed->status);
+					break;	//out of inner for loop
+				}
+				l = l->next;
+			}
+		}
+	}
+	
 cleanup:
 	// free all strings in the array
 	for (i = 0; i < num_emails && serialised_email_array[i]; i++) {
 		g_free (serialised_email_array[i]);
 	}
 	g_free (serialised_email_array);
+// free ret_failed_updates_array
+	for(i = 0; ret_failed_updates_array[i] != NULL; i++)
+	{
+		g_free(ret_failed_updates_array[i]);
+	}
+	g_free(ret_failed_updates_array);
 	g_free (ret_sync_key);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
