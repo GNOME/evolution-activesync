@@ -741,9 +741,73 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                     priv->added_items = g_slist_append (priv->added_items, flatItem);
                 }
                 continue;
-            }
-        }
-    }
+            }   // end add
+			else if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Change"))
+			{
+				appData = node;
+                gchar *flat_item = NULL;
+				
+                for (appData = appData->children; appData; appData = appData->next)
+                {	
+                    if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
+                    {
+                        item_server_id = (gchar *) xmlNodeGetContent (appData);
+                        g_debug ("Found serverID for Item = %s", item_server_id);
+                        continue;
+                    }
+                    if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "Status"))
+                    {
+                        item_status = (gchar *) xmlNodeGetContent (appData);
+                        g_debug ("Found Status for Item  = %s", item_status);
+                        continue;
+                    }		
+				}
+				// create a flattened item of appropriate type:
+				switch (priv->ItemType)
+				{
+	                case EAS_ITEM_MAIL:
+	                {
+						EasEmailInfo *email_info = eas_email_info_new();
+
+	                    g_debug ("got status of %s for email with server id %s", item_status, item_server_id);
+						email_info->server_id = item_server_id;
+						email_info->status = item_status;
+						if(!eas_email_info_serialise(email_info, &flat_item))
+						{
+							g_warning("Failed to serialise email");
+						}	
+						g_object_unref(email_info); 					
+	                }
+	                break;
+					case EAS_ITEM_CALENDAR:
+					{
+						// TODO
+					}
+					break;
+					case EAS_ITEM_CONTACT:
+					{
+						// TODO
+					}
+					break;		
+	                default:
+	                {
+	                    g_debug ("Unknown Data Type  %d", priv->ItemType);
+	                }
+	                break;						
+				}		
+		
+				if (flat_item)
+				{
+					g_debug ("appending %s to updated_items", flat_item);
+					priv->updated_items = g_slist_append (priv->updated_items, flat_item);
+				}	
+				
+		        item_server_id = NULL;
+				item_status = NULL;
+				continue;
+			}   // end Change
+		} // end for node = node->children
+    }   // end Responses
 
     g_debug ("eas_sync_msg_parse_response--");
 
