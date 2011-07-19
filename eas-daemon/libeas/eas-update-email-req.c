@@ -54,6 +54,7 @@
 #include "eas-utils.h"
 #include "eas-sync-msg.h"
 #include "eas-update-email-req.h"
+#include "serialise_utils.h"
 
 G_DEFINE_TYPE (EasUpdateEmailReq, eas_update_email_req, EAS_TYPE_REQUEST_BASE);
 
@@ -263,7 +264,9 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     EasUpdateEmailReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 	gchar *ret_sync_key;
-
+	GSList* failed_updates = NULL;   
+	gchar **ret_failed_updates_array = NULL;  
+	
     g_debug ("eas_update_email_req_MessageComplete++");
 
     // if an error occurred, store it and signal daemon
@@ -282,6 +285,12 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
 
 	ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
 
+	// get list of flattened emails with status codes
+	failed_updates = eas_sync_msg_get_updated_items (priv->sync_msg);
+	
+	// create array of flattened emails to pass over dbus
+	ret = build_serialised_email_info_array (&ret_failed_updates_array, failed_updates, &error);
+
 finish:
 	xmlFreeDoc (doc);
     if(!ret)
@@ -291,7 +300,7 @@ finish:
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (parent), ret_sync_key);
+        dbus_g_method_return (eas_request_base_GetContext (parent), ret_sync_key, ret_failed_updates_array);
     }
 
     g_debug ("eas_update_email_req_MessageComplete--");

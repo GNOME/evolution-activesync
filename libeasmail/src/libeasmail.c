@@ -953,7 +953,8 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	gchar **serialised_email_array = g_malloc0 ( (num_emails * sizeof (gchar*)) + 1);  // null terminated array of strings
 	gchar *serialised_email = NULL;
 	gchar *ret_sync_key = NULL;
-	guint i;
+	gchar **ret_failed_updates_array = NULL;
+	guint i = 0;
 	GSList *l = (GSList *) update_emails;
 
 	g_debug ("eas_mail_handler_update_emails++");
@@ -994,12 +995,15 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 				 G_TYPE_STRV, serialised_email_array,
 				 G_TYPE_INVALID,
 				 G_TYPE_STRING, &ret_sync_key,
+                 G_TYPE_STRV, &ret_failed_updates_array,
 				 G_TYPE_INVALID);
 
 	if (ret && ret_sync_key && ret_sync_key[0]) {
 		g_debug ("%s ret_Sync_key %s", __func__, ret_sync_key);
 		strcpy (sync_key, ret_sync_key);
 	}
+	
+	// TODO update status codes in update_emails where necessary
 
 cleanup:
 	// free all strings in the array
