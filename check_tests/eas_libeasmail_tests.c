@@ -449,6 +449,14 @@ START_TEST (test_eas_mail_handler_update_email)
 }
 END_TEST
 
+void print_update(gpointer data, gpointer user_data)
+{
+	EasIdUpdate *update = data;
+	g_debug("update src id = %s", update->src_id);	
+	g_debug("update dst id = %s", update->dest_id);	
+	g_debug("update status = %s", update->status);	
+}
+
 /*
  Move the first email in the inbox to a 'temp' folder (at same level as Inbox folder) 
 */
@@ -523,6 +531,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 		server_ids = g_slist_append(server_ids, email->server_id);
         email = (g_slist_nth (emails_created, 1))->data;
 		server_ids = g_slist_append(server_ids, email->server_id);
+//		server_ids = g_slist_append(server_ids, "bad server id");
 		
         mark_point();
 
@@ -533,6 +542,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
         {
             fail_if (rtn == FALSE, "%s", error->message);
         }
+
+		g_slist_foreach(updated_ids, print_update, NULL);
 
         mark_point();
 
@@ -1371,7 +1382,7 @@ Suite* eas_libeasmail_suite (void)
     tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
     
 	/* need a 'temp' folder created at the same level as Inbox and at least two emails in the inbox for this test to work: */
-	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
+	tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
     
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
 

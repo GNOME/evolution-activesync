@@ -393,15 +393,16 @@ eas_updatedid_serialise (const EasIdUpdate* updated_id, gchar **result)
 {
 	gboolean ret = TRUE;
 
-	gchar *strings[3];
+	const gchar *strings[4];
 
 	g_debug ("eas_updatedid_serialise++");
 
 	strings[0] = updated_id->src_id;
-	strings[1] = updated_id->dest_id;
-	strings[2] = NULL;
+	strings[1] = (updated_id->dest_id?:"");	// may be null
+	strings[2] = (updated_id->status?:"");	// may be null
+	strings[3] = NULL;
 
-	*result = g_strjoinv (updated_id_separator, strings);
+	*result = g_strjoinv (updated_id_separator, (gchar **)strings);
 
 	if (*result == NULL) {
 		ret = FALSE;
@@ -426,7 +427,7 @@ eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 	g_assert (updated_id->src_id == NULL);
 
 	strv = g_strsplit (data, updated_id_separator, 0);
-	if (!strv || g_strv_length (strv) > 2) {
+	if (!strv || g_strv_length (strv) > 3) {
 		g_warning ("Received invalid updateid: '%s'", data);
 		g_strfreev (strv);
 		goto out;
@@ -436,6 +437,8 @@ eas_updatedid_deserialise (EasIdUpdate *updated_id, const gchar* data)
 	updated_id->src_id = strv[0];
 	/* This one might be NULL; that's OK */
 	updated_id->dest_id = strv[1];
+	/* This one might be NULL; that's OK */
+	updated_id->status = strv[2];
 
 	g_free (strv);
 

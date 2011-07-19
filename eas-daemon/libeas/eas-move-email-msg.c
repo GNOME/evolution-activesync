@@ -239,28 +239,12 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 		    {
 		        gchar *status = (gchar *) xmlNodeGetContent (node);
 		        guint status_num = atoi (status);
-		        xmlFree (status);
 		        if (status_num != 3) // not success (MoveItems command status 3 is success (all other commands use 1 for success), doh!)
 		        {
-		            EasError error_details;
-		            ret = FALSE;
-
-					g_free(updated_id);
-					// convert status code to GError
-		            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
-		            {
-		                error_details = common_status_error_map[status_num - 100];
-		            }
-		            else
-		            {
-		                if (status_num > EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
-		                    status_num = EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT;
-
-		                error_details = moveitems_status_error_map[status_num];
-		            }
-		            g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
-		            goto finish;
-		        }
+					// store the status
+					updated_id->status = g_strdup(status);
+				}
+				xmlFree (status);
 		        continue;
 		    }
 			if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "DstMsgId"))
@@ -280,7 +264,7 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 		}
 		if(updated_id->src_id != NULL)// TODO not sure why this is necessary, but we do appear to get empty Responses!?
 		{
-			g_debug("appending updated id. src = %s, dst = %s", updated_id->src_id, updated_id->dest_id);
+			g_debug("appending updated id. src = %s, dst = %s, status = %s", updated_id->src_id, updated_id->dest_id, updated_id->status);
 			priv->updated_ids_list = g_slist_append(priv->updated_ids_list, updated_id);
 		}
 		else
@@ -293,10 +277,7 @@ finish:
     if (!ret)
     {
 		g_debug("returning error");
-		// free updated_ids list in case we had a single non-success status among successful ones
-		g_slist_foreach (priv->updated_ids_list, (GFunc) g_free, NULL);
-		g_slist_free(priv->updated_ids_list);
-		priv->updated_ids_list = NULL;		
+		g_assert(priv->updated_ids_list == NULL);		
         g_assert (error == NULL || *error != NULL);
     }
     g_debug ("eas_move_email_msg_parse_response--\n");

@@ -55,6 +55,7 @@ struct _EasEmailHandler {
 struct _EasIdUpdate {
 	gchar *src_id;
 	gchar *dest_id;
+	gchar *status;	//indicates a problem with the update if not a null/empty string
 };
 
 typedef void (*EasProgressFn) (gpointer object, gint percent);
@@ -293,7 +294,7 @@ gboolean eas_mail_handler_send_email (EasEmailHandler* this,
  *                              call
  * const gchar *src_folder_id (in): folder id of the folder from which the email will be moved
  * const gchar *dest_folder_id (in): folder id of the folder to which the email will be moved
- * GSList **server_ids_updates (out): when an email is moved between folders its id changes. this is a list of updated ids (EasIdUpdates)
+ * GSList **server_ids_updates (out): when an email is moved between folders its id changes. this is a list of updated ids/status indicating a problem (EasIdUpdates)
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
  *                              could be related to errors in this API or errors propagated
