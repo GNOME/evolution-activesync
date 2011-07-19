@@ -93,7 +93,7 @@ Suite* eas_daemon_suite (void)
     /* daemon test case */
     TCase *tc_deamon = tcase_create ("core");
     suite_add_tcase (s, tc_deamon);
-    tcase_add_test (tc_deamon, test_daemon_connection);
+//    tcase_add_test (tc_deamon, test_daemon_connection);
 
 
     return s;
