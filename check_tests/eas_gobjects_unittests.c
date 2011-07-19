@@ -92,13 +92,13 @@ START_TEST (test_add_item_req_obj)
 	g_object_unref(self_eas_add_item_req);	
 	g_debug("EAS_TYPE_ADD_ITEM_REQ --");
 
-	g_debug("EAS_TYPE_CONNECTION ++");
+/*	g_debug("EAS_TYPE_CONNECTION ++");
 	self_eas_connection = g_object_new (EAS_TYPE_CONNECTION, NULL);
 	g_object_ref(self_eas_connection);
 	g_object_unref(self_eas_connection);
 	g_object_unref(self_eas_connection);	
 	g_debug("EAS_TYPE_CONNECTION --");
-
+*/
 	g_debug("EAS_TYPE_DELETE_REQ ++");
 	self_eas_delete_req = g_object_new (EAS_TYPE_DELETE_REQ, NULL);
 	g_object_ref(self_eas_delete_req);
