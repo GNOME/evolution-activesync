@@ -149,10 +149,11 @@
 #define EAS_ELEMENT_CONTACTS2_MMS				"MMS"
 
 
+
 /* vCard attribute names and types*/
 /* This list is an addition to the one defined in e-vcard.h */
 #define VC_ATT_NAME_BEGIN	"BEGIN"
-
+#define BDAY_ZERO_TIME_ZONE	"T00:00:00.000Z"
 
 
 static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *sought)
@@ -498,6 +499,20 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_NOTE);
 				}
+				else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
+				{
+					xmlNodePtr childNode = NULL;
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_CATEGORIES);
+					e_vcard_add_attribute(vcard, attr);
+
+					childNode = n;
+					for(childNode = n->children; childNode ; childNode = childNode->next)
+						if(!g_strcmp0((const char *) childNode->name, (const char *)EAS_ELEMENT_CATEGORY)){
+							e_vcard_attribute_add_value(attr, (gchar *)xmlNodeGetContent(childNode));
+							
+						}
+				}
+
 			}			
 		}		
 	}
@@ -555,58 +570,6 @@ attribute_get_nth_value(EVCardAttribute *attr, int nth)
 	return retstr->str;
 }
 
-
-#if 0
-static void
-set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* value, EncodingType encodingType)
-{
-	if (encodingType == EAS_BASE64)
-	{
-		gchar* base64value = NULL;
-
-		g_debug("base64encoder: len = %d", strlen(value));
-		
-		base64value = g_base64_encode((const guchar *)(&value), strlen(value));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) name, (const xmlChar*)base64value);
-
-		g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
-        g_debug ("data encoded   =--->:[%s]",   base64value);
-
-		g_free(base64value);
-	}
-	else
-	{
-		xmlNewTextChild(appData, NULL, name, value);
-	}
-}
-#endif
-
-#if 0
-static EncodingType
-get_encoding_type(EVCardAttribute *attr)
-{
-	GList *params = NULL;
-	GList *p = NULL;
-	EncodingType encoding;
-	encoding  = EAS_8BIT;
-
-	params = e_vcard_attribute_get_params(attr);
-
-	for (p = params; p; p = p->next)
-	{
-		EVCardAttributeParam *param = p->data;
-		if (!strcmp("ENCODING", e_vcard_attribute_param_get_name(param)))
-		{
-			if (!g_ascii_strcasecmp(property_get_nth_value(param, 0), "b"))
-				encoding = EAS_BASE64;
-		}
-	}
-	return encoding;
-}
-
-#endif
-
 /* Check if an contact field allready set in the applicationdata xml children*/
 static gboolean
 is_element_set(xmlNodePtr appData, const gchar* name)
@@ -622,7 +585,6 @@ is_element_set(xmlNodePtr appData, const gchar* name)
 }
 
 static void 
-//set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EasAddType easAddType)
 set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
 
 {
@@ -645,16 +607,19 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 	const char *propname = NULL;
 	propname = property_get_nth_value(param, 0);
 
-//	if (easAddType == EAS_ADD_WORK)
 	if (!strcmp(propname, "WORK"))
 	{
-		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
-        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
-		g_warning("TODO:AS Does not support PostalBox");
+#if 0
+		/ * AS does not support PostalBox */
+		 set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+#endif
 
-		/* set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
-        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
-		g_warning("TODO:AS Does not support ExtendedAddress");
+#if 0
+		/ * AS does not support ExtendedAddress */
+		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
+#endif
 
 		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2));
@@ -671,17 +636,19 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 		xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_BUSINESSCOUNTRY,
         (const xmlChar*)attribute_get_nth_value(attr, 6));
 	}
-//	else if (easAddType == EAS_ADD_HOME)
 	else if (!strcmp(propname, "HOME"))
 	{
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
-        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
-		g_warning("TODO:AS Does not support PostalBox");
+#if 0
+		/* AS does not support PostalBox */
+		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
+#endif
 
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
-        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
-			g_warning("TODO:AS Does not support ExtendedAddress");
-
+#if 0
+		/* AS does not support ExtendedAddress */
+		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
+#endif
 		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_ELEMENT_HOMESTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2));
 
@@ -701,15 +668,18 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 	{
 		/* deal with possible other vCard type of addresses:
 		 "dom", "intl", "postal", "parcel", "pref" / iana-type / x-name */
-
+#if 0
+		/* AS does not support PostalBox */
 		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
         (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
-		g_warning("TODO:AS Does not support PostalBox");
+#endif
 
+#if 0
+		/* AS does not support ExtendedAddress */
 		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
-		g_warning("TODO:AS Does not support ExtendedAddress");
-
+#endif
+		
 		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERSTREET,
         (const xmlChar*)attribute_get_nth_value(attr, 2));
 		
@@ -725,7 +695,6 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERCOUNTRY,
         (const xmlChar*)attribute_get_nth_value(attr, 6));
 	}
-
 }
 
 
@@ -844,6 +813,20 @@ set_xml_email(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *p
 	
 }
 
+static void
+set_xml_categories(xmlNodePtr appData, EVCardAttribute *attr)
+{
+	xmlNodePtr categories = NULL;
+	GList *values = NULL;
+	GList *l = NULL;
+	categories = xmlNewChild (appData, NULL, (xmlChar *) EAS_ELEMENT_CATEGORIES, NULL);
+	values = e_vcard_attribute_get_values(attr);
+	for(l = values; l; l= l->next ){
+		xmlNewTextChild(categories, NULL, (const xmlChar*) EAS_ELEMENT_CATEGORY,
+				(const xmlChar*)l->data);
+	}
+}
+
 gboolean 
 eas_con_info_translator_parse_request(	xmlDocPtr doc, 
 										xmlNodePtr appData,
@@ -888,12 +871,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		params = e_vcard_attribute_get_params(attr);
 
 		/* process attributes that have no param */
-		/* FullName */
-		if (!strcmp(name, EVC_FN)) {
-			//set_xml_element(appData, (const xmlChar*) "FullName", (const xmlChar*)attribute_get_nth_value(attr, 0));
-			g_warning("TODO:AS Does not support FullName");
-			continue;
-		}
 
 		/* Name */
 		if (!strcmp(name, EVC_N)) {
@@ -933,7 +910,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			continue;
 		}
 
-		
 		/* Url */
 		if (!strcmp(name, EVC_URL)) {
 			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
@@ -943,8 +919,25 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Birthday */
 		if (!strcmp(name, EVC_BDAY)) {
-//			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BIRTHDAY,
-//			                (const xmlChar*)/*attribute_get_nth_value(attr, 0)*/"20110628T000000", EAS_BASE64);
+#if 0
+/* TODO: server respond with malformed item */
+			/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to 
+			 ActiveSync YYYY-MM-DDT00:00:00Z */
+			//gchar* test = "1965-05-03T00:00:00.000Z"; 
+			//const gchar* test= "20110711T000000Z";
+			gchar* base64value = NULL;
+			const gchar* bday = NULL;
+			gchar* bdayZ = NULL;
+
+			bday = attribute_get_nth_value(attr, 0);
+			bdayZ = g_strconcat(bday, "T00:00:00Z", NULL);
+			//g_debug("bdayZ =%s", bdayZ);
+			//g_debug("strlen(bdayZ) =%d", strlen(bdayZ));
+			base64value = g_base64_encode((const guchar *)(bdayZ), (gsize)strlen(bdayZ));
+			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BIRTHDAY, (const xmlChar*)base64value);
+			g_free(base64value);
+			g_free(bdayZ);
+#endif
 			continue;
 		}
 		
@@ -992,32 +985,45 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Anniversary - vCard does not support Anniversary so we use X-EVOLUTION-ANNIVERSARY*/
 		if (!strcmp(name, "X-EVOLUTION-ANNIVERSARY")) {
+#if 0
+/* TODO: server respond with malformed item */
+			gchar test[] =	"20021126T160000Z";
+			gchar* base64value = NULL;
+			const gchar* anv = NULL;
+
+			guchar*       decodeBuf = NULL;
+			gsize          decodeBufSize = 0;
+			//gchar* anvZ = NULL;
+			/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to 
+			 ActiveSync YYYY-MM-DDT00:00:00Z */
+			//const gchar* test = "19990719"; //Microsoft generated 
+
+			//const gchar* test = "2010-05-03T00:00:00.000Z";
+			//const gchar* test = "20100503T000000000Z";
 			
-
-#if 0			
-			gchar* anni = attribute_get_nth_value(attr, 0);
-
-			g_debug("base64encoder: size = %d", strlen(anniTZ));
-			GTimeZone *anniTZ = g_time_zone_new(anni);
-
-		gchar* base64value = NULL;
-
-		g_debug("base64encoder: size = %d", strlen(anniTZ));
-		g_debug("base64encoder: size = %d", sizeof(anniTZ));
-
-		base64value = g_base64_encode((const guchar *)(&anniTZ), sizeof(anniTZ));
-//		base64value = g_base64_encode((const guchar *)(&value), strlen(value));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY, (const xmlChar*)base64value);
-
-		g_debug ("data ecoded length  =--->:[%d]",  strlen (base64value));
-        g_debug ("data encoded   =--->:[%s]",   base64value);
-
-		g_free(base64value);
-			/*set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0), EAS_BASE64);*/
+			//const gchar* test = "2010-05-03T00:00:00Z";
+			//gchar* test =	"2010-05-03T000000Z";
+							
 			
-			g_time_zone_unref(anniTZ) ;
+			//const guchar* test =	"20021126T160000Z";
+			//const guchar* test =	"19531015Z";
+			g_debug("-->strlen(test) =%d",(unsigned int) strlen(test));
+			g_debug("-->test =%s", test);
+
+
+			anv = attribute_get_nth_value(attr, 0);
+			//anvZ = g_strconcat(anv, "T00:00:00Z", NULL);
+			base64value = g_base64_encode((const guchar *)(test), strlen(test) );
+			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY, (const xmlChar*)base64value);
+
+
+decodeBuf = g_base64_decode((const gchar*)base64value, &decodeBufSize);
+			
+g_debug("-->decodeBufSize =%d",decodeBufSize);
+g_debug("-->decodeBuf =%s", decodeBuf);
+
+			g_free(base64value);
+			//g_free(anvZ);
 #endif
 			continue;
 		}
@@ -1026,14 +1032,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		if (!strcmp(name, "X-EVOLUTION-OFFICE")) {
 			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-			continue;
-		}
-
-		/* Uid */
-		if (!strcmp(name, EVC_UID)) {
-			/*set_xml_element(appData, (const xmlChar*) "Uid",
-						(const xmlChar*)attribute_get_nth_value(attr, 0), encoding);*/
-			g_warning("TODO:AS Does not support Uid");
 			continue;
 		}
 
@@ -1058,6 +1056,12 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			continue;
 		}
 
+		/* Categories  */ 
+		if (!strcmp(name, (const char *) EVC_CATEGORIES)) {
+			set_xml_categories(appData, attr);
+			continue;
+		}
+
 		/* process attributes that have param */
 		for (p = params; p; p = p->next) {
 			EVCardAttributeParam *param = p->data;
@@ -1067,12 +1071,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 				continue;
 			}
 
-			/* Address Labeling */
-			if (!strcmp(name, EVC_LABEL)) {
-				g_warning("TODO: LABEL  not implemented yet");
-				continue;
-			}
-
+			
 			/* Telephone */
 			if (!strcmp(name, EVC_TEL)) {
 				set_xml_tel(appData, attr, param);
@@ -1085,49 +1084,61 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 				continue;
 			}
 
+
+#if 0
+			/* ActiveSync does not support the following vCard fields: */
+
+			/* FullName */
+			if (!strcmp(name, EVC_FN)) {
+				continue;
+			}
+			
+			/* Uid */
+			if (!strcmp(name, EVC_UID)) {
+				continue;
+			}
+
+			/* Address Labeling */
+			if (!strcmp(name, EVC_LABEL)) {
+				continue;
+			}
+
 			/* Mailer */
 			if (!strcmp(name, EVC_MAILER)) {
-				g_warning("TODO: MAILER not implemented yet");
 				continue;
 			}
 
 			/* Timezone */
 			if (!strcmp(name, "TZ")) {
-				g_warning("TODO:AS Does not support TZ");
 				continue;
 			}
 
 			/* Location */
 			if (!strcmp(name, EVC_GEO)) {
-				g_warning("TODO:AS Does not support GEO");
 				continue;
 			}
 
 			/* Logo */
 			if (!strcmp(name, EVC_LOGO)) {
-				g_warning("TODO:AS Does not support LOGO");
 				continue;
 			}
 
 			/* Revision */
 			if (!strcmp(name, EVC_REV)) {
-				g_warning("AS Does not support %s", name);
-				//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Revision", (const xmlChar*)attribute_get_nth_value(attr, 0));
 				continue;
 			}
 
 			/* Sound */
 			if (!strcmp(name, "SOUND")) {
-				g_warning("TODO:AS Does not support SOUND");
 				continue;
 			}
 
 			/* Public Key */
 			if (!strcmp(name, EVC_KEY)) {
-				g_warning("TODO:AS Does not support KEY");
-				//set_xml_element(appData, (const xmlChar*)EAS_NAMESPACE_CONTACTS "Key", (const xmlChar*)attribute_get_nth_value(attr, 0));
 				continue;
 			}
+#endif
+
 		}
 	}
 
