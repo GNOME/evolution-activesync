@@ -14,7 +14,12 @@ AppPage {
         id: theme
     }
 
+    ActiveSyncConfigModel {
+        id: configModel
+    }
+
     Column {
+        id: configsColumn
         anchors.margins: 10
         anchors.top: parent.top
         anchors.left: parent.left
@@ -23,10 +28,10 @@ AppPage {
         Repeater {
             id: configs
 
-            model: ActiveSyncConfigModel {}
+            model: configModel
             delegate: ExpandingBox {
                 height: 80
-                width: parent.width
+                width: configsColumn.width
                 titleText: email
                 detailsComponent: Item {
                     height: childrenRect.height
@@ -62,7 +67,10 @@ AppPage {
                         bgSourceUp: "image://themedimage/widgets/common/button/button-negative"
                         bgSourceDn: "image://themedimage/widgets/common/button/button-negative-pressed"
 
-                        onClicked: confirmRemoval.show()
+                        onClicked: {
+                            confirmRemoval.accountIndex = index
+                            confirmRemoval.show()
+                        }
                     }
                 }
             }
@@ -71,6 +79,8 @@ AppPage {
 
         ModalMessageBox {
             id: confirmRemoval
+
+            property int accountIndex: -1
 
             title: qsTr("ActiveSync account removal")
             text:  qsTr("Are you sure want to remove this ActiveSync account?")
@@ -84,6 +94,7 @@ AppPage {
 
             onAccepted: {
                 // Remove the ActiveSync account.
+                configModel.removeConfig(accountIndex)
             }
         }
 
