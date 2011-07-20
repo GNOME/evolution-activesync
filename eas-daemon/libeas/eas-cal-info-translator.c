@@ -920,13 +920,21 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 	for (exceptionNode = n->children; exceptionNode; exceptionNode = exceptionNode->next)
 	{
 		GHashTable* newEventValues = NULL;
-		
-		// Iterate through each Exception's properties
 		gchar* exceptionStartTime = NULL;
 		gboolean deleted = FALSE;
+
+		if (exceptionNode->type != XML_ELEMENT_NODE)
+			continue;
+
+		// Iterate through each Exception's properties
 		for (subNode = exceptionNode->children; subNode; subNode = subNode->next)
 		{
-			const gchar* name = (const gchar*)subNode->name;
+			const gchar* name;
+
+			if (subNode->type != XML_ELEMENT_NODE)
+				continue;
+
+			name = (const gchar*)subNode->name;
 			value = (gchar*)xmlNodeGetContent(subNode);
 
 			if (g_strcmp0(name, EAS_ELEMENT_DELETED) == 0)
