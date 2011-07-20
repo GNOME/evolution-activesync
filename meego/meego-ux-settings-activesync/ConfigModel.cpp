@@ -9,7 +9,6 @@
 #include "ConfigModel.hpp"
 #include "Config.hpp"
 #include <MGConfItem>
-#include <QtDebug>
 
 
 MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
@@ -23,10 +22,9 @@ MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
   roles[ServerUrlRole]    = "serverUrl";
   setRoleNames(roles);
 
+  // Retrieve the activesyncd configurations from GConf.
   MGConfItem accounts(MeeGo::ActiveSync::KEY_BASE);
   QList<QString> const keys = accounts.listDirs();
-
-  qDebug() << "NUM KEYS = " << keys.size();
 
   typedef QList<QString>::const_iterator const_iterator;
   const_iterator const end = keys.end();
@@ -39,6 +37,8 @@ MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
       m_configs.append(new Config(email));
     }
   }
+
+  // Retrieve the ActiveSync e-mail accounts.
 }
 
 MeeGo::ActiveSync::ConfigModel::~ConfigModel()
@@ -80,6 +80,37 @@ MeeGo::ActiveSync::ConfigModel::data(QModelIndex const & index, int role) const
   }
 
   return QVariant();
+}
+
+bool
+MeeGo::ActiveSync::ConfigModel::removeRows(int row,
+					   int count,
+					   QModelIndex const & parent)
+{
+  int const last = row + count - 1;  // Rows start at 0.
+
+  if (row < 0 || count < 0 || last >= m_configs.size())
+    return false;
+  
+  beginRemoveRows(parent, row, last);
+
+  for (int i = row; i <= last; ++i) {
+    // Remove the e-mail configuration
+    // @todo Implement
+
+    // Remove the SyncEvolution ActiveSync configuration
+    // @todo Implement
+
+    // Remove the activesyncd GConf item corresponding to this row.
+    m_configs[i]->removeConfig();
+
+    // Now remove the Config object from the list of configs.
+    m_configs.removeAt(i);
+  }
+    
+  endRemoveRows();
+
+  return true;
 }
 
 void

@@ -10,6 +10,10 @@ AppPage {
     //: The title of the ActiveSync UI displayed to the user.
     pageTitle: qsTr("ActiveSync Settings")
 
+    Theme {
+        id: theme
+    }
+
     Column {
         anchors.margins: 10
         anchors.top: parent.top
@@ -25,12 +29,14 @@ AppPage {
                 width: parent.width
                 titleText: email
                 detailsComponent: Item {
-                    height: 200
+                    height: childrenRect.height
                     width: parent.width
                     anchors.margins: 10
 
                     Text {
                         id: usernameLabel
+
+                        font.pixelSize: theme.fontPixelSizeNormal
 
                         text: qsTr("Username: %1").arg(model.username)
                     }
@@ -40,6 +46,8 @@ AppPage {
 
                         anchors.top: usernameLabel.bottom
                         anchors.topMargin: 10
+
+                        font.pixelSize: theme.fontPixelSizeNormal
 
                         text: qsTr("Server URL: %1").arg(model.serverUrl)
                     }

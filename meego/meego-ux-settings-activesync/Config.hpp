@@ -14,6 +14,7 @@
 
 
 class MGConfItem;
+// struct EAccount;
 
 namespace MeeGo {
   namespace ActiveSync {
@@ -56,9 +57,12 @@ namespace MeeGo {
        * @note This requires the e-mail address to have been set a
        *       priori.
        */
-      Q_INVOKABLE bool writeConfig(QString username,
-				   QString password,
-				   QString serverURL);
+      bool writeConfig(QString username,
+		       QString password,
+		       QString serverURL);
+
+      /// Remove the key and value from GConf.
+      void removeConfig();
 
     signals:
 
@@ -107,6 +111,9 @@ namespace MeeGo {
       MGConfItem* m_password_conf;
       MGConfItem* m_server_url_conf;
       //@}
+
+      /// E-mail account configuration.
+      // EAccount * m_mail_account;
 
     };
 

@@ -47,8 +47,11 @@ namespace MeeGo {
       virtual ~ConfigModel();
 
       virtual int rowCount (QModelIndex const & parent = QModelIndex()) const;
-      virtual QVariant data (QModelIndex  const & index,
+      virtual QVariant data (QModelIndex const & index,
 			     int role = Qt::DisplayRole) const;
+      virtual bool removeRows (int row,
+			       int count,
+			       QModelIndex const & parent = QModelIndex());
 
       Q_INVOKABLE void appendConfig(QString email,
 				    QString username,

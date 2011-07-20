@@ -8,7 +8,6 @@
 
 #include "Config.hpp"
 #include <MGConfItem>
-#include <QtDebug>
 
 
 MeeGo::ActiveSync::Config::Config(QString email, QObject* parent)
@@ -48,8 +47,6 @@ MeeGo::ActiveSync::Config::Config(QString email, QObject* parent)
   m_username   = m_username_conf->value(QString()).toString();
   m_password   = m_password_conf->value(QString()).toString();
   m_server_url = m_server_url_conf->value(QString()).toString();
-
-  qDebug() << "~~~ " << m_username << " | " << m_password << " | " << m_server_url;
 }
 
 MeeGo::ActiveSync::Config::~Config()
@@ -59,14 +56,12 @@ MeeGo::ActiveSync::Config::~Config()
 QString
 MeeGo::ActiveSync::Config::emailAddress() const
 {
-  qDebug() << "RETRIEVED EMAIL" << m_email;
   return m_email;
 }
 
 QString
 MeeGo::ActiveSync::Config::username() const
 {
-  qDebug() << "RETRIEVED USERNAME" << m_username;
   return m_username;
 }
 
@@ -144,4 +139,14 @@ MeeGo::ActiveSync::Config::writeConfig(QString username,
   }
 
   return true;
+}
+
+void
+MeeGo::ActiveSync::Config::removeConfig()
+{
+  QString const key =
+    QString(MeeGo::ActiveSync::KEY_BASE) + "/" + m_email;
+
+  MGConfItem account(key);
+  account.unset();
 }
