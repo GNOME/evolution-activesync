@@ -956,7 +956,7 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 		if (exceptionStartTime == NULL)
 		{
 			g_warning("DATA LOSS: <Exception> element found with no ExceptionStartTime.");
-			break;
+			continue;
 		}
 
 		// If the <Deleted> value is set to 1, it's dead easy: it maps straight onto an
