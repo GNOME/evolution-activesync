@@ -22,7 +22,7 @@ make clean
 ./autogen.sh
 touch NEWS README AUTHORS ChangeLog
 automake --add-missing
-./configure --enable-gconf-schemas-install
+./configure
 
 make all
 ./gen-todo-list.sh
