@@ -26,7 +26,17 @@
   End:Interfaces for testing only 
 -->
 
-
+<!--
+ get an estimate of the number of items to be synchronised for a specified folder
+-->
+    <method name="get_item_estimate">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>	
+      <arg type="s" name="sync_key" direction="in"/>
+      <arg type="s" name="collection_id" direction="in"/>
+	  <arg type="u" name="ret_estimate" direction="out"/>
+    </method>
+    
 <!--
  sync entire EMAIL folder hierarchy (folder structure only, not contents)
  EAS only allows sync of entire hierarchy (inc email, contacts...) so daemon will need to filter to ‘email’ type folders

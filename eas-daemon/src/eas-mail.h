@@ -97,6 +97,15 @@ void eas_mail_set_eas_connection(EasMail* self, EasConnection* easConnObj);
 #endif
 
 /*
+	get an estimate of the number of emails to be synchronised
+*/
+gboolean eas_mail_get_item_estimate (EasMail* self, 
+                           const gchar *account_uid, 
+                           const gchar *sync_key,
+                           const gchar *collection_id, 
+                           DBusGMethodInvocation* context); 
+
+/*
 	sync the entire email folder hierarchy 
 */                            
 gboolean eas_mail_sync_email_folder_hierarchy(EasMail* self,

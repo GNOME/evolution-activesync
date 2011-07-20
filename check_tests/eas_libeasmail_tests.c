@@ -1231,6 +1231,46 @@ START_TEST (test_eas_mail_handler_watch_email_folders)
 }
 END_TEST
 
+START_TEST (test_eas_mail_get_item_estimate)
+{
+	gboolean ret;
+	const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+	GError *error = NULL;
+    GSList *created = NULL;	// receives a list of folders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+	gchar hierarchy_sync_key[64] = "0";
+	gchar folder_sync_key[64] = "0";
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;	
+	guint estimate = 0;
+	
+	testGetMailHandler (&email_handler, accountuid);
+	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
+	fail_if (NULL == created, "No folder information returned from exchange server");
+	fail_unless (NULL == updated, "Not expecting updated folders on initial sync");
+	fail_unless (NULL == deleted, "Not expecting deleted folders on initial sync");
+
+	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
+
+	// get email in inbox
+	testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+	mark_point();
+	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key, g_inbox_id, &estimate, &error);
+	mark_point();
+	
+	fail_unless(ret == FALSE, "currently expect get_item_estimate to fail");
+
+	g_debug("get_item_estimate returned %s", error->message);
+	
+}
+END_TEST
+
+
 START_TEST (test_eas_mail_handler_delete_email)
 {
     const gchar* accountuid = g_account_id;
@@ -1385,7 +1425,8 @@ Suite* eas_libeasmail_suite (void)
 	tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
     
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
-
+	tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
+	
     g_free(g_inbox_id);
     g_inbox_id = NULL;
 

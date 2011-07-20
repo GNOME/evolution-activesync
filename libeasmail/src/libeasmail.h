@@ -75,6 +75,25 @@ GType eas_mail_handler_get_type (void) G_GNUC_CONST;
 // as an argument
 EasEmailHandler *eas_mail_handler_new (const gchar* account_uid, GError **error);
 
+/* function name:               eas_mail_handler_get_item_estimate
+ * function description:        estimates the number of emails to be synchronised for the specified folder
+ *                              
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * gchar *sync_key (in):  		value returned from the previous sync/update/delete request for this folder
+ * const gchar *folder_id (in): 
+ * guint *estimate (out): 		returns the estimated number of items to be synchronised for the specified folder
+
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  
+*/
+gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* this,
+						 const gchar *sync_key,
+                         const gchar *folder_id,
+						 guint *estimate,
+						 GError **error); 
+
 /* function name:               eas_mail_handler_sync_folder_hierarchy
  * function description:        pulls down changes in folder structure (folders
  *                              added/deleted/updated). Supplies lists of EasFolders
@@ -208,7 +227,7 @@ gboolean eas_mail_handler_fetch_email_attachment (EasEmailHandler* this,
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
- * gchar *sync_key (in):  use value returned from exchange server from previous requests
+ * gchar *sync_key (in):  		use value returned from the previous sync/update/delete request on this folder
  * const gchar *folder_id (in): identifies the folder to delete the email from
  * GSList *items_deleted (in):  identifies the specific emails to delete.  This information is in
  *                              the form of server_ids returned from the eas_mail_handler_sync_folder_email_info
@@ -237,7 +256,7 @@ Note that the only valid changes are to the read flag and to categories (other c
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
- * gchar *sync_key (in/out):  	use value returned from exchange server from previous requests
+ * gchar *sync_key (in/out):  	use value returned from the previous sync/update/delete request on this folder
  * gchar *folder_id (in):		id of folder that contains email to update
  * const GSList *update_emails (in/out): identifies the emails to update. List of EasEmailInfos. 
  *								The 'status' field for an individual EasEmailInfo may be set to reflect a problem with that email if the update is (otherwise) successful

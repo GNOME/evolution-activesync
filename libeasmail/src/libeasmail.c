@@ -512,6 +512,53 @@ free_string_array (gchar **array)
 
 }
 
+gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
+												const gchar *sync_key,
+												const gchar *folder_id, // folder to sync                                             
+												guint *estimate,
+												GError **error)
+{
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteEas;
+
+	g_debug ("eas_mail_handler_get_item_estimate++");
+	
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);	
+
+	// TODO replace asserts with EAS_CONNECTION_ERROR_BADARG
+	g_assert (self);
+	g_assert (sync_key);
+	g_assert (*estimate == 0);	
+
+	// call DBus API
+	ret = dbus_g_proxy_call (proxy, "get_item_estimate",
+				 error,
+				 G_TYPE_STRING, self->priv->account_uid,
+				 G_TYPE_STRING, sync_key,
+                 G_TYPE_STRING, folder_id,	//folder
+				 G_TYPE_INVALID,
+				 G_TYPE_UINT, estimate,
+				 G_TYPE_INVALID);	
+
+	g_debug ("get_item_estimate - dbus call returned");
+	
+	if (!ret) 
+	{
+		g_assert (error == NULL || *error != NULL);		
+		if (error && *error) 
+		{
+			g_warning ("lrm [%s][%d][%s]",
+				   g_quark_to_string ( (*error)->domain),
+				   (*error)->code,
+				   (*error)->message);
+		}
+		g_warning ("DBus dbus_g_proxy_call failed");
+	}	
+
+	g_debug ("eas_mail_handler_get_item_estimate--");
+	return ret;		
+}
+
 // pulls down changes in folder structure (folders added/deleted/updated). Supplies lists of EasFolders
 gboolean
 eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* self,
@@ -530,8 +577,6 @@ eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* self,
 
 	g_debug ("eas_mail_handler_sync_folder_hierarchy++ : account_uid[%s]",
 		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_assert (self);
