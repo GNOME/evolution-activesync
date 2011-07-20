@@ -11,6 +11,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
+#include <libedataserver/e-account-list.h>
 
 
 namespace MeeGo {
@@ -53,6 +54,7 @@ namespace MeeGo {
 			       int count,
 			       QModelIndex const & parent = QModelIndex());
 
+      Q_INVOKABLE void removeConfig(int row);
       Q_INVOKABLE void appendConfig(QString email,
 				    QString username,
 				    QString password,
@@ -63,6 +65,8 @@ namespace MeeGo {
       /// List of ActiveSync configurations.
       config_list_type m_configs;
 
+      /// List of ActiveSync e-mail accounts.
+      EAccountList * m_email_accounts;
     };
 
   }

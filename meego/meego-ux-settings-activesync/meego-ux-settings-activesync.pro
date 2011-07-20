@@ -11,18 +11,22 @@ CONFIG += \
     debug \
     warn_on
 
-PKGCONFIG += mlite
+PKGCONFIG += \
+    mlite \
+    libedataserver-1.2
 
 QT += declarative xml
 
 HEADERS = \
     Config.hpp \
     ConfigModel.hpp \
+    EmailAccount.hpp \
     Plugin.hpp
 
 SOURCES = \
     Config.cpp \
     ConfigModel.cpp \
+    EmailAccount.cpp \
     Plugin.cpp
 
 qmlfiles.files += *.qml settings/

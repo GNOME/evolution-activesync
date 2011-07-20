@@ -10,7 +10,9 @@
 #include <MGConfItem>
 
 
-MeeGo::ActiveSync::Config::Config(QString email, QObject* parent)
+MeeGo::ActiveSync::Config::Config(QString email,
+				  EAccountList * accountList,
+				  QObject * parent)
   : QObject(parent)
   , m_email(email.isEmpty() ? "<unspecified>" : email)
   , m_username()
@@ -19,6 +21,7 @@ MeeGo::ActiveSync::Config::Config(QString email, QObject* parent)
   , m_username_conf(0)
   , m_password_conf(0)
   , m_server_url_conf(0)
+  , m_email_account(email, accountList)
 {
 
   QString const key =
@@ -43,10 +46,14 @@ MeeGo::ActiveSync::Config::Config(QString email, QObject* parent)
 	  this,
 	  SLOT(serverURLConfChanged()));
 
-  // Retrieve existing values.
+  // Retrieve existing ActiveSync daemon configuration values.
   m_username   = m_username_conf->value(QString()).toString();
   m_password   = m_password_conf->value(QString()).toString();
   m_server_url = m_server_url_conf->value(QString()).toString();
+
+  // Retrieve existing ActiveSync calendar/contacts configuration
+  // values.
+  // @todo ...
 }
 
 MeeGo::ActiveSync::Config::~Config()
@@ -121,8 +128,12 @@ MeeGo::ActiveSync::Config::serverURLConfChanged()
 bool
 MeeGo::ActiveSync::Config::writeConfig(QString username,
 				       QString password,
-				       QString serverURL)
+				       QString serverURL,
+				       EAccountList * accountList)
 {
+  // ------------------------------------------
+  // Write the ActiveSync daemon configuration
+  // ------------------------------------------
   if (username != m_username) {
     m_username = username;
     m_username_conf->set(username);
@@ -138,15 +149,38 @@ MeeGo::ActiveSync::Config::writeConfig(QString username,
     m_server_url_conf->set(serverURL);
   }
 
-  return true;
+  // ------------------------------------------
+  // Write the ActiveSync e-mail configuration
+  // ------------------------------------------
+  bool success = m_email_account.writeConfig(username, accountList);
+
+  // -------------------------------------------------
+  // Remove the ActiveSync SyncEvolution configuration
+  // -------------------------------------------------
+  // @todo ...
+
+  return success;
 }
 
 void
-MeeGo::ActiveSync::Config::removeConfig()
+MeeGo::ActiveSync::Config::removeConfig(EAccountList * accountList)
 {
+  // ------------------------------------------
+  // Remove the ActiveSync daemon configuration
+  // ------------------------------------------
   QString const key =
     QString(MeeGo::ActiveSync::KEY_BASE) + "/" + m_email;
 
   MGConfItem account(key);
   account.unset();
+
+  // ------------------------------------------
+  // Remove the ActiveSync e-mail configuration
+  // ------------------------------------------
+  m_email_account.removeConfig(accountList);
+
+  // -------------------------------------------------
+  // Remove the ActiveSync SyncEvolution configuration
+  // -------------------------------------------------
+  // @todo ...
 }

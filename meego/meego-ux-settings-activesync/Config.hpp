@@ -10,11 +10,11 @@
 #define MEEGO_ACTIVESYNC_CONFIG_HPP
 
 
+#include "EmailAccount.hpp"
 #include <QObject>
 
 
 class MGConfItem;
-// struct EAccount;
 
 namespace MeeGo {
   namespace ActiveSync {
@@ -37,7 +37,9 @@ namespace MeeGo {
 
     public:
 
-      Config(QString key, QObject* parent = 0);
+      Config(QString email,
+	     EAccountList * accountList,
+	     QObject * parent = 0);
       virtual ~Config();
 
       /// Retrieve ActiveSync e-mail address.
@@ -59,10 +61,11 @@ namespace MeeGo {
        */
       bool writeConfig(QString username,
 		       QString password,
-		       QString serverURL);
+		       QString serverURL,
+		       EAccountList * accountList);
 
-      /// Remove the key and value from GConf.
-      void removeConfig();
+      /// Remove all ActiveSync account keys and values from GConf.
+      void removeConfig(EAccountList * accountList);
 
     signals:
 
@@ -113,7 +116,10 @@ namespace MeeGo {
       //@}
 
       /// E-mail account configuration.
-      // EAccount * m_mail_account;
+      EmailAccount m_email_account;
+
+      /// SyncEvolution account configuration.
+      /// @todo ...
 
     };
 

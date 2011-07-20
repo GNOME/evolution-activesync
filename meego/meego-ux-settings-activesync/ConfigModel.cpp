@@ -9,11 +9,13 @@
 #include "ConfigModel.hpp"
 #include "Config.hpp"
 #include <MGConfItem>
+#include <gconf/gconf-client.h>
 
 
 MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
   : QAbstractListModel(parent)
   , m_configs()
+  , m_email_accounts(0)
 {
   QHash<int, QByteArray> roles;
   roles[EmailAddressRole] = "email";
@@ -21,6 +23,14 @@ MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
   roles[PasswordRole]     = "password";
   roles[ServerUrlRole]    = "serverUrl";
   setRoleNames(roles);
+
+  // Initialize the Glib type system
+  g_type_init ();
+
+  // Retrieve e-mail accounts.
+  GConfClient * const client = gconf_client_get_default();
+  m_email_accounts = e_account_list_new(client);
+  g_object_unref(client);
 
   // Retrieve the activesyncd configurations from GConf.
   MGConfItem accounts(MeeGo::ActiveSync::KEY_BASE);
@@ -34,16 +44,20 @@ MeeGo::ActiveSync::ConfigModel::ConfigModel(QObject* parent)
       // Retrieve the e-mail from the key.
       // @todo There has to be a better way to do this!
       QString const email = key.right(key.count() - key.lastIndexOf("/") - 1);
-      m_configs.append(new Config(email));
+      m_configs.append(new Config(email, m_email_accounts));
     }
   }
 
-  // Retrieve the ActiveSync e-mail accounts.
+  // --------------------------------------------------
+  // Retrieve ActiveSync calendar and contacts accounts
+  // --------------------------------------------------
+  // @todo ...
 }
 
 MeeGo::ActiveSync::ConfigModel::~ConfigModel()
 {
   qDeleteAll(m_configs);
+  g_object_unref(m_email_accounts);
 }
 
 int
@@ -102,7 +116,7 @@ MeeGo::ActiveSync::ConfigModel::removeRows(int row,
     // @todo Implement
 
     // Remove the activesyncd GConf item corresponding to this row.
-    m_configs[i]->removeConfig();
+    m_configs[i]->removeConfig(m_email_accounts);
 
     // Now remove the Config object from the list of configs.
     m_configs.removeAt(i);
@@ -114,15 +128,24 @@ MeeGo::ActiveSync::ConfigModel::removeRows(int row,
 }
 
 void
+MeeGo::ActiveSync::ConfigModel::removeConfig(int row)
+{
+  removeRow(row);
+}
+
+void
 MeeGo::ActiveSync::ConfigModel::appendConfig(QString email,
 					     QString username,
 					     QString password,
 					     QString serverURL)
 {
-  Config * const c = new Config(email);
+  // ------------------------------------------
+  // Write the ActiveSync daemon configuration
+  // ------------------------------------------
+  Config * const c = new Config(email, 0);
 
-  // These following operations better not throw.
-  c->writeConfig(username, password, serverURL);
+  // The following operations better not throw.
+  c->writeConfig(username, password, serverURL, m_email_accounts);
 
   int const last = m_configs.count();
 
