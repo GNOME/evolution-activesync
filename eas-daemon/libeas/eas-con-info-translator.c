@@ -1083,6 +1083,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 #endif
 
 		}
+	success = TRUE;
 	}
 
 
