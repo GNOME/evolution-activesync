@@ -151,7 +151,9 @@ eas_get_item_estimate_msg_build_message (EasGetItemEstimateMsg* self)
 			*collection = NULL,
 			*options = NULL,
             *leaf = NULL;
+	int protover = eas_connection_get_protocol_version (priv->connection);
 
+	g_debug("protover = %d", protover);
     doc = xmlNewDoc ( (xmlChar *) "1.0");
     root = xmlNewDocNode (doc, NULL, (xmlChar*) "GetItemEstimate", NULL);
     xmlDocSetRootElement (doc, root);
@@ -161,22 +163,29 @@ eas_get_item_estimate_msg_build_message (EasGetItemEstimateMsg* self)
                         (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
                         (xmlChar*) "http://www.microsoft.com/");
 
-
-    // no namespaces required?
     xmlNewNs (root, (xmlChar *) "GetItemEstimate:", NULL);
     xmlNewNs (root, (xmlChar *) "AirSync:", (xmlChar *) "airsync");
 
     collections = xmlNewChild (root, NULL, (xmlChar *) "Collections", NULL);
     collection = xmlNewChild (collections, NULL, (xmlChar *) "Collection", NULL);
-	leaf = xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));                        
-	leaf = xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));  
-    // TODO we may want to specify a time window in future (needs to match sync). Nb Options not supported on 12.1
-    /*
-    options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
-    leaf = xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
-    leaf = xmlNewChild (options, NULL, (xmlChar *) "Class", (xmlChar*) "Email");
-	*/
-                        
+    if (protover <= 121) // 12.1: options element not supported, SyncKey element is placed after the FilterType element
+    {
+		leaf = xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id)); 	
+		//leaf = xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar*) "Email");   // including class produces a bad collection status		
+		leaf = xmlNewChild (collection, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+		leaf = xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));                        		 		
+	}
+    else
+    {
+		leaf = xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));                        
+		leaf = xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));  
+		// TODO we may want to specify a time window in future (needs to match sync).
+		/*
+		options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
+		leaf = xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+		leaf = xmlNewChild (options, NULL, (xmlChar *) "Class", (xmlChar*) "Email");
+		*/
+	}
     return doc;
 }
 
@@ -226,13 +235,28 @@ eas_get_item_estimate_msg_parse_response (EasGetItemEstimateMsg* self, xmlDoc *d
 			// Status
 		    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Status"))
 		    {
-		        gchar *status = (gchar *) xmlNodeGetContent (node);
-		        guint status_num = atoi (status);
-		        if (status_num != 1) // not success 
+		        gchar *sync_status = (gchar *) xmlNodeGetContent (node);
+		        guint status_num = atoi (sync_status);
+		        xmlFree (sync_status);
+		        if (status_num != EAS_COMMON_STATUS_OK) // not success
 		        {
-					// lrm TODO set error based on status
-				}
-				xmlFree (status);
+		            EasError error_details;
+		            ret = FALSE;
+
+		            if ( (EAS_COMMON_STATUS_INVALIDCONTENT <= status_num) && (status_num <= EAS_COMMON_STATUS_MAXIMUMDEVICESREACHED)) // it's a common status code
+		            {
+		                error_details = common_status_error_map[status_num - 100];
+		            }
+		            else
+		            {
+		                if (status_num > EAS_GETITEMESTIMATE_STATUS_EXCEEDSSTATUSLIMIT) // not pretty, but make sure we don't overrun array if new status added
+		                    status_num = EAS_GETITEMESTIMATE_STATUS_EXCEEDSSTATUSLIMIT;
+
+		                error_details = get_item_estimate_status_error_map[status_num];
+		            }
+		            g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
+		            goto finish;
+		        }
 		        continue;
 		    }
 			// Collection

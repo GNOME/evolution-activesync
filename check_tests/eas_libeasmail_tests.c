@@ -1256,7 +1256,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
-	// get email in inbox
+	// get email in inbox. Note that EAS doesn't support GetItemEstimate with a sync_key of zero :-)
 	testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	mark_point();
@@ -1265,7 +1265,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 	{
 		if(error)
 		{
-			g_debug("get_item_estimate returned %s", error->message);
+			fail_if(TRUE, "get_item_estimate returned %s", error->message);
 		}
 	}
 	g_debug("estimate = %d", estimate);	

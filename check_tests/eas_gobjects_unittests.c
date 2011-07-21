@@ -29,6 +29,8 @@
 #include "../eas-daemon/libeas/eas-sync-req.h"
 #include "../eas-daemon/libeas/eas-update-email-req.h"
 #include "../eas-daemon/libeas/eas-update-item-req.h"
+#include "../eas-daemon/libeas/eas-get-item-estimate-req.h"
+#include "../eas-daemon/libeas/eas-get-item-estimate-msg.h"
 #include "../eas-daemon/src/eas-mail.h"
 #include "../eas-daemon/src/eas-sync.h"
 #include "../eas-daemon/src/eas-test.h"
@@ -77,6 +79,8 @@ START_TEST (test_add_item_req_obj)
 	EasTest* self_eas_test;
 	EasAccountList* self_eas_account_list;
 	EasAccount* self_eas_account;
+	EasGetItemEstimateReq *self_eas_get_item_estimate_req;
+	EasGetItemEstimateMsg *self_eas_get_item_estimate_msg;	
 	
 
 	
@@ -330,6 +334,20 @@ START_TEST (test_add_item_req_obj)
 	g_object_unref(self_eas_test_handler);
 	g_object_unref(self_eas_test_handler);	
 	g_debug("EAS_TYPE_TEST_HANDLER --");
+
+	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_REQ++");
+	self_eas_get_item_estimate_req = g_object_new(EAS_TYPE_GET_ITEM_ESTIMATE_REQ, NULL);
+	g_object_ref(self_eas_get_item_estimate_req);
+	g_object_unref(self_eas_get_item_estimate_req);
+	g_object_unref(self_eas_get_item_estimate_req);
+	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_REQ--");
+
+	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_MSG++");
+	self_eas_get_item_estimate_msg = g_object_new(EAS_TYPE_GET_ITEM_ESTIMATE_MSG, NULL);
+	g_object_ref(self_eas_get_item_estimate_msg);
+	g_object_unref(self_eas_get_item_estimate_msg);
+	g_object_unref(self_eas_get_item_estimate_msg);
+	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_MSG--");	
 
 }
 END_TEST

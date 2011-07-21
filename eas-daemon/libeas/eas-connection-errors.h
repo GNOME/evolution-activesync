@@ -151,7 +151,14 @@ enum _EasConnectionError{
 	EAS_CONNECTION_MOVEITEMS_ERROR_SRC_OR_DST_LOCKED,
 	EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED,
 
+	/* GetItemEstimate status errors */
+    EAS_CONNECTION_GETITEMESTIMATE_ERROR_STATUSUNRECOGNIZED, 
+    EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_COLLECTION, 
+    EAS_CONNECTION_GETITEMESTIMATE_ERROR_BAD_SYNC_STATE,
+    EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_SYNC_KEY,
+
 	/* */
+
     EAS_CONNECTION_ERROR_LAST
 } ;
 
@@ -319,6 +326,15 @@ enum _EasMoveItemsStatus
 	EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 7 currently
 };
 
+enum _EasGetItemEstimateStatus
+{
+	// 1 == success
+	EAS_GETITEMESTIMATE_STATUS_INVALID_COLLECTION = 2,
+	EAS_GETITEMESTIMATE_STATUS_BAD_SYNC_STATE = 3,
+	EAS_GETITEMESTIMATE_STATUS_INVALID_SYNC_KEY = 4,
+
+	EAS_GETITEMESTIMATE_STATUS_EXCEEDSSTATUSLIMIT,   // no sync status spec'd above 4 currently
+};
 
 struct _EasError{
 	EasConnectionError code;
@@ -333,6 +349,7 @@ extern EasError moveitems_status_error_map[];
 extern EasError common_status_error_map[];
 extern EasError ping_status_error_map[];
 extern EasError folder_sync_status_error_map[];
+extern EasError get_item_estimate_status_error_map[];
 
 G_END_DECLS
 

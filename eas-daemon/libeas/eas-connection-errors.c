@@ -141,6 +141,10 @@ static const GEnumValue err_values[] = {
 	ERRVAL (EAS_CONNECTION_MOVEITEMS_ERROR_MULTIPLE_DST, "MoveItemsError.MULTIPLE_DST"),
 	ERRVAL (EAS_CONNECTION_MOVEITEMS_ERROR_SRC_OR_DST_LOCKED, "MoveItemsError.SRC_OR_DST_LOCKED"),
 	ERRVAL (EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "MoveItemsError.STATUSUNRECOGNIZED"),
+	ERRVAL (EAS_CONNECTION_GETITEMESTIMATE_ERROR_STATUSUNRECOGNIZED, "GetItemEstimateError.STATUSUNRECOGNIZED"),
+    ERRVAL (EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_COLLECTION, "GetItemEstimateError.INVALID_COLLECTION"),
+    ERRVAL (EAS_CONNECTION_GETITEMESTIMATE_ERROR_BAD_SYNC_STATE, "GetItemEstimateError.BAD_SYNC_STATE"),
+    ERRVAL (EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_SYNC_KEY, "GetItemEstimateError.INVALID_SYNC_KEY"),	
 	{ }
 };
 
@@ -330,6 +334,15 @@ EasError moveitems_status_error_map[] =
     {EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //6	
     {EAS_CONNECTION_MOVEITEMS_ERROR_SRC_OR_DST_LOCKED, "Source or destination item was locked. Transient server condition, retry"},
 	{EAS_CONNECTION_MOVEITEMS_ERROR_STATUSUNRECOGNIZED, "Unrecognised moveitems status"}  //8
+};
+
+EasError get_item_estimate_status_error_map[] =
+{
+    {EAS_CONNECTION_GETITEMESTIMATE_ERROR_STATUSUNRECOGNIZED, "Unrecognised sync status"},  //0
+    {0, ""},  //1
+    {EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_COLLECTION, "Invalid Collection; specified folder does not exist or incorrect folder requested"},
+    {EAS_CONNECTION_GETITEMESTIMATE_ERROR_BAD_SYNC_STATE, "Sync state not primed (Sync with a sync key of zero has never been issued"},
+    {EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_SYNC_KEY, "Invalid sync key"},
 };
 	
 
