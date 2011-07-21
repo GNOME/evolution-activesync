@@ -66,6 +66,7 @@
 #include "eas-move-email-req.h"
 #include "activesyncd-common-defs.h"
 #include "eas-marshal.h"
+#include "eas-get-item-estimate-req.h"
 
 G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
 
@@ -178,25 +179,37 @@ eas_mail_get_item_estimate (EasMail* self,
                            const gchar *collection_id, 
                            DBusGMethodInvocation* context)
 {
-	GError *error = NULL;
-
+	gboolean ret = TRUE;
+	EasConnection *connection;
+    GError *error = NULL;
+    EasGetItemEstimateReq *req = NULL;
+	
 	g_debug("eas_mail_get_item_estimate++");
-	
-	g_set_error (&error,
-                 EAS_CONNECTION_ERROR,
-                 EAS_CONNECTION_ERROR_NOTSUPPORTED,
-                 "get item estimate not yet supported");
-	
-	
-	// TODO add support for this method
-	
-	dbus_g_method_return_error (context, error);		
-	
-	g_error_free (error);
+
+    connection = eas_connection_find (account_uid);
+    if (!connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+        return FALSE;
+    }
+
+    req = eas_get_item_estimate_req_new (sync_key, collection_id, context);
+
+    eas_request_base_SetConnection (&req->parent_instance,
+                                    connection);
+
+    // Activate the request
+    ret = eas_get_item_estimate_req_Activate (req, &error);			
 	
 	g_debug("eas_mail_get_item_estimate--");
 	
-	return FALSE;
+	return ret;
 }
 
 gboolean
@@ -212,8 +225,6 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
 
     g_debug ("eas_mail_sync_email_folder_hierarchy++ : account_uid[%s]",
              (account_uid ? account_uid : "NULL"));
-
-	g_debug("context = %d", context);
 
     connection = eas_connection_find (account_uid);
     if (!connection)

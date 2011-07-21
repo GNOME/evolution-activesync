@@ -73,6 +73,8 @@
 #include "../src/activesyncd-common-defs.h"
 #include "../src/eas-mail.h"
 
+//#define ACTIVESYNC_14 
+
 #ifdef ACTIVESYNC_14
 #define AS_DEFAULT_PROTOCOL 140
 #else
@@ -1090,7 +1092,7 @@ else
                               SOUP_MEMORY_COPY,
                               response_body,
                               strlen(response_body));
-		// lrm fake the status code in the soupmessage response
+		// fake the status code in the soupmessage response
 		if(g_mock_status_codes)
 		{
 			guint status_code = g_array_index(g_mock_status_codes, guint, 0);
@@ -1819,9 +1821,11 @@ eas_connection_new (EasAccount* account, GError** error)
 	priv->protocol_version = eas_account_get_protocol_version (account);
 	if (!priv->protocol_version)
 		priv->protocol_version = AS_DEFAULT_PROTOCOL;
+
 	priv->proto_str = g_strdup_printf ("%d.%d", priv->protocol_version / 10,
 									   priv->protocol_version % 10);
-
+	g_debug("protocol version = %s", priv->proto_str);
+	
 	// Just a reference to the global account list
 	priv->account = account;
 

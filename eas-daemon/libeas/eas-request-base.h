@@ -104,6 +104,7 @@ typedef enum {
 	EAS_REQ_ADD_ITEM,
 	EAS_REQ_MOVE_EMAIL,
 	EAS_REQ_PING,
+	EAS_REQ_GET_ITEM_ESTIMATE,
 	// Add other requests here
 	
 	EAS_REQ_LAST

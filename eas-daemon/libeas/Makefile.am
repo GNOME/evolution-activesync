@@ -95,6 +95,10 @@ libeas_la_SOURCES =		\
         eas-ping-req.h \
         eas-ping-req.c \
         eas-con-info-translator.h \
-        eas-con-info-translator.c
+        eas-con-info-translator.c \
+        eas-get-item-estimate-req.h \
+        eas-get-item-estimate-req.c \
+        eas-get-item-estimate-msg.h \
+        eas-get-item-estimate-msg.c                   
 
 

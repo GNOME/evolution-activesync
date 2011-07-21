@@ -547,7 +547,7 @@ gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 		g_assert (error == NULL || *error != NULL);		
 		if (error && *error) 
 		{
-			g_warning ("lrm [%s][%d][%s]",
+			g_warning ("[%s][%d][%s]",
 				   g_quark_to_string ( (*error)->domain),
 				   (*error)->code,
 				   (*error)->message);

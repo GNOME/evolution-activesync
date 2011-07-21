@@ -1261,12 +1261,18 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	mark_point();
 	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key, g_inbox_id, &estimate, &error);
-	mark_point();
-	
-	fail_unless(ret == FALSE, "currently expect get_item_estimate to fail");
+	if(!ret)
+	{
+		if(error)
+		{
+			g_debug("get_item_estimate returned %s", error->message);
+		}
+	}
+	g_debug("estimate = %d", estimate);	
+	fail_if(estimate != 0, "Expected estimate to be zero items immediately after sync");
 
-	g_debug("get_item_estimate returned %s", error->message);
-	
+	mark_point();
+
 }
 END_TEST
 
