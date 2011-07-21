@@ -621,7 +621,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		g_mutex_unlock (priv->server_lock);
 
 		if (!res) {
-			g_mutex_unlock (priv->server_lock);
 			g_propagate_error (error, local_error);
 			break;
 		}
