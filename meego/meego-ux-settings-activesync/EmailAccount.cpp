@@ -101,6 +101,8 @@ MeeGo::ActiveSync::EmailAccount::writeConfig(QString username,
 		     E_ACCOUNT_SOURCE_SAVE_PASSWD,
 		     FALSE);
 
+  m_account->enabled = TRUE;
+
   // -------------------------
   // Transport
   // -------------------------
