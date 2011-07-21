@@ -10,6 +10,8 @@ xmlns:chk="http://check.sourceforge.net/ns">
     </xsl:template>
 
     <xsl:template match="chk:suite">
+        <testsuite>
+        <properties/>
         <xsl:for-each select="chk:test">
             <xsl:element name="testcase">
                 <xsl:attribute name="classname">
@@ -20,6 +22,7 @@ xmlns:chk="http://check.sourceforge.net/ns">
                 </xsl:attribute>
             </xsl:element>
         </xsl:for-each>
+        </testsuite>
     </xsl:template>
 
 
