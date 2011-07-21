@@ -39,7 +39,7 @@ ModalDialog {
     ConfigFields {
         id: fields
 
-        serverURL: "https://"
+        serverURL: "https://m.domain.com/Microsoft-Server-ActiveSync"
     }
 
     content: fields
