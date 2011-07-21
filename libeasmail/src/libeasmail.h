@@ -238,7 +238,7 @@ gboolean eas_mail_handler_fetch_email_attachment (EasEmailHandler* this,
  *                              back through underlying layers
 */
 gboolean eas_mail_handler_delete_email (EasEmailHandler* this,
-					const gchar *sync_key,
+					gchar *sync_key,
 					const gchar *folder_id,
 					const GSList *items_deleted,
 					GError **error);

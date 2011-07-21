@@ -1291,6 +1291,7 @@ START_TEST (test_eas_mail_handler_delete_email)
     gchar folder_hierarchy_sync_key[64] = "0";
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
+	gchar *temp_sync_key;
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -1336,6 +1337,7 @@ START_TEST (test_eas_mail_handler_delete_email)
             g_stpcpy (serveridToDel, email->server_id);
 
             // delete the first mail in the folder
+			temp_sync_key = g_strdup(folder_sync_key);
             rtn = eas_mail_handler_delete_email (email_handler, folder_sync_key, g_inbox_id, emailToDel, &error);
             if (error)
             {
@@ -1357,8 +1359,9 @@ START_TEST (test_eas_mail_handler_delete_email)
             emails_created = NULL;
 
             
-            // get email info for the folder using the saved sync key
-            testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+            // get email info for the folder using sync key from before the delete 
+			// nb: because delete now updates the sync_key, a sync with the new key will 
+            testGetFolderInfo (email_handler, temp_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
             fail_unless (NULL != emails_deleted, "No email reported as deleted");
 

@@ -915,14 +915,14 @@ finish:
 // Delete specified emails from a single folder
 gboolean
 eas_mail_handler_delete_email (EasEmailHandler* self,
-			       const gchar *sync_key,            // sync_key for the folder containing these emails
+			       gchar *sync_key,            // sync_key for the folder containing these emails
 			       const gchar *folder_id,     // folder that contains email to delete
 			       const GSList *items_deleted,        // emails to delete
 			       GError **error)
 {
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = self->priv->remoteEas;
-	gchar *updatedSyncKey = NULL;
+	gchar *ret_sync_key = NULL;
 	gchar **deleted_items_array = NULL;
 	// Build string array from items_deleted GSList
 	guint list_length = g_slist_length ( (GSList*) items_deleted);
@@ -954,7 +954,7 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 				 G_TYPE_STRING, folder_id,
 				 G_TYPE_STRV, deleted_items_array,
 				 G_TYPE_INVALID,
-				 G_TYPE_STRING, &updatedSyncKey,
+				 G_TYPE_STRING, &ret_sync_key,
 				 G_TYPE_INVALID);
 
 	// Clean up string array
@@ -968,13 +968,18 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 finish:
 	if (ret) {
 		// put the updated sync key back into the original string for tracking this
-		// strcpy(sync_key,updatedSyncKey);
+		if (ret && ret_sync_key && ret_sync_key[0]) 
+		{
+			strcpy(sync_key,ret_sync_key);
+			g_debug ("%s ret_Sync_key %s", __func__, ret_sync_key);
+		}
+		
 	} else {
 		g_assert (error == NULL || *error != NULL);
 	}
 
-	if (updatedSyncKey) {
-		g_free (updatedSyncKey);
+	if (ret_sync_key) {
+		g_free (ret_sync_key);
 	}
 
 	g_debug ("eas_mail_handler_delete_emails--");
