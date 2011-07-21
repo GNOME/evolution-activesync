@@ -9,17 +9,18 @@ xmlns:chk="http://check.sourceforge.net/ns">
 
     <xsl:template match="chk:suite">
         <testsuite>
-            <xsl:apply-templates select="chk:test"/>
+        <xsl:for-each select="chk:test">
+            <xsl:element name="testcase">
+                <xsl:attribute name="classname">
+                    <xsl:value-of select="chk:description"/>
+                </xsl:attribute>
+                <xsl:attribute name="name">
+                    <xsl:value-of select="chk:id"/>
+                </xsl:attribute>
+            </xsl:element>
+        </xsl:for-each>
         </testsuite>
     </xsl:template>
 
-
-    <xsl:template match="chk:test">
-        <xsl:element name="testcase">
-            <xsl:attribute name="name">
-                <xsl:value-of select="chk:id"/>
-            </xsl:attribute>
-        </xsl:element>
-    </xsl:template>
 
 </xsl:stylesheet>
