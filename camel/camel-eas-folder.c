@@ -726,6 +726,25 @@ eas_cmp_uids (CamelFolder *folder, const gchar *uid1, const gchar *uid2)
 }
 
 static void
+eas_folder_finalize (GObject *object)
+{
+	CamelEasFolder *eas_folder = CAMEL_EAS_FOLDER (object);
+
+	g_mutex_free (eas_folder->priv->search_lock);
+	g_mutex_free (eas_folder->priv->state_lock);
+	g_mutex_free (eas_folder->priv->server_lock);
+	g_hash_table_destroy (eas_folder->priv->uid_eflags);
+	g_cond_free (eas_folder->priv->fetch_cond);
+
+	g_free (eas_folder->priv->server_id);
+	eas_folder->priv->server_id = NULL;
+
+	/* Chain up to parent's finalize() method. */
+	G_OBJECT_CLASS (camel_eas_folder_parent_class)->finalize (object);
+
+}
+
+static void
 eas_folder_dispose (GObject *object)
 {
 	CamelEasFolder *eas_folder = CAMEL_EAS_FOLDER (object);
@@ -739,15 +758,6 @@ eas_folder_dispose (GObject *object)
 		g_object_unref (eas_folder->search);
 		eas_folder->search = NULL;
 	}
-
-	g_mutex_free (eas_folder->priv->search_lock);
-	g_mutex_free (eas_folder->priv->state_lock);
-	g_mutex_free (eas_folder->priv->server_lock);
-	g_hash_table_destroy (eas_folder->priv->uid_eflags);
-	g_cond_free (eas_folder->priv->fetch_cond);
-
-	g_free (eas_folder->priv->server_id);
-	eas_folder->priv->server_id = NULL;
 
 	/* Chain up to parent's dispose() method. */
 	G_OBJECT_CLASS (camel_eas_folder_parent_class)->dispose (object);
@@ -783,6 +793,7 @@ camel_eas_folder_class_init (CamelEasFolderClass *class)
 
 	object_class = G_OBJECT_CLASS (class);
 	object_class->dispose = eas_folder_dispose;
+	object_class->finalize = eas_folder_finalize;
 	object_class->constructed = eas_folder_constructed;
 
 	folder_class = CAMEL_FOLDER_CLASS (class);
