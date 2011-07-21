@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ApplicationData>
+<StartTime xmlns="Calendar:">20110711T080000Z</StartTime>
+<EndTime xmlns="Calendar:">20110711T090000Z</EndTime>
+<DTStamp xmlns="Calendar:">20110711T133147Z</DTStamp>
+<UID xmlns="Calendar:">4ctoibh7jhumaua8ucd44k8luc@google.com</UID>
+<Location xmlns="Calendar:"> second floor</Location>
+<Subject xmlns="Calendar:">test kalendarza</Subject>
+<BusyStatus xmlns="Calendar:">2</BusyStatus>
+<AllDayEvent xmlns="Calendar:">0</AllDayEvent>
+<Body>
+  <Type>1</Type>
+   <Truncated>0</Truncated>
+   <Data>description</Data>
+</Body>
+</ApplicationData>

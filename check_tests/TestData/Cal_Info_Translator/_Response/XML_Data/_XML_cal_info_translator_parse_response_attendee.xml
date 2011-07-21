@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ApplicationData>
+<Attendees>
+
+<Attendee>
+<Attendee_Email>example1@example.com</Attendee_Email>
+<Attendee_Name>name1</Attendee_Name>
+<Attendee_Status>2</Attendee_Status>
+<Attendee_Type>1</Attendee_Type>
+</Attendee>
+
+
+<Attendee>
+<Attendee_Email>example2@example.com</Attendee_Email>
+<Attendee_Status>5</Attendee_Status>
+<Attendee_Type>1</Attendee_Type>
+</Attendee>
+
+
+</Attendees>
+</ApplicationData>

@@ -1,0 +1,40 @@
+<ApplicationData>
+<airsyncbase:Body>note number 1</airsyncbase:Body>
+<WebPage>www.example.com</WebPage>
+<BusinessCountry>Business Country</BusinessCountry>
+<Department>Department 1</Department>
+<Email1Address>"example@example.com" &lt;example@example.com&gt;</Email1Address>
+<FileAs>lastName, firstName middleName</FileAs>
+<FirstName>firstName</FirstName>
+<HomeCity>home city</HomeCity>
+<HomeCountry>home country</HomeCountry>
+<HomeFaxNumber>0123 456 789</HomeFaxNumber>
+<HomePhoneNumber>0161 222 3333</HomePhoneNumber>
+<Home2PhoneNumber>567573</Home2PhoneNumber>
+<HomePostalCode>home post code</HomePostalCode>
+<HomeState>home state</HomeState>
+<HomeStreet>home street</HomeStreet>
+<BusinessCity>Business City</BusinessCity>
+<MiddleName>middleName</MiddleName>
+<MobilePhoneNumber>0777 333 4444</MobilePhoneNumber>
+<CompanyName>Company 1</CompanyName>
+<OtherCity>other city</OtherCity>
+<OtherCountry>other country</OtherCountry>
+<CarPhoneNumber>0987 654 321</CarPhoneNumber>
+<OtherPostalCode>other post code</OtherPostalCode>
+<OtherState>other state</OtherState>
+<OtherStreet>other street</OtherStreet>
+<PagerNumber>pager #</PagerNumber>
+<BusinessPostalCode>Business Postal Code</BusinessPostalCode>
+<AssistantName>Assistant 1</AssistantName>
+<LastName>lastName</LastName>
+<BusinessState>Business State</BusinessState>
+<BusinessStreet>Business Address Street</BusinessStreet>
+<BusinessPhoneNumber>0161 111 2222</BusinessPhoneNumber>
+<Business2PhoneNumber>00123 345 345</Business2PhoneNumber>
+<JobTitle>bricky</JobTitle>
+<OfficeLocation>Office 1</OfficeLocation>
+<IMAddress>example@example.com</IMAddress>
+<ManagerName>Manager 1</ManagerName>
+<NativeBodyType>1</NativeBodyType>
+</ApplicationData>

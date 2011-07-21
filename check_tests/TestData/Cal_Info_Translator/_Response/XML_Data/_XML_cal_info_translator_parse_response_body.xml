@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ApplicationData>
+<Body xmlns="AirSyncBase:">
+              <Type>1</Type>
+              <EstimatedDataSize>0</EstimatedDataSize>
+		<Data>description</Data>
+            </Body>
+</ApplicationData>

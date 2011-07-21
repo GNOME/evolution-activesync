@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ApplicationData><Exceptions><Exception><Deleted>0</Deleted><ExceptionStartTime>20110711T080000Z</ExceptionStartTime><Subject>subject</Subject>
+                              <StartTime>20110711T081200Z</StartTime>
+                              <EndTime>20110711T082400Z</EndTime>
+                              <Body>body</Body>
+                              <Location>location</Location>
+                              <Categories>
+                              		<Category>This is category 1</Category>
+					<Category>This is category 2</Category>
+			      </Categories>
+                              <Sensitivity>3</Sensitivity>
+                              <BusyStatus>3</BusyStatus>
+                              <AllDayEvent>1</AllDayEvent>
+                              <Reminder>1</Reminder>
+                              <DtStamp>20110711T080000Z</DtStamp>
+                              <MeetingStatus>10</MeetingStatus>
+                              <AppointmentReplyTime>20110711T083600Z</AppointmentReplyTime>
+                              <ResponseType>123</ResponseType>
+                  	</Exception>
+	</Exceptions>
+</ApplicationData>

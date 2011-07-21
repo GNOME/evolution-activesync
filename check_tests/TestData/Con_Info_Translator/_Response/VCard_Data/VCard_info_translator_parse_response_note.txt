@@ -1,0 +1,4 @@
+BEGIN:VCARD
+VERSION:3.0
+NOTE:note number 1
+END:VCARD

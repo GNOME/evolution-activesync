@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:3.0
+EMAIL:"example@example.com"<example@example.com>
+EMAIL:"example@example.com"<example@example.com>
+EMAIL:"example@example.com"<example@example.com>
+URL:www.example.com
+END:VCARD

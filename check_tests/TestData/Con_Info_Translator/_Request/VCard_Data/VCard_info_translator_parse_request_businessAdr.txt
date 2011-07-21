@@ -1,0 +1,4 @@
+BEGIN:VCARD
+VERSION:3.0
+ADR;TYPE=WORK:Business City;Business Street
+END:VCARD

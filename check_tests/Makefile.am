@@ -27,6 +27,7 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_libeascon_tests.c \
 				    eas_folderhierarchy_tests.c \
 				    eas_con_info_translator_test.c \
+                    eas_cal_info_translator_test.c \
                     eas_gobjects_unittests.c
                     
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS)
