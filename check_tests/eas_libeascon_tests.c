@@ -247,66 +247,6 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
 
 START_TEST (test_eas_sync_handler_add_con)
 {
-#if 0
-    EasSyncHandler *sync_handler = NULL;
-    GError *error = NULL;
-    gboolean testCalFound = FALSE;
-
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, g_contacts_account_id);
-
-    gchar* folder_sync_key_in = NULL;
-	gchar* folder_sync_key_out = NULL;
-    GSList *conitems_created = NULL; //receives a list of EasMails
-    GSList *conitems_updated = NULL;
-    GSList *conitems_deleted = NULL;
-
-    testGetLatestContacts (sync_handler,
-                           folder_sync_key_in,
-                           &folder_sync_key_out,
-                           &conitems_created,
-                           &conitems_updated,
-                           &conitems_deleted,
-                           &error);
-
-	
-    GSList *conitemToUpdate = NULL;
-    EasItemInfo *updatedconitem = NULL;
-    gboolean rtn = FALSE;
-
-
-    updatedconitem = eas_item_info_new();
-    updatedconitem->client_id = g_strdup ("sdfasdfsdf");
-    updatedconitem->data = g_strdup (TEST_VCARD);//TEST_VCARD_01 
-
-    conitemToUpdate = g_slist_append (conitemToUpdate, updatedconitem);
-
-	
-	g_free(folder_sync_key_in);
-	folder_sync_key_in = g_strdup(folder_sync_key_out);
-	g_free(folder_sync_key_out);
-	folder_sync_key_out = NULL;
-
-    rtn = eas_sync_handler_add_items (sync_handler, folder_sync_key_in, folder_sync_key_out, EAS_ITEM_CONTACT, "1", conitemToUpdate, &error);
-    if (error)
-    {
-        fail_if (rtn == FALSE, "%s", error->message);
-    }
-    updatedconitem = conitemToUpdate->data;
-    fail_if (updatedconitem->server_id == NULL, "Not got new id for item");
-
-    g_slist_free (conitemToUpdate);
-
-	g_free(folder_sync_key_in);
-	g_free(folder_sync_key_out);
-
-
-    testCalFound = TRUE;
-
-    g_object_unref (sync_handler);
-#endif
-
   	const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
@@ -414,45 +354,6 @@ START_TEST (test_get_latest_contacts_items)
     g_slist_free (updated);
 
     g_object_unref (sync_handler);
-
-#if 0
-    // This value needs to make sense in the daemon.  in the first instance
-    // it should be hard coded to the value used by the daemon but later
-    // there should be a mechanism for getting the value from the same place
-    // that the daemon uses
-	EasSyncHandler *sync_handler = NULL;
-
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, g_contacts_account_id);
-
-    // declare lists to hold the folder information returned by active sync
-    GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
-    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
-    // there is no persisted sync key from previous sync's, the returned information will be
-    // the complete folder hierarchy rather than a delta of any changes
-    gchar* sync_key_in = NULL;
-	gchar* sync_key_out = NULL;
-
-    GError *error = NULL;
-
-    mark_point();
-    // call into the daemon to get the folder hierarchy from the exchange server
-    testGetLatestContacts (sync_handler, sync_key_in, &sync_key_out, &created, &updated, &deleted, &error);
-
-    //  free everything!
-    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
-
-    g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
-
-    g_object_unref (sync_handler);
-#endif
 }
 END_TEST
 
@@ -488,6 +389,6 @@ Suite* eas_libeascon_suite (void)
 //	tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
     //tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_con);
     //tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
-   tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
+//   tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
     return s;
 }
