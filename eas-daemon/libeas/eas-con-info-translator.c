@@ -103,13 +103,6 @@
 #define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
 #define EAS_ELEMENT_NOTE                      "Body"
 
-
-//@
-//TODO:
-/* ActiveSync protocol message definition for contact */
-/* targetNamespace for Contacts (from AS contacts schema) */
-#define EAS_NAMESPACE_CONTACTS					"contacts:"
- 
 #define EAS_ELEMENT_ANNIVERSARY					"Anniversary"
 #define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
 #define EAS_ELEMENT_ASSISTANTPHONENUMBER		"AssistantPhoneNumber"
@@ -136,7 +129,6 @@
 
 //#define EAS_ELEMENT_BODY						"Body"
 /* targetNamespace for Contacts2 (from AS contacts schema) */
-//#define EAS_NAMESPACE_CONTACTS2					"contacts2:"
 #define EAS_ELEMENT_CONTACTS2_CUSTOMERID		"CustomerId"
 #define EAS_ELEMENT_CONTACTS2_GOVERNMENTID		"GovernmentId"
 #define EAS_ELEMENT_CONTACTS2_IMADDRESS			"IMAddress"
@@ -148,12 +140,6 @@
 #define EAS_ELEMENT_CONTACTS2_NICKNAME			"NickName"
 #define EAS_ELEMENT_CONTACTS2_MMS				"MMS"
 
-
-
-/* vCard attribute names and types*/
-/* This list is an addition to the one defined in e-vcard.h */
-#define VC_ATT_NAME_BEGIN	"BEGIN"
-#define BDAY_ZERO_TIME_ZONE	"T00:00:00.000Z"
 
 
 static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *sought)
@@ -219,7 +205,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 {
 	// Variable for the return value
 	gchar* result = NULL;
-	EVCard *vcard;
+	EVCard *vcard = NULL;
     EasItemInfo* conInfo = NULL;
 
     g_debug("eas_con_info_translator_parse_response ++");
@@ -611,13 +597,13 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 	{
 #if 0
 		/ * AS does not support PostalBox */
-		 set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+		 set_xml_element(appData, (const xmlChar*) "PostalBox",
         (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 #endif
 
 #if 0
 		/ * AS does not support ExtendedAddress */
-		set_xml_element(appData, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+		set_xml_element(appData, (const xmlChar*) "ExtendedAddress",
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
 #endif
 
@@ -640,13 +626,13 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 	{
 #if 0
 		/* AS does not support PostalBox */
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+		xmlNewTextChild(appData, NULL, (const xmlChar*) "PostalBox",
         (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
 #endif
 
 #if 0
 		/* AS does not support ExtendedAddress */
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+		xmlNewTextChild(appData, NULL, (const xmlChar*)"ExtendedAddress",
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
 #endif
 		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_ELEMENT_HOMESTREET,
@@ -670,13 +656,13 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 		 "dom", "intl", "postal", "parcel", "pref" / iana-type / x-name */
 #if 0
 		/* AS does not support PostalBox */
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "PostalBox",
+		/* xmlNewTextChild(appData, NULL, (const xmlChar*) "PostalBox",
         (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
 #endif
 
 #if 0
 		/* AS does not support ExtendedAddress */
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_NAMESPACE_CONTACTS "ExtendedAddress",
+		/* xmlNewTextChild(appData, NULL, (const xmlChar*) "ExtendedAddress",
         (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
 #endif
 		
@@ -827,6 +813,20 @@ set_xml_categories(xmlNodePtr appData, EVCardAttribute *attr)
 	}
 }
 
+
+static void
+set_xml_contact_date(xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_element)
+{
+	/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to 
+	 ActiveSync YYYY-MM-DDT00:00:00.000Z */
+	const gchar* date = NULL;
+	gchar* dateZ = NULL;
+	date = attribute_get_nth_value(attr, 0);
+	dateZ = g_strconcat(date, "T00:00:00.000Z", NULL); 
+	xmlNewTextChild(appData, NULL, (const xmlChar*) eas_element, (const xmlChar*)dateZ);
+	g_free(dateZ);	
+}
+
 gboolean 
 eas_con_info_translator_parse_request(	xmlDocPtr doc, 
 										xmlNodePtr appData,
@@ -850,7 +850,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 	vcard = e_vcard_new_from_string (contactInfo->data);
 	g_return_val_if_fail (vcard != NULL, FALSE);
 
-	e_vcard_dump_structure (vcard); /* TODO: Debug only*/
+	/* e_vcard_dump_structure (vcard); */ /* Debug only*/
 	
 	attributes = e_vcard_get_attributes(vcard);
 
@@ -860,7 +860,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		EVCardAttribute *attr = a->data;
 		name = e_vcard_attribute_get_name(attr);
 
-		g_debug("e_vcard_attribute_get_name=%s", name);
+		 /* g_debug("e_vcard_attribute_get_name=%s", name); */
 
 		if (!strcmp(name, "BEGIN"))
 			continue;
@@ -880,9 +880,9 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1));
 			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
 							(const xmlChar*)attribute_get_nth_value(attr, 2));
+			/* ActiveSync does not support Prefix */
 			/*xmlNewTextChild(appData, NULL, (const xmlChar*) "Prefix",
 							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
-			g_warning("TODO: AS Does not support Prefix");
 			xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_SUFFIX,
 			                (const xmlChar*)attribute_get_nth_value(attr, 4));
 			continue;
@@ -919,25 +919,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Birthday */
 		if (!strcmp(name, EVC_BDAY)) {
-#if 0
-/* TODO: server respond with malformed item */
-			/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to 
-			 ActiveSync YYYY-MM-DDT00:00:00Z */
-			//gchar* test = "1965-05-03T00:00:00.000Z"; 
-			//const gchar* test= "20110711T000000Z";
-			gchar* base64value = NULL;
-			const gchar* bday = NULL;
-			gchar* bdayZ = NULL;
-
-			bday = attribute_get_nth_value(attr, 0);
-			bdayZ = g_strconcat(bday, "T00:00:00Z", NULL);
-			//g_debug("bdayZ =%s", bdayZ);
-			//g_debug("strlen(bdayZ) =%d", strlen(bdayZ));
-			base64value = g_base64_encode((const guchar *)(bdayZ), (gsize)strlen(bdayZ));
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BIRTHDAY, (const xmlChar*)base64value);
-			g_free(base64value);
-			g_free(bdayZ);
-#endif
+			set_xml_contact_date(appData, attr, (gchar*) EAS_ELEMENT_BIRTHDAY);
 			continue;
 		}
 		
@@ -985,46 +967,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Anniversary - vCard does not support Anniversary so we use X-EVOLUTION-ANNIVERSARY*/
 		if (!strcmp(name, "X-EVOLUTION-ANNIVERSARY")) {
-#if 0
-/* TODO: server respond with malformed item */
-			gchar test[] =	"20021126T160000Z";
-			gchar* base64value = NULL;
-			const gchar* anv = NULL;
-
-			guchar*       decodeBuf = NULL;
-			gsize          decodeBufSize = 0;
-			//gchar* anvZ = NULL;
-			/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to 
-			 ActiveSync YYYY-MM-DDT00:00:00Z */
-			//const gchar* test = "19990719"; //Microsoft generated 
-
-			//const gchar* test = "2010-05-03T00:00:00.000Z";
-			//const gchar* test = "20100503T000000000Z";
-			
-			//const gchar* test = "2010-05-03T00:00:00Z";
-			//gchar* test =	"2010-05-03T000000Z";
-							
-			
-			//const guchar* test =	"20021126T160000Z";
-			//const guchar* test =	"19531015Z";
-			g_debug("-->strlen(test) =%d",(unsigned int) strlen(test));
-			g_debug("-->test =%s", test);
-
-
-			anv = attribute_get_nth_value(attr, 0);
-			//anvZ = g_strconcat(anv, "T00:00:00Z", NULL);
-			base64value = g_base64_encode((const guchar *)(test), strlen(test) );
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_ANNIVERSARY, (const xmlChar*)base64value);
-
-
-decodeBuf = g_base64_decode((const gchar*)base64value, &decodeBufSize);
-			
-g_debug("-->decodeBufSize =%d",decodeBufSize);
-g_debug("-->decodeBuf =%s", decodeBuf);
-
-			g_free(base64value);
-			//g_free(anvZ);
-#endif
+			set_xml_contact_date(appData, attr, (gchar*) EAS_ELEMENT_ANNIVERSARY);
 			continue;
 		}
 
