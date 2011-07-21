@@ -1547,14 +1547,14 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, gchar* server_id)
 						{
 							struct icaltimetype date = icalproperty_get_dtend(prop);
 							date.hour = date.minute = date.second = 0;
-							icalproperty_set_dtend(prop, dateTime);
+							icalproperty_set_dtend(prop, date);
 						}
 						for (prop = icalcomponent_get_first_property(vevent, ICAL_DTSTART_PROPERTY); prop;
 							 prop = icalcomponent_get_next_property(vevent, ICAL_DTSTART_PROPERTY))
 						{
 							struct icaltimetype date = icalproperty_get_dtstart(prop);
 							date.hour = date.minute = date.second = 0;
-							icalproperty_set_dtstart(prop, dateTime);
+							icalproperty_set_dtstart(prop, date);
 						}
 					}
 					xmlFree(value); value = NULL;
