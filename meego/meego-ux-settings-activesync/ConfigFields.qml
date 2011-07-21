@@ -9,7 +9,7 @@ Item {
     property alias emailAddress: emailField.text
     property alias username: usernameField.text
     property alias password: passwordField.text
-    property alias serverURL: serverUrlField.text
+    property alias serverURL: serverUrlEntry.text
 
     property bool acceptableInput: emailField.textInput.acceptableInput
 
