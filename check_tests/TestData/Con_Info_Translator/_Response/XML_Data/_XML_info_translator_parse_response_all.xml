@@ -1,5 +1,9 @@
 <ApplicationData>
-<airsyncbase:Body>note number 1</airsyncbase:Body>
+<Body>
+<Type>1</Type>
+<EstimatedDataSize>7</EstimatedDataSize>
+<Data>note number 1</Data>
+</Body>
 <WebPage>www.example.com</WebPage>
 <BusinessCountry>Business Country</BusinessCountry>
 <Department>Department 1</Department>

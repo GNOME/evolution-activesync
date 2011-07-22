@@ -309,7 +309,7 @@ Suite* eas_con_info_translator_suite (void)
 	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); //this test will fail
 	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_blank);
 	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_mobile); //this test will fail
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note); //this test will fail
+	//  tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note); //this test will fail
 
 	  tcase_add_test (tc_con_info_translator, test_info_translator_parse_response_jobTitle);
 	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_name);
