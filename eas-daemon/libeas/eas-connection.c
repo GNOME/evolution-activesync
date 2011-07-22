@@ -109,6 +109,8 @@ typedef struct _EasGnomeKeyringResponse
 	GnomeKeyringResult result;
 	gchar* password;
 	EFlag *semaphore;
+	const gchar* username;
+	const gchar* serverUri;
 } EasGnomeKeyringResponse;
 
 static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
@@ -128,6 +130,8 @@ static void parse_for_status (xmlNode *node, gboolean *isErrorStatus);
 static gchar *device_type, *device_id;
 
 static void write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len);
+static gboolean mainloop_password_fetch (gpointer data);
+static gboolean mainloop_password_store (gpointer data);
 
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
@@ -367,15 +371,43 @@ storePasswordCallback (GnomeKeyringResult result, gpointer data)
 {
 	EasGnomeKeyringResponse *response = data;
 
-	g_debug("storePasswordCallback++");
-	
 	g_assert (response);
+
+	g_debug("storePasswordCallback++ [%d]", response->result);
+
 	g_assert (response->semaphore);
-	g_assert (!response->password);
-	
+
 	response->result = result;
 	e_flag_set (response->semaphore);
 	g_debug("storePasswordCallback--");
+}
+
+static gboolean 
+mainloop_password_store (gpointer data)
+{
+	EasGnomeKeyringResponse *response = data;
+	gchar * description = g_strdup_printf ("Exchange Server Password for %s@%s", 
+	                                       response->username,
+	                                       response->serverUri);
+
+	g_debug("mainloop_password_store++");
+
+	g_assert (response->password);
+	
+	gnome_keyring_store_password (GNOME_KEYRING_NETWORK_PASSWORD,
+                                  NULL,
+                                  description,
+                                  response->password,
+                                  storePasswordCallback,
+                                  response,
+                                  NULL,
+                                  "user", response->username,
+                                  "server", response->serverUri,
+                                  NULL);
+	g_free (description);
+
+	g_debug("mainloop_password_store--");
+	return FALSE;
 }
 
 static GnomeKeyringResult 
@@ -383,30 +415,24 @@ writePasswordToKeyring (const gchar *password, const gchar* username, const gcha
 {
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	EasGnomeKeyringResponse *response = g_malloc0(sizeof(EasGnomeKeyringResponse));
-	gchar * description = g_strdup_printf ("Exchange Server Password for %s@%s", 
-	                                       username,
-	                                       serverUri);
+	GSource *source = NULL;
 
 	g_debug("writePasswordToKeyring++");
 	response->semaphore = e_flag_new ();
+	response->username = username;
+	response->serverUri = serverUri;
+	response->password = (gchar* )password;
 	g_assert (response->semaphore);
-	g_debug("writePasswordToKeyring++ 1");
-	gnome_keyring_store_password (GNOME_KEYRING_NETWORK_PASSWORD,
-                                  NULL,
-                                  description,
-                                  password,
-                                  storePasswordCallback,
-                                  response,
-                                  NULL,
-                                  "user", username,
-                                  "server", serverUri,
-                                  NULL);
-	g_debug("writePasswordToKeyring++ 2");
-	g_free (description);
+	g_assert (response->password);
+
+	/* We can't use g_idle_add, as the default context here is the soup thread */
+	source = g_idle_source_new ();
+	g_source_set_callback (source, mainloop_password_store, response, NULL);
+	g_source_attach (source, NULL);
+
 	e_flag_wait(response->semaphore);
-	g_debug("writePasswordToKeyring++ 3");
 	e_flag_free (response->semaphore);
-	g_debug("writePasswordToKeyring++ 4");
+
 	result = response->result;
 	g_free (response);
 
@@ -466,26 +492,47 @@ fetch_and_store_password (const gchar* username, const gchar * serverUri)
 	return (result == GNOME_KEYRING_RESULT_OK);
 }
 
+static gboolean 
+mainloop_password_fetch (gpointer data)
+{
+	EasGnomeKeyringResponse *response = data;
+
+	g_debug("mainloop_password_fetch++");
+
+	
+	gnome_keyring_find_password (GNOME_KEYRING_NETWORK_PASSWORD,
+	                             getPasswordCallback,
+	                             response,
+	                             NULL,
+	                             "user", response->username,
+	                             "server", response->serverUri,
+	                             NULL);
+	
+	g_debug("mainloop_password_fetch--");
+	
+	return FALSE;
+}
+
 static GnomeKeyringResult 
 getPasswordFromKeyring (const gchar* username, const gchar* serverUri, char** password)
 {
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	EFlag *semaphore = NULL;
 	EasGnomeKeyringResponse *response = g_malloc0(sizeof(EasGnomeKeyringResponse));
+	GSource *source = NULL;
 
 	g_debug("getPasswordFromKeyring++");
 
 	g_assert (password && *password == NULL);
 
 	response->semaphore = semaphore = e_flag_new ();
+	response->username = username;
+	response->serverUri = serverUri;
 
-	gnome_keyring_find_password (GNOME_KEYRING_NETWORK_PASSWORD,
-	                             getPasswordCallback,
-	                             response,
-	                             NULL,
-	                             "user", username,
-	                             "server", serverUri,
-	                             NULL);
+	/* We can't use g_idle_add, as the default context here is the soup thread */
+	source = g_idle_source_new ();
+	g_source_set_callback (source, mainloop_password_fetch, response, NULL);
+	g_source_attach (source, NULL);
 
 	e_flag_wait (response->semaphore);
 	e_flag_free (response->semaphore);
@@ -1086,7 +1133,7 @@ else
 	if(g_mock_response_list)
 	{
 		// TODO fake complete response (wrong content type etc), not just status codes
-		gchar *response_body = "mock response body";	
+		const gchar *response_body = "mock response body";	
 		
 		soup_message_set_response(msg, "application/vnd.ms-sync.wbxml",
                               SOUP_MEMORY_COPY,
@@ -1986,7 +2033,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
             g_set_error (&error, 
                          EAS_CONNECTION_ERROR,
                          EAS_CONNECTION_ERROR_XMLTOOLARGETODOM,
-                         "Server response is too large for libxml2 DOM at %lu bytes", xml_len);
+                         "Server response is too large for libxml2 DOM at %u bytes", xml_len);
         }
 
 
