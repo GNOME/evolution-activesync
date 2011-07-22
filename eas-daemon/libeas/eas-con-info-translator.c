@@ -166,10 +166,12 @@ static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *so
 
 static void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 {
+	add_attr_value(attr, node, EAS_ELEMENT_LASTNAME);
 	add_attr_value(attr, node, EAS_ELEMENT_FIRSTNAME);
 	add_attr_value(attr, node, EAS_ELEMENT_MIDDLENAME);
-	add_attr_value(attr, node, EAS_ELEMENT_LASTNAME);
-	add_attr_value(attr, node, EAS_ELEMENT_TITLE);
+	/* Prefix not supported add ";;" instead */
+	e_vcard_attribute_add_value(attr, NULL);
+	//add_attr_value(attr, node, EAS_ELEMENT_TITLE);
 	add_attr_value(attr, node, EAS_ELEMENT_SUFFIX);
 }
 
@@ -218,6 +220,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 		gboolean homeAddrElements = FALSE;
 		gboolean workAddrElements = FALSE;
 		gboolean otherAddrElements = FALSE;
+		gboolean titleElements = FALSE;
 
 		// vCard object
 		vcard = e_vcard_new();
@@ -236,7 +239,6 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 				if (((g_strcmp0(name, EAS_ELEMENT_FIRSTNAME) == 0) ||
 				    (g_strcmp0(name, EAS_ELEMENT_MIDDLENAME) == 0) ||
 				    (g_strcmp0(name, EAS_ELEMENT_LASTNAME) == 0) ||
-				    (g_strcmp0(name, EAS_ELEMENT_TITLE) == 0) ||
 				    (g_strcmp0(name, EAS_ELEMENT_SUFFIX) == 0))
 				    && (nameElements == FALSE))
 				{
@@ -244,8 +246,16 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 					add_name_attr_values(attr, node->children);
 					e_vcard_add_attribute(vcard, attr);
 					nameElements = TRUE;
+					
 				}
-
+				else if (g_strcmp0(name, EAS_ELEMENT_TITLE) == 0 &&
+				         (titleElements == FALSE))
+				{
+					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_TITLE);
+					add_attr_value(attr, node->children, EAS_ELEMENT_TITLE);
+					e_vcard_add_attribute(vcard, attr);
+					titleElements = TRUE;
+				}
 				//
 				// Home Address elements
 				//
