@@ -3,10 +3,21 @@
 xmlns:chk="http://check.sourceforge.net/ns"
 exclude-result-prefixes="chk">
 
+
+
     <xsl:output encoding="utf-8" indent="yes"/>
 
     <xsl:template match="chk:testsuites">
         <testsuite>
+            <xsl:attribute name="errors">
+                <xsl:value-of select="count(//chk:test[@result='error'])"/>
+            </xsl:attribute>
+            <xsl:attribute name="failures">
+                <xsl:value-of select="count(//chk:test[@result='failure'])"/>
+            </xsl:attribute>
+            <xsl:attribute name="tests">
+                <xsl:value-of select="count(//chk:test[@result='success'])"/>
+            </xsl:attribute>
             <xsl:apply-templates select="chk:suite"/>
         </testsuite>
     </xsl:template>
