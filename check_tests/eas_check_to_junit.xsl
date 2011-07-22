@@ -18,6 +18,9 @@ exclude-result-prefixes="chk">
             <xsl:attribute name="tests">
                 <xsl:value-of select="count(//chk:test[@result='success'])"/>
             </xsl:attribute>
+            <xsl:attribute name="name">
+                <xsl:value-of select="//chk:description"/>
+            </xsl:attribute>
             <xsl:apply-templates select="chk:suite"/>
         </testsuite>
     </xsl:template>
