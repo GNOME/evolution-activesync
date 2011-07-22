@@ -768,6 +768,16 @@ set_xml_tel(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *par
 				(const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
+
+	else if (!strcmp(propname0, "PAGER"))
+	{
+		if(!is_element_set(appData, EAS_ELEMENT_PAGER))
+		{
+			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_PAGER,
+				(const xmlChar*)attribute_get_nth_value(attr, 0));
+		}
+	}
+
 	else
 		g_debug("Tel Type not supported by ActiveSync: %s", propname0);
 
