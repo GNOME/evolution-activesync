@@ -351,7 +351,7 @@ Suite* eas_cal_info_translator_suite (void)
    	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_reminder);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_subject);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_uid);
-	// tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_attendee); // this test will fail
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_attendee); // this test will fail
 	// tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_recurrence);
 	// tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_exception); //this test will fail
 

@@ -478,7 +478,7 @@ static void _eas2ical_process_attendees(xmlNodePtr n, icalcomponent* vevent)
 		{
 			prop = icalproperty_new_attendee(email);
 
-			if (email && strlen(name))
+			if (email && name != NULL && strlen(name))
 			{
 				param = icalparameter_new_cn(name);
 				icalproperty_add_parameter(prop, param);
@@ -1026,8 +1026,15 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
  * _eas2ical_process_exceptions()) then pass thm to this function which converts them into
  * VEVENTS.
  *
- * We follow RFC5545 (doh) in our sub-events. They have the same UID, and a RECURRENCEID
- * field which identifies which individual occurrence they replace.
+ * We try to maintain the link to the original VEVENT in the UID field: each of the new "child"
+ * VEVENTS has the original VEVENT's UID with the exception's start time appended, e.g.
+ *
+ *   Original VEVENT UID: 0123456789ABCDEF
+ *   Child VEVENT UIDs:   0123456789ABCDEF_20110102T103000Z
+ *                        0123456789ABCDEF_20110103T103000Z
+ *                        etc.
+ *
+ * TODO: look for this format of UID when parsing VEVENTS to try and match them up again.
  *
  * @param  vcalendar
  *      The outer VCALENDAR component which owns the "parent" VEVENT (and into which 
@@ -1075,12 +1082,12 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 				icalproperty_free(prop); prop = NULL;
 			}
 
-			// Set the RECURRENCEID property. Note that this *MUST* be in the same
-			// timezone as the original event; not sure we have that right yet...
-			icalcomponent_set_recurrenceid(newEvent,
-					       icaltime_from_string(
-						    (const gchar*)g_hash_table_lookup(exceptionProperties,
-										      EAS_ELEMENT_EXCEPTIONSTARTTIME)));
+			// Form a new UID for the new event as follows:
+			// {Original event UID}_{Exception start time}
+			prop = icalcomponent_get_first_property(newEvent, ICAL_UID_PROPERTY); // Retains ownership of the pointer
+			value = g_strconcat((const gchar*)icalproperty_get_uid(prop), "_", (const gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_EXCEPTIONSTARTTIME), NULL);
+			icalproperty_set_uid(prop, value);
+			prop = NULL;
 
 			// TODO: as we're parsing these from the <Exceptions> element, I think we need to
 			// add an EXDATE for this ExceptionStartTime. I think ExceptionStartTime identifies
