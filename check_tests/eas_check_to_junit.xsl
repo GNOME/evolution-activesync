@@ -6,14 +6,12 @@ exclude-result-prefixes="chk">
     <xsl:output encoding="utf-8" indent="yes"/>
 
     <xsl:template match="chk:testsuites">
-        <testsuites>
+        <testsuite>
             <xsl:apply-templates select="chk:suite"/>
-        </testsuites>
+        </testsuite>
     </xsl:template>
 
     <xsl:template match="chk:suite">
-        <testsuite>
-        <properties/>
         <xsl:for-each select="chk:test">
             <xsl:element name="testcase">
                 <xsl:attribute name="classname">
@@ -24,7 +22,6 @@ exclude-result-prefixes="chk">
                 </xsl:attribute>
             </xsl:element>
         </xsl:for-each>
-        </testsuite>
     </xsl:template>
 
 
