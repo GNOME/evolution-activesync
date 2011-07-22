@@ -70,7 +70,7 @@ G_BEGIN_DECLS
  * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
  * for freeing the data with g_free().
  */
-gchar *eas_email_info_translator_add (const xmlNode *node, gchar *server_id);
+gchar *eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server_id);
 
 /**
  *
@@ -83,7 +83,7 @@ gchar *eas_email_info_translator_add (const xmlNode *node, gchar *server_id);
  * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
  * for freeing the data with g_free().
  */
-gchar *eas_email_info_translator_delete (const xmlNode *node, gchar *server_id);
+gchar *eas_email_info_translator_parse_delete_response (const xmlNode *node, gchar *server_id);
 
 /**
  *
@@ -96,11 +96,11 @@ gchar *eas_email_info_translator_delete (const xmlNode *node, gchar *server_id);
  * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
  * for freeing the data with g_free().
  */
-gchar *eas_email_info_translator_update (const xmlNode *node, gchar *server_id);
+gchar *eas_email_info_translator_parse_update_response (const xmlNode *node, gchar *server_id);
 
 
 /**
- *
+ * builds the <ApplicationData> part of XML for a request using the provided EasEmailInfo
  * 
  * @param[in] doc
  *	  ONLY USED FOR DEBUG

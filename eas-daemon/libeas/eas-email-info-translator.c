@@ -114,7 +114,7 @@ parse_header (gchar *str, GSList **headers)
 }
 
 gchar *
-eas_email_info_translator_add (const xmlNode *node, gchar *server_id)
+eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server_id)
  {
     gchar *result = NULL;
     g_debug ("eas_email_info_translator_add++");
@@ -288,7 +288,7 @@ eas_email_info_translator_add (const xmlNode *node, gchar *server_id)
 }
 
 gchar *
-eas_email_info_translator_update (const xmlNode *node, gchar *server_id)
+eas_email_info_translator_parse_update_response (const xmlNode *node, gchar *server_id)
 {
 	gchar *result = NULL;
 	g_debug("eas_email_info_translator_update++");
@@ -365,7 +365,7 @@ eas_email_info_translator_update (const xmlNode *node, gchar *server_id)
 
 
 gchar *
-eas_email_info_translator_delete (const xmlNode *node, gchar *server_id)
+eas_email_info_translator_parse_delete_response (const xmlNode *node, gchar *server_id)
 {
     gchar *result = NULL;
 
