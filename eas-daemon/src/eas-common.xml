@@ -23,8 +23,31 @@
       <arg type="s" name="version" direction="out"/>
     </method>
 
+	<!-- 2-way sync with filtertype option -->
+    <method name="sync_folder_items">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="u" name="item_type" direction="in"/>
+      <arg type="s" name="sync_key_in" direction="in"/>
+      <arg type="s" name="folder_id" direction="in"/>
+      <arg type="u" name="filter_type" direction="in"/>      
+      <arg type="as" name="add_items" direction="in"/>
+      <arg type="as" name="delete_items" direction="in"/>
+      <arg type="as" name="change_items" direction="in"/>
+
+      <arg type="s" name="ret_sync_key" direction="out"/>
+      <arg type="b" name="ret_more_available" direction="out"/> 
+      <arg type="as" name="ret_added_items" direction="out"/>
+      <arg type="as" name="ret_deleted_items" direction="out"/>
+      <arg type="as" name="ret_changed_items" direction="out"/>
+      <arg type="as" name="ret_add_items_response" direction="out"/>
+      <arg type="as" name="ret_delete_items_response" direction="out"/>
+      <arg type="as" name="ret_change_items_response" direction="out"/>      
+    </method>
+    
   <!-- TODO: Insert your common exposed APIs here -->
 
+    
   </interface>
 </node>
 

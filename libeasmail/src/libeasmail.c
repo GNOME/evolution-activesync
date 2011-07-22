@@ -38,6 +38,7 @@
 #include "eas-mail-errors.h"
 #include "../../logger/eas-logger.h"
 #include "eas-marshal.h"
+#include "../../eas-daemon/libeas/eas-request-base.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
@@ -63,6 +64,7 @@ static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
 struct _EasEmailHandlerPrivate {
 	DBusGConnection *bus;
 	DBusGProxy *remoteEas;
+	DBusGProxy *remoteCommonEas;
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
 	guint next_request_id;			// request id to be used for next dbus call
@@ -96,6 +98,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
 	priv->remoteEas = NULL;
+	priv->remoteCommonEas = NULL;
 	priv->bus = NULL;
 	priv->account_uid = NULL;
 	priv->next_request_id = 1;
@@ -138,8 +141,6 @@ eas_mail_handler_finalize (GObject *object)
 	}
 
 	g_free (priv->account_uid);
-
-
 
 	// free the hashtable
 	if (priv->email_progress_fns_table) 
@@ -254,10 +255,23 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						      EAS_SERVICE_MAIL_INTERFACE);
 	if (priv->remoteEas == NULL) {
 		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
-			     "Failed to create mainloop");
+			     "ailed to create proxy for mail interface");
 		g_warning ("Error: Couldn't create the proxy object");
 		return NULL;
 	}
+
+	g_debug ("Creating a GLib proxy object for Eas.");
+	priv->remoteCommonEas =  dbus_g_proxy_new_for_name (priv->bus,
+						      EAS_SERVICE_NAME,
+						      EAS_SERVICE_COMMON_OBJECT_PATH,
+						      EAS_SERVICE_COMMON_INTERFACE);
+	if (priv->remoteCommonEas == NULL) {
+		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+			     "Failed to create proxy for common interface");
+		g_warning ("Error: Couldn't create the proxy object for common");
+		return NULL;
+	}
+	
 
 	dbus_g_proxy_set_default_timeout (priv->remoteEas, 1000000);
 	priv->account_uid = g_strdup (account_uid);
@@ -1336,4 +1350,119 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 	g_debug ("eas_mail_handler_watch_email_folders--");
 	return ret;
 
+}
+gboolean 
+eas_mail_handler_sync_folder_email (EasEmailHandler* self,
+						  const gchar *sync_key_in,
+                          guint	time_window,
+						  const gchar *folder_id,
+						  GSList *delete_emails,
+						  GSList *change_emails, 
+                          gchar **sync_key_out,
+						  GSList **emails_created,
+						  GSList **emails_changed,
+						  GSList **emails_deleted,
+						  gboolean *more_available,
+						  GError **error)
+{
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteCommonEas;
+	gchar **created_emailinfo_array = NULL;
+	gchar **deleted_emailinfo_array = NULL;
+	gchar **changed_emailinfo_array = NULL;
+
+	g_debug ("eas_mail_handler_sync_folder_email++");
+
+	if((!self) || (!sync_key_in) || (!folder_id) || (!sync_key_out) || (!more_available))
+	{
+		g_set_error (error,
+		             EAS_MAIL_ERROR,
+		             EAS_MAIL_ERROR_BADARG,
+		             "bad argument passed to eas_mail_handler_sync_folder_email");
+		ret = FALSE;
+		goto finish;
+	}
+	// TODO update this to support 2-way sync as it claims to do:
+	if(delete_emails || change_emails)
+	{
+		g_set_error (error,
+		             EAS_MAIL_ERROR,
+		             EAS_MAIL_ERROR_BADARG,
+		             "eas_mail_handler_sync_folder_email currently doesn't support 2-way sync");
+		ret = FALSE;
+		goto finish;		
+	}
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	// call dbus api with appropriate params
+	ret = dbus_g_proxy_call (proxy, "sync_folder_items", error,
+				 G_TYPE_STRING, self->priv->account_uid,
+	             G_TYPE_UINT, EAS_ITEM_MAIL,			
+				 G_TYPE_STRING, sync_key_in,
+				 G_TYPE_STRING, folder_id, 
+	             G_TYPE_UINT, time_window,
+	             G_TYPE_STRV, NULL,						// add items
+	             G_TYPE_STRV, NULL,      				// delete items
+	             G_TYPE_STRV, NULL,						// change items
+				 G_TYPE_INVALID,
+				 G_TYPE_STRING, sync_key_out,
+				 G_TYPE_BOOLEAN, more_available,
+				 G_TYPE_STRV, &created_emailinfo_array,
+				 G_TYPE_STRV, &deleted_emailinfo_array,
+				 G_TYPE_STRV, &changed_emailinfo_array,
+	             G_TYPE_STRV, NULL,
+	             G_TYPE_STRV, NULL,
+	             G_TYPE_STRV, NULL,	                         
+				 G_TYPE_INVALID);
+
+	g_debug ("dbus call returned");
+	
+	// convert created/deleted/changed emailinfo arrays into lists of emailinfo objects (deserialise results)
+	if (ret) 
+	{
+		g_debug ("sync_folder_email called successfully");
+
+		// get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
+		ret = build_emailinfo_list ( (const gchar **) created_emailinfo_array, emails_created, error);
+		if (ret)
+		{
+			ret = build_emailinfo_list ( (const gchar **) deleted_emailinfo_array, emails_deleted, error);
+		}
+		if (ret) 
+		{
+			ret = build_emailinfo_list ( (const gchar **) changed_emailinfo_array, emails_changed, error);
+		}
+	}
+
+	free_string_array (created_emailinfo_array);
+	free_string_array (changed_emailinfo_array);
+	free_string_array (deleted_emailinfo_array);
+
+finish:
+	if (!ret) 
+	{ 	// failed - cleanup lists
+		g_assert (error == NULL || *error != NULL);
+		if(*emails_created)
+		{
+			g_slist_foreach (*emails_created, (GFunc) g_object_unref, NULL);
+			g_slist_free (*emails_created);
+			*emails_created = NULL;
+		}
+		if(*emails_changed)
+		{
+			g_slist_foreach (*emails_changed, (GFunc) g_object_unref, NULL);
+			g_slist_free (*emails_changed);
+			*emails_changed = NULL;
+		}
+		if(*emails_deleted)
+		{
+			g_slist_foreach (*emails_deleted, (GFunc) g_object_unref, NULL);
+			g_slist_free (*emails_deleted);
+			*emails_deleted = NULL;
+		}
+	}
+	g_debug ("eas_mail_handler_sync_folder_email_info--");
+
+	return ret;
 }

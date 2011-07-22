@@ -1242,6 +1242,7 @@ START_TEST (test_eas_mail_get_item_estimate)
     GSList *deleted = NULL;
 	gchar hierarchy_sync_key[64] = "0";
 	gchar folder_sync_key[64] = "0";
+	gchar* folder_sync_key_out = NULL;
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -1257,10 +1258,27 @@ START_TEST (test_eas_mail_get_item_estimate)
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
 	// get email in inbox. Note that EAS doesn't support GetItemEstimate with a sync_key of zero :-)
-	testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+	// testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+	// use the common sync api to get the first sync_key
+	ret = eas_mail_handler_sync_folder_email (email_handler,
+						  folder_sync_key,
+                          0,						// no time filter
+						  g_inbox_id,
+						  NULL,						// emails to delete
+						  NULL, 					// emails to change
+                          &folder_sync_key_out,
+						  &emails_created,
+	                      &emails_updated, 
+	                      &emails_deleted,
+						  &more_available,
+						  &error); 
 
+	if(!ret)
+	{
+		fail_if(TRUE, "eas_mail_handler_sync_folder_email returned %s", error->message);
+	}
 	mark_point();
-	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key, g_inbox_id, &estimate, &error);
+	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key_out, g_inbox_id, &estimate, &error);
 	if(!ret)
 	{
 		if(error)

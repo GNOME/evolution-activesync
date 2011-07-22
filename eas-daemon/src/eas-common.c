@@ -85,12 +85,14 @@ eas_common_class_init (EasCommonClass *klass)
 				  EAS_TYPE_CONNECTION_ERROR);
 }
 
-gboolean eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error)
+gboolean 
+eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error)
 {
     return TRUE;
 }
 
-gboolean eas_common_get_protocol_version (EasCommon *obj,
+gboolean 
+eas_common_get_protocol_version (EasCommon *obj,
 					  const gchar *account_uid,
 					  gchar **ret, GError **error)
 {
@@ -109,4 +111,38 @@ gboolean eas_common_get_protocol_version (EasCommon *obj,
 	*ret = g_strdup_printf ("%d.%d", proto_ver / 10, proto_ver % 10);
 
 	return TRUE;
+}
+
+
+gboolean 
+eas_common_sync_folder_items (EasCommon* self,
+                               const gchar* account_uid,
+                               guint item_type,
+                               const gchar* folder_id,
+                               guint filter_type,
+                               const gchar* sync_key,
+                               const gchar** add_items,
+                               const gchar** delete_items,                                       
+                               const gchar** change_items,
+                               DBusGMethodInvocation* context)
+{
+	
+	GError *error = NULL;
+
+	g_debug("eas_common_sync_folder_items++");
+	
+	g_set_error (&error,
+                 EAS_CONNECTION_ERROR,
+                 EAS_CONNECTION_ERROR_NOTSUPPORTED,
+                 "sync folder items not yet supported");
+	
+	// TODO add support for this method
+	
+	dbus_g_method_return_error (context, error);		
+	
+	g_error_free (error);
+	
+	g_debug("eas_common_sync_folder_items--");
+	
+	return FALSE;
 }

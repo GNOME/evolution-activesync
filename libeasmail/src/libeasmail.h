@@ -384,7 +384,58 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 					       EasPushEmailCallback cb,
 					       GError **error);
 
-
+/* function name:               eas_mail_handler_sync_email_info
+ * function description:        sync email with the server for a specified folder
+ *                              (no bodies retrieved).  Default Max changes in one sync = 100
+ *                              as per Exchange default window size.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
+ * const gchar *sync_key_in (in):	use value returned from the previous sync request on this folder (or 0 if this is the first sync)
+ * guint	time_window (in):		will retrieve only emails dated within the specified window. valid values are 0-5
+ *	 								0 = no window - sync all items
+ *	 								1 = 1 day back
+ *	 								2 = 3 days back
+ *	 								3 = 1 week back
+ *	 								4 = 2 weeks back
+ *	 								5 = 1 month back
+ * const gchar *folder_id (in): 	this value identifies the folder to get the email info from.
+ * 									Use the EasFolder->folder_id value in the EasFolder structs
+ *                              	returned from the eas_mail_handler_sync_folder_hierarchy() call.
+ * GSList *delete_emails	(in):	list of emails to delete 
+ * GSList *change_emails 	(in):	list of emails to update
+ * gchar *sync_key_out	 	(out):	updated sync key
+ * GSList **emails_created (out): 	returns a list of EasEmailInfos structs that describe
+ *                              	created mails.  If there are no new created mails
+ *                              	this parameter will be unchanged.  In the case of created emails
+ *                              	all fields are filled in
+ * GSList **emails_updated (out): 	returns a list of EasEmailInfos structs that describe
+ *                              	updated mails.  If there are no new updated mails
+ *                              	this parameter will be unchanged.  In the case of updated emails
+ *                              	only the serverids, flags and categories are valid
+ * GSList **emails_deleted (out): 	returns a list of EasEmailInfos structs that describe
+ *                              	deleted mails.  If there are no new deleted mails
+ *                              	this parameter will be unchanged.  In the case of deleted emails
+ *                              	only the serverids are valid
+ * gboolean *more_available:    	TRUE if there are more changes to sync (window_size exceeded).
+ *                              	Otherwise FALSE.
+ * GError **error (out):        	returns error information if an error occurs.  If no
+ *                              	error occurs this will unchanged.  This error information
+ *                              	could be related to errors in this API or errors propagated
+ *                              	back through underlying layers
+*/
+gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
+						  const gchar *sync_key_in,
+                          guint	time_window,
+						  const gchar *folder_id,
+						  GSList *delete_emails,
+						  GSList *change_emails, 
+                          gchar **sync_key_out,
+						  GSList **emails_created,
+						  GSList **emails_changed,
+						  GSList **emails_deleted,
+						  gboolean *more_available,
+						  GError **error); 
 
 /*
 Outstanding issues:

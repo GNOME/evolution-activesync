@@ -54,6 +54,7 @@
 
 #include <dbus/dbus-glib.h>
 #include <glib-object.h>
+#include "../libeas/eas-request-base.h"
 
 G_BEGIN_DECLS
 
@@ -85,6 +86,20 @@ gboolean eas_common_start_sync(EasCommon* obj, gint valueIn, GError** error) ;
 gboolean eas_common_get_protocol_version (EasCommon *obj,
 					  const gchar *account_uid,
 					  gchar **ret, GError **error);
+
+/*
+	synchronize an email folder. Gets email headers only, not bodies
+*/   
+gboolean eas_common_sync_folder_items (EasCommon* self,
+                               const gchar* account_uid,
+                               EasItemType item_type,
+                               const gchar* folder_id,
+                               guint filter_type,
+                               const gchar* sync_key,
+                               const gchar** add_items,
+                               const gchar** delete_items,                                       
+                               const gchar** change_items,
+                               DBusGMethodInvocation* context);
 
 G_END_DECLS
 

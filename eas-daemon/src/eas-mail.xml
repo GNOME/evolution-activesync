@@ -53,7 +53,7 @@
       <arg type="as" name="ret_updated_folder_array" direction="out"/>
     </method>
 
-<!-- 2-way sync of specified email folder. This will sync email headers only, not bodies will use AS 'Sync' command -->
+<!-- 1-way sync (from server to client) of specified email folder. This will sync email headers only, not bodies will use AS 'Sync' command -->
     <method name="sync_folder_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="account_uid" direction="in"/>

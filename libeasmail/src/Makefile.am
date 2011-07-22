@@ -50,13 +50,16 @@ libeasmail_la_SOURCES =		\
 		eas-marshal.h 		\
 		eas-marshal.c		
         
-interface_xml =  ../../eas-daemon/src/eas-mail.xml
+mail_interface_xml =  ../../eas-daemon/src/eas-mail.xml
+common_interface_xml = ../../eas-daemon/src/eas-common.xml
 
-#Rule to generate the binding headers
-eas-mail-client-stub.h: $(interface_xml)
+#Rules to generate the binding headers
+eas-mail-client-stub.h: $(mail_interface_xml)
 	dbus-binding-tool --prefix=eas_object --mode=glib-client $< > $@
+eas-common-client-stub.h: $(common_interface_xml)	
+	dbus-binding-tool --prefix=eas_common --mode=glib-client $< > $@
 	       
-BUILT_SOURCES = eas-mail-client-stub.h
+BUILT_SOURCES = eas-mail-client-stub.h eas-common-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
 
