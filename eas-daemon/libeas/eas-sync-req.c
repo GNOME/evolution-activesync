@@ -315,7 +315,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 
 		g_debug ("eas_sync_req_activate - build messsage");
 		//build request msg
-		doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, NULL);
+		doc = eas_sync_msg_build_message (priv->syncMsg, 0, getChanges, NULL, NULL, NULL);
 		if (!doc)
 		{
 		    ret = FALSE;
@@ -438,7 +438,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
 			g_debug ("eas_sync_req_activate - build messsage");
 			//build request msg
-			doc = eas_sync_msg_build_message (priv->syncMsg, FALSE, NULL, NULL, NULL);
+			doc = eas_sync_msg_build_message (priv->syncMsg, 0, FALSE, NULL, NULL, NULL);
 			if (!doc)
 			{
 				ret = FALSE;
@@ -487,7 +487,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
             priv->syncMsg = eas_sync_msg_new (syncKey, conn, priv->folderID, priv->ItemType);
 			g_free(syncKey);
             //build request msg
-            doc = eas_sync_msg_build_message (priv->syncMsg, TRUE, NULL, NULL, NULL);
+            doc = eas_sync_msg_build_message (priv->syncMsg, 0, TRUE, NULL, NULL, NULL);
 			if (!doc)
 			{
 				g_set_error (&error, EAS_CONNECTION_ERROR,

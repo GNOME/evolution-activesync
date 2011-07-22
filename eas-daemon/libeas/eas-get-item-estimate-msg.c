@@ -149,7 +149,6 @@ eas_get_item_estimate_msg_build_message (EasGetItemEstimateMsg* self)
     xmlNode *root  = NULL,
 			*collections = NULL,
 			*collection = NULL,
-			*options = NULL,
             *leaf = NULL;
 	int protover = eas_connection_get_protocol_version (priv->connection);
 

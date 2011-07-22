@@ -207,7 +207,7 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
 
 	g_debug ("eas_update_item_req_Activate2");
     //build request msg
-    doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, priv->serialised_calendar, NULL);
+    doc = eas_sync_msg_build_message (priv->sync_msg, 0, FALSE, NULL, priv->serialised_calendar, NULL);
 
 	g_debug ("eas_update_item_req_Activate3");
     success = eas_request_base_SendRequest (parent,

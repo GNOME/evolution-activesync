@@ -180,7 +180,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
     g_debug ("eas_delete_req_Activate- syncKey = %s", priv->syncKey);
 
     //build request msg
-    doc = eas_sync_msg_build_message (priv->syncMsg, getChanges, NULL, NULL, priv->server_ids_array);
+    doc = eas_sync_msg_build_message (priv->syncMsg, 0, getChanges, NULL, NULL, priv->server_ids_array);
 	if(!doc)
 	{
         g_set_error (error, EAS_CONNECTION_ERROR,

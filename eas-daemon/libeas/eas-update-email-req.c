@@ -228,7 +228,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
 
     g_debug ("build messsage");
     //build request msg
-    doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, NULL, update_emails, NULL);
+    doc = eas_sync_msg_build_message (priv->sync_msg, 0, FALSE, NULL, update_emails, NULL);
     g_slist_free (update_emails);
     if (!doc)
     {

@@ -130,6 +130,7 @@ eas_sync_msg_new (const gchar* syncKey,
  */
 xmlDoc* 
 eas_sync_msg_build_message (EasSyncMsg* self, 
+                            guint filter_type,
                             gboolean getChanges, 
                             GSList *added, 
                             GSList *updated, 

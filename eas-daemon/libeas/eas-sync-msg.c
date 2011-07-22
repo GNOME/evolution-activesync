@@ -151,7 +151,7 @@ eas_sync_msg_new (const gchar* syncKey, EasConnection *conn, const gchar *folder
 }
 
 xmlDoc*
-eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added, GSList *updated, GSList *deleted)
+eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getChanges, GSList *added, GSList *updated, GSList *deleted)
 {
     EasSyncMsgPrivate *priv = self->priv;
     xmlDoc  *doc   = NULL;
@@ -161,6 +161,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
             *options = NULL,
             *body_pref = NULL;
     xmlNs   *ns    = NULL;
+	gchar filter[2] = "0";
+
 	int protover = eas_connection_get_protocol_version (priv->connection);
 
     doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -201,9 +203,11 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
 
         if (priv->ItemType == EAS_ITEM_MAIL)
         {
-
+			g_assert(filter_type <= 5);
+			snprintf (filter, sizeof (filter) / sizeof (filter[0]), "%d", filter_type);
+			
             options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
-            xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+            xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) filter);
             xmlNewChild (options, NULL, (xmlChar *) "MIMESupport", (xmlChar*) "2");
             xmlNewChild(options, NULL, (xmlChar *)"MIMETruncation", (xmlChar*)"1"); // First 4KiB
 
@@ -213,9 +217,11 @@ eas_sync_msg_build_message (EasSyncMsg* self, gboolean getChanges, GSList *added
         }
         else if (priv->ItemType == EAS_ITEM_CALENDAR || priv->ItemType == EAS_ITEM_CONTACT )
         {
-
+			g_assert((filter_type == 0) || (4 <= filter_type && filter_type <= 7)); // TODO verify that we enforce this at the public api
+			snprintf (filter, sizeof (filter) / sizeof (filter[0]), "%d", filter_type);
+			
             options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
-            xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+            xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) filter);
 
             body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
             xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "1"); // Plain text 1, HTML 2, MIME 4
@@ -744,8 +750,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
             }   // end add
 			else if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Change"))
 			{
+				gchar *flat_item = NULL;
 				appData = node;
-                gchar *flat_item = NULL;
 				
                 for (appData = appData->children; appData; appData = appData->next)
                 {	

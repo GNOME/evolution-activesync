@@ -203,7 +203,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
     priv->sync_msg = eas_sync_msg_new (priv->sync_key, conn, priv->folder_id, priv->item_type);
 
     //build request msg
-    doc = eas_sync_msg_build_message (priv->sync_msg, FALSE, priv->serialised_calendar, NULL, NULL);
+    doc = eas_sync_msg_build_message (priv->sync_msg, 0, FALSE, priv->serialised_calendar, NULL, NULL);
 
 	success = eas_request_base_SendRequest (parent,
 	                                       "Sync",
