@@ -142,7 +142,8 @@
 
 
 
-static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *sought)
+static void 
+add_attr_value(EVCardAttribute *attr,xmlNodePtr node, const gchar *sought)
 {
 	xmlNodePtr n = node;
 	gchar *value = NULL; 
@@ -157,10 +158,9 @@ static void add_attr_value(EVCardAttribute *attr,xmlNodePtr node,const gchar *so
 		}
 		n = n->next;
 	}
-	// drop out if not found
-	if(!value)
-		return;
-	// add sought value
+
+	/* if sought not found (i.e. value = NULL) then e_vcard_attribute_add_value()
+	inserts a semicolon otherwise it adds the value*/
 	e_vcard_attribute_add_value(attr, value);
 }
 
@@ -169,9 +169,8 @@ static void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr node)
 	add_attr_value(attr, node, EAS_ELEMENT_LASTNAME);
 	add_attr_value(attr, node, EAS_ELEMENT_FIRSTNAME);
 	add_attr_value(attr, node, EAS_ELEMENT_MIDDLENAME);
-	/* Prefix not supported add ";;" instead */
+	/* Prefix not supported add ";" instead */
 	e_vcard_attribute_add_value(attr, NULL);
-	//add_attr_value(attr, node, EAS_ELEMENT_TITLE);
 	add_attr_value(attr, node, EAS_ELEMENT_SUFFIX);
 }
 
