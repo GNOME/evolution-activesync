@@ -7,12 +7,12 @@ MARSHAL_GENERATED = eas-marshal.c eas-marshal.h
 # TODO - this doesn't always work; sometimes the marshal files aren't created until these commands are run manually:
 # generate marshal functions for progress signals:
 eas-marshal.h: eas-marshal.list
-	$(AM_V_GEN) ( $(GLIB_GENMARSHAL) --prefix=eas_marshal eas-marshal.list --header > eas-marshal.tmp \
+	$(AM_V_GEN) ( $(GLIB_GENMARSHAL) --prefix=eas_marshal $(srcdir)/eas-marshal.list --header > eas-marshal.tmp \
 	&& mv eas-marshal.tmp eas-marshal.h ) \
 	|| ( rm -f eas-marshal.tmp && exit 1 )
 
 eas-marshal.c: eas-marshal.h
-	$(AM_V_GEN) ( (echo '#include "eas-marshal.h"'; $(GLIB_GENMARSHAL) --prefix=eas_marshal eas-marshal.list --body) > eas-marshal.tmp \
+	$(AM_V_GEN) ( (echo '#include "eas-marshal.h"'; $(GLIB_GENMARSHAL) --prefix=eas_marshal $(srcdir)/eas-marshal.list --body) > eas-marshal.tmp \
 	&& mv eas-marshal.tmp eas-marshal.c ) \
 	|| ( rm -f eas-marshal.tmp && exit 1  )
 
