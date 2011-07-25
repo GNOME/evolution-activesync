@@ -547,7 +547,7 @@ attribute_get_nth_value(EVCardAttribute *attr, int nth)
 {
 	GList *values = NULL;
 	GString *retstr = NULL;
-	
+
 	values = e_vcard_attribute_get_values_decoded(attr);
 	if (!values)
 		return NULL;
@@ -565,7 +565,7 @@ attribute_get_nth_value(EVCardAttribute *attr, int nth)
 	return retstr->str;
 }
 
-/* Check if an contact field allready set in the applicationdata xml children*/
+/* Check if a contact field allready set in the applicationdata xml children*/
 static gboolean
 is_element_set(xmlNodePtr appData, const gchar* name)
 {
@@ -580,8 +580,47 @@ is_element_set(xmlNodePtr appData, const gchar* name)
 }
 
 static void 
-set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
+set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* content)
+{
+	g_return_if_fail (appData->type == XML_ELEMENT_NODE);
+	g_return_if_fail (appData->name != NULL);
+	g_return_if_fail (name != NULL);
+	g_return_if_fail (content != NULL);
+	
+	if(strlen(content) !=0)
+		xmlNewTextChild(appData, NULL, name, content);
+}
 
+static void 
+set_xml_address2(xmlNodePtr appData, EVCardAttribute *attr, const xmlChar* add0,
+                 const xmlChar* add1, const xmlChar* add2, const xmlChar* add3,
+                 const xmlChar* add4, const xmlChar* add5, const xmlChar* add6)
+{
+	
+#if 0
+	/ * AS does not support PostalBox */
+	set_xml_element(appData, add0, (const xmlChar*)attribute_get_nth_value(attr, 0));
+#endif
+
+#if 0
+	/ * AS does not support ExtendedAddress */
+	set_xml_element(appData, add1, (const xmlChar*)attribute_get_nth_value(attr, 1));
+#endif
+
+	/* Street */
+	set_xml_element(appData, add2, (const xmlChar*)attribute_get_nth_value(attr, 2));
+	/* City */
+	set_xml_element(appData, add3, (const xmlChar*)attribute_get_nth_value(attr, 3));
+	/* State */
+	set_xml_element(appData, add4, (const xmlChar*)attribute_get_nth_value(attr, 4));
+	/* Postalcode */
+	set_xml_element(appData, add5, (const xmlChar*)attribute_get_nth_value(attr, 5));
+	/* Country */
+	set_xml_element(appData, add6, (const xmlChar*)attribute_get_nth_value(attr, 6));
+}
+
+static void 
+set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
 {
 
 /*
@@ -604,91 +643,38 @@ set_xml_address(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam 
 
 	if (!strcmp(propname, "WORK"))
 	{
-#if 0
-		/ * AS does not support PostalBox */
-		 set_xml_element(appData, (const xmlChar*) "PostalBox",
-        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-#endif
-
-#if 0
-		/ * AS does not support ExtendedAddress */
-		set_xml_element(appData, (const xmlChar*) "ExtendedAddress",
-        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
-#endif
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
-        (const xmlChar*)attribute_get_nth_value(attr, 2));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_BUSINESSCITY,
-        (const xmlChar*)attribute_get_nth_value(attr, 3));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSSTATE,
-        (const xmlChar*)attribute_get_nth_value(attr, 4));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSPOSTALCODE,
-        (const xmlChar*)attribute_get_nth_value(attr, 5));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_BUSINESSCOUNTRY,
-        (const xmlChar*)attribute_get_nth_value(attr, 6));
+		set_xml_address2(appData, attr,
+			             (const xmlChar*) "PostalBox",
+			             (const xmlChar*) "ExtendedAddress",
+			             (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
+			             (const xmlChar*) EAS_ELEMENT_BUSINESSCITY,
+			             (const xmlChar*) EAS_ELEMENT_BUSINESSSTATE,
+			             (const xmlChar*) EAS_ELEMENT_BUSINESSPOSTALCODE,
+			             (const xmlChar*) EAS_ELEMENT_BUSINESSCOUNTRY);
 	}
 	else if (!strcmp(propname, "HOME"))
 	{
-#if 0
-		/* AS does not support PostalBox */
-		xmlNewTextChild(appData, NULL, (const xmlChar*) "PostalBox",
-        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-#endif
-
-#if 0
-		/* AS does not support ExtendedAddress */
-		xmlNewTextChild(appData, NULL, (const xmlChar*)"ExtendedAddress",
-        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding);
-#endif
-		xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_ELEMENT_HOMESTREET,
-        (const xmlChar*)attribute_get_nth_value(attr, 2));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_HOMECITY,
-        (const xmlChar*)attribute_get_nth_value(attr, 3));
-	
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOMESTATE,
-        (const xmlChar*)attribute_get_nth_value(attr, 4));
-	
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOMEPOSTALCODE,
-        (const xmlChar*)attribute_get_nth_value(attr, 5));
-	
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOMECOUNTRY,
-        (const xmlChar*)attribute_get_nth_value(attr, 6));
+		set_xml_address2(appData, attr,
+			             (const xmlChar*) "PostalBox",
+			             (const xmlChar*) "ExtendedAddress",
+			             (const xmlChar*) EAS_ELEMENT_HOMESTREET,
+			             (const xmlChar*) EAS_ELEMENT_HOMECITY,
+			             (const xmlChar*) EAS_ELEMENT_HOMESTATE,
+			             (const xmlChar*) EAS_ELEMENT_HOMEPOSTALCODE,
+			             (const xmlChar*) EAS_ELEMENT_HOMECOUNTRY);
 	}
 	else
 	{
 		/* deal with possible other vCard type of addresses:
 		 "dom", "intl", "postal", "parcel", "pref" / iana-type / x-name */
-#if 0
-		/* AS does not support PostalBox */
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) "PostalBox",
-        (const xmlChar*)attribute_get_nth_value(attr, 0), encoding); */
-#endif
-
-#if 0
-		/* AS does not support ExtendedAddress */
-		/* xmlNewTextChild(appData, NULL, (const xmlChar*) "ExtendedAddress",
-        (const xmlChar*)attribute_get_nth_value(attr, 1), encoding); */
-#endif
-		
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERSTREET,
-        (const xmlChar*)attribute_get_nth_value(attr, 2));
-		
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERCITY,
-        (const xmlChar*)attribute_get_nth_value(attr, 3));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERSTATE,
-        (const xmlChar*)attribute_get_nth_value(attr, 4));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERPOSTALCODE,
-        (const xmlChar*)attribute_get_nth_value(attr, 5));
-
-		xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OTHERCOUNTRY,
-        (const xmlChar*)attribute_get_nth_value(attr, 6));
+		set_xml_address2(appData, attr,
+			             (const xmlChar*) "PostalBox",
+			             (const xmlChar*) "ExtendedAddress",
+			             (const xmlChar*) EAS_ELEMENT_OTHERSTREET,
+			             (const xmlChar*) EAS_ELEMENT_OTHERCITY,
+			             (const xmlChar*) EAS_ELEMENT_OTHERSTATE,
+			             (const xmlChar*) EAS_ELEMENT_OTHERPOSTALCODE,
+			             (const xmlChar*) EAS_ELEMENT_OTHERCOUNTRY);
 	}
 }
 
@@ -706,75 +692,75 @@ set_xml_tel(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *par
 	{	
 		if(!is_element_set(appData, EAS_ELEMENT_BUSINESSPHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSPHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSPHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
+
 		}
 		else if(!is_element_set(appData, EAS_ELEMENT_BUSINESS2PHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESS2PHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESS2PHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if(strcmp(propname0, "WORK") == 0 && strcmp(propname1, "FAX") == 0)
 	{	
 		if(!is_element_set(appData, EAS_ELEMENT_BUSINESSFAXNUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_BUSINESSFAXNUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_BUSINESSFAXNUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if(strcmp(propname0, "HOME") == 0 && strcmp(propname1, "VOICE") == 0)
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_HOMEPHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOMEPHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMEPHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 		else if(!is_element_set(appData, EAS_ELEMENT_HOME2PHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOME2PHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOME2PHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if(strcmp(propname0, "HOME") == 0 && strcmp(propname1, "FAX") == 0)
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_HOMEFAXNUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_HOMEFAXNUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_HOMEFAXNUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if (!strcmp(propname0, "CELL"))
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_MOBILEPHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if (!strcmp(propname0, "CAR"))
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_CARPHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if (!strcmp(propname0, "RADIO"))
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_RADIOPHONENUMBER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
-
 	else if (!strcmp(propname0, "PAGER"))
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_PAGER))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_PAGER,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_PAGER,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 
@@ -793,24 +779,24 @@ set_xml_email(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *p
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_EMAIL1ADDRESS))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if (!strcmp(propname0, "HOME"))
 	{
 		if(!is_element_set(appData, EAS_ELEMENT_EMAIL2ADDRESS))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_EMAIL2ADDRESS,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL2ADDRESS,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else if (!strcmp(propname0, "OTHER") || !strcmp(propname0, "INTERNET"))
 	{ 
 		if(!is_element_set(appData, EAS_ELEMENT_EMAIL3ADDRESS))
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
-				(const xmlChar*)attribute_get_nth_value(attr, 0));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
+			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 		}
 	}
 	else
@@ -827,8 +813,8 @@ set_xml_categories(xmlNodePtr appData, EVCardAttribute *attr)
 	categories = xmlNewChild (appData, NULL, (xmlChar *) EAS_ELEMENT_CATEGORIES, NULL);
 	values = e_vcard_attribute_get_values(attr);
 	for(l = values; l; l= l->next ){
-		xmlNewTextChild(categories, NULL, (const xmlChar*) EAS_ELEMENT_CATEGORY,
-				(const xmlChar*)l->data);
+		set_xml_element(categories, (const xmlChar*) EAS_ELEMENT_CATEGORY,
+			                (const xmlChar*)l->data);
 	}
 }
 
@@ -841,8 +827,8 @@ set_xml_contact_date(xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_eleme
 	const gchar* date = NULL;
 	gchar* dateZ = NULL;
 	date = attribute_get_nth_value(attr, 0);
-	dateZ = g_strconcat(date, "T00:00:00.000Z", NULL); 
-	xmlNewTextChild(appData, NULL, (const xmlChar*) eas_element, (const xmlChar*)dateZ);
+	dateZ = g_strconcat(date, "T00:00:00.000Z", NULL);
+	set_xml_element(appData, (const xmlChar*) eas_element, (const xmlChar*)dateZ);
 	g_free(dateZ);	
 }
 
@@ -893,17 +879,18 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Name */
 		if (!strcmp(name, EVC_N)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_LASTNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_LASTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-			xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_FIRSTNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1));
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
-							(const xmlChar*)attribute_get_nth_value(attr, 2));
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
+			                (const xmlChar*)attribute_get_nth_value(attr, 2));
 			/* ActiveSync does not support Prefix */
-			/*xmlNewTextChild(appData, NULL, (const xmlChar*) "Prefix",
-							(const xmlChar*)attribute_get_nth_value(attr, 3));*/
-			xmlNewTextChild(appData, NULL, (const xmlChar*)  EAS_ELEMENT_SUFFIX,
+			/* set_xml_element(appData, (const xmlChar*) "Prefix",
+			                (const xmlChar*)attribute_get_nth_value(attr, 3)); */
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
 			                (const xmlChar*)attribute_get_nth_value(attr, 4));
+
 			continue;
 		}
 
@@ -913,26 +900,28 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		  				MS-ASWBXML and wbxml (in wbxml_tables.c) indicate that this
 						itme is not supported when the MS-ASProtocolVersion header is set to 12.1 */
 		if (!strcmp(name, EVC_NICKNAME)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_CONTACTS2_NICKNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_NICKNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
 		
 		/* Company */
 		if (!strcmp(name, EVC_ORG)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_DEPARTMENT,
+			set_xml_element(appData,  (const xmlChar*) EAS_ELEMENT_DEPARTMENT,
 			                (const xmlChar*)attribute_get_nth_value(attr, 1));
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
 			                (const xmlChar*)attribute_get_nth_value(attr, 2));
+
 			continue;
 		}
 
 		/* Url */
 		if (!strcmp(name, EVC_URL)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
+
 			continue;
 		}
 
@@ -944,42 +933,43 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		
 		/* Title */
 		if (!strcmp(name, EVC_TITLE)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_TITLE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_TITLE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
+
 			continue;
 		}
 
 		/* Role */
 		if (!strcmp(name, EVC_ROLE)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_JOBTITLE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_JOBTITLE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
 
 		/* Spouse - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
 		if (!strcmp(name, "X-EVOLUTION-SPOUSE")) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_SPOUSE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SPOUSE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
 
 		/* FileAs - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
 		if (!strcmp(name, "X-EVOLUTION-FILE-AS")) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_FILEAS,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FILEAS,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
 
 		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
 		if (!strcmp(name, "X-EVOLUTION-ASSISTANT")) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_ASSISTANTNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_ASSISTANTNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
 
 		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
 		if (!strcmp(name, "X-EVOLUTION-MANAGER")) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_CONTACTS2_MANAGERNAME,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_MANAGERNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
@@ -992,8 +982,9 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Office Location - vCard does not support it, so we use X-EVOLUTION-OFFICE*/
 		if (!strcmp(name, "X-EVOLUTION-OFFICE")) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
+
 			continue;
 		}
 
@@ -1013,7 +1004,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		/* Photo (AS: name is "Picture") */
 		/* Evolution saves Photo as base64 encoded so there is no need to encode*/
 		if (!strcmp(name, EVC_PHOTO)) {
-			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_ELEMENT_PICTURE,
+			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_PICTURE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
 			continue;
 		}
