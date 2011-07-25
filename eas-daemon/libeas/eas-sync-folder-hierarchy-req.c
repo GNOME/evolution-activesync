@@ -57,16 +57,9 @@
 #include "serialise_utils.h"
 
 
-typedef enum
-{
-    EasSyncFolderHierarchyStep1 = 0,
-    EasSyncFolderHierarchyStep2
-} EasSyncFolderHierarchyReqState;
-
 struct _EasSyncFolderHierarchyReqPrivate
 {
     EasSyncFolderMsg* syncFolderMsg;
-    EasSyncFolderHierarchyReqState state;
     gchar* accountID;
     gchar* syncKey;
 };
@@ -86,7 +79,6 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
 
     g_debug ("eas_sync_folder_hierarchy_req_init++");
     priv->syncFolderMsg = NULL;
-    priv->state = EasSyncFolderHierarchyStep1;
     priv->accountID = NULL;
     priv->syncKey = NULL;
 
@@ -165,15 +157,6 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
     priv->accountID = g_strdup (accountId);
     eas_request_base_SetContext (&self->parent_instance, context);
 
-	// Actually, we don't need the two-stage sync for folders.
-	// It gives us the folder list on the *first* attempt, and
-	// if we loop, we throw away that information and get
-	// "no changes" for the second call.
-//    if (1 || syncKey && g_strcmp0 (syncKey, "0"))
-//    {
-        priv->state = EasSyncFolderHierarchyStep2;
-//    }
-
     g_debug ("eas_sync_folder_hierarchy_req_new--");
     return self;
 }
@@ -238,6 +221,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	gchar** ret_created_folders_array = NULL;
 	gchar** ret_updated_folders_array = NULL;
 	gchar** ret_deleted_folders_array = NULL;
+	const gchar *ret_sync_key;
 
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
@@ -260,58 +244,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
         goto finish;
     }
 
-    switch (priv->state)
-    {
-        default:
-        {
-            g_warning("Unknown state");
-			g_set_error (&error, EAS_CONNECTION_ERROR,
-			             EAS_CONNECTION_ERROR_BADREQUESTSTATE,
-			             "Unknown SyncFolderHierarchy state");
-			goto finish;
-        }
-        break;
-
-        //We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
-        case EasSyncFolderHierarchyStep1:
-        {
-            //get syncKey
-            const gchar* syncKey = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg);
-            xmlDoc *newMsgDoc = NULL;
-
-            //create new message with new syncKey
-            priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
-
-            //build request msg
-            newMsgDoc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-            if (!newMsgDoc)
-            {
-                ret = FALSE;
-                g_set_error (&error, EAS_CONNECTION_ERROR,
-                             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                             ("out of memory"));
-                goto finish;
-            }
-            //move to new state
-            priv->state = EasSyncFolderHierarchyStep2;
-
-            ret = eas_request_base_SendRequest (parent, 
-                                                "FolderSync", 
-                                                newMsgDoc, // full transfer
-                                                &error);
-
-            if (!ret)
-            {
-                g_assert (error != NULL);
-                goto finish;
-            }
-        }
-        break;
-
-        //we did a proper sync, so we need to complete the dbus call
-        case EasSyncFolderHierarchyStep2:
-        {
-            const gchar* ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
+            ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
 			//state machine finished, so tell connection object to clean this up.
 			cleanup = TRUE;
 			
@@ -356,9 +289,6 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			g_strfreev(ret_created_folders_array);
 			g_strfreev(ret_updated_folders_array);
 			g_strfreev(ret_deleted_folders_array);
-        }
-        break;
-    }
 
 finish:
     xmlFreeDoc (doc);
