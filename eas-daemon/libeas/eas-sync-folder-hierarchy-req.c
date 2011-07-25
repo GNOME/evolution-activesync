@@ -204,6 +204,40 @@ finish:
     return ret;
 }
 
+static void
+eas_sync_folder_hierarchy_req_return (EasSyncFolderHierarchyReq *self, const gchar *ret_sync_key,
+									  GSList *added_folders, GSList *updated_folders,
+									  GSList *deleted_folders, GError *error)
+{
+	EasRequestBase *parent = EAS_REQUEST_BASE (self);
+	gchar** ret_created_folders_array = NULL;
+	gchar** ret_updated_folders_array = NULL;
+	gchar** ret_deleted_folders_array = NULL;
+
+	// Serialise the response data from GSList* to char** for transmission over Dbus
+
+	if (!error &&
+		build_serialised_folder_array (&ret_created_folders_array, added_folders, &error) &&
+		build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error) &&
+		build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error))
+	{
+		dbus_g_method_return (eas_request_base_GetContext (parent),
+							  ret_sync_key,
+							  ret_created_folders_array,
+							  ret_deleted_folders_array,
+							  ret_updated_folders_array);
+	}
+    else
+	{
+		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_error_free (error);
+	}
+
+	g_strfreev(ret_created_folders_array);
+	g_strfreev(ret_updated_folders_array);
+	g_strfreev(ret_deleted_folders_array);
+}
+
 /*
  * @param error any error that occured (or NULL) [full transfer]
  */
@@ -216,14 +250,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	GSList* added_folders = NULL;
 	GSList* updated_folders  = NULL;
 	GSList* deleted_folders  = NULL;
-
-	gchar** ret_created_folders_array = NULL;
-	gchar** ret_updated_folders_array = NULL;
-	gchar** ret_deleted_folders_array = NULL;
-	const gchar *ret_sync_key;
-
-	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-
+	const gchar *ret_sync_key = NULL;
 
     // if an error occurred, store it and signal daemon
     if (error_in)
@@ -254,47 +281,10 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			        g_slist_length (updated_folders), 
 			        g_slist_length (deleted_folders));
 
-            // Serialise the response data from GSList* to char** for transmission over Dbus
+ finish:
+	eas_sync_folder_hierarchy_req_return (self, ret_sync_key, added_folders,
+										  updated_folders, deleted_folders, error);
 
-			ret = build_serialised_folder_array (&ret_created_folders_array, added_folders, &error);
-			if (ret)
-			{
-				ret = build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error);
-				if (ret)
-				{
-					ret = build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error);
-				}
-			}
-
-			// Return the error or the requested data to the mail client
-			if (!ret)
-			{
-				g_set_error (&error, EAS_CONNECTION_ERROR,
-			             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-			             ("out of memory"));
-				goto finish;
-			}
-			else
-			{
-				dbus_g_method_return (eas_request_base_GetContext (parent),
-					                  ret_sync_key,
-					                  ret_created_folders_array,
-				                      ret_deleted_folders_array,
-					                  ret_updated_folders_array);
-			}
-
-			g_strfreev(ret_created_folders_array);
-			g_strfreev(ret_updated_folders_array);
-			g_strfreev(ret_deleted_folders_array);
-
-finish:
-    xmlFreeDoc (doc);
-	if (!ret)
-	{
-		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
-		g_error_free (error);
-	}
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
 	return TRUE;
 }
