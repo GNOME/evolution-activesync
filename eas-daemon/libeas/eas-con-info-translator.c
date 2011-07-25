@@ -101,7 +101,13 @@
 #define EAS_ELEMENT_PAGER                     "PagerNumber"
 #define EAS_ELEMENT_ROLE                      "JobTitle"
 #define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
-#define EAS_ELEMENT_NOTE                      "Body"
+
+#define EAS_ELEMENT_BODY						"airsyncbase:Body"
+#define EAS_ELEMENT_BODY_TYPE					"airsyncbase:Type"
+#define EAS_ELEMENT_BODY_SIZE					"airsyncbase:EstimatedDataSize"
+#define EAS_ELEMENT_BODY_TRUNCATED				"airsyncbase:Truncated"
+#define EAS_ELEMENT_BODY_DATA					"airsyncbase:Data"
+#define EAS_ELEMENT_BODY_PREVIEW				"airsyncbase:Preview"
 
 #define EAS_ELEMENT_ANNIVERSARY					"Anniversary"
 #define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
@@ -127,7 +133,7 @@
 #define EAS_ELEMENT_CHILDREN					"Children"
 #define EAS_ELEMENT_CHILD						"Child"
 
-//#define EAS_ELEMENT_BODY						"Body"
+
 /* targetNamespace for Contacts2 (from AS contacts schema) */
 #define EAS_ELEMENT_CONTACTS2_CUSTOMERID		"CustomerId"
 #define EAS_ELEMENT_CONTACTS2_GOVERNMENTID		"GovernmentId"
@@ -487,12 +493,12 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 				//
 				// Note
 				//
-				else if (g_strcmp0(name, EAS_ELEMENT_NOTE) == 0)
+				else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
 				{
 					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_NOTE);
 
 					e_vcard_add_attribute(vcard, attr);
-					add_attr_value(attr,node->children,EAS_ELEMENT_NOTE);
+					add_attr_value(attr,node->children,EAS_ELEMENT_BODY);
 				}
 				else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
 				{
@@ -587,7 +593,7 @@ set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* content)
 	g_return_if_fail (name != NULL);
 	g_return_if_fail (content != NULL);
 	
-	if(strlen(content) !=0)
+	if(strlen((const char *)content) !=0)
 		xmlNewTextChild(appData, NULL, name, content);
 }
 
@@ -818,6 +824,22 @@ set_xml_categories(xmlNodePtr appData, EVCardAttribute *attr)
 	}
 }
 
+static void
+set_xml_Note(xmlNodePtr appData, EVCardAttribute *attr)
+{	
+	xmlNodePtr body = NULL;
+	body = xmlNewChild (appData, NULL, (xmlChar *) EAS_ELEMENT_BODY, NULL);
+	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_TYPE,
+	         (const xmlChar*) "1");
+	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_SIZE,
+	         (const xmlChar*) "0");
+	/* set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_TRUNCATED,
+			(const xmlChar*) "0"); */
+	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_DATA,
+	        (const xmlChar*) (const xmlChar*)attribute_get_nth_value(attr, 0));
+	/* set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_PREVIEW,
+	        (const xmlChar*) "0");*/
+}
 
 static void
 set_xml_contact_date(xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_element)
@@ -990,14 +1012,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Note */
 		if (!strcmp(name, EVC_NOTE)) { 
-			/*TODO:
-			  -if we use airsyncbase:Body server reports "malformed or invalid item sent"
-			  -if we use Note the wbxml reports an error = 100 
-			 */
-
-			/* set_xml_element(appData, (const xmlChar*)"EAS_ELEMENT_NOTE",
-			                (const xmlChar*)attribute_get_nth_value(attr, 0), encoding);
-			*/
+			set_xml_Note(appData, attr);
 			continue;
 		}
 
@@ -1093,9 +1108,12 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 #endif
 
 		}
+
 	success = TRUE;
 	}
 
+	
+	g_object_unref(vcard);
 
 	if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 4))
 	{
