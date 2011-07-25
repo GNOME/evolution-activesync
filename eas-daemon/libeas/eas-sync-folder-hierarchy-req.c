@@ -242,29 +242,22 @@ eas_sync_folder_hierarchy_req_return (EasSyncFolderHierarchyReq *self, const gch
  * @param error any error that occured (or NULL) [full transfer]
  */
 gboolean
-eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error_in)
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error)
 {
-    GError *error = NULL;
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
-    gboolean ret;
 	GSList* added_folders = NULL;
 	GSList* updated_folders  = NULL;
 	GSList* deleted_folders  = NULL;
 	const gchar *ret_sync_key = NULL;
 
     // if an error occurred, store it and signal daemon
-    if (error_in)
-    {
-        ret = FALSE;
-        error = error_in;
+    if (error)
         goto finish;
-    }
 
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete++");
 
     // if an error occurs when parsing, store it
-    ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
-    if (!ret)
+    if (!eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error))
     {
         g_assert (error != NULL);
         goto finish;
