@@ -210,7 +210,6 @@ finish:
 gboolean
 eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error_in)
 {
-    gboolean cleanup = FALSE;
     GError *error = NULL;
     EasSyncFolderHierarchyReqPrivate* priv = self->priv;
     gboolean ret;
@@ -245,9 +244,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
     }
 
             ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
-			//state machine finished, so tell connection object to clean this up.
-			cleanup = TRUE;
-			
+
 			added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 			updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 			deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
@@ -297,9 +294,7 @@ finish:
 		g_assert (error != NULL);
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
-		//there has been an error - ensure that we clean this request up
-		cleanup = TRUE;
 	}
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
-	return cleanup;
+	return TRUE;
 }
