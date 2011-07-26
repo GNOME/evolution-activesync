@@ -1,7 +1,3 @@
 <ApplicationData>
-<Body>
-<Type>1</Type>
-<EstimatedDataSize>7</EstimatedDataSize>
-<Data>note number 1</Data>
-</Body>
+<airsyncbase:Body>note number 1</airsyncbase:Body>
 </ApplicationData>
