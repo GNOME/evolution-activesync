@@ -53,6 +53,7 @@
 #include "eas-common-stub.h"
 #include "../libeas/eas-connection-errors.h"
 #include "eas-connection.h"
+#include "eas-2way-sync-req.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, G_TYPE_OBJECT);
 
@@ -117,32 +118,66 @@ eas_common_get_protocol_version (EasCommon *obj,
 gboolean 
 eas_common_sync_folder_items (EasCommon* self,
                                const gchar* account_uid,
-                               guint item_type,
+                               EasItemType item_type,
+                               const gchar* sync_key,
                                const gchar* folder_id,
                                guint filter_type,
-                               const gchar* sync_key,
                                const gchar** add_items,
                                const gchar** delete_items,                                       
                                const gchar** change_items,
                                DBusGMethodInvocation* context)
-{
-	
-	GError *error = NULL;
+{	
+    gboolean ret = TRUE;
+    EasConnection *connection;
+    GError *error = NULL;
+    Eas2WaySyncReq *req = NULL;
 
-	g_debug("eas_common_sync_folder_items++");
+	g_debug("eas_common_sync_folder_items++ filter_type = 0x%x", filter_type);
+	g_debug("folder_id = %s", folder_id);
+	g_debug("item_type = %d", item_type);
+
+	if(*add_items || *delete_items || *change_items)
+	{
+		g_warning("2-way sync not yet supported");
+	}
 	
-	g_set_error (&error,
-                 EAS_CONNECTION_ERROR,
-                 EAS_CONNECTION_ERROR_NOTSUPPORTED,
-                 "sync folder items not yet supported");
+    connection = eas_connection_find (account_uid);
+    if (!connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        ret = FALSE;
+        goto finish;
+    }
+
+	// TODO support 2-way sync 
+	req = eas_2way_sync_req_new (sync_key,
+                                 account_uid,
+                                 folder_id,
+	                             filter_type,
+                                 item_type,
+                                 context);
 	
-	// TODO add support for this method
+    eas_request_base_SetConnection (&req->parent_instance, connection);
+
+    // Activate Request
+    ret = eas_2way_sync_req_Activate (req,                                 
+                                 &error);
 	
-	dbus_g_method_return_error (context, error);		
-	
-	g_error_free (error);
+finish:
+
+    if (!ret)
+    {
+        g_debug ("returning error %s", error->message);
+        g_assert (error != NULL);
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    }
 	
 	g_debug("eas_common_sync_folder_items--");
 	
-	return FALSE;
+    return ret;
 }

@@ -1243,6 +1243,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 	gchar hierarchy_sync_key[64] = "0";
 	gchar folder_sync_key[64] = "0";
 	gchar* folder_sync_key_out = NULL;
+	gchar* folder_sync_key_out_2 = NULL;
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -1257,9 +1258,8 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
-	// get email in inbox. Note that EAS doesn't support GetItemEstimate with a sync_key of zero :-)
-	// testGetFolderInfo (email_handler, folder_sync_key, g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
-	// use the common sync api to get the first sync_key
+	// sync with sync_key=0:
+	g_debug("sync_folder_email with %s", folder_sync_key);
 	ret = eas_mail_handler_sync_folder_email (email_handler,
 						  folder_sync_key,
                           0,						// no time filter
@@ -1277,7 +1277,11 @@ START_TEST (test_eas_mail_get_item_estimate)
 	{
 		fail_if(TRUE, "eas_mail_handler_sync_folder_email returned %s", error->message);
 	}
+
+	fail_if(!more_available, "expect more_available to be TRUE on first sync");
+
 	mark_point();
+	g_debug("get_item_estimate with %s", folder_sync_key_out);
 	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key_out, g_inbox_id, &estimate, &error);
 	if(!ret)
 	{
@@ -1287,8 +1291,46 @@ START_TEST (test_eas_mail_get_item_estimate)
 		}
 	}
 	g_debug("estimate = %d", estimate);	
-	fail_if(estimate != 0, "Expected estimate to be zero items immediately after sync");
+	fail_if(estimate == 0, "Expected estimate to be non-zero before first proper sync");
 
+	mark_point();
+
+	// sync with sync_key!=0
+	g_debug("sync_folder_email with %s", folder_sync_key_out);
+	ret = eas_mail_handler_sync_folder_email (email_handler,
+					  folder_sync_key_out,
+                      0,						// no time filter
+					  g_inbox_id,
+					  NULL,						// emails to delete
+					  NULL, 					// emails to change
+                      &folder_sync_key_out_2,
+					  &emails_created,
+                      &emails_updated, 
+                      &emails_deleted,
+					  &more_available,
+					  &error); 
+if(!ret)
+	{
+		fail_if(TRUE, "eas_mail_handler_sync_folder_email returned %s", error->message);
+	}
+
+	fail_if(more_available, "Expect more_available to be TRUE when syncing with sync_key of zero");
+
+	mark_point();
+
+	g_debug("get_item_estimate with %s", folder_sync_key_out_2);
+	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key_out_2, g_inbox_id, &estimate, &error);
+	if(!ret)
+	{
+		if(error)
+		{
+			fail_if(TRUE, "get_item_estimate returned %s", error->message);
+		}
+	}
+	g_debug("estimate = %d", estimate);	
+	fail_if(estimate != 0, "Expected estimate to be zero after second sync");
+
+	
 	mark_point();
 
 }
@@ -1452,6 +1494,7 @@ Suite* eas_libeasmail_suite (void)
 	tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
     
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
+	// requires at least one email in inbox to pass
 	tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
 	
     g_free(g_inbox_id);

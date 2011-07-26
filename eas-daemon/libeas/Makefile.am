@@ -53,6 +53,8 @@ libeas_la_SOURCES =		\
         eas-request-base.c \
         eas-sync-req.h \
         eas-sync-req.c \
+        eas-2way-sync-req.h \
+        eas-2way-sync-req.c \
         eas-sync-msg.h \
         eas-sync-msg.c \
         eas-email-info-translator.h \

@@ -542,7 +542,6 @@ gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 	// TODO replace asserts with EAS_CONNECTION_ERROR_BADARG
 	g_assert (self);
 	g_assert (sync_key);
-	g_assert (*estimate == 0);	
 
 	// call DBus API
 	ret = dbus_g_proxy_call (proxy, "get_item_estimate",
