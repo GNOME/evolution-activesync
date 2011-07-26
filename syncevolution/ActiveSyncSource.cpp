@@ -25,15 +25,15 @@
 #ifdef ENABLE_ACTIVESYNC
 
 #include "ActiveSyncSource.h"
-#include <syncevo/GLibSupport.h>
-
-#include <eas-item-info.h>
 
 #include <stdlib.h>
 #include <errno.h>
 
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
+
+void EASItemUnref(EasItemInfo *info) { g_object_unref(&info->parent_instance); }
+void GStringUnref(char *str) { g_free(str); }
 
 void ActiveSyncSource::enableServerMode()
 {
@@ -72,21 +72,11 @@ void ActiveSyncSource::close()
     m_handler.set(NULL);
 }
 
-void EASItemUnref(EasItemInfo *info) { g_object_unref(&info->parent_instance); }
-
-/** non-copyable list of EasItemInfo pointers, owned by list */
-typedef GListCXX<EasItemInfo, GSList, EASItemUnref> EASItemsCXX;
-
-void GStringUnref(char *str) { g_free(str); }
-
-/** non-copyable list of strings, owned by list */
-typedef GListCXX<char, GSList, GStringUnref> EASIdsCXX;
-
-/** non-copyable smart pointer to an EasItemInfo, unrefs when going out of scope */
-typedef eptr<EasItemInfo, GObject> EASItemPtr;
-
 void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string &resumeToken)
 {
+    // claim item node for ids
+    m_ids.swap(m_itemNode);
+
     // incremental sync (non-empty token) or start from scratch
     m_startSyncKey = lastToken;
     if (lastToken.empty()) {
@@ -184,8 +174,10 @@ void ActiveSyncSource::deleteItem(const string &luid)
     }
 
     // remove from item list
-    m_items.erase(luid);
-    m_ids->removeProperty(luid);
+    if (m_ids) {
+        m_items.erase(luid);
+        m_ids->removeProperty(luid);
+    }
 
     // update key
     m_currentSyncKey = buffer;
@@ -247,8 +239,10 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
     }
 
     // add/update in cache
-    m_items[res.m_luid] = data;
-    m_ids->setProperty(res.m_luid, "1");
+    if (m_ids) {
+        m_items[res.m_luid] = data;
+        m_ids->setProperty(res.m_luid, "1");
+    }
 
     // update key
     m_currentSyncKey = buffer;

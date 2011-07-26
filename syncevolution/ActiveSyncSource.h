@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2009 Patrick Ohly <patrick.ohly@gmx.de>
- * Copyright (C) 2011 Patrick Ohly <patrick.ohly@intel.com>
+ * Copyright (C) 2011 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@
 #include <syncevo/PrefixConfigNode.h>
 #include <syncevo/SafeConfigNode.h>
 #include <syncevo/SmartPtr.h>
+#include <syncevo/GLibSupport.h>
 
 #include <boost/bind.hpp>
 
@@ -36,9 +37,11 @@
 #include <map>
 
 #include "libeassync.h"
+#include <eas-item-info.h>
 
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
+
 
 /**
  * Synchronizes contacts, events, tasks and journals with an
@@ -53,8 +56,16 @@ SE_BEGIN_CXX
  * src/syncevo/profiles/datatypes/01vcard-profile.xml for an extensive
  * example how that works.
  *
- * Each item is a single calendar item, in other words, multiple
- * VEVENTs with the same UID are treated as separate items.
+ * Each ActiveSync calendar item is a VCALENDAR which contains all
+ * VEVENTs with the same UID. The SyncEvolution/Synthesis engine works
+ * with individual VEVENTs per item. This implies that someone has to
+ * map between the two concepts. This is done in the derived
+ * ActiveSyncCalendarSource, similar to the existing MapSyncSource.
+ *
+ * Reusing that class was considered, but discarded because
+ * MapSyncSource assumes that the class that it wraps uses id/revision
+ * string pairs for change tracking, which is not the case for
+ * ActiveSync.
  *
  * A sync session is done like this:
  * - The Synthesis sync anchor directly maps to the
@@ -77,8 +88,22 @@ SE_BEGIN_CXX
  *   that any changes made by other ActiveSync server clients
  *   will be reported when asking for changes based on that updated
  *   key without including changes made by our own client, even
- *   when these changes happen concurrently.
+ *   when these changes happen concurrently. This is true for
+ *   Exchange 2010 + ActiveSync 12.1.
  *   TODO: write a test program to verify that assumption.
+ *   Google + ActiveSync 12.0 do not support this.
+ *   TODO: deal with server-side changes reported to us at the
+ *   time when we make changes ourselves.
+ * - When multiple events are in one item, it can happen that
+ *   the event series has to be retrieved individually from the
+ *   server. Example:
+ *   - nothing changed on server => nothing sent at start of sync,
+ *     cache empty
+ *   - ActiveSyncCalendarSource must delete a detached recurrence
+ *     inside a series
+ *   - retrieve series
+ *   - remove recurrence
+ *   - sent back the updated series
  * - At the end of the sync, the updated ID list is stored and
  *   the updated sync key is returned to the Synthesis engine.
  * - If anything goes wrong, a fatal error is returned to the
@@ -105,13 +130,13 @@ class ActiveSyncSource :
   public:
     ActiveSyncSource(const SyncSourceParams &params) :
         TestingSyncSource(params),
-        m_context(params.m_context),
-        m_account(0),
         // Ensure that arbitrary keys can be stored (SafeConfigNode) and
         // that we use a common prefix, so that we can use the key/value store
         // also for other keys if the need ever arises).
-        m_ids(new PrefixConfigNode("item-",
-                                   boost::shared_ptr<ConfigNode>(new SafeConfigNode(params.m_nodes.getTrackingNode()))))
+        m_itemNode(new PrefixConfigNode("item-",
+                                        boost::shared_ptr<ConfigNode>(new SafeConfigNode(params.m_nodes.getTrackingNode())))),
+        m_context(params.m_context),
+        m_account(0)
         {
             if (!m_context) {
                 m_context.reset(new SyncConfig());
@@ -122,7 +147,6 @@ class ActiveSyncSource :
     SyncConfig &getSyncConfig() { return *m_context; }
 
  protected:
-
     /* partial implementation of SyncSource */
     virtual void enableServerMode();
     virtual bool serverModeEnabled() const;
@@ -147,6 +171,16 @@ class ActiveSyncSource :
     /** to be provided by derived class */
     virtual EasItemType getEasType() const = 0;
 
+ protected:
+    EasSyncHandler *getHandler() { return m_handler.get(); }
+    std::string getFolder() { return m_folder; }
+    std::string getStartSyncKey() { return m_startSyncKey; }
+    void setStartSyncKey(const std::string &startSyncKey) { m_startSyncKey = startSyncKey; }
+    std::string getCurrentSyncKey() { return m_currentSyncKey; }
+    void setCurrentSyncKey(const std::string &currentSyncKey) { m_currentSyncKey = currentSyncKey; }
+
+    boost::shared_ptr<ConfigNode> m_itemNode;
+
  private:
     /** "source-config@<context>" instance which holds our username == ActiveSync account ID */
     boost::shared_ptr<SyncConfig> m_context;
@@ -166,10 +200,16 @@ class ActiveSyncSource :
     /** current sync key, set when session starts and updated as changes are made */
     std::string m_currentSyncKey;
 
-    /** server-side IDs of all items, updated as changes are reported and/or are made */
+    /**
+     * server-side IDs of all items, updated as changes are reported and/or are made;
+     * NULL if not using change tracking
+     */
     boost::shared_ptr<ConfigNode> m_ids;
 
-    /** cache of all items, filled at begin of session and updated as changes are made */
+    /**
+     * cache of all items, filled at begin of session and updated as
+     * changes are made (if doing change tracking)
+     */
     std::map<std::string, std::string> m_items;
 };
 
@@ -211,12 +251,12 @@ class ActiveSyncContactSource : public ActiveSyncSource
 /**
  * used for all iCalendar 2.0 items (events, todos, journals)
  */
-class ActiveSyncCalendarSource : public ActiveSyncSource
+class ActiveSyncCalFormatSource : public ActiveSyncSource
 {
     EasItemType m_type;
 
  public:
-    ActiveSyncCalendarSource(const SyncSourceParams &params, EasItemType type) :
+    ActiveSyncCalFormatSource(const SyncSourceParams &params, EasItemType type) :
     ActiveSyncSource(params),
     m_type(type)
     {}
@@ -229,6 +269,18 @@ class ActiveSyncCalendarSource : public ActiveSyncSource
     EasItemType getEasType() const { return m_type; }
 };
 
+void EASItemUnref(EasItemInfo *info);
+
+/** non-copyable list of EasItemInfo pointers, owned by list */
+typedef GListCXX<EasItemInfo, GSList, EASItemUnref> EASItemsCXX;
+
+void GStringUnref(char *str);
+
+/** non-copyable list of strings, owned by list */
+typedef GListCXX<char, GSList, GStringUnref> EASIdsCXX;
+
+/** non-copyable smart pointer to an EasItemInfo, unrefs when going out of scope */
+typedef eptr<EasItemInfo, GObject> EASItemPtr;
 
 SE_END_CXX
 

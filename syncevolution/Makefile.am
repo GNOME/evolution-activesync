@@ -19,6 +19,8 @@ MAINTAINERCLEANFILES = Makefile.in
 SYNCACTIVESYNC_SOURCES = \
 	ActiveSyncSource.h \
 	ActiveSyncSource.cpp \
+	ActiveSyncCalendarSource.h \
+	ActiveSyncCalendarSource.cpp \
 	ActiveSyncSourceRegister.cpp
 
 syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)

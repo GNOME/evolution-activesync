@@ -19,6 +19,7 @@
  */
 
 #include "ActiveSyncSource.h"
+#include "ActiveSyncCalendarSource.h"
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -63,7 +64,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     if (isMe) {
         return
 #ifdef ENABLE_ACTIVESYNC
-            new ActiveSyncCalendarSource(params, EAS_ITEM_TODO)
+            new ActiveSyncCalFormatSource(params, EAS_ITEM_TODO)
 #else
             RegisterSyncSource::InactiveSource
 #endif
@@ -74,7 +75,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
     if (isMe) {
         return
 #ifdef ENABLE_ACTIVESYNC
-            new ActiveSyncCalendarSource(params, EAS_ITEM_JOURNAL)
+            new ActiveSyncCalFormatSource(params, EAS_ITEM_JOURNAL)
 #else
             RegisterSyncSource::InactiveSource
 #endif
