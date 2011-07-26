@@ -43,7 +43,7 @@
 #include "../libeassync/src/eas-item-info.h"
 #include "../libeassync/src/libeassync.h"
 #include "../libeastest/src/libeastest.h"
-
+#include "../eas-daemon/libeas/eas-2way-sync-req.h"
 
 START_TEST (test_add_item_req_obj)
 {
@@ -81,6 +81,7 @@ START_TEST (test_add_item_req_obj)
 	EasAccount* self_eas_account;
 	EasGetItemEstimateReq *self_eas_get_item_estimate_req;
 	EasGetItemEstimateMsg *self_eas_get_item_estimate_msg;	
+	Eas2WaySyncReq* self_eas_2way_sync_req;
 	
 
 	
@@ -347,8 +348,14 @@ START_TEST (test_add_item_req_obj)
 	g_object_ref(self_eas_get_item_estimate_msg);
 	g_object_unref(self_eas_get_item_estimate_msg);
 	g_object_unref(self_eas_get_item_estimate_msg);
-	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_MSG--");	
-
+	g_debug("EAS_TYPE_GET_ITEM_ESTIMATE_MSG--");
+	
+	g_debug("EAS_TYPE_2WAY_SYNC_REQ ++");
+	self_eas_2way_sync_req = g_object_new (EAS_TYPE_2WAY_SYNC_REQ, NULL);
+	g_object_ref(self_eas_2way_sync_req);
+	g_object_unref(self_eas_2way_sync_req);
+	g_object_unref(self_eas_2way_sync_req);	
+	g_debug("EAS_TYPE_2WAY_SYNC_REQ --");
 }
 END_TEST
 
