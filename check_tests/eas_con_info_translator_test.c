@@ -299,29 +299,29 @@ Suite* eas_con_info_translator_suite (void)
 
     /* con-info-translator test case */
     TCase *tc_con_info_translator = tcase_create ("core");
-   suite_add_tcase (s, tc_con_info_translator);
+    suite_add_tcase (s, tc_con_info_translator);
 
-	// tcase_add_test (tc_con_info_translator,test_info_translator_parse_request_jobTitle);
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_name); // this test will fail
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage); // this test will fail
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_businessAdr); // this test will fail 
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_pagerNumber); // this test will fail
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); //this test will fail
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_blank);
-	// tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_mobile); //this test will fail
-	//  tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note); //this test will fail
+	tcase_add_test (tc_con_info_translator,test_info_translator_parse_request_jobTitle);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_name); // this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage); // this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_businessAdr); // this test will fail 
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_pagerNumber); // this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); //this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_blank);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_mobile); //this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note); //this test will fail
 
-	  tcase_add_test (tc_con_info_translator, test_info_translator_parse_response_jobTitle);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_name);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_email_webPage);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_businessAdr);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_otherAdr);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_pagerNumber);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_birthday);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_blank);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_mobile);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_note);
-	  tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_all);
+	tcase_add_test (tc_con_info_translator, test_info_translator_parse_response_jobTitle);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_name);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_email_webPage);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_businessAdr);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_otherAdr);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_pagerNumber);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_birthday);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_blank);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_mobile);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_note);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_all);
     
     return s;
 }
