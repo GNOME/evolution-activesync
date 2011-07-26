@@ -544,7 +544,7 @@ property_get_nth_value(EVCardAttributeParam *param, int nth)
 	if (!values)
 		return NULL;
 	ret = g_list_nth_data(values, nth);
-	//g_list_free(values);
+	/*g_list_free(values);*/
 	return ret;
 }
 
@@ -576,8 +576,8 @@ static gboolean
 is_element_set(xmlNodePtr appData, const gchar* name)
 {
 	xmlNodePtr node = NULL;
+	g_return_val_if_fail (appData != NULL && name != NULL, FALSE);
 	node = appData;
-
 	for(node = appData->children; node ; node = node->next)
 		if(!strcmp((char*) node->name, name))
 			return TRUE;
@@ -595,6 +595,33 @@ set_xml_element(xmlNodePtr appData, const xmlChar* name, const xmlChar* content)
 	
 	if(strlen((const char *)content) !=0)
 		xmlNewTextChild(appData, NULL, name, content);
+}
+
+static void 
+set_xml_name(xmlNodePtr appData, EVCardAttribute *attr)
+{
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_LASTNAME,
+	                (const xmlChar*)attribute_get_nth_value(attr, 0));
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
+	                (const xmlChar*)attribute_get_nth_value(attr, 1));
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
+	                (const xmlChar*)attribute_get_nth_value(attr, 2));
+	/* ActiveSync does not support Prefix */
+	/* set_xml_element(appData, (const xmlChar*) "Prefix",
+	                (const xmlChar*)attribute_get_nth_value(attr, 3)); */
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
+	                (const xmlChar*)attribute_get_nth_value(attr, 4));
+}
+
+static void 
+set_xml_org(xmlNodePtr appData, EVCardAttribute *attr)
+{
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
+	                (const xmlChar*)attribute_get_nth_value(attr, 0));
+	set_xml_element(appData,  (const xmlChar*) EAS_ELEMENT_DEPARTMENT,
+	                (const xmlChar*)attribute_get_nth_value(attr, 1));
+	set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
+	                (const xmlChar*)attribute_get_nth_value(attr, 2));
 }
 
 static void 
@@ -901,18 +928,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		/* Name */
 		if (!strcmp(name, EVC_N)) {
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_LASTNAME,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_FIRSTNAME,
-			                (const xmlChar*)attribute_get_nth_value(attr, 1));
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_MIDDLENAME,
-			                (const xmlChar*)attribute_get_nth_value(attr, 2));
-			/* ActiveSync does not support Prefix */
-			/* set_xml_element(appData, (const xmlChar*) "Prefix",
-			                (const xmlChar*)attribute_get_nth_value(attr, 3)); */
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_SUFFIX,
-			                (const xmlChar*)attribute_get_nth_value(attr, 4));
-
+			set_xml_name(appData, attr);
 			continue;
 		}
 
@@ -920,7 +936,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		/* TODO: -NickName (Contacts2)-> does not show in Exchange Outlook
 		 		 -Alias -> causes AS malformed item error:
 		  				MS-ASWBXML and wbxml (in wbxml_tables.c) indicate that this
-						itme is not supported when the MS-ASProtocolVersion header is set to 12.1 */
+						item is not supported when the MS-ASProtocolVersion header is set to 12.1 */
 		if (!strcmp(name, EVC_NICKNAME)) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_NICKNAME,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
@@ -929,13 +945,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		
 		/* Company */
 		if (!strcmp(name, EVC_ORG)) {
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_COMPANYNAME,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-			set_xml_element(appData,  (const xmlChar*) EAS_ELEMENT_DEPARTMENT,
-			                (const xmlChar*)attribute_get_nth_value(attr, 1));
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
-			                (const xmlChar*)attribute_get_nth_value(attr, 2));
-
+			set_xml_org(appData, attr);
 			continue;
 		}
 
@@ -957,7 +967,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		if (!strcmp(name, EVC_TITLE)) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_TITLE,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-
 			continue;
 		}
 
@@ -1006,7 +1015,6 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 		if (!strcmp(name, "X-EVOLUTION-OFFICE")) {
 			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
 			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-
 			continue;
 		}
 
