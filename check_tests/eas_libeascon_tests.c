@@ -133,56 +133,6 @@ END:VCARD\n";
 
 
 
-#if 0
-const char* TEST_VCARD = "BEGIN:vCard\n\
-VERSION:3.0\n\
-FN:John Stevenson\n\
-N:Stevenson;John;Philip,Paul;Dr.;Jr.,M.D.,A.C.P.\n\
-NICKNAME:Jim,Jimmie\n\
-TITLE:Director\n\
-ROLE:Programmer\n\
-ORG:Lotus Development Corporation\n\
-ADR;TYPE=PARCEL,POSTAL,WORK:;;6544 Battleford Drive\
- ;Raleigh;NC;27613-3502;U.S.A.\n\
-ADR;TYPE=POSTAL,HOME,PARCEL:;;6544 Battleford Drive\
- ;Raleigh;NC;27613-3502;U.S.A.\n\
-ADR;TYPE=POSTAL,OTHER,PARCEL:;;6544 Battleford Drive\
- ;Raleigh;NC;27613-3502;U.S.A.\n\
-TEL;TYPE=VOICE,MSG,WORK:+1-919-676-9515\n\
-TEL;TYPE=FAX,WORK:+1-919-676-9564\n\
-EMAIL;TYPE=INTERNET,PREF:Frank_Dawson@Lotus.com\n\
-EMAIL;TYPE=INTERNET:fdawson@earthlink.net\n\
-URL:http://home.earthlink.net/~fdawson\n\
-BDAY:1996-04-15\n\
-NOTE:This fax number is operational 0800 to 1715\n\
-PHOTO;ENCODING=b;TYPE=JPEG:MIICajCCAdOgAwIBAgICBEUwDQYJKoZIhvcN\
-AQEEBQAwdzELMAkGA1UEBhMCVVMxLDAqBgNVBAoTI05ldHNjYXBlIENvbW11bm\
-ljYXRpb25zIENvcnBvcmF0aW9uMRwwGgYDVQQLExNJbmZvcm1hdGlvbiBTeXN0\n\
-END:vCard\n";
-#endif
-
-#if 0
-const char* TEST_VCARD = "BEGIN:VCARD\n\
-N:myFamilyName;myFirstName;myMiddleName;myTitle;mySuffix\n\
-ADR;INTL;PARCEL;WORK:;;myStreet;myCity;myStateOrProvince;myZipOrPostalCode;myCountryOrRegion\n\
-END:VCARD\n";
-#endif
-
-/*
-ADR;DOM;PARCEL;HOME:;;myStreet;myCity;myStateOrProvince;myZipOrPostalCode;myCountryOrRegion\n\
-EMAIL;INTERNET:myEmail1@company.com\n\
-EMAIL;INTERNET:myEmail2@company.com\n\
-EMAIL;INTERNET:myEmail3@company.com\n\
-ORG:myCompany\n\
-TEL;WORK:myBusinessPhone\n\
-TEL;FAX;WORK:myBusinessFax\n\
-TEL;CELL:myMobilePhone\n\
-TEL;HOME:myHomePhone\n\
-TITLE:myJobTitle\n\
-URL;WORK:myWorkWebsite\n\
-URL:myPersonalWebsite\n\
-*/
-
 static gchar *
 random_uid_new (void)
 {
@@ -376,6 +326,87 @@ START_TEST (test_translate_vcard_to_xml)
 }
 END_TEST
 
+START_TEST (test_eas_sync_handler_delete_all_created_con)
+{
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+    GError *error = NULL;
+    gboolean testContactFound = FALSE;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+
+    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_out = NULL;
+    GSList *contactitems_created = NULL;
+    GSList *contactitems_updated = NULL;
+    GSList *contactitems_deleted = NULL;
+
+    testGetLatestContacts (sync_handler,
+                           folder_sync_key_in,
+                           &folder_sync_key_out,
+                           &contactitems_created,
+                           &contactitems_updated,
+                           &contactitems_deleted,
+                           &error);
+
+	g_free(folder_sync_key_in);
+	
+	/* we are only interested in the created contacts so get rid of updated + deleted */
+    g_slist_foreach (contactitems_deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (contactitems_updated, (GFunc) g_object_unref, NULL);
+    g_slist_free (contactitems_deleted);
+    g_slist_free (contactitems_updated);
+    contactitems_deleted = NULL;
+    contactitems_updated = NULL;
+
+	
+    // if the contactitems_created list contains a contact item
+    if (contactitems_created)
+    {
+        gboolean rtn = FALSE;
+		folder_sync_key_in = g_strdup(folder_sync_key_out);
+		g_free(folder_sync_key_out);
+		folder_sync_key_out = NULL;
+		
+        // delete the first calendar item in the folder
+        rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in,
+                                             folder_sync_key_out,
+                                             EAS_ITEM_CONTACT, NULL,
+                                             contactitems_created,
+                                             &error);
+        if (error)
+        {
+            fail_if (rtn == FALSE, "%s", error->message);
+        }
+
+		g_free(folder_sync_key_in);
+		g_free(folder_sync_key_out);
+
+        testContactFound = TRUE;
+    }
+
+    // fail the test if there is no cal item as this means the
+    // test has not exercised the code to get the email body as required by this test case
+    fail_if (testContactFound == FALSE, "no cal item found");
+
+	if(!testContactFound)
+	{
+		g_free(folder_sync_key_out);
+		folder_sync_key_out = NULL;
+	}
+    // free contacts item objects list
+    g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);
+    g_slist_free (contactitems_created);
+    contactitems_created = NULL;
+	
+    g_object_unref (sync_handler);
+
+}
+END_TEST
+
 Suite* eas_libeascon_suite (void)
 {
     Suite* s = suite_create ("libeascon");
@@ -387,8 +418,9 @@ Suite* eas_libeascon_suite (void)
     //tcase_add_test (tc_libeascon, test_get_sync_handler);
 	//tcase_add_test (tc_libeascon, test_get_latest_contacts_items);
 //	tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
-    //tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_con);
+   // tcase_add_test (tc_libeascon, 	test_eas_sync_handler_delete_one_con);
+   // tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_all_created_con);
     //tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
-//   tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
+   //tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
     return s;
 }
