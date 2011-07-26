@@ -41,19 +41,14 @@ exclude-result-prefixes="chk">
 						</xsl:attribute>
 					</xsl:element>
 		        </xsl:if>
+		    	<xsl:if test="@result='error'">
+					<xsl:element name="error">
+						<xsl:attribute name="message">
+						    <xsl:value-of select="chk:message"/>
+						</xsl:attribute>
+					</xsl:element>
+		        </xsl:if>
             </xsl:element>
         </xsl:for-each>
-<!--        <xsl:for-each select="chk:test[@result='failure']">
-            <xsl:apply-templates select="chk:test[@result='failure']"/>
-        </xsl:for-each> -->
     </xsl:template>
-
-<!--    <xsl:template match="@result='failure'">
-        <xsl:element name="failure">
-            <xsl:attribute name="message">
-                <xsl:value-of select="chk:message"/>
-            </xsl:attribute>
-        </xsl:element>
-    </xsl:template>
--->
 </xsl:stylesheet>
