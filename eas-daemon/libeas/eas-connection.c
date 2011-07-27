@@ -1971,8 +1971,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		if (g_mock_response_list)
 		{
 			gchar *filename = g_slist_nth_data (g_mock_response_list, 0);
-			gchar* fullPath = g_strconcat(g_getenv("HOME"), 
-			                              "/eas-test-responses/", 
+
+			gchar curPath[FILENAME_MAX];
+			if (!getcwd(curPath, sizeof(curPath)))
+				return;
+			curPath[sizeof(curPath) - 1] = '/0';
+
+			gchar* fullPath = g_strconcat(curPath, 
+			                              "/check_tests/TestData/Mocked_Negative_Tests/", 
 			                              filename, 
 			                              NULL);
 			
