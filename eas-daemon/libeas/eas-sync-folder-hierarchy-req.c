@@ -164,7 +164,7 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
     priv->syncKey = g_strdup (syncKey);
     priv->accountID = g_strdup (accountId);
 	priv->results_fn = eas_sync_folder_hierarchy_req_return;
-	priv->results_fn_data = self;
+	priv->results_fn_data = context;
     eas_request_base_SetContext (&self->parent_instance, context);
 
     g_debug ("eas_sync_folder_hierarchy_req_new--");
@@ -219,7 +219,7 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 									  GSList *added_folders, GSList *updated_folders,
 									  GSList *deleted_folders, GError *error)
 {
-	EasRequestBase *parent = EAS_REQUEST_BASE (self);
+	DBusGMethodInvocation *context = self;
 	gchar** ret_created_folders_array = NULL;
 	gchar** ret_updated_folders_array = NULL;
 	gchar** ret_deleted_folders_array = NULL;
@@ -231,7 +231,7 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 		build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error) &&
 		build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error))
 	{
-		dbus_g_method_return (eas_request_base_GetContext (parent),
+		dbus_g_method_return (context,
 							  ret_sync_key,
 							  ret_created_folders_array,
 							  ret_deleted_folders_array,
@@ -239,7 +239,7 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 	}
     else
 	{
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		dbus_g_method_return_error (context, error);
 		g_error_free (error);
 	}
 
@@ -285,7 +285,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 			        g_slist_length (deleted_folders));
 
  finish:
-	eas_sync_folder_hierarchy_req_return (self, ret_sync_key, added_folders,
+	eas_sync_folder_hierarchy_req_return (priv->results_fn_data, ret_sync_key, added_folders,
 										  updated_folders, deleted_folders, error);
 
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
