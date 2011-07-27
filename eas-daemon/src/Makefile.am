@@ -66,7 +66,9 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-test.h \
 		      eas-test.c \
 		      eas-marshal.h \
-		      eas-marshal.c
+		      eas-marshal.c \
+		      eas-interface-base.h \
+		      eas-interface-base.c		      
 		      
 
 activesyncd_LDADD = \

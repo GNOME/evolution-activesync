@@ -131,13 +131,20 @@ eas_mail_handler_finalize (GObject *object)
 
 	priv = cnc->priv;
 
-	// register for progress signals#
+	// de-register for progress signals
 	if(priv->remoteEas)
 	{
 		dbus_g_proxy_disconnect_signal (priv->remoteEas,
 					EAS_MAIL_SIGNAL_PROGRESS,
 					G_CALLBACK (progress_signal_handler),
 					cnc);
+	}
+	if(priv->remoteCommonEas)
+	{
+		dbus_g_proxy_disconnect_signal (priv->remoteCommonEas,
+					EAS_MAIL_SIGNAL_PROGRESS,
+					G_CALLBACK (progress_signal_handler),
+					cnc);		
 	}
 
 	g_free (priv->account_uid);
@@ -232,15 +239,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 		return NULL;
 	}
 	priv = object->priv;
-	/*
-	priv->main_loop = g_main_loop_new (NULL, FALSE);
 
-	if (priv->main_loop == NULL) {
-		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
-			     "Failed to create mainloop");
-		return NULL;
-	}
-	*/
 	g_debug ("Connecting to Session D-Bus.");
 	priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
 	if (priv->bus == NULL) {
@@ -289,13 +288,25 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 				 G_TYPE_UINT,	// request id
 				 G_TYPE_UINT,	// percent
 				 G_TYPE_INVALID);
+	// progress signal setup:
+	dbus_g_proxy_add_signal (priv->remoteCommonEas,
+				 EAS_MAIL_SIGNAL_PROGRESS,
+				 G_TYPE_UINT,	// request id
+				 G_TYPE_UINT,	// percent
+				 G_TYPE_INVALID);	
 
-	// register for progress signals
+	// register for progress signals from mail and common interfaces
 	dbus_g_proxy_connect_signal (priv->remoteEas,
 				     EAS_MAIL_SIGNAL_PROGRESS,
 				     G_CALLBACK (progress_signal_handler),		// callback when signal emitted
 				     object,													// userdata passed to above cb
 				     NULL);
+
+	dbus_g_proxy_connect_signal (priv->remoteCommonEas,
+				     EAS_MAIL_SIGNAL_PROGRESS,
+				     G_CALLBACK (progress_signal_handler),		// callback when signal emitted
+				     object,									// userdata passed to above cb
+				     NULL);	
 
 	g_debug ("eas_mail_handler_new--");
 	return object;
@@ -1362,14 +1373,18 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 						  GSList **emails_changed,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
+					      EasProgressFn progress_fn,
+					      gpointer progress_data,                                    
 						  GError **error)
 {
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteCommonEas;
+	EasEmailHandlerPrivate *priv = self->priv;
+	DBusGProxy *proxy = priv->remoteCommonEas;
 	gchar **created_emailinfo_array = NULL;
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **changed_emailinfo_array = NULL;
-
+	guint request_id;
+	
 	g_debug ("eas_mail_handler_sync_folder_email++");
 
 	if((!self) || (!sync_key_in) || (!folder_id) || (!sync_key_out) || (!more_available))
@@ -1394,6 +1409,15 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
+	request_id = priv->next_request_id++;	
+	if (progress_fn) 
+	{
+		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
+		if (!ret)
+			goto finish;
+	}	
+
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call (proxy, "sync_folder_items", error,
 				 G_TYPE_STRING, self->priv->account_uid,
@@ -1404,6 +1428,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	             G_TYPE_STRV, NULL,						// add items
 	             G_TYPE_STRV, NULL,      				// delete items
 	             G_TYPE_STRV, NULL,						// change items
+	             G_TYPE_UINT, request_id,
 				 G_TYPE_INVALID,
 				 G_TYPE_STRING, sync_key_out,
 				 G_TYPE_BOOLEAN, more_available,

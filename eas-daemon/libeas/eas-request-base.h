@@ -58,6 +58,7 @@
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
+#include "../src/eas-interface-base.h"
 #include "../src/eas-mail.h"
 
 G_BEGIN_DECLS
@@ -180,7 +181,7 @@ void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection*
  *
  * @return The interface object currently set for this instance.
  */
-EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
+EasInterfaceBase* eas_request_base_GetInterfaceObject (EasRequestBase* self);
 
 /**
  * Setter for dbus interface.
@@ -190,7 +191,7 @@ EasMail* eas_request_base_GetInterfaceObject (EasRequestBase* self);
  * @param[in] dbus_interface
  *      The interface object to be set.
  */ 
-void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface);	
+void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasInterfaceBase *dbus_interface);	
 
 /**
  * Getter for request id.

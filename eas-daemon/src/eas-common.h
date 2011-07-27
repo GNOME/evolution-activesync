@@ -55,6 +55,7 @@
 #include <dbus/dbus-glib.h>
 #include <glib-object.h>
 #include "../libeas/eas-request-base.h"
+#include "eas-interface-base.h"
 
 G_BEGIN_DECLS
 
@@ -70,12 +71,12 @@ typedef struct _EasCommon EasCommon;
 
 struct _EasCommonClass
 {
-	GObjectClass parent_class;
+	EasInterfaceBaseClass parent_class;
 };
 
 struct _EasCommon
 {
-	GObject parent_instance;
+	EasInterfaceBase parent_instance;
 };
 
 GType eas_common_get_type (void) G_GNUC_CONST;
@@ -99,6 +100,7 @@ gboolean eas_common_sync_folder_items (EasCommon* self,
                                const gchar** add_items,
                                const gchar** delete_items,                                       
                                const gchar** change_items,
+                               guint request_id,
                                DBusGMethodInvocation* context);
 
 G_END_DECLS

@@ -58,7 +58,7 @@ struct _EasRequestBasePrivate
     SoupMessage *soup_message;
     EFlag *flag;
 	DBusGMethodInvocation *context;
-	EasMail *dbus_interface;
+	EasInterfaceBase *dbus_interface;
 	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
 	guint request_id;			// passed back with progress signal
 	guint data_length_so_far;	// amount of data received/sent so far 
@@ -287,7 +287,7 @@ eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* con
 
 
 void
-eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interface)
+eas_request_base_SetInterfaceObject (EasRequestBase* self, EasInterfaceBase *dbus_interface)
 {
     EasRequestBasePrivate *priv = self->priv;
     g_debug ("eas_request_base_SetInterfaceObject++");
@@ -295,7 +295,7 @@ eas_request_base_SetInterfaceObject (EasRequestBase* self, EasMail *dbus_interfa
     g_debug ("eas_request_base_SetInterfaceObject--");
 }
 
-EasMail* 
+EasInterfaceBase* 
 eas_request_base_GetInterfaceObject (EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;

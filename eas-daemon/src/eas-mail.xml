@@ -133,7 +133,7 @@
       <arg type="as" name="changed_folder_array" direction="out"/>		
 	</method>
 
-	<!-- lrm signals -->
+	<!-- signals -->
 	<signal name="mail_operation_progress">
 		<arg type="u" name="request_id" direction ="out"/>
 		<arg type="u" name="percent" direction ="out"/>

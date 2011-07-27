@@ -839,11 +839,12 @@ static void try_fetch_email_body(gpointer data)
 	return;
 }
 
+// heartbeat
 static gboolean temp_func()
 {
-	g_debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! running in mainloop");
+	g_debug("running in mainloop");
 	g_usleep(500000);
-	return TRUE;	// run once (don't put back on mainloop again)
+	return TRUE;	// (put back on mainloop again when done)
 }
 
 static gboolean spawn_fetch_email_thread (gpointer data)
@@ -1231,6 +1232,68 @@ START_TEST (test_eas_mail_handler_watch_email_folders)
 }
 END_TEST
 
+
+struct _TrySyncFolderEmailParams 
+{
+	EasEmailHandler *email_handler;
+	const gchar *sync_key_in;
+	guint	time_window;
+	const gchar *folder_id;
+	GSList *delete_emails;
+	GSList *change_emails; 
+	gchar **sync_key_out;
+	GSList **emails_created;
+	GSList **emails_changed;
+	GSList **emails_deleted;
+	gboolean *more_available;
+	EasProgressFn progress_fn;
+	gpointer progress_data;                                          
+	GError **error;
+};
+
+typedef struct _TrySyncFolderEmailParams TrySyncFolderEmailParams;
+
+static void try_sync_folder_email(gpointer data)
+{
+	TrySyncFolderEmailParams *params = data;
+	gboolean rtn;
+
+	g_debug("sync_folder_email with %s", params->sync_key_in);
+	
+	rtn = eas_mail_handler_sync_folder_email (params->email_handler,
+											  params->sync_key_in,
+											  params->time_window,						// no time filter
+											  params->folder_id,
+											  params->delete_emails,						// emails to delete
+											  params->change_emails, 					// emails to change
+											  params->sync_key_out,
+											  params->emails_created,
+											  params->emails_changed, 
+											  params->emails_deleted,
+											  params->more_available,
+											  params->progress_fn,			// progress function
+											  params->progress_data,		// progress data
+											  params->error); 	
+
+	g_debug("eas_mail_handler_sync_folder_email");
+	if (!rtn)
+	{
+		fail_if(TRUE, "%s", (*params->error)->message);
+	}
+
+	g_debug("more available = %s", (params->more_available? "TRUE" : "FALSE"));
+	g_free(params);
+	
+	return;
+}
+
+static gboolean spawn_sync_folder_email_thread (gpointer data)
+{
+	sync_calls_thread = g_thread_create(try_sync_folder_email, data, TRUE, NULL);
+	
+	return FALSE;	// run once (don't put back on mainloop again)
+}	
+
 START_TEST (test_eas_mail_get_item_estimate)
 {
 	gboolean ret;
@@ -1249,6 +1312,7 @@ START_TEST (test_eas_mail_get_item_estimate)
     GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;	
 	guint estimate = 0;
+	progress_loop = g_main_loop_new (NULL, FALSE);
 	
 	testGetMailHandler (&email_handler, accountuid);
 	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
@@ -1271,6 +1335,8 @@ START_TEST (test_eas_mail_get_item_estimate)
 	                      &emails_updated, 
 	                      &emails_deleted,
 						  &more_available,
+	                      NULL,						// progress function
+	                      NULL,						// progress data
 						  &error); 
 
 	if(!ret)
@@ -1295,24 +1361,35 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	mark_point();
 
-	// sync with sync_key!=0
-	g_debug("sync_folder_email with %s", folder_sync_key_out);
-	ret = eas_mail_handler_sync_folder_email (email_handler,
-					  folder_sync_key_out,
-                      0,						// no time filter
-					  g_inbox_id,
-					  NULL,						// emails to delete
-					  NULL, 					// emails to change
-                      &folder_sync_key_out_2,
-					  &emails_created,
-                      &emails_updated, 
-                      &emails_deleted,
-					  &more_available,
-					  &error); 
-if(!ret)
-	{
-		fail_if(TRUE, "eas_mail_handler_sync_folder_email returned %s", error->message);
-	}
+	// sync with sync_key!=0, with progress updates
+	EasProgressFn progress_cb = test_email_request_progress_cb;	
+
+	// set up params
+	TrySyncFolderEmailParams *sync_params = g_new0 (TrySyncFolderEmailParams, 1);
+	sync_params->email_handler = email_handler;
+	sync_params->folder_id = g_inbox_id;
+	sync_params->sync_key_in = folder_sync_key_out;
+	sync_params->time_window = 0;
+	sync_params->folder_id = g_inbox_id;
+	sync_params->delete_emails = NULL;
+	sync_params->change_emails = NULL;
+	sync_params->sync_key_out = &folder_sync_key_out_2;
+	sync_params->emails_created = &emails_created;
+	sync_params->emails_changed = &emails_updated;
+	sync_params->emails_deleted = &emails_deleted;
+	sync_params->more_available = &more_available;	
+	sync_params->progress_fn = progress_cb;
+	sync_params->progress_data = NULL;
+	sync_params->error = &error;		
+
+	// spawn a thread to make the synchronous call so this thread free to receive progress updates:
+	g_idle_add(spawn_sync_folder_email_thread, sync_params);	
+
+	mark_point();
+	
+	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+
+	mark_point();
 
 	fail_if(more_available, "Expect more_available to be TRUE when syncing with sync_key of zero");
 

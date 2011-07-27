@@ -34,7 +34,8 @@
       <arg type="as" name="add_items" direction="in"/>
       <arg type="as" name="delete_items" direction="in"/>
       <arg type="as" name="change_items" direction="in"/>
-
+	  <arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
+	  
       <arg type="s" name="ret_sync_key" direction="out"/>
       <arg type="b" name="ret_more_available" direction="out"/> 
       <arg type="as" name="ret_added_items" direction="out"/>
@@ -47,7 +48,12 @@
     
   <!-- TODO: Insert your common exposed APIs here -->
 
-    
+	<!-- signals -->
+	<signal name="mail_operation_progress">
+		<arg type="u" name="request_id" direction ="out"/>
+		<arg type="u" name="percent" direction ="out"/>
+	</signal>
+	    
   </interface>
 </node>
 

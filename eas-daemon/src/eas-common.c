@@ -52,15 +52,19 @@
 #include "eas-common.h"
 #include "eas-common-stub.h"
 #include "../libeas/eas-connection-errors.h"
+#include "activesyncd-common-defs.h"
 #include "eas-connection.h"
 #include "eas-2way-sync-req.h"
+#include "eas-marshal.h"
 
-G_DEFINE_TYPE (EasCommon, eas_common, G_TYPE_OBJECT);
+G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
+
 
 static void
 eas_common_init (EasCommon *object)
 {
     /* TODO: Add initialization code here */
+	
 }
 
 static void
@@ -75,9 +79,24 @@ static void
 eas_common_class_init (EasCommonClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
+	EasInterfaceBaseClass *base_class = EAS_INTERFACE_BASE_CLASS (klass);	
+	
     object_class->finalize = eas_common_finalize;
 
+	// create the progress signal we emit 
+	base_class->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
+	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
+	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
+	0,																		// class offset
+	NULL,																	// accumulator
+	NULL,																	// user data for accumulator
+    eas_marshal_VOID__UINT_UINT,	// Function to marshal the signal data into the parameters of the signal call
+	G_TYPE_NONE,															// handler return type
+	2,																		// Number of parameter GTypes to follow
+	// GTypes of the parameters
+	G_TYPE_UINT,
+	G_TYPE_UINT);
+	
     /* Binding to GLib/D-Bus" */
     dbus_g_object_type_install_info (EAS_TYPE_COMMON,
                                      &dbus_glib_eas_common_object_info);
@@ -125,6 +144,7 @@ eas_common_sync_folder_items (EasCommon* self,
                                const gchar** add_items,
                                const gchar** delete_items,                                       
                                const gchar** change_items,
+                               guint request_id,
                                DBusGMethodInvocation* context)
 {	
     gboolean ret = TRUE;
@@ -162,6 +182,9 @@ eas_common_sync_folder_items (EasCommon* self,
                                  context);
 	
     eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));	
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates	
 
     // Activate Request
     ret = eas_2way_sync_req_Activate (req,                                 

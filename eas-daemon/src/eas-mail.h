@@ -54,6 +54,7 @@
 #include <dbus/dbus-glib.h>
 #include <glib-object.h>
 #include "../libeas/eas-connection.h"
+#include "eas-interface-base.h"
 
 G_BEGIN_DECLS
 
@@ -70,13 +71,12 @@ typedef struct _EasMail EasMail;
 
 struct _EasMailClass
 {
-	GObjectClass parent_class;
-	guint signal_id;	// signal we emit
+	EasInterfaceBaseClass parent_class;
 };
 
 struct _EasMail
 {
-	GObject parent_instance;
+	EasInterfaceBase parent_instance;
 	
 };
 

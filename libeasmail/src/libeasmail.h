@@ -435,6 +435,8 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
 						  GSList **emails_changed,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
+						  EasProgressFn progress_fn,
+						  gpointer progress_data,                                             
 						  GError **error); 
 
 /*

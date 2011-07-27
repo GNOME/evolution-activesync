@@ -68,8 +68,7 @@
 #include "eas-marshal.h"
 #include "eas-get-item-estimate-req.h"
 
-G_DEFINE_TYPE (EasMail, eas_mail, G_TYPE_OBJECT);
-
+G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
 
 static void
 eas_mail_init (EasMail *object)
@@ -91,20 +90,20 @@ static void
 eas_mail_class_init (EasMailClass *klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
+	EasInterfaceBaseClass* base_class = EAS_INTERFACE_BASE_CLASS (klass);
+	
     g_debug ("eas_mail_class_init++");
 
     object_class->finalize = eas_mail_finalize;
 
 	// create the progress signal we emit 
-	klass->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
+	base_class->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
 	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
 	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
 	0,																		// class offset
 	NULL,																	// accumulator
 	NULL,																	// user data for accumulator
-    eas_marshal_VOID__UINT_UINT,
-	//g_cclosure_marshal_VOID__UINT,   // Function to marshal the signal data into the parameters of the signal call
+    eas_marshal_VOID__UINT_UINT,											// Function to marshal the signal data into the parameters of the signal call  
 	G_TYPE_NONE,															// handler return type
 	2,																		// Number of parameter GTypes to follow
 	// GTypes of the parameters
@@ -495,7 +494,7 @@ eas_mail_fetch_email_body (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 
@@ -553,7 +552,7 @@ eas_mail_fetch_attachment (EasMail* self,
 
     eas_request_base_SetConnection (&req->parent_instance, connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, self);		
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));		
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 	
@@ -606,7 +605,7 @@ eas_mail_send_email (EasMail* easMailObj,
     eas_request_base_SetConnection (&req->parent_instance,
                                     connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, easMailObj);	
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(easMailObj));	
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);	
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);//incoming progress updates
 	

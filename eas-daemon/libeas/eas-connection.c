@@ -804,14 +804,14 @@ emits a signal (if the dbus interface object has been set)
 static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
 {
 	guint request_id = eas_request_base_GetRequestId (request);
-	EasMail* dbus_interface;
-	EasMailClass* dbus_interface_klass;
+	EasInterfaceBase* dbus_interface;
+	EasInterfaceBaseClass* dbus_interface_klass;
 	guint percent, total, so_far;
 
 	dbus_interface = eas_request_base_GetInterfaceObject(request); 
 	if(dbus_interface)
 	{
-		dbus_interface_klass = EAS_MAIL_GET_CLASS (dbus_interface);	
+		dbus_interface_klass = EAS_INTERFACE_BASE_GET_CLASS (dbus_interface);	
 
 		total = eas_request_base_GetDataSize(request);
 
