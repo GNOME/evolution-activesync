@@ -128,6 +128,13 @@ gboolean eas_sync_sync_folder_hierarchy(EasSync* self,
                                           const gchar* sync_key,
                                           DBusGMethodInvocation* context);
 
+gboolean
+eas_sync_fetch_item (EasSync* self,
+                           const gchar* account_uid,
+                           const gchar* collection_id,
+                           const gchar *server_id,
+                           DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_SYNC_H_ */

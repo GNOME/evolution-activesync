@@ -223,7 +223,8 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     }
 
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
-
+	gchar* item = eas_get_email_body_msg_get_item (priv->emailBodyMsg);
+	
 finish:
     xmlFreeDoc (doc);
     if (!ret)
@@ -236,7 +237,7 @@ finish:
     else
     {
         g_debug ("eas_mail_fetch_email_body - return for dbus");
-        dbus_g_method_return (eas_request_base_GetContext (parent));
+        dbus_g_method_return (eas_request_base_GetContext (parent), item);
     }
 
     g_debug ("eas_get_email_body_req_MessageComplete--");

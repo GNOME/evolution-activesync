@@ -57,6 +57,7 @@
 #include "eas-add-item-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
 #include "../../libeassync/src/eas-item-info.h"
+#include "eas-get-email-body-req.h"
 
 #include "../libeas/eas-connection.h"
 #include "eas-mail.h"
@@ -455,6 +456,57 @@ eas_sync_sync_folder_hierarchy (EasSync* self,
 
     g_debug ("eas_sync_sync_folder_hierarchy--");
 	return TRUE;
+}
+
+gboolean
+eas_sync_fetch_item (EasSync* self,
+                           const gchar* account_uid,
+                           const gchar* collection_id,
+                           const gchar *server_id,
+                           DBusGMethodInvocation* context)
+{
+    EasConnection *connection;
+    gboolean ret;
+    GError *error = NULL;
+    EasGetEmailBodyReq *req = NULL;
+
+    g_debug ("eas_mail_fetch_item++");
+
+    connection = eas_connection_find (account_uid);
+    if (!connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        ret = FALSE;
+		goto finish;
+    }
+
+    // Create Request 
+    req = eas_get_email_body_req_new (account_uid,
+                                      collection_id,
+                                      server_id,
+                                      NULL,
+                                      context);
+
+    eas_request_base_SetConnection (&req->parent_instance, connection);
+
+    ret = eas_get_email_body_req_Activate (req, &error);
+
+
+finish:
+    if (!ret)
+    {
+        g_assert (error != NULL);
+        g_warning ("eas_mail_fetch_email_body - failed to get data from message");
+        dbus_g_method_return_error (context, error);
+        g_error_free (error);
+    }
+
+    g_debug ("eas_mail_fetch_email_body--");
+    return TRUE;
 }
 
 
