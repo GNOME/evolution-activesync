@@ -213,6 +213,21 @@ gboolean eas_sync_handler_sync_folder_hierarchy(EasSyncHandler* self,
                                                  GSList **folders_deleted,
                                                  GError **error);
 
+/* function name:               eas_sync_handler_fetch_item
+ * function description:        fetch an item from a folder
+ * return value:                TRUE if function success, FALSE if error
+ * params: 
+ * gchar *folder_id (in )       :folder id where the item resides - use null if using default folders for 
+ *                               contacts or calendar items
+ * gchar *server_id (in )       : server id of the item to be fetched
+ * EasItemInfo *item (out)      : pointer to empty item which will be populated on completion 
+ * EAS_ITEM_TYPE type (in):		identify the type of data being fetched
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will be unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/ 
+
 gboolean
 eas_sync_handler_fetch_item (EasSyncHandler* self,
 				   const gchar *folder_id,
