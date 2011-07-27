@@ -52,6 +52,7 @@
 
 #include "eas-get-email-body-msg.h"
 #include "eas-get-email-body-req.h"
+#include <string.h>
 
 struct _EasGetEmailBodyReqPrivate
 {
@@ -60,6 +61,7 @@ struct _EasGetEmailBodyReqPrivate
     gchar* serverId;
     gchar* collectionId;
     gchar* mimeDirectory;
+	EasItemType item_type;
 };
 
 #define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
@@ -146,7 +148,8 @@ EasGetEmailBodyReq*
 eas_get_email_body_req_new (const gchar* account_uid,
                             const gchar *collection_id,
                             const gchar *server_id,
-                            const gchar *mime_directory,	
+                            const gchar *mime_directory,
+                            const EasItemType item_type,
                             DBusGMethodInvocation* context)
 {
     EasGetEmailBodyReq* req = NULL;
@@ -161,6 +164,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
     priv->collectionId = g_strdup (collection_id);
     priv->serverId = g_strdup (server_id);
     priv->mimeDirectory = g_strdup (mime_directory);
+	priv->item_type = item_type;
     eas_request_base_SetContext(&req->parent_instance, context);
 
     g_debug ("eas_get_email_body_req_new--");
@@ -178,6 +182,24 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
     g_debug ("eas_get_email_body_req_Activate++");
 
     g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if(priv->collectionId == NULL|| strlen(priv->collectionId)<=0)
+   {
+           EasAccount *acc;
+		   acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
+           switch (priv->item_type)
+			{
+				case EAS_ITEM_CALENDAR:
+					priv->collectionId = eas_account_get_calendar_folder (acc);
+					break;
+				case EAS_ITEM_CONTACT:
+					priv->collectionId = eas_account_get_contact_folder (acc);
+					break;
+				default:
+					g_warning("trying to get default folder for unspecified item type");
+			}
+		   g_object_unref (acc);
+   }
 
     priv->emailBodyMsg = eas_get_email_body_msg_new (priv->serverId, priv->collectionId, priv->mimeDirectory);
     doc = eas_get_email_body_msg_build_message (priv->emailBodyMsg);

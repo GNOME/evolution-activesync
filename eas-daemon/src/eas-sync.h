@@ -133,6 +133,7 @@ eas_sync_fetch_item (EasSync* self,
                            const gchar* account_uid,
                            const gchar* collection_id,
                            const gchar *server_id,
+                           const guint64 type,
                            DBusGMethodInvocation* context);
 
 G_END_DECLS

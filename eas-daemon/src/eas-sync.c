@@ -463,6 +463,7 @@ eas_sync_fetch_item (EasSync* self,
                            const gchar* account_uid,
                            const gchar* collection_id,
                            const gchar *server_id,
+                           const guint64 type,
                            DBusGMethodInvocation* context)
 {
     EasConnection *connection;
@@ -489,6 +490,7 @@ eas_sync_fetch_item (EasSync* self,
                                       collection_id,
                                       server_id,
                                       NULL,
+                                      type,
                                       context);
 
     eas_request_base_SetConnection (&req->parent_instance, connection);

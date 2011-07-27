@@ -80,6 +80,7 @@
    	<arg type="s" name="account_uid" direction="in"/>
 	<arg type="s" name="collection_id" direction="in"/>
 	<arg type="s" name="server_id" direction="in"/>		<!-- id of email to fetch body for, eg 5:2 -->
+	<arg type="t" name="type" direction="in"/>	<!-- t == UINT64-->
 	<arg type="s" name="item" direction="out"/>
     </method>
   </interface>

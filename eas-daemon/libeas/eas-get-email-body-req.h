@@ -106,12 +106,13 @@ GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
  * 
  * @return An allocated EasGetEmailAttachmentReq GObject or NULL
  */
-EasGetEmailBodyReq* 
-eas_get_email_body_req_new (const gchar* account_uid, 
-                            const gchar *collection_id, 
-                            const gchar *server_id, 
+EasGetEmailBodyReq*
+eas_get_email_body_req_new (const gchar* account_uid,
+                            const gchar *collection_id,
+                            const gchar *server_id,
                             const gchar *mime_directory,
-                            DBusGMethodInvocation *context);
+                            const EasItemType item_type,
+                            DBusGMethodInvocation* context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

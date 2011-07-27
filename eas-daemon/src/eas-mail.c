@@ -490,6 +490,7 @@ eas_mail_fetch_email_body (EasMail* self,
                                       collection_id,
                                       server_id,
                                       mime_directory,
+                                      EAS_ITEM_MAIL,
                                       context);
 
     eas_request_base_SetConnection (&req->parent_instance, connection);

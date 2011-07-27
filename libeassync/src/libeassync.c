@@ -714,6 +714,7 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 				   const gchar *folder_id,
 				   const gchar *server_id,
 				   EasItemInfo* item,
+                   EasItemType type,
 				   GError **error)
 {
 	gboolean ret = TRUE;
@@ -723,7 +724,6 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 
 	g_debug ("eas_sync_handler_fetch_item++");
 	g_assert (self);
-	g_assert (folder_id);
 	g_assert (server_id);
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -737,6 +737,7 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 					G_TYPE_STRING, priv->account_uid,
 					G_TYPE_STRING, folder_id,
 					G_TYPE_STRING, server_id,
+	                G_TYPE_UINT64, (guint64) type,
 					G_TYPE_INVALID);
 
 

@@ -217,7 +217,8 @@ gboolean
 eas_sync_handler_fetch_item (EasSyncHandler* self,
 				   const gchar *folder_id,
 				   const gchar *server_id,
-				   EasItemInfo * item,
+				   EasItemInfo* item,
+                   EasItemType type,
 				   GError **error);
 
 G_END_DECLS
