@@ -52,12 +52,16 @@
 
 #include "eas-connection-errors.h"
 #include "eas-get-email-body-msg.h"
+#include "eas-cal-info-translator.h"
+#include "eas-con-info-translator.h"
+#include <string.h>
 
 struct _EasGetEmailBodyMsgPrivate
 {
     gchar* serverUid;
     gchar* collectionId;
     gchar* directoryPath;
+	gchar* item;
 };
 
 #define EAS_GET_EMAIL_BODY_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_MSG, EasGetEmailBodyMsgPrivate))
@@ -77,6 +81,7 @@ eas_get_email_body_msg_init (EasGetEmailBodyMsg *object)
     priv->serverUid = NULL;
     priv->collectionId = NULL;
 	priv->directoryPath = NULL;
+	priv->item = NULL;
 
     g_debug ("eas_get_email_body_msg_init--");
 }
@@ -92,6 +97,7 @@ eas_get_email_body_msg_finalize (GObject *object)
     g_free (priv->serverUid);
     g_free (priv->collectionId);
     g_free (priv->directoryPath);
+	g_free (priv->item);
 
     G_OBJECT_CLASS (eas_get_email_body_msg_parent_class)->finalize (object);
     g_debug ("eas_get_email_body_msg_finalize--");
@@ -160,13 +166,19 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
     leaf = xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
     leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsync:CollectionId", (xmlChar*) priv->collectionId);
     leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsync:ServerId", (xmlChar*) priv->serverUid);
-    options = xmlNewChild (fetch, NULL, (xmlChar *) "Options", NULL);
 
-    leaf = xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
-    body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
+    //if we provide a mime directory location, then this will be an email request, otherwise,
+    // don't include mime options, as we don't want that included
+    if(priv->directoryPath)
+    {
 
-    leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
+		options = xmlNewChild (fetch, NULL, (xmlChar *) "Options", NULL);
 
+		leaf = xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
+		body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
+
+		leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
+	}
     g_debug ("eas_get_email_body_msg_build_message--");
     return doc;
 }
@@ -178,6 +190,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
     gboolean ret = TRUE;
     EasGetEmailBodyMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;
+	gchar *class = NULL;
 
     g_debug ("eas_get_email_body_msg_parse_response++");
 
@@ -292,6 +305,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Class"))
         {
+			class = (gchar *) xmlNodeGetContent (node);
             continue;
         }
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Properties"))
@@ -307,70 +321,86 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
         goto finish;
     }
 
-    for (node = node->children; node; node = node->next)
-    {
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Body"))
-        {
-            break;
-        }
-    }
 
-    if (!node)
-    {
-        g_warning ("Failed to find Body node");
-        // Note not setting error here as this is valid
-        goto finish;
-    }
+	if(!g_strcmp0(class, "Email"))
+	{
+		for (node = node->children; node; node = node->next)
+		{
+		
+			if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Body"))
+			{
+			    break;
+			}
+		}
 
-    for (node = node->children; node; node = node->next)
-    {
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Type"))
-        {
-            gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
-            if (g_strcmp0 (xmlTmp, "4"))
-            {
-                //g_critical("Email type returned by server is not MIME");
-                g_set_error (error, EAS_CONNECTION_ERROR,
-                             EAS_CONNECTION_ERROR_FAILED,       // TODO worth adding special error code?
-                             ("Email type returned by server is not MIME!"));
-                xmlFree (xmlTmp);
-                ret = FALSE;
-                goto finish;
-            }
-            xmlFree (xmlTmp);
-            continue;
-        }
+		if (!node)
+		{
+		    g_warning ("Failed to find Body node");
+		    // Note not setting error here as this is valid
+		    goto finish;
+		}
 
-        if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Data"))
-        {
-            gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
-            gchar* fullFilePath = NULL;
-            FILE *hBody = NULL;
+		for (node = node->children; node; node = node->next)
+		{
+		    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Type"))
+		    {
+		        gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
+		        if (g_strcmp0 (xmlTmp, "4"))
+		        {
+		            //g_critical("Email type returned by server is not MIME");
+		            g_set_error (error, EAS_CONNECTION_ERROR,
+		                         EAS_CONNECTION_ERROR_FAILED,       // TODO worth adding special error code?
+		                         ("Email type returned by server is not MIME!"));
+		            xmlFree (xmlTmp);
+		            ret = FALSE;
+		            goto finish;
+		        }
+		        xmlFree (xmlTmp);
+		        continue;
+		    }
 
-            fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
-            g_message ("Attempting to write email to file [%s]", fullFilePath);
-            if ( (hBody = fopen (fullFilePath, "wb")))
-            {
-                fputs (xmlTmp, hBody);
-                fclose (hBody);
-            }
-            else
-            {
-                g_critical ("Failed to open file!");
-                g_set_error (error, EAS_CONNECTION_ERROR,
-                             EAS_CONNECTION_ERROR_FILEERROR,
-                             "Failed to open file [%s]", fullFilePath);
-                ret = FALSE;
-				g_free (fullFilePath);
-				xmlFree (xmlTmp);
-				goto finish;
-            }
-            g_free (fullFilePath);
-            xmlFree (xmlTmp);
-            break;
-        }
-    }
+		    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Data"))
+		    {
+		        gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
+		        gchar* fullFilePath = NULL;
+		        FILE *hBody = NULL;
 
+		        fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
+		        g_message ("Attempting to write email to file [%s]", fullFilePath);
+		        if ( (hBody = fopen (fullFilePath, "wb")))
+		        {
+		            fputs (xmlTmp, hBody);
+		            fclose (hBody);
+		        }
+		        else
+		        {
+		            g_critical ("Failed to open file!");
+		            g_set_error (error, EAS_CONNECTION_ERROR,
+		                         EAS_CONNECTION_ERROR_FILEERROR,
+		                         "Failed to open file [%s]", fullFilePath);
+		            ret = FALSE;
+					g_free (fullFilePath);
+					xmlFree (xmlTmp);
+					goto finish;
+		        }
+		        g_free (fullFilePath);
+		        xmlFree (xmlTmp);
+		        break;
+		    }
+		}
+	}
+	else if(!g_strcmp0(class, "Calendar"))
+	{
+		g_debug ("calendar parsing");
+		priv->item = eas_cal_info_translator_parse_response (node, g_strdup(priv->serverUid));
+		g_debug("calinfo = %s", priv->item);
+	}
+	else if(!g_strcmp0(class, "Contact"))
+	{
+		g_debug ("contact parsing");
+		priv->item = eas_con_info_translator_parse_response (node, g_strdup(priv->serverUid));
+	}
+	        
 finish:
     if (!ret)
     {
@@ -379,4 +409,10 @@ finish:
     g_debug ("eas_get_email_body_msg_parse_response--");
     return ret;
 
+}
+
+
+gchar * eas_get_email_body_msg_get_item (EasGetEmailBodyMsg* self)
+{
+	return self->priv->item;
 }
