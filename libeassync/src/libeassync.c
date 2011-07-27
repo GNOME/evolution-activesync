@@ -710,3 +710,57 @@ cleanup:
     g_debug ("eas_mail_handler_sync_folder_hierarchy--");
     return ret;
 }
+
+gboolean
+eas_sync_handler_fetch_item (EasSyncHandler* self,
+				   const gchar *folder_id,
+				   const gchar *server_id,
+				   EasItemInfo* item,
+				   GError **error)
+{
+	gboolean ret = TRUE;
+	EasSyncHandlerPrivate *priv = self->priv;
+	guint request_id;
+	DBusGProxyCall *call;
+	gchar* flatitem = NULL;
+
+	g_debug ("eas_sync_handler_fetch_item++");
+	g_assert (self);
+	g_assert (folder_id);
+	g_assert (server_id);
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+
+	call = dbus_g_proxy_begin_call (priv->remoteEas,
+					"fetch_item",
+					NULL,
+					NULL, 							// userdata passed to callback
+					NULL, 							// destroy notification
+					G_TYPE_STRING, priv->account_uid,
+					G_TYPE_STRING, folder_id,
+					G_TYPE_STRING, server_id,
+					G_TYPE_INVALID);
+
+
+	// blocks until results are available:
+	ret = dbus_g_proxy_end_call (priv->remoteEas,
+				     call,
+				     error,
+	                 G_TYPE_STRING, &flatitem,
+				     G_TYPE_INVALID);
+
+
+	eas_item_info_deserialise (item, flatitem);
+
+	
+
+	
+
+finish:
+	if (!ret) {
+		g_assert (error == NULL || *error != NULL);
+	}
+	g_debug ("eas_mail_handler_fetch_email_body--");
+	return ret;
+}

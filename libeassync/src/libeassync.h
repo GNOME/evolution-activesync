@@ -28,6 +28,7 @@
 
 #include <glib-object.h>
 #include "../../eas-daemon/libeas/eas-request-base.h"
+#include "eas-item-info.h"
 
 
 G_BEGIN_DECLS
@@ -42,6 +43,7 @@ G_BEGIN_DECLS
 typedef struct _EasSyncHandlerClass EasSyncHandlerClass;
 typedef struct _EasSyncHandler EasSyncHandler;
 typedef struct _EasSyncHandlerPrivate EasSyncHandlerPrivate;
+
 
 struct _EasSyncHandlerClass{
 	GObjectClass parent_class;
@@ -210,6 +212,13 @@ gboolean eas_sync_handler_sync_folder_hierarchy(EasSyncHandler* self,
                                                  GSList **folders_updated,
                                                  GSList **folders_deleted,
                                                  GError **error);
+
+gboolean
+eas_sync_handler_fetch_item (EasSyncHandler* self,
+				   const gchar *folder_id,
+				   const gchar *server_id,
+				   EasItemInfo * item,
+				   GError **error);
 
 G_END_DECLS
 
