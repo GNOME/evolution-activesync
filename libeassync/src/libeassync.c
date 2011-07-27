@@ -57,8 +57,6 @@ eas_sync_error_quark (void)
 	return quark;
 }
 
-static gchar* defaultCalFolder = NULL;
-static gchar* defaultConFolder = NULL;
 
 struct _EasSyncHandlerPrivate
 {
@@ -720,7 +718,6 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 {
 	gboolean ret = TRUE;
 	EasSyncHandlerPrivate *priv = self->priv;
-	guint request_id;
 	DBusGProxyCall *call;
 	gchar* flatitem = NULL;
 
@@ -753,11 +750,6 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 
 	eas_item_info_deserialise (item, flatitem);
 
-	
-
-	
-
-finish:
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}

@@ -211,7 +211,8 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     GError *error = NULL;
     EasGetEmailBodyReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-
+	gchar* item = NULL;
+	
     g_debug ("eas_get_email_body_req_MessageComplete++");
 
     // if an error occurred, store it and signal client
@@ -223,7 +224,7 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
     }
 
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
-	gchar* item = eas_get_email_body_msg_get_item (priv->emailBodyMsg);
+	item = eas_get_email_body_msg_get_item (priv->emailBodyMsg);
 	
 finish:
     xmlFreeDoc (doc);

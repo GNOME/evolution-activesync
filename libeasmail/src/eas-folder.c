@@ -106,7 +106,6 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 gboolean
 eas_folder_deserialise (EasFolder* folder, const gchar *data)
 {
-	gchar *type = NULL;
 	gchar **strv;
 
 	g_assert (folder);
