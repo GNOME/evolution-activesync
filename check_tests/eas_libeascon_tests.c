@@ -191,7 +191,7 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
     // client so that the client can track where it is with regard to sync.
     // therefore the key must not be zero as this is the seed value for this test
     fail_if (*sync_key_out==NULL, "Sync Key not updated by call the exchange server");
-    fail_if (g_slist_length (*created) == 0, "list length =0");
+//    fail_if (g_slist_length (*created) == 0, "list length =0"); /* list can be empty should we fail!?*/
 }
 
 
@@ -328,99 +328,95 @@ END_TEST
 
 START_TEST (test_eas_sync_handler_delete_all_created_con)
 {
-    const char* accountuid = g_account_id;
-    EasSyncHandler *sync_handler = NULL;
-    GError *error = NULL;
-    gboolean testContactFound = FALSE;
+	const char* accountuid = g_account_id;
+	EasSyncHandler *sync_handler = NULL;
+	GError *error = NULL;
 
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+	// get a handle to the DBus interface and associate the account ID with
+	// this object
+	testGetContactsHandler (&sync_handler, accountuid);
 
-
-    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_in = NULL;
 	gchar* folder_sync_key_out = NULL;
-    GSList *contactitems_created = NULL;
-    GSList *contactitems_updated = NULL;
-    GSList *contactitems_deleted = NULL;
+	GSList *contactitems_created = NULL, *l = NULL;
+	GSList *contactitems_updated = NULL;
+	GSList *contactitems_deleted = NULL;
 
-    testGetLatestContacts (sync_handler,
-                           folder_sync_key_in,
-                           &folder_sync_key_out,
-                           &contactitems_created,
-                           &contactitems_updated,
-                           &contactitems_deleted,
-                           &error);
+	testGetLatestContacts (sync_handler,
+		                   folder_sync_key_in,
+		                   &folder_sync_key_out,
+		                   &contactitems_created,
+		                   &contactitems_updated,
+		                   &contactitems_deleted,
+		                   &error);
 
-	g_free(folder_sync_key_in);
+	g_free(folder_sync_key_in); folder_sync_key_in = NULL;
 	
 	/* we are only interested in the created contacts so get rid of updated + deleted */
     g_slist_foreach (contactitems_deleted, (GFunc) g_object_unref, NULL);
     g_slist_foreach (contactitems_updated, (GFunc) g_object_unref, NULL);
-    g_slist_free (contactitems_deleted);
-    g_slist_free (contactitems_updated);
-    contactitems_deleted = NULL;
-    contactitems_updated = NULL;
+    g_slist_free (contactitems_deleted); contactitems_deleted = NULL;
+    g_slist_free (contactitems_updated); contactitems_updated = NULL;
 
+	GSList *conitemToDel = NULL;
+	EasItemInfo *conitem = NULL;
 	
-    // if the contactitems_created list contains a contact item
-    if (contactitems_created)
-    {
-        gboolean rtn = FALSE;
-		folder_sync_key_in = g_strdup(folder_sync_key_out);
-		g_free(folder_sync_key_out);
-		folder_sync_key_out = NULL;
-		
-        // delete the first calendar item in the folder
-        rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in,
-                                             folder_sync_key_out,
-                                             EAS_ITEM_CONTACT, NULL,
-                                             contactitems_created,
-                                             &error);
-        if (error)
-        {
-            fail_if (rtn == FALSE, "%s", error->message);
-        }
-
-		g_free(folder_sync_key_in);
-		g_free(folder_sync_key_out);
-
-        testContactFound = TRUE;
-    }
-
-    // fail the test if there is no cal item as this means the
-    // test has not exercised the code to get the email body as required by this test case
-    fail_if (testContactFound == FALSE, "no cal item found");
-
-	if(!testContactFound)
-	{
-		g_free(folder_sync_key_out);
-		folder_sync_key_out = NULL;
+	for(l= contactitems_created; l ; l= l->next){
+		conitem = l->data;
+		conitemToDel = g_slist_append (conitemToDel, conitem->server_id);
 	}
-    // free contacts item objects list
-    g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);
-    g_slist_free (contactitems_created);
-    contactitems_created = NULL;
-	
-    g_object_unref (sync_handler);
 
+	// if the contactitems_created list contains a contact item
+	if (conitemToDel){
+		gboolean rtn = FALSE;
+
+		folder_sync_key_in = g_strdup(folder_sync_key_out);
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+		
+		// delete all contacts items in the folder
+		rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in,
+				                             folder_sync_key_out,
+				                             EAS_ITEM_CONTACT, NULL,
+				                             conitemToDel,
+				                             &error);
+		if (error)
+		{
+			fail_if (rtn == FALSE, "%s", error->message);
+		}
+
+		g_free(folder_sync_key_in); folder_sync_key_in = NULL;
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+#if 0
+		/*TODO: causes memory leak */
+		g_slist_foreach (conitemToDel, (GFunc) g_free, NULL);
+		g_slist_free (conitemToDel); conitemToDel = NULL;
+#endif
+	}
+
+	if(folder_sync_key_out)
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+
+	// free contacts item objects list
+	g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);
+	g_slist_free (contactitems_created); contactitems_created = NULL;
+
+	g_object_unref (sync_handler);
 }
 END_TEST
 
 Suite* eas_libeascon_suite (void)
 {
-    Suite* s = suite_create ("libeascon");
+	Suite* s = suite_create ("libeascon");
 
-    /* tc_libeascon test case */
-    TCase *tc_libeascon = tcase_create ("core");
-    suite_add_tcase (s, tc_libeascon);
+	/* tc_libeascon test case */
+	TCase *tc_libeascon = tcase_create ("core");
+	suite_add_tcase (s, tc_libeascon);
 
-    //tcase_add_test (tc_libeascon, test_get_sync_handler);
+	//tcase_add_test (tc_libeascon, test_get_sync_handler);
 	//tcase_add_test (tc_libeascon, test_get_latest_contacts_items);
-//	tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
-   // tcase_add_test (tc_libeascon, 	test_eas_sync_handler_delete_one_con);
-   // tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_all_created_con);
-    //tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
-   //tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
-    return s;
+	//tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
+	//tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_all_created_con);
+	//tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
+	//tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
+	return s;
 }
