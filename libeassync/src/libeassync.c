@@ -347,6 +347,8 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                      ("delete_items requires a valid sync key"));
 		return FALSE;
 	}
+	
+
 
 	deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
     if (!deleted_items_array)
@@ -372,7 +374,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                              G_TYPE_UINT64, (guint64) type,
                              G_TYPE_STRING, folder_id,
                              G_TYPE_STRING, sync_key_in,
-                             G_TYPE_STRV, items_deleted,
+                             G_TYPE_STRV, deleted_items_array,
                              G_TYPE_INVALID,
                              G_TYPE_STRING, sync_key_out,
                              G_TYPE_INVALID);
