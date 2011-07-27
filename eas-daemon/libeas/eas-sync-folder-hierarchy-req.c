@@ -62,6 +62,8 @@ struct _EasSyncFolderHierarchyReqPrivate
     EasSyncFolderMsg* syncFolderMsg;
     gchar* accountID;
     gchar* syncKey;
+	sync_folders_results_fn results_fn;
+	void *results_fn_data;
 };
 
 #define EAS_SYNC_FOLDER_HIERARCHY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, EasSyncFolderHierarchyReqPrivate))
@@ -69,6 +71,12 @@ struct _EasSyncFolderHierarchyReqPrivate
 
 
 G_DEFINE_TYPE (EasSyncFolderHierarchyReq, eas_sync_folder_hierarchy_req, EAS_TYPE_REQUEST_BASE);
+
+
+static void
+eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
+									  GSList *added_folders, GSList *updated_folders,
+									  GSList *deleted_folders, GError *error);
 
 static void
 eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
@@ -155,6 +163,8 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
 
     priv->syncKey = g_strdup (syncKey);
     priv->accountID = g_strdup (accountId);
+	priv->results_fn = eas_sync_folder_hierarchy_req_return;
+	priv->results_fn_data = self;
     eas_request_base_SetContext (&self->parent_instance, context);
 
     g_debug ("eas_sync_folder_hierarchy_req_new--");
@@ -205,7 +215,7 @@ finish:
 }
 
 static void
-eas_sync_folder_hierarchy_req_return (EasSyncFolderHierarchyReq *self, const gchar *ret_sync_key,
+eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 									  GSList *added_folders, GSList *updated_folders,
 									  GSList *deleted_folders, GError *error)
 {

@@ -83,6 +83,12 @@ struct _EasSyncFolderHierarchyReq
 
 GType eas_sync_folder_hierarchy_req_get_type (void) G_GNUC_CONST;
 
+/* Callback function with results */
+
+typedef void (*sync_folders_results_fn) (void *priv, const gchar *ret_sync_key,
+										 GSList *added_folders, GSList *updated_folders,
+										 GSList *deleted_folders, GError *error);
+
 /** 
  * Create a new sync folder hierarchy request GObject
  *
