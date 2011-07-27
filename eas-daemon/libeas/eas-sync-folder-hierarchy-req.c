@@ -171,7 +171,15 @@ eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId,
     return self;
 }
 
+void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *req,
+												   sync_folders_results_fn fn,
+												   void *fn_data)
+{
+	EasSyncFolderHierarchyReqPrivate *priv = req->priv;
 
+	priv->results_fn = fn;
+	priv->results_fn_data = fn_data;
+}
 
 
 gboolean

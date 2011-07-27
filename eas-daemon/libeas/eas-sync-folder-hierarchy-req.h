@@ -89,6 +89,10 @@ typedef void (*sync_folders_results_fn) (void *priv, const gchar *ret_sync_key,
 										 GSList *added_folders, GSList *updated_folders,
 										 GSList *deleted_folders, GError *error);
 
+void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *req,
+												   sync_folders_results_fn fn,
+												   void *fn_data);
+
 /** 
  * Create a new sync folder hierarchy request GObject
  *
