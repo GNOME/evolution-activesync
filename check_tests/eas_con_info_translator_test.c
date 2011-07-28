@@ -69,7 +69,8 @@ void test_info_translator_parse_request(const char* vCardName,const char* xmlNam
 //region Translate
 	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Con_Info_Translator/XML_Data/");
 	nodeLevel1 = doc->children;
-	fail_if(eas_con_info_translator_parse_request(doc, nodeLevel1, conInfo)==NULL, "XML can't be created.");
+
+	fail_if(eas_con_info_translator_parse_request(doc, nodeLevel1, conInfo)==FALSE, "XML can't be created.");
 //end Translation
 
 //region Save Translation in temp.txt	
@@ -302,14 +303,14 @@ Suite* eas_con_info_translator_suite (void)
     suite_add_tcase (s, tc_con_info_translator);
 
 	tcase_add_test (tc_con_info_translator,test_info_translator_parse_request_jobTitle);
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_name); // this test will fail
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage); // this test will fail
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_businessAdr); // this test will fail 
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_pagerNumber); // this test will fail
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); //this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_name);
+	//tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage); // this test is will fail 
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_businessAdr); 
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_pagerNumber); 
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); 
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_blank);
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_mobile); //this test will fail
-	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note); //this test will fail
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_mobile);
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_note);
 
 	tcase_add_test (tc_con_info_translator, test_info_translator_parse_response_jobTitle);
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_response_name);

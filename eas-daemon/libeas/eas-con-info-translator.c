@@ -102,12 +102,13 @@
 #define EAS_ELEMENT_ROLE                      "JobTitle"
 #define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
 
-#define EAS_ELEMENT_BODY						"airsyncbase:Body"
-#define EAS_ELEMENT_BODY_TYPE					"airsyncbase:Type"
-#define EAS_ELEMENT_BODY_SIZE					"airsyncbase:EstimatedDataSize"
-#define EAS_ELEMENT_BODY_TRUNCATED				"airsyncbase:Truncated"
-#define EAS_ELEMENT_BODY_DATA					"airsyncbase:Data"
-#define EAS_ELEMENT_BODY_PREVIEW				"airsyncbase:Preview"
+#define EAS_NAMESPACE_AIRSYNCBASE             			"airsyncbase:"
+#define EAS_ELEMENT_BODY					"Body"
+#define EAS_ELEMENT_BODY_TYPE					"Type"
+#define EAS_ELEMENT_BODY_SIZE					"EstimatedDataSize"
+#define EAS_ELEMENT_BODY_TRUNCATED				"Truncated"
+#define EAS_ELEMENT_BODY_DATA					"Data"
+#define EAS_ELEMENT_BODY_PREVIEW				"Preview"
 
 #define EAS_ELEMENT_ANNIVERSARY					"Anniversary"
 #define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
@@ -141,7 +142,7 @@
 #define EAS_ELEMENT_CONTACTS2_IMADDRESS2		"IMAddress2"
 #define EAS_ELEMENT_CONTACTS2_IMADDRESS3		"IMAddress3"
 #define EAS_ELEMENT_CONTACTS2_MANAGERNAME		"ManagerName"
-#define EAS_ELEMENT_CONTACTS2_COMPANYMAINPHONE	"CompanyMainPhone"
+#define EAS_ELEMENT_CONTACTS2_COMPANYMAINPHONE		"CompanyMainPhone"
 #define EAS_ELEMENT_CONTACTS2_ACCOUNTNAME		"AccountName"
 #define EAS_ELEMENT_CONTACTS2_NICKNAME			"NickName"
 #define EAS_ELEMENT_CONTACTS2_MMS				"MMS"
@@ -493,13 +494,17 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 				//
 				// Note
 				//
-				else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
-				{
-					EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_NOTE);
-
-					e_vcard_add_attribute(vcard, attr);
-					add_attr_value(attr,node->children,EAS_ELEMENT_BODY);
-				}
+				else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0) {
+					xmlNodePtr subNode = NULL;
+					for (subNode = n->children; subNode; subNode = subNode->next) {
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_BODY_DATA)) {
+							EVCardAttribute *attr = e_vcard_attribute_new(NULL, EVC_NOTE);
+							e_vcard_add_attribute(vcard, attr);
+                    					add_attr_value(attr,subNode,EAS_ELEMENT_BODY_DATA);
+                            				break;
+                        			}
+                    			}
+                		}
 				else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
 				{
 					xmlNodePtr childNode = NULL;
@@ -855,16 +860,16 @@ static void
 set_xml_Note(xmlNodePtr appData, EVCardAttribute *attr)
 {	
 	xmlNodePtr body = NULL;
-	body = xmlNewChild (appData, NULL, (xmlChar *) EAS_ELEMENT_BODY, NULL);
-	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_TYPE,
+	body = xmlNewChild (appData, NULL, (xmlChar *)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE,
 	         (const xmlChar*) "1");
-	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_SIZE,
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_SIZE,
 	         (const xmlChar*) "0");
-	/* set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_TRUNCATED,
+	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TRUNCATED,
 			(const xmlChar*) "0"); */
-	set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_DATA,
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_DATA,
 	        (const xmlChar*) (const xmlChar*)attribute_get_nth_value(attr, 0));
-	/* set_xml_element(body, (const xmlChar*) EAS_ELEMENT_BODY_PREVIEW,
+	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_PREVIEW,
 	        (const xmlChar*) "0");*/
 }
 
@@ -909,6 +914,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 	attributes = e_vcard_get_attributes(vcard);
 
 	for (a = attributes; a; a = a->next) {
+		success = TRUE;
 		const char *name = NULL;
 		GList *params= NULL; 
 		EVCardAttribute *attr = a->data;
@@ -1117,7 +1123,7 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 
 		}
 
-	success = TRUE;
+	
 	}
 
 	

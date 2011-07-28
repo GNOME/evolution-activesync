@@ -13,7 +13,7 @@ TEL;TYPE=HOME:567573
 TEL;TYPE=HOME:0161 222 3333
 TEL;TYPE=HOME,FAX:0123 456 789
 ADR;TYPE=HOME:home city;home country;home post code;home state;home street
-N:firstName;middleName;lastName
+N:lastName;firstName;middleName;;
 EMAIL:"example@example.com" <example@example.com>
 ADR;TYPE=WORK:Business City;Business Country;Business Postal Code;Business 
  State;Business Address Street

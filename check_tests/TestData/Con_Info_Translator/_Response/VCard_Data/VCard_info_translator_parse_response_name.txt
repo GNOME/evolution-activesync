@@ -1,4 +1,4 @@
 BEGIN:VCARD
 VERSION:3.0
-N:firstName;middleName;lastName
+N:lastName;firstName;middleName;;
 END:VCARD

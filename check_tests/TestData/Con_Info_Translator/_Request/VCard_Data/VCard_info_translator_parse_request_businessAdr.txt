@@ -1,4 +1,4 @@
 BEGIN:VCARD
 VERSION:3.0
-ADR;TYPE=WORK:Business City;Business Street
+ADR;TYPE=WORK:;;BussinessAdr;BusinessCity;;;BusinessCountry
 END:VCARD

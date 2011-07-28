@@ -1,6 +1,3 @@
+<?xml version="1.0"?>
 <ApplicationData>
-<BusinessCountry>Business Country</BusinessCountry>
-<BusinessCity>Business City</BusinessCity>
-<BusinessState>Business State</BusinessState>
-<BusinessStreet>Business Address Street</BusinessStreet>
-</ApplicationData>
+<BusinessStreet>BussinessAdr</BusinessStreet><BusinessCity>BusinessCity</BusinessCity><BusinessCountry>BusinessCountry</BusinessCountry></ApplicationData>

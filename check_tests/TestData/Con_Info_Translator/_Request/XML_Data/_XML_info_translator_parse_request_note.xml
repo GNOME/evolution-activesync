@@ -1,7 +1,3 @@
+<?xml version="1.0"?>
 <ApplicationData>
-<Body xmlns="AirSyncBase:">
-              <Type>1</Type>
-              <EstimatedDataSize>0</EstimatedDataSize>
-		<Data>note number 1</Data>
-            </Body>
-</ApplicationData>
+<airsyncbase:Body><airsyncbase:Type>1</airsyncbase:Type><airsyncbase:EstimatedDataSize>0</airsyncbase:EstimatedDataSize><airsyncbase:Data>note number 1</airsyncbase:Data></airsyncbase:Body></ApplicationData>

@@ -1305,408 +1305,409 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, gchar* server_id)
 	struct icaltimetype dateTime;
 	struct icaltriggertype trigger;
 
-
-	xmlNodePtr n = node;
-
-	EasItemInfo* calInfo = NULL;
-
-	// iCalendar objects
-	icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
-	icalcomponent* vevent = icalcomponent_new(ICAL_VEVENT_COMPONENT);
-	icalcomponent* valarm = icalcomponent_new(ICAL_VALARM_COMPONENT);
-	icalcomponent* vtimezone = icalcomponent_new(ICAL_VTIMEZONE_COMPONENT);
-	icalproperty* prop = NULL;
-	icalparameter* param = NULL;
-	gboolean isAllDayEvent = FALSE;
-	gchar* organizerName = NULL;
-	gchar* organizerEmail = NULL;
-	GSList* newExceptionEvents = NULL;
-
-	// TODO: get all these strings into constants/#defines
-	
-	// TODO: make the PRODID configurable somehow
-	prop = icalproperty_new_prodid(ICAL_PROPERTY_PRODID);
-	icalcomponent_add_property(vcalendar, prop);
-
-	prop = icalproperty_new_version(ICAL_PROPERTY_VERSION);
-	icalcomponent_add_property(vcalendar, prop);
-
-	prop = icalproperty_new_method(ICAL_METHOD_PUBLISH);
-	icalcomponent_add_property(vcalendar, prop);
-
-	for (n = n->children; n; n = n->next)
+	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0((char*)(node->name), EAS_ELEMENT_APPLICATIONDATA)))
 	{
-		if (n->type == XML_ELEMENT_NODE)
+		xmlNodePtr n = node;
+
+		EasItemInfo* calInfo = NULL;
+
+		// iCalendar objects
+		icalcomponent* vcalendar = icalcomponent_new(ICAL_VCALENDAR_COMPONENT);
+		icalcomponent* vevent = icalcomponent_new(ICAL_VEVENT_COMPONENT);
+		icalcomponent* valarm = icalcomponent_new(ICAL_VALARM_COMPONENT);
+		icalcomponent* vtimezone = icalcomponent_new(ICAL_VTIMEZONE_COMPONENT);
+		icalproperty* prop = NULL;
+		icalparameter* param = NULL;
+		gboolean isAllDayEvent = FALSE;
+		gchar* organizerName = NULL;
+		gchar* organizerEmail = NULL;
+		GSList* newExceptionEvents = NULL;
+
+		// TODO: get all these strings into constants/#defines
+		
+		// TODO: make the PRODID configurable somehow
+		prop = icalproperty_new_prodid(ICAL_PROPERTY_PRODID);
+		icalcomponent_add_property(vcalendar, prop);
+
+		prop = icalproperty_new_version(ICAL_PROPERTY_VERSION);
+		icalcomponent_add_property(vcalendar, prop);
+
+		prop = icalproperty_new_method(ICAL_METHOD_PUBLISH);
+		icalcomponent_add_property(vcalendar, prop);
+
+		for (n = n->children; n; n = n->next)
 		{
-			const gchar* name = (const gchar*)(n->name);
-
-			//
-			// Subject
-			//
-			if (g_strcmp0(name, EAS_ELEMENT_SUBJECT) == 0)
+			if (n->type == XML_ELEMENT_NODE)
 			{
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new_summary(value);
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
+				const gchar* name = (const gchar*)(n->name);
 
-			//
-			// StartTime
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_STARTTIME) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				dateTime = icaltime_from_string(value);
-				if (isAllDayEvent)
+				//
+				// Subject
+				//
+				if (g_strcmp0(name, EAS_ELEMENT_SUBJECT) == 0)
 				{
-					// Ensure time is set to 00:00:00 for all-day events
-					dateTime.hour = dateTime.minute = dateTime.second = 0;
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_summary(value);
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
 				}
-				prop = icalproperty_new_dtstart(dateTime);
-				if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
-				{
-					param = icalparameter_new_tzid(tzid);
-					icalproperty_add_parameter(prop, param);
-				}
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
 
-			//
-			// EndTime
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_ENDTIME) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				dateTime = icaltime_from_string(value);
-				if (isAllDayEvent)
+				//
+				// StartTime
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_STARTTIME) == 0)
 				{
-					// Ensure time is set to 00:00:00 for all-day events
-					dateTime.hour = dateTime.minute = dateTime.second = 0;
-				}
-				prop = icalproperty_new_dtend(dateTime);
-				if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
-				{
-					param = icalparameter_new_tzid(tzid);
-					icalproperty_add_parameter(prop, param);
-				}
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
-
-			//
-			// DtStamp
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_DTSTAMP) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				dateTime = icaltime_from_string(value);
-				prop = icalproperty_new_dtstamp(dateTime);
-				if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
-				{
-					param = icalparameter_new_tzid(tzid);
-					icalproperty_add_parameter(prop, param);
-				}
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
-			
-			//
-			// UID
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_UID) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new_uid(value);
-				icalcomponent_add_property(vevent, prop);
-				xmlFree (value); value = NULL;
-			}
-
-			//
-			// Location
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_LOCATION) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new_location(value);
-				icalcomponent_add_property(vevent, prop);
-				xmlFree (value); value = NULL;
-			}
-
-			//
-			// Body
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
-			{
-				xmlNodePtr subNode = NULL;
-				for (subNode = n->children; subNode; subNode = subNode->next)
-				{
-					if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_DATA))
+					value = (gchar*)xmlNodeGetContent(n);
+					dateTime = icaltime_from_string(value);
+					if (isAllDayEvent)
 					{
-						value = (gchar*)xmlNodeGetContent(subNode);
-						prop = icalproperty_new_description(value);
-						icalcomponent_add_property(vevent, prop);
-						xmlFree (value); value = NULL;
-						break;
+						// Ensure time is set to 00:00:00 for all-day events
+						dateTime.hour = dateTime.minute = dateTime.second = 0;
+					}
+					prop = icalproperty_new_dtstart(dateTime);
+					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
+					{
+						param = icalparameter_new_tzid(tzid);
+						icalproperty_add_parameter(prop, param);
+					}
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// EndTime
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_ENDTIME) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					dateTime = icaltime_from_string(value);
+					if (isAllDayEvent)
+					{
+						// Ensure time is set to 00:00:00 for all-day events
+						dateTime.hour = dateTime.minute = dateTime.second = 0;
+					}
+					prop = icalproperty_new_dtend(dateTime);
+					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
+					{
+						param = icalparameter_new_tzid(tzid);
+						icalproperty_add_parameter(prop, param);
+					}
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// DtStamp
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_DTSTAMP) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					dateTime = icaltime_from_string(value);
+					prop = icalproperty_new_dtstamp(dateTime);
+					if (tzid && strlen(tzid) && !dateTime.is_utc) // Note: TZID not specified if it's a UTC time
+					{
+						param = icalparameter_new_tzid(tzid);
+						icalproperty_add_parameter(prop, param);
+					}
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+				}
+				
+				//
+				// UID
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_UID) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_uid(value);
+					icalcomponent_add_property(vevent, prop);
+					xmlFree (value); value = NULL;
+				}
+
+				//
+				// Location
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_LOCATION) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_location(value);
+					icalcomponent_add_property(vevent, prop);
+					xmlFree (value); value = NULL;
+				}
+
+				//
+				// Body
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
+				{
+					xmlNodePtr subNode = NULL;
+					for (subNode = n->children; subNode; subNode = subNode->next)
+					{
+						if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)subNode->name, EAS_ELEMENT_DATA))
+						{
+							value = (gchar*)xmlNodeGetContent(subNode);
+							prop = icalproperty_new_description(value);
+							icalcomponent_add_property(vevent, prop);
+							xmlFree (value); value = NULL;
+							break;
+						}
 					}
 				}
-			}
 
-			//
-			// Sensitivity
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_SENSITIVITY) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new_class(_eas2ical_convert_sensitivity_to_class(value));
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
-
-			//
-			// BusyStatus
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_BUSYSTATUS) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new_transp(_eas2ical_convert_busystatus_to_transp(value));
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-			}
-
-			//
-			// Categories
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
-			{
-				GString* categories = g_string_new("");
-
-				xmlNode* catNode = NULL;
-				for (catNode = n->children; catNode; catNode = catNode->next)
+				//
+				// Sensitivity
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_SENSITIVITY) == 0)
 				{
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_class(_eas2ical_convert_sensitivity_to_class(value));
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// BusyStatus
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_BUSYSTATUS) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new_transp(_eas2ical_convert_busystatus_to_transp(value));
+					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// Categories
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
+				{
+					GString* categories = g_string_new("");
+
+					xmlNode* catNode = NULL;
+					for (catNode = n->children; catNode; catNode = catNode->next)
+					{
+						if (categories->len > 0)
+						{
+							categories = g_string_append(categories, ",");
+						}
+
+						value = (gchar*)xmlNodeGetContent(catNode);
+						categories = g_string_append(categories, value);
+						g_free(value); value = NULL;
+					}
 					if (categories->len > 0)
 					{
-						categories = g_string_append(categories, ",");
+						prop = icalproperty_new_categories(categories->str);
+						icalcomponent_add_property(vevent, prop);
 					}
 
-					value = (gchar*)xmlNodeGetContent(catNode);
-					categories = g_string_append(categories, value);
-					g_free(value); value = NULL;
+					// Free the string, including the character buffer
+					g_string_free(categories, TRUE);
 				}
-				if (categories->len > 0)
+
+				//
+				// Reminder
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_REMINDER) == 0)
 				{
-					prop = icalproperty_new_categories(categories->str);
+					value = (gchar*)xmlNodeGetContent(n);
+
+					// Build an icaltriggertype structure
+					trigger = icaltriggertype_from_int(0); // Null the fields first
+					trigger.duration.is_neg = 1;
+					trigger.duration.minutes = (unsigned int)atoi(value);
+
+					prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
+					icalcomponent_add_property(valarm, prop);
+
+					prop = icalproperty_new_description(ICAL_DEFAULT_REMINDER_NAME); // TODO: make this configurable
+					icalcomponent_add_property(valarm, prop);
+
+					prop = icalproperty_new_trigger(trigger);
+					icalcomponent_add_property(valarm, prop);
+
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// AllDayEvent
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_ALLDAYEVENT) == 0)
+				{
+					value = (gchar*)xmlNodeGetContent(n);
+					if (atoi(value) == 1)
+					{
+						isAllDayEvent = TRUE;
+
+						// Check if we've already stored any start/end dates, and if so ensure all their times are set to 00:00:00.
+						// (Note: DtStamp times shouldn't be affected by this as that's the time the calendar entry was created,
+						// not when the event starts or ends.)
+						for (prop = icalcomponent_get_first_property(vevent, ICAL_DTEND_PROPERTY); prop;
+							 prop = icalcomponent_get_next_property(vevent, ICAL_DTEND_PROPERTY))
+						{
+							struct icaltimetype date = icalproperty_get_dtend(prop);
+							date.hour = date.minute = date.second = 0;
+							icalproperty_set_dtend(prop, date);
+						}
+						for (prop = icalcomponent_get_first_property(vevent, ICAL_DTSTART_PROPERTY); prop;
+							 prop = icalcomponent_get_next_property(vevent, ICAL_DTSTART_PROPERTY))
+						{
+							struct icaltimetype date = icalproperty_get_dtstart(prop);
+							date.hour = date.minute = date.second = 0;
+							icalproperty_set_dtstart(prop, date);
+						}
+					}
+					xmlFree(value); value = NULL;
+				}
+
+				//
+				// OrganizerName
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_NAME) == 0)
+				{
+					organizerName = (gchar*)xmlNodeGetContent(n);
+					// That's all for now: deal with it after the loop completes so we
+					// have both OrganizerName and OrganizerEmail
+				}
+
+				//
+				// OrganizerEmail
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_EMAIL) == 0)
+				{
+					organizerEmail = (gchar*)xmlNodeGetContent(n);
+					// That's all for now: deal with it after the loop completes so we
+					// have both OrganizerName and OrganizerEmail
+				}
+
+				//
+				// Attendees
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_ATTENDEES) == 0)
+				{
+					_eas2ical_process_attendees(n, vevent);
+				}
+
+				//
+				// TimeZone
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_TIMEZONE) == 0)
+				{
+					_eas2ical_process_timezone(n, vtimezone, &tzid);
+				}
+
+				//
+				// Recurrence
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_RECURRENCE) == 0)
+				{
+					_eas2ical_process_recurrence(n, vevent);
+				}
+
+				//
+				// Exceptions
+				//
+				else if (g_strcmp0(name, EAS_ELEMENT_EXCEPTIONS) == 0)
+				{
+					newExceptionEvents = _eas2ical_process_exceptions(n, vevent);
+					// This is dealt with below...
+				}
+
+				//
+				// Unmapped data fields
+				//
+				else
+				{
+					// Build a new custom property called X-MEEGO-ACTIVESYNCD-{ElementName}
+					gchar* propertyName = g_strconcat(ICAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
+					value = (gchar*)xmlNodeGetContent(n);
+					prop = icalproperty_new(ICAL_X_PROPERTY);
+
+					g_debug("Found EAS element that doesn't map to a VEVENT property. Creating X property %s:%s", propertyName, value);
+
+					icalproperty_set_x_name(prop, propertyName);
+					icalproperty_set_value(prop, icalvalue_new_from_string(ICAL_X_VALUE, value));
 					icalcomponent_add_property(vevent, prop);
+					xmlFree(value); value = NULL;
+					g_free(propertyName); propertyName = NULL;
 				}
-
-				// Free the string, including the character buffer
-				g_string_free(categories, TRUE);
-			}
-
-			//
-			// Reminder
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_REMINDER) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-
-				// Build an icaltriggertype structure
-				trigger = icaltriggertype_from_int(0); // Null the fields first
-				trigger.duration.is_neg = 1;
-				trigger.duration.minutes = (unsigned int)atoi(value);
-
-				prop = icalproperty_new_action(ICAL_ACTION_DISPLAY);
-				icalcomponent_add_property(valarm, prop);
-
-				prop = icalproperty_new_description(ICAL_DEFAULT_REMINDER_NAME); // TODO: make this configurable
-				icalcomponent_add_property(valarm, prop);
-
-				prop = icalproperty_new_trigger(trigger);
-				icalcomponent_add_property(valarm, prop);
-
-				xmlFree(value); value = NULL;
-			}
-
-			//
-			// AllDayEvent
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_ALLDAYEVENT) == 0)
-			{
-				value = (gchar*)xmlNodeGetContent(n);
-				if (atoi(value) == 1)
-				{
-					isAllDayEvent = TRUE;
-
-					// Check if we've already stored any start/end dates, and if so ensure all their times are set to 00:00:00.
-					// (Note: DtStamp times shouldn't be affected by this as that's the time the calendar entry was created,
-					// not when the event starts or ends.)
-					for (prop = icalcomponent_get_first_property(vevent, ICAL_DTEND_PROPERTY); prop;
-						 prop = icalcomponent_get_next_property(vevent, ICAL_DTEND_PROPERTY))
-					{
-						struct icaltimetype date = icalproperty_get_dtend(prop);
-						date.hour = date.minute = date.second = 0;
-						icalproperty_set_dtend(prop, date);
-					}
-					for (prop = icalcomponent_get_first_property(vevent, ICAL_DTSTART_PROPERTY); prop;
-						 prop = icalcomponent_get_next_property(vevent, ICAL_DTSTART_PROPERTY))
-					{
-						struct icaltimetype date = icalproperty_get_dtstart(prop);
-						date.hour = date.minute = date.second = 0;
-						icalproperty_set_dtstart(prop, date);
-					}
-				}
-				xmlFree(value); value = NULL;
-			}
-
-			//
-			// OrganizerName
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_NAME) == 0)
-			{
-				organizerName = (gchar*)xmlNodeGetContent(n);
-				// That's all for now: deal with it after the loop completes so we
-				// have both OrganizerName and OrganizerEmail
-			}
-
-			//
-			// OrganizerEmail
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_ORGANIZER_EMAIL) == 0)
-			{
-				organizerEmail = (gchar*)xmlNodeGetContent(n);
-				// That's all for now: deal with it after the loop completes so we
-				// have both OrganizerName and OrganizerEmail
-			}
-
-			//
-			// Attendees
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_ATTENDEES) == 0)
-			{
-				_eas2ical_process_attendees(n, vevent);
-			}
-
-			//
-			// TimeZone
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_TIMEZONE) == 0)
-			{
-				_eas2ical_process_timezone(n, vtimezone, &tzid);
-			}
-
-			//
-			// Recurrence
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_RECURRENCE) == 0)
-			{
-				_eas2ical_process_recurrence(n, vevent);
-			}
-
-			//
-			// Exceptions
-			//
-			else if (g_strcmp0(name, EAS_ELEMENT_EXCEPTIONS) == 0)
-			{
-				newExceptionEvents = _eas2ical_process_exceptions(n, vevent);
-				// This is dealt with below...
-			}
-
-			//
-			// Unmapped data fields
-			//
-			else
-			{
-				// Build a new custom property called X-MEEGO-ACTIVESYNCD-{ElementName}
-				gchar* propertyName = g_strconcat(ICAL_EXTENSION_PROPERTY_PREFIX, name, NULL);
-				value = (gchar*)xmlNodeGetContent(n);
-				prop = icalproperty_new(ICAL_X_PROPERTY);
-
-				g_debug("Found EAS element that doesn't map to a VEVENT property. Creating X property %s:%s", propertyName, value);
-
-				icalproperty_set_x_name(prop, propertyName);
-				icalproperty_set_value(prop, icalvalue_new_from_string(ICAL_X_VALUE, value));
-				icalcomponent_add_property(vevent, prop);
-				xmlFree(value); value = NULL;
-				g_free(propertyName); propertyName = NULL;
 			}
 		}
-	}
 
-	// Deal with OrganizerName and OrganizerEmail
-	if (organizerEmail)
-	{
-	   prop = icalproperty_new_organizer(organizerEmail);
-	   xmlFree (organizerEmail); organizerEmail = NULL;
+		// Deal with OrganizerName and OrganizerEmail
+		if (organizerEmail)
+		{
+		   prop = icalproperty_new_organizer(organizerEmail);
+		   xmlFree (organizerEmail); organizerEmail = NULL;
 
-	   if (organizerName)
-	   {
-		   param = icalparameter_new_cn(organizerName);
-		   icalproperty_add_parameter(prop, param);
+		   if (organizerName)
+		   {
+			   param = icalparameter_new_cn(organizerName);
+			   icalproperty_add_parameter(prop, param);
+			   xmlFree (organizerName); organizerName = NULL;
+		   }
+
+		   icalcomponent_add_property(vevent, prop);
+		}
+
+		// Check organizerName again, so we free it if we had a name but no e-mail
+		if (organizerName)
+		{
+		   // TODO: Is there any way we can use the name without the e-mail address?
+		   g_warning("OrganizerName element found but no OrganizerEmail");
 		   xmlFree (organizerName); organizerName = NULL;
-	   }
+		}
 
-	   icalcomponent_add_property(vevent, prop);
+
+		// Add the subcomponents to their parent components
+        if (icalcomponent_count_properties(vtimezone, ICAL_ANY_PROPERTY) > 0)
+        {
+			icalcomponent_add_component(vcalendar, vtimezone);
+		}
+		icalcomponent_add_component(vcalendar, vevent);
+        if (icalcomponent_count_properties(valarm, ICAL_ANY_PROPERTY) > 0)
+        {
+			icalcomponent_add_component(vevent, valarm);
+		}
+
+		// Now handle any non-trivial exception events we found in the <Exceptions> element
+		if (newExceptionEvents)
+		{
+			_eas2ical_add_exception_events(vcalendar, vevent, newExceptionEvents);
+			// _eas2ical_add_exception_events() destroys the hash tables as it goes
+			// so all we need to do here is free the list
+			g_slist_free(newExceptionEvents);
+		}
+
+		// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
+		calInfo = eas_item_info_new();
+		calInfo->data = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
+		calInfo->server_id = (gchar*)server_id;
+		if (!eas_item_info_serialise(calInfo, &result))
+		{
+			// TODO: log error
+			result = NULL;
+		}
+
+		// Free the EasCalInfo GObject
+		g_object_unref(calInfo);
+
+		// Free the libical components
+		// (It's not clear if freeing a component also frees its children, but in any case
+		// some of these (e.g. vtimezone & valarm) won't have been added as children if they
+		// weren't present in the XML.)
+		icalcomponent_free(valarm);
+		icalcomponent_free(vevent);
+		icalcomponent_free(vtimezone);
+		icalcomponent_free(vcalendar);
+		// Note: the libical examples show that a property doesn't have to be freed once added to a component
+
+		// Free the TZID string
+		if (tzid)
+		{
+			g_free(tzid);
+		}
 	}
-
-	// Check organizerName again, so we free it if we had a name but no e-mail
-	if (organizerName)
-	{
-	   // TODO: Is there any way we can use the name without the e-mail address?
-	   g_warning("OrganizerName element found but no OrganizerEmail");
-	   xmlFree (organizerName); organizerName = NULL;
-	}
-
-
-	// Add the subcomponents to their parent components
-    if (icalcomponent_count_properties(vtimezone, ICAL_ANY_PROPERTY) > 0)
-    {
-		icalcomponent_add_component(vcalendar, vtimezone);
-	}
-	icalcomponent_add_component(vcalendar, vevent);
-    if (icalcomponent_count_properties(valarm, ICAL_ANY_PROPERTY) > 0)
-    {
-		icalcomponent_add_component(vevent, valarm);
-	}
-
-	// Now handle any non-trivial exception events we found in the <Exceptions> element
-	if (newExceptionEvents)
-	{
-		_eas2ical_add_exception_events(vcalendar, vevent, newExceptionEvents);
-		// _eas2ical_add_exception_events() destroys the hash tables as it goes
-		// so all we need to do here is free the list
-		g_slist_free(newExceptionEvents);
-	}
-
-	// Now insert the server ID and iCalendar into an EasCalInfo object and serialise it
-	calInfo = eas_item_info_new();
-	calInfo->data = (gchar*)icalcomponent_as_ical_string_r(vcalendar); // Ownership passes to the EasCalInfo
-	calInfo->server_id = (gchar*)server_id;
-	if (!eas_item_info_serialise(calInfo, &result))
-	{
-		// TODO: log error
-		result = NULL;
-	}
-
-	// Free the EasCalInfo GObject
-	g_object_unref(calInfo);
-
-	// Free the libical components
-	// (It's not clear if freeing a component also frees its children, but in any case
-	// some of these (e.g. vtimezone & valarm) won't have been added as children if they
-	// weren't present in the XML.)
-	icalcomponent_free(valarm);
-	icalcomponent_free(vevent);
-	icalcomponent_free(vtimezone);
-	icalcomponent_free(vcalendar);
-	// Note: the libical examples show that a property doesn't have to be freed once added to a component
-
-	// Free the TZID string
-	if (tzid)
-	{
-		g_free(tzid);
-	}
-	
 
 	return result;
 }
@@ -1997,6 +1998,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 	{
 		xmlNodePtr categories = NULL;
 		xmlNodePtr exceptions = NULL;
+		xmlNodePtr attendees = NULL;
 		//xmlNodePtr icalExtns = NULL;		
 		struct icaltimetype startTime, endTime;
 		
@@ -2205,7 +2207,28 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						}
 					}
 					break;
-					
+				// ATTENDEES
+				case ICAL_ATTENDEE_PROPERTY:
+					{
+						icalparameter* param = NULL;
+						xmlNodePtr attendee = NULL;
+						if (attendees == NULL)
+						{
+							attendees = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ATTENDEES, NULL);
+						}
+							attendee = xmlNewChild(attendees, NULL, (const xmlChar*) EAS_ELEMENT_ATTENDEE, NULL);
+
+						// Get the e-mail address
+						xmlNewTextChild(attendee, NULL, (const xmlChar*) EAS_ELEMENT_ATTENDEE_EMAIL, (const xmlChar*)icalproperty_get_value_as_string(prop));
+
+						// Now check for a name in the  CN parameter
+						param = icalproperty_get_first_parameter(prop, ICAL_CN_PARAMETER);
+						if (param)
+						{
+							xmlNewTextChild(attendee, NULL, (const xmlChar*) EAS_ELEMENT_ATTENDEE_NAME, (const xmlChar*)icalparameter_get_cn(param));
+						}
+					}
+					break;
 				// RRULE
 				case ICAL_RRULE_PROPERTY:
 					{
@@ -2318,8 +2341,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 		// (ie. just dates, with time set to midnight) and are 1 day apart
 		// (from [MS-ASCAL]: "An item marked as an all day event is understood to begin
 		// on midnight of the current day and to end on midnight of the next day.")
-		if (strlen(icaltime_as_ical_string(startTime))<=9 &&
-		    strlen(icaltime_as_ical_string(endTime))<=9 &&
+		if (startTime.hour==0 && startTime.minute==0 && startTime.second==0 && endTime.hour==0 && endTime.minute==0 && endTime.second==0 &&
 		    (icaltime_as_timet(endTime) - icaltime_as_timet(startTime)) == (time_t)SECONDS_PER_DAY)
 		{
 			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_TRUE);

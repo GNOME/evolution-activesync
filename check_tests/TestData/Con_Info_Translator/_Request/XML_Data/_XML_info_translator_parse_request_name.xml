@@ -1,7 +1,3 @@
 <?xml version="1.0"?>
 <ApplicationData>
-<FirstName>firstName</FirstName>
-<MiddleName>middleName</MiddleName>
-<Suffix>suffix</Suffix>
-<Prefix>prefix</Prefix>
-</ApplicationData>
+<LastName>lastName</LastName><FirstName>firstName</FirstName><MiddleName>middleName</MiddleName></ApplicationData>
