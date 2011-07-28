@@ -304,7 +304,7 @@ Suite* eas_con_info_translator_suite (void)
 
 	tcase_add_test (tc_con_info_translator,test_info_translator_parse_request_jobTitle);
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_name);
-	//tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage); // this test is will fail 
+	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_email_webPage);
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_businessAdr); 
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_pagerNumber); 
 	tcase_add_test(tc_con_info_translator,test_info_translator_parse_request_birthday); 

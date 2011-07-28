@@ -341,7 +341,7 @@ Suite* eas_cal_info_translator_suite (void)
     	suite_add_tcase (s, tc_cal_info_translator);
 
    	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_startTime);
-	//tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_timeZone); // this test will fail
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_timeZone);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_organizer);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_allDayEvent); 
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_body);
@@ -352,7 +352,7 @@ Suite* eas_cal_info_translator_suite (void)
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_uid);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_attendee);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_recurrence);
-	 //tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_exception); //this test will fail
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_exception);
 
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_startTime);
      	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_timeZone);
@@ -364,9 +364,9 @@ Suite* eas_cal_info_translator_suite (void)
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_reminder);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_subject);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_uid);
-	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_attendee); 
-	// tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_recurrence); // this test will fail 
-	 //tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_exception); this test will fail
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_attendee);
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_recurrence);
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_exception); 
 		
     return s;
 }
