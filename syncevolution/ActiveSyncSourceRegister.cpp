@@ -30,6 +30,8 @@
 # include <cppunit/extensions/HelperMacros.h>
 #endif
 
+#include <fstream>
+
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
 
@@ -130,6 +132,31 @@ namespace {
 }
 #endif
 
+/**
+ * Takes all existing items in the source and writes them into the file,
+ * separated by a blank line. beginSync() with the previous sync key was
+ * already called.
+ *
+ * Used for testing and thus should better not rely on cached information,
+ * but ActiveSync doesn't offer an independent "list and/or retrieve all items"
+ * operation. Using the cached information implies that we won't find bugs in
+ * the handling of that information.
+ */
+static int DumpItems(ClientTest &client, TestingSyncSource &source, const char *file)
+{
+    ActiveSyncSource &eassource = static_cast<ActiveSyncSource &>(source);
+    ofstream out(file);
+    BOOST_FOREACH (const std::string &easid, eassource.getAllItems()) {
+        std::string item;
+        eassource.readItem(easid, item);
+        out << item << '\n';
+        if (!boost::ends_with(item, "\n")) {
+            out << '\n';
+        }
+    }
+    return 0;
+}
+
 static TestingSyncSource *createEASSource(const ClientTestConfig::createsource_t &create,
                                           ClientTest &client, int source, bool isSourceA)
 {
@@ -179,6 +206,7 @@ public:
         config.createSourceB = boost::bind(createEASSource, config.createSourceB,
                                            _1, _2, _3);
 
+        config.dump = DumpItems;
     }
 } ActiveSyncContactTest;
 
@@ -195,6 +223,7 @@ public:
                                            _1, _2, _3);
         config.createSourceB = boost::bind(createEASSource, config.createSourceB,
                                            _1, _2, _3);
+        config.dump = DumpItems;
     }
 } ActiveSyncEventTest;
 
@@ -211,6 +240,7 @@ public:
                                            _1, _2, _3);
         config.createSourceB = boost::bind(createEASSource, config.createSourceB,
                                            _1, _2, _3);
+        config.dump = DumpItems;
     }
 } ActiveSyncTodoTest;
 
@@ -227,6 +257,7 @@ public:
                                            _1, _2, _3);
         config.createSourceB = boost::bind(createEASSource, config.createSourceB,
                                            _1, _2, _3);
+        config.dump = DumpItems;
     }
 } ActiveSyncMemoTest;
 

@@ -146,7 +146,6 @@ class ActiveSyncSource :
     /** sync config used by this instance, never NULL */
     SyncConfig &getSyncConfig() { return *m_context; }
 
- protected:
     /* partial implementation of SyncSource */
     virtual void enableServerMode();
     virtual bool serverModeEnabled() const;
