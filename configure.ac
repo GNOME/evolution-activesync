@@ -96,7 +96,8 @@ fi
 AM_CONDITIONAL(ENABLE_ACTIVESYNC, [test "${have_syncevolution}" = "yes"])
 if (test "${have_syncevolution}" = "yes"); then
     AX_BOOST_BASE(1.34)
-    AC_DEFINE([ENABLE_ACTIVESYNC], [], [Description])
+    AC_DEFINE([ENABLE_ACTIVESYNC], [], [SyncEvolution ActiveSync backend])
+    AC_DEFINE([ENABLE_ICAL], [], [libical support in SyncEvolution backend])
 
     # If syncevolution.pc has a backenddir variable (as it should), then use it
     # Otherwise, fall back to *its* $libdir/syncevolution/backends
