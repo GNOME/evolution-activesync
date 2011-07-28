@@ -1425,7 +1425,17 @@ static void try_sync_folder_email(gpointer data)
 		fail_if(TRUE, "%s", (*params->error)->message);
 	}
 
-	g_debug("more available = %s", (params->more_available? "TRUE" : "FALSE"));
+	fail_if(*params->more_available, "Expect more_available to be FALSE when syncing with a non-zero sync_key");
+
+	// TODO print out the server id of the first email to make sure it's sensible
+	fail_if(!params->emails_created, "need at least one email in the inbox for this test to pass");
+
+    EasEmailInfo *email = NULL;
+
+    // get email info for first email in the folder
+    email = (g_slist_nth (*(params->emails_created), 0))->data;
+	
+	g_debug("email id = %s", email->server_id);
 	g_free(params);
 	
 	return;
@@ -1515,7 +1525,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 	sync_params->sync_key_in = folder_sync_key_out;
 	sync_params->time_window = 0;
 	sync_params->folder_id = g_inbox_id;
-	sync_params->delete_emails = NULL;
+	sync_params->delete_emails = NULL;		
 	sync_params->change_emails = NULL;
 	sync_params->sync_key_out = &folder_sync_key_out_2;
 	sync_params->emails_created = &emails_created;
@@ -1535,10 +1545,6 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	mark_point();
 
-	fail_if(more_available, "Expect more_available to be TRUE when syncing with sync_key of zero");
-
-	mark_point();
-
 	g_debug("get_item_estimate with %s", folder_sync_key_out_2);
 	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key_out_2, g_inbox_id, &estimate, &error);
 	if(!ret)
@@ -1551,7 +1557,55 @@ START_TEST (test_eas_mail_get_item_estimate)
 	g_debug("estimate = %d", estimate);	
 	fail_if(estimate != 0, "Expected estimate to be zero after second sync");
 
+	// use 2-way sync api to update the first mail in the folder
+	EasEmailInfo *email = NULL;
+    gboolean rtn = FALSE;
+    GSList *change_emails = NULL;
+    GSList *emails_created_2 = NULL; //receives a list of EasMails
+    GSList *emails_updated_2 = NULL;
+    GSList *emails_deleted_2 = NULL;
+	gchar* folder_sync_key_out_3 = NULL;
 	
+    // get email info for first email in the folder and see if it's been read
+    email = (g_slist_nth (emails_created, 0))->data;
+
+    // toggle the read flag:
+    if (email->flags & EAS_EMAIL_READ)
+    {
+        email->flags &= ~EAS_EMAIL_READ;
+    }
+    else
+    {
+        email->flags |= EAS_EMAIL_READ;
+    }
+
+    mark_point();
+
+    change_emails = g_slist_append (change_emails, email);
+	
+
+	g_debug("folder sync key = %s (before eas_mail_handler_update_email)", folder_sync_key);
+	ret = eas_mail_handler_sync_folder_email (email_handler,
+						  folder_sync_key_out_2,
+                          0,						// no time filter
+						  g_inbox_id,
+						  NULL,						// emails to delete
+						  change_emails, 			// emails to change
+                          &folder_sync_key_out_3,
+						  &emails_created_2,
+	                      &emails_updated_2, 
+	                      &emails_deleted_2,
+						  &more_available,
+	                      NULL,						// progress function
+	                      NULL,						// progress data
+						  &error); 
+    if (error)
+	{		
+        fail_if (rtn == FALSE, "%s", error->message);
+    }
+
+	g_debug("");
+	 	
 	mark_point();
 
 }

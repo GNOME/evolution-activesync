@@ -162,6 +162,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
             *body_pref = NULL;
     xmlNs   *ns    = NULL;
 	gchar filter[2] = "0";
+    GSList * iterator;
 
 	int protover = eas_connection_get_protocol_version (priv->connection);
 
@@ -191,13 +192,13 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 	}
     xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key_in);
     xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) priv->folderID);
-
+    xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
+                        
     // TODO Refactor this function into subfunctions for each aspect.
 
     // if get changes = true - means we are pulling from the server
     if (getChanges)
     {
-        xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
         xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "1");
 		xmlNewChild(collection, NULL, (xmlChar *)"WindowSize", (xmlChar*)"100");
 
@@ -228,170 +229,165 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
             xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:TruncationSize", (xmlChar*) "200000");
         }
     }
-    //get changes = false, we are pushing changes to the server. Check the lists of items, and build correct message.
-    else
+	else
     {
-        GSList * iterator;
-
-        xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
-
 		// In protocol 12.0, do not include <GetChanges> node when SyncKey is zero.
 		// The server doesn't like it.
 		if (protover > 120 || strcmp (priv->sync_key_in, "0"))
 			xmlNewChild (collection, NULL, (xmlChar *) "GetChanges", (xmlChar*) "0");
+	}
 
-        //if any of the lists are not null we need to add commands element
-        if (added || updated || deleted)
+    //if any of the lists are not null we need to add commands element
+    if (added || updated || deleted)
+    {
+        xmlNode *command = xmlNewChild (collection, NULL, (xmlChar *) "Commands", NULL);
+        if (added)
         {
-            xmlNode *command = xmlNewChild (collection, NULL, (xmlChar *) "Commands", NULL);
-            if (added)
+            for (iterator = added; iterator; iterator = iterator->next)
             {
-                for (iterator = added; iterator; iterator = iterator->next)
+                //choose translator based on data type
+                switch (priv->ItemType)
                 {
-                    //choose translator based on data type
-                    switch (priv->ItemType)
+                    default:
                     {
-                        default:
-                        {
-                            g_debug ("Unknown Data Type  %d", priv->ItemType);
-                        }
-                        break;
-                        case EAS_ITEM_MAIL:
-                        {
-                            g_critical ("Trying to do Add with Mail type - This is not allowed");
-                        }
-                        break;
-                        case EAS_ITEM_CALENDAR:
-                        {
-                            xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
-                            xmlNewNs (node, (xmlChar *) "Calendar:", (xmlChar *) "calendar");
-                            if (iterator->data)
-                            {
-                                //TODO: call translator to get client ID and  encoded application data
-                                //gchar *serialised_calendar = (gchar *)iterator->data;
-                                xmlNode *app_data = NULL;
-                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
-
-                                // create the server_id node
-                                xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
-                                app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
-                                // translator deals with app data
-                                eas_cal_info_translator_parse_request (doc, app_data, cal_info);
-                                // TODO error handling and freeing
-                            }
-                        }
-                        break;
-                        case EAS_ITEM_CONTACT:
-                        {
-                            xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
-                            xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
-                            if (iterator->data)
-                            {
-                                //TODO: call translator to get client ID and  encoded application data
-                                //gchar *serialised_calendar = (gchar *)iterator->data;
-                                xmlNode *app_data = NULL;
-                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
-
-                                // create the server_id node
-                                xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
-                                app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
-                                // translator deals with app data
-                                 eas_con_info_translator_parse_request (doc, app_data, cal_info);
-                                // TODO error handling and freeing
-                            }
-                        }
-                        break;
-
+                        g_debug ("Unknown Data Type  %d", priv->ItemType);
                     }
-
-                }
-            }
-            if (updated)
-            {
-                for (iterator = updated; iterator; iterator = iterator->next)
-                {
-                    xmlNode *update = xmlNewChild (command, NULL, (xmlChar *) "Change", NULL);
-                    //choose translator based on data type
-                    switch (priv->ItemType)
+                    break;
+                    case EAS_ITEM_MAIL:
                     {
-                        default:
+                        g_critical ("Trying to do Add with Mail type - This is not allowed");
+                    }
+                    break;
+                    case EAS_ITEM_CALENDAR:
+                    {
+                        xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
+                        xmlNewNs (node, (xmlChar *) "Calendar:", (xmlChar *) "calendar");
+                        if (iterator->data)
                         {
-                            g_debug ("Unknown Data Type  %d", priv->ItemType);
-                        }
-                        break;
-                        case EAS_ITEM_MAIL:
-                        {
-                            gchar *serialised_email = (gchar *)iterator->data;
-                            EasEmailInfo *email_info = eas_email_info_new ();
+                            //TODO: call translator to get client ID and  encoded application data
+                            //gchar *serialised_calendar = (gchar *)iterator->data;
+                            xmlNode *app_data = NULL;
+                            EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
 
-                            xmlNewNs (node, (xmlChar *) "Email:", (xmlChar *) "email");
-
-                            if (eas_email_info_deserialise (email_info, serialised_email))
-                            {
-                                xmlNode *app_data = NULL;
-                                // create the server_id node
-                                xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) email_info->server_id);
-                                app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
-                                // call translator to get encoded application data
-                                eas_email_info_translator_build_update_request (doc, app_data, email_info);
-                            }
-                            g_object_unref (email_info);
-                            // TODO error handling
-                        }
-                        break;
-                        case EAS_ITEM_CALENDAR:
-                        {
-                            xmlNewNs (node, (xmlChar *) "Calendar:", (xmlChar *) "calendar");
-                            if (iterator->data)
-                            {
-                                //TODO: call translator to get client ID and  encoded application data
-                                //gchar *serialised_calendar = (gchar *)iterator->data;
-
-                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
-                                xmlNode *app_data = NULL;
-                                // create the server_id node
-                                xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
-                                app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
-                                // translator deals with app data
-                                eas_cal_info_translator_parse_request (doc, app_data, cal_info);
-                                // TODO error handling and freeing
-                            }
-                        }
-                        break;
-                        case EAS_ITEM_CONTACT:
-                        {
-                            xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
-                            if (iterator->data)
-                            {
-                                //TODO: call translator to get client ID and  encoded application data
-                                //gchar *serialised_calendar = (gchar *)iterator->data;
-
-                                EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
-                                xmlNode *app_data = NULL;
-                                // create the server_id node
-                                xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
-                                app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
-                                // translator deals with app data
-                                //TODO: add contact translator
-                                eas_con_info_translator_parse_request (doc, app_data, cal_info);
-                                // TODO error handling and freeing
-                            }
+                            // create the server_id node
+                            xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
+                            app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
+                            // translator deals with app data
+                            eas_cal_info_translator_parse_request (doc, app_data, cal_info);
+                            // TODO error handling and freeing
                         }
                     }
-                }
-            }
-            if (deleted)
-            {
-                for (iterator = deleted; iterator; iterator = iterator->next)
-                {
-                    xmlNode *delete = xmlNewChild (command, NULL, (xmlChar *) "Delete", NULL);
-                    xmlNewChild (delete, NULL, (xmlChar *) "ServerId", iterator->data);
+                    break;
+                    case EAS_ITEM_CONTACT:
+                    {
+                        xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
+                        xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
+                        if (iterator->data)
+                        {
+                            //TODO: call translator to get client ID and  encoded application data
+                            //gchar *serialised_calendar = (gchar *)iterator->data;
+                            xmlNode *app_data = NULL;
+                            EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
+
+                            // create the server_id node
+                            xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
+                            app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
+                            // translator deals with app data
+                             eas_con_info_translator_parse_request (doc, app_data, cal_info);
+                            // TODO error handling and freeing
+                        }
+                    }
+                    break;
+
                 }
 
             }
         }
-    }
+        if (updated)
+        {
+            for (iterator = updated; iterator; iterator = iterator->next)
+            {
+                xmlNode *update = xmlNewChild (command, NULL, (xmlChar *) "Change", NULL);
+                //choose translator based on data type
+                switch (priv->ItemType)
+                {
+                    default:
+                    {
+                        g_debug ("Unknown Data Type  %d", priv->ItemType);
+                    }
+                    break;
+                    case EAS_ITEM_MAIL:
+                    {
+                        gchar *serialised_email = (gchar *)iterator->data;
+                        EasEmailInfo *email_info = eas_email_info_new ();
 
+                        xmlNewNs (node, (xmlChar *) "Email:", (xmlChar *) "email");
+
+                        if (eas_email_info_deserialise (email_info, serialised_email))
+                        {
+                            xmlNode *app_data = NULL;
+                            // create the server_id node
+                            xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) email_info->server_id);
+                            app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
+                            // call translator to get encoded application data
+                            eas_email_info_translator_build_update_request (doc, app_data, email_info);
+                        }
+                        g_object_unref (email_info);
+                        // TODO error handling
+                    }
+                    break;
+                    case EAS_ITEM_CALENDAR:
+                    {
+                        xmlNewNs (node, (xmlChar *) "Calendar:", (xmlChar *) "calendar");
+                        if (iterator->data)
+                        {
+                            //TODO: call translator to get client ID and  encoded application data
+                            //gchar *serialised_calendar = (gchar *)iterator->data;
+
+                            EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
+                            xmlNode *app_data = NULL;
+                            // create the server_id node
+                            xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
+                            app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
+                            // translator deals with app data
+                            eas_cal_info_translator_parse_request (doc, app_data, cal_info);
+                            // TODO error handling and freeing
+                        }
+                    }
+                    break;
+                    case EAS_ITEM_CONTACT:
+                    {
+                        xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
+                        if (iterator->data)
+                        {
+                            //TODO: call translator to get client ID and  encoded application data
+                            //gchar *serialised_calendar = (gchar *)iterator->data;
+
+                            EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
+                            xmlNode *app_data = NULL;
+                            // create the server_id node
+                            xmlNewChild (update, NULL, (xmlChar *) "ServerId", (xmlChar*) cal_info->server_id);
+                            app_data = xmlNewChild (update, NULL, (xmlChar *) "ApplicationData", NULL);
+                            // translator deals with app data
+                            //TODO: add contact translator
+                            eas_con_info_translator_parse_request (doc, app_data, cal_info);
+                            // TODO error handling and freeing
+                        }
+                    }
+                }
+            }
+        }
+        if (deleted)
+        {
+            for (iterator = deleted; iterator; iterator = iterator->next)
+            {
+                xmlNode *delete = xmlNewChild (command, NULL, (xmlChar *) "Delete", NULL);
+                xmlNewChild (delete, NULL, (xmlChar *) "ServerId", iterator->data);
+            }
+
+        }
+	}// end if (added/deleted/updated)
+                        
     return doc;
 }
 

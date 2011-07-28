@@ -49,6 +49,7 @@
  *
  */
 
+#include <string.h>
 #include "eas-common.h"
 #include "eas-common-stub.h"
 #include "../libeas/eas-connection-errors.h"
@@ -141,9 +142,9 @@ eas_common_sync_folder_items (EasCommon* self,
                                const gchar* sync_key,
                                const gchar* folder_id,
                                guint filter_type,
-                               const gchar** add_items,
-                               const gchar** delete_items,                                       
-                               const gchar** change_items,
+                               const gchar** add_items_array,	// array of serialised items to add
+                               const gchar** delete_items_array,// array of serialised items/ids to delete    
+                               const gchar** change_items_array,// array of serialised items to change
                                guint request_id,
                                DBusGMethodInvocation* context)
 {	
@@ -151,14 +152,23 @@ eas_common_sync_folder_items (EasCommon* self,
     EasConnection *connection;
     GError *error = NULL;
     Eas2WaySyncReq *req = NULL;
-
-	g_debug("eas_common_sync_folder_items++ filter_type = 0x%x", filter_type);
+	GSList *add_items_list = NULL;	
+	GSList *delete_items_list = NULL;	
+	GSList *change_items_list = NULL;
+	int index = 0;
+	const gchar* item = NULL;
+	
+	g_debug("eas_common_sync_folder_items++");
+	
+	g_debug("filter_type = 0x%x", filter_type);
 	g_debug("folder_id = %s", folder_id);
 	g_debug("item_type = %d", item_type);
+	//g_debug("first change_items_array string = %s", *change_items_array);	
+	//g_debug("first add_items_array string = %s", *add_items_array);		
 
-	if(*add_items || *delete_items || *change_items)
+	if(*add_items_array != NULL)
 	{
-		g_warning("2-way sync not yet supported");
+		g_warning("2-way sync doesn't support adding (untested)");
 	}
 	
     connection = eas_connection_find (account_uid);
@@ -173,19 +183,54 @@ eas_common_sync_folder_items (EasCommon* self,
         goto finish;
     }
 
-	// TODO support 2-way sync 
+	// Convert add_items_array into list (of strings)
+	if(*add_items_array != NULL)
+	{
+		g_debug("add_items_array");
+		while ( (item = add_items_array[index++]))// null terminated list of flattened items (strings)
+		{
+		    add_items_list = g_slist_prepend (add_items_list, g_strdup (item));
+		}
+	}
+	
+    // Convert delete_items_array into GSList
+	if(*delete_items_array != NULL)
+	{
+		g_debug("delete_items_array");
+		while ( (item = delete_items_array[index++]))// null terminated list of ids
+		{
+		    delete_items_list = g_slist_prepend (delete_items_list, g_strdup (item));
+		}
+	}
+
+	// Convert change_items_array into list (of strings)
+	if(*change_items_array != NULL)
+	{
+		g_debug("change_items_array");
+		while ( (item = change_items_array[index++]))// null terminated list of flattened items (strings)
+		{
+		    change_items_list = g_slist_prepend (change_items_list, g_strdup (item));	
+		}
+	}
+
+	g_debug("create request");
+	
 	req = eas_2way_sync_req_new (sync_key,
                                  account_uid,
                                  folder_id,
 	                             filter_type,
                                  item_type,
+	                             add_items_list,		// list of serialised items
+	                             delete_items_list,
+	                             change_items_list,
                                  context);
-	
+// not freeing lists as transferred to request
     eas_request_base_SetConnection (&req->parent_instance, connection);
 	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));	
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates	
 
+	g_debug("activate request");
     // Activate Request
     ret = eas_2way_sync_req_Activate (req,                                 
                                  &error);

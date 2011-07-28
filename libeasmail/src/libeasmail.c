@@ -1366,8 +1366,8 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 						  const gchar *sync_key_in,
                           guint	time_window,
 						  const gchar *folder_id,
-						  GSList *delete_emails,
-						  GSList *change_emails, 
+						  GSList *delete_emails,	// list of server ids
+						  GSList *change_emails, 	// list of EasMailInfos
                           gchar **sync_key_out,
 						  GSList **emails_created,
 						  GSList **emails_changed,
@@ -1384,8 +1384,20 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **changed_emailinfo_array = NULL;
 	guint request_id;
+	gchar **delete_emails_array = NULL;
+	gchar **ret_failed_changes_array = NULL;
+	guint delete_list_length = g_slist_length ( (GSList*) delete_emails);
+	guint change_list_length = g_slist_length ( (GSList *) change_emails);
+	gchar **change_emails_array = g_malloc0 ( (change_list_length * sizeof (gchar*)) + 1);  // null terminated
+	gchar *serialised_email = NULL;
+	int loop = 0;
+	guint i = 0;
+	GSList *l = (GSList *) change_emails;
 	
 	g_debug ("eas_mail_handler_sync_folder_email++");
+
+	g_debug("delete_list_length = %d", delete_list_length);
+	g_debug("change_list_length = %d", change_list_length);
 
 	if((!self) || (!sync_key_in) || (!folder_id) || (!sync_key_out) || (!more_available))
 	{
@@ -1394,17 +1406,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		             EAS_MAIL_ERROR_BADARG,
 		             "bad argument passed to eas_mail_handler_sync_folder_email");
 		ret = FALSE;
-		goto finish;
-	}
-	// TODO update this to support 2-way sync as it claims to do:
-	if(delete_emails || change_emails)
-	{
-		g_set_error (error,
-		             EAS_MAIL_ERROR,
-		             EAS_MAIL_ERROR_BADARG,
-		             "eas_mail_handler_sync_folder_email currently doesn't support 2-way sync");
-		ret = FALSE;
-		goto finish;		
+		goto cleanup;
 	}
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -1415,9 +1417,36 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	{
 		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
 		if (!ret)
-			goto finish;
+			goto cleanup;
 	}	
 
+	// build string array from delete_emails list
+	for (; loop < delete_list_length; ++loop) {
+		delete_emails_array[loop] = g_strdup (g_slist_nth_data ( (GSList*) delete_emails, loop));
+		g_debug ("Deleted Id: [%s]", delete_emails_array[loop]);
+	}	
+
+	// build string array from update_emails list
+	for (i = 0; i < change_list_length; i++) {
+		EasEmailInfo *email = l->data;
+
+		g_debug ("serialising email %d", i);
+		ret = eas_email_info_serialise (email, &serialised_email);
+		if (!ret) {
+			// set the error
+			g_set_error (error, EAS_MAIL_ERROR,
+				     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
+				     ("out of memory"));
+			change_emails_array[i] = NULL;
+			goto cleanup;
+		}
+		change_emails_array[i] = serialised_email;
+		g_debug ("change_emails_array[%d] = %s", i, change_emails_array[i]);
+
+		l = l->next;
+	}
+	change_emails_array[i] = NULL;
+	
 	// call dbus api with appropriate params
 	ret = dbus_g_proxy_call (proxy, "sync_folder_items", error,
 				 G_TYPE_STRING, self->priv->account_uid,
@@ -1425,9 +1454,9 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				 G_TYPE_STRING, sync_key_in,
 				 G_TYPE_STRING, folder_id, 
 	             G_TYPE_UINT, time_window,
-	             G_TYPE_STRV, NULL,						// add items
-	             G_TYPE_STRV, NULL,      				// delete items
-	             G_TYPE_STRV, NULL,						// change items
+	             G_TYPE_STRV, NULL,								// add items - always NULL for email
+	             G_TYPE_STRV, delete_emails_array,      // delete items. 
+	             G_TYPE_STRV, change_emails_array,		// change items	
 	             G_TYPE_UINT, request_id,
 				 G_TYPE_INVALID,
 				 G_TYPE_STRING, sync_key_out,
@@ -1437,7 +1466,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				 G_TYPE_STRV, &changed_emailinfo_array,
 	             G_TYPE_STRV, NULL,
 	             G_TYPE_STRV, NULL,
-	             G_TYPE_STRV, NULL,	                         
+	             G_TYPE_STRV, &ret_failed_changes_array,                      
 				 G_TYPE_INVALID);
 
 	g_debug ("dbus call returned");
@@ -1447,7 +1476,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	{
 		g_debug ("sync_folder_email called successfully");
 
-		// get 3 arrays of strings of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
+		// get 3 arrays of 'serialised' EasEmailInfos, convert to EasEmailInfo lists:
 		ret = build_emailinfo_list ( (const gchar **) created_emailinfo_array, emails_created, error);
 		if (ret)
 		{
@@ -1457,13 +1486,64 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		{
 			ret = build_emailinfo_list ( (const gchar **) changed_emailinfo_array, emails_changed, error);
 		}
+
+		// update status codes in update_emails where necessary
+		
+		for (i = 0; ret_failed_changes_array[i] != NULL; i++)
+		{
+			// get the update response
+			EasEmailInfo *email_failed = eas_email_info_new();
+
+			g_debug("ret_failed_changes_array[%d] = %s", i, ret_failed_changes_array[i]);
+
+			eas_email_info_deserialise (email_failed, ret_failed_changes_array[i]);		
+
+			if(email_failed->status && strlen(email_failed->status))
+			{
+				int idx;
+				g_debug("got status %s for update of %s", email_failed->status, email_failed->server_id);
+				l = (GSList *) change_emails;			
+			
+				for (idx = 0; idx < change_list_length; idx++) 
+				{
+					EasEmailInfo *email = l->data;
+					if(strcmp(email_failed->server_id, email->server_id) == 0)
+					{
+						email->status = g_strdup(email_failed->status);
+						break;	//out of inner for loop
+					}
+					l = l->next;
+				}
+			}
+		}	
+	
+
+		free_string_array (created_emailinfo_array);
+		free_string_array (changed_emailinfo_array);
+		free_string_array (deleted_emailinfo_array);	
+
+		// free the delete_emails array
+		for (loop = 0; loop < delete_list_length; ++loop) {
+			g_free (delete_emails_array[loop]);
+			delete_emails_array[loop] = NULL;
+		}
+		g_free (delete_emails_array);
+		delete_emails_array = NULL;	
+		// free the change_emails array
+		for (i = 0; i < change_list_length && change_emails_array[i]; i++) 
+		{
+			g_free (change_emails_array[i]);
+		}
+		g_free (change_emails_array);
+		// free ret_failed_updates_array
+		for(i = 0; ret_failed_changes_array[i] != NULL; i++)
+		{
+			g_free(ret_failed_changes_array[i]);
+		}
+		g_free(ret_failed_changes_array);
 	}
 
-	free_string_array (created_emailinfo_array);
-	free_string_array (changed_emailinfo_array);
-	free_string_array (deleted_emailinfo_array);
-
-finish:
+cleanup:	
 	if (!ret) 
 	{ 	// failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);

@@ -98,6 +98,14 @@ GType eas_2way_sync_req_get_type (void) G_GNUC_CONST;
  * @param[in] context
  *	  A dbus method invocation used to send the completed operation's results
  *	  to the server. Used in MessageComplete
+ * @param[in] add_items  [full transfer]
+ *	  items to add
+ *
+ * @param[in] delete_items  [full transfer]
+ *	  items to delete
+ *
+ * @param[in] change_items  [full transfer]
+ *	  items to change
  *
  * @return An allocated Eas2WaySyncReq GObject or NULL
  */
@@ -106,6 +114,9 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
                               const gchar* folderId, 
                               guint filter_type,
                               EasItemType type,
+                              GSList *add_items,
+                              GSList *delete_items,
+                              GSList *change_items,                                       
                               DBusGMethodInvocation *context);
 
 /**

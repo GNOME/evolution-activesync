@@ -402,8 +402,8 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
  * const gchar *folder_id (in): 	this value identifies the folder to get the email info from.
  * 									Use the EasFolder->folder_id value in the EasFolder structs
  *                              	returned from the eas_mail_handler_sync_folder_hierarchy() call.
- * GSList *delete_emails	(in):	list of emails to delete 
- * GSList *change_emails 	(in):	list of emails to update
+ * GSList *delete_emails	(in):	list of email's server ids to delete 
+ * GSList *change_emails 	(in/out):	list of emails to update. In the case of an unsuccessful update the status will be set to indicate the problem
  * gchar *sync_key_out	 	(out):	updated sync key
  * GSList **emails_created (out): 	returns a list of EasEmailInfos structs that describe
  *                              	created mails.  If there are no new created mails

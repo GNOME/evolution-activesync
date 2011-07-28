@@ -152,7 +152,8 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
     leaf = xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
     leaf = xmlNewChild (root, NULL, (xmlChar *) "SaveInSentItems", NULL); // presence indicates true
     base64data = g_base64_encode ( (const guchar *) priv->mime_string, strlen (priv->mime_string));
-    leaf = xmlNewChild (root, NULL, (xmlChar *) "MIME", (xmlChar *) base64data);
+    // TODO: we're potentially adding a HUGE string here. Is there a libxml2 limit (as there was for receive)?
+    leaf = xmlNewChild (root, NULL, (xmlChar *) "MIME", (xmlChar *) base64data);	
 
     return doc;
 }

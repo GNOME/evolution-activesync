@@ -79,6 +79,9 @@ struct _Eas2WaySyncReqPrivate
     gchar* folderID;
     EasItemType ItemType;
 	guint filter_type;
+	GSList *serialised_add_items;   // list of serialised items to add 
+	GSList *delete_ids;				// list of ids to delete
+	GSList *serialised_change_items;// list of serialised items to change
 };
 
 
@@ -98,6 +101,9 @@ eas_2way_sync_req_init (Eas2WaySyncReq *object)
     priv->folderID = NULL;
 	priv->ItemType = EAS_ITEM_NOT_SPECIFIED;
 	priv->filter_type = 0;
+	priv->serialised_add_items = NULL;
+	priv->delete_ids = NULL;
+	priv->serialised_change_items = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_2WAY_SYNC);
 
@@ -139,6 +145,23 @@ eas_2way_sync_req_finalize (GObject *object)
 
     g_free (priv->accountID);
     g_free (priv->folderID);
+	// free lists
+	if(priv->serialised_add_items)
+	{
+		g_slist_foreach(priv->serialised_add_items, (GFunc)g_free, NULL);
+	}
+	g_slist_free(priv->serialised_add_items);
+	if(priv->delete_ids)
+	{
+		g_slist_foreach(priv->delete_ids, (GFunc)g_free, NULL);
+	}
+	g_slist_free(priv->delete_ids);
+	if(priv->serialised_change_items)
+	{
+		g_slist_foreach(priv->serialised_change_items, (GFunc)g_free, NULL);
+	}
+	g_slist_free(priv->serialised_change_items);
+	
 
     G_OBJECT_CLASS (eas_2way_sync_req_parent_class)->finalize (object);
 
@@ -165,6 +188,9 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
                               const gchar* folderId, 
                               guint filter_type,
                               EasItemType type,
+                              GSList *serialised_add_items,		// serialised list of items. // full transfer
+                              GSList *delete_ids,				// list of ids. full transfer
+                              GSList *serialised_change_items,   // serialised list of items. // full transfer                                  
                               DBusGMethodInvocation *context) 
 {
     Eas2WaySyncReq* self = g_object_new (EAS_TYPE_2WAY_SYNC_REQ, NULL);
@@ -178,6 +204,9 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
 	priv->filter_type = filter_type;
     priv->sync_key = g_strdup (syncKey);
     priv->accountID = g_strdup (accountID);
+	priv->serialised_add_items = serialised_add_items;
+	priv->delete_ids = delete_ids;
+	priv->serialised_change_items = serialised_change_items;
 
 	// If we have a folderId which isn't NULL or an empty string
 	if (folderId && g_strcmp0("", folderId))
@@ -291,9 +320,9 @@ eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
 	else 
 	{
 		EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
-		g_debug ("eas_2way_sync_req_activate - new Sync  mesg");
+		g_debug ("eas_2way_sync_req_activate - new Sync msg");
 
-		//create sync  msg type
+		//create sync msg type
 		priv->syncMsg = eas_sync_msg_new (priv->sync_key, conn, priv->folderID, priv->ItemType);
 		if (!priv->syncMsg)
 		{
@@ -313,7 +342,7 @@ eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
 		{
 			getChanges = TRUE;
 		}
-		doc = eas_sync_msg_build_message (priv->syncMsg, priv->filter_type, getChanges, NULL, NULL, NULL);
+		doc = eas_sync_msg_build_message (priv->syncMsg, priv->filter_type, getChanges, priv->serialised_add_items, priv->serialised_change_items, priv->delete_ids);
 		if (!doc)
 		{
 		    ret = FALSE;
@@ -360,7 +389,7 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
     gchar** ret_added_item_array = NULL;
     gchar** ret_deleted_item_array = NULL;
     gchar** ret_changed_item_array = NULL;
-	GSList* added_items = NULL;
+	GSList* added_items = NULL; 
     GSList* updated_items = NULL;
     GSList* deleted_items = NULL;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
@@ -523,16 +552,17 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 				goto finish;
 				}
 			}
-			// TODO add support for 2 way sync
+			// TODO add support for responses to add/delete/change
 			dbus_g_method_return (eas_request_base_GetContext (parent),
                               ret_sync_key,
                               ret_more_available,
-		                      NULL,					// not supported yet
-		                      NULL,					// not supported yet
-		                      NULL,					// not supported yet
                               ret_added_item_array,
                               ret_deleted_item_array,
-                              ret_changed_item_array);
+                              ret_changed_item_array,
+		                      NULL,						// add response (not supported yet)
+		                      NULL,						// delete response (not supported yet)
+		                      NULL);				   // update response (not supported yet)
+			                  
 
         }
         break;
