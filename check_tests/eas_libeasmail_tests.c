@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <check.h>
+#include <dbus/dbus-glib.h>
 
 #include "eas_test_user.h"
 
@@ -11,7 +12,7 @@
 #include "../libeasmail/src/eas-attachment.h"
 
 /** Uncomment for to enable Mocks **/
-// #include "../libeastest/src/libeastest.h"
+ #include "../libeastest/src/libeastest.h"
 
 static gchar * g_account_id = (gchar*)TEST_ACCOUNT_ID;
 
@@ -117,6 +118,25 @@ static void testGetFolderHierarchy (EasEmailHandler *email_handler,
     
     fail_if(g_inbox_id == NULL);
     g_message("Inbox Id = [%s]", g_inbox_id);
+}
+
+static void GetFolderHierarchy_negativetests (EasEmailHandler *email_handler,
+                                    gchar *sync_key,
+                                    GSList **created,
+                                    GSList **updated,
+                                    GSList **deleted,
+                                    GError **error)
+{
+    gboolean ret = FALSE;
+    GSList *item = NULL;
+    ret  = eas_mail_handler_sync_folder_hierarchy (email_handler,
+                                                   sync_key,
+                                                   created,
+                                                   updated,
+                                                   deleted,
+                                                   error);
+
+	fail_if ((*error) == NULL, "negative test did not give error for folder hierarchy request");
 }
 
 static void testGetFolderInfo (EasEmailHandler *email_handler,
@@ -650,20 +670,46 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     // this object
     testGetMailHandler (&email_handler, accountuid);
 
-    mark_point();
+    // call into the daemon to get the folder hierarchy from the exchange server
+    testGetFolderHierarchy (email_handler, sync_key, &created, &updated, &deleted, &error);
 
-    /** Example of how to mock a response.
-     * @@ NOTE - You'll need to uncomment the libeastest.h header at the top of
-     * the file.
-     */
-    /** 
-    {
-		g_debug("mocking response");
+    // fail the test if there is no folder information
+    fail_unless (NULL != created, "No folder information returned from exchange server");
 
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (email_handler);
+}
+END_TEST
+
+START_TEST (test_eas_mail_sync_folder_hierarchy_bad_synckey)
+{
+	// init as if we were going to get the folder hierarchy correctly
+    const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+	gchar sync_key[64] = "0";
+    GError *error = NULL;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetMailHandler (&email_handler, accountuid);
+
+	// set mock
+	{
 		guint status_code = 200;
 		GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
 		g_array_append_val(status_codes, status_code);
-        const gchar *mocks[] = {"folder-hierarchy-resp.xml", 0};
+        const gchar *mocks[] = {"EmailFolderHierarchyInvalidSyncKey.xml", 0};
         EasTestHandler *test_handler = eas_test_handler_new ();
         if (test_handler)
         {
@@ -674,14 +720,14 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
         }
 		g_array_free(status_codes, TRUE);
     }
-	/** End example. */
-    
+	
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, sync_key, &created, &updated, &deleted, &error);
+    GetFolderHierarchy_negativetests (email_handler, sync_key, &created, &updated, &deleted, &error);
 
-    // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
-
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),
+	                   "org.meego.activesyncd.FolderSyncError.INVALIDSYNCKEY"),
+	        "Incorrect handling of invalid sync key");
+	
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
     g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
@@ -1551,28 +1597,33 @@ Suite* eas_libeasmail_suite (void)
     TCase *tc_libeasmail = tcase_create ("core");
     suite_add_tcase (s, tc_libeasmail);
 
-	tcase_add_test (tc_libeasmail, test_get_mail_handler);
-    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
-   
-    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+//	tcase_add_test (tc_libeasmail, test_get_mail_handler);
+//    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+
+	// mocked tests only
+	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
+    {
+	    tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
+	}
+//    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+//    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
     //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+//    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
+//    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     
     /* Need an unread, high importance email with a single attachment at top of inbox for this to pass: */
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
     
     /* need at least one email in the inbox for this to pass: */
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
+//    tcase_add_test (tc_libeasmail, test_eas_mail_handler_update_email);
     
 	/* need a 'temp' folder created at the same level as Inbox and at least two emails in the inbox for this test to work: */
-	tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
+	//tcase_add_test (tc_libeasmail, test_eas_mail_handler_move_to_folder);
     
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
 	// requires at least one email in inbox to pass
-	tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
+//	tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
 	
     g_free(g_inbox_id);
     g_inbox_id = NULL;
