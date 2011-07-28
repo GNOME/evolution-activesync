@@ -252,12 +252,24 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
 
 void ActiveSyncSource::readItem(const std::string &luid, std::string &item)
 {
-    // return straight from cache
+    // return straight from cache?
     std::map<std::string, std::string>::iterator it = m_items.find(luid);
     if (it == m_items.end()) {
-        throwError(std::string("internal error: item data for ") + luid + " not available");
+        // no, must fetch
+        EASItemPtr tmp(eas_item_info_new(), "EasItem");
+        GErrorCXX gerror;
+        if (!eas_sync_handler_fetch_item(m_handler,
+                                         m_folder.c_str(),
+                                         luid.c_str(),
+                                         tmp,
+                                         getEasType(),
+                                         gerror)) {
+            gerror.throwError("reading ActiveSync item");
+        }
+        item = tmp->data;
+    } else {
+        item = it->second;
     }
-    item = it->second;
 }
 
 SE_END_CXX
