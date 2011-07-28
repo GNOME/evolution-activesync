@@ -66,12 +66,13 @@ class ActiveSyncCalendarSource : public ActiveSyncCalFormatSource
     virtual InsertItemResult insertItem(const std::string &luid, const std::string &item);
     virtual void readItem(const std::string &luid, std::string &item);
 
+    /** split luid into uid (first) and rid (second) */
+    static StringPair splitLUID(const std::string &luid);
+
  private:
     /** compose luid from mainid and subid */
     static std::string createLUID(const std::string &uid, const std::string &rid);
 
-    /** split luid into uid (first) and rid (second) */
-    static StringPair splitLUID(const std::string &luid);
     /** escape / in uid with %2F, so that splitMainIDValue() and splitLUID() can use / as separator */
     static StringEscape m_escape;
 

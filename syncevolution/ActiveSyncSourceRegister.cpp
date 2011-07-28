@@ -146,9 +146,22 @@ static int DumpItems(ClientTest &client, TestingSyncSource &source, const char *
 {
     ActiveSyncSource &eassource = static_cast<ActiveSyncSource &>(source);
     ofstream out(file);
-    BOOST_FOREACH (const std::string &easid, eassource.getAllItems()) {
+
+    // find all ActiveSync server IDs: in ActiveSyncCalendarSource,
+    // each server ID might appear multiple times, once for each
+    // recurrence associated with it
+    std::set<std::string> easids;
+    BOOST_FOREACH (const std::string &luid, eassource.getAllItems()) {
+        // slight hack: we know that luids in ActiveSyncSource base
+        // class pass through this method unmodified, so no need to
+        // avoid it
+        StringPair ids = ActiveSyncCalendarSource::splitLUID(luid);
+        easids.insert(ids.first);
+    }
+
+    BOOST_FOREACH(const std::string &easid, easids) {
         std::string item;
-        eassource.readItem(easid, item);
+        eassource.ActiveSyncSource::readItem(easid, item);
         out << item << '\n';
         if (!boost::ends_with(item, "\n")) {
             out << '\n';
