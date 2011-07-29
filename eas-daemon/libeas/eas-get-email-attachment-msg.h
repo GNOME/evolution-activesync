@@ -132,6 +132,12 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self,
 											 xmlDoc* doc, 
 											 GError** error);
 
+
+gboolean
+eas_get_email_attachment_msg_write_file(EasGetEmailAttachmentMsg *self,
+                                        gchar * data, 
+                                        GError **error);
+
 G_END_DECLS
 
 #endif /* _EAS_GET_EMAIL_ATTACHMENT_MSG_H_ */

@@ -221,6 +221,16 @@ gboolean eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq*
         g_assert (error != NULL);
         goto finish;
     }
+	
+	if(eas_request_base_UseMultipart(parent))
+	{
+		gchar * data =NULL;
+		data = eas_connection_get_multipartdata(eas_request_base_GetConnection(parent), 0);
+		if(!eas_get_email_attachment_msg_write_file (priv->emailAttachmentMsg, data, &error))
+		{
+			ret = FALSE;
+		}
+	}
 
 finish:
     xmlFreeDoc (doc);

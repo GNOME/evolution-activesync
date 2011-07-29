@@ -306,46 +306,9 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self,
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Data"))
         {
             gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
-            gsize decoded_len = 0;
-            guchar* decoded_buf = g_base64_decode ( (const gchar*) xmlTmp, &decoded_len);
-            gchar* fullFilePath = NULL;
-            FILE *hAttachement = NULL;
 
-            g_message ("data ecoded length  =--->:[%d]",  strlen (xmlTmp));
-            g_message ("data encoded   =--->:[%s]",   xmlTmp);
+			ret = eas_get_email_attachment_msg_write_file(self, xmlTmp, error);
 
-            if (!decoded_len)
-            {
-                g_set_error (error, EAS_CONNECTION_ERROR,
-                             EAS_CONNECTION_ERROR_WBXMLERROR,
-                             ("Failed to base64 decode attachment"));
-                xmlFree (xmlTmp);
-                ret = FALSE;
-                goto finish;
-            }
-            g_message ("data decoded   =--->:[%s]",   decoded_buf);
-            g_message ("data decoded length =--->:[%d]",  decoded_len);
-
-            fullFilePath = g_build_filename (priv->directoryPath, priv->fileReference, NULL);
-            g_message ("Attempting to write attachment to file [%s]", fullFilePath);
-            if ( (hAttachement = fopen (fullFilePath, "wb")))
-            {
-                fwrite ( (const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
-                fclose (hAttachement);
-            }
-            else
-            {
-                //g_critical("Failed to open file!")
-                g_set_error (error, EAS_CONNECTION_ERROR,
-                             EAS_CONNECTION_ERROR_FILEERROR,
-                             ("Failed to open file!"));
-                xmlFree (xmlTmp);
-                ret = FALSE;
-                goto finish;
-            }
-
-            g_free (decoded_buf);
-            g_free (fullFilePath);
             xmlFree (xmlTmp);
             break;
         }
@@ -360,3 +323,47 @@ finish:
     g_debug ("eas_get_email_attachment_msg_parse_response --");
 }
 
+gboolean
+eas_get_email_attachment_msg_write_file(EasGetEmailAttachmentMsg *self, gchar * data, GError **error)
+{
+    gsize decoded_len = 0;
+    guchar* decoded_buf = g_base64_decode ( (const gchar*) data, &decoded_len);
+    gchar* fullFilePath = NULL;
+    FILE *hAttachement = NULL;
+	gboolean ret;
+	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
+
+    g_message ("data ecoded length  =--->:[%d]",  strlen (data));
+    g_message ("data encoded   =--->:[%s]",   data);
+
+    if (!decoded_len)
+    {
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_WBXMLERROR,
+                     ("Failed to base64 decode attachment"));
+        ret = FALSE;
+        goto finish;
+    }
+    g_message ("data decoded   =--->:[%s]",   decoded_buf);
+    g_message ("data decoded length =--->:[%d]",  decoded_len);
+
+    fullFilePath = g_build_filename (priv->directoryPath, priv->fileReference, NULL);
+    g_message ("Attempting to write attachment to file [%s]", fullFilePath);
+    if ( (hAttachement = fopen (fullFilePath, "wb")))
+    {
+        fwrite ( (const WB_UTINY*) decoded_buf, decoded_len, 1, hAttachement);
+        fclose (hAttachement);
+    }
+	else
+	{
+		 //g_critical("Failed to open file!")
+        g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_FILEERROR,
+                     ("Failed to open file!"));
+		ret = FALSE;
+	}
+finish:
+	g_free(decoded_buf);
+	g_free(fullFilePath);
+	return ret;
+}
