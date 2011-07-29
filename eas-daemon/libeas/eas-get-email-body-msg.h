@@ -138,6 +138,9 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self,
 gchar* 
 eas_get_email_body_msg_get_item (EasGetEmailBodyMsg* self);
 
+gboolean
+eas_get_email_body_msg_write_file(EasGetEmailBodyMsg* self, gchar* data);
+
 G_END_DECLS
 
 #endif /* _EAS_GET_EMAIL_BODY_MSG_H_ */

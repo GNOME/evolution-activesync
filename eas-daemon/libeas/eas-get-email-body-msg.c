@@ -362,28 +362,16 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		    if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "Data"))
 		    {
 		        gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
-		        gchar* fullFilePath = NULL;
-		        FILE *hBody = NULL;
-
-		        fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
-		        g_message ("Attempting to write email to file [%s]", fullFilePath);
-		        if ( (hBody = fopen (fullFilePath, "wb")))
-		        {
-		            fputs (xmlTmp, hBody);
-		            fclose (hBody);
-		        }
-		        else
-		        {
-		            g_critical ("Failed to open file!");
-		            g_set_error (error, EAS_CONNECTION_ERROR,
-		                         EAS_CONNECTION_ERROR_FILEERROR,
-		                         "Failed to open file [%s]", fullFilePath);
-		            ret = FALSE;
-					g_free (fullFilePath);
+		        if(!eas_get_email_body_msg_write_file(self, xmlTmp))
+				{
+					g_critical ("Failed to open file!");
+					g_set_error (error, EAS_CONNECTION_ERROR,
+		            EAS_CONNECTION_ERROR_FILEERROR,
+		             "Failed to open file ");
+					ret = FALSE;
 					xmlFree (xmlTmp);
 					goto finish;
-		        }
-		        g_free (fullFilePath);
+				}
 		        xmlFree (xmlTmp);
 		        break;
 		    }
@@ -409,6 +397,28 @@ finish:
     g_debug ("eas_get_email_body_msg_parse_response--");
     return ret;
 
+}
+
+gboolean
+eas_get_email_body_msg_write_file(EasGetEmailBodyMsg* self, gchar* data)
+{
+	gchar* fullFilePath = NULL;
+	FILE *hBody = NULL;
+	EasGetEmailBodyMsgPrivate *priv = self->priv;
+
+	fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
+	g_message ("Attempting to write email to file [%s]", fullFilePath);
+	if ( (hBody = fopen (fullFilePath, "wb")))
+	{
+		fputs (data, hBody);
+		fclose (hBody);
+	}
+	else
+	{
+		return FALSE;
+	}
+	g_free (fullFilePath);
+	return TRUE;
 }
 
 

@@ -74,11 +74,18 @@ static void
 eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 {
     EasGetEmailBodyReqPrivate* priv;
+	gboolean use_multipart = FALSE;
     g_debug ("eas_get_email_body_req_init++");
     object->priv = priv = EAS_GET_EMAIL_BODY_REQ_PRIVATE (object);
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_GET_EMAIL_BODY);
+
+	if(priv->item_type == EAS_ITEM_MAIL)
+	{
+		use_multipart = TRUE;
+	}
+	eas_request_base_Set_UseMultipart (&object->parent_instance, use_multipart);
 
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
@@ -247,7 +254,22 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
 
     ret = eas_get_email_body_msg_parse_response (priv->emailBodyMsg, doc, &error);
 	item = eas_get_email_body_msg_get_item (priv->emailBodyMsg);
-	
+
+	//if we're using multipart to get email - then get the data from connection and send
+	//to msg to write to file
+	if(eas_request_base_UseMultipart(parent))
+	{
+		gchar * data =NULL;
+		data = eas_connection_get_multipartdata(eas_request_base_GetConnection(parent), 0);
+		if(!eas_get_email_body_msg_write_file (priv->emailBodyMsg, data))
+		{
+			g_critical ("Failed to open file!");
+			g_set_error (error, EAS_CONNECTION_ERROR,
+            EAS_CONNECTION_ERROR_FILEERROR,
+             "Failed to open file");
+			ret = FALSE;
+		}
+	}
 finish:
     xmlFreeDoc (doc);
     if (!ret)
