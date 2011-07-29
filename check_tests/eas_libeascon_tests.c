@@ -131,6 +131,61 @@ UID:pas-id-4E1E1CFD00000000\n\
 X-COUCHDB-REVISION:3-27f3c9f29571145454ce17f436b948c3\n\
 END:VCARD\n";
 
+/* removed the PHOTO, changed the NOTE and N*/
+const char* TEST_VCARD_FROM_EVO_UPDATED = "BEGIN:VCARD\n\
+VERSION:3.0\n\
+LABEL;TYPE=OTHER:myOtherAddress \nmyOtherCity\, myOtherState\nmyOtherZip\nm\
+yOtherPOBox\nmyOtherCountry\n\
+ADR;TYPE=OTHER:myOtherPOBox;;myOtherAddress ;myOtherCity;myOtherState;myOth\
+erZip;myOtherCountry\n\
+LABEL;TYPE=HOME:myHomeAddress \nmyHomeCity\, myHomeState\nmyHomeZip\nmyHome\
+POBox\nmyHomeCountry\n\
+ADR;TYPE=HOME:myHomePOBox;;myHomeAddress ;myHomeCity;myHomeState;myHomeZip;\
+myHomeCountry\n\
+LABEL;TYPE=WORK:myWorkAddress\nmyWorkCity\, myWorkState\nmyWorkZip\nmyWorkP\
+OBox\nmyWorkCountry\n\
+ADR;TYPE=WORK:myWorkPOBox;;myWorkAddress;myWorkCity;myWorkState;myWorkZip;m\
+yWorkCountry\n\
+X-ICQ;X-EVOLUTION-UI-SLOT=4;TYPE=HOME:myICQ\n\
+X-MSN;X-EVOLUTION-UI-SLOT=3;TYPE=HOME:myMSN\n\
+X-YAHOO;X-EVOLUTION-UI-SLOT=2;TYPE=HOME:myYahoo\n\
+X-AIM;X-EVOLUTION-UI-SLOT=1;TYPE=HOME:myAIM\n\
+TEL;X-EVOLUTION-UI-SLOT=4;TYPE=HOME,VOICE:20123456789\n\
+TEL;X-EVOLUTION-UI-SLOT=3;TYPE=WORK,FAX:40123456789\n\
+TEL;X-EVOLUTION-UI-SLOT=2;TYPE=CELL:30123456789\n\
+TEL;X-EVOLUTION-UI-SLOT=1;TYPE=WORK,VOICE:10123456789\n\
+EMAIL;X-EVOLUTION-UI-SLOT=4;TYPE=OTHER:myemail@Other.com\n\
+EMAIL;X-EVOLUTION-UI-SLOT=3;TYPE=HOME:myemail2@Home.com\n\
+EMAIL;X-EVOLUTION-UI-SLOT=2;TYPE=HOME:myemail@Home.com\n\
+EMAIL;X-EVOLUTION-UI-SLOT=1;TYPE=WORK:myemail@Work.com\n\
+X-MOZILLA-HTML:FALSE\n\
+X-EVOLUTION-VIDEO-URL:myVideoChat\n\
+FBURL:myFreeOrBusy\n\
+CALURI:myCalendar\n\
+ROLE:myProfession\n\
+X-COUCHDB-APPLICATION-ANNOTATIONS:{ \"Evolution\" : { \"revision\" : \"2011-07-1\
+0T00:28:58Z\" } }\n\
+REV:2011-07-10T00:28:58Z\n\
+X-EVOLUTION-ANNIVERSARY:2011-07-13\n\
+BDAY:1995-07-13\n\
+X-EVOLUTION-BLOG-URL;X-COUCHDB-UUID=\"8930d503-0794-454b-9c4e-f30b093654fc\":\
+myWebLog\n\
+URL;X-COUCHDB-UUID=\"84fb728f-9e33-4dbb-af66-e62dedfbcc1c\":http://www.myHome\
+Page.com\n\
+NOTE:Update Contact test\n\
+CATEGORIES:Competition,Favorites,Birthday,Anniversary,Business\n\
+X-EVOLUTION-ASSISTANT:myAssistant\n\
+X-EVOLUTION-MANAGER:myManager\n\
+TITLE:myTitle\n\
+ORG:myCompany;myDepartment;myOffice\n\
+X-EVOLUTION-SPOUSE:mySpouse\n\
+NICKNAME:myNickname\n\
+FN:Mr. myFirstName myMiddleName myLastName Sr.\n\
+X-EVOLUTION-FILE-AS:myLastName\, myFirstName\n\
+N:UmyLastName;UmyFirstName;UmyMiddleName;Mr.;Sr.\n\
+UID:pas-id-4E1E1CFD00000000\n\
+X-COUCHDB-REVISION:3-27f3c9f29571145454ce17f436b948c3\n\
+END:VCARD\n";
 
 
 static gchar *
@@ -206,11 +261,9 @@ START_TEST (test_eas_sync_handler_add_con)
     // this object
     testGetContactsHandler (&sync_handler, accountuid);
 
-
-
     gchar* folder_sync_key_in = NULL;
 	gchar* folder_sync_key_out = NULL;
-    GSList *calitems_created = NULL; //receives a list of EasMails
+    GSList *calitems_created = NULL; 
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;
 
@@ -241,7 +294,13 @@ START_TEST (test_eas_sync_handler_add_con)
 	g_free(folder_sync_key_out);
 	folder_sync_key_out = NULL;
 
-    rtn = eas_sync_handler_add_items (sync_handler, folder_sync_key_in, folder_sync_key_out, EAS_ITEM_CONTACT, NULL, calitemToUpdate, &error);
+    rtn = eas_sync_handler_add_items (sync_handler,
+                                      folder_sync_key_in,
+                                      folder_sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      calitemToUpdate,
+                                      &error);
     if (error)
     {
         fail_if (rtn == FALSE, "%s", error->message);
@@ -386,11 +445,10 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
 
 		g_free(folder_sync_key_in); folder_sync_key_in = NULL;
 		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
-#if 0
-		/*TODO: causes memory leak */
-		g_slist_foreach (conitemToDel, (GFunc) g_free, NULL);
+
+		g_slist_foreach (conitemToDel, (GFunc) g_object_unref, NULL);
 		g_slist_free (conitemToDel); conitemToDel = NULL;
-#endif
+
 	}
 
 	if(folder_sync_key_out)
@@ -404,6 +462,92 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
 }
 END_TEST
 
+
+START_TEST (test_eas_sync_handler_update_con)
+{
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+    GError *error = NULL;
+    gboolean testCalFound = FALSE;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    gchar* folder_sync_key_in = NULL;
+	gchar* folder_sync_key_out = NULL;
+	GSList *contactitems_created = NULL, *l = NULL;
+	GSList *contactitems_updated = NULL;
+	GSList *contactitems_deleted = NULL;
+
+	testGetLatestContacts (sync_handler,
+		                   folder_sync_key_in,
+		                   &folder_sync_key_out,
+		                   &contactitems_created,
+		                   &contactitems_updated,
+		                   &contactitems_deleted,
+		                   &error);
+	
+	g_free(folder_sync_key_in); folder_sync_key_in = NULL;
+	
+	/* we are only interested in the created contacts so get rid of updated + deleted */
+    g_slist_foreach (contactitems_deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (contactitems_updated, (GFunc) g_object_unref, NULL);
+    g_slist_free (contactitems_deleted); contactitems_deleted = NULL;
+    g_slist_free (contactitems_updated); contactitems_updated = NULL;
+
+	GSList *conItemToUpdate = NULL;
+	EasItemInfo *conItem = NULL;
+	EasItemInfo *updatedConItem = NULL;
+	
+	for(l= contactitems_created; l ; l= l->next){
+		conItem = l->data;
+
+        updatedConItem = eas_item_info_new();
+        updatedConItem->server_id = g_strdup (conItem->server_id);
+        updatedConItem->data = g_strdup (TEST_VCARD_FROM_EVO_UPDATED);
+		conItemToUpdate = g_slist_append (conItemToUpdate, updatedConItem);
+	}
+
+	// if the contactitems_created list contains a contact item
+	if (conItemToUpdate){
+		gboolean rtn = FALSE;
+
+		folder_sync_key_in = g_strdup(folder_sync_key_out);
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+		
+		// update all contacts items in the folder
+        rtn = eas_sync_handler_update_items (sync_handler,
+                                             folder_sync_key_in,
+                                             folder_sync_key_out,
+                                             EAS_ITEM_CONTACT,
+                                             NULL,
+                                             conItemToUpdate,
+                                             &error);
+		if (error)
+		{
+			fail_if (rtn == FALSE, "%s", error->message);
+		}
+
+		g_free(folder_sync_key_in); folder_sync_key_in = NULL;
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+
+		g_slist_foreach (conItemToUpdate, (GFunc) g_object_unref, NULL);
+		g_slist_free (conItemToUpdate); conItemToUpdate = NULL;
+	}
+
+	if(folder_sync_key_out)
+		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+
+	// free contacts item objects list
+	g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);
+	g_slist_free (contactitems_created); contactitems_created = NULL;
+
+	g_object_unref (sync_handler);
+}
+END_TEST
+
+
 Suite* eas_libeascon_suite (void)
 {
 	Suite* s = suite_create ("libeascon");
@@ -412,11 +556,12 @@ Suite* eas_libeascon_suite (void)
 	TCase *tc_libeascon = tcase_create ("core");
 	suite_add_tcase (s, tc_libeascon);
 
+	//tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
 	//tcase_add_test (tc_libeascon, test_get_sync_handler);
 	//tcase_add_test (tc_libeascon, test_get_latest_contacts_items);
-	//tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
 	//tcase_add_test (tc_libeascon, test_eas_sync_handler_delete_all_created_con);
-	//tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
 	//tcase_add_test (tc_libeascon, test_eas_sync_handler_add_con);
+	//tcase_add_test (tc_libeascon, test_eas_sync_handler_update_con);
+
 	return s;
 }
