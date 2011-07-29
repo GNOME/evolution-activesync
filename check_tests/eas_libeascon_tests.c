@@ -134,15 +134,12 @@ END:VCARD\n";
 /* removed the PHOTO, changed the NOTE and N*/
 const char* TEST_VCARD_FROM_EVO_UPDATED = "BEGIN:VCARD\n\
 VERSION:3.0\n\
-LABEL;TYPE=OTHER:myOtherAddress \nmyOtherCity, myOtherState\nmyOtherZip\nm\
 yOtherPOBox\nmyOtherCountry\n\
 ADR;TYPE=OTHER:myOtherPOBox;;myOtherAddress ;myOtherCity;myOtherState;myOth\
 erZip;myOtherCountry\n\
-LABEL;TYPE=HOME:myHomeAddress \nmyHomeCity, myHomeState\nmyHomeZip\nmyHome\
 POBox\nmyHomeCountry\n\
 ADR;TYPE=HOME:myHomePOBox;;myHomeAddress ;myHomeCity;myHomeState;myHomeZip;\
 myHomeCountry\n\
-LABEL;TYPE=WORK:myWorkAddress\nmyWorkCity, myWorkState\nmyWorkZip\nmyWorkP\
 OBox\nmyWorkCountry\n\
 ADR;TYPE=WORK:myWorkPOBox;;myWorkAddress;myWorkCity;myWorkState;myWorkZip;m\
 yWorkCountry\n\
@@ -181,7 +178,6 @@ ORG:myCompany;myDepartment;myOffice\n\
 X-EVOLUTION-SPOUSE:mySpouse\n\
 NICKNAME:myNickname\n\
 FN:Mr. myFirstName myMiddleName myLastName Sr.\n\
-X-EVOLUTION-FILE-AS:myLastName, myFirstName\n\
 N:UmyLastName;UmyFirstName;UmyMiddleName;Mr.;Sr.\n\
 UID:pas-id-4E1E1CFD00000000\n\
 X-COUCHDB-REVISION:3-27f3c9f29571145454ce17f436b948c3\n\
