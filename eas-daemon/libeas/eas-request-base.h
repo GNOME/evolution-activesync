@@ -322,6 +322,11 @@ DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
  */
 void eas_request_base_SetContext(EasRequestBase* self, DBusGMethodInvocation* context);
 
+gboolean
+eas_request_base_UseMultipart(EasRequestBase* self);
+
+void eas_request_base_Set_UseMultipart(EasRequestBase* self, gboolean use_multipart);
+
 // @@Deprecated, to be removed once move email is updated to not use this.
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
 void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);

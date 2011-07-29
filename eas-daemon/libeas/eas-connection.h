@@ -228,6 +228,9 @@ EasAccount *eas_connection_get_account (EasConnection *self);
 int eas_connection_get_protocol_version (EasConnection *self);
 
 
+gchar*
+eas_connection_get_multipartdata(EasConnection* self, guint partID);
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */

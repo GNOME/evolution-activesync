@@ -63,6 +63,7 @@ struct _EasRequestBasePrivate
 	guint request_id;			// passed back with progress signal
 	guint data_length_so_far;	// amount of data received/sent so far 
 	guint data_size;			// total size of response/request data
+	gboolean use_multipart;
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
@@ -90,6 +91,7 @@ eas_request_base_init (EasRequestBase *object)
 	priv->data_length_so_far = 0;
 	priv->data_size = 0;
 	priv->request_id = 0;
+	priv->use_multipart = FALSE;
 	
     g_debug ("eas_request_base_init--");
 }
@@ -352,4 +354,14 @@ eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* contex
     g_debug ("eas_request_base_SetContext++");
     priv->context = context;
     g_debug ("eas_request_base_SetContext--");
+}
+
+gboolean
+eas_request_base_UseMultipart(EasRequestBase* self)
+{
+	return self->priv->use_multipart;
+}
+void eas_request_base_Set_UseMultipart(EasRequestBase* self, gboolean use_multipart)
+{
+	self->priv->use_multipart = use_multipart;
 }

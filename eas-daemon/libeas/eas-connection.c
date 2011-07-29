@@ -98,6 +98,8 @@ struct _EasConnectionPrivate
     struct _EasRequestBase* request;
     GError **request_error;
 
+	GSList* multipart_strings_list;
+
 	int protocol_version;
 	gchar *proto_str;
 };
@@ -112,6 +114,12 @@ typedef struct _EasGnomeKeyringResponse
 	const gchar* username;
 	const gchar* serverUri;
 } EasGnomeKeyringResponse;
+
+typedef struct _EasMultipartTuple
+{
+	guint32 startPos;
+	guint32 itemsize;
+} EasMultipartTuple;
 
 static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
 static GHashTable *g_open_connections = NULL;
@@ -964,7 +972,7 @@ gboolean
 eas_connection_send_request (EasConnection* self, 
                              const gchar* cmd, 
                              xmlDoc* doc, 
-                             EasRequestBase *request, 
+                             EasRequestBase *request,
                              GError** error)
 {
     gboolean ret = TRUE;
@@ -1071,6 +1079,13 @@ eas_connection_send_request (EasConnection* self,
     soup_message_headers_append (msg->request_headers,
                                  "MS-ASProtocolVersion",
                                 priv->proto_str);
+
+	if(eas_request_base_UseMultipart (request))
+	{
+		soup_message_headers_append (msg->request_headers,
+                                 "MS-ASAcceptMultipart",
+                                "T");
+	}
 
     soup_message_headers_append (msg->request_headers,
                                  "User-Agent",
@@ -1204,7 +1219,7 @@ typedef enum
 
 
 static RequestValidity
-isResponseValid (SoupMessage *msg, GError **error)
+isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 {
     const gchar *content_type = NULL;
 
@@ -1235,7 +1250,7 @@ isResponseValid (SoupMessage *msg, GError **error)
 
     content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
 
-    if (0 != g_strcmp0 ("application/vnd.ms-sync.wbxml", content_type))
+    if (!multipart && (0 != g_strcmp0 ("application/vnd.ms-sync.wbxml", content_type)))
     {
         g_warning ("  Failed: Content-Type did not match WBXML");
 		g_set_error (error,
@@ -1244,6 +1259,15 @@ isResponseValid (SoupMessage *msg, GError **error)
 					 "HTTP response type was not WBXML");
         return INVALID;
     }
+	if(multipart && (0 != g_strcmp0 ("application/vnd.ms-sync.multipart", content_type)))
+	{
+		 g_warning ("  Failed: Content-Type did not match mutipart");
+		g_set_error (error,
+					 EAS_CONNECTION_ERROR,
+					 EAS_CONNECTION_ERROR_FAILED,
+					 "HTTP response type was not MULTIPART");
+        return INVALID;
+	}
 
     g_debug ("eas_connection - isResponseValid--");
 
@@ -1944,8 +1968,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     g_debug ("eas_connection - handle_server_response++ self [%lx], priv[%lx]", 
              (unsigned long)self, (unsigned long)self->priv );
 
-	validity = isResponseValid (msg, &error);
+	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
 
+	
     if (INVALID == validity)
     {
 		g_assert (error != NULL);
@@ -2002,7 +2027,59 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		}
 		else
 		{
-		    if (!wbxml2xml ( (WB_UTINY*) msg->response_body->data,
+			gchar* wbxmlPart = NULL;
+			
+			if(eas_request_base_UseMultipart (req))
+			{
+				guchar* data = (guchar*)msg->response_body->data;
+				GSList *partsList = NULL;
+				gint i=0;
+				//convert first 4 bytes to integer to determine how many parts there are
+				gint parts = data[ 3 ] << 24 |
+						data[ 2 ] << 16 |
+						data[ 1 ] << 8 |
+						data[ 0 ];
+				g_debug("parts = %d", parts);
+				
+				for(i=0; i < parts; i++)
+				{
+					EasMultipartTuple* item = g_new(EasMultipartTuple, 1);
+					//j is start position for this tuple
+					gint j = (4 + (i*8));
+
+					item->startPos = data[ (j+3) ] << 24 |
+						data[ (j+2) ] << 16 |
+						data[ (j+1) ] << 8 |
+						data[ (j+0) ];
+
+					g_debug("startpos = %u", item->startPos);
+
+					
+					item->itemsize = data[ (j+7) ] << 24 |
+						data[ (j+6) ] << 16 |
+						data[ (j+5) ] << 8 |
+						data[ (j+4) ];
+
+					g_debug("size = %u", item->itemsize);
+
+					partsList = g_slist_append(partsList, item);
+				}
+				EasMultipartTuple* wbxmlData = partsList->data; 
+				g_debug("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
+				wbxmlPart = g_memdup((msg->response_body->data+ wbxmlData->startPos) , (wbxmlData->itemsize )); 
+				partsList = g_slist_next(partsList);
+				while(partsList)
+				{
+					EasMultipartTuple* locator = partsList->data;
+					gchar* multipart = g_memdup((msg->response_body->data+ locator->startPos) , locator->itemsize );
+					priv->multipart_strings_list = g_slist_append(priv->multipart_strings_list, multipart);
+					partsList = g_slist_next(partsList);
+				}
+				g_slist_free_full(partsList, g_free);
+			}
+
+			//if wbxmlPart is set, use that, otherwise, just use the response data
+			if (!wbxml2xml ((WB_UTINY*) (wbxmlPart?:msg->response_body->data) ,
 		                     msg->response_body->length,
 		                     &xml,
 		                     &xml_len))
@@ -2010,8 +2087,10 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		        g_set_error (&error, EAS_CONNECTION_ERROR,
 		                     EAS_CONNECTION_ERROR_WBXMLERROR,
 		                     ("Converting wbxml failed"));
+				g_free(wbxmlPart);
 		        goto complete_request;
 		    }
+			g_free(wbxmlPart);
 
 		    if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
 			{
@@ -2092,6 +2171,8 @@ complete_request:
         {
             g_object_unref(req);
         }
+		//also need to clean up the multipart data
+		g_slist_free_full(priv->multipart_strings_list, g_free);
     }
     else
     {
@@ -2166,4 +2247,10 @@ eas_connection_add_mock_responses (const gchar** response_file_list, const GArra
 	}
 	
 	g_debug ("eas_connection_add_mock_responses--");
+}
+
+gchar*
+eas_connection_get_multipartdata(EasConnection* self, guint partID)
+{
+	return g_slist_nth_data (self->priv->multipart_strings_list, partID);
 }
