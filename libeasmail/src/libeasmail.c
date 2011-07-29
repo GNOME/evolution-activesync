@@ -71,20 +71,35 @@ struct _EasEmailHandlerPrivate {
 
 };
 
+
 struct _EasProgressCallbackInfo {
 	EasProgressFn progress_fn;
 	gpointer progress_data;
 	guint percent_last_sent;
+
+	guint handler_id;	//
+	GCancellable cancellable;	//
+	
 };
 
 typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
 
+struct _EasCancelInfo
+{
+	EasEmailHandler *handler;	// the email handler in use
+	guint request_id;			// request id to cancel
+};
 
-// fwd declaration
+typedef struct _EasCancelInfo EasCancelInfo;
+
+// fwd declarations:
 static void progress_signal_handler (DBusGProxy * proxy,
 				     guint request_id,
 				     guint percent,
 				     gpointer user_data);
+
+static void eas_mail_handler_cancel_common_request (GCancellable *cancellable, 
+                                  gpointer user_data);
 
 // TODO - how much verification of args should happen??
 
@@ -186,7 +201,7 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 		g_set_error (error, EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));
-		ret = FALSE;
+		ret = FALSE;		
 		goto finish;
 	}
 
@@ -1374,12 +1389,13 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
 					      EasProgressFn progress_fn,
-					      gpointer progress_data,                                    
+					      gpointer progress_data,
+                          GCancellable *cancellable,
 						  GError **error)
 {
 	gboolean ret = TRUE;
 	EasEmailHandlerPrivate *priv = self->priv;
-	DBusGProxy *proxy = priv->remoteCommonEas;
+	DBusGProxy *proxy = priv->remoteCommonEas;	// uses the common object, not the email object
 	gchar **created_emailinfo_array = NULL;
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **changed_emailinfo_array = NULL;
@@ -1393,6 +1409,8 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	int loop = 0;
 	guint i = 0;
 	GSList *l = (GSList *) change_emails;
+	DBusGProxyCall *call;
+	guint cancel_handler_id;
 	
 	g_debug ("eas_mail_handler_sync_folder_email++");
 
@@ -1413,13 +1431,14 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 
 	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
 	request_id = priv->next_request_id++;	
-	if (progress_fn) 
+	
+	if (progress_fn)
 	{
 		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
 		if (!ret)
 			goto cleanup;
 	}	
-
+	
 	// build string array from delete_emails list
 	for (; loop < delete_list_length; ++loop) {
 		delete_emails_array[loop] = g_strdup (g_slist_nth_data ( (GSList*) delete_emails, loop));
@@ -1446,31 +1465,63 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		l = l->next;
 	}
 	change_emails_array[i] = NULL;
+
+	if (cancellable) 
+	{
+		EasCancelInfo *cancel_info = g_new0(EasCancelInfo, 1);	// freed on disconnect
+
+		cancel_info->handler = self;
+		cancel_info->request_id = request_id;
+		// connect to the "cancelled" signal
+		g_debug ("connect to cancellable");
+		cancel_handler_id = g_cancellable_connect(cancellable,
+												  G_CALLBACK (eas_mail_handler_cancel_common_request),
+												  (gpointer) cancel_info, 
+												  g_free);				// data destroy func 
+	}
 	
 	// call dbus api with appropriate params
-	ret = dbus_g_proxy_call (proxy, "sync_folder_items", error,
-				 G_TYPE_STRING, self->priv->account_uid,
-	             G_TYPE_UINT, EAS_ITEM_MAIL,			
-				 G_TYPE_STRING, sync_key_in,
-				 G_TYPE_STRING, folder_id, 
-	             G_TYPE_UINT, time_window,
-	             G_TYPE_STRV, NULL,								// add items - always NULL for email
-	             G_TYPE_STRV, delete_emails_array,      // delete items. 
-	             G_TYPE_STRV, change_emails_array,		// change items	
-	             G_TYPE_UINT, request_id,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, sync_key_out,
-				 G_TYPE_BOOLEAN, more_available,
-				 G_TYPE_STRV, &created_emailinfo_array,
-				 G_TYPE_STRV, &deleted_emailinfo_array,
-				 G_TYPE_STRV, &changed_emailinfo_array,
-	             G_TYPE_STRV, NULL,
-	             G_TYPE_STRV, NULL,
-	             G_TYPE_STRV, &ret_failed_changes_array,                      
-				 G_TYPE_INVALID);
+	call = dbus_g_proxy_begin_call (proxy,
+					"sync_folder_items",
+					dbus_call_completed,
+					NULL, 							// userdata passed to callback
+					NULL, 							// destroy notification
+					G_TYPE_STRING, self->priv->account_uid,
+	             	G_TYPE_UINT, EAS_ITEM_MAIL,			
+				 	G_TYPE_STRING, sync_key_in,
+				 	G_TYPE_STRING, folder_id, 
+	             	G_TYPE_UINT, time_window,
+	             	G_TYPE_STRV, NULL,						// add items - always NULL for email
+	             	G_TYPE_STRV, delete_emails_array,      // delete items. 
+	             	G_TYPE_STRV, change_emails_array,		// change items	
+	             	G_TYPE_UINT, request_id,
+				 	G_TYPE_INVALID);
+	
+	g_debug ("block until results available");
+	
+	// blocks until results are available:
+	ret = dbus_g_proxy_end_call (proxy,
+				     call,
+				     error,
+					 G_TYPE_STRING, sync_key_out,
+					 G_TYPE_BOOLEAN, more_available,
+					 G_TYPE_STRV, &created_emailinfo_array,
+					 G_TYPE_STRV, &deleted_emailinfo_array,
+					 G_TYPE_STRV, &changed_emailinfo_array,
+			         G_TYPE_STRV, NULL,
+			         G_TYPE_STRV, NULL,
+			         G_TYPE_STRV, &ret_failed_changes_array,	                             
+				     G_TYPE_INVALID);
 
 	g_debug ("dbus call returned");
-	
+
+	if(cancellable)
+	{
+		// disconnect from cancellable
+		g_debug ("disconnect from cancellable");
+		g_cancellable_disconnect(cancellable, cancel_handler_id);
+	}
+		
 	// convert created/deleted/changed emailinfo arrays into lists of emailinfo objects (deserialise results)
 	if (ret) 
 	{
@@ -1517,7 +1568,6 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 			}
 		}	
 	
-
 		free_string_array (created_emailinfo_array);
 		free_string_array (changed_emailinfo_array);
 		free_string_array (deleted_emailinfo_array);	
@@ -1569,4 +1619,39 @@ cleanup:
 	g_debug ("eas_mail_handler_sync_folder_email_info--");
 
 	return ret;
+}
+
+
+static void
+eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user_data)
+{
+	EasCancelInfo *cancel_info = user_data;
+	EasEmailHandler* self = cancel_info->handler;
+	EasEmailHandlerPrivate *priv = self->priv;
+	DBusGProxy *proxy = priv->remoteCommonEas;	// uses the common object, not the email object
+	gboolean ret;
+	guint request_id = cancel_info->request_id;	
+	GError *error = NULL;
+	
+	g_debug("eas_mail_handler_cancel_common_request++");
+
+	g_debug("call dbus to cancel request with id %d", request_id);
+
+	// call the cancel operation on the common interface
+	ret = dbus_g_proxy_call (proxy, 
+	                         "cancel_request", 
+	                         &error,
+					 		 G_TYPE_STRING, priv->account_uid,		
+					 		 G_TYPE_UINT, request_id,
+                     		 G_TYPE_INVALID,
+                     		 G_TYPE_INVALID);	// no out params. fire and forget
+
+	g_debug("dbus call returned");
+	if(!ret)
+	{
+		g_warning("cancel request failed with %s", error->message);
+	}
+
+	g_debug("eas_mail_handler_cancel_common_request--");
+	
 }

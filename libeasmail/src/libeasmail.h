@@ -27,6 +27,7 @@
 #define EAS_MAIL_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 #include "eas-email-info.h"
 
 G_BEGIN_DECLS
@@ -436,7 +437,8 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
 						  EasProgressFn progress_fn,
-						  gpointer progress_data,                                             
+						  gpointer progress_data,
+                          GCancellable *cancellable,
 						  GError **error); 
 
 /*

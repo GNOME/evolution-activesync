@@ -46,6 +46,13 @@
       <arg type="as" name="ret_change_items_response" direction="out"/>      
     </method>
     
+    <!-- cancel request -->
+    <method name="cancel_request">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/><!-- -->
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="u" name="request_id" direction="in"/>
+    </method>  
+    
   <!-- TODO: Insert your common exposed APIs here -->
 
 	<!-- signals -->

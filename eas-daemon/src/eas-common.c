@@ -249,3 +249,29 @@ finish:
 	
     return ret;
 }
+
+gboolean 
+eas_common_cancel_request (EasCommon* self,
+                               const gchar* account_uid,
+                               guint request_id,
+                               DBusGMethodInvocation* context)
+{
+	GError *error = NULL;
+
+	g_debug("eas_common_cancel_request++");
+	
+	g_set_error (&error,
+                 EAS_CONNECTION_ERROR,
+                 EAS_CONNECTION_ERROR_NOTSUPPORTED,
+                 "cancel request not yet supported");
+	
+	// TODO add support for this method when request queue is implemented
+	
+	dbus_g_method_return_error (context, error);		
+	
+	g_error_free (error);
+	
+	g_debug("eas_common_cancel_request--");
+	
+	return FALSE;	
+}

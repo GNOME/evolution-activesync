@@ -89,7 +89,7 @@ gboolean eas_common_get_protocol_version (EasCommon *obj,
 					  gchar **ret, GError **error);
 
 /*
-	synchronize an email folder. Gets email headers only, not bodies
+	synchronize a folder. In the case of email, syncs only email info
 */   
 gboolean eas_common_sync_folder_items (EasCommon* self,
                                const gchar* account_uid,
@@ -100,6 +100,14 @@ gboolean eas_common_sync_folder_items (EasCommon* self,
                                const gchar** add_items,
                                const gchar** delete_items,                                       
                                const gchar** change_items,
+                               guint request_id,
+                               DBusGMethodInvocation* context);
+
+/*
+	cancel a request
+*/
+gboolean eas_common_cancel_request (EasCommon* self,
+                               const gchar* account_uid,
                                guint request_id,
                                DBusGMethodInvocation* context);
 

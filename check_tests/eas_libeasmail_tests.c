@@ -1377,7 +1377,8 @@ struct _TrySyncFolderEmailParams
 	GSList **emails_deleted;
 	gboolean *more_available;
 	EasProgressFn progress_fn;
-	gpointer progress_data;                                          
+	gpointer progress_data; 
+	GCancellable *cancellable;
 	GError **error;
 };
 
@@ -1389,6 +1390,9 @@ static void try_sync_folder_email(gpointer data)
 	gboolean rtn;
 
 	g_debug("sync_folder_email with %s", params->sync_key_in);
+	g_debug("cancellable = %x", params->cancellable);
+	g_debug("short delay");
+	g_usleep(500000);
 	
 	rtn = eas_mail_handler_sync_folder_email (params->email_handler,
 											  params->sync_key_in,
@@ -1403,6 +1407,7 @@ static void try_sync_folder_email(gpointer data)
 											  params->more_available,
 											  params->progress_fn,			// progress function
 											  params->progress_data,		// progress data
+	                                          params->cancellable,			// cancellable
 											  params->error); 	
 
 	g_debug("eas_mail_handler_sync_folder_email");
@@ -1453,6 +1458,11 @@ START_TEST (test_eas_mail_get_item_estimate)
     gboolean more_available = FALSE;	
 	guint estimate = 0;
 	progress_loop = g_main_loop_new (NULL, FALSE);
+	GCancellable *cancellable = NULL; 
+
+	g_type_init();	// must call before calling g_cancellable_new
+	g_thread_init (NULL);
+	cancellable = g_cancellable_new();	
 	
 	testGetMailHandler (&email_handler, accountuid);
 	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
@@ -1477,6 +1487,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 						  &more_available,
 	                      NULL,						// progress function
 	                      NULL,						// progress data
+	                      NULL,						// cancellable
 						  &error); 
 
 	if(!ret)
@@ -1520,15 +1531,23 @@ START_TEST (test_eas_mail_get_item_estimate)
 	sync_params->more_available = &more_available;	
 	sync_params->progress_fn = progress_cb;
 	sync_params->progress_data = NULL;
+	sync_params->cancellable = cancellable;	
+	g_debug("sync_params->cancellable = %x", sync_params->cancellable);
 	sync_params->error = &error;		
 
 	// spawn a thread to make the synchronous call so this thread free to receive progress updates:
 	g_idle_add(spawn_sync_folder_email_thread, sync_params);	
 
 	mark_point();
+
+	// TEMP: cancel the sync: currently does nothing in the daemon
+	// TODO figure out how to test properly when supported in daemon
+	g_debug("calling g_cancellable_cancel");
+	g_cancellable_cancel(cancellable);
+	mark_point();
 	
 	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
-
+	
 	mark_point();
 
 	g_debug("get_item_estimate with %s", folder_sync_key_out_2);
@@ -1584,6 +1603,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 						  &more_available,
 	                      NULL,						// progress function
 	                      NULL,						// progress data
+	                      NULL,						// cancellable
 						  &error); 
     if (error)
 	{		
@@ -1591,8 +1611,10 @@ START_TEST (test_eas_mail_get_item_estimate)
     }
 
 	g_debug("");
-	 	
+
 	mark_point();
+
+	g_object_unref(cancellable);
 
 }
 END_TEST
@@ -1802,11 +1824,11 @@ Suite* eas_libeasmail_suite (void)
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
 	}
-//    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+ //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
-    //tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
+ //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-    //tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+ //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     
     /* Need an unread, high importance email with a single attachment at top of inbox for this to pass: */
