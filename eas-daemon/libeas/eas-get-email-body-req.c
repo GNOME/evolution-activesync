@@ -197,10 +197,10 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
            switch (priv->item_type)
 			{
 				case EAS_ITEM_CALENDAR:
-					priv->collectionId = eas_account_get_calendar_folder (acc);
+					priv->collectionId = g_strdup(eas_account_get_calendar_folder (acc));
 					break;
 				case EAS_ITEM_CONTACT:
-					priv->collectionId = eas_account_get_contact_folder (acc);
+					priv->collectionId = g_strdup(eas_account_get_contact_folder (acc));
 					break;
 				default:
 					g_warning("trying to get default folder for unspecified item type");
