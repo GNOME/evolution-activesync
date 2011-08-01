@@ -20,29 +20,32 @@
 //-------------------------------------------------------------//
 
 
-void test_eas_cal_info_translator_parse_request(const char* vCalendarName,const char* xmlName)
+static void test_eas_cal_info_translator_parse_request(const char* vCalendarName,const char* xmlName)
 {
-        g_type_init();
   //region init variable
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
 	FILE *fr,*fw;
 	gchar temp[]="3:1";
 	gchar* serv=temp;
-	gchar* res = NULL;
 	long lSize1,lSize2,lSize3;
 	gchar * buffer1=NULL;
 	gchar * buffer2=NULL;
 	gchar* 	buffer3=NULL;
 	struct stat stFileInfo;
 	EasItemInfo* calInfo = NULL;
+	size_t readResult;
+	gchar *ptr= NULL;
+	long size;
+	gchar *buf;
+	gboolean parseResponse;
+
+	g_type_init();
+
 	calInfo = eas_item_info_new();
 	calInfo->server_id = serv;
 //endregion
 //check the VCalendar file, did the VCalendar file exists
-	gchar *ptr= NULL;
-	long size;
-	gchar *buf;
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
@@ -56,8 +59,9 @@ void test_eas_cal_info_translator_parse_request(const char* vCalendarName,const 
 	lSize1 = ftell (fr);
 	rewind (fr);
 	buffer1 = (gchar*) malloc (sizeof(gchar)*lSize1 + 1);
-	fread (buffer1,sizeof(gchar),lSize1,fr);
-	buffer1[lSize1]=NULL;
+	readResult=fread (buffer1,sizeof(gchar),lSize1,fr);
+	fail_if(readResult == 0);
+	buffer1[lSize1]='\0';
 	calInfo->data = buffer1;
 	fclose (fr);
 //end Loading
@@ -69,7 +73,8 @@ void test_eas_cal_info_translator_parse_request(const char* vCalendarName,const 
 //region Translate
 	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Cal_Info_Translator/XML_Data/");
 	nodeLevel1 = doc->children;
-	fail_if(eas_cal_info_translator_parse_request(doc, nodeLevel1, calInfo)==NULL, "XML can't be created.");
+	parseResponse = eas_cal_info_translator_parse_request(doc, nodeLevel1, calInfo);
+	fail_unless(parseResponse, "XML can't be created.");
 //end Translation
 
 //region Save Translation in temp.txt	
@@ -86,8 +91,9 @@ fr = fopen(g_strconcat (ptr, "/TestData/Cal_Info_Translator/_Request/XML_Data/te
 	lSize2 = ftell (fr);
 	rewind (fr);
 	buffer2 = (gchar*) malloc (sizeof(gchar)*lSize2 + 1);
-	fread (buffer2,sizeof(gchar),lSize2,fr);
-	buffer2[lSize2]=NULL;
+	readResult=fread (buffer2,sizeof(gchar),lSize2,fr);
+	fail_if(readResult == 0);
+	buffer2[lSize2]='\0';
 	fclose (fr);
 	remove(g_strconcat (ptr, "/TestData/Cal_Info_Translator/_Request/XML_Data/temp.txt",NULL)); //Delete the temporary File temp.txt
 //end Loading Translation
@@ -99,8 +105,9 @@ fr = fopen(g_strconcat (ptr, "/TestData/Cal_Info_Translator/_Request/XML_Data/",
 	lSize3 = ftell (fr);
 	rewind (fr);
 	buffer3 = (gchar*) malloc (sizeof(gchar)*lSize3 + 1);
-	fread (buffer3,sizeof(gchar),lSize3,fr);
-	buffer3[lSize3]=NULL;
+	readResult=fread (buffer3,sizeof(gchar),lSize3,fr);
+	fail_if(readResult == 0);
+	buffer3[lSize3]='\0';
 	
 	fclose (fr);
 
@@ -298,11 +305,11 @@ test_eas_cal_info_translator_parse_response("VCard_cal_info_translator_parse_res
 }
 END_TEST
 
-START_TEST(test_eas_cal_info_translator_parse_response_sensitivity)
+/*START_TEST(test_eas_cal_info_translator_parse_response_sensitivity)
 {
 test_eas_cal_info_translator_parse_response("VCard_cal_info_translator_parse_response_sensitivity.txt","_XML_cal_info_translator_parse_response_sensitivity.xml");
 }
-END_TEST
+END_TEST*/
 START_TEST(test_eas_cal_info_translator_parse_response_subject)
 {
 test_eas_cal_info_translator_parse_response("VCard_cal_info_translator_parse_response_subject.txt","_XML_cal_info_translator_parse_response_subject.xml");

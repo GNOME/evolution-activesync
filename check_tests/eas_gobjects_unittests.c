@@ -82,7 +82,9 @@ START_TEST (test_add_item_req_obj)
 	EasGetItemEstimateReq *self_eas_get_item_estimate_req;
 	EasGetItemEstimateMsg *self_eas_get_item_estimate_msg;	
 	Eas2WaySyncReq* self_eas_2way_sync_req;
-	
+	EasAttachment* self_eas_attachment;
+	EasEmailInfo* self_eas_email_info;
+	EasFolder* self_eas_folder;
 
 	
     // initise G type library to allow use of G type objects which provide
@@ -287,21 +289,21 @@ START_TEST (test_add_item_req_obj)
 	g_debug("EAS_TYPE_ACCOUNT --"); 
 
 	g_debug("EAS_TYPE_ATTACHMENT ++");
-	EasAttachment* self_eas_attachment = g_object_new(EAS_TYPE_ATTACHMENT, NULL);
+	self_eas_attachment = g_object_new(EAS_TYPE_ATTACHMENT, NULL);
 	g_object_ref(self_eas_attachment);
 	g_object_unref(self_eas_attachment);
 	g_object_unref(self_eas_attachment);	
 	g_debug("EAS_TYPE_ATTACHMENT --");
 
 	g_debug("EAS_TYPE_EMAIL_INFO ++");
-	EasEmailInfo* self_eas_email_info = g_object_new(EAS_TYPE_EMAIL_INFO, NULL);
+	self_eas_email_info = g_object_new(EAS_TYPE_EMAIL_INFO, NULL);
 	g_object_ref(self_eas_email_info);
 	g_object_unref(self_eas_email_info);
 	g_object_unref(self_eas_email_info);	
 	g_debug("EAS_TYPE_EMAIL_INFO --");
 
 	g_debug("EAS_TYPE_FOLDER ++");
-	EasFolder* self_eas_folder = g_object_new(EAS_TYPE_FOLDER, NULL);
+	self_eas_folder = g_object_new(EAS_TYPE_FOLDER, NULL);
 	g_object_ref(self_eas_folder);
 	g_object_unref(self_eas_folder);
 	g_object_unref(self_eas_folder);	
