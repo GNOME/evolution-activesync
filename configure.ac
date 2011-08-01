@@ -115,6 +115,7 @@ AC_SUBST(syncevo_backenddir)
 # use the "build as module" part of syncevolution/Makefile.am,
 # unconditionally when compiling as part of activesyncd
 AM_CONDITIONAL([ENABLE_MODULES], [true])
+AC_DEFINE([ENABLE_MODULES], [], [tell SyncEvolution backend that it builds as a module])
 
 # Compile flags for syncevolution backend.
 # Don't hard-code them in syncevolution/Makefile.am, that file

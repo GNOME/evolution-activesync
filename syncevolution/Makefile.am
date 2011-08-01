@@ -4,6 +4,8 @@ AM_CPPFLAGS = \
 	$(EASSYNC_CFLAGS) \
         $(BACKEND_CPPFLAGS)
 
+EXTRA_DIST = configure-sub.in ActiveSyncSourceRegister.cpp
+
 backenddir = $(syncevo_backenddir)
 
 SYNCSOURCES = syncactivesync.la
@@ -20,8 +22,7 @@ SYNCACTIVESYNC_SOURCES = \
 	ActiveSyncSource.h \
 	ActiveSyncSource.cpp \
 	ActiveSyncCalendarSource.h \
-	ActiveSyncCalendarSource.cpp \
-	ActiveSyncSourceRegister.cpp
+	ActiveSyncCalendarSource.cpp
 
 syncactivesync_la_SOURCES = $(SYNCACTIVESYNC_SOURCES)
 syncactivesync_la_LIBADD = $(SYNCEVOLUTION_LIBS) $(EASSYNC_LIBS)
