@@ -102,8 +102,15 @@ gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data)
     gchar *tempString = NULL;
 	gchar *tempString2 = NULL;
 
+
     g_debug ("eas_item_info_deserialise++");
-    // Look for the separator character
+
+	//check that there is data to deserialise - otherwise return false
+	if(data == NULL || strlen(data)==0)
+	{
+		return FALSE;
+	}
+	// Look for the separator character
     for (; data[i]; i++)
     {
         if (data[i] == SERVER_ID_SEPARATOR)
