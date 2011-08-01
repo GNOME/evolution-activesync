@@ -1,3 +1,3 @@
 <?xml version="1.0"?>
 <ApplicationData>
-<calendar:Attendees><Attendee><Attendee_Email>example1@example.com</Attendee_Email><Attendee_Name>name1</Attendee_Name></Attendee><Attendee><Attendee_Email>example2@example.com</Attendee_Email></Attendee></calendar:Attendees><calendar:AllDayEvent>0</calendar:AllDayEvent></ApplicationData>
+<calendar:Attendees><Attendee><Attendee_Email>example1@example.com</Attendee_Email><Attendee_Name>name1</Attendee_Name></Attendee><Attendee><Attendee_Email>example2@example.com</Attendee_Email><Attendee_Name>example2@example.com</Attendee_Name></Attendee></calendar:Attendees><calendar:AllDayEvent>0</calendar:AllDayEvent></ApplicationData>
