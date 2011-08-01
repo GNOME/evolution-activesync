@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+<Sync xmlns="AirSync:">
+  <Collections>
+    <Collection>
+      <SyncKey>0</SyncKey>
+      <CollectionId>8</CollectionId>
+      <Status>3</Status>
+    </Collection>
+  </Collections>
+</Sync>

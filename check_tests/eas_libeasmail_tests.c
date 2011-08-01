@@ -901,23 +901,9 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
 
-	setMockNegTestGoodHttp("EmailGetInfoBadFolderId.xml");
 	// set mock
-	{
-		guint status_code = 200;
-		GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
-		g_array_append_val(status_codes, status_code);
-        const gchar *mocks[] = {"EmailGetInfoBadFolderId.xml", 0};
-        EasTestHandler *test_handler = eas_test_handler_new ();
-        if (test_handler)
-        {
-			//eas_test_handler_add_mock_responses (test_handler, mocks, NULL);
-            eas_test_handler_add_mock_responses (test_handler, mocks, status_codes);
-            g_object_unref (test_handler);
-            test_handler = NULL;
-        }
-		g_array_free(status_codes, TRUE);
-    }
+	setMockNegTestGoodHttp("EmailGetInfoBadFolderId.xml");
+	
     // get the folder info for the inbox
     GetFolderInfo_negativetests (email_handler, folder_sync_key, "wrong", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
@@ -1740,7 +1726,64 @@ START_TEST (test_eas_mail_handler_delete_email)
 
 }
 END_TEST
+START_TEST (test_get_eas_mail_info_bad_sync_key)
+{
+    const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    gchar folder_hierarchy_sync_key[64] = "0";
+    GError *error = NULL;
+    gchar folder_sync_key[64] = "0";
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;
+	// get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetMailHandler (&email_handler, accountuid);
 
+    // call into the daemon to get the folder hierarchy from the exchange server
+    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+
+    // fail the test if there is no folder information
+    fail_unless (NULL != created, "No folder information returned from exchange server");
+
+	// set mock
+	setMockNegTestGoodHttp("EmailListInvalidSyncKey.xml");
+
+    // get the folder info for the inbox
+    GetFolderInfo_negativetests (email_handler, "wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
+	        "Incorrect handling of Sync Key");
+
+
+    //  free email objects in lists of email objects
+    g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_updated, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_created, (GFunc) g_object_unref, NULL);
+
+    //  free folder objects in lists of folder objects
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (email_handler);
+
+}
+END_TEST
 Suite* eas_libeasmail_suite (void)
 {
     Suite* s = suite_create ("libeasmail");
@@ -1754,9 +1797,10 @@ Suite* eas_libeasmail_suite (void)
 
 	// mocked tests only
 	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
-    {
+    	{
 	    tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
+	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
 	}
 //    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
