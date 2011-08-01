@@ -88,43 +88,57 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     GErrorCXX gerror;
     EASItemsCXX created, updated;
     EASIdsCXX deleted;
-    gchar *buffer;
-    if (!eas_sync_handler_get_items(m_handler,
-                                    m_startSyncKey.c_str(),
-                                    &buffer,
-                                    getEasType(),
-                                    m_folder.c_str(),
-                                    created, updated, deleted,
-                                    0,
-                                    gerror)) {
-        gerror.throwError("reading ActiveSync changes");
-    }
+    gboolean moreAvailable = TRUE;
 
-    // TODO: Test that we really get an empty token here for an unexpected slow
-    // sync. If not, we'll start an incremental sync here and later the engine
-    // will ask us for older, unmodified item content which we won't have.
+    m_currentSyncKey = m_startSyncKey;
 
+    while (moreAvailable) {
+        gchar *buffer = NULL;
 
-    // populate ID lists and content cache
-    BOOST_FOREACH(EasItemInfo *item, created) {
-        string luid(item->server_id);
-        SE_LOG_DEBUG(this, NULL, "new item %s", luid.c_str());
-        addItem(luid, NEW);
-        m_ids->setProperty(luid, "1");
-        m_items[luid] = item->data;
-    }
-    BOOST_FOREACH(EasItemInfo *item, updated) {
-        string luid(item->server_id);
-        SE_LOG_DEBUG(this, NULL, "updated item %s", luid.c_str());
-        addItem(luid, UPDATED);
-        // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
-        m_items[luid] = item->data;
-    }
-    BOOST_FOREACH(const char *serverID, deleted) {
-        string luid(serverID);
-        SE_LOG_DEBUG(this, NULL, "deleted item %s", luid.c_str());
-        addItem(luid, DELETED);
-        m_ids->removeProperty(luid);
+        // reset stuff in case we're after the first loop
+        created.clear();
+        updated.clear();
+        deleted.clear();
+
+        if (!eas_sync_handler_get_items(m_handler,
+                                        m_currentSyncKey.c_str(),
+                                        &buffer,
+                                        getEasType(),
+                                        m_folder.c_str(),
+                                        created, updated, deleted,
+                                        &moreAvailable,
+                                        gerror)) {
+            gerror.throwError("reading ActiveSync changes");
+        }
+
+        // TODO: Test that we really get an empty token here for an unexpected slow
+        // sync. If not, we'll start an incremental sync here and later the engine
+        // will ask us for older, unmodified item content which we won't have.
+
+        // populate ID lists and content cache
+        BOOST_FOREACH(EasItemInfo *item, created) {
+            string luid(item->server_id);
+            SE_LOG_DEBUG(this, NULL, "new item %s", luid.c_str());
+            addItem(luid, NEW);
+            m_ids->setProperty(luid, "1");
+            m_items[luid] = item->data;
+        }
+        BOOST_FOREACH(EasItemInfo *item, updated) {
+            string luid(item->server_id);
+            SE_LOG_DEBUG(this, NULL, "updated item %s", luid.c_str());
+            addItem(luid, UPDATED);
+            // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
+            m_items[luid] = item->data;
+        }
+        BOOST_FOREACH(const char *serverID, deleted) {
+            string luid(serverID);
+            SE_LOG_DEBUG(this, NULL, "deleted item %s", luid.c_str());
+            addItem(luid, DELETED);
+            m_ids->removeProperty(luid);
+        }
+
+        // update key
+        m_currentSyncKey = buffer;
     }
 
     // now also generate full list of all current items:
@@ -136,9 +150,6 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
         SE_LOG_DEBUG(this, NULL, "existing item %s", luid.c_str());
         addItem(luid, ANY);
     }
-
-    // update key
-    m_currentSyncKey = buffer;
 }
 
 std::string ActiveSyncSource::endSync(bool success)
