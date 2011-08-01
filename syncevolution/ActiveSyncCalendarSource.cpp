@@ -417,6 +417,9 @@ SyncSourceRaw::InsertItemResult ActiveSyncCalendarSource::insertItem(const std::
             // special case: no need to load old data, replace it outright
             event.m_calendar = newEvent->m_calendar;
         } else {
+            // populate event
+            loadItem(event);
+
             // update cache: find old VEVENT and remove it before adding new one
             icalcomponent *removeme = NULL;
             for (icalcomponent *comp = icalcomponent_get_first_component(event.m_calendar, ICAL_VEVENT_COMPONENT);
