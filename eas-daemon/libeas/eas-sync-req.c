@@ -136,6 +136,7 @@ eas_sync_req_finalize (GObject *object)
 
     g_debug ("eas_sync_req_finalize++");
 
+    g_free (priv->sync_key);
     g_free (priv->accountID);
     g_free (priv->folderID);
 
