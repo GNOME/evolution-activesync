@@ -204,7 +204,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     EasSyncFolderMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;
     EasError error_details;
-	EasAccount * acc = NULL;
+	const EasAccount * acc = NULL;
 	EasAccountList *account_list = NULL;
 	GConfClient* client = NULL;
 
@@ -304,7 +304,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
     }
 
 finish:
-	g_object_unref (acc);
+	g_object_unref (G_OBJECT(acc));
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
