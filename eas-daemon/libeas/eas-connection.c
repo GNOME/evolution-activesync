@@ -2075,7 +2075,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				while(partsList)
 				{
 					EasMultipartTuple* locator = partsList->data;
-					gchar* multipart = g_memdup((msg->response_body->data+ locator->startPos) , locator->itemsize );
+					gchar *multipart = g_malloc0(locator->itemsize + 1); // Allow for NULL and implicitly set the everything to 0
+					memcpy(multipart, (msg->response_body->data + locator->startPos), locator->itemsize); // Copy in the data
+
 					priv->multipart_strings_list = g_slist_append(priv->multipart_strings_list, multipart);
 					partsList = g_slist_next(partsList);
 				}
