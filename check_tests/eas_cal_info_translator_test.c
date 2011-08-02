@@ -193,6 +193,11 @@ test_eas_cal_info_translator_parse_request("VCard_cal_info_translator_parse_requ
 }
 END_TEST
 
+START_TEST(test_eas_cal_info_translator_parse_request_category)
+{
+test_eas_cal_info_translator_parse_request("VCard_cal_info_translator_parse_request_category.txt","_XML_cal_info_translator_parse_request_category.xml");
+}
+END_TEST
 static void test_eas_cal_info_translator_parse_response(const char* vcardName, const char* xmlName)
 {
 //region init variable
@@ -337,6 +342,11 @@ test_eas_cal_info_translator_parse_response("VCard_cal_info_translator_parse_res
 }
 END_TEST
 
+START_TEST(test_eas_cal_info_translator_parse_response_category)
+{
+test_eas_cal_info_translator_parse_response("VCard_cal_info_translator_parse_response_category.txt","_XML_cal_info_translator_parse_response_category.xml");
+}
+END_TEST
 
 
 Suite* eas_cal_info_translator_suite (void)
@@ -360,6 +370,7 @@ Suite* eas_cal_info_translator_suite (void)
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_attendee);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_recurrence);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_exception);
+	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_request_category); 
 
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_startTime);
      	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_timeZone);
@@ -374,6 +385,7 @@ Suite* eas_cal_info_translator_suite (void)
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_attendee);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_recurrence);
 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_exception); 
+ 	 tcase_add_test (tc_cal_info_translator, test_eas_cal_info_translator_parse_response_category);	
 		
     return s;
 }
