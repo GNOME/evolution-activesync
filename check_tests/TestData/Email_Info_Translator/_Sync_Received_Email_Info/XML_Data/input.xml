@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<ApplicationData>
+            <To xmlns="Email:">&quot;Microsoft Outlook&quot; &lt;MicrosoftExchange329e71ec88ae4615bbc36ab6ce41109e@cstylianou.com&gt;</To>
+            <From xmlns="Email:">&quot;Microsoft Outlook&quot; &lt;MicrosoftExchange329e71ec88ae4615bbc36ab6ce41109e@cstylianou.com&gt;</From>
+            <Subject xmlns="Email:">Undeliverable: test0001</Subject>
+            <DateReceived xmlns="Email:">2011-08-01T09:44:41.326Z</DateReceived>
+            <DisplayTo xmlns="Email:">luze@yahoo.com</DisplayTo>
+            <ThreadTopic xmlns="Email:">test0001</ThreadTopic>
+            <Importance xmlns="Email:">2</Importance>
+            <Read xmlns="Email:">0</Read>
+            <Attachments xmlns="AirSyncBase:">
+              <Attachment>
+                <DisplayName>test0001.eml</DisplayName>
+                <FileReference>9%3a2%3a0</FileReference>
+                <Method>5</Method>
+                <EstimatedDataSize>1216</EstimatedDataSize>
+              </Attachment>
+            </Attachments>
+            <Categories xmlns="AirSyncBase:">
+            <Category>Buissness</Category>
+            <Category> VIP </Category>
+            </Categories>
+            <Body xmlns="AirSyncBase:">
+              <Type>4</Type>
+              <EstimatedDataSize>9052</EstimatedDataSize>
+              <Truncated>1</Truncated>
+              <Data>From: Microsoft Outlook
+	&lt;MicrosoftExchange329e71ec88ae4615bbc36ab6ce41109e@cstylianou.com&gt;
+To: &lt;good.user@cstylianou.com&gt;
+Date: Mon, 1 Aug 2011 10:44:41 +0100
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary=&quot;bdac5b5b-bce0-4bb7-9283-4db7212d1ede&quot;
+X-MS-Exchange-Organization-SCL: -1
+Content-Language: en-GB
+Message-ID: &lt;95fa1876-41b7-4e8d-af46-7fd5f14a3048@CS-SERVER1.cstylianou.com&gt;
+In-Reply-To: &lt;0413DD6E62ADC940AC2669786639023CE705F9@CS-SERVER1.cstylianou.com&gt;
+References: &lt;0413DD6E62ADC940AC2669786639023CE705F9@CS-SERVER1.cstylianou.com&gt;
+Thread-Topic: test0001
+Thread-Index: AcxQL4/krqRb0Rf6SvOgPvxICGCDDQAABLsK
+Subject: Undeliverable: test0001
+X-MS-Exchange-Organization-AuthSource: CS-SERVER1.cstylianou.com
+X-MS-Exchange-Organization-AuthAs: Internal
+X-MS-Exchange-Organization-AuthMechanism: 05
+Importance: high
+X-Priority: 1
+MIME-Version: 1.0
+
+--bdac5b5b-bce0-4bb7-9283-4db7212d1ede
+Content-Type: multipart/alternative; differences=Content-Type;
+	boundary=&quot;a97a4f0d-1f89-49f4-93f9-9b33f1708823&quot;
+
+--a97a4f0d-1f89-49f4-93f9-9b33f1708823
+Content-Type: text/plain; charset=&quot;us-ascii&quot;
+Content-Transfer-Encoding: quoted-printable
+
+mta1428.mail.mud.yahoo.com rejected your message to the following e-mail ad=
+dresses:
+
+luze@yahoo.com (luze@yahoo.com)&lt;mailto:luze@yahoo.com&gt;
+
+mta1428.mail.mud.yahoo.com gave this error:
+delivery error: dd Sorry your message to luze@yahoo.com cannot be delivered=
+. This account has been disabled or discontinued [#102]. - mta1428.mail.mud=
+.yahoo.com
+
+A problem occurred during the delivery of this message to this e-mail addre=
+ss. Try sending this message again. If the problem continues, please contac=
+t your helpdesk.
+
+
+
+
+
+
+
+Diagnostic information for administrators:
+
+Generating server: CS-SERVER1.cstylianou.com
+
+luze@yahoo.com
+mta1428.mail.mud.yahoo.com #554 delivery error: dd Sorry your message to lu=
+ze@yahoo.com cannot be delivered. This account has been disabled or discont=
+inued [#102]. - mta1428.mail.mud.yahoo.com ##
+
+Original message headers:
+
+Received: from CS-SERVER1.cstylianou.com ([fe80::10bc:89f7:7224:77ee]) by
+ CS-SERVER1.cstylianou.com ([fe80::10bc:89f7:7224:77ee%11]) with mapi id
+ 14.01.0289.001; Mon, 1 Aug 2011 10:44:34 +0100
+From: Good User &lt;good.user@cstylianou.com&gt;
+To: &quot;luze@yahoo.com&quot; &lt;luze@yahoo.com&gt;
+Subject: test0001
+Thread-Topic: test0001
+Thread-Index: AcxQL4/krqRb0Rf6SvOgPvxICGCDDQ=3D=3D
+Importance: high
+X-Priority: 1
+Disposition-Notification-To: Good User &lt;good.user@cstylianou.com&gt;
+Return-Receipt-To: &lt;good.user@cstylianou.com&gt;
+Date: Mon, 1 Aug 2011 09:44:33 +0000
+Message-ID: &lt;0413DD6E62ADC940AC2669786639023CE705F9@CS-SERVER1.cstylianou.c=
+om&gt;
+Accept-Language: en-GB, en-US
+Content-Language: en-GB
+X-MS-Has-Attach: yes
+X-MS-TNEF-Correlator:
+x-originating-ip: [81.144.163.2]
+Content-Type: multipart/mixed;
+        boundary=3D&quot;_004_0413DD6E62ADC940AC2669786639023CE705F9CSSERVER1cst=
+ylian_&quot;
+MIME-Version: 1.0
+
+
+--a97a4f0d-1f89-49f4-93f9-9b33f1708823
+Content-Type: text/html; charset=&quot;us-ascii&quot;
+Content-Transfer-Encoding: quoted-printable
+
+&lt;html&gt;&lt;head&gt;
+&lt;meta http-equiv=3D&quot;Content-Type&quot; content=3D&quot;text/html; charset=3Dus-ascii&quot;=
+&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p&gt;&lt;b&gt;&lt;font color=3D&quot;#000066&quot; size=3D&quot;3&quot; face=3D&quot;Arial&quot;&gt;mta1428.mail.mud.ya=
+hoo.com rejected your message to the following e-mail addresses:&lt;/font&gt;&lt;/b&gt;=
+&lt;/p&gt;
+&lt;font color=3D&quot;#000000&quot; size=3D&quot;2&quot; face=3D&quot;Tahoma&quot;&gt;&lt;p&gt;&lt;a href=3D&quot;mailto:luz=
+e@yahoo.com&quot;&gt;luze@yahoo.com (luze@yahoo.com)&lt;/a&gt;&lt;br&gt;
+
+&lt;p&gt;&lt;b&gt;mta1428.mail.mud.yahoo.com gave this error:&lt;br&gt;
+delivery error: dd Sorry your message to luze@yahoo.com cannot be delivered=
+. This account has been disabled or discontinued [#102]. - mta1428.mail.mud=
+.yahoo.com &lt;br&gt;
+&lt;/b&gt;&lt;/p&gt;
+A problem occurred during the delivery of this message to this e-mail addre=
+ss. Try sending this message again. If the problem continues, please contac=
+t your helpdesk.&lt;br&gt;
+&lt;/p&gt;
+&lt;/font&gt;
+&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;
+&lt;font color=3D&quot;#808080&quot; size=3D&quot;2&quot; face=3D&quot;Tahoma&quot;&gt;&lt;p&gt;&lt;b&gt;Diagnostic informa=
+tion for administrators</Data>
+            </Body>
+            <MessageClass xmlns="Email:">REPORT.IPM.Note.NDR</MessageClass>
+            <InternetCPID xmlns="Email:">20127</InternetCPID>
+            <Flag xmlns="Email:"/>
+            <ContentClass xmlns="Email:">urn:content-classes:dsn</ContentClass>
+            <NativeBodyType xmlns="AirSyncBase:">2</NativeBodyType>
+          </ApplicationData>

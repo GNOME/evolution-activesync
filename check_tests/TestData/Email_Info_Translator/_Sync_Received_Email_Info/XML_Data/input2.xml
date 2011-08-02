@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ApplicationData>
+	<Read xmlns="Email:">0</Read>
+        <Categories xmlns="AirSyncBase:">
+        	<Category>Buissness</Category>
+            	<Category> VIP </Category>
+       	</Categories>
+</ApplicationData>

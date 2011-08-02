@@ -25,10 +25,11 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     $(top_builddir)/libeastest/src/libeastest.h \
                     eas_libeassync_tests.c \
                     eas_libeascon_tests.c \
-				    eas_folderhierarchy_tests.c \
-				    eas_con_info_translator_test.c \
+		    eas_folderhierarchy_tests.c \
+		    eas_con_info_translator_test.c \
                     eas_cal_info_translator_test.c \
-                    eas_gobjects_unittests.c
+                    eas_gobjects_unittests.c \
+		    eas_email_info_translator_test.c
                     
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS)
 
