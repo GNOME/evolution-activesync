@@ -914,10 +914,10 @@ eas_con_info_translator_parse_request(	xmlDocPtr doc,
 	attributes = e_vcard_get_attributes(vcard);
 
 	for (a = attributes; a; a = a->next) {
-		success = TRUE;
 		const char *name = NULL;
 		GList *params= NULL; 
 		EVCardAttribute *attr = a->data;
+		success = TRUE;
 		name = e_vcard_attribute_get_name(attr);
 
 		 /* g_debug("e_vcard_attribute_get_name=%s", name); */
