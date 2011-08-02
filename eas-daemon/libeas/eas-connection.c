@@ -2039,7 +2039,6 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				guchar* data = (guchar*)msg->response_body->data;
 				GSList *partsList = NULL;
 				gint i=0;
-				EasMultipartTuple* wbxmlData = NULL;
 				//convert first 4 bytes to integer to determine how many parts there are
 				gint parts = data[ 3 ] << 24 |
 						data[ 2 ] << 16 |
@@ -2060,7 +2059,6 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 					g_debug("startpos = %u", item->startPos);
 
-					
 					item->itemsize = data[ (j+7) ] << 24 |
 						data[ (j+6) ] << 16 |
 						data[ (j+5) ] << 8 |
