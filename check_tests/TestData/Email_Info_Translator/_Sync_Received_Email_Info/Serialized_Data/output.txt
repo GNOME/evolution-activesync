@@ -41,7 +41,9 @@ MIME-Version
 test0001.eml
 1216
 -2147418112
-0
+2
+Buissness
+ VIP 
 9052
 1312191881
 2
