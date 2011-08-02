@@ -378,8 +378,28 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		g_object_unref (iter);
 	}
 
-	if (list) {
+	if (list) 
+	{
+		GSList *item = list;
+		// Delete all the data from the Account Info's held in the list
+		for (; item; item = item->next)
+		{
+	        EasAccountInfo *accountInfo = item->data;
+
+	        g_free (accountInfo->uid); 
+	        g_free (accountInfo->serverUri);
+	        g_free (accountInfo->username);
+	        g_free (accountInfo->policy_key);
+	        g_free (accountInfo->contact_folder);
+	        g_free (accountInfo->calendar_folder);
+	        g_free (accountInfo->device_id);
+	        g_free (accountInfo->password);
+		}
+
+		// Now free the memory allocated via g_new0
 		g_slist_foreach (list, (GFunc) g_free, NULL);
+
+		// Finally free the memory for the list itself
 		g_slist_free (list);
 	}
 
