@@ -264,7 +264,7 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, xmlDoc *doc, G
 		if(!eas_get_email_body_msg_write_file (priv->emailBodyMsg, data))
 		{
 			g_critical ("Failed to open file!");
-			g_set_error (error, EAS_CONNECTION_ERROR,
+			g_set_error (&error, EAS_CONNECTION_ERROR,
             EAS_CONNECTION_ERROR_FILEERROR,
              "Failed to open file");
 			ret = FALSE;
