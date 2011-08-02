@@ -580,7 +580,7 @@ eas_account_list_save_account(EasAccountList *account_list,
 		gchar* devover_Key_path = NULL;
 		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
 
-		gconf_client_set_int (account_list->priv->gconf,
+		gconf_client_set_string (account_list->priv->gconf,
 					  devover_Key_path,
 					  eas_account_get_device_id(account),
 					  NULL);
@@ -1022,7 +1022,7 @@ eas_account_list_find (EasAccountList *account_list,
 	g_object_unref (it);
 
 	if (account)
-		g_object_ref (account);
+		g_object_ref (G_OBJECT(account));
 	g_debug("eas_account_list_find--");
 	return account;
 }
