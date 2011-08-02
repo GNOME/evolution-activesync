@@ -74,18 +74,11 @@ static void
 eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 {
     EasGetEmailBodyReqPrivate* priv;
-	gboolean use_multipart = FALSE;
     g_debug ("eas_get_email_body_req_init++");
     object->priv = priv = EAS_GET_EMAIL_BODY_REQ_PRIVATE (object);
 
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_GET_EMAIL_BODY);
-
-	if(priv->item_type == EAS_ITEM_MAIL)
-	{
-		use_multipart = TRUE;
-	}
-	eas_request_base_Set_UseMultipart (&object->parent_instance, use_multipart);
 
     priv->emailBodyMsg = NULL;
     priv->accountUid = NULL;
@@ -173,6 +166,11 @@ eas_get_email_body_req_new (const gchar* account_uid,
     priv->mimeDirectory = g_strdup (mime_directory);
 	priv->item_type = item_type;
     eas_request_base_SetContext(&req->parent_instance, context);
+
+	if (priv->item_type == EAS_ITEM_MAIL)
+		eas_request_base_Set_UseMultipart (EAS_REQUEST_BASE (req), TRUE);
+
+
 
     g_debug ("eas_get_email_body_req_new--");
     return req;

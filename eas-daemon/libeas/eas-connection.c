@@ -2032,6 +2032,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		else
 		{
 			gchar* wbxmlPart = NULL;
+			EasMultipartTuple* wbxmlData = NULL;
 			
 			if(eas_request_base_UseMultipart (req))
 			{
@@ -2085,7 +2086,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 			//if wbxmlPart is set, use that, otherwise, just use the response data
 			if (!wbxml2xml ((WB_UTINY*) (wbxmlPart?:msg->response_body->data) ,
-		                     msg->response_body->length,
+		                    wbxmlPart? wbxmlData->itemsize:msg->response_body->length,
 		                     &xml,
 		                     &xml_len))
 		    {
@@ -2178,6 +2179,7 @@ complete_request:
         }
 		//also need to clean up the multipart data
 		g_slist_free_full(priv->multipart_strings_list, g_free);
+		priv->multipart_strings_list = NULL;
     }
     else
     {
