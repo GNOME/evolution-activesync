@@ -464,8 +464,7 @@ build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const 
 		//if we're adding data, and it has no client id - make one up
 		if(add_client_ids &&calInfo->client_id == NULL)
 		{
-			
-			const gchar client_id[21];
+			gchar client_id[21];
 			guint random_num;
 			random_num = rand();
 			snprintf (client_id, sizeof (client_id) / sizeof (client_id[0]), "%d", random_num);
