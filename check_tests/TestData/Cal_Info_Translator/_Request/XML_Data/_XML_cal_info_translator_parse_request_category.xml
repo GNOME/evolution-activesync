@@ -1,7 +1,3 @@
 <?xml version="1.0"?>
 <ApplicationData>
-<Categories>
-<Category>Category 1</Category>
-<Category>Category 2</Category>
-</Categories>
-</ApplicationData>
+<calendar:Categories><calendar:Category>this is, category1</calendar:Category><calendar:Category>this is, category2</calendar:Category></calendar:Categories><calendar:AllDayEvent>0</calendar:AllDayEvent></ApplicationData>

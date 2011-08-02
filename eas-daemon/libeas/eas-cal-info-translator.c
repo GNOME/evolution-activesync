@@ -2186,7 +2186,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						{
 							categories = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORIES, NULL);
 						}
-						xmlNewTextChild(categories, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORY, (const xmlChar*)icalproperty_get_value_as_string(prop));
+						xmlNewTextChild(categories, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORY, (const xmlChar*)icalproperty_get_categories(prop));
 					}
 					break;
 					

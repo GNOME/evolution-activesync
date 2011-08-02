@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
 <ApplicatonData>
-<Categories>
-<Category>category1</Category><Category>category2</Category><Category>category3</Category></Categories>
+<Categories><Category>category1</Category><Category>category2</Category></Categories>
 </ApplicatonData>
