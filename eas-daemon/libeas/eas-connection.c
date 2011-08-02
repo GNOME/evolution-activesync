@@ -1996,16 +1996,20 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		if (g_mock_response_list)
 		{
 			gchar *filename = g_slist_nth_data (g_mock_response_list, 0);
-
 			gchar curPath[FILENAME_MAX];
+			gchar *fullPath = NULL;
+
+			memset (curPath, '\0', sizeof(curPath));
+
 			if (!getcwd(curPath, sizeof(curPath)))
 				return;
-			curPath[sizeof(curPath) - 1] = '/0';
+			
+			curPath[FILENAME_MAX - 1] = '\0';
 
-			gchar* fullPath = g_strconcat(curPath, 
-			                              "/check_tests/TestData/Mocked_Negative_Tests/", 
-			                              filename, 
-			                              NULL);
+			fullPath = g_strconcat(curPath, 
+			                       "/check_tests/TestData/Mocked_Negative_Tests/", 
+			                       filename, 
+			                       NULL);
 			
 			g_debug ("Queued mock responses [%u]", g_slist_length (g_mock_response_list));
 			
@@ -2034,6 +2038,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				guchar* data = (guchar*)msg->response_body->data;
 				GSList *partsList = NULL;
 				gint i=0;
+				EasMultipartTuple* wbxmlData = NULL;
 				//convert first 4 bytes to integer to determine how many parts there are
 				gint parts = data[ 3 ] << 24 |
 						data[ 2 ] << 16 |
@@ -2064,7 +2069,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 					partsList = g_slist_append(partsList, item);
 				}
-				EasMultipartTuple* wbxmlData = partsList->data; 
+				wbxmlData = partsList->data; 
 				g_debug("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
 				wbxmlPart = g_memdup((msg->response_body->data+ wbxmlData->startPos) , (wbxmlData->itemsize )); 
 				partsList = g_slist_next(partsList);
