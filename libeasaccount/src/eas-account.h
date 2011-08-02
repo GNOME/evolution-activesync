@@ -77,7 +77,7 @@ typedef struct	_EasAccountInfo
 	 gchar* calendar_folder;
 	 gchar* device_id;
 	 gchar* password;
-         int protocol_version;
+	 int protocol_version;
 } EasAccountInfo;
 
 typedef enum _eas_account_item_t {
