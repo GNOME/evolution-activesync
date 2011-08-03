@@ -330,7 +330,7 @@ eas_get_email_attachment_msg_write_file(EasGetEmailAttachmentMsg *self, gchar * 
     guchar* decoded_buf = g_base64_decode ( (const gchar*) data, &decoded_len);
     gchar* fullFilePath = NULL;
     FILE *hAttachement = NULL;
-	gboolean ret;
+	gboolean ret = TRUE;
 	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
 
     g_message ("data ecoded length  =--->:[%d]",  strlen (data));
