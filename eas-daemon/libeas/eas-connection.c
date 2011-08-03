@@ -1140,8 +1140,6 @@ else
                               (gchar*) doc,
                               strlen((gchar*)doc));
 
-	//Avoid double-free in handle_server_response()
-	priv->request_doc = NULL;
 }
 
 	if(g_mock_response_list)

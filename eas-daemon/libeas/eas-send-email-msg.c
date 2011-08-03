@@ -169,7 +169,7 @@ eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** 
 
     if (!doc)
     {
-        g_debug ("Failed: no doc supplied");
+        g_debug ("warning: no doc supplied");
         // Note not setting error here as empty doc is valid
         goto finish;
     }
