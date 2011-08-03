@@ -270,8 +270,7 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self,
         if (node->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) node->name, "FileReference"))
         {
             gchar *xmlTmp = (gchar *) xmlNodeGetContent (node);
-            priv->fileReference = g_strdup (xmlTmp);
-            g_debug ("FileReference:[%s]", priv->fileReference);
+            g_debug ("FileReference:[%s]", xmlTmp);
             xmlFree (xmlTmp);
             continue;
         }
