@@ -49,7 +49,6 @@
  *
  */
 
-#include <libedataserver/e-flag.h>
 #include "eas-mail.h"
 #include "eas-mail-stub.h"
 #include "eas-folder.h"
@@ -524,7 +523,6 @@ eas_mail_fetch_attachment (EasMail* self,
 {
     EasConnection *connection;
     gboolean ret;
-    EFlag *flag = NULL;
     GError *error = NULL;
     EasGetEmailAttachmentReq *req = NULL;
 
@@ -544,7 +542,6 @@ eas_mail_fetch_attachment (EasMail* self,
     }
 
     // Create Request
-    flag = e_flag_new ();
     req = eas_get_email_attachment_req_new (account_uid,
                                             file_reference,
                                             mime_directory,
