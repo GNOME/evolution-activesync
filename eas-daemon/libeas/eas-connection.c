@@ -995,7 +995,7 @@ eas_connection_send_request (EasConnection* self,
     {
 		gint recursive = 1;
 		g_debug("store the request");
-        priv->request_cmd = g_strdup (cmd);
+		priv->request_cmd = cmd; // This should be a string literal valid for the lifetime of the request.
 
 		if(priv->protocol_version < 140 &&
 		   !g_strcmp0(cmd, "SendMail"))
@@ -1112,7 +1112,6 @@ if( priv->protocol_version >= 140 || g_strcmp0(cmd, "SendMail"))
         g_debug ("wbxml_conv_xml2wbxml_run [Ret:%s],  wbxml_len = [%d]", wbxml_errors_string (wbxml_ret), wbxml_len);
     }
 
-    wbxml_ret = wbxml_conv_xml2wbxml_run (conv, dataptr, data_len, &wbxml, &wbxml_len);
     if (wbxml_ret != WBXML_OK)
     {
         g_set_error (error, EAS_CONNECTION_ERROR,
