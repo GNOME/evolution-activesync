@@ -390,6 +390,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 	}
 	        
 finish:
+	xmlFree(class);
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
