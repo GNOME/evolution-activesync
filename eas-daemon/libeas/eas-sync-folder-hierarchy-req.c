@@ -296,6 +296,7 @@ eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
 	eas_sync_folder_hierarchy_req_return (priv->results_fn_data, ret_sync_key, added_folders,
 										  updated_folders, deleted_folders, error);
 
+	xmlFreeDoc (doc);
     g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
 	return TRUE;
 }
