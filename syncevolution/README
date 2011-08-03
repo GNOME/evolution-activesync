@@ -63,9 +63,14 @@ Backend Testing
 
 In addition to an activesyncd account called <EAS account ID> (usually
 an email adddress), also create an activesyncd account called <EAS
-account ID>_B ("_B" appended) with the same settings. This is required
-for Client::Source::*::testChanges, which must simulate two
-independent ActiveSync clients.
+account ID>_B ("_B" appended) with the same settings *plus*
+"device_id" set explicitly. The value must be different than the one
+chosen automatically (see apps/activesyncd/device_id key). Because
+Exchange might not accept arbitrary strings, stick to the scheme of
+"32 digit hexadecimal number".
+
+This second accounts is required for Client::Source::*::testChanges,
+which must simulate two independent ActiveSync clients.
 
 Configure "local" testing (backend is covered, no syncing involved):
 ./syncevolution --configure username=<EAS account ID> \
