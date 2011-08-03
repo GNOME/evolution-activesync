@@ -81,6 +81,12 @@
 #define AS_DEFAULT_PROTOCOL 121
 #endif
 
+/* For the number of connections */
+#define EAS_CONNECTION_MAX_REQUESTS 10
+
+#define QUEUE_LOCK(x) (g_static_rec_mutex_lock(&(x)->priv->queue_lock))
+#define QUEUE_UNLOCK(x) (g_static_rec_mutex_unlock(&(x)->priv->queue_lock))
+
 struct _EasConnectionPrivate
 {
     SoupSession* soup_session;
@@ -102,6 +108,10 @@ struct _EasConnectionPrivate
 
 	int protocol_version;
 	gchar *proto_str;
+
+
+	GSList *active_job_queue;
+	GStaticRecMutex queue_lock;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -120,6 +130,13 @@ typedef struct _EasMultipartTuple
 	guint32 startPos;
 	guint32 itemsize;
 } EasMultipartTuple;
+
+typedef struct _EasNode EasNode;
+
+struct _EasNode {
+	EasRequestBase *request;
+	EasConnection *cnc;
+};
 
 static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
 static GHashTable *g_open_connections = NULL;
@@ -143,7 +160,7 @@ static gboolean mainloop_password_store (gpointer data);
 
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
-
+struct _EwsNode;
 #define HTTP_STATUS_OK (200)
 #define HTTP_STATUS_PROVISION (449)
 
@@ -312,7 +329,12 @@ eas_connection_dispose (GObject *object)
         g_object_unref (priv->request);
 		priv->request = NULL;
     }
-
+	
+//@@@
+	if (priv->active_job_queue) {
+		g_slist_free (priv->active_job_queue);
+		priv->active_job_queue = NULL;
+	}
     G_OBJECT_CLASS (eas_connection_parent_class)->dispose (object);
 
 	g_debug("eas_connection_dispose--");
@@ -789,6 +811,7 @@ call_handle_server_response (gpointer data)
 	return FALSE;   // don't put back on main loop
 }
 
+#if 0
 static gboolean
 eas_queue_soup_message (gpointer _request)
 {
@@ -804,6 +827,7 @@ eas_queue_soup_message (gpointer _request)
 
 	return FALSE;
 }
+#endif
 
 /*
 emits a signal (if the dbus interface object has been set)
@@ -948,6 +972,82 @@ static void soap_wrote_headers (SoupMessage *msg, gpointer data)
 	}
 }
 
+static EasNode *
+eas_node_new ()
+{
+	EasNode *node;
+	g_debug ("eas_node_new++");
+	node = g_new0 (EasNode, 1);
+	g_debug ("eas_node_newt--");
+	return node;
+}
+
+static gboolean
+eas_next_request (gpointer _cnc)
+{
+	EasConnection *cnc = _cnc;
+	GSList *l;
+	EasNode *node;
+	g_debug ("eas_next_request++");
+	QUEUE_LOCK (cnc);
+
+	l = cnc->priv->active_job_queue;
+
+	if (!l || g_slist_length (cnc->priv->active_job_queue) >= EAS_CONNECTION_MAX_REQUESTS) {
+		QUEUE_UNLOCK (cnc);
+		return FALSE;
+	}
+	
+	node = (EasNode *) l->data;
+#if 0
+	if (g_getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 1)) {
+		soup_buffer_free (soup_message_body_flatten (SOUP_MESSAGE (eas_request_base_GetSoupMessage(node->request))->request_body));
+		/* print request's body */
+		printf ("\n The request headers");
+		fputc ('\n', stdout);
+		fputs (SOUP_MESSAGE (eas_request_base_GetSoupMessage(node->request))->request_body->data, stdout);
+		fputc ('\n', stdout);
+	}
+#endif
+	
+	soup_session_queue_message (cnc->priv->soup_session,
+	                            SOUP_MESSAGE (eas_request_base_GetSoupMessage(node->request)),
+	                            handle_server_response,
+	                            node);
+	QUEUE_UNLOCK (cnc);
+	g_debug ("eas_next_request--");
+	return FALSE;
+}
+
+static void 
+eas_trigger_next_request(EasConnection *cnc)
+{
+	GSource *source;
+	g_debug ("eas_trigger_next_request++");
+	source = g_idle_source_new ();
+	g_source_set_priority (source, G_PRIORITY_DEFAULT);
+	g_source_set_callback (source, eas_next_request, cnc, NULL);
+	g_source_attach (source, cnc->priv->soup_context);
+	g_debug ("eas_trigger_next_request--");
+}
+
+static void
+eas_active_job_done (EasConnection *cnc, EasNode *eas_node)
+{
+	g_debug ("eas_active_job_done++");
+	QUEUE_LOCK (cnc);
+
+	cnc->priv->active_job_queue = g_slist_remove (cnc->priv->active_job_queue, eas_node);
+
+	g_debug ("eas_active_job_done: active_job_queue length=%d",g_slist_length(cnc->priv->active_job_queue));
+	
+	QUEUE_UNLOCK (cnc);
+
+	g_free (eas_node);
+	eas_trigger_next_request(cnc);
+	g_debug ("eas_active_job_done--");
+}
+
 /**
  * WBXML encode the message and send to exchange server via libsoup.
  * May also be required to temporarily hold the request message whilst
@@ -985,9 +1085,9 @@ eas_connection_send_request (EasConnection* self,
     WBXMLConvXML2WBXML *conv = NULL;
     xmlChar* dataptr = NULL;
     int data_len = 0;
-	GSource *source = NULL;
 	const gchar *policy_key;
 	gchar *fake_device_id = NULL;
+	EasNode *node = NULL;
 
     g_debug ("eas_connection_send_request++");
     // If not the provision request, store the request
@@ -1176,11 +1276,26 @@ else
 		g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
 		g_signal_connect (msg, "wrote-body-data", G_CALLBACK (soap_wrote_body_data), request);
 		g_signal_connect (msg, "wrote-headers", G_CALLBACK (soap_wrote_headers), request);
+#if 0		
 		// We have to call soup_session_queue_message() from the soup thread,
 		// or libsoup screws up (https://bugzilla.gnome.org/642573)
 		source = g_idle_source_new ();
 		g_source_set_callback (source, eas_queue_soup_message, request, NULL);
 		g_source_attach (source, priv->soup_context);
+#endif
+		
+	/*Adding request to the queue*/
+	node = eas_node_new ();
+	node->request = request;
+	node->cnc = self;
+
+	QUEUE_LOCK (node->cnc);
+	/* Add to active job queue */
+	self->priv->active_job_queue = g_slist_append (self->priv->active_job_queue, node);
+	g_debug ("eas_connection_send_request : active_job_queue length=%d",g_slist_length(self->priv->active_job_queue));
+	QUEUE_UNLOCK (node->cnc);
+
+	eas_trigger_next_request(node->cnc);
 	}
 finish:
 	// @@WARNING - doc must always be freed before exiting this function.
@@ -1951,9 +2066,16 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 void
 handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 {
-    EasRequestBase *req = EAS_REQUEST_BASE (data);
-    EasConnection *self = EAS_CONNECTION (eas_request_base_GetConnection (req));
-    EasConnectionPrivate *priv = self->priv;
+	EasRequestBase *req;
+	EasConnection *self;
+	EasConnectionPrivate *priv;	
+	EasNode *node = (EasNode *) data;
+
+//    EasRequestBase *req = EAS_REQUEST_BASE (data);
+	req= node->request;
+//    EasConnection *self = EAS_CONNECTION (eas_request_base_GetConnection (req));
+    self = node->cnc;
+    priv = self->priv;
     xmlDoc *doc = NULL;
     WB_UTINY *xml = NULL;
     WB_ULONG xml_len = 0;
@@ -2136,7 +2258,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
             }
         }
 
-        if (xml) free (xml);
+		if (xml) free (xml);
     }
 
 	if (VALID_12_1_REPROVISION == validity)
@@ -2190,6 +2312,9 @@ complete_request:
         // Don't delete this request and create a provisioning request.
         eas_provision_req_Activate (prov_req, &error);   // TODO check return
     }
+
+
+	eas_active_job_done (node->cnc, node);
     g_debug ("eas_connection - handle_server_response--");
 }
 
