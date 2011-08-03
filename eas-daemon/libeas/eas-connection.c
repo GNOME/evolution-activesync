@@ -2037,6 +2037,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			{
 				guchar* data = (guchar*)msg->response_body->data;
 				GSList *partsList = NULL;
+				GSList *l = NULL;
 				gint i=0;
 				//convert first 4 bytes to integer to determine how many parts there are
 				gint parts = data[ 3 ] << 24 |
@@ -2071,14 +2072,15 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				g_debug("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
 				wbxmlPart = g_memdup((msg->response_body->data+ wbxmlData->startPos) , (wbxmlData->itemsize )); 
 				partsList = g_slist_next(partsList);
-				while(partsList)
+				l = partsList;
+				while(l)
 				{
-					EasMultipartTuple* locator = partsList->data;
+					EasMultipartTuple* locator = l->data;
 					gchar *multipart = g_malloc0(locator->itemsize + 1); // Allow for NULL and implicitly set the everything to 0
 					memcpy(multipart, (msg->response_body->data + locator->startPos), locator->itemsize); // Copy in the data
 
 					priv->multipart_strings_list = g_slist_append(priv->multipart_strings_list, multipart);
-					partsList = g_slist_next(partsList);
+					l = g_slist_next(l);
 				}
 				g_slist_free_full(partsList, g_free);
 			}
