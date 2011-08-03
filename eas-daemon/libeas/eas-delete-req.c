@@ -94,6 +94,11 @@ eas_delete_req_dispose (GObject *object)
 
     g_debug ("eas_delete_req_dispose++");
 
+    if (priv->syncMsg)
+    {
+        g_object_unref (priv->syncMsg);
+		priv->syncMsg = NULL;
+    }	
 	for (item = priv->server_ids_array; item; item = item->next)
 	{
 		if (item->data)
@@ -118,6 +123,7 @@ eas_delete_req_finalize (GObject *object)
     g_free (priv->syncKey);
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
+	g_free(priv->folder_id);
     g_debug ("eas_delete_req_finalize--");
     G_OBJECT_CLASS (eas_delete_req_parent_class)->finalize (object);
 }
