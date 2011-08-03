@@ -707,7 +707,10 @@ static void _eas2ical_process_recurrence(xmlNodePtr n, icalcomponent* vevent)
 	{
 		const gchar* elemName = (const gchar*)subNode->name;
 		value = (gchar*)xmlNodeGetContent(subNode);
-
+		
+		
+		if(subNode->type != XML_ELEMENT_NODE)
+			continue;
 		// Type
 		if (g_strcmp0(elemName, EAS_ELEMENT_TYPE) == 0)
 		{

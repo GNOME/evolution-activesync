@@ -1,14 +1,12 @@
+<?xml version="1.0"?>
 <ApplicationData>
-<Recurrence>
-		<Type>3</Type>
-		<Occurrences>5</Occurrences>
-		<Interval>7</Interval>
-		<WeekOfMonth>1</WeekOfMonth>
-                <DayOfWeek>7</DayOfWeek>
-                <MonthOfYear>12</MonthOfYear>
-                <DayOfMonth>127</DayOfMonth>              
-                <CalendarType>1</CalendarType>
-                <IsLeapMonth>0</IsLeapMonth>
-                <FirstDayOfWeek>1</FirstDayOfWeek>
-</Recurrence>
+	<Recurrence>
+		<Recurrence_Occurrences>5</Recurrence_Occurrences>
+		<Recurrence_Interval>7</Recurrence_Interval>
+		<Recurrence_DayOfWeek>7</Recurrence_DayOfWeek>
+		<Recurrence_Type>2</Recurrence_Type>
+		<Recurrence_MonthOfYear>12</Recurrence_MonthOfYear>
+		<Recurrence_DayOfMonth>127</Recurrence_DayOfMonth>
+		<FirstDayOfWeek>2</FirstDayOfWeek>
+	</Recurrence>
 </ApplicationData>
