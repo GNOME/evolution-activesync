@@ -2071,7 +2071,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				wbxmlData = partsList->data; 
 				g_debug("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
 				wbxmlPart = g_memdup((msg->response_body->data+ wbxmlData->startPos) , (wbxmlData->itemsize )); 
-				l = g_slist_next(partsList);
+				partsList = g_slist_delete_link(partsList, partsList); // delete the first link in the list (not it's data)
+				l = partsList;
 				while(l)
 				{
 					EasMultipartTuple* locator = l->data;
@@ -2097,6 +2098,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		        goto complete_request;
 		    }
 			g_free(wbxmlPart);
+			g_free(wbxmlData);
 
 		    if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
 			{
