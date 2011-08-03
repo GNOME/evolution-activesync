@@ -137,7 +137,7 @@ get_key_absolute_path(const gchar *uid, const gchar *Key)
 } 
 
 static void
-eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_path, GConfEntry* entry)
+eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_path, GSList *entry_list)
 {
 	const GConfValue* value = NULL;
 	const gchar* keyname = NULL;
@@ -152,23 +152,12 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	gchar* password_Key_path = NULL;
 	gchar* protover_Key_path = NULL;
 	gchar* devover_Key_path = NULL;
+	GSList *item = NULL;
 
 	/* g_debug("eas_account_list_set_account_info++"); */
 	g_return_if_fail (acc_info != NULL);
 	g_return_if_fail (uid_path != NULL);
-	g_return_if_fail (entry != NULL);
-
-	keyname = gconf_entry_get_key(entry);
-	if (keyname == NULL) {
-		/* g_debug("Couldn't get the key name - this could be a delete notification!\n");*/
-		return;
-	}
-
-	value = gconf_entry_get_value(entry);
-	if (value == NULL) {
-		/*g_debug("Couldn't get the key value - this could be a delete notification!\n");*/
-		return;
-	}
+	g_return_if_fail (entry_list != NULL);
 
 	/* strip the EAS_ACCOUNT_ROOT from the uid_path to get the uid only */
 	last_token = 4;
@@ -178,65 +167,64 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	g_strfreev(str_array);
 
 	/* Concatenate "ROOT + UID + KEY" */
-	serveruri_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
-	username_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
-	policy_key_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-	contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
+	serveruri_Key_path       = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
+	username_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
+	policy_key_Key_path      = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
+	contact_folder_Key_path  = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
 	calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-	password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
-	protover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
-	devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
+	password_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
+	protover_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
+	devover_Key_path         = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
 
-	acc_info->uid = g_strdup(uid);
-	if (strcmp(keyname, serveruri_Key_path) == 0) {
-		acc_info->serverUri = gconf_value_to_string(value);
-		//g_debug( "serverUri changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, username_Key_path) == 0) {
-		acc_info->username = gconf_value_to_string(value); 
-		//g_debug( "username changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, policy_key_Key_path) == 0) {
-		acc_info->policy_key = gconf_value_to_string(value);
-		//g_debug( "policy_key  changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, calendar_folder_Key_path) == 0) {
-		acc_info->calendar_folder = gconf_value_to_string(value);
-		//g_debug( "calendar_folder  changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, contact_folder_Key_path) == 0) {
-		acc_info->contact_folder = gconf_value_to_string(value);
-		//g_debug( "contact_folder  changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, password_Key_path) == 0){
-		acc_info->password = gconf_value_to_string(value); 
-		//g_debug( "username changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, protover_Key_path) == 0){
-		acc_info->protocol_version = gconf_value_get_int(value);
-		//g_debug( "protocol_version changed: [%s]\n", strValue);
-	} else if (strcmp(keyname, devover_Key_path) == 0){
-		acc_info->device_id = gconf_value_to_string(value);
-		//g_debug( "device_id changed: [%s]\n", strValue);
-	}else {
-		g_warning( "Unknown key: %s (value: [%s])\n", keyname,
-			   gconf_value_get_string (value));
+	acc_info->uid = uid; // Ownership passed to the account into structure.
+
+	for (item = entry_list; item; item = item->next)
+	{
+		GConfEntry *entry = item->data;
+
+		keyname = gconf_entry_get_key(entry);
+		if (keyname == NULL) {
+			/* g_debug("Couldn't get the key name - this could be a delete notification!");*/
+			continue;
+		}
+
+		value = gconf_entry_get_value(entry);
+		if (value == NULL) {
+			/*g_debug("Couldn't get the key value - this could be a delete notification!");*/
+			continue;
+		}
+
+		// gconf_value_to_string passes memory ownership to the account into structure.
+		if (strcmp(keyname, serveruri_Key_path) == 0) {
+			acc_info->serverUri = gconf_value_to_string(value);
+		} else if (strcmp(keyname, username_Key_path) == 0) {
+			acc_info->username = gconf_value_to_string(value); 
+		} else if (strcmp(keyname, policy_key_Key_path) == 0) {
+			acc_info->policy_key = gconf_value_to_string(value);
+		} else if (strcmp(keyname, calendar_folder_Key_path) == 0) {
+			acc_info->calendar_folder = gconf_value_to_string(value);
+		} else if (strcmp(keyname, contact_folder_Key_path) == 0) {
+			acc_info->contact_folder = gconf_value_to_string(value);
+		} else if (strcmp(keyname, password_Key_path) == 0) {
+			acc_info->password = gconf_value_to_string(value); 
+		} else if (strcmp(keyname, protover_Key_path) == 0) {
+			acc_info->protocol_version = gconf_value_get_int(value);
+		} else if (strcmp(keyname, devover_Key_path) == 0) {
+			acc_info->device_id = gconf_value_to_string(value);
+		} else {
+			g_warning ("Unknown key: %s (value: [%s])\n", keyname, gconf_value_get_string (value));
+		}
 	}
-	
-	g_free (uid);
-	uid = NULL;
-	g_free (serveruri_Key_path);
-	serveruri_Key_path = NULL;
-	g_free (username_Key_path);
-	username_Key_path = NULL;
-	g_free (policy_key_Key_path);
-	policy_key_Key_path = NULL;	
-	g_free (calendar_folder_Key_path);
-	calendar_folder_Key_path = NULL;	
-	g_free (contact_folder_Key_path);
-	contact_folder_Key_path = NULL;	
-	g_free (password_Key_path);
-	password_Key_path  = NULL;
-	g_free (username_Key_path);
-	username_Key_path = NULL;
-	g_free (protover_Key_path);
-	protover_Key_path = NULL;
-	g_free (devover_Key_path);
-	devover_Key_path = NULL;
+
+	g_free (serveruri_Key_path);        serveruri_Key_path       = NULL;
+	g_free (username_Key_path);         username_Key_path        = NULL;
+	g_free (policy_key_Key_path);       policy_key_Key_path      = NULL;
+	g_free (calendar_folder_Key_path);  calendar_folder_Key_path = NULL;
+	g_free (contact_folder_Key_path);   contact_folder_Key_path  = NULL;
+	g_free (password_Key_path);         password_Key_path        = NULL;
+	g_free (username_Key_path);         username_Key_path        = NULL;
+	g_free (protover_Key_path);         protover_Key_path        = NULL;
+	g_free (devover_Key_path);          devover_Key_path         = NULL;
 
 	/* g_debug("eas_account_list_set_account_info--"); */
 }
@@ -279,7 +267,7 @@ static void
 gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 			GConfEntry *entry, gpointer user_data)
 {
-	GSList *list = NULL, *l= NULL, *ll = NULL, *new_accounts = NULL;
+	GSList *list = NULL, *l= NULL, *new_accounts = NULL;
 	EasAccount *account = NULL;
 	EList *old_accounts = NULL;
 	EIterator *iter = NULL;
@@ -301,39 +289,40 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	*/
 	account_uids_list = gconf_client_all_dirs (client, EAS_ACCOUNT_ROOT, NULL);
 
-	for (l = account_uids_list; l; l = l->next) {
+	for (l = account_uids_list; l; l = l->next) 
+	{
 		uid = l->data;
 		if (!uid)
 			continue;
-	/*
-	 Get the key/value for an account with a given uid from GConf,
-	 save it in EasAccountInfo and append it to the "list" object
-	*/
-	acc_info = g_new0 (EasAccountInfo, 1);
-	gconf_entry_list = gconf_client_all_entries(client, uid, NULL);
-	for (ll = gconf_entry_list; ll; ll = ll->next) {
-		eas_account_list_set_account_info(acc_info, uid, ll->data );
-	}
+		/*
+		 Get the key/value for an account with a given uid from GConf,
+		 save it in EasAccountInfo and append it to the "list" object
+		*/
+		acc_info = g_new0 (EasAccountInfo, 1);
+		gconf_entry_list = gconf_client_all_entries(client, uid, NULL);
+
+		eas_account_list_set_account_info(acc_info, uid, gconf_entry_list);
+
 #if 0
-	g_debug("uid =%s", acc_info->uid); 
-	g_debug("serverUri =%s", acc_info->serverUri);
-	g_debug("username =%s", acc_info->username);
-	g_debug("policy_key =%s", acc_info->policy_key);
-	g_debug("protocol_version =%d", acc_info->protocol_version);
-	g_debug("calendar_folder =%s", acc_info->calendar_folder;
-	g_debug("contact_folder =%s", acc_info->contact_folder;
-	g_debug("password =%s", acc_info->password);
-	g_debug("check 02");
-#endif		
-	list = g_slist_append (list, acc_info);
+		g_debug ("uid              = %s", acc_info->uid); 
+		g_debug ("serverUri        = %s", acc_info->serverUri);
+		g_debug ("username         = %s", acc_info->username);
+		g_debug ("policy_key       = %s", acc_info->policy_key);
+		g_debug ("protocol_version = %d", acc_info->protocol_version);
+		g_debug ("calendar_folder  = %s", acc_info->calendar_folder);
+		g_debug ("contact_folder   = %s", acc_info->contact_folder);
+		g_debug ("password         = %s", acc_info->password);
+#endif
 
-	// free gconf_entry_list
-	if (gconf_entry_list) {
-		g_slist_foreach (gconf_entry_list, (GFunc) gconf_entry_free, NULL);
-		g_slist_free (gconf_entry_list);
-		gconf_entry_list=NULL;
-	}
+		list = g_slist_append (list, acc_info);
 
+		// free gconf_entry_list
+		if (gconf_entry_list) 
+		{
+			g_slist_foreach (gconf_entry_list, (GFunc) gconf_entry_free, NULL);
+			g_slist_free (gconf_entry_list);
+			gconf_entry_list=NULL;
+		}
 	}
 
 
@@ -343,17 +332,16 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		account_uids_list = NULL;
 	}
 
-
 	/* Begin processing changed, new or deleted accounts */
-	for (l = list; l; l = l->next) {
+	for (l = list; l; l = l->next) 
+	{
 		uid = ((EasAccountInfo*)l->data)->uid;
 		if (!uid)
 			continue;
-		
+
 		/* See if this is an existing account */
-		for (iter = e_list_get_iterator (old_accounts);
-		     e_iterator_is_valid (iter);
-		     e_iterator_next (iter)) {
+		for (iter = e_list_get_iterator (old_accounts); e_iterator_is_valid (iter); e_iterator_next (iter)) 
+		{
 			account = (EasAccount *)e_iterator_get (iter);
 			if (!strcmp (eas_account_get_uid(account), uid)) {
 				/* The account still exists, so remove
@@ -374,7 +362,6 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		new_accounts = g_slist_prepend (new_accounts, account);
 
 	next:
-		//g_free (uid);//TODO: we didn't strdup the string so why do you free it?
 		g_object_unref (iter);
 	}
 
