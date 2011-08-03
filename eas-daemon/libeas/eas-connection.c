@@ -2071,8 +2071,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 				wbxmlData = partsList->data; 
 				g_debug("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
 				wbxmlPart = g_memdup((msg->response_body->data+ wbxmlData->startPos) , (wbxmlData->itemsize )); 
-				partsList = g_slist_next(partsList);
-				l = partsList;
+				l = g_slist_next(partsList);
 				while(l)
 				{
 					EasMultipartTuple* locator = l->data;
