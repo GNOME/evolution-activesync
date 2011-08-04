@@ -120,6 +120,7 @@ eas_add_item_req_finalize (GObject *object)
     g_debug ("eas_add_item_req_finalize++");
 
     g_free (priv->account_id);
+	g_free (priv->folder_id);
 
     G_OBJECT_CLASS (eas_add_item_req_parent_class)->finalize (object);
 
@@ -189,10 +190,10 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 		switch (priv->item_type)
 		{
 			case EAS_ITEM_CALENDAR:
-				priv->folder_id = eas_account_get_calendar_folder (acc);
+				priv->folder_id = g_strdup(eas_account_get_calendar_folder (acc));
 				break;
 			case EAS_ITEM_CONTACT:
-				priv->folder_id = eas_account_get_contact_folder (acc);
+				priv->folder_id = g_strdup(eas_account_get_contact_folder (acc));
 				break;
 			default:
 				g_warning("trying to get default folder for unspecified item type");
