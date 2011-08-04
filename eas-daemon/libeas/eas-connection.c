@@ -2217,7 +2217,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 					priv->multipart_strings_list = g_slist_append(priv->multipart_strings_list, multipart);
 					l = g_slist_next(l);
 				}
-				g_slist_free_full(partsList, g_free);
+				g_slist_foreach (partsList, (GFunc)g_free, NULL);
+				g_slist_free (partsList);
 			}
 
 			//if wbxmlPart is set, use that, otherwise, just use the response data
@@ -2315,7 +2316,8 @@ complete_request:
             g_object_unref(req);
         }
 		//also need to clean up the multipart data
-		g_slist_free_full(priv->multipart_strings_list, g_free);
+		g_slist_foreach (priv->multipart_strings_list, (GFunc)g_free, NULL);
+		g_slist_free (priv->multipart_strings_list);
 		priv->multipart_strings_list = NULL;
     }
     else
