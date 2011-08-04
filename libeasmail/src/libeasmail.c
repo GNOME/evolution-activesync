@@ -1136,7 +1136,6 @@ cleanup:
 		g_free (serialised_email_array[i]);
 	}
 	g_free (serialised_email_array);
-	g_free (ret_failed_updates_array);
 	g_free (ret_sync_key);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
