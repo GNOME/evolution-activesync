@@ -1088,8 +1088,7 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			// Form a new UID for the new event as follows:
 			// {Original event UID}_{Exception start time}
 			prop = icalcomponent_get_first_property(newEvent, ICAL_UID_PROPERTY); // Retains ownership of the pointer
-			value = g_strconcat((const gchar*)icalproperty_get_uid(prop), "_", (const gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_EXCEPTIONSTARTTIME), NULL);
-			icalproperty_set_uid(prop, value);
+			icalproperty_set_uid(prop, (const gchar*)icalproperty_get_uid(prop));
 			prop = NULL;
 
 			// TODO: as we're parsing these from the <Exceptions> element, I think we need to
@@ -1982,7 +1981,7 @@ static void _ical2eas_process_rrule(icalproperty* prop, xmlNodePtr appData, stru
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, icaltimezone* icaltz)
+static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, icaltimezone* icaltz,   gboolean exception)
 {
 	if (vevent)
 	{
@@ -2018,7 +2017,8 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 					{
 						modified = g_strdup(timestamp);
 					}
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)modified);
+					if(!exception)
+						xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DTSTAMP, (const xmlChar*)modified);
  					g_debug("dtstamp cleanup");
 					g_free(modified);
 				}
@@ -2132,7 +2132,8 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 					
 				// UID
 				case ICAL_UID_PROPERTY:
-					xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UID, (const xmlChar*)icalproperty_get_value_as_string(prop));
+					if(!exception)
+						xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UID, (const xmlChar*)icalproperty_get_value_as_string(prop));
 					break;
 					
 				// CLASS
@@ -2187,12 +2188,14 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						icalparameter* cnParam = NULL;
 						
 						// Get the e-mail address
+						if(!exception)
 						xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_EMAIL, (const xmlChar*)icalproperty_get_organizer(prop));
 
 						// Now check for a name in the (optional) CN parameter
 						cnParam = icalproperty_get_first_parameter(prop, ICAL_CN_PARAMETER);
 						if (cnParam)
 						{
+							if(!exception)
 							xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_NAME, (const xmlChar*)icalparameter_get_cn(cnParam));
 						}
 					}
@@ -2295,6 +2298,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 				// DESCRIPTION
 				case ICAL_DESCRIPTION_PROPERTY:
 					{
+
 						// See [MS-ASAIRS] for format of the <Body> element:
 						// http://msdn.microsoft.com/en-us/library/dd299454(v=EXCHG.80).aspx
 						xmlNodePtr bodyNode = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
@@ -2302,6 +2306,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*)EAS_BOOLEAN_FALSE);
 						xmlNewTextChild(bodyNode, NULL, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*)icalproperty_get_value_as_string(prop));
 						// All other fields are optional
+
 					}
 					break;
 
@@ -2330,6 +2335,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 			}// end of switch
 		}// end of for loop
 
+
 		
 
 		// Add an <AllDayEvent> element if both the start and end dates have no times
@@ -2343,7 +2349,7 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 		}
 		else
 		{
-			xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_FALSE);
+			 xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*)EAS_BOOLEAN_FALSE);
 		}
 	}
 }
@@ -2643,6 +2649,7 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 	    (icalcomponent_isa(ical) == ICAL_VCALENDAR_COMPONENT))
 	{
 		icalcomponent* vevent= NULL;
+		icalcomponent* exceptionvevent= NULL;
 		icalcomponent* vtimezone = NULL;
 		icaltimezone* icaltz = NULL;
 		icalproperty* tzid = NULL;
@@ -2660,7 +2667,29 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 		// Process the components of the VCALENDAR
 		_ical2eas_process_vtimezone(vtimezone, appData);
 		vevent = icalcomponent_get_first_component(ical, ICAL_VEVENT_COMPONENT);
-		_ical2eas_process_vevent(vevent, appData, icaltz);
+		_ical2eas_process_vevent(vevent, appData, icaltz, FALSE);
+
+		exceptionvevent = icalcomponent_get_next_component(ical, ICAL_VEVENT_COMPONENT);
+		if(exceptionvevent)
+		{
+			xmlNodePtr exceptions = xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
+			do
+			{
+				xmlNodePtr exception = xmlNewTextChild(exceptions, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+				icalproperty* prop = NULL;
+				g_debug("Processing multiple vevents as exceptions");
+				
+				_ical2eas_process_vevent(exceptionvevent, exception, icaltz, TRUE );
+
+				prop = icalcomponent_get_first_property(exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
+				xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *)icalproperty_get_value_as_string(prop));
+
+				exceptionvevent = NULL;
+				exceptionvevent = icalcomponent_get_next_component(ical, ICAL_VEVENT_COMPONENT);
+			}while(exceptionvevent);
+		}
+			
+		      
 		_ical2eas_process_valarm(icalcomponent_get_first_component(vevent, ICAL_VALARM_COMPONENT), appData);
 
 		if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 4))
