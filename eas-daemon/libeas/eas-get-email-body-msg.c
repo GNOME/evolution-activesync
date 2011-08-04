@@ -179,6 +179,16 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 
 		leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
 	}
+    else
+	{
+		options = xmlNewChild (fetch, NULL, (xmlChar *) "Options", NULL);
+
+		leaf = xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
+		body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
+
+		leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "1");  // Plain text 1, HTML 2, MIME 4
+		
+	}
     g_debug ("eas_get_email_body_msg_build_message--");
     return doc;
 }
