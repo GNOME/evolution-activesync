@@ -264,7 +264,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     GError *error = NULL;
     EasUpdateEmailReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-	gchar *ret_sync_key;
+	gchar *ret_sync_key = NULL;
 	GSList* failed_updates = NULL;   
 	gchar **ret_failed_updates_array = NULL;  
 	

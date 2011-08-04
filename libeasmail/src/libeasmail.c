@@ -425,6 +425,17 @@ cleanup:
 	return ret;
 }
 
+void 
+eas_updatedid_free(EasIdUpdate* updated_id)
+{
+	g_debug("eas_updatedid_free++");
+	g_free(updated_id->status);
+	g_free(updated_id->dest_id);
+	g_free(updated_id->src_id);
+	g_free(updated_id);
+	g_debug("eas_updatedid_free--");
+}
+
 /*
 take the contents of the structure and turn it into a null terminated string
 */

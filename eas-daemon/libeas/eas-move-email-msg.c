@@ -67,7 +67,7 @@ struct _EasMoveEmailMsgPrivate
     GSList* server_ids_list;
     gchar* src_folder_id;
     gchar* dest_folder_id;	
-	GSList *updated_ids_list;
+	GSList *updated_ids_list;   // list of EasIdUpdate
 };
 
 static void
@@ -102,15 +102,15 @@ eas_move_email_msg_finalize (GObject *object)
 {
     /* deinitalization code: */
     EasMoveEmailMsg *msg = (EasMoveEmailMsg *) object;
-
     EasMoveEmailMsgPrivate *priv = msg->priv;
 
     g_free (priv->account_id);	
     g_free (priv->dest_folder_id);
     g_free (priv->src_folder_id);
+	
 	g_slist_foreach (priv->server_ids_list, (GFunc) g_free, NULL);
 	g_slist_free(priv->server_ids_list);
-	g_slist_foreach (priv->updated_ids_list, (GFunc) g_free, NULL);
+	g_slist_foreach (priv->updated_ids_list, (GFunc) eas_updatedid_free, NULL);
 	g_slist_free(priv->updated_ids_list);
 	
     G_OBJECT_CLASS (eas_move_email_msg_parent_class)->finalize (object);
@@ -269,7 +269,7 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 		}
 		else
 		{
-			g_free(updated_id);
+			eas_updatedid_free(updated_id);
 		}
     }
 

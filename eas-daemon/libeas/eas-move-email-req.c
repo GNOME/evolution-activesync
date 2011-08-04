@@ -300,7 +300,7 @@ eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* 
 	g_debug ("updated ids list size = %d", g_slist_length (updated_ids_list));
 	// convert list to array for transport over dbus:
 	ret = build_serialised_idupdates_array (&ret_updated_ids_array, updated_ids_list, &error);	
-	g_slist_foreach (updated_ids_list, (GFunc) g_free, NULL);
+	g_slist_foreach (updated_ids_list, (GFunc) eas_updatedid_free, NULL);
 	g_slist_free(updated_ids_list);			
 
 finish:
@@ -315,6 +315,8 @@ finish:
 	{
 		dbus_g_method_return (eas_request_base_GetContext (parent), ret_updated_ids_array);
 	}
+	g_strfreev(ret_updated_ids_array);
+
     g_debug ("eas_move_email_req_MessageComplete--");
 
     return TRUE;	// indicates that we want req to be cleanedup - always TRUE

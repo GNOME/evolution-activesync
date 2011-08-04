@@ -62,6 +62,11 @@ struct _EasIdUpdate {
 typedef void (*EasProgressFn) (gpointer object, gint percent);
 
 /*
+ Free the memory for a EasIdUpdate
+*/
+void eas_updatedid_free(EasIdUpdate* updated_id);
+
+/*
 take the contents of the structure and turn it into a null terminated string
 */
 gboolean eas_updatedid_serialise (const EasIdUpdate* updated_id, gchar **result);
