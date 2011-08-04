@@ -166,7 +166,6 @@ eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self,
 {
     EasError error_details;
     gboolean ret = TRUE;
-    EasGetEmailAttachmentMsgPrivate *priv = self->priv;
     xmlNode *node = NULL;
 
     g_debug ("eas_get_email_attachment_msg_parse_response ++");
