@@ -1,7 +1,3 @@
 <?xml version="1.0"?>
 <ApplicationData>
-<WebPage>www.example.com</WebPage>
-<Email1Address>"example@example.com"&lt;example1@example.com&gt;</Email1Address>
-<Email2Address>"example@example.com"&lt;example2@example.com&gt;</Email2Address>
-<Email3Address>"example@example.com"&lt;exampl3e@example.com&gt;</Email3Address>
-</ApplicationData>
+<Email1Address>"example@example.com"&lt;example1@example.com&gt;</Email1Address><Email2Address>"example@example.com"&lt;example2@example.com&gt;</Email2Address><Email3Address>"example@example.com"&lt;example3@example.com&gt;</Email3Address><WebPage>www.example.com</WebPage></ApplicationData>

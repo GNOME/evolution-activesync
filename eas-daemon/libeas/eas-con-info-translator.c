@@ -409,6 +409,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL1ADDRESS);
+					e_vcard_attribute_add_param_with_value(attr, param, "internet");
 				}
 				else if (g_strcmp0(name, EAS_ELEMENT_EMAIL2ADDRESS) == 0)
 				{
@@ -416,6 +417,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL2ADDRESS);
+					e_vcard_attribute_add_param_with_value(attr, param, "internet");
 				}
 				else if (g_strcmp0(name, EAS_ELEMENT_EMAIL3ADDRESS) == 0)
 				{
@@ -423,6 +425,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 
 					e_vcard_add_attribute(vcard, attr);
 					add_attr_value(attr,node->children,EAS_ELEMENT_EMAIL3ADDRESS);
+					e_vcard_attribute_add_param_with_value(attr, param, "internet");
 				}
 
 				//
@@ -812,30 +815,20 @@ set_xml_email(xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *p
 {
 	const char *propname0 = NULL;
 	propname0 = property_get_nth_value(param, 0);
-
-	 if (!strcmp(propname0, "WORK"))
+	if(!is_element_set(appData, EAS_ELEMENT_EMAIL1ADDRESS))
 	{
-		if(!is_element_set(appData, EAS_ELEMENT_EMAIL1ADDRESS))
-		{
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-		}
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
+		                (const xmlChar*)attribute_get_nth_value(attr, 0));
 	}
-	else if (!strcmp(propname0, "HOME"))
+	else if(!is_element_set(appData, EAS_ELEMENT_EMAIL2ADDRESS))
 	{
-		if(!is_element_set(appData, EAS_ELEMENT_EMAIL2ADDRESS))
-		{
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL2ADDRESS,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-		}
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL2ADDRESS,
+		                (const xmlChar*)attribute_get_nth_value(attr, 0));
 	}
-	else if (!strcmp(propname0, "OTHER") || !strcmp(propname0, "INTERNET"))
-	{ 
-		if(!is_element_set(appData, EAS_ELEMENT_EMAIL3ADDRESS))
-		{
-			set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
-			                (const xmlChar*)attribute_get_nth_value(attr, 0));
-		}
+	else if(!is_element_set(appData, EAS_ELEMENT_EMAIL3ADDRESS))
+	{
+		set_xml_element(appData, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
+		                (const xmlChar*)attribute_get_nth_value(attr, 0));
 	}
 	else
 		g_debug("Email type not Supported by ActiveSync: %s", propname0);
