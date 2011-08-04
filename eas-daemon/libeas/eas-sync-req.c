@@ -250,8 +250,6 @@ eas_sync_req_Activate (EasSyncReq *self,
 		priv->state = EasSyncReqStep2;
 	}
 
-	g_debug("default missing");
-
 	if(priv->state == EasSyncReqStep1)
 	{
 		g_debug("default folder id missing - do folder sync");
