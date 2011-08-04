@@ -92,6 +92,7 @@ eas_sync_req_init (EasSyncReq *object)
 
     g_debug ("eas_sync_req_init++");
     priv->syncMsg = NULL;
+	priv->sync_key = NULL;
     priv->syncFolderMsg = NULL;
     priv->state = EasSyncReqStep1;
     priv->accountID = NULL;

@@ -104,6 +104,7 @@ eas_2way_sync_req_init (Eas2WaySyncReq *object)
 	priv->serialised_add_items = NULL;
 	priv->delete_ids = NULL;
 	priv->serialised_change_items = NULL;
+	priv->sync_key = NULL;
     eas_request_base_SetRequestType (&object->parent_instance,
                                      EAS_REQ_2WAY_SYNC);
 
@@ -145,6 +146,7 @@ eas_2way_sync_req_finalize (GObject *object)
 
     g_free (priv->accountID);
     g_free (priv->folderID);
+	g_free (priv->sync_key);
 	// free lists
 	if(priv->serialised_add_items)
 	{
