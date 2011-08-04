@@ -287,7 +287,7 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
 	ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
 
 	// get list of flattened emails with status codes
-	failed_updates = eas_sync_msg_get_updated_items (priv->sync_msg);
+	failed_updates = eas_sync_msg_get_update_responses (priv->sync_msg);
 
 	if(failed_updates)
 	{

@@ -63,7 +63,7 @@ struct _EasSyncMsgPrivate
     GSList* added_items;
     GSList* updated_items;
     GSList* deleted_items;
-
+	GSList* update_responses;
 	gboolean more_available;
     gchar* sync_key_in;
 	gchar* sync_key_out;
@@ -93,6 +93,11 @@ eas_sync_msg_init (EasSyncMsg *object)
 	priv->sync_key_out = NULL;
     priv->folderID = NULL;
     priv->connection = NULL;
+	priv->added_items = NULL;
+	priv->updated_items = NULL;
+	priv->deleted_items = NULL;
+	priv->update_responses = NULL;
+	
     g_debug ("eas_sync_msg_init--");
 }
 
@@ -629,9 +634,10 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 {
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
                     {
+						if (item_server_id) xmlFree(item_server_id);
                         item_server_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found serverID for Item = %s", item_server_id);
-                        priv->deleted_items = g_slist_append (priv->deleted_items, item_server_id);
+                        priv->deleted_items = g_slist_append (priv->deleted_items, g_strdup(item_server_id));
                         continue;
                     }
                 }
@@ -647,6 +653,7 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 {
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
                     {
+						if (item_server_id) xmlFree(item_server_id);
                         item_server_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found serverID for Item = %s", item_server_id);
                         continue;
@@ -711,18 +718,21 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 {
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ClientId"))
                     {
+						if(item_client_id) xmlFree(item_client_id);
                         item_client_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found clientID for Item = %s", item_client_id);
                         continue;
                     }
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
                     {
+						if (item_server_id) xmlFree(item_server_id);
                         item_server_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found serverID for Item = %s", item_server_id);
                         continue;
                     }
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "Status"))
                     {
+						if (item_status) xmlFree(item_status);
                         item_status = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found Status for Item  = %s", item_status);
                         continue;
@@ -730,13 +740,13 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 }
                 info = eas_item_info_new ();
                 info->client_id = item_client_id;
+				item_client_id = NULL;
                 info->server_id = item_server_id;
+				item_server_id = NULL;
 				info->status = item_status;
+				item_status = NULL;
                 eas_item_info_serialise (info, &flatItem);
                 g_object_unref (info);
-                item_client_id = NULL;
-                item_server_id = NULL;
-				item_status = NULL;
                 if (flatItem)
                 {
                     g_debug ("appending to added_items");
@@ -753,12 +763,14 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
                 {	
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "ServerId"))
                     {
+						if (item_server_id) xmlFree(item_server_id);
                         item_server_id = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found serverID for Item = %s", item_server_id);
                         continue;
                     }
                     if (appData->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) appData->name, "Status"))
                     {
+						if (item_status) xmlFree(item_status);
                         item_status = (gchar *) xmlNodeGetContent (appData);
                         g_debug ("Found Status for Item  = %s", item_status);
                         continue;
@@ -772,8 +784,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 						EasEmailInfo *email_info = eas_email_info_new();
 
 	                    g_debug ("got status of %s for email with server id %s", item_status, item_server_id);
-						email_info->server_id = item_server_id;
-						email_info->status = item_status;
+						email_info->server_id = g_strdup(item_server_id);
+						email_info->status = g_strdup(item_status);
 						if(!eas_email_info_serialise(email_info, &flat_item))
 						{
 							g_warning("Failed to serialise email");
@@ -801,11 +813,8 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
 				if (flat_item)
 				{
 					g_debug ("appending %s to updated_items", flat_item);
-					priv->updated_items = g_slist_append (priv->updated_items, flat_item);
+					priv->update_responses = g_slist_append (priv->update_responses, flat_item);
 				}	
-				
-		        item_server_id = NULL;
-				item_status = NULL;
 				continue;
 			}   // end Change
 		} // end for node = node->children
@@ -814,6 +823,19 @@ eas_sync_msg_parse_response (EasSyncMsg* self, xmlDoc *doc, GError** error)
     g_debug ("eas_sync_msg_parse_response--");
 
 finish:
+	
+    if (item_server_id) 
+	{
+		xmlFree(item_server_id);
+	}
+	if (item_status) 
+	{
+		xmlFree(item_status);
+	}
+	if(item_client_id)
+	{
+		xmlFree(item_client_id);
+	}
     if (!ret)
     {
         g_assert (error == NULL || *error != NULL);
@@ -836,6 +858,14 @@ eas_sync_msg_get_updated_items (EasSyncMsg* self)
     EasSyncMsgPrivate *priv = self->priv;
     return priv->updated_items;
 }
+
+GSList*
+eas_sync_msg_get_update_responses (EasSyncMsg* self)
+{
+    EasSyncMsgPrivate *priv = self->priv;
+    return priv->update_responses;
+}
+
 
 GSList*
 eas_sync_msg_get_deleted_items (EasSyncMsg* self)

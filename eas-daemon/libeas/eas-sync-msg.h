@@ -190,6 +190,18 @@ GSList* eas_sync_msg_get_updated_items (EasSyncMsg* self);
  *	  - EAS_ITEM_CALENDAR EasItemInfo
  *	  - EAS_ITEM_CONTACT  EasItemInfo
  */
+GSList* eas_sync_msg_get_update_responses (EasSyncMsg* self);
+
+/**
+ *
+ * @param[in] self
+ *	  The EasSyncMsg GObject instance.
+ *
+ * @return NULL or List of *serialized* GObjects determined by the instance's EasItemType. [no transfer]
+ *	  - EAS_ITEM_MAIL     EasEmailInfo
+ *	  - EAS_ITEM_CALENDAR EasItemInfo
+ *	  - EAS_ITEM_CONTACT  EasItemInfo
+ */
 GSList* eas_sync_msg_get_deleted_items (EasSyncMsg* self);
 
 /**
