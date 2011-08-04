@@ -1483,28 +1483,16 @@ gchar* eas_cal_info_translator_parse_response(xmlNodePtr node, gchar* server_id)
 			//
 			else if (g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
 			{
-				GString* categories = g_string_new("");
-
 				xmlNode* catNode = NULL;
 				for (catNode = n->children; catNode; catNode = catNode->next)
 				{
-					if (categories->len > 0)
-					{
-						categories = g_string_append(categories, ",");
-					}
+					if (catNode->type != XML_ELEMENT_NODE)
+						continue;
 
 					value = (gchar*)xmlNodeGetContent(catNode);
-					categories = g_string_append(categories, value);
-					g_free(value); value = NULL;
-				}
-				if (categories->len > 0)
-				{
-					prop = icalproperty_new_categories(categories->str);
+					prop = icalproperty_new_categories(value);
 					icalcomponent_add_property(vevent, prop);
-				}
-
-				// Free the string, including the character buffer
-				g_string_free(categories, TRUE);
+				}	
 			}
 
 			//

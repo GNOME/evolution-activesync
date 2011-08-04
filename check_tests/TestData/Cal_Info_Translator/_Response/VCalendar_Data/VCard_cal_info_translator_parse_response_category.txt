@@ -3,6 +3,7 @@ PRODID:-//Meego//ActiveSyncD 1.0//EN
 VERSION:2.0
 METHOD:PUBLISH
 BEGIN:VEVENT
-CATEGORIES:category1,category2
+CATEGORIES:this is\, category1
+CATEGORIES:this is\, category2
 END:VEVENT
 END:VCALENDAR
