@@ -561,7 +561,7 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
                               ret_changed_item_array,
 		                      NULL,						// add response (not supported yet)
 		                      NULL,						// delete response (not supported yet)
-		                      NULL);				   // update response (not supported yet)
+		                      NULL);				   // TODO update response (not supported yet)
 			                  
 
         }

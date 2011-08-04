@@ -201,7 +201,7 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	g_assert (self);
 	g_assert (data);
 
-	strv = g_strsplit (data, sep, 0);
+	strv = g_strsplit (data, sep, 0);	// split into array of strings
 	if (!strv)
 		goto out;
 
@@ -323,6 +323,7 @@ out:
 	while (strv[idx])
 		g_free (strv[idx++]);
 	g_free (strv[idx]);
+	g_free(strv);
 
 	if (!ret) {
 		g_warning ("failed!");
