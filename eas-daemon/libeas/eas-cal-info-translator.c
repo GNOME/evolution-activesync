@@ -948,6 +948,53 @@ static GSList* _eas2ical_process_exceptions(xmlNodePtr n, icalcomponent* vevent)
 			{
 				exceptionStartTime = g_strdup(value);
 			}
+			// only content of <Data> present in <Body> is required to be stored in hashTable
+			else if(g_strcmp0(name, EAS_ELEMENT_BODY) == 0)
+			{
+				xmlNodePtr bodySubNode = NULL;
+				for (bodySubNode = subNode->children; bodySubNode; bodySubNode = bodySubNode->next)
+				{
+					if (bodySubNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)bodySubNode->name, EAS_ELEMENT_DATA))
+					{
+						value = (gchar*)xmlNodeGetContent(bodySubNode);
+						break;
+					}
+				}
+				if (newEventValues == NULL)
+				{
+					newEventValues = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+				}
+				g_hash_table_insert(newEventValues, g_strdup(name), g_strdup(value));	
+			}
+			// contents of all <Category> present in <Categories> is required to be stored in hashTable
+			else if(g_strcmp0(name, EAS_ELEMENT_CATEGORIES) == 0)
+			{
+				xmlNodePtr catNode = NULL;
+				GString* categories = g_string_new("");
+				int categoryLength,index=0;
+				for (catNode = subNode->children; catNode; catNode = catNode->next)
+				{
+					if (catNode->type == XML_ELEMENT_NODE && !g_strcmp0((gchar*)catNode->name, EAS_ELEMENT_CATEGORY))
+					{
+						value=(gchar*)xmlNodeGetContent(catNode);
+						for(index=0,categoryLength=strlen(value);index<categoryLength;index++)
+						{
+							if(value[index] == ',')
+								categories = g_string_append(categories,"/,");
+							else
+								categories = g_string_append_c(categories,value[index]);
+						}
+						categories = g_string_append_c(categories,',');
+					}
+					
+				}
+				categories = g_string_erase(categories,categories->len-1,-1);
+				if (newEventValues == NULL)
+				{
+					newEventValues = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+				}
+				g_hash_table_insert(newEventValues, g_strdup(name), g_strdup(categories->str));	
+			}
 			else if (strlen(value) > 0)
 			{
 				// We've got a non-trivial exception that will
@@ -1154,7 +1201,35 @@ static void _eas2ical_add_exception_events(icalcomponent* vcalendar, icalcompone
 			// Categories
 			if ((value = (gchar*)g_hash_table_lookup(exceptionProperties, EAS_ELEMENT_CATEGORIES)) != NULL)
 			{
-				// TODO: sort out <Categories> - it's a collection element! :-(
+				GString* category = g_string_new("");
+				int index,categoriesLength;
+				for(index=0,categoriesLength=strlen(value);index<categoriesLength;index++)
+				{
+					if (value[index]== '/' && index+1 != categoriesLength && value[index+1]== ',')
+					{ 
+						// ignore 
+					}
+					else if (value[index]==',' && index !=0 && value[index-1] == '/')
+						category = g_string_append_c(category,',');
+					else if (value[index]==',' && index !=0 && value[index-1] !='/')
+					{
+
+							
+							prop = icalproperty_new_categories(category->str);
+							icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+							g_string_free(category,TRUE);
+							category = g_string_new("");
+													
+					}
+					else
+						category= g_string_append_c(category,index[value]);
+							
+				}
+				
+							prop = icalproperty_new_categories(category->str);
+							icalcomponent_add_property(newEvent, prop); // vevent takes ownership
+							g_string_free(category,TRUE);
+							category = g_string_new("");
 			}
 
 			// Sensitivity

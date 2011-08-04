@@ -2,19 +2,22 @@
 <ApplicationData>     
 	<Exceptions>
 			<Exception>
-                              <Deleted>0</Deleted>
-                              <ExceptionStartTime>20110711T080000Z</ExceptionStartTime>
-                              <Subject>subject</Subject>
-                              <StartTime>20110711T081200Z</StartTime>
+			      <Exception_Deleted>0</Exception_Deleted>
+                              <Exception_StartTime>20110711T080000Z</Exception_StartTime>
+			      <StartTime>20110711T081200Z</StartTime>
                               <EndTime>20110711T082400Z</EndTime>
-                              <Body>body</Body>
+			      <Body xmlns="AirSyncBase:">
+              		      		<Type>1</Type>
+              				<EstimatedDataSize>0</EstimatedDataSize>
+					<Data>description</Data>
+           		      </Body>
                               <Location>location</Location>
                               <Categories>
-                              		<Category>This is category 1</Category>
-					<Category>This is category 2</Category>
-			      </Categories>
-                              <Sensitivity>3</Sensitivity>
-                              <BusyStatus>3</BusyStatus>
+					<Category>This is, category1</Category>
+					<Category>This is, category2</Category>
+			      </Categories>                             
+                              <Sensitivity>2</Sensitivity>
+                              <BusyStatus>4</BusyStatus>
                               <AllDayEvent>1</AllDayEvent>
                               <Reminder>1</Reminder>
                               <DtStamp>20110711T080000Z</DtStamp>
@@ -22,5 +25,60 @@
                               <AppointmentReplyTime>20110711T083600Z</AppointmentReplyTime>
                               <ResponseType>123</ResponseType>
                   	</Exception>
+			<Exception>
+			      <Exception_Deleted>1</Exception_Deleted>
+                              <Exception_StartTime>20110711T080000Z</Exception_StartTime>
+			      <StartTime>20110711T081200Z</StartTime>
+                              <EndTime>20110711T082400Z</EndTime>
+			      <Body xmlns="AirSyncBase:">
+              		      		<Type>1</Type>
+              				<EstimatedDataSize>0</EstimatedDataSize>
+					<Data>description</Data>
+           		      </Body>
+                              <Location>location</Location>
+                              <Categories>
+                              		<Category>This is category 1</Category>
+					<Category>This is category 2</Category>
+			      </Categories>                             
+                              <Sensitivity>2</Sensitivity>
+                              <BusyStatus>4</BusyStatus>
+                              <AllDayEvent>1</AllDayEvent>
+                              <Reminder>1</Reminder>
+                              <DtStamp>20110711T080000Z</DtStamp>
+                              <MeetingStatus>10</MeetingStatus>
+                              <AppointmentReplyTime>20110711T083600Z</AppointmentReplyTime>
+                              <ResponseType>123</ResponseType>
+                  	</Exception>
+			<Exception>
+			      <Exception_Deleted>1</Exception_Deleted>
+                              <Exception_StartTime>20110711T080000Z</Exception_StartTime>
+			      <StartTime>20110711T081200Z</StartTime>
+                              <EndTime>20110711T082400Z</EndTime>
+			      <Body xmlns="AirSyncBase:">
+              		      		<Type>1</Type>
+              				<EstimatedDataSize>0</EstimatedDataSize>
+					<Data>description</Data>
+           		      </Body>
+                              <Location>location</Location>
+                              <Categories>
+                              		<Category>This is category 1</Category>
+					<Category>This is category 2</Category>
+			      </Categories>                             
+                              <Sensitivity>2</Sensitivity>
+                              <BusyStatus>4</BusyStatus>
+                              <AllDayEvent>1</AllDayEvent>
+                              <Reminder>1</Reminder>
+                              <DtStamp>20110711T080000Z</DtStamp>
+                              <MeetingStatus>10</MeetingStatus>
+                              <AppointmentReplyTime>20110711T083600Z</AppointmentReplyTime>
+                              <ResponseType>123</ResponseType>
+                  	</Exception>
+			<Exception>
+			      <Exception_StartTime>20110711T080000Z</Exception_StartTime>
+			</Exception>
+			<Exception>
+			      <Exception_StartTime>20110711T080000Z</Exception_StartTime>
+			</Exception>
+
 	</Exceptions>
 </ApplicationData>
