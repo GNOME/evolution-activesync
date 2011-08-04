@@ -1099,7 +1099,12 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	}
 
 	// update status codes in update_emails where necessary
-	for (i = 0; ret_failed_updates_array[i] != NULL; i++) { //nb: looks like eas only provides a response when the status != ok
+
+	//nb: looks like eas only provides a response when the status != ok
+	if (!ret_failed_updates_array)
+		goto cleanup;
+
+	for (i = 0; ret_failed_updates_array[i] != NULL; i++) {
 		// get the update response
 		EasEmailInfo *email_failed = eas_email_info_new();
 
@@ -1121,18 +1126,16 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 				l = l->next;
 			}
 		}
+		g_free (ret_failed_updates_array[i]);
 	}
 
+	g_free (ret_failed_updates_array);
 cleanup:
 	// free all strings in the array
 	for (i = 0; i < num_emails && serialised_email_array[i]; i++) {
 		g_free (serialised_email_array[i]);
 	}
 	g_free (serialised_email_array);
-// free ret_failed_updates_array
-	for (i = 0; ret_failed_updates_array[i] != NULL; i++) {
-		g_free (ret_failed_updates_array[i]);
-	}
 	g_free (ret_failed_updates_array);
 	g_free (ret_sync_key);
 	if (!ret) {
