@@ -109,7 +109,7 @@ struct _EasConnectionPrivate
 	int protocol_version;
 	gchar *proto_str;
 
-
+	GSList *jobs;
 	GSList *active_job_queue;
 	GStaticRecMutex queue_lock;
 };
@@ -160,7 +160,7 @@ static gboolean mainloop_password_store (gpointer data);
 
 
 G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
-struct _EwsNode;
+
 #define HTTP_STATUS_OK (200)
 #define HTTP_STATUS_PROVISION (449)
 
@@ -329,8 +329,12 @@ eas_connection_dispose (GObject *object)
         g_object_unref (priv->request);
 		priv->request = NULL;
     }
-	
-//@@@
+
+	if (priv->jobs) {
+		g_slist_free (priv->jobs);
+		priv->jobs = NULL;
+	}
+
 	if (priv->active_job_queue) {
 		g_slist_free (priv->active_job_queue);
 		priv->active_job_queue = NULL;
@@ -989,9 +993,10 @@ eas_next_request (gpointer _cnc)
 	GSList *l;
 	EasNode *node;
 	g_debug ("eas_next_request++");
+	
 	QUEUE_LOCK (cnc);
 
-	l = cnc->priv->active_job_queue;
+	l = cnc->priv->jobs;
 
 	if (!l || g_slist_length (cnc->priv->active_job_queue) >= EAS_CONNECTION_MAX_REQUESTS) {
 		QUEUE_UNLOCK (cnc);
@@ -999,6 +1004,7 @@ eas_next_request (gpointer _cnc)
 	}
 	
 	node = (EasNode *) l->data;
+	
 #if 0
 	if (g_getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 1)) {
 		soup_buffer_free (soup_message_body_flatten (SOUP_MESSAGE (eas_request_base_GetSoupMessage(node->request))->request_body));
@@ -1009,7 +1015,15 @@ eas_next_request (gpointer _cnc)
 		fputc ('\n', stdout);
 	}
 #endif
+
+	/* Remove the node from the job queue */
+	cnc->priv->jobs = g_slist_remove (cnc->priv->jobs, (gconstpointer *) node);
+	g_debug ("eas_next_request : job-- queuelength=%d",g_slist_length(cnc->priv->jobs));
 	
+	/* Add to active job queue */
+	cnc->priv->active_job_queue = g_slist_append (cnc->priv->active_job_queue, node);
+	g_debug ("eas_next_request: active_job++  queuelength=%d",g_slist_length(cnc->priv->active_job_queue));
+
 	soup_session_queue_message (cnc->priv->soup_session,
 	                            SOUP_MESSAGE (eas_request_base_GetSoupMessage(node->request)),
 	                            handle_server_response,
@@ -1038,8 +1052,8 @@ eas_active_job_done (EasConnection *cnc, EasNode *eas_node)
 	QUEUE_LOCK (cnc);
 
 	cnc->priv->active_job_queue = g_slist_remove (cnc->priv->active_job_queue, eas_node);
-
-	g_debug ("eas_active_job_done: active_job_queue length=%d",g_slist_length(cnc->priv->active_job_queue));
+	
+	g_debug ("eas_active_job_done: active_job++  queuelength=%d",g_slist_length(cnc->priv->active_job_queue));
 	
 	QUEUE_UNLOCK (cnc);
 
@@ -1291,8 +1305,9 @@ else
 
 	QUEUE_LOCK (node->cnc);
 	/* Add to active job queue */
-	self->priv->active_job_queue = g_slist_append (self->priv->active_job_queue, node);
-	g_debug ("eas_connection_send_request : active_job_queue length=%d",g_slist_length(self->priv->active_job_queue));
+	self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
+	//self->priv->active_job_queue = g_slist_append (self->priv->active_job_queue, node);
+	g_debug ("eas_connection_send_request : job++ queuelength=%d",g_slist_length(self->priv->jobs));
 	QUEUE_UNLOCK (node->cnc);
 
 	eas_trigger_next_request(node->cnc);
