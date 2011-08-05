@@ -345,6 +345,8 @@ static void _eas2ical_convert_relative_timezone_date(EasSystemTime* date, struct
 
 	modifiedDate.Day = g_date_get_day(recurrenceStartDate);
 
+	g_free (recurrenceStartDate);
+
 	// Now populate the rrule value before modifying date->Day
 	rrule->freq = ICAL_YEARLY_RECURRENCE;
 	rrule->by_month[0] = modifiedDate.Month;
