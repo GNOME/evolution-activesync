@@ -1127,7 +1127,7 @@ eas_connection_send_request (EasConnection* self,
 
 	policy_key = eas_account_get_policy_key (priv->account);
     // If we need to provision, and not the provisioning msg
-    if ( (!policy_key || !g_strcmp0("0",policy_key)) && g_strcmp0 (cmd, "Provision"))
+    if ( (!policy_key) && g_strcmp0 (cmd, "Provision"))
     {
         EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
 		EasRequestBase *req_base = EAS_REQUEST_BASE (&req->parent_instance);
