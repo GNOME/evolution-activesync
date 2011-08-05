@@ -90,7 +90,6 @@ eas_delete_req_dispose (GObject *object)
 {
     EasDeleteReq *req = EAS_DELETE_REQ (object);
     EasDeleteReqPrivate *priv = req->priv;
-	GSList *item = NULL;
 
     g_debug ("eas_delete_req_dispose++");
 
@@ -99,14 +98,6 @@ eas_delete_req_dispose (GObject *object)
         g_object_unref (priv->syncMsg);
 		priv->syncMsg = NULL;
     }	
-	for (item = priv->server_ids_array; item; item = item->next)
-	{
-		if (item->data)
-		{
-			g_free (item->data);
-			item->data = NULL;
-		}
-	}
 
     g_debug ("eas_delete_req_dispose--");
     G_OBJECT_CLASS (eas_delete_req_parent_class)->dispose (object);
@@ -121,6 +112,7 @@ eas_delete_req_finalize (GObject *object)
     g_debug ("eas_delete_req_finalize++");
 
     g_free (priv->syncKey);
+	g_slist_foreach (priv->server_ids_array, (GFunc)g_free, NULL);
     g_slist_free (priv->server_ids_array);
     g_free (priv->accountID);
 	g_free(priv->folder_id);
@@ -215,15 +207,12 @@ finish:
 EasDeleteReq *eas_delete_req_new (const gchar* accountId, 
                                   const gchar *syncKey, 
                                   const gchar *folderId, 
-                                  const GSList *server_ids_array, 
+                                  GSList *server_ids_array, 
                                   EasItemType itemType, 
                                   DBusGMethodInvocation *context)
 {
     EasDeleteReq* self = g_object_new (EAS_TYPE_DELETE_REQ, NULL);
     EasDeleteReqPrivate *priv = self->priv;
-    guint listCount;
-    guint listLen = g_slist_length ( (GSList*) server_ids_array);
-    gchar *server_id = NULL;
 
     g_debug ("eas_delete_req_new++");
 	g_return_val_if_fail(syncKey != NULL, NULL);
@@ -233,11 +222,7 @@ EasDeleteReq *eas_delete_req_new (const gchar* accountId,
 
 	priv->itemType = itemType;
 
-    for (listCount = 0; listCount < listLen; listCount++)
-    {
-        server_id = g_slist_nth_data ( (GSList*) server_ids_array, listCount);
-        priv->server_ids_array = g_slist_append (priv->server_ids_array, g_strdup (server_id));
-    }
+	priv->server_ids_array = server_ids_array; // Take ownership
 
     priv->accountID = g_strdup (accountId);
     eas_request_base_SetContext (&self->parent_instance, context);

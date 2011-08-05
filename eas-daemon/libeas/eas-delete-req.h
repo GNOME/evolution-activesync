@@ -92,7 +92,7 @@ GType eas_delete_req_get_type (void) G_GNUC_CONST;
  *	  The current synchronisation key.
  * @param[in] folder_id
  *	  The identifer for the target server folder.
- * @param[in] server_ids_array
+ * @param[in] server_ids_array [full transfer]
  *	  A list of item server ids to be deleted.
  * @param[in] EasItemType
  *	  Tell the server which type we are deleting. 
@@ -102,7 +102,7 @@ GType eas_delete_req_get_type (void) G_GNUC_CONST;
 EasDeleteReq *eas_delete_req_new (const gchar* accountId, 
                                              const gchar *syncKey, 
                                              const gchar *folderId, 
-                                             const GSList *server_ids_array,
+                                             GSList *server_ids_array,
                                              const EasItemType itemType,
                                              DBusGMethodInvocation *context);
 
