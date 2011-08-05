@@ -1610,7 +1610,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 						  &error); 
     if (error)
 	{		
-        fail_if (rtn == FALSE, "%s", error->message);spawn_sync_folder_email_thread
+        fail_if (rtn == FALSE, "%s", error->message);
     }
 
 	g_debug("");
