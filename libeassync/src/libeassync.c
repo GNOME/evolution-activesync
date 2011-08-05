@@ -530,20 +530,29 @@ eas_sync_handler_add_items (EasSyncHandler* self,
         guint i = 0;
         guint length = g_slist_length (items_added);
         g_debug ("add_calendar_items called successfully");
-        while (created_item_array[i] && i < length)
+        if (created_item_array)
         {
-            EasItemInfo *cal = eas_item_info_new ();
-            EasItemInfo *updated = g_slist_nth (items_added, i)->data;
-            g_debug ("created item = %s", created_item_array[i]);
-            eas_item_info_deserialise (cal, created_item_array[i]);
-            g_debug ("created item server id = %s", cal->server_id);
-            updated->server_id = g_strdup (cal->server_id);
-            g_debug ("created updated server id in list = %s", cal->server_id);
-            i++;
-        }
-        if (i == length && created_item_array[i])
-        {
-            g_debug ("added list is not the same length as input list - problem?");
+            while (created_item_array[i] && i < length)
+            {
+                EasItemInfo *cal = eas_item_info_new ();
+                EasItemInfo *updated = g_slist_nth (items_added, i)->data;
+                
+                g_debug ("created item = %s", created_item_array[i]);
+                eas_item_info_deserialise (cal, created_item_array[i]);
+
+                g_free (created_item_array[i]);
+                created_item_array[i] = NULL;
+
+                g_debug ("created item server id = %s", cal->server_id);
+                updated->server_id = g_strdup (cal->server_id);
+                i++;
+            }
+            g_free (created_item_array);
+            
+            if (i == length && created_item_array[i])
+            {
+                g_debug ("added list is not the same length as input list - problem?");
+            }
         }
     }
 
