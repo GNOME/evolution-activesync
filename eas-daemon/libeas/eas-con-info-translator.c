@@ -168,7 +168,8 @@ add_attr_value(EVCardAttribute *attr,xmlNodePtr node, const gchar *sought)
 
 	/* if sought not found (i.e. value = NULL) then e_vcard_attribute_add_value()
 	inserts a semicolon otherwise it adds the value*/
-	e_vcard_attribute_add_value(attr, value);
+	e_vcard_attribute_add_value(attr, value); // e_vcard copies value
+    xmlFree (value);
 }
 
 static void add_name_attr_values(EVCardAttribute *attr,xmlNodePtr node)
@@ -516,9 +517,10 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 
 					childNode = n;
 					for(childNode = n->children; childNode ; childNode = childNode->next)
-						if(!g_strcmp0((const char *) childNode->name, (const char *)EAS_ELEMENT_CATEGORY)){
-							e_vcard_attribute_add_value(attr, (gchar *)xmlNodeGetContent(childNode));
-							
+						if(!g_strcmp0((const char *) childNode->name, (const char *)EAS_ELEMENT_CATEGORY)) {
+                            gchar * value = (gchar *)xmlNodeGetContent (childNode);
+							e_vcard_attribute_add_value (attr, value);
+							xmlFree (value);
 						}
 				}
 
@@ -527,7 +529,7 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr node,
 	}
 	conInfo = eas_item_info_new();
 	conInfo->server_id = (gchar*)server_id;
-	conInfo->data = g_strdup(e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30));
+	conInfo->data = e_vcard_to_string(vcard, EVC_FORMAT_VCARD_30); // no need to duplicate, e_vcard allocates memory
 
 	if (!eas_item_info_serialise(conInfo, &result))
 	{
