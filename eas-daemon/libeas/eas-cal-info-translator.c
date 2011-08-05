@@ -2314,7 +2314,51 @@ static void _ical2eas_process_vevent(icalcomponent* vevent, xmlNodePtr appData, 
 				// RDATE
 				case ICAL_RDATE_PROPERTY:
 					{
-						// TODO...
+						
+						const gchar* start = NULL;
+						gchar *modified = NULL;
+						
+						xmlNodePtr exception = NULL;
+
+						// Create the <Exceptions> container element if not already present
+						if (exceptions == NULL)
+						{
+							exceptions = xmlNewChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
+						}
+
+						// Now create the <Exception> element
+						exception = xmlNewChild(exceptions, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+						
+						start = icalproperty_get_value_as_string(prop);
+						if(strlen(start)<=9)
+						{
+							if(!g_str_has_suffix (start, "Z"))
+							{
+								modified = g_strconcat(start, "T000000Z", NULL);
+							}
+							else
+							{
+								//need to add midnight timestamp before last characters
+								//first remove last character
+								gchar * temp = g_strndup(start, (strlen(start)-1));
+								//then concatenate timestamp + "Z"
+								modified = g_strconcat(temp, "T000000", "Z", NULL);
+								g_free(temp);
+							}
+						}
+						else
+						{
+							if(!g_str_has_suffix (start, "Z"))
+							{
+								modified = g_strconcat(start, "Z", NULL);
+							}
+							else
+							{
+								modified = g_strdup(start);
+							}
+						}
+						xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*)modified);
+						g_free(modified);
 					}
 					break;
 
@@ -2749,7 +2793,22 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 		exceptionvevent = icalcomponent_get_next_component(ical, ICAL_VEVENT_COMPONENT);
 		if(exceptionvevent)
 		{
-			xmlNodePtr exceptions = xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
+				xmlNodePtr exceptions=NULL;
+				xmlNodePtr subNode   =NULL;
+			// check if <Exceptions> node Already exists otherwise create a new <Exceptions> Node			
+			for (subNode = appData->children; subNode; subNode = subNode->next)
+			{
+				
+				if (subNode->type == XML_ELEMENT_NODE && g_strcmp0((gchar*)subNode->name, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS) == 0)
+				{
+					exceptions= subNode;
+					break;
+				}
+			} 
+			if(exceptions == NULL)
+				 exceptions = xmlNewTextChild(appData, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
+			//end check
+			
 			do
 			{
 				xmlNodePtr exception = xmlNewTextChild(exceptions, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
@@ -2757,6 +2816,7 @@ gboolean eas_cal_info_translator_parse_request(xmlDocPtr doc, xmlNodePtr appData
 				g_debug("Processing multiple vevents as exceptions");
 				
 				_ical2eas_process_vevent(exceptionvevent, exception, icaltz, TRUE );
+				_ical2eas_process_valarm(icalcomponent_get_first_component(exceptionvevent, ICAL_VALARM_COMPONENT), exception);
 
 				prop = icalcomponent_get_first_property(exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
 				xmlNewTextChild(exception, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *)icalproperty_get_value_as_string(prop));
