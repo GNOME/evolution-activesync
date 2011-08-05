@@ -982,7 +982,7 @@ eas_node_new ()
 	EasNode *node;
 	g_debug ("eas_node_new++");
 	node = g_new0 (EasNode, 1);
-	g_debug ("eas_node_newt--");
+	g_debug ("eas_node_new--");
 	return node;
 }
 
@@ -1090,7 +1090,7 @@ eas_connection_send_request (EasConnection* self,
                              GError** error)
 {
     gboolean ret = TRUE;
-    EasConnectionPrivate *priv = self->priv;
+    EasConnectionPrivate *priv = EAS_CONNECTION_PRIVATE (self);
     SoupMessage *msg = NULL;
     gchar* uri = NULL;
     WB_UTINY *wbxml = NULL;
@@ -2081,16 +2081,10 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 void
 handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 {
-	EasRequestBase *req;
-	EasConnection *self;
-	EasConnectionPrivate *priv;	
-	EasNode *node = (EasNode *) data;
-
-//    EasRequestBase *req = EAS_REQUEST_BASE (data);
-	req= node->request;
-//    EasConnection *self = EAS_CONNECTION (eas_request_base_GetConnection (req));
-    self = node->cnc;
-    priv = self->priv;
+	EasNode *node = data;
+	EasRequestBase *req = EAS_REQUEST_BASE (node->request);
+	EasConnection *self = EAS_CONNECTION (node->cnc);
+	EasConnectionPrivate *priv = EAS_CONNECTION_PRIVATE (self);
     xmlDoc *doc = NULL;
     WB_UTINY *xml = NULL;
     WB_ULONG xml_len = 0;
@@ -2099,12 +2093,10 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
     RequestValidity validity = FALSE; 
 	gboolean cleanupRequest = FALSE;
 
-    g_debug ("eas_connection - handle_server_response++ self [%lx], priv[%lx]", 
-             (unsigned long)self, (unsigned long)self->priv );
+    g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]",node, req, self, priv );
 
 	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
 
-	
     if (INVALID == validity)
     {
 		g_assert (error != NULL);
@@ -2293,6 +2285,7 @@ complete_request:
         if (request_type != EAS_REQ_PROVISION)
         {
             // Clean up request data
+			g_debug("Handling cmd = [%s]", priv->request_cmd);
 			if (priv->protocol_version < 140 && !g_strcmp0("SendMail", priv->request_cmd))
 			{
 				g_free((gchar*)priv->request_doc);
