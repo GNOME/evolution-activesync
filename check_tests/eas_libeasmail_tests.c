@@ -1391,8 +1391,8 @@ static void try_sync_folder_email(gpointer data)
 
 	g_debug("sync_folder_email with %s", params->sync_key_in);
 	g_debug("cancellable = %x", params->cancellable);
-	g_debug("short delay");
-	g_usleep(500000);
+	//g_debug("short delay");
+	//g_usleep(500000);
 	
 	rtn = eas_mail_handler_sync_folder_email (params->email_handler,
 											  params->sync_key_in,
@@ -1421,6 +1421,7 @@ static void try_sync_folder_email(gpointer data)
 	// TODO print out the server id of the first email to make sure it's sensible
 	fail_if(!params->emails_created, "need at least one email in the inbox for this test to pass");
 
+	g_slist_foreach(params->emails_created, (GFunc) g_object_unref, NULL);
     EasEmailInfo *email = NULL;
 
     // get email info for first email in the folder
@@ -1471,6 +1472,8 @@ START_TEST (test_eas_mail_get_item_estimate)
 	fail_unless (NULL == deleted, "Not expecting deleted folders on initial sync");
 
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
+
+    g_slist_free (created);	
 
 	// sync with sync_key=0:
 	g_debug("sync_folder_email with %s", folder_sync_key);
@@ -1607,7 +1610,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 						  &error); 
     if (error)
 	{		
-        fail_if (rtn == FALSE, "%s", error->message);
+        fail_if (rtn == FALSE, "%s", error->message);spawn_sync_folder_email_thread
     }
 
 	g_debug("");
@@ -1615,6 +1618,12 @@ START_TEST (test_eas_mail_get_item_estimate)
 	mark_point();
 
 	g_object_unref(cancellable);
+
+	g_slist_foreach(change_emails, (GFunc) g_object_unref, NULL);
+	g_slist_free(change_emails);
+	g_free(folder_sync_key_out);
+	g_free(folder_sync_key_out_2);
+	g_free(folder_sync_key_out_3);
 
 }
 END_TEST

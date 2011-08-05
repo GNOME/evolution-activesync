@@ -1568,11 +1568,6 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		}
 		g_free (delete_emails_array);
 		delete_emails_array = NULL;
-		// free the change_emails array
-		for (i = 0; i < change_list_length && change_emails_array[i]; i++) {
-			g_free (change_emails_array[i]);
-		}
-		g_free (change_emails_array);
 		// free ret_failed_updates_array
 		for (i = 0; ret_failed_changes_array[i] != NULL; i++) {
 			g_free (ret_failed_changes_array[i]);
@@ -1581,6 +1576,11 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	}
 
 cleanup:
+		// free the change_emails array
+		for (i = 0; i < change_list_length && change_emails_array[i]; i++) {
+			g_free (change_emails_array[i]);
+		}
+		g_free (change_emails_array);	
 	if (!ret) {
 		// failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);
@@ -1633,6 +1633,7 @@ eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user
 	g_debug ("dbus call returned");
 	if (!ret) {
 		g_warning ("cancel request failed with %s", error->message);
+		g_error_free(error);
 	}
 
 	g_debug ("eas_mail_handler_cancel_common_request--");
