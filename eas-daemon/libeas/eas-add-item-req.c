@@ -119,8 +119,12 @@ eas_add_item_req_finalize (GObject *object)
 
     g_debug ("eas_add_item_req_finalize++");
 
+	g_free (priv->sync_key);
     g_free (priv->account_id);
 	g_free (priv->folder_id);
+
+	g_slist_foreach (priv->serialised_calendar, (GFunc)g_object_unref, NULL);
+	g_slist_free (priv->serialised_calendar);
 
     G_OBJECT_CLASS (eas_add_item_req_parent_class)->finalize (object);
 
@@ -144,13 +148,12 @@ eas_add_item_req_class_init (EasAddItemReqClass *klass)
 }
 
 
-// TODO - update this to take a GSList of serialised calendars? rem to copy the list
 EasAddItemReq *
 eas_add_item_req_new (const gchar* account_id, 
                           const gchar *sync_key, 
                           const gchar *folder_id,
                           const EasItemType item_type,
-                          const GSList* serialised_calendar, 
+                          GSList* serialised_calendar, 
                           DBusGMethodInvocation *context)
 {
     EasAddItemReq* self = g_object_new (EAS_TYPE_ADD_ITEM_REQ, NULL);
@@ -160,7 +163,7 @@ eas_add_item_req_new (const gchar* account_id,
 
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
-    priv->serialised_calendar = (GSList *) serialised_calendar;
+    priv->serialised_calendar = serialised_calendar; // Take ownership
     priv->account_id = g_strdup (account_id);
 	priv->item_type = item_type;
 
@@ -228,7 +231,6 @@ eas_add_item_req_MessageComplete (EasAddItemReq *self,
     GError *local_error = NULL;
     EasAddItemReqPrivate *priv = self->priv;
 	GSList* added_items = NULL;
-	gchar* ret_sync_key = NULL;
 	gchar** ret_added_items_array = NULL;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
@@ -246,9 +248,7 @@ eas_add_item_req_MessageComplete (EasAddItemReq *self,
 		goto finish;
 	}
 
-	ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
-    added_items = eas_sync_msg_get_added_items (priv->sync_msg);
-
+	added_items = eas_sync_msg_get_added_items (priv->sync_msg);
 	build_serialised_calendar_info_array (&ret_added_items_array, added_items, &error);
 
 finish:
@@ -256,13 +256,27 @@ finish:
 	if(local_error)
 	{
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), local_error);
-        g_error_free (local_error);
+		g_error_free (local_error);
 	}
 	else
 	{
 		dbus_g_method_return (eas_request_base_GetContext (parent),
-                              ret_sync_key,
+                              eas_sync_msg_get_syncKey (priv->sync_msg),
                               ret_added_items_array);
+		if (ret_added_items_array)
+		{
+			gint index = 0;
+
+			while (NULL != ret_added_items_array[index])
+			{
+				g_free (ret_added_items_array[index]);
+				ret_added_items_array[index] = NULL;
+				++ index;
+			}
+
+			g_free (ret_added_items_array);
+			ret_added_items_array = NULL;
+		}
 	}
 	// We always need to free 'doc' and release the semaphore.
     xmlFreeDoc (doc);

@@ -91,7 +91,7 @@ GType eas_add_item_req_get_type (void) G_GNUC_CONST;
  *	  The current synchronisation key.
  * @param[in] folder_id
  *	  The identifer for the target server folder.
- * @param[in] serialised_calendar
+ * @param[in] serialised_calendar [full transfer]
  *	  A list of strings containing serialised EasItemInfo GObjects.
  * @param[in] context
  *	  DBus context token.
@@ -102,7 +102,7 @@ EasAddItemReq *eas_add_item_req_new(const gchar* account_id,
                                             const gchar *sync_key, 
                                             const gchar *folder_id,
                                             const EasItemType item_type,
-                                            const GSList *serialised_calendar, 
+                                            GSList *serialised_calendar, 
                                             DBusGMethodInvocation *context);
 
 /**
