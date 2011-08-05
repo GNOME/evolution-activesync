@@ -94,7 +94,7 @@ GType eas_update_item_req_get_type (void) G_GNUC_CONST;
  *	  Identifies the type of update item. e.g. Calendar, Contact, Email
  * @param[in] folder_id
  *	  The identifer for the target server folder.
- * @param[in] serialised_calendar
+ * @param[in] serialised_calendar [full transfer]
  *	  A list of strings containing serialised EasItemInfo GObjects.
  * @param[in] context
  *	  A dbus method invocation used to send the completed operation's results
@@ -106,7 +106,7 @@ EasUpdateItemReq *eas_update_item_req_new(const gchar* account_id,
                                           const gchar *sync_key, 
                                           const EasItemType item_type, 
                                           const gchar *folder_id, 
-                                          const GSList *serialised_calendar, 
+                                          GSList *serialised_calendar, 
                                           DBusGMethodInvocation *context);
 
 /**

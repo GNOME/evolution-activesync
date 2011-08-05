@@ -119,8 +119,12 @@ eas_update_item_req_finalize (GObject *object)
 
     g_debug ("eas_update_item_req_finalize++");
 
+	g_free (priv->sync_key);
     g_free (priv->account_id);
 	g_free (priv->folder_id);
+
+	g_slist_foreach (priv->serialised_calendar, (GFunc)g_object_unref, NULL);
+	g_slist_free (priv->serialised_calendar);
 
     G_OBJECT_CLASS (eas_update_item_req_parent_class)->finalize (object);
 
@@ -144,26 +148,25 @@ eas_update_item_req_class_init (EasUpdateItemReqClass *klass)
 }
 
 
-// TODO - update this to take a GSList of serialised calendars? rem to copy the list
 EasUpdateItemReq *eas_update_item_req_new (const gchar* account_id, 
-                                                   const gchar *sync_key, 
-                                                   const EasItemType item_type, 
-                                                   const gchar *folder_id, 
-                                                   const GSList* serialised_calendar, 
-                                                   DBusGMethodInvocation *context)
+                                           const gchar *sync_key, 
+                                           const EasItemType item_type, 
+                                           const gchar *folder_id, 
+                                           GSList* serialised_calendar, 
+                                           DBusGMethodInvocation *context)
 {
     EasUpdateItemReq* self = g_object_new (EAS_TYPE_UPDATE_ITEM_REQ, NULL);
     EasUpdateItemReqPrivate *priv = self->priv;
 
     g_debug ("eas_update_item_req_new++");
 
-	g_assert (sync_key);
+    g_assert (sync_key);
     g_assert (folder_id);
     g_assert (serialised_calendar);
-	
+
     priv->sync_key = g_strdup (sync_key);
     priv->folder_id = g_strdup (folder_id);
-    priv->serialised_calendar = (GSList *) serialised_calendar;
+    priv->serialised_calendar = serialised_calendar; // Take ownership
     priv->account_id = g_strdup (account_id);
     priv->item_type = item_type;
 
