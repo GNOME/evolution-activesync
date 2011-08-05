@@ -86,7 +86,6 @@ eas_request_base_init (EasRequestBase *object)
     priv->soup_message = NULL;
     priv->flag = NULL;
     priv->context = NULL;
-    priv->connection = NULL;
 	priv->dbus_interface = NULL;
 	priv->data_length_so_far = 0;
 	priv->data_size = 0;
@@ -274,7 +273,7 @@ struct _EasConnection*
 eas_request_base_GetConnection (EasRequestBase* self)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_GetConnection++ %lx", (unsigned long)priv->connection );
+    g_debug("eas_request_base_GetConnection++ %p", priv->connection );
     return priv->connection;
 }
 
@@ -282,7 +281,7 @@ void
 eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* connection)
 {
     EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetConnection++");
+    g_debug ("eas_request_base_SetConnection++ [%p]", connection);
     priv->connection = connection;
     g_debug ("eas_request_base_SetConnection--");
 }
