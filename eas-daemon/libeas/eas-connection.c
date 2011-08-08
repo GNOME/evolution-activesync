@@ -72,6 +72,7 @@
 
 #include "../src/activesyncd-common-defs.h"
 #include "../src/eas-mail.h"
+#include <errno.h>
 
 //#define ACTIVESYNC_14
 
@@ -97,6 +98,9 @@ struct _EasConnectionPrivate {
 	EasAccount *account;
 
 	gboolean retrying_asked;
+
+	gchar *folders_keyfile;
+	GKeyFile *folders;
 
 	const gchar* request_cmd;
 	xmlDoc* request_doc;
@@ -359,6 +363,9 @@ eas_connection_finalize (GObject *object)
 	}
 
 	g_free (priv->proto_str);
+
+	g_free (priv->folders_keyfile);
+	g_key_file_free (priv->folders);
 
 	G_OBJECT_CLASS (eas_connection_parent_class)->finalize (object);
 	g_debug ("eas_connection_finalize--");
@@ -1835,6 +1842,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	EasConnection *cnc = NULL;
 	EasConnectionPrivate *priv = NULL;
 	gchar *hashkey = NULL;
+	gchar *cachedir;
 
 	g_debug ("eas_connection_new++");
 
@@ -1877,6 +1885,27 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_static_mutex_unlock (&connection_list);
 		return NULL;
 	}
+
+	cachedir = g_build_filename (g_get_user_cache_dir (),
+				     "activesync",
+				     eas_account_get_uid (account),
+				     NULL);
+	if (g_mkdir_with_parents (cachedir, 0700)) {
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_FILEERROR,
+			     "Failed to create folder cache directory %s: %s",
+			     cachedir, strerror (errno));
+		g_free (cachedir);
+		g_object_unref (cnc);
+		g_static_mutex_unlock (&connection_list);
+		return NULL;
+	}
+
+	priv->folders_keyfile = g_build_filename (cachedir, "folders", NULL);
+	priv->folders = g_key_file_new ();
+	g_key_file_load_from_file (priv->folders, priv->folders_keyfile,
+				   G_KEY_FILE_NONE, NULL);
 
 	priv->protocol_version = eas_account_get_protocol_version (account);
 	if (!priv->protocol_version)
