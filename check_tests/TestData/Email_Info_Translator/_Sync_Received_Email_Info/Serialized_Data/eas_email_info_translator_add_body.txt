@@ -1,0 +1,44 @@
+3:1
+18
+From
+Microsoft Outlook 	<MicrosoftExchange329e71ec88ae4615bbc36ab6ce41109e@cstylianou.com>
+To
+<good.user@cstylianou.com>
+Date
+Mon, 1 Aug 2011 10:44:41 +0100
+Content-Type
+multipart/report; report-type=delivery-status; 	boundary="bdac5b5b-bce0-4bb7-9283-4db7212d1ede"
+X-MS-Exchange-Organization-SCL
+-1
+Content-Language
+en-GB
+Message-ID
+<95fa1876-41b7-4e8d-af46-7fd5f14a3048@CS-SERVER1.cstylianou.com>
+In-Reply-To
+<0413DD6E62ADC940AC2669786639023CE705F9@CS-SERVER1.cstylianou.com>
+References
+<0413DD6E62ADC940AC2669786639023CE705F9@CS-SERVER1.cstylianou.com>
+Thread-Topic
+test0001
+Thread-Index
+AcxQL4/krqRb0Rf6SvOgPvxICGCDDQAABLsK
+Subject
+Undeliverable: test0001
+X-MS-Exchange-Organization-AuthSource
+CS-SERVER1.cstylianou.com
+X-MS-Exchange-Organization-AuthAs
+Internal
+X-MS-Exchange-Organization-AuthMechanism
+05
+Importance
+high
+X-Priority
+1
+MIME-Version
+1.0
+0
+0
+0
+9052
+0
+1

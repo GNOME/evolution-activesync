@@ -91,8 +91,16 @@ START_TEST(test_eas_email_info_translator_add_attachment)
 	test_eas_email_info_translator_add("eas_email_info_translator_add_attachment.txt","eas_email_info_translator_add_attachment.xml");
 } 
 END_TEST
-// TODO -> We should create cases, in which we will test separatly fields.
-
+START_TEST(test_eas_email_info_translator_add_body)
+{
+	test_eas_email_info_translator_add("eas_email_info_translator_add_body.txt","eas_email_info_translator_add_body.xml");
+} 
+END_TEST
+START_TEST(test_eas_email_info_translator_add_category)
+{
+	test_eas_email_info_translator_add("eas_email_info_translator_add_category.txt","eas_email_info_translator_add_category.xml");
+} 
+END_TEST
 
 //---------------------------------------------------Update------------------------------------------------------------
 
@@ -177,7 +185,8 @@ Suite* eas_email_info_translator_suite (void)
 
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_all);
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_attachment);
-	
+	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_body);
+	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_category);
 
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_all);
     
