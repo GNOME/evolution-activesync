@@ -233,6 +233,8 @@ void
 eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 			       GSList *added_folders, GSList *updated_folders,
 			       GSList *deleted_folders, GError *error);
+gchar *
+eas_connection_get_folder_sync_key (EasConnection *cnc);
 
 G_END_DECLS
 

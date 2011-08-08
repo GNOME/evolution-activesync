@@ -2292,3 +2292,9 @@ eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 	g_file_replace_contents (file, contents, size, NULL, FALSE,
 				 G_FILE_CREATE_PRIVATE, NULL, NULL, NULL);
 }
+
+gchar *
+eas_connection_get_folder_sync_key (EasConnection *cnc)
+{
+	return g_key_file_get_string (cnc->priv->folders, "##storedata", "synckey", NULL);
+}
