@@ -86,7 +86,11 @@ START_TEST(test_eas_email_info_translator_add_all)
 	test_eas_email_info_translator_add("output.txt","input.xml");
 } 
 END_TEST
-
+START_TEST(test_eas_email_info_translator_add_attachment)
+{
+	test_eas_email_info_translator_add("eas_email_info_translator_add_attachment.txt","eas_email_info_translator_add_attachment.xml");
+} 
+END_TEST
 // TODO -> We should create cases, in which we will test separatly fields.
 
 
@@ -172,6 +176,10 @@ Suite* eas_email_info_translator_suite (void)
     suite_add_tcase (s, tc_email_info_translator);
 
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_all);
+	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_attachment);
+	
+
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_all);
-    return s;
+    
+	return s;
 }
