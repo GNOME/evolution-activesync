@@ -83,7 +83,7 @@
  
 START_TEST(test_eas_email_info_translator_add_all)
 {
-	test_eas_email_info_translator_add("output.txt","input.xml");
+	test_eas_email_info_translator_add("eas_email_info_translator_add_all.txt","eas_email_info_translator_add_all.xml");
 } 
 END_TEST
 START_TEST(test_eas_email_info_translator_add_attachment)
@@ -165,7 +165,7 @@ void test_eas_email_info_translator_update(const char* Serializeddata,const char
 
 START_TEST(test_eas_email_info_translator_update_all)
 {
-	test_eas_email_info_translator_update("output2.txt","input2.xml");
+	test_eas_email_info_translator_update("eas_email_info_translator_update_all.txt","eas_email_info_translator_update_all.xml");
 } 
 END_TEST
 START_TEST(test_eas_email_info_translator_update_category)
