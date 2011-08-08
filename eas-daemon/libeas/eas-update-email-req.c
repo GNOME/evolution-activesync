@@ -264,7 +264,6 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
     GError *error = NULL;
     EasUpdateEmailReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
-	gchar *ret_sync_key = NULL;
 	GSList* failed_updates = NULL;   
 	gchar **ret_failed_updates_array = NULL;  
 	
@@ -284,8 +283,6 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
         g_assert (error != NULL);
     }
 
-	ret_sync_key  = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
-
 	// get list of flattened emails with status codes
 	failed_updates = eas_sync_msg_get_update_responses (priv->sync_msg);
 
@@ -304,9 +301,25 @@ finish:
     }
     else
     {
-        dbus_g_method_return (eas_request_base_GetContext (parent), ret_sync_key, ret_failed_updates_array);
+        dbus_g_method_return (eas_request_base_GetContext (parent), 
+                              eas_sync_msg_get_syncKey (priv->sync_msg), 
+                              ret_failed_updates_array);
     }
-	g_free(ret_sync_key);
+
+	if (ret_failed_updates_array)
+	{
+		gint index = 0;
+
+		while (ret_failed_updates_array[index])
+		{
+			g_free (ret_failed_updates_array[index]);
+			ret_failed_updates_array[index] = NULL;
+			++ index;
+		}
+		g_free (ret_failed_updates_array);
+		ret_failed_updates_array = NULL;
+	}
+
     g_debug ("eas_update_email_req_MessageComplete--");
 	return TRUE;
 }
