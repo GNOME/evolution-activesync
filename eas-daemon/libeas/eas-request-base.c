@@ -60,7 +60,8 @@ struct _EasRequestBasePrivate {
 	EasInterfaceBase *dbus_interface;
 	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
 	guint request_id;			// passed back with progress signal
-	guint data_length_so_far;	// amount of data received/sent so far
+	gboolean cancelled;			// whether the request has been cancelled
+	guint data_length_so_far;	// amount of data received/sent so far 
 	guint data_size;			// total size of response/request data
 	gboolean use_multipart;
 };
@@ -89,6 +90,7 @@ eas_request_base_init (EasRequestBase *object)
 	priv->data_length_so_far = 0;
 	priv->data_size = 0;
 	priv->request_id = 0;
+	priv->cancelled = FALSE;
 	priv->use_multipart = FALSE;
 
 	g_debug ("eas_request_base_init--");
@@ -101,9 +103,9 @@ eas_request_base_dispose (GObject *object)
 	EasRequestBasePrivate *priv = req->priv;
 
 	g_debug ("eas_request_base_dispose++");
-	if (priv->connection) {
-		g_debug ("not unrefing connection");
-		// TODO Fix the unreff count.
+	if(priv->connection){
+		g_debug("not unrefing connection");
+        // TODO Fix the unref count.
 		// g_object_unref(priv->connection);
 		// priv->connection = NULL;
 	}
@@ -198,6 +200,26 @@ eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
 
 	return ;
 }
+
+gboolean 
+eas_request_base_IsCancelled (EasRequestBase* self)
+{
+	EasRequestBasePrivate *priv = self->priv;
+
+	return priv->cancelled;
+	
+}
+
+void 
+eas_request_base_Cancelled (EasRequestBase* self)
+{
+	EasRequestBasePrivate *priv = self->priv;
+
+	priv->cancelled = TRUE;
+
+	return;
+}
+
 
 gboolean
 eas_request_base_GetRequestProgressDirection (EasRequestBase* self)

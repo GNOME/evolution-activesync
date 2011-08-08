@@ -791,6 +791,19 @@ call_handle_server_response (gpointer data)
 	return FALSE;   // don't put back on main loop
 }
 
+static gboolean
+call_soup_session_cancel_message (gpointer data)
+{
+	EasRequestBase *req = EAS_REQUEST_BASE (data);
+	SoupMessage *msg = eas_request_base_GetSoupMessage (req);	
+	EasConnection *cnc = eas_request_base_GetConnection(req);
+
+	g_debug("cancelling soup request for request with id %d", eas_request_base_GetRequestId(req));
+	soup_session_cancel_message(cnc->priv->soup_session, msg, SOUP_STATUS_CANCELLED);
+
+	return FALSE;   // don't put back on main loop
+}
+
 #if 0
 static gboolean
 eas_queue_soup_message (gpointer _request)
@@ -1994,6 +2007,17 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 	g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]", node, req, self, priv);
 
+	// if request has been cancelled, complete with appropriate error
+	if(eas_request_base_IsCancelled(req))
+	{
+		g_debug("request was cancelled by caller");
+        g_set_error (&error, EAS_CONNECTION_ERROR,
+	                     EAS_CONNECTION_ERROR_CANCELLED,
+	                     ("request was cancelled by user"));
+
+	    goto complete_request;		
+	}
+	
 	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
 
 	if (INVALID == validity) {
@@ -2352,4 +2376,81 @@ gchar **eas_connection_get_folders (EasConnection *cnc)
 		folders[j++] = res;
 	}
 	return folders;
+}
+
+gboolean 
+eas_connection_cancel_request(EasConnection* cnc, 
+                                     guint request_id, 
+                                     GError** error)
+{
+	GSList *l;
+	EasNode *node;
+	gboolean found = FALSE;
+	EasConnectionPrivate *priv = cnc->priv;
+	EasRequestBase *request;
+	gboolean ret = TRUE;
+	
+	QUEUE_LOCK (cnc);
+
+	// is the request in the jobs queue?
+	for(l = priv->jobs; l != NULL; l = l->next)
+	{
+		node = (EasNode *) l->data;
+		request = node->request;
+		
+		if(eas_request_base_GetRequestId(request) == request_id)
+		{
+			g_debug("found the request in the jobs queue");
+			found = TRUE;
+
+			// set to cancelled
+			eas_request_base_Cancelled(request);
+			
+			// remove it from the queue, 
+			priv->jobs = g_slist_remove (priv->jobs, (gconstpointer *) node);
+			
+			// call handle_server_response from soup thread 
+			// by adding to the default main loop
+			g_idle_add(call_handle_server_response, request);
+
+			break; // out of for loop
+		}
+	}
+	if(!found)// not in the jobs queue
+	{
+		g_debug("look for the request in the active queue");
+		// is the request in the active jobs queue?
+		for(l = priv->active_job_queue; l != NULL; l = l->next)
+		{
+			node = (EasNode *) l->data;
+			request = node->request;
+			
+			if(eas_request_base_GetRequestId(request) == request_id)
+			{
+				g_debug("found the request in the active queue");
+				found = TRUE;
+
+				// set to cancelled
+				eas_request_base_Cancelled(request);
+
+				// tell soup to cancel (nb: we need to do this from the soup thread)
+				// For messages queued with soup_session_queue_message() and cancelled from the same thread, 
+				// the callback will be invoked before soup_session_cancel_message() returns
+				call_soup_session_cancel_message(request);
+
+				break;  // out of for loop
+			}
+		}
+	}
+
+	if(!found)
+	{
+		ret = FALSE;
+		g_set_error (error, EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_BADARG,
+                     ("Request with id %d does not exist, can't cancel"), request_id);
+	}
+	QUEUE_UNLOCK (cnc);
+
+	return ret;
 }

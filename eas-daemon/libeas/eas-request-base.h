@@ -212,6 +212,27 @@ guint eas_request_base_GetRequestId (EasRequestBase* self);
 void eas_request_base_SetRequestId (EasRequestBase* self, guint request_id);
 
 /**
+ * Getter for cancelled.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return whether the current instance has been cancelled.
+ */
+gboolean eas_request_base_IsCancelled (EasRequestBase* self);
+
+/**
+ * Setter for cancelled.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * sets the instance to cancelled
+ */
+void eas_request_base_Cancelled (EasRequestBase* self);
+
+
+/**
  * Getter for outgoing.
  *
  * @param[in] self

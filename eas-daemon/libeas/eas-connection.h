@@ -238,6 +238,24 @@ eas_connection_get_folder_sync_key (EasConnection *cnc);
 
 gchar **eas_connection_get_folders (EasConnection *cnc);
 
+/**
+ * Cancel the request
+ *
+ * @param[in] self
+ *	  GObject instance of EasConnection.
+ * @param[in] request_id id of the request to be cancelled
+ *	  
+ * @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller 
+ *	  should free the memory with g_error_free() if it has been set. [full transfer]
+ *
+ * @return TRUE if successful, otherwise FALSE.
+ */
+gboolean eas_connection_cancel_request(EasConnection* self, 
+                                     guint request_id, 
+                                     GError** error); 
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */

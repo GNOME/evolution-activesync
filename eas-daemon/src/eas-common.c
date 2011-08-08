@@ -248,24 +248,40 @@ eas_common_cancel_request (EasCommon* self,
 			   guint request_id,
 			   DBusGMethodInvocation* context)
 {
+	gboolean ret = TRUE;
+	EasConnection *connection;
 	GError *error = NULL;
+	g_debug("eas_common_cancel_request++");	
+	
+    connection = eas_connection_find (account_uid);
+    if (!connection)
+    {
+        g_set_error (&error,
+                     EAS_CONNECTION_ERROR,
+                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+                     "Failed to find account [%s]",
+                     account_uid);
+        ret = FALSE;
+        goto finish;
+    }
 
-	g_debug ("eas_common_cancel_request++");
-
-	g_set_error (&error,
-		     EAS_CONNECTION_ERROR,
-		     EAS_CONNECTION_ERROR_NOTSUPPORTED,
-		     "cancel request not yet supported");
-
-	// TODO add support for this method when request queue is implemented
-
-	dbus_g_method_return_error (context, error);
-
-	g_error_free (error);
-
-	g_debug ("eas_common_cancel_request--");
-
-	return FALSE;
+	// call connection to cancel the request with the supplied id
+	ret = eas_connection_cancel_request(connection, request_id, &error);
+	if(!ret)
+	{
+		g_debug("eas_common_cancel_request returning error");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+	else
+	{
+		dbus_g_method_return(context);
+	}
+		
+finish:	
+	g_debug("eas_common_cancel_request--");
+	
+	return ret;	
 }
 
 struct folder_state {
@@ -356,3 +372,4 @@ eas_common_get_folders (EasCommon* self,
 
 	return TRUE;
 }
+
