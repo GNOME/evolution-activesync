@@ -780,17 +780,20 @@ static void
 set_xml_Note (xmlNodePtr appData, EVCardAttribute *attr)
 {
 	xmlNodePtr body = NULL;
-	body = xmlNewChild (appData, NULL, (xmlChar *) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
-	set_xml_element (body, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE,
-			 (const xmlChar*) "1");
-	set_xml_element (body, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_SIZE,
-			 (const xmlChar*) "0");
-	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TRUNCATED,
-			(const xmlChar*) "0"); */
-	set_xml_element (body, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_DATA,
-			 (const xmlChar*) (const xmlChar*) attribute_get_nth_value (attr, 0));
-	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_PREVIEW,
-	        (const xmlChar*) "0");*/
+
+	if (strlen(attribute_get_nth_value(attr, 0)) > 0){
+		body = xmlNewChild (appData, NULL, (xmlChar *)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
+		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE,
+			     (const xmlChar*) "1");
+		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_SIZE,
+			     (const xmlChar*) "0");
+		/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TRUNCATED,
+				(const xmlChar*) "0"); */
+		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_DATA,
+			    (const xmlChar*) (const xmlChar*)attribute_get_nth_value(attr, 0));
+		/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_PREVIEW,
+			    (const xmlChar*) "0");*/
+	}
 }
 
 static void
