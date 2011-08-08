@@ -49,15 +49,15 @@
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");	
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");	
   //end checking
 
   //Load XML Root Node
-	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL));
+	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL));
   //end Loading
 
   //region Translate
-	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");
+	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");
 	nodeLevel1 = doc->children;
 	result = eas_email_info_translator_parse_add_response(nodeLevel1, server_id);
 	fw = fopen (g_strconcat (ptr,"test.txt",NULL),"w+");
@@ -66,9 +66,9 @@
   //end translation  //end Translation
 
   //load serialized test data
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");	
-	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL), "r");
-	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/_Sync_Received_Email_Info/_Response/Serialized_Data/");	
+	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL), "r");
+	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/Serialized_Data/");
 	
 	fseek (fr , 0 , SEEK_END);
 	lSize = ftell (fr);
@@ -131,25 +131,25 @@ void test_eas_email_info_translator_update(const char* Serializeddata,const char
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");	
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");	
   //end checking
 
   //Load XML Root Node
-	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL));
+	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL));
   //end Loading
 
   //region Translate
-	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");
+	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");
 	nodeLevel1 = doc->children;
 	result = eas_email_info_translator_parse_update_response(nodeLevel1, server_id);
 
-  //end translation  //end Translation
+  //end translation
 
   //load serialized test data
   
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");	
-	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL), "r");
-	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/Serialized_Data/");	
+	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL), "r");
+	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/Serialized_Data/");
 	
 	fseek (fr , 0 , SEEK_END);
 	lSize = ftell (fr);
@@ -206,15 +206,15 @@ void test_eas_email_info_translator_delete(const char* Serializeddata,const char
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");	
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");	
   //end checking
 
   //Load XML Root Node
-	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL));
+	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Response/XML_Data/",xmlName,NULL));
   //end Loading
 
   //region Translate
-	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");
+	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/XML_Data/");
 	nodeLevel1 = doc->children;
 	result = eas_email_info_translator_parse_delete_response(nodeLevel1, server_id);
 
@@ -222,9 +222,9 @@ void test_eas_email_info_translator_delete(const char* Serializeddata,const char
 
   //load serialized test data
   
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");	
-	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL), "r");
-	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/Serialized_Data/");	
+	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Response/Serialized_Data/",Serializeddata,NULL), "r");
+	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Response/Serialized_Data/");
 	
 	fseek (fr , 0 , SEEK_END);
 	lSize = ftell (fr);
@@ -234,8 +234,6 @@ void test_eas_email_info_translator_delete(const char* Serializeddata,const char
 	fail_if(readResult == 0);
 	buffer[lSize]='\0';
   //end loading serialized data
-g_debug("buffer %s",buffer);
-g_debug("result %s",result);
 	fail_if(g_strcmp0 (buffer,result)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
 	
  }
@@ -249,6 +247,7 @@ END_TEST
 
 static void test_eas_mail_info_translator_build_update_request(const char* serializedData,const char* xmlName)
 {
+	g_type_init();
   //region init variable
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
@@ -260,7 +259,7 @@ static void test_eas_mail_info_translator_build_update_request(const char* seria
 	gchar * buffer2=NULL;
 	gchar* 	buffer3=NULL;
 	struct stat stFileInfo;
-	EasEmailInfo* emailInfo = NULL;
+	EasEmailInfo *email_info = eas_email_info_new();
 	size_t readResult;
 	gchar *ptr= NULL;
 	long size;
@@ -273,12 +272,12 @@ static void test_eas_mail_info_translator_build_update_request(const char* seria
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
-	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",serializedData,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/)");
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/Serialized_Data/",serializedData,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(/TestData/Email_Info_Translator/_Request/Serialized_Data/)");
 //end checking
 
 //region Load Serialized data
-	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",serializedData,NULL), "r");
-	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/)");
+	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/Serialized_Data/",serializedData,NULL), "r");
+	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(/TestData/Email_Info_Translator/_Request/Serialized_Data/)");
 	fseek (fr , 0 , SEEK_END);
 	lSize1 = ftell (fr);
 	rewind (fr);
@@ -286,31 +285,31 @@ static void test_eas_mail_info_translator_build_update_request(const char* seria
 	readResult=fread (buffer1,sizeof(gchar),lSize1,fr);
 	fail_if(readResult == 0);
 	buffer1[lSize1]='\0';
-	eas_email_info_deserialise(emailInfo,buffer1);
+	eas_email_info_deserialise(email_info,buffer1);
 	fclose (fr);
 //end Loading
 
 //Load XML Root Node
-	doc = xmlParseFile(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/temp.xml",NULL));
+	doc = xmlParseFile(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/XML_Data/temp.xml",NULL));
 //end Loading
 
 //region Translate
-	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");
+	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Request/Serialized_Data/");
 	nodeLevel1 = doc->children;
-	parseResponse = eas_email_info_translator_build_update_request(doc, nodeLevel1, emailInfo);
+	parseResponse = eas_email_info_translator_build_update_request(doc, nodeLevel1, email_info);
 	fail_unless(parseResponse, "XML can't be created.");
 //end Translation
 
 //region Save Translation in temp.txt	
-		fw = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/temp.txt",NULL), "w");
+		fw = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/XML_Data/temp.txt",NULL), "w");
 		xmlDocFormatDump(fw,doc,1);
 	fclose(fw);
 	xmlFreeDoc(doc);
 //end region
 
 //region Load Translation
-fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/temp.txt",NULL), "r");
-	fail_if(fr==NULL,"The temp file from XML_Data folder does not have good structure.", "Please check your XML_Data folder.(/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/)");
+fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/XML_Data/temp.txt",NULL), "r");
+	fail_if(fr==NULL,"The temp file from XML_Data folder does not have good structure.", "Please check your XML_Data folder.(/TestData/Email_Info_Translator/_Request/XML_Data/)");
 	fseek (fr , 0 , SEEK_END);
 	lSize2 = ftell (fr);
 	rewind (fr);
@@ -319,12 +318,12 @@ fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Ema
 	fail_if(readResult == 0);
 	buffer2[lSize2]='\0';
 	fclose (fr);
-	remove(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/temp.txt",NULL)); //Delete the temporary File temp.txt
+	remove(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/XML_Data/temp.txt",NULL)); //Delete the temporary File temp.txt
 //end Loading Translation
 
 //region Load XML Data 
-fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL), "r");
-	fail_if(fr==NULL,"The test file from XML_Data folder does not have good structure.", "Please check your XML_Data folder.(/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/)");
+fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Request/XML_Data/",xmlName,NULL), "r");
+	fail_if(fr==NULL,"The test file from XML_Data folder does not have good structure.", "Please check your XML_Data folder.(/TestData/Email_Info_Translator/_Request/Serialized_Data/)");
 	fseek (fr , 0 , SEEK_END);
 	lSize3 = ftell (fr);
 	rewind (fr);
@@ -340,17 +339,17 @@ fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Ema
 }
 START_TEST(test_eas_email_info_translator_build_update_request_all)
 {
-test_eas_email_info_translator_update("eas_email_info_translator_build_update_request_all.txt","eas_email_info_translator_build_update_request_all.xml");
+test_eas_mail_info_translator_build_update_request("eas_email_info_translator_build_update_request_all.txt","eas_email_info_translator_build_update_request_all.xml");
 } 
 END_TEST
 START_TEST(test_eas_email_info_translator_build_update_request_category)
 {
-test_eas_email_info_translator_update("eas_email_info_translator_build_update_request_category.txt","eas_email_info_translator_build_update_request_category.xml");
+test_eas_mail_info_translator_build_update_request("eas_email_info_translator_build_update_request_category.txt","eas_email_info_translator_build_update_request_category.xml");
 } 
 END_TEST
 START_TEST(test_eas_email_info_translator_build_update_request_read)
 {
-test_eas_email_info_translator_update("eas_email_info_translator_build_update_request_read.txt","eas_email_info_translator_build_update_request_read.xml");
+test_eas_mail_info_translator_build_update_request("eas_email_info_translator_build_update_request_read.txt","eas_email_info_translator_build_update_request_read.xml");
 } 
 END_TEST
 Suite* eas_email_info_translator_suite (void)
@@ -371,9 +370,8 @@ Suite* eas_email_info_translator_suite (void)
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_read);
 
 	tcase_add_test (tc_email_info_translator, test_eas_email_info_translator_delete_all);
-    
 
-	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_build_update_request_read);
+   	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_build_update_request_read);
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_build_update_request_all);
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_build_update_request_category);
 

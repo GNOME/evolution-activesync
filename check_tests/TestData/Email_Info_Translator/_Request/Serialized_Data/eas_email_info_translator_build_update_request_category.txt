@@ -4,8 +4,8 @@
 0
 3
 this is, category1
-this is, cateogry2
+this is, category2
 this is, category3
 0
 0
-0
+
