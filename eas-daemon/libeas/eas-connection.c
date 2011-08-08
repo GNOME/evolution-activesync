@@ -72,6 +72,7 @@
 
 #include "../src/activesyncd-common-defs.h"
 #include "../src/eas-mail.h"
+#include <eas-folder.h>
 #include <errno.h>
 
 //#define ACTIVESYNC_14
@@ -2247,4 +2248,47 @@ gchar*
 eas_connection_get_multipartdata (EasConnection* self, guint partID)
 {
 	return g_slist_nth_data (self->priv->multipart_strings_list, partID);
+}
+
+void
+eas_connection_update_folders (void *self, const gchar *ret_sync_key,
+			       GSList *added_folders, GSList *updated_folders,
+			       GSList *deleted_folders, GError *error)
+{
+	EasConnection *cnc = self;
+	EasFolder *folder;
+	GSList *l;
+	GFile *file;
+	gsize size;
+	gchar *contents;
+
+	if (error)
+		return;
+
+	for (l = deleted_folders; l; l = l->next) {
+		folder = l->data;
+		g_key_file_remove_group (cnc->priv->folders, folder->folder_id, NULL);
+	}
+
+	for (l = added_folders; l; l = l->next) {
+		folder = l->data;
+		g_key_file_set_string (cnc->priv->folders, folder->folder_id, "parent_id", folder->parent_id);
+		g_key_file_set_string (cnc->priv->folders, folder->folder_id, "display_name", folder->display_name);
+		g_key_file_set_integer (cnc->priv->folders, folder->folder_id, "type", folder->type);
+	}
+
+	for (l = updated_folders; l; l = l->next) {
+		folder = l->data;
+		g_key_file_set_string (cnc->priv->folders, folder->folder_id, "parent_id", folder->parent_id);
+		g_key_file_set_string (cnc->priv->folders, folder->folder_id, "display_name", folder->display_name);
+		g_key_file_set_integer (cnc->priv->folders, folder->folder_id, "type", folder->type);
+	}
+
+	g_key_file_set_string (cnc->priv->folders, "##storedata", "synckey", ret_sync_key);
+
+	contents = g_key_file_to_data (cnc->priv->folders, &size, NULL);
+
+	file = g_file_new_for_path (cnc->priv->folders_keyfile);
+	g_file_replace_contents (file, contents, size, NULL, FALSE,
+				 G_FILE_CREATE_PRIVATE, NULL, NULL, NULL);
 }

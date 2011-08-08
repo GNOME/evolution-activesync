@@ -229,6 +229,11 @@ int eas_connection_get_protocol_version (EasConnection *self);
 gchar*
 eas_connection_get_multipartdata (EasConnection* self, guint partID);
 
+void
+eas_connection_update_folders (void *self, const gchar *ret_sync_key,
+			       GSList *added_folders, GSList *updated_folders,
+			       GSList *deleted_folders, GError *error);
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */
