@@ -168,8 +168,16 @@ START_TEST(test_eas_email_info_translator_update_all)
 	test_eas_email_info_translator_update("output2.txt","input2.xml");
 } 
 END_TEST
-
-// TODO -> We should create cases, in which we will test separatly fields.
+START_TEST(test_eas_email_info_translator_update_category)
+{
+	test_eas_email_info_translator_update("eas_email_info_translator_update_category.txt","eas_email_info_translator_update_category.xml");
+} 
+END_TEST
+START_TEST(test_eas_email_info_translator_update_read)
+{
+	test_eas_email_info_translator_update("eas_email_info_translator_update_read.txt","eas_email_info_translator_update_read.xml");
+} 
+END_TEST
 
 
 // TODO -> We need to create test for eas_email_info_translator_build_update_request function and for eas_email_info_translator_delete function.
@@ -189,6 +197,8 @@ Suite* eas_email_info_translator_suite (void)
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_add_category);
 
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_all);
+	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_category);
+	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_read);
     
 	return s;
 }
