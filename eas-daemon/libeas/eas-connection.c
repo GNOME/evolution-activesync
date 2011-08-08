@@ -492,15 +492,20 @@ getPasswordCallback (GnomeKeyringResult result, const char* password, gpointer d
 }
 
 static gboolean
-fetch_and_store_password (const gchar* username, const gchar * serverUri)
+fetch_and_store_password (const gchar *account_id, const gchar *username, const gchar *serverUri)
 {
-	gchar *argv[] = {(gchar*)ASKPASS, (gchar*)"Please enter your Exchange Password", NULL};
+	gchar *argv[3];
 	gchar * password = NULL;
 	GError * error = NULL;
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	gint exit_status = 0;
 
 	g_debug("fetch_and_store_password++");
+
+	argv[0] = (gchar *)ASKPASS;
+	argv[1] = g_strdup_printf("Please enter your ActiveSync password for %s",
+							  account_id);
+	argv[2] = NULL;
 
 	if (FALSE == g_spawn_sync (NULL, argv, NULL,
 	                           G_SPAWN_SEARCH_PATH,
@@ -510,17 +515,19 @@ fetch_and_store_password (const gchar* username, const gchar * serverUri)
 	                           &error))
 	{
 		g_warning ("Failed to spawn : [%d][%s]", error->code, error->message);
+		g_free (argv[1]);
 		g_error_free (error);
 		return FALSE;
 	}
 
 	g_strchomp (password);
-
 	result = writePasswordToKeyring (password, username, serverUri);
 	
 	memset (password, 0, strlen(password));
 	g_free(password);
 	password = NULL;
+
+	g_free (argv[1]);
 
 	g_debug("fetch_and_store_password--");
 	return (result == GNOME_KEYRING_RESULT_OK);
@@ -588,6 +595,7 @@ connection_authenticate (SoupSession *sess,
     EasConnection* cnc = (EasConnection *) data;
 	const gchar * username = eas_account_get_username(cnc->priv->account);
 	const gchar * serverUri = eas_account_get_uri(cnc->priv->account);
+	const gchar * account_id = eas_account_get_uid (cnc->priv->account);
 	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
 	gchar* password = NULL;
 
@@ -614,7 +622,7 @@ connection_authenticate (SoupSession *sess,
 	{
 		g_warning("Failed to find password in Gnome Keyring");
 
-		if (fetch_and_store_password(username, serverUri))
+		if (fetch_and_store_password (account_id, username, serverUri))
 		{
 			if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password))
 			{
@@ -672,7 +680,7 @@ connection_authenticate (SoupSession *sess,
 				password = NULL;
 			}
 
-			if (fetch_and_store_password(username, serverUri))
+			if (fetch_and_store_password (account_id, username, serverUri))
 			{
 				if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password))
 				{
