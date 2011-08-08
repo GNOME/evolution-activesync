@@ -303,15 +303,24 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
     
     if (!ret)   // failed - cleanup lists
     {
-        g_slist_foreach (*items_created, (GFunc) g_free, NULL);
-        g_free (*items_created);
-        *items_created = NULL;
-        g_slist_foreach (*items_updated, (GFunc) g_free, NULL);
-        g_free (*items_updated);
-        *items_updated = NULL;
-        g_slist_foreach (*items_deleted, (GFunc) g_free, NULL);
-        g_free (*items_deleted);
-        *items_deleted = NULL;
+		if (*items_created) 
+		{
+			g_slist_foreach (*items_created, (GFunc) g_object_unref, NULL);
+			g_slist_free (*items_created);
+			*items_created=NULL;
+		}
+		if (*items_updated) 
+		{
+			g_slist_foreach (*items_updated, (GFunc) g_object_unref, NULL);
+			g_slist_free (*items_updated);
+			*items_updated=NULL;
+		}
+		if (*items_deleted) 
+		{
+			g_slist_foreach (*items_deleted, (GFunc) g_object_unref, NULL);
+			g_slist_free (*items_deleted);
+			*items_deleted=NULL;
+		}
     } else {
 	g_debug("sync_key = %s", *sync_key_out);
     }
@@ -530,29 +539,20 @@ eas_sync_handler_add_items (EasSyncHandler* self,
         guint i = 0;
         guint length = g_slist_length (items_added);
         g_debug ("add_calendar_items called successfully");
-        if (created_item_array)
+        while (created_item_array[i] && i < length)
         {
-            while (created_item_array[i])
-            {
-                EasItemInfo *cal = eas_item_info_new ();
-                EasItemInfo *updated = g_slist_nth (items_added, i)->data;
-                
-                g_debug ("created item = %s", created_item_array[i]);
-                eas_item_info_deserialise (cal, created_item_array[i]);
-
-                g_free (created_item_array[i]);
-                created_item_array[i] = NULL;
-
-                g_debug ("created item server id = %s", cal->server_id);
-                updated->server_id = g_strdup (cal->server_id);
-                i++;
-            }
-            g_free (created_item_array);
+            EasItemInfo *cal = eas_item_info_new ();
+            EasItemInfo *updated = g_slist_nth (items_added, i)->data;
+            g_debug ("created item = %s", created_item_array[i]);
+            eas_item_info_deserialise (cal, created_item_array[i]);
+            g_debug ("created item server id = %s", cal->server_id);
+            updated->server_id = g_strdup (cal->server_id);
+            g_debug ("created updated server id in list = %s", cal->server_id);
+            i++;
         }
-        
-        if (i != length)
+        if (i == length && created_item_array[i])
         {
-            g_debug ("Added list is not the same length as input list!");
+            g_debug ("added list is not the same length as input list - problem?");
         }
     }
 
@@ -579,7 +579,6 @@ build_folder_list (const gchar **serialised_folder_array, GSList **folder_list, 
             *folder_list = g_slist_append (*folder_list, folder);   // add it to the list first to aid cleanup
             if (!folder_list)
             {
-                g_free (folder);
                 ret = FALSE;
                 goto cleanup;
             }
@@ -605,8 +604,12 @@ cleanup:
                      EAS_MAIL_ERROR_NOTENOUGHMEMORY,
                      ("out of memory"));
         // clean up on error
-        g_slist_foreach (*folder_list, (GFunc) g_free, NULL);
-        g_slist_free (*folder_list);
+		if(*folder_list)
+		{
+			g_slist_foreach (*folder_list, (GFunc) g_object_unref, NULL);
+			g_slist_free (*folder_list);
+			*folder_list = NULL;
+		}
     }
 
     g_debug ("list has %d items", g_slist_length (*folder_list));
@@ -702,15 +705,26 @@ cleanup:
             g_warning (" Error: %s", (*error)->message);
         }
         g_debug ("eas_mail_handler_sync_folder_hierarchy failure - cleanup lists");
-        g_slist_foreach (*folders_created, (GFunc) g_free, NULL);
-        g_free (*folders_created);
-        *folders_created = NULL;
-        g_slist_foreach (*folders_updated, (GFunc) g_free, NULL);
-        g_free (*folders_updated);
-        *folders_updated = NULL;
-        g_slist_foreach (*folders_deleted, (GFunc) g_free, NULL);
-        g_free (*folders_deleted);
-        *folders_deleted = NULL;
+		
+		if (*folders_created) 
+		{
+			g_slist_foreach (*folders_created, (GFunc) g_object_unref, NULL);
+			g_slist_free (*folders_created);
+			*folders_created=NULL;
+		}
+		if (*folders_updated) 
+		{
+			g_slist_foreach (*folders_updated, (GFunc) g_object_unref, NULL);
+			g_slist_free (*folders_updated);
+			*folders_updated=NULL;
+		}
+		if (*folders_deleted) 
+		{
+			g_slist_foreach (*folders_deleted, (GFunc) g_object_unref, NULL);
+			g_slist_free (*folders_deleted);
+			*folders_deleted=NULL;
+		}
+
     }
 
     g_debug ("eas_mail_handler_sync_folder_hierarchy--");
