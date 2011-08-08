@@ -270,11 +270,14 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 				
 				for (; loop < list_length; ++loop)
 				{
-					ret_changed_folders_array[loop] = g_strdup (g_slist_nth_data (folder_array, loop));
+					ret_changed_folders_array[loop] = g_slist_nth_data (folder_array, loop); // No transfer
 				}
-        		dbus_g_method_return (eas_request_base_GetContext (parent),
-						                  ret_changed_folders_array);
-				
+				dbus_g_method_return (eas_request_base_GetContext (parent),
+						              ret_changed_folders_array);
+
+                g_free (ret_changed_folders_array);
+                ret_changed_folders_array = NULL;
+
 				finished = TRUE;
 			    ret = TRUE;
 		}
@@ -285,9 +288,6 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 			finished = TRUE;
 		}
 	}
-	
-	
-	
 
 finish:
     xmlFreeDoc (doc);
