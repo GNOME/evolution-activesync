@@ -236,6 +236,8 @@ eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 gchar *
 eas_connection_get_folder_sync_key (EasConnection *cnc);
 
+gchar **eas_connection_get_folders (EasConnection *cnc);
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */

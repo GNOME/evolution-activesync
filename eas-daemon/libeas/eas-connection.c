@@ -2298,3 +2298,34 @@ eas_connection_get_folder_sync_key (EasConnection *cnc)
 {
 	return g_key_file_get_string (cnc->priv->folders, "##storedata", "synckey", NULL);
 }
+
+gchar **eas_connection_get_folders (EasConnection *cnc)
+{
+	gchar **folders = g_key_file_get_groups (cnc->priv->folders, NULL);
+	int i, j = 0;
+
+	/* We re-use the original array, dropping the ##storedata element */
+	for (i = 0; folders[i]; i++) {
+		if (!strcmp (folders[i], "##storedata")) {
+			folders[i] = NULL;
+			continue;
+		}
+
+		gchar *res = g_strdup_printf ("%s\n%s\n%s\n%d",
+					      g_key_file_get_string (cnc->priv->folders,
+								     folders[i], "parent_id", NULL),
+					      folders[i],
+					      g_key_file_get_string (cnc->priv->folders,
+								     folders[i], "display_name", NULL),
+					      g_key_file_get_integer (cnc->priv->folders,
+								      folders[i], "type", NULL));
+
+		/* Reuse the existing array. */
+		g_free (folders[i]);
+		if (i > j)
+			folders[i] = NULL;
+
+		folders[j++] = res;
+	}
+	return folders;
+}
