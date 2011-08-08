@@ -179,10 +179,72 @@ START_TEST(test_eas_email_info_translator_update_read)
 } 
 END_TEST
 
+void test_eas_email_info_translator_delete(const char* Serializeddata,const char* xmlName)
+ {
+	g_type_init();
+   
+  //server_id initialization
+	gchar temp[]="3:1";
+	gchar * server_id=g_strdup(temp);
+  //end initialization of server_id
+   
+  //region init variable
+	xmlDocPtr doc;
+	xmlNodePtr nodeLevel1;
+	struct stat stFileInfo;
+	FILE *fr,*fw;
+	gchar * result=NULL;
+	gchar * buffer=NULL;
+	gchar * readResult=NULL;
+	long lSize;
+  //endregion
 
-// TODO -> We need to create test for eas_email_info_translator_build_update_request function and for eas_email_info_translator_delete function.
+  // check the XML file, did the XML file exists
+	gchar *ptr= NULL;
+	long size;
+	gchar *buf;
+	size = pathconf(".", _PC_PATH_MAX);
+	if ((buf = (char *)malloc((size_t)size)) != NULL)
+	ptr = getcwd(buf, (size_t)size);
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL),&stFileInfo)==0,"The test file from XML_Data folder does not exist,Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");	
+  //end checking
 
+  //Load XML Root Node
+	doc = xmlParseFile(g_strconcat (ptr,  "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/",xmlName,NULL));
+  //end Loading
 
+  //region Translate
+	fail_if(doc==NULL,"The test file from XML_Data folder does not have good structure", "Please check your XML_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/XML_Data/");
+	nodeLevel1 = doc->children;
+	result = eas_email_info_translator_parse_delete_response(nodeLevel1, server_id);
+
+  //end translation 
+
+  //load serialized test data
+  
+	fail_if(!stat(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL),&stFileInfo)==0,"The test file from Serialized_Data folder does not exist,Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");	
+	fr = fopen(g_strconcat (ptr, "/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/",Serializeddata,NULL), "r");
+	fail_if(fr==NULL,"The test file from Serialized_Data folder does not have good structure.", "Please check your Serialized_Data folder.(check_tests/TestData/Email_Info_Translator/_Sync_Received_Email_Info/Serialized_Data/");
+	
+	fseek (fr , 0 , SEEK_END);
+	lSize = ftell (fr);
+	rewind (fr);
+	buffer = (gchar*) malloc (sizeof(gchar)*lSize+1);
+	readResult=fread (buffer,sizeof(gchar),lSize,fr);
+	fail_if(readResult == 0);
+	buffer[lSize]='\0';
+  //end loading serialized data
+g_debug("buffer %s",buffer);
+g_debug("result %s",result);
+	fail_if(g_strcmp0 (buffer,result)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
+	
+ }
+START_TEST(test_eas_email_info_translator_delete_all)
+{
+	test_eas_email_info_translator_update("eas_email_info_translator_delete_all.txt","eas_email_info_translator_delete_all.xml");
+} 
+END_TEST
+// TODO -> We need to create test for eas_email_info_translator_build_update_request function
 Suite* eas_email_info_translator_suite (void)
 {
     Suite* s = suite_create ("eas_email_info_translator");
@@ -199,6 +261,8 @@ Suite* eas_email_info_translator_suite (void)
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_all);
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_category);
 	tcase_add_test (tc_email_info_translator,test_eas_email_info_translator_update_read);
+
+	tcase_add_test (tc_email_info_translator, test_eas_email_info_translator_delete_all);
     
 	return s;
 }
