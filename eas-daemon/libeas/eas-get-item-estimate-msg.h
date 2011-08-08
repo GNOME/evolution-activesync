@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasGetItemEstimateMsgClass EasGetItemEstimateMsgClass;
 typedef struct _EasGetItemEstimateMsg EasGetItemEstimateMsg;
 typedef struct _EasGetItemEstimateMsgPrivate EasGetItemEstimateMsgPrivate;
 
-struct _EasGetItemEstimateMsgClass
-{
+struct _EasGetItemEstimateMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasGetItemEstimateMsg
-{
+struct _EasGetItemEstimateMsg {
 	EasMsgBase parent_instance;
 
 	EasGetItemEstimateMsgPrivate *priv;

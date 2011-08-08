@@ -75,19 +75,17 @@ typedef struct _EasRequestBase EasRequestBase;
 typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
 
 
-typedef gboolean (*EasRequestBaseMessageCompleteFp)(EasRequestBase *self, xmlDoc* doc, GError* error_in);
+typedef gboolean (*EasRequestBaseMessageCompleteFp) (EasRequestBase *self, xmlDoc* doc, GError* error_in);
 
-struct _EasRequestBaseClass
-{
+struct _EasRequestBaseClass {
 	GObjectClass parent_class;
 
-    EasRequestBaseMessageCompleteFp do_MessageComplete;
+	EasRequestBaseMessageCompleteFp do_MessageComplete;
 };
 
-struct _EasRequestBase
-{
+struct _EasRequestBase {
 	GObject parent_instance;
-	
+
 	EasRequestBasePrivate* priv;
 };
 
@@ -108,12 +106,12 @@ typedef enum {
 	EAS_REQ_PING,
 	EAS_REQ_GET_ITEM_ESTIMATE,
 	// Add other requests here
-	
+
 	EAS_REQ_LAST
 } EasRequestType;
 
 typedef enum {
-    EAS_ITEM_NOT_SPECIFIED=0,
+	EAS_ITEM_NOT_SPECIFIED = 0,
 	EAS_ITEM_FOLDER,
 	EAS_ITEM_MAIL,
 	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
@@ -122,9 +120,9 @@ typedef enum {
 	EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
 
 	// Add other items here
-	
+
 	EAS_ITEM_LAST
-}EasItemType;
+} EasItemType;
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
 
@@ -141,7 +139,7 @@ gboolean eas_request_base_SendRequest (EasRequestBase* self, const gchar* cmd, x
  *
  * @return The request type currently set for this instance.
  */
-EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
+EasRequestType eas_request_base_GetRequestType (EasRequestBase* self);
 
 /**
  * Setter for request type.
@@ -151,7 +149,7 @@ EasRequestType eas_request_base_GetRequestType(EasRequestBase* self);
  * @param[in] type
  *      The request type to be set.
  */
-void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
+void eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type);
 
 /**
  * Getter for connection.
@@ -161,7 +159,7 @@ void eas_request_base_SetRequestType(EasRequestBase* self, EasRequestType type);
  *
  * @return The connection currently set for this instance.
  */
-struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
+struct _EasConnection* eas_request_base_GetConnection (EasRequestBase* self);
 
 /**
  * Setter for request type.
@@ -171,7 +169,7 @@ struct _EasConnection* eas_request_base_GetConnection(EasRequestBase* self);
  * @param[in] connection
  *      The connection to be set.
  */
-void eas_request_base_SetConnection(EasRequestBase* self, struct _EasConnection* connection);
+void eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* connection);
 
 /**
  * Getter for dbus interface.
@@ -190,8 +188,8 @@ EasInterfaceBase* eas_request_base_GetInterfaceObject (EasRequestBase* self);
  *      GObject Instance.
  * @param[in] dbus_interface
  *      The interface object to be set.
- */ 
-void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasInterfaceBase *dbus_interface);	
+ */
+void eas_request_base_SetInterfaceObject (EasRequestBase* self, EasInterfaceBase *dbus_interface);
 
 /**
  * Getter for request id.
@@ -210,7 +208,7 @@ guint eas_request_base_GetRequestId (EasRequestBase* self);
  *      GObject Instance.
  * @param[in] request_id
  *      The request_id to be set.
- */ 
+ */
 void eas_request_base_SetRequestId (EasRequestBase* self, guint request_id);
 
 /**
@@ -230,7 +228,7 @@ gboolean eas_request_base_GetRequestProgressDirection (EasRequestBase* self);
  *      GObject Instance.
  * @param[in] outgoing_progress
  *      The outgoing_progress to be set (TRUE == outgoing, FALSE == incoming)
- */ 
+ */
 void eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress);
 
 /**
@@ -250,7 +248,7 @@ guint eas_request_base_GetDataSize (EasRequestBase* self);
  *      GObject Instance.
  * @param[in] request_id
  *      The data_size to be set.
- */ 
+ */
 void eas_request_base_SetDataSize (EasRequestBase* self, guint size);
 
 /**
@@ -270,7 +268,7 @@ guint eas_request_base_GetDataLengthSoFar (EasRequestBase* self);
  *      GObject Instance.
  * @param[in] length
  *      The length to increase data_length_so_far by.
- */ 
+ */
 void eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length);
 
 /**
@@ -280,7 +278,7 @@ void eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length)
  *      GObject Instance.
  * @param[in] length
  *      The length to be set.
- */ 
+ */
 void eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length);
 
 /**
@@ -290,7 +288,7 @@ void eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length);
  *
  * @return The soup message currently set for this instance.
  */
-SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
+SoupMessage *eas_request_base_GetSoupMessage (EasRequestBase* self);
 
 /**
  * Setter for soup message.
@@ -300,7 +298,7 @@ SoupMessage *eas_request_base_GetSoupMessage(EasRequestBase* self);
  * @param[in] soup_message
  *      The soup message to be set.
  */
-void eas_request_base_SetSoupMessage(EasRequestBase* self, SoupMessage *soup_message);
+void eas_request_base_SetSoupMessage (EasRequestBase* self, SoupMessage *soup_message);
 
 /**
  * Getter for DBus context token.
@@ -320,16 +318,16 @@ DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
  * @param[in] context
  *      The DBus context token to be set.
  */
-void eas_request_base_SetContext(EasRequestBase* self, DBusGMethodInvocation* context);
+void eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context);
 
 gboolean
-eas_request_base_UseMultipart(EasRequestBase* self);
+eas_request_base_UseMultipart (EasRequestBase* self);
 
-void eas_request_base_Set_UseMultipart(EasRequestBase* self, gboolean use_multipart);
+void eas_request_base_Set_UseMultipart (EasRequestBase* self, gboolean use_multipart);
 
 // @@Deprecated, to be removed once move email is updated to not use this.
 EFlag *eas_request_base_GetFlag (EasRequestBase* self);
-void eas_request_base_SetFlag(EasRequestBase* self, EFlag* flag);
+void eas_request_base_SetFlag (EasRequestBase* self, EFlag* flag);
 
 G_END_DECLS
 

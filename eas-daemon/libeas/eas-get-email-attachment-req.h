@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -68,21 +68,19 @@ typedef struct _EasGetEmailAttachmentReqClass EasGetEmailAttachmentReqClass;
 typedef struct _EasGetEmailAttachmentReq EasGetEmailAttachmentReq;
 typedef struct _EasGetEmailAttachmentReqPrivate EasGetEmailAttachmentReqPrivate;
 
-struct _EasGetEmailAttachmentReqClass
-{
+struct _EasGetEmailAttachmentReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasGetEmailAttachmentReq
-{
+struct _EasGetEmailAttachmentReq {
 	EasRequestBase parent_instance;
-	
+
 	EasGetEmailAttachmentReqPrivate* priv;
 };
 
 GType eas_get_email_attachment_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new delete email request GObject
  *
  * @param[in] account_id
@@ -90,18 +88,18 @@ GType eas_get_email_attachment_req_get_type (void) G_GNUC_CONST;
  * @param[in] file_reference
  *	  File identifer reference on the server.
  * @param[in] mime_directory
- *	  Full path to local file system directory where the retrieved email 
+ *	  Full path to local file system directory where the retrieved email
  *	  attachment is to be written.
  * @param[in] context
  *	  DBus context token.
  *
  * @return An allocated EasGetEmailAttachmentReq GObject or NULL
  */
-EasGetEmailAttachmentReq* 
-eas_get_email_attachment_req_new (const gchar* account_uid, 
-                                  const gchar *file_reference,
-                                  const gchar *mime_directory,
-                                  DBusGMethodInvocation *context);
+EasGetEmailAttachmentReq*
+eas_get_email_attachment_req_new (const gchar* account_uid,
+				  const gchar *file_reference,
+				  const gchar *mime_directory,
+				  DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -115,15 +113,15 @@ eas_get_email_attachment_req_new (const gchar* account_uid,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, 
-                                       GError** error);
+gboolean
+eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self,
+				       GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client 
+ * then returning the results across the dbus to the client
  *
  * @param[in] self
  *	  The EasGetEmailAttachmentReq GObject instance whose messages are complete.
@@ -135,10 +133,10 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self,
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise
  */
-gboolean 
-eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self, 
-                                              xmlDoc *doc, 
-                                              GError* error);
+gboolean
+eas_get_email_attachment_req_MessageComplete (EasGetEmailAttachmentReq* self,
+					      xmlDoc *doc,
+					      GError* error);
 
 G_END_DECLS
 

@@ -68,22 +68,19 @@ typedef struct _EasPingReqClass EasPingReqClass;
 typedef struct _EasPingReq EasPingReq;
 typedef struct _EasPingReqPrivate EasPingReqPrivate;
 
-typedef enum
-{
-    EasPingReqSend = 0,
-    EasPingReqSendHeartbeat,
+typedef enum {
+	EasPingReqSend = 0,
+	EasPingReqSendHeartbeat,
 	EasPingReqNotifyClient,
 	EasPingReqHeartbeatError,
 	EasPingReqFolderError
 } EasPingReqState;
 
-struct _EasPingReqClass
-{
+struct _EasPingReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasPingReq
-{
+struct _EasPingReq {
 	EasRequestBase parent_instance;
 
 	EasPingReqPrivate * priv;
@@ -95,10 +92,10 @@ GType eas_ping_req_get_type (void) G_GNUC_CONST;
 EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, DBusGMethodInvocation *context);
 
 // start async request
-gboolean eas_ping_req_Activate(EasPingReq *self, GError** error);
+gboolean eas_ping_req_Activate (EasPingReq *self, GError** error);
 
 // async request completed
-gboolean eas_ping_req_MessageComplete(EasPingReq *self, xmlDoc* doc, GError* error);
+gboolean eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error);
 
 
 G_END_DECLS

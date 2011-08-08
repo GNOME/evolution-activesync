@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -61,39 +61,39 @@ G_BEGIN_DECLS
 
 /**
  *
- * 
+ *
  * @param[in] node
  *	  XML 'root' node from where we will start our parsing.
  * @param[in] server_id [full transfer]
  *	  Server identifier for this email, will be freed by g_free()
  *
- * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
+ * @result NULL or A serialized EasEmailInfo GObject, caller is responsible
  * for freeing the data with g_free().
  */
 gchar *eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server_id);
 
 /**
  *
- * 
+ *
  * @param[in] node
  *	  XML 'root' node from where we will start our parsing.
  * @param[in] server_id [full transfer]
  *	  Server identifier for this email, will be freed by g_free()
  *
- * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
+ * @result NULL or A serialized EasEmailInfo GObject, caller is responsible
  * for freeing the data with g_free().
  */
 gchar *eas_email_info_translator_parse_delete_response (const xmlNode *node, gchar *server_id);
 
 /**
  *
- * 
+ *
  * @param[in] node
  *	  XML 'root' node from where we will start our parsing.
  * @param[in] server_id [full transfer]
  *	  Server identifier for this email, will be freed by g_free()
  *
- * @result NULL or A serialized EasEmailInfo GObject, caller is responsible 
+ * @result NULL or A serialized EasEmailInfo GObject, caller is responsible
  * for freeing the data with g_free().
  */
 gchar *eas_email_info_translator_parse_update_response (const xmlNode *node, gchar *server_id);
@@ -101,20 +101,20 @@ gchar *eas_email_info_translator_parse_update_response (const xmlNode *node, gch
 
 /**
  * builds the <ApplicationData> part of XML for a request using the provided EasEmailInfo
- * 
+ *
  * @param[in] doc
  *	  ONLY USED FOR DEBUG
  * @param app_data
- *	  Existing XML node point at which we need to insert the read flag 
+ *	  Existing XML node point at which we need to insert the read flag
  *	  status and catagory list.
  * @param[in] email_info
  *	  Source email structure from which we are extracting the data.
  *
  * @result TRUE if successful, otherwise FALSE.
  */
-gboolean eas_email_info_translator_build_update_request(const xmlDocPtr doc, 
-                                                        xmlNodePtr app_data, 
-                                                        const EasEmailInfo* email_info);
+gboolean eas_email_info_translator_build_update_request (const xmlDocPtr doc,
+							 xmlNodePtr app_data,
+							 const EasEmailInfo* email_info);
 
 G_END_DECLS
 

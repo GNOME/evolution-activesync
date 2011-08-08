@@ -72,186 +72,181 @@ G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
 static void
 eas_mail_init (EasMail *object)
 {
-    g_debug ("eas_mail_init++");
+	g_debug ("eas_mail_init++");
 
-    g_debug ("eas_mail_init--");
+	g_debug ("eas_mail_init--");
 }
 
 static void
 eas_mail_finalize (GObject *object)
 {
-    /* TODO: Add deinitalization code here */
+	/* TODO: Add deinitalization code here */
 
-    G_OBJECT_CLASS (eas_mail_parent_class)->finalize (object);
+	G_OBJECT_CLASS (eas_mail_parent_class)->finalize (object);
 }
 
 static void
 eas_mail_class_init (EasMailClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasInterfaceBaseClass* base_class = EAS_INTERFACE_BASE_CLASS (klass);
-	
-    g_debug ("eas_mail_class_init++");
 
-    object_class->finalize = eas_mail_finalize;
+	g_debug ("eas_mail_class_init++");
 
-	// create the progress signal we emit 
-	base_class->signal_id = g_signal_new ( EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
-	G_OBJECT_CLASS_TYPE ( klass ),  										// type this signal pertains to
-	G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
-	0,																		// class offset
-	NULL,																	// accumulator
-	NULL,																	// user data for accumulator
-    eas_marshal_VOID__UINT_UINT,											// Function to marshal the signal data into the parameters of the signal call  
-	G_TYPE_NONE,															// handler return type
-	2,																		// Number of parameter GTypes to follow
-	// GTypes of the parameters
-	G_TYPE_UINT,
-	G_TYPE_UINT);
-	
-    /* Binding to GLib/D-Bus" */
-    dbus_g_object_type_install_info (EAS_TYPE_MAIL,
-                                     &dbus_glib_eas_mail_object_info);
-    g_debug ("eas_mail_class_init--");
+	object_class->finalize = eas_mail_finalize;
+
+	// create the progress signal we emit
+	base_class->signal_id = g_signal_new (EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
+					      G_OBJECT_CLASS_TYPE (klass),  										// type this signal pertains to
+					      G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
+					      0,																		// class offset
+					      NULL,																	// accumulator
+					      NULL,																	// user data for accumulator
+					      eas_marshal_VOID__UINT_UINT,											// Function to marshal the signal data into the parameters of the signal call
+					      G_TYPE_NONE,															// handler return type
+					      2,																		// Number of parameter GTypes to follow
+					      // GTypes of the parameters
+					      G_TYPE_UINT,
+					      G_TYPE_UINT);
+
+	/* Binding to GLib/D-Bus" */
+	dbus_g_object_type_install_info (EAS_TYPE_MAIL,
+					 &dbus_glib_eas_mail_object_info);
+	g_debug ("eas_mail_class_init--");
 }
 
 EasMail* eas_mail_new (void)
 {
-    EasMail* easMail = NULL;
-    easMail = g_object_new (EAS_TYPE_MAIL, NULL);
-    return easMail;
+	EasMail* easMail = NULL;
+	easMail = g_object_new (EAS_TYPE_MAIL, NULL);
+	return easMail;
 }
 
 gboolean
 eas_mail_start_sync (EasMail* easMailObj, gint valueIn, GError** error)
 {
-    /*
-    guint64 account_uid = 12345;
-    const gchar* sync_key =NULL;
-    gchar **ret_sync_key =NULL;
-    gchar **ret_created_folders_array =NULL;
-    gchar **ret_updated_folders_array =NULL;
-    gchar **ret_deleted_folders_array =NULL;
+	/*
+	guint64 account_uid = 12345;
+	const gchar* sync_key =NULL;
+	gchar **ret_sync_key =NULL;
+	gchar **ret_created_folders_array =NULL;
+	gchar **ret_updated_folders_array =NULL;
+	gchar **ret_deleted_folders_array =NULL;
 
 
-    eas_connection_folder_sync(easMailObj->easConnection,
-                                                account_uid,
-                            sync_key,
-                            ret_sync_key,
-                            ret_created_folders_array,
-                            ret_updated_folders_array,
-                            ret_deleted_folders_array,
-                            error);
-    */
-    return TRUE;
+	eas_connection_folder_sync(easMailObj->easConnection,
+	                                            account_uid,
+	                        sync_key,
+	                        ret_sync_key,
+	                        ret_created_folders_array,
+	                        ret_updated_folders_array,
+	                        ret_deleted_folders_array,
+	                        error);
+	*/
+	return TRUE;
 }
 
 void
 eas_mail_test_001 (EasMail* obj, DBusGMethodInvocation* context)
 {
 
-    GError *error = NULL;
-    gchar *ok_str = g_strdup ("OK");
+	GError *error = NULL;
+	gchar *ok_str = g_strdup ("OK");
 
-    g_debug (">> eas_mail_test_001()");
+	g_debug (">> eas_mail_test_001()");
 
-    if (error)
-    {
-        g_debug (">> eas_mail_test_001 -error-");
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    else
-    {
-        g_debug (">> eas_mail_test_001 -No error-");
-        dbus_g_method_return (context, ok_str);
-    }
+	if (error) {
+		g_debug (">> eas_mail_test_001 -error-");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	} else {
+		g_debug (">> eas_mail_test_001 -No error-");
+		dbus_g_method_return (context, ok_str);
+	}
 
-    g_free (ok_str);
+	g_free (ok_str);
 }
 
 gboolean
-eas_mail_get_item_estimate (EasMail* self, 
-                           const gchar *account_uid, 
-                           const gchar *sync_key,
-                           const gchar *collection_id, 
-                           DBusGMethodInvocation* context)
+eas_mail_get_item_estimate (EasMail* self,
+			    const gchar *account_uid,
+			    const gchar *sync_key,
+			    const gchar *collection_id,
+			    DBusGMethodInvocation* context)
 {
 	gboolean ret = TRUE;
 	EasConnection *connection;
-    GError *error = NULL;
-    EasGetItemEstimateReq *req = NULL;
-	
-	g_debug("eas_mail_get_item_estimate++");
+	GError *error = NULL;
+	EasGetItemEstimateReq *req = NULL;
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-        return FALSE;
-    }
+	g_debug ("eas_mail_get_item_estimate++");
 
-    req = eas_get_item_estimate_req_new (sync_key, collection_id, context);
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
 
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	req = eas_get_item_estimate_req_new (sync_key, collection_id, context);
 
-    // Activate the request
-    ret = eas_get_item_estimate_req_Activate (req, &error);			
-	
-	g_debug("eas_mail_get_item_estimate--");
-	
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
+
+	// Activate the request
+	ret = eas_get_item_estimate_req_Activate (req, &error);
+
+	g_debug ("eas_mail_get_item_estimate--");
+
 	return ret;
 }
 
 gboolean
 eas_mail_sync_email_folder_hierarchy (EasMail* self,
-                                      const gchar* account_uid,
-                                      const gchar* sync_key,
-                                      DBusGMethodInvocation* context)
+				      const gchar* account_uid,
+				      const gchar* sync_key,
+				      DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    GError *error = NULL;
-    EasSyncFolderHierarchyReq *req = NULL;
-    gboolean ret;
+	EasConnection *connection;
+	GError *error = NULL;
+	EasSyncFolderHierarchyReq *req = NULL;
+	gboolean ret;
 
-    g_debug ("eas_mail_sync_email_folder_hierarchy++ : account_uid[%s]",
-             (account_uid ? account_uid : "NULL"));
+	g_debug ("eas_mail_sync_email_folder_hierarchy++ : account_uid[%s]",
+		 (account_uid ? account_uid : "NULL"));
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-        return FALSE;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
 
-    g_debug ("eas_mail_sync_email_folder_hierarchy++ 1");
+	g_debug ("eas_mail_sync_email_folder_hierarchy++ 1");
 
-    req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
+	req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
 
-    g_debug ("eas_mail_sync_email_folder_hierarchy++ 2");
+	g_debug ("eas_mail_sync_email_folder_hierarchy++ 2");
 
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
 
-    g_debug ("eas_mail_sync_email_folder_hierarchy++ 3");
+	g_debug ("eas_mail_sync_email_folder_hierarchy++ 3");
 
-    // Activate the request
-    ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
+	// Activate the request
+	ret = eas_sync_folder_hierarchy_req_Activate (req, &error);
 
-    g_debug ("eas_mail_sync_email_folder_hierarchy--");
+	g_debug ("eas_mail_sync_email_folder_hierarchy--");
 	return TRUE;
 }
 
@@ -267,180 +262,171 @@ eas_mail_sync_email_folder_hierarchy (EasMail* self,
  */
 gboolean
 eas_mail_sync_folder_email (EasMail* self,
-                            const gchar* account_uid,
-                            const gchar* sync_key,
-                            const gchar *collection_id,
-                            DBusGMethodInvocation* context)
+			    const gchar* account_uid,
+			    const gchar* sync_key,
+			    const gchar *collection_id,
+			    DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    GError *error = NULL;
-    EasSyncReq *req = NULL;
-    gboolean ret = TRUE;
+	EasConnection *connection;
+	GError *error = NULL;
+	EasSyncReq *req = NULL;
+	gboolean ret = TRUE;
 
-    g_debug ("eas_mail_sync_folder_email++");
+	g_debug ("eas_mail_sync_folder_email++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
-    // Create Request
-    req = eas_sync_req_new (sync_key,
-                                 account_uid,
-                                 collection_id,
-                                 EAS_ITEM_MAIL,
-                                 context);
+	// Create Request
+	req = eas_sync_req_new (sync_key,
+				account_uid,
+				collection_id,
+				EAS_ITEM_MAIL,
+				context);
 
-    eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
 
-    // Activate Request
+	// Activate Request
 
-    ret = eas_sync_req_Activate (req,                                 
-                                 &error);
-	
+	ret = eas_sync_req_Activate (req,
+				     &error);
+
 
 finish:
 
-    if (!ret)
-    {
-        g_debug ("returning error %s", error->message);
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
- 
-    return ret;
+	if (!ret) {
+		g_debug ("returning error %s", error->message);
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+
+	return ret;
 }
 
 gboolean
 eas_mail_delete_email (EasMail *easMailObj,
-                       const gchar* account_uid,
-                       const gchar *sync_key,
-                       const gchar *folder_id,
-                       const gchar **server_ids_array,
-                       DBusGMethodInvocation* context)
+		       const gchar* account_uid,
+		       const gchar *sync_key,
+		       const gchar *folder_id,
+		       const gchar **server_ids_array,
+		       DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret = TRUE;
-    GError *error = NULL;
-    GSList *server_ids_list = NULL;
-    int index = 0;
-    const gchar* id = NULL;
-    EasDeleteReq *req = NULL;
-    GSList *item = NULL;
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	GSList *server_ids_list = NULL;
+	int index = 0;
+	const gchar* id = NULL;
+	EasDeleteReq *req = NULL;
+	GSList *item = NULL;
 
-    g_debug ("eas_mail_delete_email++");
-    g_assert (server_ids_array);
+	g_debug ("eas_mail_delete_email++");
+	g_assert (server_ids_array);
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
-    // Convert server_ids_array into GSList
-    while ( (id = server_ids_array[index++]))
-    {
-        server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
-    }
+	// Convert server_ids_array into GSList
+	while ( (id = server_ids_array[index++])) {
+		server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
+	}
 
-    // Create the request
-    req = eas_delete_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
+	// Create the request
+	req = eas_delete_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
 
-    // Cleanup the gslist
-    item = server_ids_list;
-    for (; item; item = item->next)
-    {
-        g_free (item->data);
-        item->data = NULL;
-    }
-    g_slist_free (server_ids_list);
+	// Cleanup the gslist
+	item = server_ids_list;
+	for (; item; item = item->next) {
+		g_free (item->data);
+		item->data = NULL;
+	}
+	g_slist_free (server_ids_list);
 
-    eas_request_base_SetConnection (&req->parent_instance,
-				    connection);
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
 
-    // Start the request
-    ret = eas_delete_req_Activate (req, &error);
+	// Start the request
+	ret = eas_delete_req_Activate (req, &error);
 
 finish:
-    if (!ret)
-    {
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    g_debug ("eas_mail_delete_email--");
-    return ret;
+	if (!ret) {
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+	g_debug ("eas_mail_delete_email--");
+	return ret;
 }
 
 gboolean
 eas_mail_update_emails (EasMail *self,
-                        const gchar* account_uid,
-                        const gchar *sync_key,
-                        const gchar *folder_id,
-                        const gchar **serialised_email_array,
-                        DBusGMethodInvocation* context)
+			const gchar* account_uid,
+			const gchar *sync_key,
+			const gchar *folder_id,
+			const gchar **serialised_email_array,
+			DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    GError *error = NULL;
-    EasUpdateEmailReq *req = NULL;
-    gboolean ret = TRUE;
+	EasConnection *connection;
+	GError *error = NULL;
+	EasUpdateEmailReq *req = NULL;
+	gboolean ret = TRUE;
 
-    g_debug ("eas_mail_update_email++");
+	g_debug ("eas_mail_update_email++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
-    // Create the request
-    g_debug ("create request");
-    req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, context);
-    if (!req)
-    {
-        g_set_error (&error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     ("out of memory"));
-        ret = FALSE;
-        goto finish;
-    }
+	// Create the request
+	g_debug ("create request");
+	req = eas_update_email_req_new (account_uid, sync_key, folder_id, serialised_email_array, context);
+	if (!req) {
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
+		ret = FALSE;
+		goto finish;
+	}
 
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
 
-    // Start the request
-    g_debug ("start request");
-    ret = eas_update_email_req_Activate (req, &error);
+	// Start the request
+	g_debug ("start request");
+	ret = eas_update_email_req_Activate (req, &error);
 
 finish:
-    if (!ret)
-    {
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    g_debug ("eas_mail_update_email--");
-    return ret;
+	if (!ret) {
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+	g_debug ("eas_mail_update_email--");
+	return ret;
 }
 
 /**
@@ -457,314 +443,299 @@ finish:
  */
 gboolean
 eas_mail_fetch_email_body (EasMail* self,
-                           const gchar* account_uid,
-                           const gchar* collection_id,
-                           const gchar *server_id,
-                           const gchar *mime_directory,
-                           guint request_id,			// passed back with progress signal
-                           DBusGMethodInvocation* context)
+			   const gchar* account_uid,
+			   const gchar* collection_id,
+			   const gchar *server_id,
+			   const gchar *mime_directory,
+			   guint request_id,			// passed back with progress signal
+			   DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret;
-    GError *error = NULL;
-    EasGetEmailBodyReq *req = NULL;
+	EasConnection *connection;
+	gboolean ret;
+	GError *error = NULL;
+	EasGetEmailBodyReq *req = NULL;
 
-    g_debug ("eas_mail_fetch_email_body++");
+	g_debug ("eas_mail_fetch_email_body++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
 		goto finish;
-    }
+	}
 
-    // Create Request 
-    req = eas_get_email_body_req_new (account_uid,
-                                      collection_id,
-                                      server_id,
-                                      mime_directory,
-                                      EAS_ITEM_MAIL,
-                                      context);
+	// Create Request
+	req = eas_get_email_body_req_new (account_uid,
+					  collection_id,
+					  server_id,
+					  mime_directory,
+					  EAS_ITEM_MAIL,
+					  context);
 
-    eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));		
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (self));
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 
-    ret = eas_get_email_body_req_Activate (req, &error);
+	ret = eas_get_email_body_req_Activate (req, &error);
 
 
 finish:
-    if (!ret)
-    {
-        g_assert (error != NULL);
-        g_warning ("eas_mail_fetch_email_body - failed to get data from message");
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
+	if (!ret) {
+		g_assert (error != NULL);
+		g_warning ("eas_mail_fetch_email_body - failed to get data from message");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
 
-    g_debug ("eas_mail_fetch_email_body--");
-    return TRUE;
+	g_debug ("eas_mail_fetch_email_body--");
+	return TRUE;
 }
 
 gboolean
 eas_mail_fetch_attachment (EasMail* self,
-                           const gchar* account_uid,
-                           const gchar *file_reference,
-                           const gchar *mime_directory,
-                           guint request_id,
-                           DBusGMethodInvocation* context)
+			   const gchar* account_uid,
+			   const gchar *file_reference,
+			   const gchar *mime_directory,
+			   guint request_id,
+			   DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret;
-    GError *error = NULL;
-    EasGetEmailAttachmentReq *req = NULL;
+	EasConnection *connection;
+	gboolean ret;
+	GError *error = NULL;
+	EasGetEmailAttachmentReq *req = NULL;
 
-    g_debug ("eas_mail_fetch_attachment++");
+	g_debug ("eas_mail_fetch_attachment++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-        return FALSE;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
 
-    // Create Request
-    req = eas_get_email_attachment_req_new (account_uid,
-                                            file_reference,
-                                            mime_directory,
-                                            context);
+	// Create Request
+	req = eas_get_email_attachment_req_new (account_uid,
+						file_reference,
+						mime_directory,
+						context);
 
-    eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(self));		
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (self));
 	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
-	
+
 	ret = eas_get_email_attachment_req_Activate (req, &error);
 
 
- if (!ret)
-    {
-        g_assert (error != NULL);
-        g_warning ("eas_mail_fetch_attachment - failed to get data from message");
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-  
- g_debug ("eas_mail_fetch_attachment--");
-    return TRUE;
+	if (!ret) {
+		g_assert (error != NULL);
+		g_warning ("eas_mail_fetch_attachment - failed to get data from message");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+
+	g_debug ("eas_mail_fetch_attachment--");
+	return TRUE;
 }
 
 
 gboolean
 eas_mail_send_email (EasMail* easMailObj,
-                     const gchar* account_uid,
-                     const gchar* clientid,
-                     const gchar *mime_file,
-                     guint request_id,
-                     DBusGMethodInvocation* context)
+		     const gchar* account_uid,
+		     const gchar* clientid,
+		     const gchar *mime_file,
+		     guint request_id,
+		     DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret = TRUE;
-    GError *error = NULL;
-    EasSendEmailReq *req = NULL;
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasSendEmailReq *req = NULL;
 
-    g_debug ("eas_mail_send_email++");
+	g_debug ("eas_mail_send_email++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
-    // Create Request
-    req = eas_send_email_req_new (account_uid, context, clientid, mime_file);
+	// Create Request
+	req = eas_send_email_req_new (account_uid, context, clientid, mime_file);
 
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
 
-	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE(easMailObj));	
-	eas_request_base_SetRequestId (&req->parent_instance, request_id);	
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
+	eas_request_base_SetRequestId (&req->parent_instance, request_id);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);//incoming progress updates
-	
-    // Activate Request
-    ret = eas_send_email_req_Activate (req, &error);
+
+	// Activate Request
+	ret = eas_send_email_req_Activate (req, &error);
 
 
 finish:
-    if (!ret)
-    {
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    g_debug ("eas_mail_send_email--");
-    return ret;
+	if (!ret) {
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+	g_debug ("eas_mail_send_email--");
+	return ret;
 }
 
 
 gboolean
 eas_mail_move_emails_to_folder (EasMail* easMailObj,
-                     const gchar* account_uid,
-                     const gchar** server_ids_array,
-                     const gchar *src_folder_id,
-                     const gchar *dest_folder_id,
-                     DBusGMethodInvocation* context)
+				const gchar* account_uid,
+				const gchar** server_ids_array,
+				const gchar *src_folder_id,
+				const gchar *dest_folder_id,
+				DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret = TRUE;
-    GError *error = NULL;
-    EasMoveEmailReq *req = NULL;
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasMoveEmailReq *req = NULL;
 	GSList *server_ids_list = NULL, *l = NULL;
-    int index = 0;
-    const gchar* id = NULL;
-		
+	int index = 0;
+	const gchar* id = NULL;
+
 	g_debug ("eas_mail_move_emails_to_folder++");
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
-    // Convert server_ids_array into GSList
-    while ( (id = server_ids_array[index++]))
-    {
-        server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
-    }
-	
-    // Create Request
-    req = eas_move_email_req_new (account_uid, server_ids_list, src_folder_id, dest_folder_id, context);
+	// Convert server_ids_array into GSList
+	while ( (id = server_ids_array[index++])) {
+		server_ids_list = g_slist_prepend (server_ids_list, g_strdup (id));
+	}
 
-    // Cleanup the gslist
-    l = server_ids_list;
-    for (; l; l = l->next)
-    {
-        g_free (l->data);
-        l->data = NULL;
-    }
-    g_slist_free (server_ids_list);
-	
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	// Create Request
+	req = eas_move_email_req_new (account_uid, server_ids_list, src_folder_id, dest_folder_id, context);
 
-    // Activate Request
-    ret = eas_move_email_req_Activate (req, &error);
-    if (!ret)
-    {
-        goto finish;
-    }
+	// Cleanup the gslist
+	l = server_ids_list;
+	for (; l; l = l->next) {
+		g_free (l->data);
+		l->data = NULL;
+	}
+	g_slist_free (server_ids_list);
 
-	
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
+
+	// Activate Request
+	ret = eas_move_email_req_Activate (req, &error);
+	if (!ret) {
+		goto finish;
+	}
+
+
 finish:
-    if (!ret)
-    {
-		g_debug("dbus_g_method_return_error");
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-	
-    g_debug ("eas_mail_move_emails_to_folder--");
-    return ret;
+	if (!ret) {
+		g_debug ("dbus_g_method_return_error");
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+
+	g_debug ("eas_mail_move_emails_to_folder--");
+	return ret;
 }
 
-gboolean 
-eas_mail_watch_email_folders(EasMail* easMailObj,
-                                const gchar* account_uid,
-                                const gchar* heartbeat,
-                                const gchar **folder_array,
-                                DBusGMethodInvocation* context)
+gboolean
+eas_mail_watch_email_folders (EasMail* easMailObj,
+			      const gchar* account_uid,
+			      const gchar* heartbeat,
+			      const gchar **folder_array,
+			      DBusGMethodInvocation* context)
 {
-    EasConnection *connection;
-    gboolean ret = TRUE;
-    GError *error = NULL;
-    GSList *folder_ids_list = NULL;
-    int index = 0;
-    const gchar* id = NULL;
-    EasPingReq *req = NULL;
-    GSList *item = NULL;
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	GSList *folder_ids_list = NULL;
+	int index = 0;
+	const gchar* id = NULL;
+	EasPingReq *req = NULL;
+	GSList *item = NULL;
 
-    g_debug ("eas_mail_watch_email_folders++");
-    g_assert (folder_array);
+	g_debug ("eas_mail_watch_email_folders++");
+	g_assert (folder_array);
 
-    connection = eas_connection_find (account_uid);
-    if (!connection)
-    {
-        g_set_error (&error,
-                     EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
-                     "Failed to find account [%s]",
-                     account_uid);
-        ret = FALSE;
-        goto finish;
-    }
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+		ret = FALSE;
+		goto finish;
+	}
 
 	g_debug ("eas_mail_watch_email_folders1");
-    // Convert server_ids_array into GSList
-    while ( (id = folder_array[index++]))
-    {
-		g_debug("Folder id = [%s]", id);
-        folder_ids_list = g_slist_prepend (folder_ids_list, g_strdup (id));
-    }
+	// Convert server_ids_array into GSList
+	while ( (id = folder_array[index++])) {
+		g_debug ("Folder id = [%s]", id);
+		folder_ids_list = g_slist_prepend (folder_ids_list, g_strdup (id));
+	}
 	g_debug ("eas_mail_watch_email_folders2");
 
-    // Create the request
-    req = eas_ping_req_new (account_uid, heartbeat, folder_ids_list, context);
+	// Create the request
+	req = eas_ping_req_new (account_uid, heartbeat, folder_ids_list, context);
 
 	g_debug ("eas_mail_watch_email_folders3");
 
-    // Cleanup the gslist
-    item = folder_ids_list;
-    for (; item; item = item->next)
-    {
-        g_free (item->data);
-        item->data = NULL;
-    }
-    g_slist_free (folder_ids_list);
+	// Cleanup the gslist
+	item = folder_ids_list;
+	for (; item; item = item->next) {
+		g_free (item->data);
+		item->data = NULL;
+	}
+	g_slist_free (folder_ids_list);
 
-    eas_request_base_SetConnection (&req->parent_instance,
-                                    connection);
+	eas_request_base_SetConnection (&req->parent_instance,
+					connection);
 
 	g_debug ("eas_mail_watch_email_folder4");
-    // Start the request
-    ret = eas_ping_req_Activate (req, &error);
+	// Start the request
+	ret = eas_ping_req_Activate (req, &error);
 
 	g_debug ("eas_mail_watch_email_folders5");
 
 finish:
-    if (!ret)
-    {
+	if (!ret) {
 		g_debug ("eas_mail_watch_email_folders6");
-        g_assert (error != NULL);
-        dbus_g_method_return_error (context, error);
-        g_error_free (error);
-    }
-    g_debug ("eas_mail_watch_email_folders--");
-    return ret;
+		g_assert (error != NULL);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+	}
+	g_debug ("eas_mail_watch_email_folders--");
+	return ret;
 }

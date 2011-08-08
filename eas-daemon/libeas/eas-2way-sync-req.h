@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,22 +69,20 @@ typedef struct _Eas2WaySyncReqClass Eas2WaySyncReqClass;
 typedef struct _Eas2WaySyncReq Eas2WaySyncReq;
 typedef struct _Eas2WaySyncReqPrivate Eas2WaySyncReqPrivate;
 
-struct _Eas2WaySyncReqClass
-{
+struct _Eas2WaySyncReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _Eas2WaySyncReq
-{
+struct _Eas2WaySyncReq {
 	EasRequestBase parent_instance;
-	
+
 	Eas2WaySyncReqPrivate *priv;
 };
 
 GType eas_2way_sync_req_get_type (void) G_GNUC_CONST;
 
 
-/** 
+/**
  * Create a new item update request GObject
  *
  * @param[in] syncKey
@@ -109,15 +107,15 @@ GType eas_2way_sync_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated Eas2WaySyncReq GObject or NULL
  */
-Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey, 
-                              const gchar* accountID, 
-                              const gchar* folderId, 
-                              guint filter_type,
-                              EasItemType type,
-                              GSList *add_items,
-                              GSList *delete_items,
-                              GSList *change_items,                                       
-                              DBusGMethodInvocation *context);
+Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
+				       const gchar* accountID,
+				       const gchar* folderId,
+				       guint filter_type,
+				       EasItemType type,
+				       GSList *add_items,
+				       GSList *delete_items,
+				       GSList *change_items,
+				       DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -131,8 +129,8 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_2way_sync_req_Activate (Eas2WaySyncReq *self, 
-                                GError** error);
+gboolean eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
+				     GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -148,12 +146,12 @@ gboolean eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
  *
- * @return TRUE if request is finished and needs cleaning up by connection 
- *    object, otherwise FALSE. 
+ * @return TRUE if request is finished and needs cleaning up by connection
+ *    object, otherwise FALSE.
  */
-gboolean eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, 
-										  xmlDoc* doc, 
-										  GError* error);
+gboolean eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self,
+					    xmlDoc* doc,
+					    GError* error);
 G_END_DECLS
 
 #endif /* _EAS_2WAY_SYNC_REQ_H_ */

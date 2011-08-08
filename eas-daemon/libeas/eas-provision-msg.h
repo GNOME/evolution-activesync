@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasProvisionMsgClass EasProvisionMsgClass;
 typedef struct _EasProvisionMsg EasProvisionMsg;
 typedef struct _EasProvisionMsgPrivate EasProvisionMsgPrivate;
 
-struct _EasProvisionMsgClass
-{
+struct _EasProvisionMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasProvisionMsg
-{
+struct _EasProvisionMsg {
 	EasMsgBase parent_instance;
 
 	EasProvisionMsgPrivate *priv;
@@ -97,15 +95,15 @@ EasProvisionMsg* eas_provision_msg_new (void);
  * @param[in] self
  *	  The EasProvisionMsg GObject instance.
  *
- * @return NULL or libxml DOM tree structure containing the XML for the message 
+ * @return NULL or libxml DOM tree structure containing the XML for the message
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
  *		   [full transfer]
  */
 xmlDoc* eas_provision_msg_build_message (EasProvisionMsg* self);
 
 /**
- * Parses the response from the server, storing the email attachment according 
- * to the parameters set when the EasProvisionMsg GObject instance was 
+ * Parses the response from the server, storing the email attachment according
+ * to the parameters set when the EasProvisionMsg GObject instance was
  * created.
  *
  * @param[in] self
@@ -119,10 +117,10 @@ xmlDoc* eas_provision_msg_build_message (EasProvisionMsg* self);
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_provision_msg_parse_response (EasProvisionMsg* self, 
-                                  xmlDoc* doc, 
-                                  GError** error);
+gboolean
+eas_provision_msg_parse_response (EasProvisionMsg* self,
+				  xmlDoc* doc,
+				  GError** error);
 
 /**
  * Getter for policy key.

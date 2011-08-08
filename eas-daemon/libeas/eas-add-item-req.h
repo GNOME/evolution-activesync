@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -68,21 +68,19 @@ typedef struct _EasAddItemReqClass EasAddItemReqClass;
 typedef struct _EasAddItemReq EasAddItemReq;
 typedef struct _EasAddItemReqPrivate EasAddItemReqPrivate;
 
-struct _EasAddItemReqClass
-{
+struct _EasAddItemReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasAddItemReq
-{
+struct _EasAddItemReq {
 	EasRequestBase parent_instance;
-	
+
 	EasAddItemReqPrivate * priv;
 };
 
 GType eas_add_item_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new item request GObject
  *
  * @param[in] account_id
@@ -98,12 +96,12 @@ GType eas_add_item_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasAddItemReq GObject or NULL
  */
-EasAddItemReq *eas_add_item_req_new(const gchar* account_id, 
-                                            const gchar *sync_key, 
-                                            const gchar *folder_id,
-                                            const EasItemType item_type,
-                                            GSList *serialised_calendar, 
-                                            DBusGMethodInvocation *context);
+EasAddItemReq *eas_add_item_req_new (const gchar* account_id,
+				     const gchar *sync_key,
+				     const gchar *folder_id,
+				     const EasItemType item_type,
+				     GSList *serialised_calendar,
+				     DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -117,7 +115,7 @@ EasAddItemReq *eas_add_item_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_add_item_req_Activate(EasAddItemReq *self, GError **error);
+gboolean eas_add_item_req_Activate (EasAddItemReq *self, GError **error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -138,9 +136,9 @@ gboolean eas_add_item_req_Activate(EasAddItemReq *self, GError **error);
  *    object, otherwise FALSE.
  */
 gboolean
-eas_add_item_req_MessageComplete(EasAddItemReq *self, 
-                                     xmlDoc* doc, 
-                                     GError* error);
+eas_add_item_req_MessageComplete (EasAddItemReq *self,
+				  xmlDoc* doc,
+				  GError* error);
 
 
 

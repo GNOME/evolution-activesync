@@ -51,9 +51,8 @@
 
 #include "eas-interface-base.h"
 
-struct _EasInterfaceBasePrivate
-{
-    EasInterfaceType interfaceType;
+struct _EasInterfaceBasePrivate {
+	EasInterfaceType interfaceType;
 	guint signal_id;
 };
 
@@ -64,15 +63,15 @@ G_DEFINE_TYPE (EasInterfaceBase, eas_interface_base, G_TYPE_OBJECT);
 static void
 eas_interface_base_init (EasInterfaceBase *object)
 {
-    EasInterfaceBasePrivate *priv;
+	EasInterfaceBasePrivate *priv;
 
-    object->priv = priv = EAS_INTERFACE_BASE_PRIVATE (object);
+	object->priv = priv = EAS_INTERFACE_BASE_PRIVATE (object);
 
-    g_debug ("eas_interface_base_init++");
+	g_debug ("eas_interface_base_init++");
 
-    //priv->signal_id = 0;
-	
-    g_debug ("eas_interface_base_init--");
+	//priv->signal_id = 0;
+
+	g_debug ("eas_interface_base_init--");
 }
 
 static void
@@ -82,7 +81,7 @@ eas_interface_base_dispose (GObject *object)
 	//EasInterfaceBasePrivate *priv = req->priv;
 
 	g_debug ("eas_interface_base_dispose++");
-    G_OBJECT_CLASS (eas_interface_base_parent_class)->dispose (object);
+	G_OBJECT_CLASS (eas_interface_base_parent_class)->dispose (object);
 	g_debug ("eas_interface_base_dispose--");
 }
 
@@ -90,39 +89,39 @@ static void
 eas_interface_base_finalize (GObject *object)
 {
 	g_debug ("eas_interface_base_finalize++");
-    G_OBJECT_CLASS (eas_interface_base_parent_class)->finalize (object);
+	G_OBJECT_CLASS (eas_interface_base_parent_class)->finalize (object);
 	g_debug ("eas_interface_base_finalize--");
 }
 
 static void
 eas_interface_base_class_init (EasInterfaceBaseClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-    g_debug ("eas_interface_base_class_init++");
-    g_type_class_add_private (klass, sizeof (EasInterfaceBasePrivate));
+	g_debug ("eas_interface_base_class_init++");
+	g_type_class_add_private (klass, sizeof (EasInterfaceBasePrivate));
 
-    object_class->finalize = eas_interface_base_finalize;
-    object_class->dispose = eas_interface_base_dispose;
+	object_class->finalize = eas_interface_base_finalize;
+	object_class->dispose = eas_interface_base_dispose;
 
-    g_debug ("eas_interface_base_class_init--");
+	g_debug ("eas_interface_base_class_init--");
 }
 
 EasInterfaceType
 eas_interface_base_GetInterfaceType (EasInterfaceBase* self)
 {
-    EasInterfaceBasePrivate *priv = self->priv;
+	EasInterfaceBasePrivate *priv = self->priv;
 
-    return priv->interfaceType;
+	return priv->interfaceType;
 }
 
 void
 eas_interface_base_SetInterfaceType (EasInterfaceBase* self, EasInterfaceType type)
 {
-    EasInterfaceBasePrivate *priv = self->priv;
-    g_debug ("eas_interface_base_SetInterfaceType++");
-    priv->interfaceType = type;
-    g_debug ("eas_interface_base_SetInterfaceType--");
+	EasInterfaceBasePrivate *priv = self->priv;
+	g_debug ("eas_interface_base_SetInterfaceType++");
+	priv->interfaceType = type;
+	g_debug ("eas_interface_base_SetInterfaceType--");
 }
 
 /*

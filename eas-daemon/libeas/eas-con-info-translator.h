@@ -63,15 +63,15 @@
  * Converts the <ApplicationData> element of an Exchange ActiveSync XML response into an
  * EasItemInfo structure (containing an vCard document).
  *
- * @param app_data  
+ * @param app_data
  *      <ApplicationData> element from the Exchange ActiveSync XML response
  * @param[in] server_id [full transfer]
  *      The server ID from the Exchange ActiveSync XML response, will be freed by g_free()
  *
  * @return Serialised EasItemInfo structure
  */
-gchar* eas_con_info_translator_parse_response(xmlNodePtr app_data, 
-                                              gchar* server_id);
+gchar* eas_con_info_translator_parse_response (xmlNodePtr app_data,
+					       gchar* server_id);
 
 
 /**
@@ -82,9 +82,9 @@ gchar* eas_con_info_translator_parse_response(xmlNodePtr app_data,
  * @param calInfo
  *      The EasItemInfo struct containing the vCard string to parse (plus a server ID)
  */
-gboolean eas_con_info_translator_parse_request(xmlDocPtr doc, 
-                                               xmlNodePtr app_data, 
-                                               EasItemInfo* cal_info);
+gboolean eas_con_info_translator_parse_request (xmlDocPtr doc,
+						xmlNodePtr app_data,
+						EasItemInfo* cal_info);
 
 G_END_DECLS
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasSyncFolderMsgClass EasSyncFolderMsgClass;
 typedef struct _EasSyncFolderMsg EasSyncFolderMsg;
 typedef struct _EasSyncFolderMsgPrivate EasSyncFolderMsgPrivate;
 
-struct _EasSyncFolderMsgClass
-{
+struct _EasSyncFolderMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasSyncFolderMsg
-{
+struct _EasSyncFolderMsg {
 	EasMsgBase parent_instance;
 
 	EasSyncFolderMsgPrivate *priv;
@@ -101,15 +99,15 @@ EasSyncFolderMsg* eas_sync_folder_msg_new (const gchar* syncKey, const gchar* ac
  * @param[in] self
  *	  The EasSyncFolderMsg GObject instance.
  *
- * @return NULL or libxml DOM tree structure containing the XML for the message 
+ * @return NULL or libxml DOM tree structure containing the XML for the message
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
  *		   [full transfer]
  */
 xmlDoc* eas_sync_folder_msg_build_message (EasSyncFolderMsg* self);
 
 /**
- * Parses the response from the server, storing the email attachment according 
- * to the parameters set when the EasSyncFolderMsg GObject instance was 
+ * Parses the response from the server, storing the email attachment according
+ * to the parameters set when the EasSyncFolderMsg GObject instance was
  * created.
  *
  * @param[in] self
@@ -123,9 +121,9 @@ xmlDoc* eas_sync_folder_msg_build_message (EasSyncFolderMsg* self);
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, 
-                                             const xmlDoc *doc, 
-                                             GError** error);
+gboolean eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self,
+					     const xmlDoc *doc,
+					     GError** error);
 
 /**
  * Retrieves the response added folders.
@@ -165,7 +163,7 @@ GSList* eas_sync_folder_msg_get_deleted_folders (EasSyncFolderMsg* self);
  *
  * @return NULL or The updated sync key supplied by the server response. [no transfer]
  */
-gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
+gchar* eas_sync_folder_msg_get_syncKey (EasSyncFolderMsg* self);
 
 /**
  * Retrieves the default contact folder id in the response from the server.
@@ -175,7 +173,7 @@ gchar* eas_sync_folder_msg_get_syncKey(EasSyncFolderMsg* self);
  *
  * @return NULL or The updated default contact folder id supplied by the server response. [no transfer]
  */
-gchar* eas_sync_folder_msg_get_def_con_folder(EasSyncFolderMsg* self);
+gchar* eas_sync_folder_msg_get_def_con_folder (EasSyncFolderMsg* self);
 
 /**
  * Retrieves the default calendar folder id in the response from the server.
@@ -185,7 +183,7 @@ gchar* eas_sync_folder_msg_get_def_con_folder(EasSyncFolderMsg* self);
  *
  * @return NULL or The updated default calendar folder id supplied by the server response. [no transfer]
  */
-gchar* eas_sync_folder_msg_get_def_cal_folder(EasSyncFolderMsg* self); 
+gchar* eas_sync_folder_msg_get_def_cal_folder (EasSyncFolderMsg* self);
 
 G_END_DECLS
 

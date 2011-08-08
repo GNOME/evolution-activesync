@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasSendEmailMsgClass EasSendEmailMsgClass;
 typedef struct _EasSendEmailMsg EasSendEmailMsg;
 typedef struct _EasSendEmailMsgPrivate EasSendEmailMsgPrivate;
 
-struct _EasSendEmailMsgClass
-{
+struct _EasSendEmailMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasSendEmailMsg
-{
+struct _EasSendEmailMsg {
 	EasMsgBase parent_instance;
 
 	EasSendEmailMsgPrivate *priv;
@@ -90,7 +88,7 @@ EasSendEmailMsg* eas_send_email_msg_new (const gchar* account_id, const gchar* c
 // build xml for SendMail request
 xmlDoc* eas_send_email_msg_build_message (EasSendEmailMsg* self);
 
-// parse response to SendMail 
+// parse response to SendMail
 gboolean eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** error);
 
 G_END_DECLS

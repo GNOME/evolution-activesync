@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasMoveEmailReqClass EasMoveEmailReqClass;
 typedef struct _EasMoveEmailReq EasMoveEmailReq;
 typedef struct _EasMoveEmailReqPrivate EasMoveEmailReqPrivate;
 
-struct _EasMoveEmailReqClass
-{
+struct _EasMoveEmailReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasMoveEmailReq
-{
+struct _EasMoveEmailReq {
 	EasRequestBase parent_instance;
 
 	EasMoveEmailReqPrivate *priv;
@@ -85,13 +83,13 @@ struct _EasMoveEmailReq
 GType eas_move_email_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasMoveEmailReq *eas_move_email_req_new(const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context);
+EasMoveEmailReq *eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context);
 
 // start async request
-gboolean eas_move_email_req_Activate(EasMoveEmailReq *self, GError** error);
+gboolean eas_move_email_req_Activate (EasMoveEmailReq *self, GError** error);
 
 // async request completed
-gboolean eas_move_email_req_MessageComplete(EasMoveEmailReq *self, xmlDoc* doc, GError* error);
+gboolean eas_move_email_req_MessageComplete (EasMoveEmailReq *self, xmlDoc* doc, GError* error);
 
 G_END_DECLS
 

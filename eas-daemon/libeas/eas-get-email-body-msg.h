@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasGetEmailBodyMsgClass EasGetEmailBodyMsgClass;
 typedef struct _EasGetEmailBodyMsg EasGetEmailBodyMsg;
 typedef struct _EasGetEmailBodyMsgPrivate EasGetEmailBodyMsgPrivate;
 
-struct _EasGetEmailBodyMsgClass
-{
+struct _EasGetEmailBodyMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasGetEmailBodyMsg
-{
+struct _EasGetEmailBodyMsg {
 	EasMsgBase parent_instance;
 
 	EasGetEmailBodyMsgPrivate* priv;
@@ -96,10 +94,10 @@ GType eas_get_email_body_msg_get_type (void) G_GNUC_CONST;
  *
  * @return NULL or a newly created EasGetEmailAttachmentMsg GObject.
  */
-EasGetEmailBodyMsg* 
-eas_get_email_body_msg_new (const gchar* serverUid, 
-							const gchar* collectionId, 
-							const gchar* directoryPath);
+EasGetEmailBodyMsg*
+eas_get_email_body_msg_new (const gchar* serverUid,
+			    const gchar* collectionId,
+			    const gchar* directoryPath);
 
 /**
  * Build the XML required for the message to be send in the request to the server.
@@ -107,16 +105,16 @@ eas_get_email_body_msg_new (const gchar* serverUid,
  * @param[in] self
  *	  The EasGetEmailBodyMsg GObject instance.
  *
- * @return NULL or libxml DOM tree structure containing the XML for the message 
+ * @return NULL or libxml DOM tree structure containing the XML for the message
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
  *		   [full transfer]
  */
-xmlDoc* 
+xmlDoc*
 eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self);
 
 /**
- * Parses the response from the server, storing the email attachment according 
- * to the parameters set when the EasGetEmailBodyMsg GObject instance was 
+ * Parses the response from the server, storing the email attachment according
+ * to the parameters set when the EasGetEmailBodyMsg GObject instance was
  * created.
  *
  * @param[in] self
@@ -130,16 +128,16 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self);
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, 
-									   xmlDoc* doc, 
-									   GError** error);
+gboolean
+eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self,
+				       xmlDoc* doc,
+				       GError** error);
 
-gchar* 
+gchar*
 eas_get_email_body_msg_get_item (EasGetEmailBodyMsg* self);
 
 gboolean
-eas_get_email_body_msg_write_file(EasGetEmailBodyMsg* self, gchar* data);
+eas_get_email_body_msg_write_file (EasGetEmailBodyMsg* self, gchar* data);
 
 G_END_DECLS
 

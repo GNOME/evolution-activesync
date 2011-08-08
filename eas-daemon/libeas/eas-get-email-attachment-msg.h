@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,15 +69,13 @@ typedef struct _EasGetEmailAttachmentMsgClass EasGetEmailAttachmentMsgClass;
 typedef struct _EasGetEmailAttachmentMsg EasGetEmailAttachmentMsg;
 typedef struct _EasGetEmailAttachmentMsgPrivate EasGetEmailAttachmentMsgPrivate;
 
-struct _EasGetEmailAttachmentMsgClass
-{
+struct _EasGetEmailAttachmentMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasGetEmailAttachmentMsg
-{
+struct _EasGetEmailAttachmentMsg {
 	EasMsgBase parent_instance;
-	
+
 	EasGetEmailAttachmentMsgPrivate* priv;
 };
 
@@ -87,15 +85,15 @@ GType eas_get_email_attachment_msg_get_type (void) G_GNUC_CONST;
  * Create a new email attachment message.
  *
  * @param[in] fileReference
- *	  Reference used to identify the file on the server. 
+ *	  Reference used to identify the file on the server.
  * @param[in] directoryPath
  *	  Full path to the directory the file will be written to on the local file system.
  *
  * @return NULL or a newly created EasGetEmailAttachmentMsg GObject.
  */
-EasGetEmailAttachmentMsg* 
-eas_get_email_attachment_msg_new (const gchar *fileReference, 
-								  const gchar* directoryPath);
+EasGetEmailAttachmentMsg*
+eas_get_email_attachment_msg_new (const gchar *fileReference,
+				  const gchar* directoryPath);
 
 /**
  * Build the XML required for the message to be send in the request to the server.
@@ -103,17 +101,17 @@ eas_get_email_attachment_msg_new (const gchar *fileReference,
  * @param[in] self
  *	  The EasGetEmailAttachmentMsg GObject instance.
  *
- * @return NULL or libxml DOM tree structure containing the XML for the message 
+ * @return NULL or libxml DOM tree structure containing the XML for the message
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
  *		   [full transfer]
  */
-xmlDoc* 
+xmlDoc*
 eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self);
 
 
 /**
- * Parses the response from the server, storing the email attachment according 
- * to the parameters set when the EasGetEmailAttachmenentMsg GObject instance 
+ * Parses the response from the server, storing the email attachment according
+ * to the parameters set when the EasGetEmailAttachmenentMsg GObject instance
  * was created.
  *
  * @param[in] self
@@ -127,16 +125,16 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self);
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self, 
-											 xmlDoc* doc, 
-											 GError** error);
+gboolean
+eas_get_email_attachment_msg_parse_response (EasGetEmailAttachmentMsg* self,
+					     xmlDoc* doc,
+					     GError** error);
 
 
 gboolean
-eas_get_email_attachment_msg_write_file(EasGetEmailAttachmentMsg *self,
-                                        gchar * data, 
-                                        GError **error);
+eas_get_email_attachment_msg_write_file (EasGetEmailAttachmentMsg *self,
+					 gchar * data,
+					 GError **error);
 
 G_END_DECLS
 

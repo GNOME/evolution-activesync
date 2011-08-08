@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -71,15 +71,13 @@ typedef struct _EasSyncMsgClass EasSyncMsgClass;
 typedef struct _EasSyncMsg EasSyncMsg;
 typedef struct _EasSyncMsgPrivate EasSyncMsgPrivate;
 
-struct _EasSyncMsgClass
-{
+struct _EasSyncMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasSyncMsg
-{
+struct _EasSyncMsg {
 	EasMsgBase parent_instance;
-	
+
 	EasSyncMsgPrivate *priv;
 };
 
@@ -99,11 +97,11 @@ GType eas_sync_msg_get_type (void) G_GNUC_CONST;
  *
  * @return NULL or a newly created EasSyncMsg GObject.
  */
-EasSyncMsg* 
-eas_sync_msg_new (const gchar* syncKey, 
-                  EasConnection *connection,
-                  const gchar *FolderID, 
-                  const EasItemType type);
+EasSyncMsg*
+eas_sync_msg_new (const gchar* syncKey,
+		  EasConnection *connection,
+		  const gchar *FolderID,
+		  const EasItemType type);
 
 /**
  * Build the XML required for the message to be send in the request to the server.
@@ -124,21 +122,21 @@ eas_sync_msg_new (const gchar* syncKey,
  * @param[in] deleted
  *	  Caller provides a list of ServerId's for the items to be deleted, or NULL.
  *
- * @return NULL or libxml DOM tree structure containing the XML for the message 
+ * @return NULL or libxml DOM tree structure containing the XML for the message
  *		   body. Caller is responsible for freeing the result using xmlFreeDoc().
  *		   [full transfer]
  */
-xmlDoc* 
-eas_sync_msg_build_message (EasSyncMsg* self, 
-                            guint filter_type,
-                            gboolean getChanges, 
-                            GSList *added, 
-                            GSList *updated, 
-                            GSList *deleted);
+xmlDoc*
+eas_sync_msg_build_message (EasSyncMsg* self,
+			    guint filter_type,
+			    gboolean getChanges,
+			    GSList *added,
+			    GSList *updated,
+			    GSList *deleted);
 
 /**
- * Parses the response from the server, storing the email attachment according 
- * to the parameters set when the EasSyncMsg GObject instance was 
+ * Parses the response from the server, storing the email attachment according
+ * to the parameters set when the EasSyncMsg GObject instance was
  * created.
  *
  * @param[in] self
@@ -152,10 +150,10 @@ eas_sync_msg_build_message (EasSyncMsg* self,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_sync_msg_parse_response (EasSyncMsg* self, 
-                             xmlDoc *doc, 
-                             GError** error);
+gboolean
+eas_sync_msg_parse_response (EasSyncMsg* self,
+			     xmlDoc *doc,
+			     GError** error);
 /**
  *
  * @param[in] self
@@ -211,16 +209,16 @@ GSList* eas_sync_msg_get_deleted_items (EasSyncMsg* self);
  *
  * @return NULL or The updated sync key supplied by the server response. [no transfer]
  */
-gchar* eas_sync_msg_get_syncKey(EasSyncMsg* self);
+gchar* eas_sync_msg_get_syncKey (EasSyncMsg* self);
 
 /**
  *
  * @param[in] self
  *	  The EasSyncMsg GObject instance.
  *
- * @return TRUE if more available, otherwise FALSE. 
+ * @return TRUE if more available, otherwise FALSE.
  */
-gboolean eas_sync_msg_get_more_available(EasSyncMsg* self);
+gboolean eas_sync_msg_get_more_available (EasSyncMsg* self);
 
 G_END_DECLS
 

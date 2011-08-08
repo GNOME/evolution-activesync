@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,22 +69,20 @@ typedef struct _EasSyncReqClass EasSyncReqClass;
 typedef struct _EasSyncReq EasSyncReq;
 typedef struct _EasSyncReqPrivate EasSyncReqPrivate;
 
-struct _EasSyncReqClass
-{
+struct _EasSyncReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasSyncReq
-{
+struct _EasSyncReq {
 	EasRequestBase parent_instance;
-	
+
 	EasSyncReqPrivate *priv;
 };
 
 GType eas_sync_req_get_type (void) G_GNUC_CONST;
 
 
-/** 
+/**
  * Create a new item update request GObject
  *
  * @param[in] syncKey
@@ -101,11 +99,11 @@ GType eas_sync_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
-EasSyncReq *eas_sync_req_new (const gchar* syncKey, 
-                              const gchar* accountID, 
-                              const gchar* folderId, 
-                              EasItemType type,
-                              DBusGMethodInvocation *context);
+EasSyncReq *eas_sync_req_new (const gchar* syncKey,
+			      const gchar* accountID,
+			      const gchar* folderId,
+			      EasItemType type,
+			      DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -119,8 +117,8 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_sync_req_Activate (EasSyncReq *self, 
-                                GError** error);
+gboolean eas_sync_req_Activate (EasSyncReq *self,
+				GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -136,12 +134,12 @@ gboolean eas_sync_req_Activate (EasSyncReq *self,
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
  *
- * @return TRUE if request is finished and needs cleaning up by connection 
- *    object, otherwise FALSE. 
+ * @return TRUE if request is finished and needs cleaning up by connection
+ *    object, otherwise FALSE.
  */
-gboolean eas_sync_req_MessageComplete (EasSyncReq *self, 
-										  xmlDoc* doc, 
-										  GError* error);
+gboolean eas_sync_req_MessageComplete (EasSyncReq *self,
+				       xmlDoc* doc,
+				       GError* error);
 G_END_DECLS
 
 #endif /* _EAS_SYNC_REQ_H_ */

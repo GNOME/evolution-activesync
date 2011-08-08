@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,21 +69,19 @@ typedef struct _EasDeleteReqClass EasDeleteReqClass;
 typedef struct _EasDeleteReq EasDeleteReq;
 typedef struct _EasDeleteReqPrivate EasDeleteReqPrivate;
 
-struct _EasDeleteReqClass
-{
+struct _EasDeleteReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasDeleteReq
-{
+struct _EasDeleteReq {
 	EasRequestBase parent_instance;
 
-	EasDeleteReqPrivate* priv;	
+	EasDeleteReqPrivate* priv;
 };
 
 GType eas_delete_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new delete request GObject
  *
  * @param[in] account_id
@@ -95,16 +93,16 @@ GType eas_delete_req_get_type (void) G_GNUC_CONST;
  * @param[in] server_ids_array [full transfer]
  *	  A list of item server ids to be deleted.
  * @param[in] EasItemType
- *	  Tell the server which type we are deleting. 
+ *	  Tell the server which type we are deleting.
  *    Must be present if using default folders
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
-EasDeleteReq *eas_delete_req_new (const gchar* accountId, 
-                                             const gchar *syncKey, 
-                                             const gchar *folderId, 
-                                             GSList *server_ids_array,
-                                             const EasItemType itemType,
-                                             DBusGMethodInvocation *context);
+EasDeleteReq *eas_delete_req_new (const gchar* accountId,
+				  const gchar *syncKey,
+				  const gchar *folderId,
+				  GSList *server_ids_array,
+				  const EasItemType itemType,
+				  DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -118,8 +116,8 @@ EasDeleteReq *eas_delete_req_new (const gchar* accountId,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_delete_req_Activate (EasDeleteReq *self, 
-                                        GError** error);
+gboolean eas_delete_req_Activate (EasDeleteReq *self,
+				  GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -135,9 +133,9 @@ gboolean eas_delete_req_Activate (EasDeleteReq *self,
  *	  A GError code that has been propagated from the server response.
  * @return TRUE if finished and needs unreffing, FALSE otherwise
  */
-gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, 
-                                           xmlDoc* doc, 
-                                           GError* error);
+gboolean eas_delete_req_MessageComplete (EasDeleteReq *self,
+					 xmlDoc* doc,
+					 GError* error);
 
 G_END_DECLS
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -71,15 +71,13 @@ typedef struct _EasPingMsgClass EasPingMsgClass;
 typedef struct _EasPingMsg EasPingMsg;
 typedef struct _EasPingMsgPrivate EasPingMsgPrivate;
 
-struct _EasPingMsgClass
-{
+struct _EasPingMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasPingMsg
-{
+struct _EasPingMsg {
 	EasMsgBase parent_instance;
-	
+
 	EasPingMsgPrivate *priv;
 };
 

@@ -69,20 +69,18 @@ G_BEGIN_DECLS
 typedef struct _EasCommonClass EasCommonClass;
 typedef struct _EasCommon EasCommon;
 
-struct _EasCommonClass
-{
+struct _EasCommonClass {
 	EasInterfaceBaseClass parent_class;
 };
 
-struct _EasCommon
-{
+struct _EasCommon {
 	EasInterfaceBase parent_instance;
 };
 
 GType eas_common_get_type (void) G_GNUC_CONST;
 
 /* TODO:Insert your Common Interface APIS here*/
-gboolean eas_common_start_sync(EasCommon* obj, gint valueIn, GError** error) ;
+gboolean eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error) ;
 
 gboolean eas_common_get_protocol_version (EasCommon *obj,
 					  const gchar *account_uid,
@@ -90,26 +88,26 @@ gboolean eas_common_get_protocol_version (EasCommon *obj,
 
 /*
 	synchronize a folder. In the case of email, syncs only email info
-*/   
+*/
 gboolean eas_common_sync_folder_items (EasCommon* self,
-                               const gchar* account_uid,
-                               EasItemType item_type,
-                               const gchar* sync_key,
-                               const gchar* folder_id,
-                               guint filter_type,
-                               const gchar** add_items,
-                               const gchar** delete_items,                                       
-                               const gchar** change_items,
-                               guint request_id,
-                               DBusGMethodInvocation* context);
+				       const gchar* account_uid,
+				       EasItemType item_type,
+				       const gchar* sync_key,
+				       const gchar* folder_id,
+				       guint filter_type,
+				       const gchar** add_items,
+				       const gchar** delete_items,
+				       const gchar** change_items,
+				       guint request_id,
+				       DBusGMethodInvocation* context);
 
 /*
 	cancel a request
 */
 gboolean eas_common_cancel_request (EasCommon* self,
-                               const gchar* account_uid,
-                               guint request_id,
-                               DBusGMethodInvocation* context);
+				    const gchar* account_uid,
+				    guint request_id,
+				    DBusGMethodInvocation* context);
 
 G_END_DECLS
 

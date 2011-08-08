@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasSendEmailReqClass EasSendEmailReqClass;
 typedef struct _EasSendEmailReq EasSendEmailReq;
 typedef struct _EasSendEmailReqPrivate EasSendEmailReqPrivate;
 
-struct _EasSendEmailReqClass
-{
+struct _EasSendEmailReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasSendEmailReq
-{
+struct _EasSendEmailReq {
 	EasRequestBase parent_instance;
 
 	EasSendEmailReqPrivate *priv;
@@ -84,14 +82,14 @@ struct _EasSendEmailReq
 
 GType eas_send_email_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new send email request GObject
  *
  * @param[in] account_uid
  *	  Unique identifier for a user account.
  * @param[in] context
  *	  DBus context token.
- * @param client_id  
+ * @param client_id
  *      The client ID identifying the email on the local system.
  * @param[in] mime_file
  *	  Full path to local file system directory where the retrieved email.
@@ -99,10 +97,10 @@ GType eas_send_email_req_get_type (void) G_GNUC_CONST;
  * @return An allocated EasSendEmailReq GObject or NULL
  */
 EasSendEmailReq *
-eas_send_email_req_new(const gchar* account_id, 
-                       DBusGMethodInvocation *context, 
-                       const gchar* client_id, 
-                       const gchar* mime_file);
+eas_send_email_req_new (const gchar* account_id,
+			DBusGMethodInvocation *context,
+			const gchar* client_id,
+			const gchar* mime_file);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -116,15 +114,15 @@ eas_send_email_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_send_email_req_Activate(EasSendEmailReq *self, 
-                            GError** error);
+gboolean
+eas_send_email_req_Activate (EasSendEmailReq *self,
+			     GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client 
+ * then returning the results across the dbus to the client
  *
  * @param[in] self
  *	  The EasSendEmailReq GObject instance whose messages are complete.
@@ -136,10 +134,10 @@ eas_send_email_req_Activate(EasSendEmailReq *self,
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise.
  */
-gboolean 
-eas_send_email_req_MessageComplete(EasSendEmailReq *self, 
-                                   xmlDoc* doc, 
-                                   GError* error);
+gboolean
+eas_send_email_req_MessageComplete (EasSendEmailReq *self,
+				    xmlDoc* doc,
+				    GError* error);
 
 
 G_END_DECLS

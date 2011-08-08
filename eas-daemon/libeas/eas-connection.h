@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -73,13 +73,11 @@ typedef struct _EasConnection EasConnection;
 
 struct _EasRequestBase;
 
-struct _EasConnectionClass
-{
+struct _EasConnectionClass {
 	GObjectClass parent_class;
 };
 
-struct _EasConnection
-{
+struct _EasConnection {
 	GObject parent_instance;
 
 	EasConnectionPrivate* priv;
@@ -91,7 +89,7 @@ GType eas_connection_get_type (void) G_GNUC_CONST;
  * Callback for passed to the eas_connection_autodiscover.
  *
  * @param[in] serverUri
- *	  NULL or Uri found by the autodiscover process, if set needs to be 
+ *	  NULL or Uri found by the autodiscover process, if set needs to be
  *    freed with g_free(). [full transfer]
  * @param[in] data
  *	  User data passed into eas_connection_autodiscover as cb_data. [full transfer]
@@ -101,7 +99,7 @@ GType eas_connection_get_type (void) G_GNUC_CONST;
 typedef void (*EasAutoDiscoverCallback) (char* serverUri, gpointer data, GError *error);
 
 /**
- * Asynchronous function which attempts to discover the activesync url for an 
+ * Asynchronous function which attempts to discover the activesync url for an
  * exchange server given a user's email and username.
  *
  * @param[in] cb
@@ -117,13 +115,13 @@ typedef void (*EasAutoDiscoverCallback) (char* serverUri, gpointer data, GError 
  *		If not required can be set to NULL.
  */
 void eas_connection_autodiscover (EasAutoDiscoverCallback cb,
-                                  gpointer cb_data, 
-                                  const gchar* email, 
-                                  const gchar* username);
+				  gpointer cb_data,
+				  const gchar* email,
+				  const gchar* username);
 
 /**
- * Searches for an existing open connection for the GConf account details 
- * identified by the accountId, or creates a new connection if the account 
+ * Searches for an existing open connection for the GConf account details
+ * identified by the accountId, or creates a new connection if the account
  * details are valid but no existing connection exists.
  *
  * @param[in] accountId
@@ -136,32 +134,32 @@ EasConnection* eas_connection_find (const gchar* accountId);
 /**
  * Create a new connection using the details supplied in the EasAccount object.
  * Note: The users details must be present in GConf.
- * 
+ *
  * @param[in] account
  *	  GObject containing the account details of a GConf account.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
- *	  will be populated with error details if the function returns NULL. Caller 
+ *	  will be populated with error details if the function returns NULL. Caller
  *	  should free the memory with g_error_free() if it has been set. [full transfer]
  *
  * @returns NULL or EasConnection GObject correspoing to the details in the account.
  */
-EasConnection* eas_connection_new (EasAccount* account, 
-                                   GError** error);
+EasConnection* eas_connection_new (EasAccount* account,
+				   GError** error);
 
 // Provisioning APIs
 /**
  * Setter for the policy key for this connection instance.
- * 
+ *
  * @param[in] self
  *	  GObject instance of EasConnection.
  * @param[in] policyKey
  *	  Policy key to be set for this connection instance.
  */
-void eas_connection_set_policy_key(EasConnection* self, 
-                                   const gchar* policyKey);
+void eas_connection_set_policy_key (EasConnection* self,
+				    const gchar* policyKey);
 
-void eas_connection_resume_request(EasConnection* self, gboolean provisionSuccessful);
+void eas_connection_resume_request (EasConnection* self, gboolean provisionSuccessful);
 /**
  * Send the fully formed request over the connection to the server.
  *
@@ -175,21 +173,21 @@ void eas_connection_resume_request(EasConnection* self, gboolean provisionSucces
  *	  EasXXXReq GObject corresponding to the request.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
- *	  will be populated with error details if the function returns FALSE. Caller 
+ *	  will be populated with error details if the function returns FALSE. Caller
  *	  should free the memory with g_error_free() if it has been set. [full transfer]
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_connection_send_request(EasConnection* self, 
-                                     const gchar* cmd, 
-                                     xmlDoc* doc, 
-                                     struct _EasRequestBase *request, 
-                                     GError** error);
+gboolean eas_connection_send_request (EasConnection* self,
+				      const gchar* cmd,
+				      xmlDoc* doc,
+				      struct _EasRequestBase *request,
+				      GError** error);
 
 
 /**
  * Substitutes xml body responses from the server with prefabricated responses
- * that are located in a directory named 'eas-test-responses' in the user's 
+ * that are located in a directory named 'eas-test-responses' in the user's
  * HOME directory.
  *
  * Purely a debug API intended to allow the insertion of various 'status' level
@@ -199,7 +197,7 @@ gboolean eas_connection_send_request(EasConnection* self,
  *	  A NULL terminated array of NULL terminated strings of filenames.
  *
  * @param[in] mock_status_codes [no transfer]
- *	  An array of guints. 
+ *	  An array of guints.
  *
  */
 void eas_connection_add_mock_responses (const gchar** response_file_list, const GArray *mock_status_codes);
@@ -229,7 +227,7 @@ int eas_connection_get_protocol_version (EasConnection *self);
 
 
 gchar*
-eas_connection_get_multipartdata(EasConnection* self, guint partID);
+eas_connection_get_multipartdata (EasConnection* self, guint partID);
 
 G_END_DECLS
 

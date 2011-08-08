@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasGetItemEstimateReqClass EasGetItemEstimateReqClass;
 typedef struct _EasGetItemEstimateReq EasGetItemEstimateReq;
 typedef struct _EasGetItemEstimateReqPrivate EasGetItemEstimateReqPrivate;
 
-struct _EasGetItemEstimateReqClass
-{
+struct _EasGetItemEstimateReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasGetItemEstimateReq
-{
+struct _EasGetItemEstimateReq {
 	EasRequestBase parent_instance;
 
 	EasGetItemEstimateReqPrivate * priv;
@@ -83,7 +81,7 @@ struct _EasGetItemEstimateReq
 
 GType eas_get_item_estimate_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new email get item estimate request GObject
  *
  * @param[in] sync_key
@@ -96,9 +94,9 @@ GType eas_get_item_estimate_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasGetItemEstimateReq GObject or NULL
  */
-EasGetItemEstimateReq *eas_get_item_estimate_req_new(const gchar *sync_key, 
-                                            const gchar *folder_id,
-                                            DBusGMethodInvocation *context);
+EasGetItemEstimateReq *eas_get_item_estimate_req_new (const gchar *sync_key,
+						      const gchar *folder_id,
+						      DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -112,8 +110,8 @@ EasGetItemEstimateReq *eas_get_item_estimate_req_new(const gchar *sync_key,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_get_item_estimate_req_Activate(EasGetItemEstimateReq *self, 
-                                       GError** error);
+gboolean eas_get_item_estimate_req_Activate (EasGetItemEstimateReq *self,
+					     GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -129,12 +127,12 @@ gboolean eas_get_item_estimate_req_Activate(EasGetItemEstimateReq *self,
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
  *
- * @return TRUE if request is finished and needs cleaning up by connection 
- *    object, otherwise FALSE. 
+ * @return TRUE if request is finished and needs cleaning up by connection
+ *    object, otherwise FALSE.
  */
-gboolean eas_get_item_estimate_req_MessageComplete(EasGetItemEstimateReq *self, 
-                                              xmlDoc* doc, 
-                                              GError* error);
+gboolean eas_get_item_estimate_req_MessageComplete (EasGetItemEstimateReq *self,
+						    xmlDoc* doc,
+						    GError* error);
 
 
 G_END_DECLS

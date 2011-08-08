@@ -69,13 +69,11 @@ typedef struct _EasSyncClass EasSyncClass;
 typedef struct _EasSync EasSync;
 typedef struct _EasSyncPrivate EasSyncPrivate;
 
-struct _EasSyncClass
-{
+struct _EasSyncClass {
 	GObjectClass parent_class;
 };
 
-struct _EasSync
-{
+struct _EasSync {
 	GObject parent_instance;
 
 	EasSyncPrivate* priv;
@@ -83,58 +81,58 @@ struct _EasSync
 
 GType eas_sync_get_type (void) G_GNUC_CONST;
 
-EasSync* eas_sync_new(void);
+EasSync* eas_sync_new (void);
 
-EasConnection*  eas_sync_get_eas_connection(EasSync* self);
-void eas_sync_set_eas_connection(EasSync* self, EasConnection* easConnObj);
+EasConnection*  eas_sync_get_eas_connection (EasSync* self);
+void eas_sync_set_eas_connection (EasSync* self, EasConnection* easConnObj);
 
 
-void eas_sync_get_latest_items(EasSync* self,
-                               const gchar* account_uid,
-                               guint64 type,
-                               const gchar* folder_id,
-                               const gchar* sync_key,
-                               DBusGMethodInvocation* context);
+void eas_sync_get_latest_items (EasSync* self,
+				const gchar* account_uid,
+				guint64 type,
+				const gchar* folder_id,
+				const gchar* sync_key,
+				DBusGMethodInvocation* context);
 
-gboolean eas_sync_delete_items(EasSync* self,
-                               const gchar* account_uid,
-                               const guint64 type,
-                               const gchar* folder_id,
-                               const gchar* sync_key, 
-                               const gchar** deleted_items_array,
-                               DBusGMethodInvocation* context);
+gboolean eas_sync_delete_items (EasSync* self,
+				const gchar* account_uid,
+				const guint64 type,
+				const gchar* folder_id,
+				const gchar* sync_key,
+				const gchar** deleted_items_array,
+				DBusGMethodInvocation* context);
 
-gboolean eas_sync_update_items(EasSync* self,
-                               const gchar* account_uid,
-                               guint64 type,
-                               const gchar* folder_id,
-                               const gchar* sync_key, 
-                               const gchar **items,
-                               DBusGMethodInvocation* context);
+gboolean eas_sync_update_items (EasSync* self,
+				const gchar* account_uid,
+				guint64 type,
+				const gchar* folder_id,
+				const gchar* sync_key,
+				const gchar **items,
+				DBusGMethodInvocation* context);
 
-gboolean eas_sync_add_items(EasSync* self,
-                            const gchar* account_uid,
-                            guint64 type,
-                            const gchar* folder_id,
-                            const gchar* sync_key, 
-                            const gchar **items,
-                            DBusGMethodInvocation* context);
+gboolean eas_sync_add_items (EasSync* self,
+			     const gchar* account_uid,
+			     guint64 type,
+			     const gchar* folder_id,
+			     const gchar* sync_key,
+			     const gchar **items,
+			     DBusGMethodInvocation* context);
 
 /*
-	sync the entire  folder hierarchy 
-*/                            
-gboolean eas_sync_sync_folder_hierarchy(EasSync* self,
-                                          const gchar* account_uid,
-                                          const gchar* sync_key,
-                                          DBusGMethodInvocation* context);
+	sync the entire  folder hierarchy
+*/
+gboolean eas_sync_sync_folder_hierarchy (EasSync* self,
+					 const gchar* account_uid,
+					 const gchar* sync_key,
+					 DBusGMethodInvocation* context);
 
 gboolean
 eas_sync_fetch_item (EasSync* self,
-                           const gchar* account_uid,
-                           const gchar* collection_id,
-                           const gchar *server_id,
-                           const guint64 type,
-                           DBusGMethodInvocation* context);
+		     const gchar* account_uid,
+		     const gchar* collection_id,
+		     const gchar *server_id,
+		     const guint64 type,
+		     DBusGMethodInvocation* context);
 
 G_END_DECLS
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasMsgBase EasMsgBase;
 typedef struct _EasMsgBasePrivate EasMsgBasePrivate;
 
 
-struct _EasMsgBaseClass
-{
+struct _EasMsgBaseClass {
 	GObjectClass parent_class;
 };
 
-struct _EasMsgBase
-{
+struct _EasMsgBase {
 	GObject parent_instance;
 
 	EasMsgBasePrivate *priv;
@@ -88,7 +86,7 @@ typedef enum {
 	EAS_SYNC,
 
 	// Etc
-	
+
 	EAS_LAST
 } EasMsgType;
 

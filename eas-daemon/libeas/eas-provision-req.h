@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasProvisionReqClass EasProvisionReqClass;
 typedef struct _EasProvisionReq EasProvisionReq;
 typedef struct _EasProvisionReqPrivate EasProvisionReqPrivate;
 
-struct _EasProvisionReqClass
-{
+struct _EasProvisionReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasProvisionReq
-{
+struct _EasProvisionReq {
 	EasRequestBase parent_instance;
 
 	EasProvisionReqPrivate* priv;
@@ -83,7 +81,7 @@ struct _EasProvisionReq
 
 GType eas_provision_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a provisioning request GObject
  *
  * @param[in] policy_status
@@ -93,7 +91,7 @@ GType eas_provision_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasProvisionReq GObject or NULL
  */
-EasProvisionReq* 
+EasProvisionReq*
 eas_provision_req_new (const gchar* policy_status, const gchar* policy_key);
 
 /**
@@ -114,7 +112,7 @@ gboolean eas_provision_req_Activate (EasProvisionReq* self, GError** error);
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client 
+ * then returning the results across the dbus to the client
  *
  * @param[in] self
  *	  The EasProvisionReq GObject instance whose messages are complete.
@@ -126,9 +124,9 @@ gboolean eas_provision_req_Activate (EasProvisionReq* self, GError** error);
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise.
  */
-gboolean eas_provision_req_MessageComplete (EasProvisionReq* self, 
-                                            xmlDoc *doc, 
-                                            GError* error_in);
+gboolean eas_provision_req_MessageComplete (EasProvisionReq* self,
+					    xmlDoc *doc,
+					    GError* error_in);
 
 G_END_DECLS
 

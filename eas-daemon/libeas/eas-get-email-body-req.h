@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,50 +69,48 @@ typedef struct _EasGetEmailBodyReqClass EasGetEmailBodyReqClass;
 typedef struct _EasGetEmailBodyReq EasGetEmailBodyReq;
 typedef struct _EasGetEmailBodyReqPrivate EasGetEmailBodyReqPrivate;
 
-struct _EasGetEmailBodyReqClass
-{
+struct _EasGetEmailBodyReqClass {
 	EasRequestBaseClass parent_class;
 	guint signal_id;	// signal we emit
 };
 
-struct _EasGetEmailBodyReq
-{
+struct _EasGetEmailBodyReq {
 	EasRequestBase parent_instance;
 
 	EasGetEmailBodyReqPrivate* priv;
 };
 
-void eas_get_email_body_req_set_response_size(EasGetEmailBodyReq* self, guint size);
-void eas_get_email_body_req_GotChunk(EasGetEmailBodyReq* self, guint length);
+void eas_get_email_body_req_set_response_size (EasGetEmailBodyReq* self, guint size);
+void eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, guint length);
 
 
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new email body request GObject
  *
  * @param[in] account_uid
  *	  Unique identifier for a user account.
  * @param[in] collection_id
  *	  The identifer for the target server folder.
- * @param server_id  
+ * @param server_id
  *      The server ID identifying the email on the Exchange Server.
  * @param[in] mime_directory
- *	  Full path to local file system directory where the retrieved email 
+ *	  Full path to local file system directory where the retrieved email
  * @param[in] request_id
  *    passed back with progress signal to allow caller to identify the call instance
  * @param[in] context
  *	  DBus context token.
- * 
+ *
  * @return An allocated EasGetEmailAttachmentReq GObject or NULL
  */
 EasGetEmailBodyReq*
 eas_get_email_body_req_new (const gchar* account_uid,
-                            const gchar *collection_id,
-                            const gchar *server_id,
-                            const gchar *mime_directory,
-                            const EasItemType item_type,
-                            DBusGMethodInvocation* context);
+			    const gchar *collection_id,
+			    const gchar *server_id,
+			    const gchar *mime_directory,
+			    const EasItemType item_type,
+			    DBusGMethodInvocation* context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -126,15 +124,15 @@ eas_get_email_body_req_new (const gchar* account_uid,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, 
-                                 GError** error);
+gboolean
+eas_get_email_body_req_Activate (EasGetEmailBodyReq* self,
+				 GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client 
+ * then returning the results across the dbus to the client
  *
  * @param[in] self
  *	  The EasGetEmailBodyReq GObject instance whose messages are complete.
@@ -146,10 +144,10 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self,
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise.
  */
-gboolean 
-eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self, 
-                                        xmlDoc *doc, 
-                                        GError* error);
+gboolean
+eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self,
+					xmlDoc *doc,
+					GError* error);
 
 G_END_DECLS
 

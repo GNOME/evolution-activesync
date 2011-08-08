@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -57,11 +57,10 @@
 #include "serialise_utils.h"
 
 
-struct _EasSyncFolderHierarchyReqPrivate
-{
-    EasSyncFolderMsg* syncFolderMsg;
-    gchar* accountID;
-    gchar* syncKey;
+struct _EasSyncFolderHierarchyReqPrivate {
+	EasSyncFolderMsg* syncFolderMsg;
+	gchar* accountID;
+	gchar* syncKey;
 	sync_folders_results_fn results_fn;
 	void *results_fn_data;
 };
@@ -75,41 +74,41 @@ G_DEFINE_TYPE (EasSyncFolderHierarchyReq, eas_sync_folder_hierarchy_req, EAS_TYP
 
 static void
 eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
-									  GSList *added_folders, GSList *updated_folders,
-									  GSList *deleted_folders, GError *error);
+				      GSList *added_folders, GSList *updated_folders,
+				      GSList *deleted_folders, GError *error);
 
 static void
 eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
 {
-    EasSyncFolderHierarchyReqPrivate *priv;
+	EasSyncFolderHierarchyReqPrivate *priv;
 
-    object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_REQ_PRIVATE (object);
+	object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_REQ_PRIVATE (object);
 
-    g_debug ("eas_sync_folder_hierarchy_req_init++");
-    priv->syncFolderMsg = NULL;
-    priv->accountID = NULL;
-    priv->syncKey = NULL;
+	g_debug ("eas_sync_folder_hierarchy_req_init++");
+	priv->syncFolderMsg = NULL;
+	priv->accountID = NULL;
+	priv->syncKey = NULL;
 
-    eas_request_base_SetRequestType (&object->parent_instance,
-                                     EAS_REQ_SYNC_FOLDER_HIERARCHY);
+	eas_request_base_SetRequestType (&object->parent_instance,
+					 EAS_REQ_SYNC_FOLDER_HIERARCHY);
 
-    g_debug ("eas_sync_folder_hierarchy_req_init--");
+	g_debug ("eas_sync_folder_hierarchy_req_init--");
 }
 
 // finalize should free anything we own. called once
 static void
 eas_sync_folder_hierarchy_req_finalize (GObject *object)
 {
-    EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
-    EasSyncFolderHierarchyReqPrivate *priv = req->priv;
+	EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
+	EasSyncFolderHierarchyReqPrivate *priv = req->priv;
 
-    g_debug ("eas_sync_folder_hierarchy_req_finalize++");
+	g_debug ("eas_sync_folder_hierarchy_req_finalize++");
 
-    g_free (priv->syncKey);
-    g_free (priv->accountID);
+	g_free (priv->syncKey);
+	g_free (priv->accountID);
 
-    G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
-    g_debug ("eas_sync_folder_hierarchy_req_finalize--");
+	G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->finalize (object);
+	g_debug ("eas_sync_folder_hierarchy_req_finalize--");
 }
 
 // dispose should unref all members on which you own a reference.
@@ -117,63 +116,62 @@ eas_sync_folder_hierarchy_req_finalize (GObject *object)
 static void
 eas_sync_folder_hierarchy_req_dispose (GObject *object)
 {
-    EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
-    EasSyncFolderHierarchyReqPrivate *priv = req->priv;
+	EasSyncFolderHierarchyReq *req = (EasSyncFolderHierarchyReq *) object;
+	EasSyncFolderHierarchyReqPrivate *priv = req->priv;
 
-    g_debug ("eas_sync_folder_hierarchy_req_dispose++");
+	g_debug ("eas_sync_folder_hierarchy_req_dispose++");
 
-    if (priv->syncFolderMsg)
-    {
-        g_object_unref (priv->syncFolderMsg);
+	if (priv->syncFolderMsg) {
+		g_object_unref (priv->syncFolderMsg);
 		priv->syncFolderMsg = NULL;
-    }
+	}
 
-    G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->dispose (object);
-    g_debug ("eas_sync_folder_hierarchy_req_dispose--");
+	G_OBJECT_CLASS (eas_sync_folder_hierarchy_req_parent_class)->dispose (object);
+	g_debug ("eas_sync_folder_hierarchy_req_dispose--");
 }
 
 
 static void
 eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
-    g_debug ("eas_sync_folder_hierarchy_req_class_init++");
+	g_debug ("eas_sync_folder_hierarchy_req_class_init++");
 
-    g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyReqPrivate));
+	g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyReqPrivate));
 
-	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_sync_folder_hierarchy_req_MessageComplete;
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_sync_folder_hierarchy_req_MessageComplete;
 
-    object_class->finalize = eas_sync_folder_hierarchy_req_finalize;
+	object_class->finalize = eas_sync_folder_hierarchy_req_finalize;
 	object_class->dispose = eas_sync_folder_hierarchy_req_dispose;
-    g_debug ("eas_sync_folder_hierarchy_req_class_init--");
+	g_debug ("eas_sync_folder_hierarchy_req_class_init--");
 
 }
 
 EasSyncFolderHierarchyReq*
 eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId, DBusGMethodInvocation* context)
 {
-    EasSyncFolderHierarchyReq* self = g_object_new (EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, NULL);
-    EasSyncFolderHierarchyReqPrivate *priv = self->priv;
+	EasSyncFolderHierarchyReq* self = g_object_new (EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, NULL);
+	EasSyncFolderHierarchyReqPrivate *priv = self->priv;
 
-    g_debug ("eas_sync_folder_hierarchy_req_new++");
+	g_debug ("eas_sync_folder_hierarchy_req_new++");
 
-    g_return_val_if_fail (syncKey, NULL);
+	g_return_val_if_fail (syncKey, NULL);
 
-    priv->syncKey = g_strdup (syncKey);
-    priv->accountID = g_strdup (accountId);
+	priv->syncKey = g_strdup (syncKey);
+	priv->accountID = g_strdup (accountId);
 	priv->results_fn = eas_sync_folder_hierarchy_req_return;
 	priv->results_fn_data = context;
-    eas_request_base_SetContext (&self->parent_instance, context);
+	eas_request_base_SetContext (&self->parent_instance, context);
 
-    g_debug ("eas_sync_folder_hierarchy_req_new--");
-    return self;
+	g_debug ("eas_sync_folder_hierarchy_req_new--");
+	return self;
 }
 
 void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *req,
-												   sync_folders_results_fn fn,
-												   void *fn_data)
+						   sync_folders_results_fn fn,
+						   void *fn_data)
 {
 	EasSyncFolderHierarchyReqPrivate *priv = req->priv;
 
@@ -185,47 +183,45 @@ void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *re
 gboolean
 eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError** error)
 {
-    gboolean ret = FALSE;
-    EasSyncFolderHierarchyReqPrivate* priv = self->priv;
-    xmlDoc *doc = NULL;
-    EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
+	gboolean ret = FALSE;
+	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+	xmlDoc *doc = NULL;
+	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
-    g_debug ("eas_sync_folder_hierarchy_req_Activate++");
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_debug ("eas_sync_folder_hierarchy_req_Activate++");
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-    // Create sync folder msg type
-    priv->syncFolderMsg = eas_sync_folder_msg_new (priv->syncKey, priv->accountID);
-    if (!priv->syncFolderMsg)
-    {
-        // set the error
-        g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     ("out of memory"));
-        goto finish;
-    }
-    doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
-    if (!doc)
-    {
-        // set the error
-        g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-                     ("out of memory"));
-        g_free (priv->syncFolderMsg);
-        priv->syncFolderMsg = NULL;
-        goto finish;
-    }
+	// Create sync folder msg type
+	priv->syncFolderMsg = eas_sync_folder_msg_new (priv->syncKey, priv->accountID);
+	if (!priv->syncFolderMsg) {
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
+		goto finish;
+	}
+	doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+	if (!doc) {
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
+		g_free (priv->syncFolderMsg);
+		priv->syncFolderMsg = NULL;
+		goto finish;
+	}
 
-    ret = eas_request_base_SendRequest (parent, "FolderSync", doc, error);
+	ret = eas_request_base_SendRequest (parent, "FolderSync", doc, error);
 
 finish:
-    g_debug ("eas_sync_folder_hierarchy_req_Activate--");
-    return ret;
+	g_debug ("eas_sync_folder_hierarchy_req_Activate--");
+	return ret;
 }
 
 static void
 eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
-									  GSList *added_folders, GSList *updated_folders,
-									  GSList *deleted_folders, GError *error)
+				      GSList *added_folders, GSList *updated_folders,
+				      GSList *deleted_folders, GError *error)
 {
 	DBusGMethodInvocation *context = self;
 	gchar** ret_created_folders_array = NULL;
@@ -235,25 +231,22 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 	// Serialise the response data from GSList* to char** for transmission over Dbus
 
 	if (!error &&
-		build_serialised_folder_array (&ret_created_folders_array, added_folders, &error) &&
-		build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error) &&
-		build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error))
-	{
+	    build_serialised_folder_array (&ret_created_folders_array, added_folders, &error) &&
+	    build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error) &&
+	    build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error)) {
 		dbus_g_method_return (context,
-							  ret_sync_key,
-							  ret_created_folders_array,
-							  ret_deleted_folders_array,
-							  ret_updated_folders_array);
-	}
-    else
-	{
+				      ret_sync_key,
+				      ret_created_folders_array,
+				      ret_deleted_folders_array,
+				      ret_updated_folders_array);
+	} else {
 		dbus_g_method_return_error (context, error);
 		g_error_free (error);
 	}
 
-	g_strfreev(ret_created_folders_array);
-	g_strfreev(ret_updated_folders_array);
-	g_strfreev(ret_deleted_folders_array);
+	g_strfreev (ret_created_folders_array);
+	g_strfreev (ret_updated_folders_array);
+	g_strfreev (ret_deleted_folders_array);
 }
 
 /*
@@ -262,41 +255,40 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 gboolean
 eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, xmlDoc *doc, GError* error)
 {
-    EasSyncFolderHierarchyReqPrivate* priv = self->priv;
+	EasSyncFolderHierarchyReqPrivate* priv = self->priv;
 	GSList* added_folders = NULL;
 	GSList* updated_folders  = NULL;
 	GSList* deleted_folders  = NULL;
 	const gchar *ret_sync_key = NULL;
 
-    // if an error occurred, store it and signal daemon
-    if (error)
-        goto finish;
+	// if an error occurred, store it and signal daemon
+	if (error)
+		goto finish;
 
-    g_debug ("eas_sync_folder_hierarchy_req_MessageComplete++");
+	g_debug ("eas_sync_folder_hierarchy_req_MessageComplete++");
 
-    // if an error occurs when parsing, store it
-    if (!eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error))
-    {
-        g_assert (error != NULL);
-        goto finish;
-    }
+	// if an error occurs when parsing, store it
+	if (!eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error)) {
+		g_assert (error != NULL);
+		goto finish;
+	}
 
-            ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
+	ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
 
-			added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
-			updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
-			deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
+	added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
+	updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
+	deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 
-			g_debug("Folder Hierarchy: A:%d, U:%d, D:%d", 
-			        g_slist_length (added_folders), 
-			        g_slist_length (updated_folders), 
-			        g_slist_length (deleted_folders));
+	g_debug ("Folder Hierarchy: A:%d, U:%d, D:%d",
+		 g_slist_length (added_folders),
+		 g_slist_length (updated_folders),
+		 g_slist_length (deleted_folders));
 
- finish:
+finish:
 	eas_sync_folder_hierarchy_req_return (priv->results_fn_data, ret_sync_key, added_folders,
-										  updated_folders, deleted_folders, error);
+					      updated_folders, deleted_folders, error);
 
 	xmlFreeDoc (doc);
-    g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
+	g_debug ("eas_sync_folder_hierarchy_req_MessageComplete--");
 	return TRUE;
 }

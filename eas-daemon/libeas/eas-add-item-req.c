@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -60,191 +60,185 @@ G_DEFINE_TYPE (EasAddItemReq, eas_add_item_req, EAS_TYPE_REQUEST_BASE);
 
 #define EAS_ADD_ITEM_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ADD_ITEM_REQ, EasAddItemReqPrivate))
 
-struct _EasAddItemReqPrivate
-{
-    EasSyncMsg* sync_msg;
-    gchar* account_id;
-    gchar* sync_key;
+struct _EasAddItemReqPrivate {
+	EasSyncMsg* sync_msg;
+	gchar* account_id;
+	gchar* sync_key;
 	EasItemType item_type;
-    gchar* folder_id;
-    GSList *serialised_calendar;
+	gchar* folder_id;
+	GSList *serialised_calendar;
 };
 
 static void
 eas_add_item_req_init (EasAddItemReq *object)
 {
-    /* initialization code */
-    EasAddItemReqPrivate *priv;
-    g_debug ("eas_add_item_req_init++");
+	/* initialization code */
+	EasAddItemReqPrivate *priv;
+	g_debug ("eas_add_item_req_init++");
 
-    object->priv = priv = EAS_ADD_ITEM_REQ_PRIVATE (object);
+	object->priv = priv = EAS_ADD_ITEM_REQ_PRIVATE (object);
 
-    priv->sync_msg = NULL;
-    priv->account_id = NULL;
-    priv->sync_key = NULL;
+	priv->sync_msg = NULL;
+	priv->account_id = NULL;
+	priv->sync_key = NULL;
 	priv->item_type = EAS_ITEM_LAST;
-    priv->folder_id = NULL;
-    priv->serialised_calendar = NULL;
+	priv->folder_id = NULL;
+	priv->serialised_calendar = NULL;
 
-    eas_request_base_SetRequestType (&object->parent_instance,
-                                     EAS_REQ_ADD_ITEM);
+	eas_request_base_SetRequestType (&object->parent_instance,
+					 EAS_REQ_ADD_ITEM);
 
-    g_debug ("eas_add_item_req_init++");
+	g_debug ("eas_add_item_req_init++");
 }
 
 static void
 eas_add_item_req_dispose (GObject *object)
 {
-    EasAddItemReq *req = EAS_ADD_ITEM_REQ (object);
-    EasAddItemReqPrivate *priv = req->priv;
+	EasAddItemReq *req = EAS_ADD_ITEM_REQ (object);
+	EasAddItemReqPrivate *priv = req->priv;
 
-    g_debug ("eas_add_item_req_dispose++");
+	g_debug ("eas_add_item_req_dispose++");
 
 	if (priv->sync_msg) {
 		g_object_unref (priv->sync_msg);
 		priv->sync_msg = NULL;
 	}
 
-    G_OBJECT_CLASS (eas_add_item_req_parent_class)->dispose (object);
+	G_OBJECT_CLASS (eas_add_item_req_parent_class)->dispose (object);
 
-    g_debug ("eas_add_item_req_dispose--");
+	g_debug ("eas_add_item_req_dispose--");
 }
 
 static void
 eas_add_item_req_finalize (GObject *object)
 {
-    /* deinitalization code */
-    EasAddItemReq *req = EAS_ADD_ITEM_REQ (object);
-    EasAddItemReqPrivate *priv = req->priv;
+	/* deinitalization code */
+	EasAddItemReq *req = EAS_ADD_ITEM_REQ (object);
+	EasAddItemReqPrivate *priv = req->priv;
 
-    g_debug ("eas_add_item_req_finalize++");
+	g_debug ("eas_add_item_req_finalize++");
 
 	g_free (priv->sync_key);
-    g_free (priv->account_id);
+	g_free (priv->account_id);
 	g_free (priv->folder_id);
 
-	g_slist_foreach (priv->serialised_calendar, (GFunc)g_object_unref, NULL);
+	g_slist_foreach (priv->serialised_calendar, (GFunc) g_object_unref, NULL);
 	g_slist_free (priv->serialised_calendar);
 
-    G_OBJECT_CLASS (eas_add_item_req_parent_class)->finalize (object);
+	G_OBJECT_CLASS (eas_add_item_req_parent_class)->finalize (object);
 
-    g_debug ("eas_add_item_req_finalize--");
+	g_debug ("eas_add_item_req_finalize--");
 }
 
 static void
 eas_add_item_req_class_init (EasAddItemReqClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
-    g_type_class_add_private (klass, sizeof (EasAddItemReqPrivate));
+	g_type_class_add_private (klass, sizeof (EasAddItemReqPrivate));
 
-	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp)eas_add_item_req_MessageComplete;
+	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_add_item_req_MessageComplete;
 
-    object_class->finalize = eas_add_item_req_finalize;
-    object_class->dispose = eas_add_item_req_dispose;
+	object_class->finalize = eas_add_item_req_finalize;
+	object_class->dispose = eas_add_item_req_dispose;
 
-    g_debug ("eas_add_item_req_class_init--");
+	g_debug ("eas_add_item_req_class_init--");
 }
 
 
 EasAddItemReq *
-eas_add_item_req_new (const gchar* account_id, 
-                          const gchar *sync_key, 
-                          const gchar *folder_id,
-                          const EasItemType item_type,
-                          GSList* serialised_calendar, 
-                          DBusGMethodInvocation *context)
+eas_add_item_req_new (const gchar* account_id,
+		      const gchar *sync_key,
+		      const gchar *folder_id,
+		      const EasItemType item_type,
+		      GSList* serialised_calendar,
+		      DBusGMethodInvocation *context)
 {
-    EasAddItemReq* self = g_object_new (EAS_TYPE_ADD_ITEM_REQ, NULL);
-    EasAddItemReqPrivate *priv = self->priv;
+	EasAddItemReq* self = g_object_new (EAS_TYPE_ADD_ITEM_REQ, NULL);
+	EasAddItemReqPrivate *priv = self->priv;
 
-    g_debug ("eas_add_item_req_new++");
+	g_debug ("eas_add_item_req_new++");
 
-    priv->sync_key = g_strdup (sync_key);
-    priv->folder_id = g_strdup (folder_id);
-    priv->serialised_calendar = serialised_calendar; // Take ownership
-    priv->account_id = g_strdup (account_id);
+	priv->sync_key = g_strdup (sync_key);
+	priv->folder_id = g_strdup (folder_id);
+	priv->serialised_calendar = serialised_calendar; // Take ownership
+	priv->account_id = g_strdup (account_id);
 	priv->item_type = item_type;
 
-    eas_request_base_SetContext (&self->parent_instance, context);
+	eas_request_base_SetContext (&self->parent_instance, context);
 
-    g_debug ("eas_add_item_req_new--");
-    return self;
+	g_debug ("eas_add_item_req_new--");
+	return self;
 }
 
-gboolean 
+gboolean
 eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 {
-    EasAddItemReqPrivate *priv = self->priv;
-    xmlDoc *doc = NULL;
-    gboolean success = FALSE;
+	EasAddItemReqPrivate *priv = self->priv;
+	xmlDoc *doc = NULL;
+	gboolean success = FALSE;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 	EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
-    g_debug ("eas_add_item_req_Activate++");
+	g_debug ("eas_add_item_req_Activate++");
 
-    g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	if(priv->folder_id == NULL|| strlen(priv->folder_id)<=0)
-	{
+	if (priv->folder_id == NULL || strlen (priv->folder_id) <= 0) {
 		EasAccount *acc;
 
 		acc = eas_connection_get_account (conn);
-		switch (priv->item_type)
-		{
-			case EAS_ITEM_CALENDAR:
-				priv->folder_id = g_strdup(eas_account_get_calendar_folder (acc));
-				break;
-			case EAS_ITEM_CONTACT:
-				priv->folder_id = g_strdup(eas_account_get_contact_folder (acc));
-				break;
-			default:
-				g_warning("trying to get default folder for unspecified item type");
+		switch (priv->item_type) {
+		case EAS_ITEM_CALENDAR:
+			priv->folder_id = g_strdup (eas_account_get_calendar_folder (acc));
+			break;
+		case EAS_ITEM_CONTACT:
+			priv->folder_id = g_strdup (eas_account_get_contact_folder (acc));
+			break;
+		default:
+			g_warning ("trying to get default folder for unspecified item type");
 		}
 		g_object_unref (acc);
 	}
-    //create sync msg object
-    priv->sync_msg = eas_sync_msg_new (priv->sync_key, conn, priv->folder_id, priv->item_type);
+	//create sync msg object
+	priv->sync_msg = eas_sync_msg_new (priv->sync_key, conn, priv->folder_id, priv->item_type);
 
-    //build request msg
-    doc = eas_sync_msg_build_message (priv->sync_msg, 0, FALSE, priv->serialised_calendar, NULL, NULL);
+	//build request msg
+	doc = eas_sync_msg_build_message (priv->sync_msg, 0, FALSE, priv->serialised_calendar, NULL, NULL);
 
 	success = eas_request_base_SendRequest (parent,
-	                                       "Sync",
-                                           doc, // full transfer
-                                           error);
-	if (!success)
-	{
-		g_assert(error == NULL || (*error != NULL));
+						"Sync",
+						doc, // full transfer
+						error);
+	if (!success) {
+		g_assert (error == NULL || (*error != NULL));
 	}
 
-    g_debug ("eas_add_item_req_Activate--");
+	g_debug ("eas_add_item_req_Activate--");
 	return success;
 }
 
 
 gboolean
-eas_add_item_req_MessageComplete (EasAddItemReq *self, 
-                                      xmlDoc* doc, 
-                                      GError* error)
+eas_add_item_req_MessageComplete (EasAddItemReq *self,
+				  xmlDoc* doc,
+				  GError* error)
 {
-    GError *local_error = NULL;
-    EasAddItemReqPrivate *priv = self->priv;
+	GError *local_error = NULL;
+	EasAddItemReqPrivate *priv = self->priv;
 	GSList* added_items = NULL;
 	gchar** ret_added_items_array = NULL;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
-    g_debug ("eas_add_item_req_MessageComplete++");
-	
+	g_debug ("eas_add_item_req_MessageComplete++");
+
 	// If we have an error send it back to client
-	if (error)
-	{
+	if (error) {
 		local_error = error;
 		goto finish;
 	}
 
-	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error))
-	{
+	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error)) {
 		goto finish;
 	}
 
@@ -253,22 +247,17 @@ eas_add_item_req_MessageComplete (EasAddItemReq *self,
 
 finish:
 
-	if(local_error)
-	{
+	if (local_error) {
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), local_error);
 		g_error_free (local_error);
-	}
-	else
-	{
+	} else {
 		dbus_g_method_return (eas_request_base_GetContext (parent),
-                              eas_sync_msg_get_syncKey (priv->sync_msg),
-                              ret_added_items_array);
-		if (ret_added_items_array)
-		{
+				      eas_sync_msg_get_syncKey (priv->sync_msg),
+				      ret_added_items_array);
+		if (ret_added_items_array) {
 			gint index = 0;
 
-			while (NULL != ret_added_items_array[index])
-			{
+			while (NULL != ret_added_items_array[index]) {
 				g_free (ret_added_items_array[index]);
 				ret_added_items_array[index] = NULL;
 				++ index;
@@ -279,9 +268,9 @@ finish:
 		}
 	}
 	// We always need to free 'doc' and release the semaphore.
-    xmlFreeDoc (doc);
+	xmlFreeDoc (doc);
 
-    g_debug ("eas_add_item_req_MessageComplete--");
+	g_debug ("eas_add_item_req_MessageComplete--");
 	return TRUE;
 }
 

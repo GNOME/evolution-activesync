@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,21 +69,19 @@ typedef struct _EasUpdateItemReqClass EasUpdateItemReqClass;
 typedef struct _EasUpdateItemReq EasUpdateItemReq;
 typedef struct _EasUpdateItemReqPrivate EasUpdateItemReqPrivate;
 
-struct _EasUpdateItemReqClass
-{
+struct _EasUpdateItemReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasUpdateItemReq
-{
+struct _EasUpdateItemReq {
 	EasRequestBase parent_instance;
-	
+
 	EasUpdateItemReqPrivate * priv;
 };
 
 GType eas_update_item_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new item update request GObject
  *
  * @param[in] account_id
@@ -102,12 +100,12 @@ GType eas_update_item_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasUpdateItemReq GObject or NULL
  */
-EasUpdateItemReq *eas_update_item_req_new(const gchar* account_id, 
-                                          const gchar *sync_key, 
-                                          const EasItemType item_type, 
-                                          const gchar *folder_id, 
-                                          GSList *serialised_calendar, 
-                                          DBusGMethodInvocation *context);
+EasUpdateItemReq *eas_update_item_req_new (const gchar* account_id,
+					   const gchar *sync_key,
+					   const EasItemType item_type,
+					   const gchar *folder_id,
+					   GSList *serialised_calendar,
+					   DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -121,8 +119,8 @@ EasUpdateItemReq *eas_update_item_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_update_item_req_Activate(EasUpdateItemReq *self, 
-                                          GError** error);
+gboolean eas_update_item_req_Activate (EasUpdateItemReq *self,
+				       GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -138,12 +136,12 @@ gboolean eas_update_item_req_Activate(EasUpdateItemReq *self,
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
  *
- * @return TRUE if request is finished and needs cleaning up by connection 
- *    object, otherwise FALSE. 
+ * @return TRUE if request is finished and needs cleaning up by connection
+ *    object, otherwise FALSE.
  */
-gboolean eas_update_item_req_MessageComplete(EasUpdateItemReq *self, 
-                                             xmlDoc* doc, 
-                                             GError* error);
+gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
+					      xmlDoc* doc,
+					      GError* error);
 
 
 

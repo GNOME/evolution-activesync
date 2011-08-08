@@ -51,17 +51,16 @@
 
 #include "eas-request-base.h"
 
-struct _EasRequestBasePrivate
-{
-    EasRequestType requestType;
-    struct _EasConnection* connection;
-    SoupMessage *soup_message;
-    EFlag *flag;
+struct _EasRequestBasePrivate {
+	EasRequestType requestType;
+	struct _EasConnection* connection;
+	SoupMessage *soup_message;
+	EFlag *flag;
 	DBusGMethodInvocation *context;
 	EasInterfaceBase *dbus_interface;
 	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
 	guint request_id;			// passed back with progress signal
-	guint data_length_so_far;	// amount of data received/sent so far 
+	guint data_length_so_far;	// amount of data received/sent so far
 	guint data_size;			// total size of response/request data
 	gboolean use_multipart;
 };
@@ -75,41 +74,40 @@ G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
 static void
 eas_request_base_init (EasRequestBase *object)
 {
-    EasRequestBasePrivate *priv;
+	EasRequestBasePrivate *priv;
 
-    object->priv = priv = EAS_REQUEST_BASE_PRIVATE (object);
+	object->priv = priv = EAS_REQUEST_BASE_PRIVATE (object);
 
-    g_debug ("eas_request_base_init++");
+	g_debug ("eas_request_base_init++");
 
-    priv->requestType = EAS_REQ_BASE;
-    priv->connection = NULL;
-    priv->soup_message = NULL;
-    priv->flag = NULL;
-    priv->context = NULL;
+	priv->requestType = EAS_REQ_BASE;
+	priv->connection = NULL;
+	priv->soup_message = NULL;
+	priv->flag = NULL;
+	priv->context = NULL;
 	priv->dbus_interface = NULL;
 	priv->data_length_so_far = 0;
 	priv->data_size = 0;
 	priv->request_id = 0;
 	priv->use_multipart = FALSE;
-	
-    g_debug ("eas_request_base_init--");
+
+	g_debug ("eas_request_base_init--");
 }
 
 static void
 eas_request_base_dispose (GObject *object)
 {
-	EasRequestBase *req = (EasRequestBase *)object;
+	EasRequestBase *req = (EasRequestBase *) object;
 	EasRequestBasePrivate *priv = req->priv;
 
 	g_debug ("eas_request_base_dispose++");
-	if(priv->connection)
-	{
-		g_debug("not unrefing connection");
-        // TODO Fix the unreff count.
+	if (priv->connection) {
+		g_debug ("not unrefing connection");
+		// TODO Fix the unreff count.
 		// g_object_unref(priv->connection);
-        // priv->connection = NULL;
+		// priv->connection = NULL;
 	}
-    G_OBJECT_CLASS (eas_request_base_parent_class)->dispose (object);
+	G_OBJECT_CLASS (eas_request_base_parent_class)->dispose (object);
 	g_debug ("eas_request_base_dispose--");
 }
 
@@ -117,86 +115,86 @@ static void
 eas_request_base_finalize (GObject *object)
 {
 	g_debug ("eas_request_base_finalize++");
-    G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
+	G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
 	g_debug ("eas_request_base_finalize--");
 }
 
 static void
 eas_request_base_class_init (EasRequestBaseClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-    g_debug ("eas_request_base_class_init++");
-    g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
+	g_debug ("eas_request_base_class_init++");
+	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
 
-    object_class->finalize = eas_request_base_finalize;
-    object_class->dispose = eas_request_base_dispose;
+	object_class->finalize = eas_request_base_finalize;
+	object_class->dispose = eas_request_base_dispose;
 
-    klass->do_MessageComplete = NULL;
+	klass->do_MessageComplete = NULL;
 
-    g_debug ("eas_request_base_class_init--");
+	g_debug ("eas_request_base_class_init--");
 }
 
 EasRequestType
 eas_request_base_GetRequestType (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    return priv->requestType;
-}
-
-gboolean 
-eas_request_base_MessageComplete (EasRequestBase *self, 
-                                  xmlDoc* doc, 
-                                  GError* error_in)
-{
-    g_return_val_if_fail (EAS_IS_REQUEST_BASE (self), TRUE);
-
-    g_debug ("eas_request_base_MessageComplete+-");
-
-    return EAS_REQUEST_BASE_GET_CLASS (self)->do_MessageComplete (self, doc, error_in);
+	return priv->requestType;
 }
 
 gboolean
-eas_request_base_SendRequest (EasRequestBase* self, 
-                              const gchar* cmd, 
-                              xmlDoc *doc, 
-                              GError **error)
+eas_request_base_MessageComplete (EasRequestBase *self,
+				  xmlDoc* doc,
+				  GError* error_in)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	g_return_val_if_fail (EAS_IS_REQUEST_BASE (self), TRUE);
 
-    g_debug ("eas_request_base_SendRequest");
+	g_debug ("eas_request_base_MessageComplete+-");
 
-    return eas_connection_send_request (priv->connection,
-                                       cmd,
-                                       doc, // full transfer
-                                       self,
-                                       error);
+	return EAS_REQUEST_BASE_GET_CLASS (self)->do_MessageComplete (self, doc, error_in);
+}
+
+gboolean
+eas_request_base_SendRequest (EasRequestBase* self,
+			      const gchar* cmd,
+			      xmlDoc *doc,
+			      GError **error)
+{
+	EasRequestBasePrivate *priv = self->priv;
+
+	g_debug ("eas_request_base_SendRequest");
+
+	return eas_connection_send_request (priv->connection,
+					    cmd,
+					    doc, // full transfer
+					    self,
+					    error);
 }
 
 void
 eas_request_base_SetRequestType (EasRequestBase* self, EasRequestType type)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetRequestType++");
-    priv->requestType = type;
-    g_debug ("eas_request_base_SetRequestType--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetRequestType++");
+	priv->requestType = type;
+	g_debug ("eas_request_base_SetRequestType--");
 }
 
 guint
 eas_request_base_GetRequestId (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    return priv->request_id;
+	return priv->request_id;
 }
 
 void
 eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    priv->request_id = request_id;
+	priv->request_id = request_id;
 
 	return ;
 }
@@ -204,17 +202,17 @@ eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
 gboolean
 eas_request_base_GetRequestProgressDirection (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    return priv->outgoing_progress;
+	return priv->outgoing_progress;
 }
 
 void
 eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean outgoing_progress)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    priv->outgoing_progress = outgoing_progress;
+	priv->outgoing_progress = outgoing_progress;
 
 	return ;
 }
@@ -222,145 +220,144 @@ eas_request_base_SetRequestProgressDirection (EasRequestBase* self, gboolean out
 guint
 eas_request_base_GetDataSize (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    return priv->data_size;
+	return priv->data_size;
 }
 
 void
 eas_request_base_SetDataSize (EasRequestBase* self, guint size)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
 	g_debug ("eas_request_base_SetDataSize++");
-	
+
 	priv->data_size = size;
 
 	g_debug ("eas_request_base_SetDataSize--");
-	
-    return;
+
+	return;
 }
 
 guint
 eas_request_base_GetDataLengthSoFar (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
-    return priv->data_length_so_far;
+	return priv->data_length_so_far;
 }
 
 void
 eas_request_base_UpdateDataLengthSoFar (EasRequestBase* self, guint length)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
 	priv->data_length_so_far += length;
-	
-    return;
+
+	return;
 }
 
 void
 eas_request_base_SetDataLengthSoFar (EasRequestBase* self, guint length)
 {
-    EasRequestBasePrivate *priv = self->priv;
+	EasRequestBasePrivate *priv = self->priv;
 
 	priv->data_length_so_far = length;
-	
-    return;
+
+	return;
 }
 
 struct _EasConnection*
-eas_request_base_GetConnection (EasRequestBase* self)
-{
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_GetConnection++ %p", priv->connection );
-    return priv->connection;
+eas_request_base_GetConnection (EasRequestBase* self) {
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_GetConnection++ %p", priv->connection);
+	return priv->connection;
 }
 
 void
 eas_request_base_SetConnection (EasRequestBase* self, struct _EasConnection* connection)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetConnection++ [%p]", connection);
-    priv->connection = connection;
-    g_debug ("eas_request_base_SetConnection--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetConnection++ [%p]", connection);
+	priv->connection = connection;
+	g_debug ("eas_request_base_SetConnection--");
 }
 
 
 void
 eas_request_base_SetInterfaceObject (EasRequestBase* self, EasInterfaceBase *dbus_interface)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetInterfaceObject++");
-    priv->dbus_interface = dbus_interface;
-    g_debug ("eas_request_base_SetInterfaceObject--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetInterfaceObject++");
+	priv->dbus_interface = dbus_interface;
+	g_debug ("eas_request_base_SetInterfaceObject--");
 }
 
-EasInterfaceBase* 
+EasInterfaceBase*
 eas_request_base_GetInterfaceObject (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    return priv->dbus_interface;
+	EasRequestBasePrivate *priv = self->priv;
+	return priv->dbus_interface;
 }
 
 
 SoupMessage *
-eas_request_base_GetSoupMessage(EasRequestBase *self)
+eas_request_base_GetSoupMessage (EasRequestBase *self)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_SoupMessage++ %lx", (unsigned long)priv->soup_message );
-    return priv->soup_message;
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SoupMessage++ %lx", (unsigned long) priv->soup_message);
+	return priv->soup_message;
 }
 
 void
-eas_request_base_SetSoupMessage(EasRequestBase *self, SoupMessage *soup_message)
+eas_request_base_SetSoupMessage (EasRequestBase *self, SoupMessage *soup_message)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug("eas_request_base_SetSoupMessage++");
-    priv->soup_message = soup_message;
-    g_debug("eas_request_base_SetSoupMessage--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetSoupMessage++");
+	priv->soup_message = soup_message;
+	g_debug ("eas_request_base_SetSoupMessage--");
 }
 
 EFlag *
 eas_request_base_GetFlag (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetFlag+-");
-    return priv->flag;
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_GetFlag+-");
+	return priv->flag;
 }
 
 void
 eas_request_base_SetFlag (EasRequestBase* self, EFlag* flag)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetFlag++");
-    priv->flag = flag;
-    g_debug ("eas_request_base_SetFlag--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetFlag++");
+	priv->flag = flag;
+	g_debug ("eas_request_base_SetFlag--");
 }
 
 DBusGMethodInvocation*
 eas_request_base_GetContext (EasRequestBase* self)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_GetContext+-");
-    return priv->context;
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_GetContext+-");
+	return priv->context;
 }
 
 void
 eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context)
 {
-    EasRequestBasePrivate *priv = self->priv;
-    g_debug ("eas_request_base_SetContext++");
-    priv->context = context;
-    g_debug ("eas_request_base_SetContext--");
+	EasRequestBasePrivate *priv = self->priv;
+	g_debug ("eas_request_base_SetContext++");
+	priv->context = context;
+	g_debug ("eas_request_base_SetContext--");
 }
 
 gboolean
-eas_request_base_UseMultipart(EasRequestBase* self)
+eas_request_base_UseMultipart (EasRequestBase* self)
 {
 	return self->priv->use_multipart;
 }
-void eas_request_base_Set_UseMultipart(EasRequestBase* self, gboolean use_multipart)
+void eas_request_base_Set_UseMultipart (EasRequestBase* self, gboolean use_multipart)
 {
 	self->priv->use_multipart = use_multipart;
 }

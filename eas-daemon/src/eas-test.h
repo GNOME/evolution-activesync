@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 
 #ifndef _EAS_TEST_H_
 #define _EAS_TEST_H_
@@ -20,13 +20,11 @@ typedef struct _EasTestClass EasTestClass;
 typedef struct _EasTest EasTest;
 
 
-struct _EasTestClass
-{
+struct _EasTestClass {
 	GObjectClass parent_class;
 };
 
-struct _EasTest
-{
+struct _EasTest {
 	GObject parent_instance;
 };
 

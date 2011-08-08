@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -70,13 +70,11 @@ typedef struct _EasMoveEmailMsgClass EasMoveEmailMsgClass;
 typedef struct _EasMoveEmailMsg EasMoveEmailMsg;
 typedef struct _EasMoveEmailMsgPrivate EasMoveEmailMsgPrivate;
 
-struct _EasMoveEmailMsgClass
-{
+struct _EasMoveEmailMsgClass {
 	EasMsgBaseClass parent_class;
 };
 
-struct _EasMoveEmailMsg
-{
+struct _EasMoveEmailMsg {
 	EasMsgBase parent_instance;
 
 	EasMoveEmailMsgPrivate *priv;

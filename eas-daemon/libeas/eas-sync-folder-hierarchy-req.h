@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasSyncFolderHierarchyReqClass EasSyncFolderHierarchyReqClass;
 typedef struct _EasSyncFolderHierarchyReq EasSyncFolderHierarchyReq;
 typedef struct _EasSyncFolderHierarchyReqPrivate EasSyncFolderHierarchyReqPrivate;
 
-struct _EasSyncFolderHierarchyReqClass
-{
+struct _EasSyncFolderHierarchyReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasSyncFolderHierarchyReq
-{
+struct _EasSyncFolderHierarchyReq {
 	EasRequestBase parent_instance;
 
 	EasSyncFolderHierarchyReqPrivate* priv;
@@ -86,14 +84,14 @@ GType eas_sync_folder_hierarchy_req_get_type (void) G_GNUC_CONST;
 /* Callback function with results */
 
 typedef void (*sync_folders_results_fn) (void *priv, const gchar *ret_sync_key,
-										 GSList *added_folders, GSList *updated_folders,
-										 GSList *deleted_folders, GError *error);
+					 GSList *added_folders, GSList *updated_folders,
+					 GSList *deleted_folders, GError *error);
 
 void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *req,
-												   sync_folders_results_fn fn,
-												   void *fn_data);
+						   sync_folders_results_fn fn,
+						   void *fn_data);
 
-/** 
+/**
  * Create a new sync folder hierarchy request GObject
  *
  * @param[in] syncKey
@@ -106,8 +104,8 @@ void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *re
  * @return An allocated EasSyncFolderHierarchyReq GObject or NULL
  */
 EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncKey,
-                                                             const gchar* accountId,
-                                                             DBusGMethodInvocation* context);
+							      const gchar* accountId,
+							      DBusGMethodInvocation* context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -121,15 +119,15 @@ EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncK
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean 
-eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, 
-                                        GError** error);
+gboolean
+eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self,
+					GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
  *
  * Responsible for parsing the server response with the help of the message and
- * then returning the results across the dbus to the client 
+ * then returning the results across the dbus to the client
  *
  * @param[in] self
  *	  The EasSyncFolderHierarchyReq GObject instance whose messages are complete.
@@ -141,10 +139,10 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self,
  *
  * @return TRUE if finished and needs unreffing, FALSE otherwise.
  */
-gboolean 
-eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self, 
-                                               xmlDoc *doc, 
-                                               GError* error_in);
+gboolean
+eas_sync_folder_hierarchy_req_MessageComplete (EasSyncFolderHierarchyReq* self,
+					       xmlDoc *doc,
+					       GError* error_in);
 
 
 G_END_DECLS

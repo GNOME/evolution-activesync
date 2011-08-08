@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8; show-trailing-whitespace: t -*- */
 /*
  * ActiveSync core protocol library
  *
@@ -69,13 +69,11 @@ typedef struct _EasUpdateEmailReqClass EasUpdateEmailReqClass;
 typedef struct _EasUpdateEmailReq EasUpdateEmailReq;
 typedef struct _EasUpdateEmailReqPrivate EasUpdateEmailReqPrivate;
 
-struct _EasUpdateEmailReqClass
-{
+struct _EasUpdateEmailReqClass {
 	EasRequestBaseClass parent_class;
 };
 
-struct _EasUpdateEmailReq
-{
+struct _EasUpdateEmailReq {
 	EasRequestBase parent_instance;
 
 	EasUpdateEmailReqPrivate * priv;
@@ -83,7 +81,7 @@ struct _EasUpdateEmailReq
 
 GType eas_update_email_req_get_type (void) G_GNUC_CONST;
 
-/** 
+/**
  * Create a new email update request GObject
  *
  * @param[in] account_id
@@ -100,11 +98,11 @@ GType eas_update_email_req_get_type (void) G_GNUC_CONST;
  *
  * @return An allocated EasAddCalendarReq GObject or NULL
  */
-EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id, 
-                                            const gchar *sync_key, 
-                                            const gchar *folder_id, 
-                                            const gchar **serialised_email_array, 
-                                            DBusGMethodInvocation *context);
+EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id,
+					     const gchar *sync_key,
+					     const gchar *folder_id,
+					     const gchar **serialised_email_array,
+					     DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -118,8 +116,8 @@ EasUpdateEmailReq *eas_update_email_req_new(const gchar* account_id,
  *
  * @return TRUE if successful, otherwise FALSE.
  */
-gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self, 
-                                       GError** error);
+gboolean eas_update_email_req_Activate (EasUpdateEmailReq *self,
+					GError** error);
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -135,12 +133,12 @@ gboolean eas_update_email_req_Activate(EasUpdateEmailReq *self,
  * @param[in] error
  *	  A GError code that has been propagated from the server response.
  *
- * @return TRUE if request is finished and needs cleaning up by connection 
- *    object, otherwise FALSE. 
+ * @return TRUE if request is finished and needs cleaning up by connection
+ *    object, otherwise FALSE.
  */
-gboolean eas_update_email_req_MessageComplete(EasUpdateEmailReq *self, 
-                                              xmlDoc* doc, 
-                                              GError* error);
+gboolean eas_update_email_req_MessageComplete (EasUpdateEmailReq *self,
+					       xmlDoc* doc,
+					       GError* error);
 
 
 G_END_DECLS

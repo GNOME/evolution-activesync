@@ -68,16 +68,14 @@ typedef struct _EasInterfaceBaseClass EasInterfaceBaseClass;
 typedef struct _EasInterfaceBase EasInterfaceBase;
 typedef struct _EasInterfaceBasePrivate EasInterfaceBasePrivate;
 
-struct _EasInterfaceBaseClass
-{
+struct _EasInterfaceBaseClass {
 	GObjectClass parent_class;
-	guint signal_id;	// signal we emit	
+	guint signal_id;	// signal we emit
 };
 
-struct _EasInterfaceBase
-{
+struct _EasInterfaceBase {
 	GObject parent_instance;
-	
+
 	EasInterfaceBasePrivate* priv;
 };
 
@@ -86,9 +84,9 @@ typedef enum {
 	EAS_INTERFACE_MAIL,
 	EAS_INTERFACE_SYNC,
 	EAS_INTERFACE_COMMON,
-	
+
 	// Add other requests here
-	
+
 	EAS_INTERFACE_LAST
 } EasInterfaceType;
 
@@ -102,7 +100,7 @@ GType eas_interface_base_get_type (void) G_GNUC_CONST;
  *
  * @return The interface type of this instance.
  */
-EasInterfaceType eas_interface_base_GetInterfaceType(EasInterfaceBase* self);
+EasInterfaceType eas_interface_base_GetInterfaceType (EasInterfaceBase* self);
 
 /**
  * Setter for interface type.
@@ -112,7 +110,7 @@ EasInterfaceType eas_interface_base_GetInterfaceType(EasInterfaceBase* self);
  * @param[in] type
  *      The request type to be set.
  */
-void eas_interface_base_SetInterfaceType(EasInterfaceBase* self, EasInterfaceType type);
+void eas_interface_base_SetInterfaceType (EasInterfaceBase* self, EasInterfaceType type);
 
 /**
  * Getter for signal id.
@@ -122,7 +120,7 @@ void eas_interface_base_SetInterfaceType(EasInterfaceBase* self, EasInterfaceTyp
  *
  * @return id of signal emitted by interface
  */
-guint eas_interface_base_GetSignalId(EasInterfaceBase* self);
+guint eas_interface_base_GetSignalId (EasInterfaceBase* self);
 
 
 G_END_DECLS
