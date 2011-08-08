@@ -580,23 +580,12 @@ static const char *
 attribute_get_nth_value(EVCardAttribute *attr, int nth)
 {
 	GList *values = NULL;
-	GString *retstr = NULL;
 
-	values = e_vcard_attribute_get_values_decoded(attr);
+	values = e_vcard_attribute_get_values(attr);
 	if (!values)
 		return NULL;
-	retstr = (GString *)g_list_nth_data(values, nth);
-	if (!retstr)
-		return NULL;
 
-	if (!g_utf8_validate(retstr->str, -1, NULL)) {
-		values = e_vcard_attribute_get_values(attr);
-		if (!values)
-			return NULL;
-		return g_list_nth_data(values, nth);
-	}
-
-	return retstr->str;
+	return g_list_nth_data(values, nth);
 }
 
 /* Check if a contact field allready set in the applicationdata xml children*/
