@@ -45,6 +45,13 @@
       <arg type="as" name="ret_delete_items_response" direction="out"/>
       <arg type="as" name="ret_change_items_response" direction="out"/>      
     </method>
+
+    <method name="get_folders">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="b" name="update" direction="in"/>
+      <arg type="as" name="ret_folder_array" direction="out"/>
+    </method>
     
     <!-- cancel request -->
     <method name="cancel_request">

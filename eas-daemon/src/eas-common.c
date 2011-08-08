@@ -56,6 +56,7 @@
 #include "activesyncd-common-defs.h"
 #include "eas-connection.h"
 #include "eas-2way-sync-req.h"
+#include "eas-sync-folder-hierarchy-req.h"
 #include "eas-marshal.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
@@ -265,4 +266,93 @@ eas_common_cancel_request (EasCommon* self,
 	g_debug ("eas_common_cancel_request--");
 
 	return FALSE;
+}
+
+struct folder_state {
+	DBusGMethodInvocation *context;
+	EasConnection *cnc;
+};
+
+static void
+eas_common_update_folders (void *self, const gchar *ret_sync_key,
+			   GSList *added_folders, GSList *updated_folders,
+			   GSList *deleted_folders, GError *error)
+{
+	struct folder_state *state = self;
+
+	eas_connection_update_folders (state->cnc, ret_sync_key, added_folders,
+				       updated_folders, deleted_folders, error);
+	if (error)
+		dbus_g_method_return_error (state->context, error);
+	else {
+		gchar **folders = eas_connection_get_folders (state->cnc);
+
+		dbus_g_method_return (state->context, folders);
+		g_strfreev (folders);
+	}
+	g_free (state);
+}
+
+gboolean
+eas_common_get_folders (EasCommon* self,
+			const gchar* account_uid,
+			gboolean refresh,
+			DBusGMethodInvocation* context)
+{
+	EasConnection *connection;
+	GError *error = NULL;
+	EasSyncFolderHierarchyReq *req = NULL;
+	gchar *sync_key = NULL;
+
+	g_debug ("eas_common_get_folders++ : account_uid[%s]",
+		 (account_uid ? account_uid : "NULL"));
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+	err:
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	sync_key = eas_connection_get_folder_sync_key (connection);
+	if (!sync_key) {
+		sync_key = g_strdup ("0");
+		refresh = TRUE;
+	}
+
+	if (refresh) {
+		struct folder_state *state = g_malloc0 (sizeof (*state));
+
+		state->context = context;
+		state->cnc = connection;
+
+		req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
+
+		eas_sync_folder_hierarchy_req_set_results_fn (req, eas_common_update_folders,
+							      state);
+
+		eas_request_base_SetConnection (&req->parent_instance,
+						connection);
+
+		if (!eas_sync_folder_hierarchy_req_Activate (req, &error)) {
+			g_free (state);
+			goto err;
+		}
+	} else {
+		gchar **folders = eas_connection_get_folders (connection);
+
+		dbus_g_method_return (context, folders);
+		g_strfreev (folders);
+	}
+
+	g_free (sync_key);
+	g_debug ("eas_common_get_folders--");
+
+	return TRUE;
 }

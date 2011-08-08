@@ -109,6 +109,13 @@ gboolean eas_common_cancel_request (EasCommon* self,
 				    guint request_id,
 				    DBusGMethodInvocation* context);
 
+
+gboolean
+eas_common_get_folders (EasCommon* self,
+			const gchar* account_uid,
+			gboolean refresh,
+			DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_COMMON_H_ */
