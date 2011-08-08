@@ -532,7 +532,7 @@ eas_sync_handler_add_items (EasSyncHandler* self,
         g_debug ("add_calendar_items called successfully");
         if (created_item_array)
         {
-            while (created_item_array[i] && i < length)
+            while (created_item_array[i])
             {
                 EasItemInfo *cal = eas_item_info_new ();
                 EasItemInfo *updated = g_slist_nth (items_added, i)->data;
@@ -548,11 +548,11 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                 i++;
             }
             g_free (created_item_array);
-            
-            if (i == length && created_item_array[i])
-            {
-                g_debug ("added list is not the same length as input list - problem?");
-            }
+        }
+        
+        if (i != length)
+        {
+            g_debug ("Added list is not the same length as input list!");
         }
     }
 
