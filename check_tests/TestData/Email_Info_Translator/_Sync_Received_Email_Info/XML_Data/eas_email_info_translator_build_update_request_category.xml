@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ApplicationData>
+        <Categories xmlns="AirSyncBase:">
+        	<Category>this is, category1</Category>
+            	<Category>this is, cateogry2</Category>
+		<Category>this is, category3</Category>
+       	</Categories>
+</ApplicationData>
