@@ -1015,23 +1015,37 @@ eas_trigger_next_request (EasConnection *cnc)
 	g_debug ("eas_trigger_next_request--");
 }
 
+/**
+	Free the active job and pull a new one into the queue 
+	called when we're finished processing the response
+ */
 static void
 eas_active_job_done (EasConnection *cnc, EasNode *eas_node)
 {
 	g_debug ("eas_active_job_done++");
-	
+	g_free (eas_node);
+	eas_trigger_next_request(cnc);
+	g_debug ("eas_active_job_done--");
+}
+
+/**
+	Remove the job from the active queue, 
+	called when we get a response from soup
+ */
+static void
+eas_active_job_dequeue (EasConnection *cnc, EasNode *eas_node)
+{
+	g_debug ("eas_active_job_dequeue++");
 	QUEUE_LOCK (cnc);
 
 	cnc->priv->active_job_queue = g_slist_remove (cnc->priv->active_job_queue, eas_node);
-
-	g_debug ("eas_active_job_done: active_job++  queuelength=%d", g_slist_length (cnc->priv->active_job_queue));
-
+	
+	g_debug ("eas_active_job_dequeue:  queuelength=%d",g_slist_length(cnc->priv->active_job_queue));
+	
 	QUEUE_UNLOCK (cnc);
-
-	g_free (eas_node);
-	eas_trigger_next_request (cnc);
-	g_debug ("eas_active_job_done--");
+	g_debug ("eas_active_job_dequeue--");
 }
+
 
 /**
  * WBXML encode the message and send to exchange server via libsoup.
@@ -2003,10 +2017,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	RequestValidity validity = FALSE;
 	gboolean cleanupRequest = FALSE;
 
-
-
-	g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]", node, req, self, priv);
-
+	eas_active_job_dequeue(node->cnc, node);
+	
+    g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]", node, req, self, priv);
 	// if request has been cancelled, complete with appropriate error
 	if(eas_request_base_IsCancelled(req))
 	{
@@ -2448,7 +2461,7 @@ eas_connection_cancel_request(EasConnection* cnc,
 		ret = FALSE;
 		g_set_error (error, EAS_CONNECTION_ERROR,
                      EAS_CONNECTION_ERROR_BADARG,
-                     ("Request with id %d does not exist, can't cancel"), request_id);
+                     ("Request with id %d not in queue, can't cancel"), request_id);
 	}
 	QUEUE_UNLOCK (cnc);
 
