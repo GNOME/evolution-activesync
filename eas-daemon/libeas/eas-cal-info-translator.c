@@ -1333,7 +1333,7 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				dateTime = icaltime_from_string (value);
 				if (isAllDayEvent) {
 					// Ensure time is set to 00:00:00 for all-day events
-					dateTime.hour = dateTime.minute = dateTime.second = 0;
+					dateTime.is_date = 1;
 				}
 				prop = icalproperty_new_dtstart (dateTime);
 				if (tzid && strlen (tzid) && !dateTime.is_utc) { // Note: TZID not specified if it's a UTC time
@@ -1353,7 +1353,8 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				dateTime = icaltime_from_string (value);
 				if (isAllDayEvent) {
 					// Ensure time is set to 00:00:00 for all-day events
-					dateTime.hour = dateTime.minute = dateTime.second = 0;
+					dateTime.is_date = 1;
+					
 				}
 				prop = icalproperty_new_dtend (dateTime);
 				if (tzid && strlen (tzid) && !dateTime.is_utc) { // Note: TZID not specified if it's a UTC time
@@ -1495,13 +1496,13 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 					for (prop = icalcomponent_get_first_property (vevent, ICAL_DTEND_PROPERTY); prop;
 					     prop = icalcomponent_get_next_property (vevent, ICAL_DTEND_PROPERTY)) {
 						struct icaltimetype date = icalproperty_get_dtend (prop);
-						date.hour = date.minute = date.second = 0;
+						date.is_date = 1;
 						icalproperty_set_dtend (prop, date);
 					}
 					for (prop = icalcomponent_get_first_property (vevent, ICAL_DTSTART_PROPERTY); prop;
 					     prop = icalcomponent_get_next_property (vevent, ICAL_DTSTART_PROPERTY)) {
 						struct icaltimetype date = icalproperty_get_dtstart (prop);
-						date.hour = date.minute = date.second = 0;
+						date.is_date = 1;
 						icalproperty_set_dtstart (prop, date);
 					}
 				}
