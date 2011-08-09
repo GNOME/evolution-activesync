@@ -291,17 +291,8 @@ finish:
 				      ret_failed_updates_array);
 	}
 
-	if (ret_failed_updates_array) {
-		gint index = 0;
-
-		while (ret_failed_updates_array[index]) {
-			g_free (ret_failed_updates_array[index]);
-			ret_failed_updates_array[index] = NULL;
-			++ index;
-		}
-		g_free (ret_failed_updates_array);
-		ret_failed_updates_array = NULL;
-	}
+	g_strfreev (ret_failed_updates_array);
+	ret_failed_updates_array = NULL;
 
 	g_debug ("eas_update_email_req_MessageComplete--");
 	return TRUE;
