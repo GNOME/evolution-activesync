@@ -2535,7 +2535,8 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
 
 		if (tzid) {
-			icaltz = icaltimezone_get_builtin_timezone (icalproperty_get_value_as_string (tzid));
+			icaltz = icaltimezone_new();
+			icaltimezone_set_component(icaltz, vtimezone);
 		}
 
 
