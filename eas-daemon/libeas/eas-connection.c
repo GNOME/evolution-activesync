@@ -2306,19 +2306,21 @@ gchar **eas_connection_get_folders (EasConnection *cnc)
 
 	/* We re-use the original array, dropping the ##storedata element */
 	for (i = 0; folders[i]; i++) {
+		gchar *res = NULL;
+		
 		if (!strcmp (folders[i], "##storedata")) {
 			folders[i] = NULL;
 			continue;
 		}
 
-		gchar *res = g_strdup_printf ("%s\n%s\n%s\n%d",
-					      g_key_file_get_string (cnc->priv->folders,
-								     folders[i], "parent_id", NULL),
-					      folders[i],
-					      g_key_file_get_string (cnc->priv->folders,
-								     folders[i], "display_name", NULL),
-					      g_key_file_get_integer (cnc->priv->folders,
-								      folders[i], "type", NULL));
+		res = g_strdup_printf ("%s\n%s\n%s\n%d",
+				       g_key_file_get_string (cnc->priv->folders,
+							      folders[i], "parent_id", NULL),
+				       folders[i],
+				       g_key_file_get_string (cnc->priv->folders,
+							      folders[i], "display_name", NULL),
+				       g_key_file_get_integer (cnc->priv->folders,
+							       folders[i], "type", NULL));
 
 		/* Reuse the existing array. */
 		g_free (folders[i]);
