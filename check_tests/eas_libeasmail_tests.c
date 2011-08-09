@@ -237,6 +237,7 @@ static gboolean spawn_send_email_thread (gpointer data)
 static void testSendEmail (EasEmailHandler *email_handler,
                            const gchar *client_id,
                            const gchar *mime_file,
+                           gboolean get_progress_updates,
                            GError **error)
 {
     gboolean ret = FALSE;
@@ -246,21 +247,33 @@ static void testSendEmail (EasEmailHandler *email_handler,
 	// comment out if progress reports not desired:
 	progress_cb = test_email_request_progress_cb;
 
-	TrySendEmailParams *send_params = g_new0 (TrySendEmailParams, 1);
-	send_params->email_handler = email_handler;
-	send_params->client_id = client_id;
-	send_params->mime_file = mime_file;
-	send_params->progress_fn = progress_cb;
-	send_params->progress_data = NULL;
-	send_params->error = error;		
+	if(get_progress_updates)
+	{
+		TrySendEmailParams *send_params = g_new0 (TrySendEmailParams, 1);
+		send_params->email_handler = email_handler;
+		send_params->client_id = client_id;
+		send_params->mime_file = mime_file;
+		send_params->progress_fn = progress_cb;
+		send_params->progress_data = NULL;
+		send_params->error = error;		
 
-	g_idle_add(spawn_send_email_thread, send_params);	// spawns a new thread to make the sync call
+		g_idle_add(spawn_send_email_thread, send_params);	// spawns a new thread to make the sync call
 
-	mark_point();
+		mark_point();
 
-	g_debug("run mainloop");
+		g_debug("run mainloop");
 	
-	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+		g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+	}
+	else
+	{
+    	ret = eas_mail_handler_send_email (email_handler,
+		                                   client_id,
+		                                   mime_file,
+		                                   NULL,
+		                                   NULL,		
+		                                   error);	
+	}
   
 }
 
@@ -669,7 +682,7 @@ START_TEST (test_eas_mail_handler_send_email)
     mark_point();
 
     // call into the daemon to send email to the exchange server
-    testSendEmail (email_handler, client_id, mime_file, &error);
+    testSendEmail (email_handler, client_id, mime_file, TRUE, &error);
     g_free (mime_file);
 
     g_object_unref (email_handler);
@@ -1379,6 +1392,7 @@ struct _TrySyncFolderEmailParams
 	EasProgressFn progress_fn;
 	gpointer progress_data; 
 	GCancellable *cancellable;
+	gboolean	expect_cancelled;
 	GError **error;
 };
 
@@ -1391,9 +1405,10 @@ static void try_sync_folder_email(gpointer data)
 
 	g_debug("sync_folder_email with %s", params->sync_key_in);
 	g_debug("cancellable = %x", params->cancellable);
-	//g_debug("short delay");
-	//g_usleep(500000);
-	
+	//g_debug("short delay before doing sync folder request");
+	//g_usleep(50000);
+
+	g_debug("request folder sync");
 	rtn = eas_mail_handler_sync_folder_email (params->email_handler,
 											  params->sync_key_in,
 											  params->time_window,						// no time filter
@@ -1411,23 +1426,35 @@ static void try_sync_folder_email(gpointer data)
 											  params->error); 	
 
 	g_debug("eas_mail_handler_sync_folder_email");
-	if (!rtn)
+	if ((params->expect_cancelled == FALSE) && !rtn)
 	{
 		fail_if(TRUE, "%s", (*params->error)->message);
 	}
+	else if (params->expect_cancelled)
+	{
+		fail_if(rtn == TRUE, "expect sync to fail because cancelled");
+		g_debug("sync failed with '%s'", (*params->error)->message);
+		// need to do this here since no more progress updates will be received:
+		g_main_loop_quit(progress_loop);	
+		goto cleanup;
+	}
 
-	fail_if(*params->more_available, "Expect more_available to be FALSE when syncing with a non-zero sync_key");
+	if(*params->more_available)
+	{	
+		g_warning("Expect more_available to be FALSE when syncing with a non-zero sync_key - have you got > 100 emails in your inbox?");
+	}
+	//fail_if(*params->more_available, "Expect more_available to be FALSE when syncing with a non-zero sync_key");
 
 	// TODO print out the server id of the first email to make sure it's sensible
 	fail_if(!params->emails_created, "need at least one email in the inbox for this test to pass");
 
-	g_slist_foreach(params->emails_created, (GFunc) g_object_unref, NULL);
     EasEmailInfo *email = NULL;
 
     // get email info for first email in the folder
     email = (g_slist_nth (*(params->emails_created), 0))->data;
 	
 	g_debug("email id = %s", email->server_id);
+cleanup:	
 	g_free(params);
 	
 	return;
@@ -1439,6 +1466,18 @@ static gboolean spawn_sync_folder_email_thread (gpointer data)
 	
 	return FALSE;	// run once (don't put back on mainloop again)
 }	
+
+static try_cancel (gpointer data)
+{
+	GCancellable *cancellable = data;
+
+	g_debug("delay before cancelling to make sure sync request has reached daemon");
+	g_usleep(500000);	
+	g_debug("calling g_cancellable_cancel");
+	g_cancellable_cancel(cancellable);
+	
+	return FALSE;	// run once (don't put back on mainloop again)
+}
 
 START_TEST (test_eas_mail_get_item_estimate)
 {
@@ -1459,11 +1498,9 @@ START_TEST (test_eas_mail_get_item_estimate)
     gboolean more_available = FALSE;	
 	guint estimate = 0;
 	progress_loop = g_main_loop_new (NULL, FALSE);
-	GCancellable *cancellable = NULL; 
 
 	g_type_init();	// must call before calling g_cancellable_new
 	g_thread_init (NULL);
-	cancellable = g_cancellable_new();	
 	
 	testGetMailHandler (&email_handler, accountuid);
 	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
@@ -1534,19 +1571,16 @@ START_TEST (test_eas_mail_get_item_estimate)
 	sync_params->more_available = &more_available;	
 	sync_params->progress_fn = progress_cb;
 	sync_params->progress_data = NULL;
-	sync_params->cancellable = cancellable;	
-	g_debug("sync_params->cancellable = %x", sync_params->cancellable);
+	sync_params->cancellable = NULL;	
+	sync_params->expect_cancelled = FALSE;
+
 	sync_params->error = &error;		
 
 	// spawn a thread to make the synchronous call so this thread free to receive progress updates:
 	g_idle_add(spawn_sync_folder_email_thread, sync_params);	
 
 	mark_point();
-
-	// TEMP: cancel the sync: currently does nothing in the daemon
-	// TODO figure out how to test properly when supported in daemon
-	g_debug("calling g_cancellable_cancel");
-	g_cancellable_cancel(cancellable);
+	
 	mark_point();
 	
 	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
@@ -1563,7 +1597,11 @@ START_TEST (test_eas_mail_get_item_estimate)
 		}
 	}
 	g_debug("estimate = %d", estimate);	
-	fail_if(estimate != 0, "Expected estimate to be zero after second sync");
+	if(estimate != 0)
+	{
+		g_warning("Expected estimate to be zero after second sync if less than 100 emails in inbox?");
+	}
+	//fail_if(estimate != 0, "Expected estimate to be zero after second sync");
 
 	// use 2-way sync api to update the first mail in the folder
 	EasEmailInfo *email = NULL;
@@ -1617,8 +1655,6 @@ START_TEST (test_eas_mail_get_item_estimate)
 
 	mark_point();
 
-	g_object_unref(cancellable);
-
 	g_slist_foreach(change_emails, (GFunc) g_object_unref, NULL);
 	g_slist_free(change_emails);
 	g_free(folder_sync_key_out);
@@ -1628,6 +1664,148 @@ START_TEST (test_eas_mail_get_item_estimate)
 }
 END_TEST
 
+START_TEST (test_eas_mail_cancel_sync)
+{
+	gboolean ret;
+	const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+	GError *error = NULL;
+    GSList *created = NULL;	// receives a list of folders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+	gchar hierarchy_sync_key[64] = "0";
+	gchar folder_sync_key[64] = "0";
+	gchar* folder_sync_key_out = NULL;
+	gchar* folder_sync_key_out_2 = NULL;
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;	
+	guint estimate = 0;
+	progress_loop = g_main_loop_new (NULL, FALSE);
+	GCancellable *cancellable = NULL; 
+
+	g_type_init();	// must call before calling g_cancellable_new
+	g_thread_init (NULL);
+	cancellable = g_cancellable_new();	
+	
+	testGetMailHandler (&email_handler, accountuid);
+
+	// sync folder hierarchy
+	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
+	fail_if (NULL == created, "No folder information returned from exchange server");
+	fail_unless (NULL == updated, "Not expecting updated folders on initial sync");
+	fail_unless (NULL == deleted, "Not expecting deleted folders on initial sync");
+
+	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
+
+	// sync with sync_key=0:
+	g_debug("sync_folder_email with %s", folder_sync_key);
+	ret = eas_mail_handler_sync_folder_email (email_handler,
+						  folder_sync_key,
+                          0,						// no time filter
+						  g_inbox_id,
+						  NULL,						// emails to delete
+						  NULL, 					// emails to change
+                          &folder_sync_key_out,
+						  &emails_created,
+	                      &emails_updated, 
+	                      &emails_deleted,
+						  &more_available,
+	                      NULL,						// progress function
+	                      NULL,						// progress data
+	                      NULL,						// cancellable
+						  &error); 
+
+	if(!ret)
+	{
+		fail_if(TRUE, "eas_mail_handler_sync_folder_email returned %s", error->message);
+	}
+
+	fail_if(!more_available, "expect more_available to be TRUE on first sync");
+
+	mark_point();
+
+	// how many items are there to sync?
+	g_debug("get_item_estimate with %s", folder_sync_key_out);
+	ret = eas_mail_handler_get_item_estimate(email_handler, folder_sync_key_out, g_inbox_id, &estimate, &error);
+	if(!ret)
+	{
+		if(error)
+		{
+			fail_if(TRUE, "get_item_estimate returned %s", error->message);
+		}
+	}
+	g_debug("estimate = %d", estimate);	
+
+	guint items_in_inbox = estimate;
+
+	// make sure we have 100 emails in the inbox so the sync request will take 
+	// long enough to allow us to cancel before it's done:
+	while(items_in_inbox < 200)
+	{
+		guint i;
+		gchar client_id[21];
+		guint random_num;
+		/* initialize random generator */
+		srand (time (NULL));
+		random_num = rand();
+		gchar *mime_file = g_strconcat (getenv ("HOME"), "/int07/testdata/mime_file.txt", NULL);
+		
+		g_debug("sending emails to fill up inbox");
+		for(i = 0; i < 10; i++)
+		{
+			snprintf (client_id, sizeof (client_id) / sizeof (client_id[0]), "%d", random_num);
+			testSendEmail (email_handler, client_id, mime_file, FALSE, &error);
+		}
+
+		items_in_inbox += 10;
+		g_usleep(5000000);
+	}
+
+	g_debug("there should be at least 100 emails in inbox now");
+	// sync with new sync key, and cancel:
+	EasProgressFn progress_cb = test_email_request_progress_cb;	
+
+	// set up params
+	TrySyncFolderEmailParams *sync_params = g_new0 (TrySyncFolderEmailParams, 1);
+	sync_params->email_handler = email_handler;
+	sync_params->folder_id = g_inbox_id;
+	sync_params->sync_key_in = folder_sync_key_out;
+	sync_params->time_window = 0;
+	sync_params->folder_id = g_inbox_id;
+	sync_params->delete_emails = NULL;		
+	sync_params->change_emails = NULL;
+	sync_params->sync_key_out = &folder_sync_key_out_2;
+	sync_params->emails_created = &emails_created;
+	sync_params->emails_changed = &emails_updated;
+	sync_params->emails_deleted = &emails_deleted;
+	sync_params->more_available = &more_available;	
+	sync_params->progress_fn = progress_cb;
+	sync_params->progress_data = NULL;
+	sync_params->cancellable = cancellable;	
+	sync_params->expect_cancelled = TRUE;
+
+	sync_params->error = &error;		
+
+	// spawn a thread to make the synchronous call so this thread free to receive progress updates:
+	g_idle_add(spawn_sync_folder_email_thread, sync_params);	
+
+	mark_point();
+
+	// cancel the previous sync request after it's been sent
+	g_idle_add(try_cancel, cancellable);
+	
+	mark_point();
+	
+	g_main_loop_run (progress_loop);	// drop into main loop, quits when 100% progress feedback received
+
+	mark_point();
+
+	g_object_unref(cancellable);
+
+}
+END_TEST	
 
 START_TEST (test_eas_mail_handler_delete_email)
 {
@@ -1851,7 +2029,13 @@ Suite* eas_libeasmail_suite (void)
     
 	//tcase_add_test(tc_libeasmail, test_eas_mail_handler_watch_email_folders);
 	// requires at least one email in inbox to pass
-//	tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
+	//tcase_add_test(tc_libeasmail, test_eas_mail_get_item_estimate);
+
+	// this cancel test requires a long test timeout (CK_DEFAULT_TIMEOUT=400 or higher)
+	// it can also fail. 
+	// NOTE: this test can add up to 200 emails to your inbox 
+	// and doesn't currently delete them afterwards (TODO)
+	// tcase_add_test(tc_libeasmail, test_eas_mail_cancel_sync);
 	
     g_free(g_inbox_id);
     g_inbox_id = NULL;
