@@ -145,7 +145,6 @@ AC_CONFIG_FILES([
     eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
-    eas-daemon/tests/Makefile
     libeastest/src/Makefile
     libeasmail/src/Makefile
     libeassync/src/Makefile

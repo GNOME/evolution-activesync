@@ -122,50 +122,6 @@ EasMail* eas_mail_new (void)
 	return easMail;
 }
 
-gboolean
-eas_mail_start_sync (EasMail* easMailObj, gint valueIn, GError** error)
-{
-	/*
-	guint64 account_uid = 12345;
-	const gchar* sync_key =NULL;
-	gchar **ret_sync_key =NULL;
-	gchar **ret_created_folders_array =NULL;
-	gchar **ret_updated_folders_array =NULL;
-	gchar **ret_deleted_folders_array =NULL;
-
-
-	eas_connection_folder_sync(easMailObj->easConnection,
-	                                            account_uid,
-	                        sync_key,
-	                        ret_sync_key,
-	                        ret_created_folders_array,
-	                        ret_updated_folders_array,
-	                        ret_deleted_folders_array,
-	                        error);
-	*/
-	return TRUE;
-}
-
-void
-eas_mail_test_001 (EasMail* obj, DBusGMethodInvocation* context)
-{
-
-	GError *error = NULL;
-	gchar *ok_str = g_strdup ("OK");
-
-	g_debug (">> eas_mail_test_001()");
-
-	if (error) {
-		g_debug (">> eas_mail_test_001 -error-");
-		dbus_g_method_return_error (context, error);
-		g_error_free (error);
-	} else {
-		g_debug (">> eas_mail_test_001 -No error-");
-		dbus_g_method_return (context, ok_str);
-	}
-
-	g_free (ok_str);
-}
 
 gboolean
 eas_mail_get_item_estimate (EasMail* self,

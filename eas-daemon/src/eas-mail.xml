@@ -12,21 +12,6 @@
   <interface name="org.meego.activesyncd.EasMail">
 
 <!--
-  Start:Interfaces for testing only 
--->
-    <method name="start_sync">
-      <arg type="i" name="new_value" direction="in"/>
-    </method>
-
-    <method name="test_001">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="s" name="ret_str" direction="out" />
-    </method>
-<!--
-  End:Interfaces for testing only 
--->
-
-<!--
  get an estimate of the number of items to be synchronised for a specified folder
 -->
     <method name="get_item_estimate">
