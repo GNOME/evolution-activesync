@@ -1904,6 +1904,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	}
 
 	priv->folders_keyfile = g_build_filename (cachedir, "folders", NULL);
+	g_free (cachedir);
 	priv->folders = g_key_file_new ();
 	g_key_file_load_from_file (priv->folders, priv->folders_keyfile,
 				   G_KEY_FILE_NONE, NULL);
