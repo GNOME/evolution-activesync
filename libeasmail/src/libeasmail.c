@@ -150,14 +150,17 @@ eas_mail_handler_finalize (GObject *object)
 						EAS_MAIL_SIGNAL_PROGRESS,
 						G_CALLBACK (progress_signal_handler),
 						cnc);
+		g_object_unref(priv->remoteEas);
 	}
 	if (priv->remoteCommonEas) {
 		dbus_g_proxy_disconnect_signal (priv->remoteCommonEas,
 						EAS_MAIL_SIGNAL_PROGRESS,
 						G_CALLBACK (progress_signal_handler),
 						cnc);
+		g_object_unref(priv->remoteCommonEas);
 	}
 
+	
 	g_free (priv->account_uid);
 
 	// free the hashtable
@@ -795,7 +798,7 @@ progress_signal_handler (DBusGProxy* proxy,
 static void
 dbus_call_completed (DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data)
 {
-	g_debug ("dbus call completed");
+	g_debug ("dbus call completed callback called");
 
 	return;
 }
@@ -1580,48 +1583,53 @@ eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user
 	guint request_id = cancel_info->request_id;
 	GError *error = NULL;
 	DBusGProxyCall *call;
-	
+	DBusGConnection *bus;
+	DBusGProxy *common_proxy;
+		
 	g_debug ("eas_mail_handler_cancel_common_request++");
 
 	g_debug ("call dbus to cancel request with id %d", request_id);
 
+	// create (and the tear down) a new dbus session to connect to common interface
+	// to allow us to send the cancel to dbus even if email handler's main
+	// dbus session is blocked
+	g_debug ("Connecting to new D-Bus Session to cancel");
+	bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+	if (bus == NULL) {
+		g_warning ("Error: Couldn't connect to the Session bus (%s) ", error->message);
+	}
+
+	g_debug ("Creating a GLib proxy object for Eas.");
+	common_proxy =  dbus_g_proxy_new_for_name (bus,
+						      EAS_SERVICE_NAME,
+						      EAS_SERVICE_COMMON_OBJECT_PATH,
+						      EAS_SERVICE_COMMON_INTERFACE);
+	
+	if (common_proxy == NULL) {
+		g_warning ("Error: Couldn't create the proxy object");
+	}
+	
 	// call the cancel operation on the common interface
-	/*
-	ret = dbus_g_proxy_call (proxy_common,
+	ret = dbus_g_proxy_call (common_proxy,
 				 "cancel_request",
 				 &error,
 				 G_TYPE_STRING, priv->account_uid,
 				 G_TYPE_UINT, request_id,
 				 G_TYPE_INVALID,
 				 G_TYPE_INVALID);	// no out params. fire and forget
-	*/
 	
-	call = dbus_g_proxy_begin_call (proxy_common, 
-									"cancel_request",
-									dbus_call_completed,
-									NULL, 				// userdata
-									NULL, 	
-									G_TYPE_STRING, priv->account_uid,
-									G_TYPE_UINT, request_id,
-									G_TYPE_INVALID);
-
-	//g_debug("flushing");	
-
-	//dbus_g_connection_flush(priv->bus);
-	
-	g_debug ("block until cancel results available");
-	
-	ret = dbus_g_proxy_end_call (proxy_common,
-			     call,
-			     &error,
-			     G_TYPE_INVALID);
-
 	g_debug ("dbus call to cancel request returned");
+	
 	if (!ret) {
 		g_warning ("cancel request failed with %s", error->message);
 		g_error_free(error);
 	}
+	
+	// disconnect from dbus
+	dbus_g_connection_unref (bus);
 
+	g_object_unref(common_proxy);
+	
 	g_debug ("eas_mail_handler_cancel_common_request--");
 
 }

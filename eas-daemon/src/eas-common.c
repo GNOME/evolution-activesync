@@ -269,7 +269,7 @@ eas_common_cancel_request (EasCommon* self,
 	ret = eas_connection_cancel_request(connection, request_id, &error);
 	if(!ret)
 	{
-		g_debug("eas_common_cancel_request returning error");
+		g_debug("eas_common_cancel_request returning error %s", error->message);
 		dbus_g_method_return_error (context, error);
 		g_error_free (error);
 	}
