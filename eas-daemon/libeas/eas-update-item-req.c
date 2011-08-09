@@ -231,7 +231,6 @@ gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 {
 	GError *local_error = NULL;
 	EasUpdateItemReqPrivate *priv = self->priv;
-	gchar *ret_sync_key = NULL;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
 	g_debug ("eas_update_item_req_MessageComplete++");
@@ -244,7 +243,6 @@ gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 	if (FALSE == eas_sync_msg_parse_response (priv->sync_msg, doc, &local_error)) {
 		goto finish;
 	}
-	ret_sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->sync_msg));
 
 finish:
 	if (local_error) {
@@ -252,11 +250,10 @@ finish:
 		g_error_free (local_error);
 	} else {
 		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      ret_sync_key);
+				      eas_sync_msg_get_syncKey (priv->sync_msg));
 	}
 	// We must always free doc and release the semaphore
 	xmlFreeDoc (doc);
-	g_free (ret_sync_key);
 
 	g_debug ("eas_update_item_req_MessageComplete--");
 	return TRUE;
