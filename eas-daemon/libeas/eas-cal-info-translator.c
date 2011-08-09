@@ -530,6 +530,10 @@ static void _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vtimezone, 
 			if (*tzid == NULL || strlen (*tzid) == 0) {
 				*tzid = g_strdup (ICAL_DEFAULT_TZID);
 			}
+			// if timezone id contains character UTC, then don't add it to the ICAL
+			if(g_strrstr (*tzid, "UTC") != NULL) {
+				return;
+			}
 			prop = icalproperty_new_tzid (*tzid);
 			icalcomponent_add_property (vtimezone, prop);
 
