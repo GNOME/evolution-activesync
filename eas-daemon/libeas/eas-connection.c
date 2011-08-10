@@ -146,6 +146,7 @@ static GConfClient* g_gconf_client = NULL;
 static EasAccountList* g_account_list = NULL;
 static GSList* g_mock_response_list = NULL;
 static GArray *g_mock_status_codes = NULL;
+static gboolean g_mock_test = FALSE;
 
 static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
 				     SoupAuth *auth, gboolean retrying,
@@ -766,13 +767,27 @@ void eas_connection_resume_request (EasConnection* self, gboolean provisionSucce
 	g_debug ("eas_connection_resume_request--");
 }
 
+static EasNode *
+eas_node_new ()
+{
+	EasNode *node;
+	g_debug ("eas_node_new++");
+	node = g_new0 (EasNode, 1);
+	g_debug ("eas_node_new--");
+	return node;
+}
+
 static gboolean
 call_handle_server_response (gpointer data)
 {
-	EasRequestBase *req = EAS_REQUEST_BASE (data);
+	EasNode* node = (EasNode*)data;
+	EasRequestBase *req = node->request;
 	SoupMessage *msg = eas_request_base_GetSoupMessage (req);
 
-	handle_server_response (NULL, msg, req);
+	g_debug ("call_handle_server_response++");
+	handle_server_response (NULL, msg, node);
+
+	g_debug ("call_handle_server_response--");
 	return FALSE;   // don't put back on main loop
 }
 
@@ -926,15 +941,7 @@ static void soap_wrote_headers (SoupMessage *msg, gpointer data)
 	}
 }
 
-static EasNode *
-eas_node_new ()
-{
-	EasNode *node;
-	g_debug ("eas_node_new++");
-	node = g_new0 (EasNode, 1);
-	g_debug ("eas_node_new--");
-	return node;
-}
+
 
 static gboolean
 eas_next_request (gpointer _cnc)
@@ -999,6 +1006,7 @@ static void
 eas_active_job_done (EasConnection *cnc, EasNode *eas_node)
 {
 	g_debug ("eas_active_job_done++");
+	
 	QUEUE_LOCK (cnc);
 
 	cnc->priv->active_job_queue = g_slist_remove (cnc->priv->active_job_queue, eas_node);
@@ -1210,7 +1218,11 @@ eas_connection_send_request (EasConnection* self,
 
 	if (g_mock_response_list) {	// call handle_server_response directly from soup thread
 		g_debug ("put call_handle_server_response on soup loop");
-		g_idle_add (call_handle_server_response, request);
+		node = eas_node_new ();
+		node->request = request;
+		node->cnc = self;
+		g_idle_add (call_handle_server_response, node);
+		
 	} else {	// send request via libsoup
 		g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
 		g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
@@ -1232,7 +1244,6 @@ eas_connection_send_request (EasConnection* self,
 		QUEUE_LOCK (node->cnc);
 		/* Add to active job queue */
 		self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
-		//self->priv->active_job_queue = g_slist_append (self->priv->active_job_queue, node);
 		g_debug ("eas_connection_send_request : job++ queuelength=%d", g_slist_length (self->priv->jobs));
 		QUEUE_UNLOCK (node->cnc);
 
@@ -1967,7 +1978,7 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 void
 handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 {
-	EasNode *node = data;
+	EasNode *node = (EasNode *)data;
 	EasRequestBase *req = EAS_REQUEST_BASE (node->request);
 	EasConnection *self = EAS_CONNECTION (node->cnc);
 	EasConnectionPrivate *priv = EAS_CONNECTION_PRIVATE (self);
@@ -1978,6 +1989,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	GError *error = NULL;
 	RequestValidity validity = FALSE;
 	gboolean cleanupRequest = FALSE;
+
+
 
 	g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]", node, req, self, priv);
 
@@ -2002,6 +2015,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		//            feed that response back instead of the real server
 		//            response.
 		if (g_mock_response_list) {
+			g_mock_test = TRUE;
 			gchar *filename = g_slist_nth_data (g_mock_response_list, 0);
 			gchar curPath[FILENAME_MAX];
 			gchar *fullPath = NULL;
@@ -2034,6 +2048,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_free (fullPath);
 
 			g_object_unref (msg);
+			g_free(node);
 		} else {
 			gchar* wbxmlPart = NULL;
 			EasMultipartTuple* wbxmlData = NULL;
@@ -2156,7 +2171,7 @@ complete_request:
 			} else {
 				xmlFreeDoc (priv->request_doc);
 			}
-
+			
 			priv->request_cmd = NULL;
 			priv->request_doc = NULL;
 			priv->request = NULL;
@@ -2182,7 +2197,13 @@ complete_request:
 		eas_provision_req_Activate (prov_req, &error);   // TODO check return
 	}
 
+	g_debug ("Queued mock responses [%u]", g_slist_length (g_mock_response_list));
 
+	if(g_mock_test){
+		g_debug ("eas_connection - (mock test)handle_server_response--");
+		return;
+		}
+	
 	eas_active_job_done (node->cnc, node);
 	g_debug ("eas_connection - handle_server_response--");
 }
