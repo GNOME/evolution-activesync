@@ -2052,10 +2052,10 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		//            feed that response back instead of the real server
 		//            response.
 		if (g_mock_response_list) {
-			g_mock_test = TRUE;
 			gchar *filename = g_slist_nth_data (g_mock_response_list, 0);
 			gchar curPath[FILENAME_MAX];
 			gchar *fullPath = NULL;
+			g_mock_test = TRUE;
 
 			memset (curPath, '\0', sizeof (curPath));
 
@@ -2413,6 +2413,11 @@ eas_connection_cancel_request(EasConnection* cnc,
 		
 		if(eas_request_base_GetRequestId(request) == request_id)
 		{
+			GSource *source = NULL;
+			EasNode* node = eas_node_new ();
+			node->request = request;
+			node->cnc = cnc;			
+			
 			g_debug("found the request in the jobs queue");
 			found = TRUE;
 
@@ -2423,8 +2428,9 @@ eas_connection_cancel_request(EasConnection* cnc,
 			priv->jobs = g_slist_remove (priv->jobs, (gconstpointer *) node);
 			
 			// call handle_server_response from soup thread 
-			// by adding to the default main loop
-			g_idle_add(call_handle_server_response, request);
+			source = g_idle_source_new ();
+			g_source_set_callback (source, call_handle_server_response, node, NULL);
+			g_source_attach (source, priv->soup_context);			
 
 			break; // out of for loop
 		}
@@ -2440,6 +2446,7 @@ eas_connection_cancel_request(EasConnection* cnc,
 			
 			if(eas_request_base_GetRequestId(request) == request_id)
 			{
+				GSource *source;
 				g_debug("found the request in the active queue");
 				found = TRUE;
 
@@ -2449,8 +2456,10 @@ eas_connection_cancel_request(EasConnection* cnc,
 				// tell soup to cancel (nb: we need to do this from the soup thread)
 				// For messages queued with soup_session_queue_message() and cancelled from the same thread, 
 				// the callback will be invoked before soup_session_cancel_message() returns
-				call_soup_session_cancel_message(request);
-
+				// call_soup_session_cancel_message(request);
+				source = g_idle_source_new ();
+				g_source_set_callback (source, call_soup_session_cancel_message, request, NULL);
+				g_source_attach (source, priv->soup_context);	
 				break;  // out of for loop
 			}
 		}
