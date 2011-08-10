@@ -41,19 +41,17 @@ G_BEGIN_DECLS
 typedef struct _EasItemInfoClass EasItemInfoClass;
 typedef struct _EasItemInfo EasItemInfo;
 
-struct _EasItemInfoClass
-{
-	GObjectClass parent_class;
+struct _EasItemInfoClass {
+        GObjectClass parent_class;
 };
 
-struct _EasItemInfo
-{
-	GObject parent_instance;
+struct _EasItemInfo {
+        GObject parent_instance;
 
-	gchar* client_id;	   // from Local app - needed for add operations
-	gchar*  server_id;		// from AS server
-	gchar*  data;		// The iCalendar (RFC 5545) formatted payload
-	gchar* status;
+        gchar* client_id;	   // from Local app - needed for add operations
+        gchar*  server_id;		// from AS server
+        gchar*  data;		// The iCalendar (RFC 5545) formatted payload
+        gchar* status;
 };
 
 GType eas_item_info_get_type (void) G_GNUC_CONST;
@@ -67,12 +65,12 @@ EasItemInfo* eas_item_info_new();
 /*
 take the contents of the object and turn it into a null terminated string
 */
-gboolean eas_item_info_serialise(EasItemInfo* self, gchar** result);
+gboolean eas_item_info_serialise (EasItemInfo* self, gchar** result);
 
 /*
 populate the object from a string
 */
-gboolean eas_item_info_deserialise(EasItemInfo* self, const gchar* data);
+gboolean eas_item_info_deserialise (EasItemInfo* self, const gchar* data);
 
 
 G_END_DECLS

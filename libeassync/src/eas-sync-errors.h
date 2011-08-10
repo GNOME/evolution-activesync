@@ -35,9 +35,9 @@ GQuark eas_sync_error_quark (void);
 #define EAS_SYNC_ERROR (eas_sync_error_quark ())
 
 enum {
-	EAS_SYNC_ERROR_NONE,
-	EAS_SYNC_ERROR_BADARG,
-	EAS_SYNC_ERROR_UNKNOWN
+        EAS_SYNC_ERROR_NONE,
+        EAS_SYNC_ERROR_BADARG,
+        EAS_SYNC_ERROR_UNKNOWN
 };
 
 G_END_DECLS
