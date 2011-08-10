@@ -366,6 +366,10 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 	}
 	break;
 	case EasSyncReqStep1: {
+		GSList* added_folders = NULL;
+		GSList* updated_folders  = NULL;
+		GSList* deleted_folders  = NULL;
+		const gchar *ret_sync_key = NULL;
 		// We do some direct assigns lower down so this should always be true.
 		g_assert (!priv->folderID);
 
@@ -376,6 +380,17 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			g_assert (error != NULL);
 			goto finish;
 		}
+		//save the Folder Sync info for future Folder syncs
+		ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
+
+		added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
+		updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
+		deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
+
+		eas_connection_update_folders(eas_request_base_GetConnection (EAS_REQUEST_BASE (self)), 
+		                              ret_sync_key, added_folders,
+					      updated_folders, deleted_folders, error);
+		
 		priv->state = EasSyncReqStep2;
 		if (priv->ItemType == EAS_ITEM_CALENDAR) {
 			// cannot get from gconf - as the update takes too long - get from sync msg response
