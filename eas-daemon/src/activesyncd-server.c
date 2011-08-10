@@ -56,6 +56,7 @@
 #include <unistd.h>
 #include <libsoup/soup.h>
 #include <signal.h>
+#include <dbus/dbus.h>
 
 //user include
 #include "activesyncd-common-defs.h"
@@ -303,31 +304,43 @@ int main (int argc, char** argv)
 	g_main_loop_unref (g_mainloop);
 
 	// clean up dbus and all its objects
-	if (EasSyncObj){
+	if (EasSyncObj) {
+		g_debug ("Unregister and unref EasSyncObj");
 		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasSyncObj));
 		g_object_unref(EasSyncObj);
 	}
 	
-	if (EasCommonObj){
+	if (EasCommonObj) {
+		g_debug ("Unregister and unref EasCommonObj");
 		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasCommonObj));
 		g_object_unref(EasCommonObj);
 	}
 
-	if (EasMailObj){
+	if (EasMailObj) {
+		g_debug ("Unregister and unref EasMailObj");
 		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasMailObj));
 		g_object_unref(EasMailObj);
 	}
 
-	if(EasTestObj){
+	if (EasTestObj) {
+		g_debug ("Unregister and unref EasTestObj");
 		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasTestObj));
 		g_object_unref(EasTestObj);
 	}
 	
-	if(busProxy)
+	if (busProxy) {
+		g_debug ("Unref busProxy");
 		g_object_unref(busProxy);
+	}
 
 	if(bus)
+	{
+		g_debug ("Flush and unref DBusConnection bus");
+		dbus_g_connection_flush (bus);
 		dbus_g_connection_unref(bus);
+	}
+
+	dbus_shutdown ();
 
 	g_debug ("Exiting main()");
 	return 0;

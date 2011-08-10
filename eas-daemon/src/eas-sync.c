@@ -84,9 +84,9 @@ eas_sync_init (EasSync *object)
 static void
 eas_sync_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
-
+	g_debug ("eas_sync_finalize++");
 	G_OBJECT_CLASS (eas_sync_parent_class)->finalize (object);
+	g_debug ("eas_sync_finalize--");
 }
 
 static void
