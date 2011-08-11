@@ -1578,11 +1578,9 @@ eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user
 	EasCancelInfo *cancel_info = user_data;
 	EasEmailHandler* self = cancel_info->handler;
 	EasEmailHandlerPrivate *priv = self->priv;
-	DBusGProxy *proxy_common = priv->remoteCommonEas;	// uses the common object, not the email object
 	gboolean ret;
 	guint request_id = cancel_info->request_id;
 	GError *error = NULL;
-	DBusGProxyCall *call;
 	DBusGConnection *bus;
 	DBusGProxy *common_proxy;
 		
