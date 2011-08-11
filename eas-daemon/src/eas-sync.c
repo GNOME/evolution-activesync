@@ -110,14 +110,6 @@ EasSync* eas_sync_new (void)
 	return easCal;
 }
 
-#if 0
-void eas_sync_set_eas_connection (EasSync* self, EasConnection* easConnObj)
-{
-	EasSyncPrivate* priv = self->priv;
-	priv->connection = easConnObj;
-}
-#endif
-
 
 EasConnection*
 eas_sync_get_eas_connection (EasSync* self)
@@ -128,7 +120,10 @@ eas_sync_get_eas_connection (EasSync* self)
 	g_debug ("eas_sync_get_leas_connection--");
 }
 
-// takes an NULL terminated array of serialised calendar items and creates a list of EasCalInfo objects
+/*
+ Takes a NULL terminated array of serialised calendar or contacts items and
+ creates a list of EasItemInfo objects
+*/
 static gboolean
 build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GError **error)
 {
@@ -144,7 +139,7 @@ build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GErr
 		if (calInfo) {
 			*cal_list = g_slist_append (*cal_list, calInfo); // add it to the list first to aid cleanup
 			if (!cal_list) {
-				g_free (calInfo);
+				g_object_unref (calInfo);
 				ret = FALSE;
 				goto cleanup;
 			}
@@ -161,13 +156,16 @@ build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GErr
 
 cleanup:
 	if (!ret) {
-		// set the error
-		//g_set_error (error, EAS_MAIL_ERROR,
-		//       EAS_MAIL_ERROR_NOTENOUGHMEMORY,
-		//       ("out of memory"));
-		// clean up on error
-		g_slist_foreach (*cal_list, (GFunc) g_free, NULL);
-		g_slist_free (*cal_list);
+		g_set_error (error,
+		             EAS_CONNECTION_ERROR,
+		             EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+		             ("out of memory"));
+
+		if (*cal_list != NULL){
+			g_slist_foreach (*cal_list, (GFunc) g_object_unref, NULL);
+			g_slist_free (*cal_list);
+			*cal_list =NULL;
+		}
 	}
 
 	g_debug ("list has %d items", g_slist_length (*cal_list));
@@ -307,11 +305,22 @@ eas_sync_update_items (EasSync* self,
 	case EAS_ITEM_CALENDAR:
 	case EAS_ITEM_CONTACT: {
 		build_calendar_list (calendar_items, &items, &error);
+		if (error) {
+			dbus_g_method_return_error (context, error);
+			g_error_free (error);
+			return FALSE;
+		}
 	}
 	break;
 	default: {
-		//TODO: put unknown type error here.
-	}
+			g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTSUPPORTED,
+			     "Unknown type");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+		}
 	}
 	// Create the request
 	req = eas_update_item_req_new (account_uid, sync_key, type, folder_id, items, context);
@@ -363,12 +372,22 @@ eas_sync_add_items (EasSync* self,
 	case EAS_ITEM_CALENDAR:
 	case EAS_ITEM_CONTACT: {
 		build_calendar_list (calendar_items, &items, &error);
+		if (error) {
+			dbus_g_method_return_error (context, error);
+			g_error_free (error);
+			return FALSE;
+		}
 	}
 	break;
 	default: {
-		//TODO: put unknown type error here.
-	}
-	break;
+			g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTSUPPORTED,
+			     "Unknown type");
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+		}
 	}
 
 	// Create the request
@@ -380,7 +399,7 @@ eas_sync_add_items (EasSync* self,
 	// Start the request
 	eas_add_item_req_Activate (req, &error);
 
-	// TODO Check for error
+	// Check for error
 	if (error) {
 		dbus_g_method_return_error (context, error);
 		g_error_free (error);
@@ -484,5 +503,3 @@ finish:
 	g_debug ("eas_mail_fetch_email_body--");
 	return TRUE;
 }
-
-
