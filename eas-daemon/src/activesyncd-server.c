@@ -169,6 +169,7 @@ int main (int argc, char** argv)
 	GError* error = NULL;
 
 	g_type_init();
+	dbus_g_thread_init();
 #if 0
 	g_log_set_handler (NULL,
 			   G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
