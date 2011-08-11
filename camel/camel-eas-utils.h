@@ -80,9 +80,7 @@ gchar *eas_concat ( const gchar *prefix, const gchar *suffix);
 void strip_lt_gt (gchar **string, gint s_offset, gint e_offset);
 
 void	eas_utils_sync_folders	(CamelEasStore *eas_store,
-				 GSList *created_folders,
-				 GSList *deleted_folders,
-				 GSList *updated_folders);
+				 GSList *folder_list);
 
 CamelFolderInfo *
 	camel_eas_utils_build_folder_info	(CamelEasStore *store,

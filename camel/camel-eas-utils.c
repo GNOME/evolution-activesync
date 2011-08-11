@@ -110,29 +110,17 @@ static gboolean eas_do_remove_esource (gpointer user_data)
 }
 #endif
 
-static void
-sync_deleted_folders (CamelEasStore *store, GSList *deleted_folders)
+static gboolean
+eas_delete_folder_func (gpointer key, gpointer val, gpointer _store)
 {
-	CamelEasStoreSummary *eas_summary = store->summary;
-	GSList *l;
+	CamelEasStore *eas_store = _store;
+	CamelEasStoreSummary *eas_summary = eas_store->summary;
+	CamelFolderInfo *fi;
 
-	for (l = deleted_folders; l != NULL; l = g_slist_next (l)) {
-		EasFolder *folder = l->data;
-		CamelFolderInfo *fi;
-		GError *error = NULL;
-
-		printf("Delete folder %s?\n", folder->folder_id);
-		if (!camel_eas_store_summary_has_folder (eas_summary, folder->folder_id)) {
-			printf("no exist\n");
-			continue;
-		}
-
-		fi = camel_eas_utils_build_folder_info (store, folder->folder_id);
-		camel_store_folder_deleted ((CamelStore *) store, fi);
-
-		printf("remove from summary...\n");
-		camel_eas_store_summary_remove_folder (eas_summary, folder->folder_id, NULL);
-	}
+	fi = camel_eas_utils_build_folder_info (eas_store, key);
+	camel_store_folder_deleted (CAMEL_STORE (eas_store), fi);
+	camel_eas_store_summary_remove_folder (eas_summary, key, NULL);
+	return TRUE;
 }
 
 #if 0
@@ -257,15 +245,67 @@ sync_created_folders (CamelEasStore *eas_store, GSList *created_folders)
 			fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
 			camel_store_folder_created ((CamelStore *) eas_store, fi);
 		}
+		g_object_unref (folder);
 	}
+	g_slist_free (created_folders);
 }
 
 void
-eas_utils_sync_folders (CamelEasStore *eas_store, GSList *created_folders, GSList *deleted_folders, GSList *updated_folders)
+eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 {
 	GError *error = NULL;
+	GHashTable *old_hash;
+	GSList *l;
+	GSList* created_folders = NULL;
+	GSList* updated_folders = NULL;
+	GSList* existing = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
 
-	sync_deleted_folders (eas_store, deleted_folders);
+	old_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+	for (l = existing; l; l = g_slist_next (l)) {
+		EasFolder *folder = (EasFolder *) l->data;
+		g_hash_table_insert (old_hash, folder, folder);
+	}
+	g_slist_free (existing);
+
+	// iterate through existing list of folders
+	for (l = folder_list; l != NULL; l = g_slist_next (l)) {
+		EasFolder *folder = (EasFolder *) l->data;
+
+		if (g_hash_table_remove (old_hash, folder->folder_id)) {
+			/* We knew of a folder with this ID before */
+			gchar *old_display_name, *old_parent_id;
+			int old_type;
+			
+			old_display_name = camel_eas_store_summary_get_folder_name (eas_store->summary,
+										    folder->folder_id, NULL);
+			old_type = camel_eas_store_summary_get_folder_type (eas_store->summary,
+									    folder->folder_id, NULL);
+			old_parent_id = camel_eas_store_summary_get_parent_folder_id (eas_store->summary,
+										      folder->folder_id, NULL);
+
+			if (g_str_equal (folder->parent_id, old_parent_id) &&
+			    g_str_equal (folder->display_name, old_display_name) &&
+			    folder->type == old_type) {
+				/* Complete match; no changes. Forget it */
+				g_object_unref (folder);
+			} else {
+				/* The folder has been changed */
+				updated_folders = g_slist_append (updated_folders, folder);
+			}
+			g_free (old_display_name);
+			g_free (old_parent_id);
+		} else {
+			/* No match in the hash table: this is a new folder */
+			created_folders = g_slist_append (created_folders, folder);
+		}
+	}
+	/* We have eaten the objects; just free the list structure itself */
+	g_slist_free (folder_list);
+
+	/* Now, anything left in old_hash must be a folder that no longer exists */
+	g_hash_table_foreach_remove (old_hash, eas_delete_folder_func, eas_store);
+	g_hash_table_destroy (old_hash);
+
 	sync_updated_folders (eas_store, updated_folders);
 	sync_created_folders (eas_store, created_folders);
 

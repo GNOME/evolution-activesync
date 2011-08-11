@@ -329,24 +329,6 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 	return root_fi;
 }
 
-static void
-eas_update_folder_hierarchy (CamelEasStore *eas_store, gchar *sync_state,
-			     GSList *folders_created,
-			     GSList *folders_deleted, GSList *folders_updated)
-{
-	eas_utils_sync_folders (eas_store, folders_created, folders_deleted, folders_updated);
-	camel_eas_store_summary_store_string_val (eas_store->summary, "sync_state", sync_state);
-	camel_eas_store_summary_save (eas_store->summary, NULL);
-
-	g_slist_foreach (folders_created, (GFunc) g_object_unref, NULL);
-	g_slist_foreach (folders_updated, (GFunc) g_object_unref, NULL);
-	g_slist_foreach (folders_deleted, (GFunc) g_object_unref, NULL);
-	g_slist_free (folders_created);
-	g_slist_free (folders_deleted);
-	g_slist_free (folders_updated);
-	g_free (sync_state);
-}
-
 struct _store_sync_data
 {
 	CamelEasStore *eas_store;
@@ -366,10 +348,8 @@ eas_refresh_finfo (CamelSession *session, CamelSessionThreadMsg *msg)
 {
 	struct _eas_refresh_msg *m = (struct _eas_refresh_msg *)msg;
 	CamelEasStore *eas_store = (CamelEasStore *) m->store;
-	gchar *sync_state;
 	struct _store_sync_data *sync_data;
-	GSList *folders_created = NULL, *folders_updated = NULL;
-	GSList *folders_deleted = NULL;
+	GSList *folders = NULL;
 
 	printf("%s\n", __func__);
 	if (!camel_offline_store_get_online (CAMEL_OFFLINE_STORE (eas_store)))
@@ -380,22 +360,14 @@ eas_refresh_finfo (CamelSession *session, CamelSessionThreadMsg *msg)
 
 	g_mutex_lock (eas_store->priv->get_finfo_lock);
 
-	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
-	if (!sync_state || strlen (sync_state) < 64) {
-		gchar *new_ss = g_strndup(sync_state?:"0", 64);
-		g_free (sync_state);
-		sync_state = new_ss;
-	}
-	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
-						     sync_state,
-						     &folders_created, &folders_updated,
-						     &folders_deleted, /*cancellable,*/ NULL)) {
+	if (!eas_mail_handler_get_folder_list (eas_store->priv->handler,
+					       FALSE,
+					       &folders, /*cancellable,*/ NULL)) {
 		g_warning ("Unable to fetch the folder hierarchy.\n");
 		g_mutex_unlock (eas_store->priv->get_finfo_lock);
 		return;
 	}
-	eas_update_folder_hierarchy (eas_store, sync_state,
-				     folders_created, folders_deleted, folders_updated);
+	eas_utils_sync_folders (eas_store, folders);
 
 	g_mutex_unlock (eas_store->priv->get_finfo_lock);
 }
@@ -429,11 +401,9 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
 	CamelFolderInfo *fi = NULL;
-	gchar *sync_state;
 	GSList *folders = NULL;
 	gboolean initial_setup = FALSE;
-	GSList *folders_created = NULL, *folders_updated = NULL;
-	GSList *folders_deleted = NULL;
+	GSList *new_folders = NULL;
 
 	eas_store = (CamelEasStore *) store;
 	priv = eas_store->priv;
@@ -468,17 +438,9 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 	g_slist_foreach (folders, (GFunc)g_free, NULL);
 	g_slist_free (folders);
 
-	sync_state = camel_eas_store_summary_get_string_val (eas_store->summary, "sync_state", NULL);
-
-	if (!sync_state || strlen (sync_state) < 64) {
-		gchar *new_ss = g_strndup(sync_state?:"0", 64);
-		g_free (sync_state);
-		sync_state = new_ss;
-	}
-	if (!eas_mail_handler_sync_folder_hierarchy (eas_store->priv->handler,
-						     sync_state,
-						     &folders_created, &folders_updated,
-						     &folders_deleted, /*cancellable,*/ error)) {
+	if (!eas_mail_handler_get_folder_list (eas_store->priv->handler,
+					       FALSE,
+					       &new_folders, /*cancellable,*/ error)) {
 		if (error)
 			g_warning ("Unable to fetch the folder hierarchy: %s :%d \n",
 				   (*error)->message, (*error)->code);
@@ -488,8 +450,7 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 		g_mutex_unlock (priv->get_finfo_lock);
 		return NULL;
 	}
-	eas_update_folder_hierarchy (eas_store, sync_state,
-				     folders_created, folders_deleted, folders_updated);
+	eas_utils_sync_folders (eas_store, new_folders);
 	g_mutex_unlock (priv->get_finfo_lock);
 
 offline:
