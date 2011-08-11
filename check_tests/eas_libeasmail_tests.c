@@ -1919,6 +1919,31 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
 
 }
 END_TEST
+START_TEST (test_get_eas_mail_attachment_invalid_file_reference)
+{
+	const gchar* accountuid = g_account_id;
+	EasEmailHandler *email_handler = NULL;
+	GError *error = NULL;
+
+	// get a handle to the DBus interface and associate the account ID with this object
+	testGetMailHandler (&email_handler, accountuid);
+
+
+	// set mock
+	setMockNegTestGoodHttp("EmailAttachmentInvalidFileReference.xml");
+
+	// mock Test
+	eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.ItemOperationsError.INVALIDATTACHMENT"),  
+	        "The Error returned by the server is not correct.");
+	
+	g_object_unref (email_handler);
+
+}
+END_TEST
 Suite* eas_libeasmail_suite (void)
 {
     Suite* s = suite_create ("libeasmail");
@@ -1934,14 +1959,15 @@ Suite* eas_libeasmail_suite (void)
 	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
     	{
 		// TODO: update this test to use the new eas_mail_handler_get_folder_list() 
-	    //tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
-	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
-	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
+		//tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_attachment_invalid_file_reference);
 	}
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
-//    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
+ //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
  //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     

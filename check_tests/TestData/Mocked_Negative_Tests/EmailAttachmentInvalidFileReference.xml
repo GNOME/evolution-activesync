@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+<ItemOperations xmlns="ItemOperations:">
+  <Status>1</Status>
+  <Response>
+    <Fetch>
+      <Status>15</Status>
+      <FileReference xmlns="AirSyncBase:">wrong</FileReference>
+    </Fetch>
+  </Response>
+</ItemOperations>
