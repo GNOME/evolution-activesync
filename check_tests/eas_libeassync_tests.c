@@ -27,30 +27,22 @@ static void getFolderHierarchy (void)
     EasEmailHandler *email_handler = eas_mail_handler_new (g_account_id, &error);
 
     mark_point();
-    ret  = eas_mail_handler_sync_folder_hierarchy (email_handler,
-                                                   sync_key,
-                                                   &created,
-                                                   &updated,
-                                                   &deleted,
-                                                   &error);
+
+	ret = eas_mail_handler_get_folder_list (email_handler,
+	                                        FALSE, // force refresh?
+											&created,
+	                                        &error);	
     mark_point();
     
     // if the call to the daemon returned an error, report and drop out of the test
 
     if (!ret)
     {
-        fail_if(!error, "eas_mail_handler_sync_folder_hierarchy failed but no error was set.");
+        fail_if(!error, "eas_mail_handler_get_folder_list failed but no error was set.");
         fail_if (error, "%s", error->message);
     }
 
     fail_if (created == NULL);
-
-    // the exchange server should increment the sync key and send back to the
-    // client so that the client can track where it is with regard to sync.
-    // therefore the key must not be zero as this is the seed value for this test
-    
-    fail_if (!g_strcmp0 (sync_key, "0"),
-             "Sync Key not updated by call the exchange server %s", sync_key);
              
     for (item = created; item; item = item->next)
     {
@@ -64,12 +56,8 @@ static void getFolderHierarchy (void)
     }
 
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 

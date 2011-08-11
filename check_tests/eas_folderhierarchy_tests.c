@@ -29,7 +29,7 @@ log_and_free (gpointer data, gpointer user_data)
 
 START_TEST (test_get_folder_hierarchy)
 {
-    GSList *added = NULL, *updated = NULL, *deleted = NULL;
+    GSList *added = NULL;
     EasEmailHandler *email_handler = NULL;
     gchar syncKey[64] = "0";
     GError *error = NULL;
@@ -43,34 +43,25 @@ START_TEST (test_get_folder_hierarchy)
                    error->code, error->message);
         g_error_free (error);
     }
-
-    result = eas_mail_handler_sync_folder_hierarchy (email_handler,
-                                                     syncKey,
-                                                     &added,
-                                                     &updated,
-                                                     &deleted,
-                                                     &error);
-
+	
+	result = eas_mail_handler_get_folder_list (email_handler,
+	                                        FALSE, 	// force refresh?
+											&added,
+	                                        &error);
+	
     if (!result)
     {
-        g_critical("Failed to sync folder hierarchy [%d:%s]",
+        g_critical("Failed to get folder list [%d:%s]",
                    error->code, error->message);
         g_error_free (error);
     }
 
-    g_message("Updated sync key = [%s]", syncKey);
-
     g_message("Display name:type:folder_id:parent_id");
     g_message("======== Added   ========");
     g_slist_foreach (added,   (GFunc)log_and_free, NULL);
-    g_message("======== Updated ========");
-    g_slist_foreach (updated, (GFunc)log_and_free, NULL);
-    g_message("======== Deleted ========");
-    g_slist_foreach (deleted, (GFunc)log_and_free, NULL);
 
     g_slist_free (added);
-    g_slist_free (updated);
-    g_slist_free (deleted);
+
 }
 END_TEST
 

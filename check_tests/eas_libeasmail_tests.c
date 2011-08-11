@@ -76,36 +76,27 @@ static void testGetMailHandler (EasEmailHandler **email_handler, const char* acc
 }
 
 static void testGetFolderHierarchy (EasEmailHandler *email_handler,
-                                    gchar *sync_key,
-                                    GSList **created,
-                                    GSList **updated,
-                                    GSList **deleted,
+                                    GSList **folders,
                                     GError **error)
 {
     gboolean ret = FALSE;
     GSList *item = NULL;
     mark_point();
-    ret  = eas_mail_handler_sync_folder_hierarchy (email_handler,
-                                                   sync_key,
-                                                   created,
-                                                   updated,
-                                                   deleted,
-                                                   error);
+	ret = eas_mail_handler_get_folder_list (email_handler,
+	                                        FALSE, // force refresh?
+											folders,
+	                                        error);
+	                                        
     mark_point();
     // if the call to the daemon returned an error, report and drop out of the test
     if ( (*error) != NULL)
     {
         fail_if (ret == FALSE, "%s", (*error)->message);
     }
-    fail_if (*created == NULL);
+    fail_if (*folders == NULL);
 
-    // the exchange server should increment the sync key and send back to the
-    // client so that the client can track where it is with regard to sync.
-    // therefore the key must not be zero as this is the seed value for this test
-    fail_if (!g_strcmp0 (sync_key, "0"),
-             "Sync Key not updated by call the exchange server %s", sync_key);
-             
-    for (item = *created; item; item = item->next)
+    // get the inbox id:
+    for (item = *folders; item; item = item->next)
     {
         EasFolder *folder = item->data;
         if (!g_strcmp0("Inbox", folder->display_name))
@@ -120,6 +111,7 @@ static void testGetFolderHierarchy (EasEmailHandler *email_handler,
     g_message("Inbox Id = [%s]", g_inbox_id);
 }
 
+/* 
 static void GetFolderHierarchy_negativetests (EasEmailHandler *email_handler,
                                     gchar *sync_key,
                                     GSList **created,
@@ -138,6 +130,7 @@ static void GetFolderHierarchy_negativetests (EasEmailHandler *email_handler,
 
 	fail_if ((*error) == NULL, "negative test did not give error for folder hierarchy request");
 }
+*/
 
 static void testGetFolderInfo (EasEmailHandler *email_handler,
                                gchar *folder_sync_key,
@@ -301,8 +294,6 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -322,7 +313,7 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
     mark_point();
 
     // fail the test if there is no folder information
@@ -389,8 +380,6 @@ START_TEST (test_eas_mail_handler_update_email)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -406,7 +395,7 @@ START_TEST (test_eas_mail_handler_update_email)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
@@ -509,12 +498,8 @@ START_TEST (test_eas_mail_handler_update_email)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 
@@ -538,8 +523,6 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -558,12 +541,10 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 	
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
-	fail_if (deleted, "Not expecting any deletions with folder sync");
-	fail_if (updated, "Not expecting any updates with folder sync");
 
 	// get the id for the 'Temp' folder
     for (l = created; l; l = l->next)
@@ -647,11 +628,8 @@ START_TEST (test_eas_mail_handler_move_to_folder)
 	
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
 	g_free(tempfolder_id);
 	
@@ -710,8 +688,6 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -723,24 +699,23 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
 
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
+
 
     g_object_unref (email_handler);
 }
 END_TEST
 
+/* 
 START_TEST (test_eas_mail_sync_folder_hierarchy_bad_synckey)
 {
 	// init as if we were going to get the folder hierarchy correctly
@@ -777,6 +752,7 @@ START_TEST (test_eas_mail_sync_folder_hierarchy_bad_synckey)
     g_object_unref (email_handler);
 }
 END_TEST
+*/
 
 START_TEST (test_get_eas_mail_info_in_folder)
 {
@@ -784,8 +760,6 @@ START_TEST (test_get_eas_mail_info_in_folder)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -803,7 +777,7 @@ START_TEST (test_get_eas_mail_info_in_folder)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
     
 
     // fail the test if there is no folder information
@@ -823,12 +797,8 @@ START_TEST (test_get_eas_mail_info_in_folder)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 }
@@ -840,8 +810,6 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -858,7 +826,7 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
@@ -873,12 +841,8 @@ START_TEST (test_get_eas_mail_info_in_inbox)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 
@@ -891,8 +855,6 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -909,7 +871,7 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
@@ -933,12 +895,8 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 
@@ -1005,8 +963,6 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -1029,7 +985,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
     mark_point();
 
     // fail the test if there is no folder information
@@ -1130,12 +1086,8 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 }
@@ -1192,8 +1144,6 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -1219,7 +1169,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
     mark_point();
     
 
@@ -1344,12 +1294,8 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 }
@@ -1486,8 +1432,6 @@ START_TEST (test_eas_mail_get_item_estimate)
     EasEmailHandler *email_handler = NULL;
 	GError *error = NULL;
     GSList *created = NULL;	// receives a list of folders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
 	gchar hierarchy_sync_key[64] = "0";
 	gchar folder_sync_key[64] = "0";
 	gchar* folder_sync_key_out = NULL;
@@ -1503,10 +1447,8 @@ START_TEST (test_eas_mail_get_item_estimate)
 	g_thread_init (NULL);
 	
 	testGetMailHandler (&email_handler, accountuid);
-	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
+	testGetFolderHierarchy (email_handler, &created, &error);
 	fail_if (NULL == created, "No folder information returned from exchange server");
-	fail_unless (NULL == updated, "Not expecting updated folders on initial sync");
-	fail_unless (NULL == deleted, "Not expecting deleted folders on initial sync");
 
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
@@ -1671,8 +1613,6 @@ START_TEST (test_eas_mail_cancel_sync)
     EasEmailHandler *email_handler = NULL;
 	GError *error = NULL;
     GSList *created = NULL;	// receives a list of folders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
 	gchar hierarchy_sync_key[64] = "0";
 	gchar folder_sync_key[64] = "0";
 	gchar* folder_sync_key_out = NULL;
@@ -1692,10 +1632,8 @@ START_TEST (test_eas_mail_cancel_sync)
 	testGetMailHandler (&email_handler, accountuid);
 
 	// sync folder hierarchy
-	testGetFolderHierarchy (email_handler, hierarchy_sync_key, &created, &updated, &deleted, &error);
+	testGetFolderHierarchy (email_handler, &created, &error);
 	fail_if (NULL == created, "No folder information returned from exchange server");
-	fail_unless (NULL == updated, "Not expecting updated folders on initial sync");
-	fail_unless (NULL == deleted, "Not expecting deleted folders on initial sync");
 
 	fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
@@ -1813,8 +1751,6 @@ START_TEST (test_eas_mail_handler_delete_email)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -1834,7 +1770,7 @@ START_TEST (test_eas_mail_handler_delete_email)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     fail_if(g_inbox_id == NULL, "Failed to find inbox id");
 
@@ -1924,12 +1860,8 @@ START_TEST (test_eas_mail_handler_delete_email)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 
@@ -1941,8 +1873,6 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
     EasEmailHandler *email_handler = NULL;
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
-    GSList *updated = NULL;
-    GSList *deleted = NULL;
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
@@ -1958,7 +1888,7 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, folder_hierarchy_sync_key, &created, &updated, &deleted, &error);
+    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
     fail_unless (NULL != created, "No folder information returned from exchange server");
@@ -1982,12 +1912,8 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
 
     //  free folder objects in lists of folder objects
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
 
     g_slist_free (created);
-    g_slist_free (deleted);
-    g_slist_free (updated);
 
     g_object_unref (email_handler);
 
@@ -2007,7 +1933,8 @@ Suite* eas_libeasmail_suite (void)
 	// mocked tests only
 	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
     	{
-	    tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
+		// TODO: update this test to use the new eas_mail_handler_get_folder_list() 
+	    //tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
 	}
