@@ -2567,6 +2567,11 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			//end check
 
 			do {
+				int utc_offset, isDaylight;
+				struct icaltimetype tt;
+				gchar* modified = NULL;
+				const gchar* timestamp = NULL;
+				
 				xmlNodePtr exception = xmlNewTextChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
 				icalproperty* prop = NULL;
 				g_debug ("Processing multiple vevents as exceptions");
@@ -2574,9 +2579,36 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 				_ical2eas_process_vevent (exceptionvevent, exception, icaltz, TRUE);
 				_ical2eas_process_valarm (icalcomponent_get_first_component (exceptionvevent, ICAL_VALARM_COMPONENT), exception);
 
-				prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
-				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) icalproperty_get_value_as_string (prop));
+				
 
+				//get recurrenceID ( which is a timestamp), convert it to UTC and suffix Z onto it
+				prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
+				tt = icaltime_from_string(icalproperty_get_value_as_string (prop));
+				utc_offset = icaltimezone_get_utc_offset (icaltz, &tt, &isDaylight);
+				icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
+				timestamp = icaltime_as_ical_string (tt);
+				if (!g_str_has_suffix (timestamp, "Z")) {
+					if (strlen (timestamp) <= 8) {
+						//need to add midnight timestamp and Z for UTC
+						modified = g_strconcat (timestamp, "T000000", "Z", NULL);
+					} else {
+						//just add Z
+						modified = g_strconcat (timestamp, "Z", NULL);
+					}
+				} else {
+					if (strlen (timestamp) <= 9) {
+						//need to add midnight timestamp before last characters
+						//first remove last character
+						gchar * temp = g_strndup (timestamp, (strlen (timestamp) - 1));
+						//then concatenate timestamp + "Z"
+						modified = g_strconcat (temp, "T000000", "Z", NULL);
+						g_free (temp);
+					} else {
+						modified = g_strdup (timestamp);
+					}
+				}
+				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) modified);
+				g_free (modified);
 				exceptionvevent = NULL;
 				exceptionvevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT);
 			} while (exceptionvevent);
