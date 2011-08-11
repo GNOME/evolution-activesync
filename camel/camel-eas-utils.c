@@ -229,34 +229,12 @@ sync_updated_folders (CamelEasStore *store, GSList *updated_folders)
 #endif
 }
 
-static void
-sync_created_folders (CamelEasStore *eas_store, GSList *created_folders)
-{
-	GSList *l;
-
-	for (l = created_folders; l != NULL; l = g_slist_next (l)) {
-		EasFolder *folder = (EasFolder *) l->data;
-		CamelFolderInfo *fi;
-
-		camel_eas_store_summary_new_folder (eas_store->summary, folder);
-
-		if (eas_folder_type_is_mail (folder->type) ||
-		    folder->type == EAS_FOLDER_TYPE_USER_CREATED_GENERIC) {
-			fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
-			camel_store_folder_created ((CamelStore *) eas_store, fi);
-		}
-		g_object_unref (folder);
-	}
-	g_slist_free (created_folders);
-}
-
 void
 eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 {
 	GError *error = NULL;
 	GHashTable *old_hash;
 	GSList *l;
-	GSList* created_folders = NULL;
 	GSList* updated_folders = NULL;
 	GSList* existing = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
 
@@ -296,7 +274,17 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 			g_free (old_parent_id);
 		} else {
 			/* No match in the hash table: this is a new folder */
-			created_folders = g_slist_append (created_folders, folder);
+			CamelFolderInfo *fi;
+
+			camel_eas_store_summary_new_folder (eas_store->summary, folder);
+
+			if (eas_folder_type_is_mail (folder->type) ||
+			    folder->type == EAS_FOLDER_TYPE_USER_CREATED_GENERIC) {
+				fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
+				camel_store_folder_created ((CamelStore *) eas_store, fi);
+			}
+
+			g_object_unref (folder);
 		}
 	}
 	/* We have eaten the objects; just free the list structure itself */
@@ -307,7 +295,6 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 	g_hash_table_destroy (old_hash);
 
 	sync_updated_folders (eas_store, updated_folders);
-	sync_created_folders (eas_store, created_folders);
 
 	camel_eas_store_summary_save (eas_store->summary, &error);
 	if (error != NULL) {
