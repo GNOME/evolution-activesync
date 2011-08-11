@@ -28,6 +28,8 @@
  will use AS FolderSync command	
 -->
 
+<!-- OBSOLETE: Use EasCommon::get_email_folders() instead. The dæmon must manage
+     the folder list centrally for all clients. -->
     <method name="sync_email_folder_hierarchy">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="account_uid" direction="in"/>	<!-- t == UINT64-->

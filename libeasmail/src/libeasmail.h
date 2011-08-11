@@ -100,37 +100,6 @@ gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* this,
 						 guint *estimate,
 						 GError **error); 
 
-/* function name:               eas_mail_handler_sync_folder_hierarchy
- * function description:        pulls down changes in folder structure (folders
- *                              added/deleted/updated). Supplies lists of EasFolders
- *                              note that each folder has a sync key and the folder
- *                              *structure* has a separate sync_key
- * return value:                TRUE if function success, FALSE if error
- * params:
- * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned
- *                              from exchange server for subsequent sync requests
- * GSList **folders_created (out): returns a list of EasFolder structs that describe
- *                              created folders.  If there are no new created folders
- *                              this parameter will be unchanged.
- * GSList **folders_updated (out): returns a list of EasFolder structs that describe
- *                              updated folders.  If there are no new updated folders
- *                              this parameter will be unchanged.
- * GSList **folders_deleted (out): returns a list of EasFolder structs that describe
- *                              deleted folders.  If there are no new deleted folders
- *                              this parameter will be unchanged.
- * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propagated
- *                              back through underlying layers
-*/
-gboolean eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* this,
-						 gchar *sync_key,
-						 GSList **folders_created,
-						 GSList **folders_updated,
-						 GSList **folders_deleted,
-						 GError **error);
-
 /* function name:               eas_mail_handler_get_folder_list
  * function description:        gets current folder structure of account. Supplies
  *                              Supplies lists of EasFolders.
@@ -161,7 +130,7 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * const gchar *folder_id (in): this value identifies the folder to get the email info from.
  * 								Use the EasFolder->folder_id value in the EasFolder structs
- *                              returned from the eas_mail_handler_sync_folder_hierarchy() call.
+ *                              returned from the eas_mail_handler_get_folder_list() call.
  * GSList **emails_created (out): returns a list of EasEmailInfos structs that describe
  *                              created mails.  If there are no new created mails
  *                              this parameter will be unchanged.  In the case of created emails
@@ -307,7 +276,7 @@ gboolean eas_mail_handler_update_email (EasEmailHandler* this,
  *                              note: users of this method should not attempt to save the sent email to
  *                              sent item folders or even assume that the send is successfull.  Confirmation
  *                              of a successfull send and organisation of email into sent folders should
- *                              be done through a subsiquent call to eas_mail_handler_sync_folder_hierarchy
+ *                              be done through a subsequent call to eas_mail_handler_get_folder_list
  *                              and eas_mail_handler_sync_folder_email_info.
  * return value:                TRUE if function success, FALSE if error
  * params:
@@ -396,7 +365,7 @@ typedef void (*EasPushEmailCallback) (GSList* data, GError *error);
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * const GSList *folder_ids (in):identifies the specific folders to watch.  This information is in
- *                              the form of folder_ids (gchar*) returned from the eas_mail_handler_sync_folder_hierarchy
+ *                              the form of folder_ids (gchar*) returned from the eas_mail_handler_get_folder_list
  *                              call
  * const gchar *heartbeat (in): time between ping calls
  * EasPushEmailCallback (in):   callback function to be used to signal when a folder has been changed
@@ -428,7 +397,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
  *	 								5 = 1 month back
  * const gchar *folder_id (in): 	this value identifies the folder to get the email info from.
  * 									Use the EasFolder->folder_id value in the EasFolder structs
- *                              	returned from the eas_mail_handler_sync_folder_hierarchy() call.
+ *                              	returned from the eas_mail_handler_get_folder_list() call.
  * GSList *delete_emails	(in):	list of email's server ids to delete 
  * GSList *change_emails 	(in/out):	list of emails to update. In the case of an unsuccessful update the status will be set to indicate the problem
  * gchar *sync_key_out	 	(out):	updated sync key
