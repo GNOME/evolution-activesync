@@ -370,8 +370,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		GSList* updated_folders  = NULL;
 		GSList* deleted_folders  = NULL;
 		const gchar *ret_sync_key = NULL;
-		// We do some direct assigns lower down so this should always be true.
-		g_assert (!priv->folderID);
 
 		ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
 
@@ -391,13 +389,20 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		                              ret_sync_key, added_folders,
 					      updated_folders, deleted_folders, error);
 		
+		if (g_strcmp0 (priv->sync_key, "0")) {
+			g_debug ("switching state");
+			priv->state = EasSyncReqStep3;
+			goto start_step3;
+		}
 		priv->state = EasSyncReqStep2;
-		if (priv->ItemType == EAS_ITEM_CALENDAR) {
-			// cannot get from gconf - as the update takes too long - get from sync msg response
-			priv->folderID = g_strdup (eas_sync_folder_msg_get_def_cal_folder (priv->syncFolderMsg));
-		} else {
-			// cannot get from gconf - as the update takes too long - get from sync msg response
-			priv->folderID = g_strdup (eas_sync_folder_msg_get_def_con_folder (priv->syncFolderMsg));
+		if (!priv->folderID) {
+			if (priv->ItemType == EAS_ITEM_CALENDAR) {
+				// cannot get from gconf - as the update takes too long - get from sync msg response
+				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_cal_folder (priv->syncFolderMsg));
+			} else {
+				// cannot get from gconf - as the update takes too long - get from sync msg response
+				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_con_folder (priv->syncFolderMsg));
+			}
 		}
 		//clean up old message
 		if (priv->syncFolderMsg) {
@@ -443,8 +448,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
 	//We have started a first time sync, and need to get the sync Key from the result, and then do the proper sync
 	case EasSyncReqStep2: {
-		gchar * syncKey = NULL;
-
 		ret = eas_sync_msg_parse_response (priv->syncMsg, doc, &error);
 		xmlFreeDoc (doc);
 		if (!ret) {
@@ -452,19 +455,20 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			goto finish;
 		}
 		//get syncKey
-		syncKey = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
+		g_free (priv->sync_key);
+		priv->sync_key = g_strdup (eas_sync_msg_get_syncKey (priv->syncMsg));
 
-		g_debug ("eas_sync_req synckey = %s", syncKey);
+		g_debug ("eas_sync_req synckey = %s", priv->sync_key);
 
 		//clean up old message
 		if (priv->syncMsg) {
 			g_object_unref (priv->syncMsg);
 			priv->syncMsg = NULL;
 		}
-
+	start_step3:
 		//create new message with new syncKey
-		priv->syncMsg = eas_sync_msg_new (syncKey, conn, priv->folderID, priv->ItemType);
-		g_free (syncKey);
+		priv->syncMsg = eas_sync_msg_new (priv->sync_key, conn, priv->folderID, priv->ItemType);
+
 		//build request msg
 		doc = eas_sync_msg_build_message (priv->syncMsg, 0, TRUE, NULL, NULL, NULL);
 		if (!doc) {
@@ -495,6 +499,43 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		xmlFreeDoc (doc);
 		if (!ret) {
 			g_assert (error != NULL);
+
+			if (error->domain == EAS_CONNECTION_ERROR &&
+			    error->code == EAS_CONNECTION_SYNC_ERROR_FOLDERHIERARCHYCHANGED) {
+				/* Need to update folder hierarchy before we can Sync.
+				   Go back to Step1. */
+				gchar *syncKey = eas_connection_get_folder_sync_key (conn);
+
+				if (!syncKey)
+					syncKey = g_strdup("0");
+
+				//clean up old message
+				if (priv->syncMsg) {
+					g_object_unref (priv->syncMsg);
+					priv->syncMsg = NULL;
+				}
+
+				/* If errors happen here, let the first error show */
+				priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
+				g_free (syncKey);
+				syncKey = NULL;
+				if (!priv->syncFolderMsg)
+					goto finish;
+
+				//build request msg
+				doc = eas_sync_folder_msg_build_message (priv->syncFolderMsg);
+				if (!doc)
+					goto finish;
+
+				g_clear_error (&error);
+				g_debug ("eas_sync_req_activate - send message");
+				ret = eas_request_base_SendRequest (parent,
+								    "FolderSync",
+								    doc, // full transfer
+								    &error);
+				if (ret)
+					priv->state = EasSyncReqStep1;
+			}
 			goto finish;
 		}
 		//finished state machine - req needs to be cleanup up by connection object
