@@ -307,14 +307,6 @@ eas_mail_delete_email (EasMail *easMailObj,
 	// Create the request
 	req = eas_delete_req_new (account_uid, sync_key, folder_id, server_ids_list, EAS_ITEM_MAIL, context);
 
-	// Cleanup the gslist
-	item = server_ids_list;
-	for (; item; item = item->next) {
-		g_free (item->data);
-		item->data = NULL;
-	}
-	g_slist_free (server_ids_list);
-
 	eas_request_base_SetConnection (&req->parent_instance,
 					connection);
 
