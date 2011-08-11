@@ -131,6 +131,27 @@ gboolean eas_mail_handler_sync_folder_hierarchy (EasEmailHandler* this,
 						 GSList **folders_deleted,
 						 GError **error);
 
+/* function name:               eas_mail_handler_get_folder_list
+ * function description:        gets current folder structure of account. Supplies
+ *                              Supplies lists of EasFolders.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
+ * gboolean force_update (in):  check for updates from the server. If FALSE, uses the
+ *                              information already cached by the ActiveSync dæmon.
+ * GSList **folders (out):      returns a list of EasFolder structs that describe the
+ *                              folders on the server.
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+gboolean
+eas_mail_handler_get_folder_list (EasEmailHandler *self,
+				  gboolean force_refresh,
+				  GSList **folders,
+				  GError **error);
+
 /* function name:               eas_mail_handler_sync_email_info
  * function description:        sync email changes from the server for a specified folder
  *                              (no bodies retrieved).  Default Max changes in one sync = 100

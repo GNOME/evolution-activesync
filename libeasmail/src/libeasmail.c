@@ -701,6 +701,68 @@ cleanup:
 	return ret;
 }
 
+gboolean
+eas_mail_handler_get_folder_list (EasEmailHandler *self,
+				  gboolean force_refresh,
+				  GSList **folders,
+				  GError **error)
+{
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = self->priv->remoteCommonEas;
+	gchar **folder_array = NULL;
+
+	g_debug ("%s++ : account_uid[%s]", __func__,
+		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_assert (self);
+	g_assert (*folders == NULL);
+
+	// call DBus API
+	ret = dbus_g_proxy_call (proxy, "get_folders",
+				 error,
+				 G_TYPE_STRING, self->priv->account_uid,
+				 G_TYPE_BOOLEAN, force_refresh,
+				 G_TYPE_INVALID,
+				 G_TYPE_STRV, &folder_array,
+				 G_TYPE_INVALID);
+
+	g_debug ("%s - dbus proxy called", __func__);
+
+	if (!ret) {
+		if (error && *error) {
+			g_warning ("[%s][%d][%s]",
+				   g_quark_to_string ( (*error)->domain),
+				   (*error)->code,
+				   (*error)->message);
+		}
+		g_warning ("DBus dbus_g_proxy_call failed");
+		goto cleanup;
+	}
+
+	g_debug ("%s called successfully", __func__);
+
+	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+	ret = build_folder_list ( (const gchar **) folder_array, folders, error);
+
+cleanup:
+	free_string_array (folder_array);
+
+	if (!ret) { // failed - cleanup lists
+		g_assert (error == NULL || *error != NULL);
+		if (error) {
+			g_warning (" Error: %s", (*error)->message);
+		}
+		g_debug ("%s failure - cleanup lists", __func__);
+		g_slist_foreach (*folders, (GFunc) g_free, NULL);
+		g_free (*folders);
+		*folders = NULL;
+	}
+
+	g_debug ("%s--", __func__);
+	return ret;
+}
+
 
 /* sync emails in a specified folder (no bodies retrieved).
 Returns lists of EasEmailInfos.
