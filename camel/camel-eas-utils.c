@@ -146,96 +146,12 @@ static gboolean eas_utils_rename_folder (CamelEasStore *store,
 	return TRUE;
 }
 #endif
-static void
-sync_updated_folders (CamelEasStore *store, GSList *updated_folders)
-{
-#if 0
-	CamelEasStoreSummary *eas_summary = store->summary;
-	GSList *l;
-
-	for (l = updated_folders; l != NULL; l = g_slist_next (l)) {
-		EEasFolder *eas_folder = (EEasFolder *)	l->data;
-		EasFolderType ftype;
-		gchar *folder_name;
-		gchar *display_name;
-		const EasFolderId *fid, *pfid;
-
-		ftype = e_eas_folder_get_folder_type (eas_folder);
-		if (ftype == EAS_FOLDER_TYPE_CALENDAR ||
-		    ftype == EAS_FOLDER_TYPE_TASKS ||
-		    ftype == EAS_FOLDER_TYPE_CONTACTS) {
-			/* TODO Update esource */
-		} else 	if (ftype != EAS_FOLDER_TYPE_MAILBOX)
-			continue;
-
-		fid = e_eas_folder_get_id (eas_folder);
-		folder_name = camel_eas_store_summary_get_folder_full_name (eas_summary, fid->id, NULL);
-
-		pfid = e_eas_folder_get_parent_id (eas_folder);
-		display_name = g_strdup (e_eas_folder_get_name (eas_folder));
-
-		/* If the folder is moved or renamed (which are separate
-		   operations in Exchange, unfortunately, then the name
-		   or parent folder will change. Handle both... */
-		if (pfid || display_name) {
-			GError *error = NULL;
-			gchar *new_fname = NULL;
-
-			if (pfid) {
-				gchar *pfname;
-
-				/* If the display name wasn't changed, its basename is still
-				   the same as it was before... */
-				if (!display_name)
-					display_name = camel_eas_store_summary_get_folder_name (eas_summary,
-										fid->id, NULL);
-				if (!display_name)
-					goto done;
-
-				pfname = camel_eas_store_summary_get_folder_full_name (eas_summary, pfid->id, NULL);
-
-				/* If the lookup failed, it'll be because the new parent folder
-				   is the message folder root. */
-				if (pfname) {
-					new_fname = g_strconcat (pfname, "/", display_name, NULL);
-					g_free (pfname);
-				} else
-					new_fname = g_strdup (display_name);
-			} else {
-				/* Parent folder not changed; just basename */
-				const gchar *last_slash;
-
-				/* Append new display_name to old parent directory name... */
-				last_slash = g_strrstr (folder_name, "/");
-				if (last_slash)
-					new_fname = g_strdup_printf ("%.*s/%s", (int)(last_slash - folder_name),
-								     folder_name, display_name);
-				else /* ...unless it was a child of the root folder */
-					new_fname = g_strdup (display_name);
-			}
-
-			if (strcmp(new_fname, folder_name))
-				eas_utils_rename_folder (store, ftype,
-							 fid->id, fid->change_key,
-							 pfid?pfid->id:NULL,
-							 display_name, folder_name, &error);
-			g_free (new_fname);
-			g_clear_error (&error);
-		}
- done:
-		g_free (folder_name);
-		g_free (display_name);
-	}
-#endif
-}
-
 void
 eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 {
 	GError *error = NULL;
 	GHashTable *old_hash;
 	GSList *l;
-	GSList* updated_folders = NULL;
 	GSList* existing = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
 
 	old_hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
@@ -267,8 +183,25 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 				/* Complete match; no changes. Forget it */
 				g_object_unref (folder);
 			} else {
-				/* The folder has been changed */
-				updated_folders = g_slist_append (updated_folders, folder);
+				gchar *old_full_name = camel_eas_store_summary_get_folder_full_name (eas_store->summary,
+												     folder->folder_id, NULL);
+				if (!g_str_equal (folder->display_name, old_display_name))
+					camel_eas_store_summary_set_folder_name (eas_store->summary, folder->folder_id,
+										  folder->display_name);
+				if (!g_str_equal (folder->parent_id, old_parent_id))
+					camel_eas_store_summary_set_parent_folder_id (eas_store->summary, folder->folder_id,
+										      folder->parent_id);
+
+				camel_eas_store_summary_set_folder_type (eas_store->summary, folder->folder_id, folder->type);
+
+				if (eas_folder_type_is_mail (folder->type) ||
+				    folder->type == EAS_FOLDER_TYPE_USER_CREATED_GENERIC) {
+					CamelFolderInfo *fi = camel_eas_utils_build_folder_info (eas_store, folder->folder_id);
+					camel_store_folder_renamed (CAMEL_STORE (eas_store), old_full_name, fi);
+				}
+
+				g_free (old_full_name);
+				g_object_unref (folder);
 			}
 			g_free (old_display_name);
 			g_free (old_parent_id);
@@ -293,8 +226,6 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 	/* Now, anything left in old_hash must be a folder that no longer exists */
 	g_hash_table_foreach_remove (old_hash, eas_delete_folder_func, eas_store);
 	g_hash_table_destroy (old_hash);
-
-	sync_updated_folders (eas_store, updated_folders);
 
 	camel_eas_store_summary_save (eas_store->summary, &error);
 	if (error != NULL) {
