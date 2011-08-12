@@ -1925,6 +1925,7 @@ START_TEST (test_get_eas_mail_attachment_invalid_file_reference)
 	EasEmailHandler *email_handler = NULL;
 	GError *error = NULL;
 
+
 	// get a handle to the DBus interface and associate the account ID with this object
 	testGetMailHandler (&email_handler, accountuid);
 
@@ -1938,6 +1939,32 @@ START_TEST (test_get_eas_mail_attachment_invalid_file_reference)
 	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
 	                   "org.meego.activesyncd.ItemOperationsError.INVALIDATTACHMENT"),  
+	        "The Error returned by the server is not correct.");
+	
+	g_object_unref (email_handler);
+
+}
+END_TEST
+START_TEST (test_get_eas_mail_delete_invalid_server_id)
+{
+	const gchar* accountuid = g_account_id;
+	EasEmailHandler *email_handler = NULL;
+	GError *error = NULL;
+
+
+	// get a handle to the DBus interface and associate the account ID with this object
+	testGetMailHandler (&email_handler, accountuid);
+
+
+	// set mock
+	setMockNegTestGoodHttp("EmailDeleteInvalidServerId.xml");
+
+	// mock Test
+	eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.Error.XMLELEMENTNOTFOUND"),  
 	        "The Error returned by the server is not correct.");
 	
 	g_object_unref (email_handler);
@@ -2061,6 +2088,7 @@ Suite* eas_libeasmail_suite (void)
 		tcase_add_test (tc_libeasmail, test_get_eas_mail_attachment_invalid_file_reference);
 		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_structure);
 		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_invalid_folder);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_delete_invalid_server_id);
 	}
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
