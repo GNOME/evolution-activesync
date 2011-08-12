@@ -63,7 +63,7 @@ void ActiveSyncSource::open()
     m_folder = getDatabaseID();
 
     // create handler
-    m_handler.set(eas_sync_handler_new(m_account));
+    m_handler.set(eas_sync_handler_new(m_account), "EAS handler");
 }
 
 void ActiveSyncSource::close()
