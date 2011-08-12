@@ -358,7 +358,7 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 
 	if (!eas_mail_handler_get_folder_list (eas_store->priv->handler,
 					       FALSE,
-					       &new_folders, /*cancellable,*/ error)) {
+					       &new_folders, /*cancellable*/NULL, error)) {
 		if (error)
 			g_warning ("Unable to fetch the folder hierarchy: %s :%d \n",
 				   (*error)->message, (*error)->code);

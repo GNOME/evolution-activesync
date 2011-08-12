@@ -191,7 +191,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 
 	g_mutex_lock (priv->server_lock);
 	res = eas_mail_handler_fetch_email_body (handler, priv->server_id, uid, mime_dir,
-						 camel_operation_progress, progress_data, error);
+						 camel_operation_progress, progress_data, NULL, error);
 	g_mutex_unlock (priv->server_lock);
 
 	if (!res) {
@@ -369,7 +369,7 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 	g_mutex_lock (priv->server_lock);
 	success = eas_mail_handler_delete_email (handler,
 						 ((CamelEasSummary *) folder->summary)->sync_state,
-						 priv->server_id, deleted_uids, error);
+						 priv->server_id, deleted_uids, NULL, error);
 	g_mutex_unlock (priv->server_lock);
 	if (success) {
 		CamelFolderChangeInfo *changes = camel_folder_change_info_new ();
@@ -461,7 +461,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		g_mutex_lock (priv->server_lock);
 		success = eas_mail_handler_update_email (handler,
 							 ((CamelEasSummary *) folder->summary)->sync_state,
-							 priv->server_id, item_list, error);
+							 priv->server_id, item_list, NULL, error);
 		for (l = changing_mis; l; l = l->next) {
 			CamelEasMessageInfo *mi = l->data;
 			if (success) {
@@ -599,7 +599,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, priv->server_id,
 							       &items_created,
 							       &items_updated, &items_deleted,
-							       &more_available, &local_error);
+							       &more_available, NULL, &local_error);
 
 		/* We use strcasecmp() instead of dbus_g_error_has_name() because
 		   the error names will probably become CamelCase when we manage

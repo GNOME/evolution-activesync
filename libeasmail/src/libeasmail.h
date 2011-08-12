@@ -119,6 +119,7 @@ gboolean
 eas_mail_handler_get_folder_list (EasEmailHandler *self,
 				  gboolean force_refresh,
 				  GSList **folders,
+				  GCancellable *cancellable,
 				  GError **error);
 
 /* function name:               eas_mail_handler_sync_email_info
@@ -157,6 +158,7 @@ gboolean eas_mail_handler_sync_folder_email_info (EasEmailHandler* this,
 						  GSList **emails_updated,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
+                          GCancellable *cancellable,
 						  GError **error);
 
 
@@ -187,6 +189,7 @@ gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
 					    const gchar *mime_directory,
 					    EasProgressFn progress_fn,
 					    gpointer progress_data,
+                        GCancellable *cancellable,
 					    GError **error);
 
 
@@ -237,6 +240,7 @@ gboolean eas_mail_handler_delete_email (EasEmailHandler* this,
 					gchar *sync_key,
 					const gchar *folder_id,
 					const GSList *items_deleted,
+                    GCancellable *cancellable,
 					GError **error);
 
 
@@ -265,6 +269,7 @@ gboolean eas_mail_handler_update_email (EasEmailHandler* this,
 					gchar *sync_key,
 					const gchar *folder_id,
 					GSList *update_emails,
+					GCancellable *cancellable,
 					GError **error);
 
 
@@ -294,6 +299,7 @@ gboolean eas_mail_handler_send_email (EasEmailHandler* this,
 				      const gchar *mime_file,
 				      EasProgressFn progress_fn,
 				      gpointer progress_data,
+                      GCancellable *cancellable,     
 				      GError **error);
 
 

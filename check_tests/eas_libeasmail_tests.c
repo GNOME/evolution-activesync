@@ -204,7 +204,8 @@ static void try_send_email(gpointer data)
                                        params->client_id,
                                        params->mime_file,
                                        params->progress_fn,
-                                       params->progress_data,		
+                                       params->progress_data,
+                                       NULL,
                                        params->error);											 
 
 	g_debug("eas_mail_handler_send_email returned");
@@ -264,7 +265,8 @@ static void testSendEmail (EasEmailHandler *email_handler,
 		                                   client_id,
 		                                   mime_file,
 		                                   NULL,
-		                                   NULL,		
+		                                   NULL,
+	                                       NULL,
 		                                   error);	
 	}
   
@@ -926,7 +928,8 @@ static void try_fetch_email_body(gpointer data)
                                                  params->server_id,
                                                  params->mime_directory,
                                                  params->progress_fn,
-                                                 params->progress_data,		
+                                                 params->progress_data,	
+		                                         NULL,
                                                  params->error);
 
 	g_debug("eas_mail_handler_fetch_email_body");
