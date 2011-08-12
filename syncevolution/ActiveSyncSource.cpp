@@ -105,6 +105,9 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
                                         gerror)) {
             gerror.throwError("reading ActiveSync changes");
         }
+        if (!buffer) {
+            throwError("reading changes: empty sync key returned");
+        }
 
         // TODO: Test that we really get an empty token here for an unexpected slow
         // sync. If not, we'll start an incremental sync here and later the engine
@@ -112,21 +115,45 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
 
         // populate ID lists and content cache
         BOOST_FOREACH(EasItemInfo *item, created) {
+            if (!item->server_id) {
+                throwError("no server ID for new eas item");
+            }
             string luid(item->server_id);
+            if (luid.empty()) {
+                throwError("empty server ID for new eas item");
+            }
             SE_LOG_DEBUG(this, NULL, "new item %s", luid.c_str());
             addItem(luid, NEW);
             m_ids->setProperty(luid, "1");
+            if (!item->data) {
+                throwError(StringPrintf("no body returned for new eas item %s", luid.c_str()));
+            }
             m_items[luid] = item->data;
         }
         BOOST_FOREACH(EasItemInfo *item, updated) {
+            if (!item->server_id) {
+                throwError("no server ID for updated eas item");
+            }
             string luid(item->server_id);
+            if (luid.empty()) {
+                throwError("empty server ID for updated eas item");
+            }
             SE_LOG_DEBUG(this, NULL, "updated item %s", luid.c_str());
             addItem(luid, UPDATED);
             // m_ids.setProperty(luid, "1"); not necessary, should already exist (TODO: check?!)
+            if (!item->data) {
+                throwError(StringPrintf("no body returned for updated eas item %s", luid.c_str()));
+            }
             m_items[luid] = item->data;
         }
         BOOST_FOREACH(const char *serverID, deleted) {
+            if (!serverID) {
+                throwError("no server ID for deleted eas item");
+            }
             string luid(serverID);
+            if (luid.empty()) {
+                throwError("empty server ID for deleted eas item");
+            }
             SE_LOG_DEBUG(this, NULL, "deleted item %s", luid.c_str());
             addItem(luid, DELETED);
             m_ids->removeProperty(luid);
@@ -176,7 +203,10 @@ void ActiveSyncSource::deleteItem(const string &luid)
                                        m_folder.c_str(),
                                        items,
                                        gerror)) {
-        gerror.throwError("deleting ActiveSync item");
+        gerror.throwError("deleting eas item");
+    }
+    if (!buffer) {
+        throwError("delete items: empty sync key returned");
     }
 
     // remove from item list
@@ -220,10 +250,16 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
                                         m_folder.c_str(),
                                         items,
                                         gerror)) {
-            gerror.throwError("adding ActiveSync item");
+            gerror.throwError("adding eas item");
+        }
+        if (!item->server_id) {
+            throwError("no server ID for new eas item");
         }
         // get new ID from updated item
         res.m_luid = item->server_id;
+        if (res.m_luid.empty()) {
+            throwError("empty server ID for new eas item");
+        }
 
         // TODO: if someone else has inserted a new calendar item
         // with the same UID as the one we are trying to insert here,
@@ -239,9 +275,12 @@ SyncSourceSerialize::InsertItemResult ActiveSyncSource::insertItem(const std::st
                                            m_folder.c_str(),
                                            items,
                                            gerror)) {
-            gerror.throwError("updating ActiveSync item");
+            gerror.throwError("updating eas item");
         }
         res.m_luid = luid;
+    }
+    if (!buffer) {
+        throwError("insert item: empty sync key returned");
     }
 
     // add/update in cache
@@ -270,7 +309,10 @@ void ActiveSyncSource::readItem(const std::string &luid, std::string &item)
                                          tmp,
                                          getEasType(),
                                          gerror)) {
-            gerror.throwError("reading ActiveSync item");
+            gerror.throwError(StringPrintf("reading eas item %s", luid.c_str()));
+        }
+        if (!tmp->data) {
+            throwError(StringPrintf("no body returned for eas item %s", luid.c_str()));
         }
         item = tmp->data;
     } else {

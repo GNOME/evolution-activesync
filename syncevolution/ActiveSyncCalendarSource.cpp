@@ -107,6 +107,9 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
                                         gerror)) {
             gerror.throwError("reading ActiveSync changes");
         }
+        if (!buffer) {
+            throwError("reading changes: empty sync key returned");
+        }
 
         // TODO: Test that we really get an empty token here for an unexpected slow
         // sync. If not, we'll start an incremental sync here and later the engine
@@ -115,8 +118,17 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
 
         // populate ID lists and content cache
         BOOST_FOREACH(EasItemInfo *item, created) {
+            if (!item->server_id) {
+                throwError("no server ID for new eas item");
+            }
             string easid(item->server_id);
+            if (easid.empty()) {
+                throwError("empty server ID for new eas item");
+            }
             SE_LOG_DEBUG(this, NULL, "new eas item %s", easid.c_str());
+            if (!item->data) {
+                throwError(StringPrintf("no body returned for new eas item %s", easid.c_str()));
+            }
             Event &event = setItemData(easid, item->data);
             BOOST_FOREACH(const std::string &subid, event.m_subids) {
                 SE_LOG_DEBUG(this, NULL, "new eas item %s = uid %s + rid %s",
@@ -125,8 +137,17 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
             }
         }
         BOOST_FOREACH(EasItemInfo *item, updated) {
+            if (!item->server_id) {
+                throwError("no server ID for updated eas item");
+            }
             string easid(item->server_id);
+            if (easid.empty()) {
+                throwError("empty server ID for updated eas item");
+            }
             SE_LOG_DEBUG(this, NULL, "updated eas item %s", easid.c_str());
+            if (!item->data) {
+                throwError(StringPrintf("no body returned for updated eas item %s", easid.c_str()));
+            }
             Event &event = setItemData(easid, item->data);
             BOOST_FOREACH(const std::string &subid, event.m_subids) {
                 SE_LOG_DEBUG(this, NULL, "deleted eas item %s = uid %s + rid %s",
@@ -135,7 +156,13 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
             }
         }
         BOOST_FOREACH(const char *serverID, deleted) {
+            if (!serverID) {
+                throwError("no server ID for deleted eas item");
+            }
             string easid(serverID);
+            if (easid.empty()) {
+                throwError("empty server ID for deleted eas item");
+            }
             Event &event = findItem(easid);
             if (event.m_subids.empty()) {
                 SE_LOG_DEBUG(this, NULL, "deleted eas item %s empty?!", easid.c_str());
