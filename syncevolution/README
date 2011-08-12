@@ -29,6 +29,7 @@ $ syncevolution backend=? | grep -i activesync
 
 Configure access to the server:
 $ syncevolution --configure \
+                syncURL= \
                 username=<email adddress identifying the account> \
                 addressbook/backend=eas-contacts \
                 calendar/backend=eas-events \
