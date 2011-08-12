@@ -2171,7 +2171,7 @@ Suite* eas_libeasmail_suite (void)
 		tcase_add_test (tc_libeasmail, test_get_eas_mail_attachment_invalid_mime_directory);
 		tcase_add_test (tc_libeasmail, test_get_eas_mail_body_invalid_mime_directory);
 	}
- //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
  //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
