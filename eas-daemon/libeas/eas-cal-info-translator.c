@@ -1929,7 +1929,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			switch (prop_type) {
 				// SUMMARY
 			case ICAL_SUMMARY_PROPERTY:
-				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SUBJECT, (const xmlChar*) icalproperty_get_value_as_string (prop));
+				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SUBJECT, (const xmlChar*) icalproperty_get_summary (prop));
 				break;
 
 				// DTSTAMP
@@ -2213,7 +2213,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				xmlNodePtr bodyNode = xmlNewChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
 				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE, (const xmlChar*) EAS_BODY_TYPE_PLAINTEXT);
 				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*) EAS_BOOLEAN_FALSE);
-				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*) icalproperty_get_value_as_string (prop));
+				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*) icalproperty_get_description(prop));
 				// All other fields are optional
 
 			}
