@@ -61,6 +61,7 @@ struct _EasGetEmailBodyMsgPrivate {
 	gchar* collectionId;
 	gchar* directoryPath;
 	gchar* item;
+	gchar* fullFilePath;
 };
 
 #define EAS_GET_EMAIL_BODY_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_MSG, EasGetEmailBodyMsgPrivate))
@@ -81,6 +82,7 @@ eas_get_email_body_msg_init (EasGetEmailBodyMsg *object)
 	priv->collectionId = NULL;
 	priv->directoryPath = NULL;
 	priv->item = NULL;
+	priv->fullFilePath = NULL;
 
 	g_debug ("eas_get_email_body_msg_init--");
 }
@@ -97,6 +99,7 @@ eas_get_email_body_msg_finalize (GObject *object)
 	g_free (priv->collectionId);
 	g_free (priv->directoryPath);
 	g_free (priv->item);
+	g_free (priv->fullFilePath);
 
 	G_OBJECT_CLASS (eas_get_email_body_msg_parent_class)->finalize (object);
 	g_debug ("eas_get_email_body_msg_finalize--");
@@ -128,6 +131,8 @@ eas_get_email_body_msg_new (const gchar* serverUid, const gchar* collectionId, c
 	priv->serverUid  = g_strdup (serverUid);
 	priv->collectionId  = g_strdup (collectionId);
 	priv->directoryPath = g_strdup (directoryPath);
+
+	priv->fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
 
 	g_debug ("eas_get_email_body_msg_new--");
 
@@ -371,22 +376,58 @@ finish:
 gboolean
 eas_get_email_body_msg_write_file (EasGetEmailBodyMsg* self, gchar* data)
 {
-	gchar* fullFilePath = NULL;
 	FILE *hBody = NULL;
 	EasGetEmailBodyMsgPrivate *priv = self->priv;
 
-	fullFilePath = g_build_filename (priv->directoryPath, priv->serverUid, NULL);
-	g_message ("Attempting to write email to file [%s]", fullFilePath);
-	if ( (hBody = fopen (fullFilePath, "wb"))) {
+	g_message ("Attempting to write email to file [%s]", priv->fullFilePath);
+	if ( (hBody = fopen (priv->fullFilePath, "wb"))) {
 		fputs (data, hBody);
 		fclose (hBody);
 	} else {
 		return FALSE;
 	}
-	g_free (fullFilePath);
+
 	return TRUE;
 }
 
+gboolean 
+eas_get_email_msg_write_chunk_to_file (EasGetEmailBodyMsg* self,const guchar* chunk, gsize size)
+{
+	gboolean success = TRUE;
+	FILE *hBody = NULL;
+	EasGetEmailBodyMsgPrivate *priv = EAS_GET_EMAIL_BODY_MSG_PRIVATE (self);
+
+	g_message ("Attempting to write email chunk to file [%s]", priv->fullFilePath);
+	
+	// Append to the file if it exists, otherwise create it.
+	if (!(hBody = fopen (priv->fullFilePath, "ab")) ) {
+		hBody = fopen (priv->fullFilePath, "wb");
+		g_message ("Creating file [%s]", priv->fullFilePath);
+	}
+
+	if (hBody)
+	{
+		gint written = fwrite (chunk, 
+			               sizeof (guchar), 
+			               size, 
+			               hBody);
+
+		if (written != size)
+		{
+			g_warning ("Problem writing mime data segment to file!");
+			success = FALSE;
+		}
+		g_debug ("Wrote %u of %u bytes to file.", written, size);
+
+		fclose (hBody);
+	}
+	else
+	{
+		success = FALSE;
+	}
+	
+	return success;
+}
 
 gchar * eas_get_email_body_msg_get_item (EasGetEmailBodyMsg* self)
 {

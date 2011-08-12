@@ -64,13 +64,44 @@ struct _EasRequestBasePrivate {
 	guint data_length_so_far;	// amount of data received/sent so far 
 	guint data_size;			// total size of response/request data
 	gboolean use_multipart;
+	guchar* wbxml;
+	gsize wbxml_length;
 };
 
 #define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
 
-
-
 G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
+
+void _eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
+
+guchar* 
+eas_request_base_GetWbxmlFromChunking (EasRequestBase *self)
+{
+	return EAS_REQUEST_BASE_PRIVATE (self)->wbxml;
+}
+
+gsize 
+eas_request_base_GetWbxmlFromChunkingSize (EasRequestBase *self)
+{
+	return EAS_REQUEST_BASE_PRIVATE (self)->wbxml_length;
+}
+
+
+void 
+eas_request_base_SetWbxmlFromChunking (EasRequestBase *self, guchar* wbxml, gsize wbxml_length)
+{
+	EasRequestBasePrivate *priv = EAS_REQUEST_BASE_PRIVATE (self);
+
+	g_free (priv->wbxml);
+	priv->wbxml_length = 0;
+	
+	priv->wbxml = g_malloc0 (wbxml_length);
+	if (priv->wbxml) {
+		memcpy (priv->wbxml, wbxml, wbxml_length);
+		priv->wbxml_length = wbxml_length;
+	}
+}
+
 
 static void
 eas_request_base_init (EasRequestBase *object)
@@ -92,6 +123,7 @@ eas_request_base_init (EasRequestBase *object)
 	priv->request_id = 0;
 	priv->cancelled = FALSE;
 	priv->use_multipart = FALSE;
+	priv->wbxml = NULL;
 
 	g_debug ("eas_request_base_init--");
 }
@@ -116,7 +148,10 @@ eas_request_base_dispose (GObject *object)
 static void
 eas_request_base_finalize (GObject *object)
 {
+	EasRequestBasePrivate *priv = EAS_REQUEST_BASE_PRIVATE (object);
+	
 	g_debug ("eas_request_base_finalize++");
+	g_free (priv->wbxml);
 	G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
 	g_debug ("eas_request_base_finalize--");
 }
@@ -133,6 +168,7 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 	object_class->dispose = eas_request_base_dispose;
 
 	klass->do_MessageComplete = NULL;
+	klass->do_GotChunk = _eas_request_base_GotChunk;
 
 	g_debug ("eas_request_base_class_init--");
 }
@@ -143,6 +179,23 @@ eas_request_base_GetRequestType (EasRequestBase* self)
 	EasRequestBasePrivate *priv = self->priv;
 
 	return priv->requestType;
+}
+
+void
+_eas_request_base_GotChunk (EasRequestBase *self, 
+                            SoupMessage *msg, 
+                            SoupBuffer *chunk)
+{
+	g_debug ("_eas_request_base_GotChunk+-");
+}
+
+void
+eas_request_base_GotChunk (EasRequestBase *self, 
+                           SoupMessage *msg, 
+                           SoupBuffer *chunk)
+{
+	g_debug ("eas_request_base_GotChunk+-");
+	EAS_REQUEST_BASE_GET_CLASS (self)->do_GotChunk (self, msg, chunk);
 }
 
 gboolean

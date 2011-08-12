@@ -58,6 +58,7 @@
 #include <libedataserver/e-flag.h>
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
+#include <string.h>
 #include "../src/eas-interface-base.h"
 #include "../src/eas-mail.h"
 
@@ -76,11 +77,13 @@ typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
 
 
 typedef gboolean (*EasRequestBaseMessageCompleteFp) (EasRequestBase *self, xmlDoc* doc, GError* error_in);
+typedef void (*EasRequestBaseGotChunkFp) (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
 
 struct _EasRequestBaseClass {
 	GObjectClass parent_class;
 
 	EasRequestBaseMessageCompleteFp do_MessageComplete;
+	EasRequestBaseGotChunkFp do_GotChunk;
 };
 
 struct _EasRequestBase {
@@ -341,8 +344,31 @@ DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
  */
 void eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context);
 
-gboolean
-eas_request_base_UseMultipart (EasRequestBase* self);
+/**
+ * Function hook invoked during the "got_chunk" signal from libsoup.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] msg
+ *      The current SoupMessage we're receiving buffer chunks from.
+ * @param[in] chunk
+ *      The chunk of data from the server.
+ */
+void eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
+
+/**
+ * Function hook invoked during the "got_chunk" signal from libsoup.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return NULL or Pointer to buffer containing the WBXML extracted during chunking. [no transfer]
+ */
+guchar* eas_request_base_GetWbxmlFromChunking (EasRequestBase *self);
+gsize eas_request_base_GetWbxmlFromChunkingSize (EasRequestBase *self);
+void eas_request_base_SetWbxmlFromChunking (EasRequestBase *self, guchar* wbxml, gsize wbxml_length);
+
+gboolean eas_request_base_UseMultipart (EasRequestBase* self);
 
 void eas_request_base_Set_UseMultipart (EasRequestBase* self, gboolean use_multipart);
 

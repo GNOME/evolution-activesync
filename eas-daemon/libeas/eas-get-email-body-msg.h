@@ -139,6 +139,9 @@ eas_get_email_body_msg_get_item (EasGetEmailBodyMsg* self);
 gboolean
 eas_get_email_body_msg_write_file (EasGetEmailBodyMsg* self, gchar* data);
 
+gboolean 
+eas_get_email_msg_write_chunk_to_file (EasGetEmailBodyMsg* self, const guchar* chunk, gsize size);
+
 G_END_DECLS
 
 #endif /* _EAS_GET_EMAIL_BODY_MSG_H_ */

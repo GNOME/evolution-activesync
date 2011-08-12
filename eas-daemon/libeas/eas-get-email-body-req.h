@@ -81,8 +81,6 @@ struct _EasGetEmailBodyReq {
 };
 
 void eas_get_email_body_req_set_response_size (EasGetEmailBodyReq* self, guint size);
-void eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, guint length);
-
 
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
@@ -148,6 +146,12 @@ gboolean
 eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self,
 					xmlDoc *doc,
 					GError* error);
+
+void
+eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, 
+                                 SoupMessage *msg, 
+                                 SoupBuffer *chunk);
+
 
 G_END_DECLS
 

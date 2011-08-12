@@ -128,11 +128,6 @@ typedef struct _EasGnomeKeyringResponse {
 	const gchar* serverUri;
 } EasGnomeKeyringResponse;
 
-typedef struct _EasMultipartTuple {
-	guint32 startPos;
-	guint32 itemsize;
-} EasMultipartTuple;
-
 typedef struct _EasNode EasNode;
 
 struct _EasNode {
@@ -872,6 +867,8 @@ static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 		emit_signal (chunk, request);
 	}
 
+	eas_request_base_GotChunk (request, msg, chunk);
+
 	g_debug ("Received %zd bytes for request %p", chunk->length, request);
 }
 
@@ -1093,6 +1090,12 @@ eas_connection_send_request (EasConnection* self,
 	if (g_strcmp0 (cmd, "Provision")) {
 		gint recursive = 1;
 		g_debug ("store the request");
+
+		if (priv->request_cmd || priv->request_doc)
+		{
+			g_critical ("Provisioning request stash already has data!");
+		}
+		
 		priv->request_cmd = cmd; // This should be a string literal valid for the lifetime of the request.
 
 		if (priv->protocol_version < 140 &&
@@ -1172,6 +1175,9 @@ eas_connection_send_request (EasConnection* self,
 		soup_message_headers_append (msg->request_headers,
 					     "MS-ASAcceptMultipart",
 					     "T");
+		// Instruct libsoup not to accumulate response data per 'got_chunk' 
+		// into a buffer in the body.
+		soup_message_body_set_accumulate (msg->response_body, FALSE);
 	}
 
 	soup_message_headers_append (msg->request_headers,
@@ -1326,6 +1332,13 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		return INVALID;
 	}
 
+
+	if (FALSE == soup_message_body_get_accumulate (msg->response_body))
+	{
+		g_debug ("Body collected in GotChunk");
+		return VALID_NON_EMPTY;
+	}
+	
 	if (!msg->response_body->length) {
 		g_debug ("Empty Content");
 		return VALID_EMPTY;
@@ -2018,7 +2031,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	gboolean cleanupRequest = FALSE;
 
 	eas_active_job_dequeue(node->cnc, node);
-	
+
     g_debug ("eas_connection - handle_server_response++ node [%p], req [%p], self [%p], priv[%p]", node, req, self, priv);
 	// if request has been cancelled, complete with appropriate error
 	if(eas_request_base_IsCancelled(req))
@@ -2028,7 +2041,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	                     EAS_CONNECTION_ERROR_CANCELLED,
 	                     ("request was cancelled by user"));
 
-	    goto complete_request;		
+	    goto complete_request;
 	}
 	
 	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
@@ -2087,72 +2100,29 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_object_unref (msg);
 			g_free(node);
 		} else {
-			gchar* wbxmlPart = NULL;
-			EasMultipartTuple* wbxmlData = NULL;
-
-			if (eas_request_base_UseMultipart (req)) {
-				guchar* data = (guchar*) msg->response_body->data;
-				GSList *partsList = NULL;
-				GSList *l = NULL;
-				gint i = 0;
-				//convert first 4 bytes to integer to determine how many parts there are
-				gint parts = data[ 3 ] << 24 |
-					     data[ 2 ] << 16 |
-					     data[ 1 ] << 8 |
-					     data[ 0 ];
-				g_debug ("parts = %d", parts);
-
-				for (i = 0; i < parts; i++) {
-					EasMultipartTuple* item = g_new (EasMultipartTuple, 1);
-					//j is start position for this tuple
-					gint j = (4 + (i * 8));
-
-					item->startPos = data[ (j + 3) ] << 24 |
-							 data[ (j + 2) ] << 16 |
-							 data[ (j + 1) ] << 8 |
-							 data[ (j + 0) ];
-
-					g_debug ("startpos = %u", item->startPos);
-
-					item->itemsize = data[ (j + 7) ] << 24 |
-							 data[ (j + 6) ] << 16 |
-							 data[ (j + 5) ] << 8 |
-							 data[ (j + 4) ];
-
-					g_debug ("size = %u", item->itemsize);
-
-					partsList = g_slist_append (partsList, item);
-				}
-				wbxmlData = partsList->data;
-				g_debug ("startpos = %u, size = %u", wbxmlData->startPos, wbxmlData->itemsize);
-				wbxmlPart = g_memdup ( (msg->response_body->data + wbxmlData->startPos) , (wbxmlData->itemsize));
-				partsList = g_slist_delete_link (partsList, partsList); // delete the first link in the list (not it's data)
-				l = partsList;
-				while (l) {
-					EasMultipartTuple* locator = l->data;
-					gchar *multipart = g_malloc0 (locator->itemsize + 1); // Allow for NULL and implicitly set the everything to 0
-					memcpy (multipart, (msg->response_body->data + locator->startPos), locator->itemsize); // Copy in the data
-
-					priv->multipart_strings_list = g_slist_append (priv->multipart_strings_list, multipart);
-					l = g_slist_next (l);
-				}
-				g_slist_foreach (partsList, (GFunc) g_free, NULL);
-				g_slist_free (partsList);
+			WB_UTINY* wbxml = NULL;
+			WB_ULONG wbxml_length = 0;
+			
+			if ( (wbxml = (WB_UTINY *)eas_request_base_GetWbxmlFromChunking (req)) )
+			{
+				wbxml_length = eas_request_base_GetWbxmlFromChunkingSize (req);
+				dump_wbxml_response (wbxml, wbxml_length);
 			}
-
-			//if wbxmlPart is set, use that, otherwise, just use the response data
-			if (!wbxml2xml ( (WB_UTINY*) (wbxmlPart ? : msg->response_body->data) ,
-					 wbxmlPart ? wbxmlData->itemsize : msg->response_body->length,
+			else
+			{
+				wbxml = (WB_UTINY *) msg->response_body->data;
+				wbxml_length = msg->response_body->length;
+			}
+			
+			if (!wbxml2xml ( wbxml ,
+					 wbxml_length,
 					 &xml,
 					 &xml_len)) {
 				g_set_error (&error, EAS_CONNECTION_ERROR,
 					     EAS_CONNECTION_ERROR_WBXMLERROR,
 					     ("Converting wbxml failed"));
-				g_free (wbxmlPart);
 				goto complete_request;
 			}
-			g_free (wbxmlPart);
-			g_free (wbxmlData);
 
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
