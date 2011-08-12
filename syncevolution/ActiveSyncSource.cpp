@@ -86,19 +86,14 @@ void ActiveSyncSource::beginSync(const std::string &lastToken, const std::string
     }
 
     GErrorCXX gerror;
-    EASItemsCXX created, updated;
-    EASIdsCXX deleted;
     gboolean moreAvailable = TRUE;
 
     m_currentSyncKey = m_startSyncKey;
 
     while (moreAvailable) {
         gchar *buffer = NULL;
-
-        // reset stuff in case we're after the first loop
-        created.clear();
-        updated.clear();
-        deleted.clear();
+        EASItemsCXX created, updated;
+        EASIdsCXX deleted;
 
         if (!eas_sync_handler_get_items(m_handler,
                                         m_currentSyncKey.c_str(),
