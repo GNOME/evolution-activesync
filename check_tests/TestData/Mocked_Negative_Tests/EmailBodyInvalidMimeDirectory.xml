@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+<ItemOperations xmlns="ItemOperations:">
+  <Status>1</Status>
+  <Response>
+    <Fetch>
+      <Status>1</Status>
+      <FileReference xmlns="AirSyncBase:">8%3a3%3a0</FileReference>
+      <Properties>
+        <ContentType xmlns="AirSyncBase:">application/octet-stream</ContentType>
+        <Data>QXR0YWNobWVudA==</Data>
+      </Properties>
+    </Fetch>
+  </Response>
+</ItemOperations>
