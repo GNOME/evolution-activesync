@@ -88,59 +88,69 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
     }
 
     GErrorCXX gerror;
-    EASItemsCXX created, updated;
-    EASIdsCXX deleted;
-    gchar *buffer;
-    if (!eas_sync_handler_get_items(getHandler(),
-                                    getStartSyncKey().c_str(),
-                                    &buffer,
-                                    getEasType(),
-                                    getFolder().c_str(),
-                                    created, updated, deleted,
-                                    0,
-                                    gerror)) {
-        gerror.throwError("reading ActiveSync changes");
-    }
+    gboolean moreAvailable = TRUE;
 
-    // TODO: Test that we really get an empty token here for an unexpected slow
-    // sync. If not, we'll start an incremental sync here and later the engine
-    // will ask us for older, unmodified item content which we won't have.
+    setCurrentSyncKey(getStartSyncKey());
 
+    while (moreAvailable) {
+        gchar *buffer = NULL;
+        EASItemsCXX created, updated;
+        EASIdsCXX deleted;
 
-    // populate ID lists and content cache
-    BOOST_FOREACH(EasItemInfo *item, created) {
-        string easid(item->server_id);
-        SE_LOG_DEBUG(this, NULL, "new eas item %s", easid.c_str());
-        Event &event = setItemData(easid, item->data);
-        BOOST_FOREACH(const std::string &subid, event.m_subids) {
-            SE_LOG_DEBUG(this, NULL, "new eas item %s = uid %s + rid %s",
-                         easid.c_str(), event.m_uid.c_str(), subid.c_str());
-            addItem(createLUID(easid, subid), NEW);
+        if (!eas_sync_handler_get_items(getHandler(),
+                                        getCurrentSyncKey().c_str(),
+                                        &buffer,
+                                        getEasType(),
+                                        getFolder().c_str(),
+                                        created, updated, deleted,
+                                        &moreAvailable,
+                                        gerror)) {
+            gerror.throwError("reading ActiveSync changes");
         }
-    }
-    BOOST_FOREACH(EasItemInfo *item, updated) {
-        string easid(item->server_id);
-        SE_LOG_DEBUG(this, NULL, "updated eas item %s", easid.c_str());
-        Event &event = setItemData(easid, item->data);
-        BOOST_FOREACH(const std::string &subid, event.m_subids) {
-            SE_LOG_DEBUG(this, NULL, "deleted eas item %s = uid %s + rid %s",
-                         easid.c_str(), event.m_uid.c_str(), subid.c_str());
-            addItem(createLUID(easid, subid), UPDATED);
+
+        // TODO: Test that we really get an empty token here for an unexpected slow
+        // sync. If not, we'll start an incremental sync here and later the engine
+        // will ask us for older, unmodified item content which we won't have.
+
+
+        // populate ID lists and content cache
+        BOOST_FOREACH(EasItemInfo *item, created) {
+            string easid(item->server_id);
+            SE_LOG_DEBUG(this, NULL, "new eas item %s", easid.c_str());
+            Event &event = setItemData(easid, item->data);
+            BOOST_FOREACH(const std::string &subid, event.m_subids) {
+                SE_LOG_DEBUG(this, NULL, "new eas item %s = uid %s + rid %s",
+                             easid.c_str(), event.m_uid.c_str(), subid.c_str());
+                addItem(createLUID(easid, subid), NEW);
+            }
         }
-    }
-    BOOST_FOREACH(const char *serverID, deleted) {
-        string easid(serverID);
-        Event &event = findItem(easid);
-        if (event.m_subids.empty()) {
-            SE_LOG_DEBUG(this, NULL, "deleted eas item %s empty?!", easid.c_str());
-        } else {
+        BOOST_FOREACH(EasItemInfo *item, updated) {
+            string easid(item->server_id);
+            SE_LOG_DEBUG(this, NULL, "updated eas item %s", easid.c_str());
+            Event &event = setItemData(easid, item->data);
             BOOST_FOREACH(const std::string &subid, event.m_subids) {
                 SE_LOG_DEBUG(this, NULL, "deleted eas item %s = uid %s + rid %s",
                              easid.c_str(), event.m_uid.c_str(), subid.c_str());
-                addItem(createLUID(easid, subid), DELETED);
+                addItem(createLUID(easid, subid), UPDATED);
             }
         }
-        m_cache.erase(easid);
+        BOOST_FOREACH(const char *serverID, deleted) {
+            string easid(serverID);
+            Event &event = findItem(easid);
+            if (event.m_subids.empty()) {
+                SE_LOG_DEBUG(this, NULL, "deleted eas item %s empty?!", easid.c_str());
+            } else {
+                BOOST_FOREACH(const std::string &subid, event.m_subids) {
+                    SE_LOG_DEBUG(this, NULL, "deleted eas item %s = uid %s + rid %s",
+                                 easid.c_str(), event.m_uid.c_str(), subid.c_str());
+                    addItem(createLUID(easid, subid), DELETED);
+                }
+            }
+            m_cache.erase(easid);
+        }
+
+        // update key
+        setCurrentSyncKey(buffer);
     }
 
     // now also generate full list of all current items:
@@ -154,9 +164,6 @@ void ActiveSyncCalendarSource::beginSync(const std::string &lastToken, const std
             addItem(createLUID(easid, subid), ANY);
         }
     }
-
-    // update key
-    setCurrentSyncKey(buffer);
 }
 
 std::string ActiveSyncCalendarSource::endSync(bool success)

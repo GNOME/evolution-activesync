@@ -118,6 +118,10 @@ AC_SUBST(syncevo_backenddir)
 AM_CONDITIONAL([ENABLE_MODULES], [true])
 AC_DEFINE([ENABLE_MODULES], [], [tell SyncEvolution backend that it builds as a module])
 
+# enable the integration tests support for syncevolution
+# unconditionally when compiling as part of activesyncd
+AC_DEFINE([ENABLE_INTEGRATION_TESTS], [true], [Enable integration tests for syncevolution])
+
 # Compile flags for syncevolution backend.
 # Don't hard-code them in syncevolution/Makefile.am, that file
 # is also used when compiling inside SyncEvolution.
