@@ -1219,6 +1219,12 @@ static void _eas2ical_add_exception_events (icalcomponent* vcalendar, icalcompon
 				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
 			}
 
+			// ExceptionStartTime -> convert to RecurrenceID
+			if ( (value = (gchar*) g_hash_table_lookup (exceptionProperties, EAS_ELEMENT_EXCEPTIONSTARTTIME)) != NULL) {
+				prop = icalproperty_new_recurrenceid(icaltime_from_string (value));
+				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
+			}
+			
 			// MeetingStatus
 			if ( (value = (gchar*) g_hash_table_lookup (exceptionProperties, EAS_ELEMENT_MEETINGSTATUS)) != NULL) {
 				// TODO
