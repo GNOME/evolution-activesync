@@ -329,63 +329,6 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 	return root_fi;
 }
 
-struct _store_sync_data
-{
-	CamelEasStore *eas_store;
-
-	/* Used if caller wants it to be  a sync call */
-	EFlag *sync;
-	GError **error;
-};
-
-struct _eas_refresh_msg {
-	CamelSessionThreadMsg msg;
-	CamelStore *store;
-};
-
-static void
-eas_refresh_finfo (CamelSession *session, CamelSessionThreadMsg *msg)
-{
-	struct _eas_refresh_msg *m = (struct _eas_refresh_msg *)msg;
-	CamelEasStore *eas_store = (CamelEasStore *) m->store;
-	struct _store_sync_data *sync_data;
-	GSList *folders = NULL;
-
-	printf("%s\n", __func__);
-	if (!camel_offline_store_get_online (CAMEL_OFFLINE_STORE (eas_store)))
-		return;
-
-	if (!EVO3_sync(camel_service_connect) ((CamelService *) eas_store, &msg->error))
-		return;
-
-	g_mutex_lock (eas_store->priv->get_finfo_lock);
-
-	if (!eas_mail_handler_get_folder_list (eas_store->priv->handler,
-					       FALSE,
-					       &folders, /*cancellable,*/ NULL)) {
-		g_warning ("Unable to fetch the folder hierarchy.\n");
-		g_mutex_unlock (eas_store->priv->get_finfo_lock);
-		return;
-	}
-	eas_utils_sync_folders (eas_store, folders);
-
-	g_mutex_unlock (eas_store->priv->get_finfo_lock);
-}
-
-static void
-eas_refresh_free (CamelSession *session, CamelSessionThreadMsg *msg)
-{
-	struct _eas_refresh_msg *m = (struct _eas_refresh_msg *)msg;
-
-	g_object_unref (m->store);
-}
-
-
-static CamelSessionThreadOps eas_refresh_ops = {
-	eas_refresh_finfo,
-	eas_refresh_free,
-};
-
 static gchar *
 eas_service_get_path (CamelService *service)
 {
@@ -401,8 +344,6 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
 	CamelFolderInfo *fi = NULL;
-	GSList *folders = NULL;
-	gboolean initial_setup = FALSE;
 	GSList *new_folders = NULL;
 
 	eas_store = (CamelEasStore *) store;
@@ -411,30 +352,6 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 	g_mutex_lock (priv->get_finfo_lock);
 	if (!(camel_offline_store_get_online (CAMEL_OFFLINE_STORE (store))
 	      && EVO3_sync(camel_service_connect) ((CamelService *)store, error))) {
-		g_mutex_unlock (priv->get_finfo_lock);
-		goto offline;
-	}
-
-	/* FIXME: There has to be a more efficient way than this, surely? */
-	folders = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
-	if (!folders)
-		initial_setup = TRUE;
-	g_slist_foreach (folders, (GFunc)g_free, NULL);
-	g_slist_free (folders);
-	folders = NULL;
-
-	if (!initial_setup && flags & CAMEL_STORE_FOLDER_INFO_SUBSCRIBED) {
-		time_t now = time (NULL);
-
-		if (now - priv->last_refresh_time > FINFO_REFRESH_INTERVAL) {
-			struct _eas_refresh_msg *m;
-
-			m = camel_session_thread_msg_new (((CamelService *)store)->session, &eas_refresh_ops, sizeof (*m));
-			m->store = g_object_ref (store);
-			camel_session_thread_queue (((CamelService *)store)->session, &m->msg, 0);
-		}
-
-		eas_store->priv->last_refresh_time = time (NULL);
 		g_mutex_unlock (priv->get_finfo_lock);
 		goto offline;
 	}
