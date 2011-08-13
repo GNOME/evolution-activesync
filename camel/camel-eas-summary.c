@@ -90,9 +90,24 @@ eas_message_info_free (CamelFolderSummary *s, CamelMessageInfo *mi)
 }
 
 static void
+eas_summary_finalize (GObject *object)
+{
+	CamelEasSummary *eas_summary = CAMEL_EAS_SUMMARY (object);
+
+	g_free (eas_summary->sync_state);
+
+	/* Chain up to parent's finalize() method. */
+	G_OBJECT_CLASS (camel_eas_summary_parent_class)->finalize (object);
+}
+
+static void
 camel_eas_summary_class_init (CamelEasSummaryClass *class)
 {
 	CamelFolderSummaryClass *folder_summary_class;
+	GObjectClass *object_class;
+
+	object_class = G_OBJECT_CLASS (class);
+	object_class->finalize = eas_summary_finalize;
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_size = sizeof (CamelEasMessageInfo);
