@@ -1011,7 +1011,7 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	DBusGProxy *proxy = self->priv->remoteEas;
 	// serialise the emails
 	guint num_emails = g_slist_length ( (GSList *) update_emails);
-	gchar **serialised_email_array = g_malloc0 ( (num_emails * sizeof (gchar*)) + 1);  // null terminated array of strings
+	gchar **serialised_email_array = g_malloc0 ((num_emails + 1) * sizeof (gchar*));  // null terminated array of strings
 	gchar *serialised_email = NULL;
 	gchar *ret_sync_key = NULL;
 	gchar **ret_failed_updates_array = NULL;
