@@ -188,6 +188,7 @@ camel_eas_store_summary_save (CamelEasStoreSummary *eas_summary,
 	ret = g_file_replace_contents	(file, contents, strlen (contents),
 					 NULL, FALSE, G_FILE_CREATE_PRIVATE,
 					 NULL, NULL, error);
+	g_object_unref (file);
 	priv->dirty = FALSE;
 
 exit:
