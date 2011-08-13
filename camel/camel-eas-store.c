@@ -415,9 +415,13 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 		goto offline;
 	}
 
+	/* FIXME: There has to be a more efficient way than this, surely? */
 	folders = camel_eas_store_summary_get_folders (eas_store->summary, NULL);
 	if (!folders)
 		initial_setup = TRUE;
+	g_slist_foreach (folders, (GFunc)g_free, NULL);
+	g_slist_free (folders);
+	folders = NULL;
 
 	if (!initial_setup && flags & CAMEL_STORE_FOLDER_INFO_SUBSCRIBED) {
 		time_t now = time (NULL);
@@ -434,9 +438,6 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 		g_mutex_unlock (priv->get_finfo_lock);
 		goto offline;
 	}
-
-	g_slist_foreach (folders, (GFunc)g_free, NULL);
-	g_slist_free (folders);
 
 	if (!eas_mail_handler_get_folder_list (eas_store->priv->handler,
 					       FALSE,
