@@ -471,6 +471,8 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 		changing_mis = NULL;
 
 		g_mutex_unlock (priv->server_lock);
+		g_slist_foreach (item_list, (GFunc) g_object_unref, NULL);
+		g_slist_free (item_list);
 		item_list = NULL;
 		item_list_len = 0;
 	}
