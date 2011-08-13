@@ -129,7 +129,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	CamelEasFolderPrivate *priv;
 	EasEmailHandler *handler;
 	CamelEasStore *eas_store;
-	const gchar *mime_content;
+	gchar *mime_content;
 	CamelMimeMessage *message = NULL;
 	CamelStream *tmp_stream = NULL;
 	GSList *ids = NULL, *items = NULL;
@@ -213,6 +213,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 			     _("Unable to create cache path"));
 		g_free (dir);
 		g_free (cache_file);
+		g_free (mime_content);
 		goto exit;
 	}
 	g_free (dir);
@@ -221,9 +222,11 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 		g_set_error (error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
 			     _("Failed to move message cache file"));
 		g_free (cache_file);
+		g_free (mime_content);
 		goto exit;
 	}
 	g_free (cache_file);
+	g_free (mime_content);
 
 	message = camel_eas_folder_get_message_from_cache (eas_folder, uid, cancellable, error);
 
