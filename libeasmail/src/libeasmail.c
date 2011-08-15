@@ -1370,7 +1370,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	gchar **ret_failed_changes_array = NULL;
 	guint delete_list_length = g_slist_length ( (GSList*) delete_emails);
 	guint change_list_length = g_slist_length ( (GSList *) change_emails);
-	gchar **change_emails_array = g_malloc0 ( (change_list_length * sizeof (gchar*)) + 1);  // null terminated
+	gchar **change_emails_array = g_malloc0 ( (change_list_length + 1) * sizeof (gchar *) );  // null terminated
 	gchar *serialised_email = NULL;
 	int loop = 0;
 	guint i = 0;
