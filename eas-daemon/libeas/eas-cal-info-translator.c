@@ -57,7 +57,7 @@
 #include <libical/icalduration.h>
 #include <libical/icaltimezone.h>
 
-#include <libwbxml-1.0/wbxml/wbxml.h>
+#include <wbxml/wbxml.h>
 
 // Values for converting icaldurationtype into a number of minutes
 const gint SECONDS_PER_MINUTE          = 60;

@@ -50,7 +50,7 @@
  *
  */
 
-#include <libwbxml-1.0/wbxml/wbxml.h>
+#include <wbxml/wbxml.h>
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-msg.h"
 #include <glib.h>
