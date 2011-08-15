@@ -23,12 +23,8 @@ CFLAGS="$CFLAGS $WARNING_FLAGS"
 
 # Checks for libraries.
 
-# This macro is defined in check.m4 and tests if check.h and
-# libcheck.a are installed in your system. It sets CHECK_CFLAGS and
-# CHECK_LIBS accordingly.
-#  AM_PATH_CHECK([MINIMUM-VERSION,
-#                [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-AM_PATH_CHECK()
+# find compile flags for the "check" C++ unit testing framework
+PKG_CHECK_MODULES(CHECK, check)
 
 GETTEXT_PACKAGE=activesyncd
 AC_SUBST(GETTEXT_PACKAGE)
