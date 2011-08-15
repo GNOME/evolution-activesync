@@ -388,7 +388,7 @@ create_node_from_categorylist (xmlNode *app_data, const GSList* categories)
 gboolean
 eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNode *app_data, const EasEmailInfo *email_info)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 	g_debug ("eas_email_info_translator_build_update_request++");
 
 	if (! (doc &&
@@ -397,6 +397,7 @@ eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNode *ap
 	       (app_data->type == XML_ELEMENT_NODE) &&
 	       (g_strcmp0 ( (char*) (app_data->name), "ApplicationData") == 0))) {
 		g_debug ("invalid input");
+		ret = FALSE;
 	} else {
 		// Note that the only fields it's valid to update are flags and categories!
 		xmlNode *leaf;
@@ -411,7 +412,8 @@ eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNode *ap
 				leaf = xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "0");
 			}
 		}
-		if (ret) {
+		if(email_info->categories)
+		{
 			//categories
 			ret = create_node_from_categorylist (app_data, email_info->categories);
 		}
