@@ -75,7 +75,7 @@ which must simulate two independent ActiveSync clients.
 
 Configure "local" testing (backend is covered, no syncing involved):
 ./syncevolution --configure username=<EAS account ID> \
-                --template SyncEvolution target-config@client-test
+                --template SyncEvolution target-config@client-test-exchange
 
 On MeeGo:
 - install syncevolution-test and syncevolution-synccompare
