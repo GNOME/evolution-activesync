@@ -253,9 +253,9 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 					    doc, // full transfer
 					    error);
 finish:
-	if (file == NULL) {
+	if (file)
 		fclose (file);
-	}
+
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
