@@ -52,7 +52,7 @@ static GMainLoop *loop = NULL;
 static void
 test_expects_error_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_debug ("Error response for test [%d]", (int) data);
+    g_debug ("Error response for test [%p]", data);
 
     if (error)
     {
@@ -214,7 +214,7 @@ END_TEST
 static void
 test_expects_success_cb (char* serverUri, gpointer data, GError *error)
 {
-    g_debug ("Found URL:[%d] [%s]", (int) data, serverUri);
+    g_debug ("Found URL:[%p] [%s]", data, serverUri);
 
     if (error)
     {
