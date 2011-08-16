@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+<MoveItems xmlns="Move:">
+  <Response>
+    <SrcMsgId>8:2</SrcMsgId>
+    <Status>4</Status>
+  </Response>
+  <Response>
+    <SrcMsgId>8:1</SrcMsgId>
+    <Status>4</Status>
+  </Response>
+</MoveItems>
