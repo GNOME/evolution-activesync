@@ -218,18 +218,27 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 		goto finish;
 	}
 
-	g_debug ("create msg object");
-	//create msg object
-	priv->send_email_msg = eas_send_email_msg_new (priv->account_id, priv->client_id, mime_string);
-
-	g_debug ("build messsage");
 	//build request msg
 	if (eas_connection_get_protocol_version (eas_request_base_GetConnection (parent)) < 140)
+	{
+		g_debug ("create & build messsage for protocol < 14.0");
+		priv->send_email_msg = eas_send_email_msg_new (priv->account_id, 
+			                                       priv->client_id, 
+			                                       NULL); // Mime string becomes 'doc'
+
 		//Activesync 12.1 just uses the mime string in the body of the message
 		doc = (xmlDoc*) mime_string;
+	}
 	else
+	{
+		g_debug ("create & build messsage for protocol >= 14.0");
+		priv->send_email_msg = eas_send_email_msg_new (priv->account_id, 
+			                                       priv->client_id, 
+			                                       mime_string);
+
 		//Activesync 14 base64 encodes the Mime and builds an xml message
 		doc = eas_send_email_msg_build_message (priv->send_email_msg);
+	}
 
 	if (!doc) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
@@ -281,6 +290,7 @@ finish:
 	xmlFreeDoc (doc);
 	if (!ret) {
 		g_assert (error != NULL);
+		g_debug ("Error: %d %s", error->code, error->message);
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
