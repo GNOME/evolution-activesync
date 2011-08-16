@@ -213,20 +213,6 @@ eas_send_email_msg_parse_response (EasSendEmailMsg* self, xmlDoc *doc, GError** 
 					error_details = common_status_error_map[0];
 				}
 
-				// @@BUG Something in the way error_details.code is being set here is
-				// causing a SegFault in the calling eas_send_email_req_MessageComplete()
-				// at the point where the error is given to dbus for dbus_g_method_return_error() 
-
-				/*
-				(gdb) where
-				#0  gerror_domaincode_to_dbus_error_name (object_info=<value optimised out>, message=<value optimised out>, error=0x8070c90) at dbus-gobject.c:1222
-				#1  gerror_to_dbus_error_message (object_info=<value optimised out>, message=<value optimised out>, error=0x8070c90) at dbus-gobject.c:1339
-				#2  0x002b780f in dbus_g_method_return_error (context=0x8088f48, error=0x8070c90) at dbus-gobject.c:2838
-				#3  0x005b7685 in eas_send_email_req_MessageComplete (self=0x80896c0, doc=0x808a978, error_in=0x0) at eas-send-email-req.c:293
-				#4  0x005b16fe in eas_request_base_MessageComplete (self=0x80896c0, doc=0x808a978, error_in=0x0) at eas-request-base.c:210
-				<SNIP>
-				*/
-
 				g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
 
 				goto finish;
