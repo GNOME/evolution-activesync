@@ -1109,25 +1109,6 @@ eas_connection_send_request (EasConnection* self,
 		priv->request_error = error;
 	}
 
-	policy_key = eas_account_get_policy_key (priv->account);
-	// If we need to provision, and not the provisioning msg
-	if ( (!policy_key) && g_strcmp0 (cmd, "Provision")) {
-		EasProvisionReq *req = eas_provision_req_new (NULL, NULL);
-		EasRequestBase *req_base = EAS_REQUEST_BASE (&req->parent_instance);
-		g_debug ("  eas_connection_send_request - Provisioning required");
-
-		eas_request_base_SetConnection (&req->parent_instance, self);
-		// For provisioning copy the DBus Context of the original request.
-		eas_request_base_SetContext (req_base,
-					     eas_request_base_GetContext (request));
-
-		ret = eas_provision_req_Activate (req, error);
-		if (!ret) {
-			g_assert (error == NULL || *error != NULL);
-		}
-		goto finish;
-	}
-
 	wbxml_ret = wbxml_conv_xml2wbxml_create (&conv);
 	if (wbxml_ret != WBXML_OK) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
@@ -1184,9 +1165,14 @@ eas_connection_send_request (EasConnection* self,
 				     "User-Agent",
 				     "libeas");
 
-	soup_message_headers_append (msg->request_headers,
-				     "X-MS-PolicyKey",
-				     policy_key ? : "0");
+	/* If policy key is set from provisioning add it, otherwise skip */
+	policy_key = eas_account_get_policy_key (priv->account);
+	if (policy_key)
+	{
+		soup_message_headers_append (msg->request_headers,
+					     "X-MS-PolicyKey", 
+					     policy_key);
+	}
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 	if (priv->protocol_version >= 140 || g_strcmp0 (cmd, "SendMail")) {
 		// Convert doc into a flat xml string
