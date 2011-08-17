@@ -2443,3 +2443,51 @@ eas_connection_cancel_request(EasConnection* cnc,
 
 	return ret;
 }
+
+
+/*
+ use the HTTP OPTIONS command to ask server for a list of protocols
+ store results in GConf 
+ */
+gboolean 
+eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
+{
+	gboolean ret = TRUE;
+	SoupMessage *msg = NULL;
+	EasConnectionPrivate *priv = cnc->priv;
+	EasAccount *acc = priv->account;
+	const gchar *protocol_versions = NULL;
+	
+	msg = soup_message_new("OPTIONS", eas_account_get_uri(acc));
+	
+	// use the sync version of soup request and parse msg on completion
+	// rather than go via handle_server_response which requires setting up
+	// eas request and message objects
+	soup_session_send_message(priv->soup_session, msg);
+	
+	// parse response store the list in GConf (via EasAccount)
+	if (HTTP_STATUS_OK != msg->status_code) {
+		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_FAILED,
+			     "HTTP request failed: %d - %s",
+			     msg->status_code, msg->reason_phrase);
+		ret = FALSE;
+		goto cleanup;
+	}	
+
+	// get supported protocols
+	protocol_versions = soup_message_headers_get_one(msg->response_headers, "MS-ASProtocolVersions");
+
+	g_debug("server supports protocols %s", protocol_versions);
+
+	// TODO write the list to GConf using new EasAccount API
+	
+	
+cleanup:
+	
+	g_object_unref (msg);
+
+	return ret;
+}

@@ -256,6 +256,21 @@ gboolean eas_connection_cancel_request(EasConnection* self,
                                      guint request_id, 
                                      GError** error); 
 
+/**
+ * Get a list of activesync protocols supported by the exchange server
+ * and store them in GConf
+ *
+ * @param[in]   cnc
+ *		instance of EasConnection
+* @param[out] error
+ *	  GError may be NULL if the caller wishes to ignore error details, otherwise
+ *	  will be populated with error details if the function returns FALSE. Caller 
+ *	  should free the memory with g_error_free() if it has been set. [full transfer] 
+ *
+ * @return TRUE if successful, otherwise FALSE. 
+ */
+gboolean eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error);
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */
