@@ -2152,10 +2152,11 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_debug ("handle_server_response - doc created - parse for status");
 			parse_for_status (node, &isStatusError); // TODO Also catch provisioning for 14.0
 		} else {
+			xmlError *xmlerr = xmlGetLastError ();
 			g_set_error (&error,
 				     EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_XMLTOOLARGETODOM,
-				     "Server response is too large for libxml2 DOM at %u bytes", xml_len);
+				     "Failed to parse XML: %s", xmlerr?xmlerr->message:"<unknown error>");
 		}
 
 
