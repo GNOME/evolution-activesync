@@ -2342,27 +2342,29 @@ gchar **eas_connection_get_folders (EasConnection *cnc)
 	for (i = 0; folders[i]; i++) {
 		gchar *res = NULL;
 
-		if (!strcmp (folders[i], "##storedata")) {
-			g_free (folders[i]);
-			folders[i] = NULL;
-			continue;
+		if (strcmp (folders[i], "##storedata")) {
+			gchar *parent_id, *display_name;
+			int type;
+
+			parent_id = g_key_file_get_string (cnc->priv->folders,
+						   folders[i], "parent_id", NULL);
+			display_name = g_key_file_get_string (cnc->priv->folders,
+							      folders[i], "display_name", NULL);
+			type = g_key_file_get_integer (cnc->priv->folders,
+						       folders[i], "type", NULL);
+
+			res = g_strdup_printf ("%s\n%s\n%s\n%d", parent_id,
+					       folders[i], display_name, type);
+			g_free (parent_id);
+			g_free (display_name);
 		}
 
-		res = g_strdup_printf ("%s\n%s\n%s\n%d",
-				       g_key_file_get_string (cnc->priv->folders,
-							      folders[i], "parent_id", NULL),
-				       folders[i],
-				       g_key_file_get_string (cnc->priv->folders,
-							      folders[i], "display_name", NULL),
-				       g_key_file_get_integer (cnc->priv->folders,
-							       folders[i], "type", NULL));
-
-		/* Reuse the existing array. */
 		g_free (folders[i]);
-		if (i > j)
-			folders[i] = NULL;
+		folders[i] = NULL;
 
-		folders[j++] = res;
+		/* Reuse the existing array */
+		if (res)
+			folders[j++] = res;
 	}
 	return folders;
 }
