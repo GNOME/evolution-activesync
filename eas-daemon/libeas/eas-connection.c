@@ -1847,6 +1847,7 @@ eas_connection_find (const gchar* accountId)
 			break;
 		}
 	}
+	g_object_unref (iter);
 
 	if (!account_found) {
 		g_warning ("No account details found for accountId [%s]", accountId);
