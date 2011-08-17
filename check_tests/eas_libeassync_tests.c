@@ -31,6 +31,7 @@ static void getFolderHierarchy (void)
 	ret = eas_mail_handler_get_folder_list (email_handler,
 	                                        FALSE, // force refresh?
 											&created,
+	                                        NULL,
 	                                        &error);	
     mark_point();
     

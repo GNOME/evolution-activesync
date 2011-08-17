@@ -47,6 +47,7 @@ START_TEST (test_get_folder_hierarchy)
 	result = eas_mail_handler_get_folder_list (email_handler,
 	                                        FALSE, 	// force refresh?
 											&added,
+	                                        NULL,
 	                                        &error);
 	
     if (!result)
