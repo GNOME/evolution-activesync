@@ -2126,10 +2126,14 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_debug ("handle_server_response - performing xmlReadMemory");
 
 			// Otherwise proccess the server response
+			/* libxml doesn't really need to know what the charset is, as long as it's
+			   ASCII-compatible so that the XML parsing can work. So tell it ISO8859-1
+			   so that it will tolerate invalid UTF-8 sequences in node content, which
+			   happen often in broken emails (especially spam). */
 			doc = xmlReadMemory ( (const char*) xml,
 					      xml_len,
 					      "sync.xml",
-					      NULL,
+					      "ISO8859-1",
 					      0);
 		}
 
