@@ -2483,7 +2483,7 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	g_debug("server supports protocols %s", protocol_versions);
 
 	// TODO write the list to GConf using new EasAccount API
-	
+	eas_account_set_server_protocols(acc, protocol_versions);
 	
 cleanup:
 	

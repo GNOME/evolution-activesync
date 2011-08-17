@@ -46,8 +46,9 @@ struct	_EasAccountPrivate
 	 gchar* calendar_folder;
 	 gchar* contact_folder;
 	 gchar* password;
-	gchar* device_id;
-         int protocol_version;
+	 gchar* device_id;
+     int protocol_version;
+	 gchar** server_protocols;	// array of protocols supported by server, eg "14.1,12.0"
 };
 	
 #define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
@@ -400,6 +401,92 @@ eas_account_set_protocol_version (EasAccount *account, int protocol_version)
 		g_debug( "protocol_version changed: [%d]\n", account->priv->protocol_version);
 	}
 	/*g_debug("eas_account_set_protocol_version--");*/
+}
+
+/*
+ * Takes a comma delimited list of protocols (as provided by server) and saves as an array
+ */
+void
+eas_account_set_server_protocols (EasAccount *account, const gchar* server_protocols)
+{
+	g_debug("eas_account_server_protocols++");
+	g_return_if_fail (EAS_IS_ACCOUNT (account));
+
+	if(account->priv->server_protocols == NULL){	// set previously unset:
+		if(server_protocols != NULL){
+			int strvlen, i;
+			account->priv->server_protocols = g_strsplit (server_protocols, ",", 0);
+			strvlen = g_strv_length (account->priv->server_protocols);
+			g_signal_emit (account, signals[CHANGED], 0, -1);
+			g_debug( "server_protocols changed:");
+			for(i = 0; i < strvlen; i++)
+			{
+				g_debug( "[%s]\n", account->priv->server_protocols[i]);
+			}
+		}
+	}else{	
+		if(server_protocols != NULL){ // compare to current, if different update:
+			gboolean changed = FALSE;
+			gchar **strv = g_strsplit (server_protocols, ",", 0);
+			guint len = g_strv_length (strv);
+			if(len == g_strv_length (account->priv->server_protocols)){// same length, may be unchanged
+				guint i, j;
+				for (i = 0; i < len; i++){
+					gboolean found = FALSE;
+					for(j = 0; j < len; j++){
+						if(!strcmp(strv[i], account->priv->server_protocols[j])){
+							// got a match
+							found = TRUE;
+							break;
+						}
+					}
+					if(!found){
+						changed = TRUE;
+						break;
+					}	
+				}
+				/*
+				for (i = 0; i < len; i++){	// allow for the case where protocol repeated
+					for(j = 0; j < len){
+						gboolean found = FALSE;
+						if(!strcmp(strv[j], account->priv->server_protocols[i])){
+							// got a match
+							found = TRUE;
+							break;
+						}
+					}
+					if(!found){
+						changed = TRUE;
+						break;
+					}	
+				}*/				
+			}else{
+				changed = TRUE;
+			}
+			
+			if(changed){
+				g_strfreev(account->priv->server_protocols);
+				account->priv->server_protocols = strv;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "server_protocols changed: NULL\n");
+			}else{
+				g_strfreev(strv);
+			}
+		}else{	// delete:
+				g_strfreev (account->priv->server_protocols);
+				account->priv->server_protocols = NULL;
+				g_signal_emit (account, signals[CHANGED], 0, -1);
+				g_debug( "server_protocols changed: NULL\n");
+		}
+	} 	
+	
+	g_debug("eas_account_server_protocols--");
+}
+
+gchar**	
+eas_account_get_server_protocols (const EasAccount *account)
+{
+	return account->priv->server_protocols;
 }
 
 gchar*

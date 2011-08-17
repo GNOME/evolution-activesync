@@ -107,6 +107,7 @@ void	eas_account_set_calendar_folder	(EasAccount *account, const gchar* calendar
 void	eas_account_set_password	(EasAccount *account, const gchar* password);
 void	eas_account_set_protocol_version(EasAccount *account, int protocol_version);
 void	eas_account_set_device_id	(EasAccount *account, const gchar* device_id);
+void 	eas_account_set_server_protocols (EasAccount *account, const gchar* protocols);
 
 gboolean	eas_account_set_from_info	(EasAccount *account, const EasAccountInfo* accountinfo);
 
@@ -119,7 +120,9 @@ gchar*	eas_account_get_calendar_folder	(const EasAccount *account);
 gchar*	eas_account_get_password	(const EasAccount *account);
 int 	eas_account_get_protocol_version(const EasAccount *account);
 gchar*	eas_account_get_device_id	(const EasAccount *account);
+gchar**	eas_account_get_server_protocols (const EasAccount *account);
 EasAccountInfo*	eas_account_get_account_info(const EasAccount *account);
+
 
 G_END_DECLS
 
