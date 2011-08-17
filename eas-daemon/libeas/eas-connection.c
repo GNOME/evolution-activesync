@@ -2324,6 +2324,7 @@ eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 	file = g_file_new_for_path (cnc->priv->folders_keyfile);
 	g_file_replace_contents (file, contents, size, NULL, FALSE,
 				 G_FILE_CREATE_PRIVATE, NULL, NULL, NULL);
+	g_free (contents);
 	g_object_unref (file);
 }
 
