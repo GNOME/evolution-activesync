@@ -12,6 +12,11 @@
 #   cmake
 #   libwbxml (must use 0.11.beta5 - obtain from http://sourceforge.net/projects/libwbxml/files/libwbxml/0.11.beta5/)
 #   libical
+#   libical-dev
+#   libgnome-keyring-dev
+#   libebook-1.2-dev
+#   libcamel-1.2-dev
+#   libebackend1.2-dev
 
 
 export GLIB_GENMARSHAL=glib-genmarshal
