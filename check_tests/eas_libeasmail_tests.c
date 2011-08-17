@@ -1925,6 +1925,333 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
 
 }
 END_TEST
+START_TEST (test_get_eas_mail_attachment_invalid_file_reference)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+      GError *error = NULL;
+
+
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailAttachmentInvalidFileReference.xml");
+
+       // mock Test
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.ItemOperationsError.INVALIDATTACHMENT"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST
+START_TEST (test_get_eas_mail_delete_invalid_server_id)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+
+
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailDeleteInvalidServerId.xml");
+
+       // mock Test
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.Error.XMLELEMENTNOTFOUND"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST
+START_TEST (test_get_eas_mail_info_bad_folder_structure)
+{
+    const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    gchar folder_hierarchy_sync_key[64] = "0";
+    GError *error = NULL;
+    gchar folder_sync_key[64] = "0";
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;
+       // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetMailHandler (&email_handler, accountuid);
+
+       // set mock
+       setMockNegTestGoodHttp("EmailInfoBadFolderStructure.xml");
+
+    // get the folder info for the inbox
+    GetFolderInfo_negativetests (email_handler, folder_sync_key, "validKey", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.SyncError.FOLDERHIERARCHYCHANGED"),  
+               "The Error returned by the server is not correct.");
+    //  free email objects in lists of email objects
+    g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_updated, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_created, (GFunc) g_object_unref, NULL);
+
+    g_object_unref (email_handler);
+
+}
+END_TEST
+
+START_TEST (test_get_eas_mail_info_invalid_folder)
+{
+    const gchar* accountuid = g_account_id;
+    EasEmailHandler *email_handler = NULL;
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    gchar folder_hierarchy_sync_key[64] = "0";
+    GError *error = NULL;
+    gchar folder_sync_key[64] = "0";
+    GSList *emails_created = NULL; //receives a list of EasMails
+    GSList *emails_updated = NULL;
+    GSList *emails_deleted = NULL;
+    gboolean more_available = FALSE;
+       // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetMailHandler (&email_handler, accountuid);
+
+    // call into the daemon to get the folder hierarchy from the exchange server
+   testGetFolderHierarchy (email_handler, &created, &error);
+
+    // fail the test if there is no folder information
+    fail_unless (NULL != created, "No folder information returned from exchange server");
+
+       // set mock
+       setMockNegTestGoodHttp("EmailInfoInvalidFolder.xml");
+
+    // get the folder info for the inbox
+    GetFolderInfo_negativetests (email_handler, folder_sync_key, "invalid", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.SyncError.OBJECTNOTFOUND"),  
+               "The Error returned by the server is not correct.");
+
+
+    //  free email objects in lists of email objects
+    g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_updated, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (emails_created, (GFunc) g_object_unref, NULL);
+
+    //  free folder objects in lists of folder objects
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (email_handler);
+
+}
+END_TEST
+START_TEST (test_get_eas_mail_body_invalid_server_id)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+
+
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailBodyInvalidServerId.xml");
+
+       // mock Test
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.ItemOperationsError.OBJECTNOTFOUND"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_attachment_invalid_mime_directory)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+
+
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailAttachmentInvalidMimeDirectory.xml");
+
+       // mock Test
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.Error.FILEERROR"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_body_invalid_mime_directory)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+
+
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailBodyInvalidMimeDirectory.xml");
+
+       // mock Test
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.Error.FILEERROR"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_move_invalid_server_id)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+       GSList *updated_ids = NULL;
+       GSList *server_ids = NULL;
+server_ids = g_slist_append(server_ids, "bad server id");
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailMoveInvalidServerId.xml");
+       // mock Test
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.MoveItemsError.INVALID_SRC_ID"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_move_invalid_source_folder)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+       GSList *updated_ids = NULL;
+       GSList *server_ids = NULL;
+server_ids = g_slist_append(server_ids, "bad server id");
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailMoveInvalidSourceFolder.xml");
+       // mock Test
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.MoveItemsError.INVALID_SRC_ID"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_move_invalid_destination_folder)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+       GSList *updated_ids = NULL;
+       GSList *server_ids = NULL;
+server_ids = g_slist_append(server_ids, "bad server id");
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailMoveInvalidDestinationFolder.xml");
+       // mock Test
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.MoveItemsError.INVALID_DST_ID"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+START_TEST (test_get_eas_mail_move_same_source_destination)
+{
+       const gchar* accountuid = g_account_id;
+       EasEmailHandler *email_handler = NULL;
+       GError *error = NULL;
+       GSList *updated_ids = NULL;
+       GSList *server_ids = NULL;
+server_ids = g_slist_append(server_ids, "bad server id");
+       // get a handle to the DBus interface and associate the account ID with this object
+       testGetMailHandler (&email_handler, accountuid);
+
+
+       // set mock
+       setMockNegTestGoodHttp("EmailMoveSameSourceDestination.xml");
+       // mock Test
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
+       g_debug("error is %s",dbus_g_error_get_name(error));
+       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+                          "org.meego.activesyncd.MoveItemsError.SRC_AND_DST_SAME"),  
+               "The Error returned by the server is not correct.");
+       
+       g_object_unref (email_handler);
+
+}
+END_TEST 
+
 Suite* eas_libeasmail_suite (void)
 {
     Suite* s = suite_create ("libeasmail");
@@ -1934,7 +2261,7 @@ Suite* eas_libeasmail_suite (void)
     suite_add_tcase (s, tc_libeasmail);
 
 //	tcase_add_test (tc_libeasmail, test_get_mail_handler);
-    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
+//    tcase_add_test (tc_libeasmail, test_get_init_eas_mail_sync_folder_hierarchy);
 
 	// mocked tests only
 	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
@@ -1943,13 +2270,24 @@ Suite* eas_libeasmail_suite (void)
 	    //tcase_add_test (tc_libeasmail, test_eas_mail_sync_folder_hierarchy_bad_synckey);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_id);
 	    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_sync_key);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_attachment_invalid_file_reference);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_bad_folder_structure);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_info_invalid_folder);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_delete_invalid_server_id);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_body_invalid_server_id);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_attachment_invalid_mime_directory);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_body_invalid_mime_directory);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_move_invalid_server_id);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_move_invalid_source_folder);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_move_invalid_destination_folder);
+		tcase_add_test (tc_libeasmail, test_get_eas_mail_move_same_source_destination);			
 	}
-    tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
+ //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
+ //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
 //    tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_attachments);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
-    tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
+ //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_delete_email);
+ //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_send_email);
     
     /* Need an unread, high importance email with a single attachment at top of inbox for this to pass: */
     //tcase_add_test (tc_libeasmail, test_eas_mail_handler_read_email_metadata);
