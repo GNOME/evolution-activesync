@@ -2341,8 +2341,9 @@ gchar **eas_connection_get_folders (EasConnection *cnc)
 	/* We re-use the original array, dropping the ##storedata element */
 	for (i = 0; folders[i]; i++) {
 		gchar *res = NULL;
-		
+
 		if (!strcmp (folders[i], "##storedata")) {
+			g_free (folders[i]);
 			folders[i] = NULL;
 			continue;
 		}
