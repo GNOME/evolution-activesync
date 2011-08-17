@@ -37,6 +37,7 @@ libeasmail/config/*
 libeasmail/m4/*
 libeascal/m4/*
 aclocal.m4
+QtActivesyncdConfig-build-desktop/
 
 # File paterns to ignore
 *.o
@@ -47,5 +48,7 @@ aclocal.m4
 *.*~
 *.orig
 *.bak
+*.pro.user
+
 
 
