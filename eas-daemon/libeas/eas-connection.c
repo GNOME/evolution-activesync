@@ -148,7 +148,7 @@ static void connection_authenticate (SoupSession *sess, SoupMessage *msg,
 				     gpointer data);
 static gpointer eas_soup_thread (gpointer user_data);
 static void handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data);
-static gboolean wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len);
+static gboolean wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len, GError **error);
 static void parse_for_status (xmlNode *node, gboolean *isErrorStatus);
 static gchar *device_type, *device_id;
 
@@ -1377,7 +1377,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
  * @param xml_len length of the output buffer in bytes
  */
 static gboolean
-wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len)
+wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_ULONG *xml_len, GError **error)
 {
 	gboolean ret = TRUE;
 	WBXMLConvWBXML2XML *conv = NULL;
@@ -1389,12 +1389,18 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	*xml_len = 0;
 
 	if (NULL == wbxml) {
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     "wbxml is NULL!");
 		g_warning ("  wbxml is NULL!");
 		ret = FALSE;
 		goto finish;
 	}
 
 	if (0 == wbxml_len) {
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     "wbxml_len is 0!");
 		g_warning ("  wbxml_len is 0!");
 		ret = FALSE;
 		goto finish;
@@ -1403,7 +1409,10 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	wbxml_ret = wbxml_conv_wbxml2xml_create (&conv);
 
 	if (wbxml_ret != WBXML_OK) {
-		g_warning ("  Failed to create conv! %s", wbxml_errors_string (ret));
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     "Failed to create WBXML to XML converter: %s", wbxml_errors_string (wbxml_ret));
+		g_warning ("  Failed to create conv! %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
 		goto finish;
 	}
@@ -1418,6 +1427,10 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 					      xml_len);
 
 	if (WBXML_OK != wbxml_ret) {
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_WBXMLERROR,
+			     "Error converting WBXML to XML: %s",
+			     wbxml_errors_string (wbxml_ret));
 		g_warning ("  wbxml2xml Ret = %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
 	}
@@ -1440,7 +1453,7 @@ dump_wbxml_response (const WB_UTINY *wbxml, const WB_LONG wbxml_len)
 	gchar* tmp = NULL;
 
 	if (0 != wbxml_len) {
-		wbxml2xml (wbxml, wbxml_len, &xml, &xml_len);
+		wbxml2xml (wbxml, wbxml_len, &xml, &xml_len, NULL);
 		tmp = g_strndup ( (gchar*) xml, xml_len);
 		g_debug ("\n=== dump start: xml_len [%d] ===\n%s=== dump end ===", xml_len, tmp);
 		if (tmp) g_free (tmp);
@@ -2117,12 +2130,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			if (!wbxml2xml ( wbxml ,
 					 wbxml_length,
 					 &xml,
-					 &xml_len)) {
-				g_set_error (&error, EAS_CONNECTION_ERROR,
-					     EAS_CONNECTION_ERROR_WBXMLERROR,
-					     ("Converting wbxml failed"));
+					 &xml_len, &error))
 				goto complete_request;
-			}
 
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
