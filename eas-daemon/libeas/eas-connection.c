@@ -2450,6 +2450,7 @@ eas_connection_cancel_request(EasConnection* cnc,
 
 
 /*
+ TODO - create own sync session rather than use the async session in the connection?
  use the HTTP OPTIONS command to ask server for a list of protocols
  store results in GConf 
  */
@@ -2486,9 +2487,12 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 
 	g_debug("server supports protocols %s", protocol_versions);
 
-	// TODO write the list to GConf using new EasAccount API
+	// write the list to GConf using new EasAccount API
 	eas_account_set_server_protocols(acc, protocol_versions);
-	
+
+	eas_account_list_save_item (g_account_list,
+				    priv->account,
+				    EAS_ACCOUNT_SERVER_PROTOCOLS);		
 cleanup:
 	
 	g_object_unref (msg);
