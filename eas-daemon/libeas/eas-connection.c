@@ -50,6 +50,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "eas-connection.h"
 #include <glib.h>
 #include <libsoup/soup.h>
@@ -60,6 +64,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <gnome-keyring.h>
+#include <glib/gi18n-lib.h>
 
 #include <sys/stat.h>
 
@@ -488,7 +493,7 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	g_debug ("fetch_and_store_password++");
 
 	argv[0] = (gchar *) ASKPASS;
-	argv[1] = g_strdup_printf ("Please enter your ActiveSync password for %s",
+	argv[1] = g_strdup_printf (_("Please enter your ActiveSync password for %s"),
 				   account_id);
 	argv[2] = NULL;
 
@@ -1116,7 +1121,7 @@ eas_connection_send_request (EasConnection* self,
 	if (wbxml_ret != WBXML_OK) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     ("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);
+			     _("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);
 		ret = FALSE;
 		goto finish;
 	}
@@ -1146,7 +1151,7 @@ eas_connection_send_request (EasConnection* self,
 	if (!msg) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_SOUPERROR,
-			     ("soup_message_new returned NULL"));
+			     _("soup_message_new returned NULL"));
 		ret = FALSE;
 		goto finish;
 	}
@@ -1195,7 +1200,7 @@ eas_connection_send_request (EasConnection* self,
 		if (wbxml_ret != WBXML_OK) {
 			g_set_error (error, EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_WBXMLERROR,
-				     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);
+				     _("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);
 			ret = FALSE;
 			goto finish;
 		}
@@ -1316,7 +1321,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP request failed: %d - %s",
+			     _("HTTP request failed: %d - %s"),
 			     msg->status_code, msg->reason_phrase);
 		return INVALID;
 	}
@@ -1340,7 +1345,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP response type was not WBXML");
+			     _("HTTP response type was not WBXML"));
 		return INVALID;
 	}
 	if (multipart && (0 != g_strcmp0 ("application/vnd.ms-sync.multipart", content_type))) {
@@ -1348,7 +1353,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP response type was not MULTIPART");
+			     _("HTTP response type was not MULTIPART"));
 		return INVALID;
 	}
 
@@ -1380,7 +1385,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (NULL == wbxml) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "wbxml is NULL!");
+			     _("wbxml is NULL!"));
 		g_warning ("  wbxml is NULL!");
 		ret = FALSE;
 		goto finish;
@@ -1389,7 +1394,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (0 == wbxml_len) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "wbxml_len is 0!");
+			     _("wbxml_len is 0!"));
 		g_warning ("  wbxml_len is 0!");
 		ret = FALSE;
 		goto finish;
@@ -1400,7 +1405,8 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (wbxml_ret != WBXML_OK) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "Failed to create WBXML to XML converter: %s", wbxml_errors_string (wbxml_ret));
+			     _("Failed to create WBXML to XML converter: %s"),
+			     wbxml_errors_string (wbxml_ret));
 		g_warning ("  Failed to create conv! %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
 		goto finish;
@@ -1418,7 +1424,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (WBXML_OK != wbxml_ret) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "Error converting WBXML to XML: %s",
+			     _("Error converting WBXML to XML: %s"),
 			     wbxml_errors_string (wbxml_ret));
 		g_warning ("  wbxml2xml Ret = %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
@@ -1535,7 +1541,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Status code: %d - Response from server",
+			     _("Status code: %d - Response from server"),
 			     status);
 		goto failed;
 	}
@@ -1550,7 +1556,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to parse autodiscover response XML");
+			     _("Failed to parse autodiscover response XML"));
 		goto failed;
 	}
 
@@ -1559,7 +1565,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Autodiscover> element");
+			     _("Failed to find <Autodiscover> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1570,7 +1576,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Response> element");
+			     _("Failed to find <Response> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1581,7 +1587,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Action> element");
+			     _("Failed to find <Action> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1592,7 +1598,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Settings> element");
+			     _("Failed to find <Settings> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1725,7 +1731,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Email is mandatory and must be provided");
+			     _("Email is mandatory and must be provided"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1735,7 +1741,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to extract domain from email address");
+			     _("Failed to extract domain from email address"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1746,7 +1752,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-			     "Failed create temp account for autodiscover");
+			     _("Failed create temp account for autodiscover"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1910,7 +1916,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_BADARG,
-			     "An account must be provided.");
+			     _("An account must be provided."));
 		return NULL;
 	}
 
@@ -1936,7 +1942,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-			     "A server url and username must be provided.");
+			     _("A server url and username must be provided."));
 		g_static_mutex_unlock (&connection_list);
 		return NULL;
 	}
@@ -1949,7 +1955,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FILEERROR,
-			     "Failed to create folder cache directory %s: %s",
+			     _("Failed to create folder cache directory %s: %s"),
 			     cachedir, strerror (errno));
 		g_free (cachedir);
 		g_object_unref (cnc);
@@ -2041,8 +2047,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	{
 		g_debug("request was cancelled by caller");
         g_set_error (&error, EAS_CONNECTION_ERROR,
-	                     EAS_CONNECTION_ERROR_CANCELLED,
-	                     ("request was cancelled by user"));
+		     EAS_CONNECTION_ERROR_CANCELLED,
+		     _("request was cancelled by user"));
 
 	    goto complete_request;
 	}
@@ -2150,7 +2156,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_set_error (&error,
 				     EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_XMLTOOLARGETODOM,
-				     "Failed to parse XML: %s", xmlerr?xmlerr->message:"<unknown error>");
+				     _("Failed to parse XML: %s"),
+				     xmlerr?xmlerr->message:"<unknown error>");
 		}
 
 
@@ -2448,8 +2455,9 @@ eas_connection_cancel_request(EasConnection* cnc,
 	{
 		ret = FALSE;
 		g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_BADARG,
-                     ("Request with id %d not in queue, can't cancel"), request_id);
+			     EAS_CONNECTION_ERROR_BADARG,
+			     _("Request with id %d not in queue; can't cancel"),
+			     request_id);
 	}
 	QUEUE_UNLOCK (cnc);
 
@@ -2540,7 +2548,7 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP request failed: %d - %s",
+			     _("HTTP request failed: %d - %s"),
 			     msg->status_code, msg->reason_phrase);
 		ret = FALSE;
 		goto cleanup;
