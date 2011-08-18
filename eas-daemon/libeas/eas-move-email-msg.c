@@ -191,7 +191,6 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 	gboolean ret = TRUE;
 	xmlNode *root = NULL, *node = NULL, *response = NULL;
 	EasMoveEmailMsgPrivate *priv = self->priv;
-	EasError error_details;
 	g_debug ("eas_move_email_msg_parse_response++\n");
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -233,11 +232,6 @@ eas_move_email_msg_parse_response (EasMoveEmailMsg* self, xmlDoc *doc, GError** 
 				if (status_num != 3) { // not success (MoveItems command status 3 is success (all other commands use 1 for success), doh!)
 					// store the status
 					updated_id->status = g_strdup (status);
-					if (status_num > EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT) 
-						status_num = EAS_MOVEITEMS_STATUS_EXCEEDSSTATUSLIMIT;
-
-					error_details = moveitems_status_error_map[status_num];
-					g_set_error (error, EAS_CONNECTION_ERROR, error_details.code, "%s", error_details.message);
 				}
 				xmlFree (status);
 				continue;

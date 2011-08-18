@@ -518,7 +518,13 @@ void print_update(gpointer data, gpointer user_data)
 	g_debug("update dst id = %s", update->dest_id);	
 	g_debug("update status = %s", update->status);	
 }
+void check_status(gpointer data, gpointer user_data)
+{
+	EasIdUpdate *update = data;
+	gchar* satus = user_data;
+	fail_if(g_strcmp0(update->status,user_data)!=0,"Not a valid status returned by the function ");
 
+}
 /*
  Move the first email in the inbox to a 'temp' folder (at same level as Inbox folder) 
 */
@@ -2166,12 +2172,10 @@ server_ids = g_slist_append(server_ids, "bad server id");
        // set mock
        setMockNegTestGoodHttp("EmailMoveInvalidServerId.xml");
        // mock Test
-       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
-       g_debug("error is %s",dbus_g_error_get_name(error));
-       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
-                          "org.meego.activesyncd.MoveItemsError.INVALID_SRC_ID"),  
-               "The Error returned by the server is not correct.");
-       
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
+      fail_if(error != NULL,"The server should not return error for this function call");
+
+	g_list_foreach(updated_ids,check_status,"1");
        g_object_unref (email_handler);
 
 }
@@ -2191,12 +2195,10 @@ server_ids = g_slist_append(server_ids, "bad server id");
        // set mock
        setMockNegTestGoodHttp("EmailMoveInvalidSourceFolder.xml");
        // mock Test
-       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
-       g_debug("error is %s",dbus_g_error_get_name(error));
-       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
-                          "org.meego.activesyncd.MoveItemsError.INVALID_SRC_ID"),  
-               "The Error returned by the server is not correct.");
-       
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
+      fail_if(error != NULL,"The server should not return error for this function call");
+
+	g_list_foreach(updated_ids,check_status,"1");
        g_object_unref (email_handler);
 
 }
@@ -2216,12 +2218,10 @@ server_ids = g_slist_append(server_ids, "bad server id");
        // set mock
        setMockNegTestGoodHttp("EmailMoveInvalidDestinationFolder.xml");
        // mock Test
-       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
-       g_debug("error is %s",dbus_g_error_get_name(error));
-       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
-                          "org.meego.activesyncd.MoveItemsError.INVALID_DST_ID"),  
-               "The Error returned by the server is not correct.");
-       
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
+      fail_if(error != NULL,"The server should not return error for this function call");
+
+	g_list_foreach(updated_ids,check_status,"2");
        g_object_unref (email_handler);
 
 }
@@ -2241,16 +2241,14 @@ server_ids = g_slist_append(server_ids, "bad server id");
        // set mock
        setMockNegTestGoodHttp("EmailMoveSameSourceDestination.xml");
        // mock Test
-       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);                
-       g_debug("error is %s",dbus_g_error_get_name(error));
-       fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
-                          "org.meego.activesyncd.MoveItemsError.SRC_AND_DST_SAME"),  
-               "The Error returned by the server is not correct.");
-       
+       eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
+      fail_if(error != NULL,"The server should not return error for this function call");
+
+	g_list_foreach(updated_ids,check_status,"4");
        g_object_unref (email_handler);
 
 }
-END_TEST 
+END_TEST  
 
 Suite* eas_libeasmail_suite (void)
 {
