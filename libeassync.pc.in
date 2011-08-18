@@ -1,0 +1,14 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+privincludedir=@privincludedir@
+
+Name: libeassync
+Description: Client library for accessing ActiveSync dæmon via D-Bus
+Version: @VERSION@
+Libs: -L${libdir} -leassync
+Cflags: -I${privincludedir}/eas-sync

@@ -27,7 +27,10 @@ libeassync_la_SOURCES =		\
         libeassync.c                     \
         eas-item-info.h                     \
         eas-item-info.c
-        
+
+libeassyncincludedir = $(privincludedir)/eas-sync
+libeassyncinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h
+
 interface_xml =  ../../eas-daemon/src/eas-sync.xml
 
 #Rule to generate the binding headers
