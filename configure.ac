@@ -37,6 +37,7 @@ AM_PROG_CC_C_O
 
 AC_SUBST(NO_UNDEFINED)
 
+IT_PROG_INTLTOOL([0.35.5])
 AM_GLIB_GNU_GETTEXT
 AM_PATH_GLIB_2_0
 AM_DISABLE_STATIC
@@ -156,6 +157,7 @@ AC_CONFIG_FILES([
     camel/Makefile
     syncevolution/Makefile
     meego/Makefile
+    po/Makefile.in
     ])
 
 AC_CONFIG_COMMANDS_POST([test "$have_mlite" = "yes" && pushd ${srcdir}/${MEEGO_UI_DIR} && qmake && popd])
