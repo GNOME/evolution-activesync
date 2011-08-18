@@ -16,20 +16,21 @@ START_TEST (test_fetch_server_protocols)
 	GError *error = NULL;
 	gboolean ret;
 	
-	//loop = g_main_loop_new (NULL, FALSE);	
-
-	g_debug("find connection for %s", TEST_ACCOUNT_ID);
-	
 	cnc = eas_connection_find ((gchar*)TEST_ACCOUNT_ID);
 
 	fail_if(!cnc, "Failed: no connection found for %s",TEST_ACCOUNT_ID);
 	
     mark_point ();
-    g_debug ("test_fetch_server_protocols");
+
     ret = eas_connection_fetch_server_protocols (cnc, &error);
 
-	fail_if(!ret, "eas_connection_fetch_server_protocols returned %s", error->message);
-	//g_main_loop_run(loop);
+	mark_point();
+	if(!ret)
+	{
+		fail_if(TRUE, "eas_connection_fetch_server_protocols returned error %s", error->message);
+	}
+	
+	// TODO verify that the server protocol list is in GConf
 	
     mark_point ();
 }

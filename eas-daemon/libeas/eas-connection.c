@@ -600,8 +600,6 @@ connection_authenticate (SoupSession *sess,
 			g_warning ("Failed to store GConf password in Gnome Keyring");
 		}
 	}
-
-	g_debug("password written");
 	
 	password = NULL;
 
@@ -2496,6 +2494,30 @@ handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
 }
 */
 
+// TODO This is a temporary workaround
+static void
+options_connection_authenticate (SoupSession *sess,
+			 SoupMessage *msg,
+			 SoupAuth *auth,
+			 gboolean retrying,
+			 gpointer data)
+{
+	EasConnection* cnc = (EasConnection *) data;
+	const gchar * username = eas_account_get_username (cnc->priv->account);
+	
+	gchar* password = NULL;
+
+	g_debug ("options_connection_authenticate++");
+
+	// @@FIX ME - Temporary grab of password from GConf
+	password = eas_account_get_password (cnc->priv->account);
+
+	soup_auth_authenticate (auth,
+				username,
+				password);
+	g_debug ("  eas_connection - connection_authenticate--");
+}				
+
 /*
  TODO - fails if we haven't authenticated. 
  If we connect to the authenticate signal, then connection_authenticate will
@@ -2514,18 +2536,20 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	EasAccount *acc = priv->account;
 	const gchar *protocol_versions = NULL;
 	SoupSession* soup_session;
-	
+
+	// need our own synchronous session so we can use the sync soup call
 	soup_session = soup_session_sync_new_with_options (SOUP_SESSION_USE_NTLM,
 						     TRUE,
 						     SOUP_SESSION_TIMEOUT,
 						     120,
 						     NULL);	
-	/*
+
+	// since we've created a new soup session, we'll need to authenticate
+	
 	g_signal_connect (soup_session,
 			  "authenticate",
-			  G_CALLBACK (connection_authenticate),
+			  G_CALLBACK (options_connection_authenticate),
 			  cnc);	
-	*/
 	
 	msg = soup_message_new("OPTIONS", eas_account_get_uri(acc));
 
@@ -2578,6 +2602,6 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 cleanup:
 	
 	g_object_unref (msg);
-
+	
 	return ret;
 }
