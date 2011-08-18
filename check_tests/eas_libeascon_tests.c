@@ -794,6 +794,106 @@ START_TEST (test_con_delete_invalid_server_id)
     g_object_unref (sync_handler);
 }
 END_TEST	
+START_TEST (test_con_delete_valid_invalid_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactDeleteValidInvalidServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_con_delete_valid_calendar_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactDeleteValidCalendarServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
 Suite* eas_libeascon_suite (void)
 {
 	Suite* s = suite_create ("libeascon");
@@ -807,6 +907,8 @@ Suite* eas_libeascon_suite (void)
 		tcase_add_test (tc_libeascon, test_con_add_invalid_sync_key);
 		tcase_add_test (tc_libeascon, test_con_delete_invalid_sync_key);
 		tcase_add_test (tc_libeascon, test_con_delete_invalid_server_id);
+		tcase_add_test (tc_libeascon, test_con_delete_valid_invalid_server_id);
+		tcase_add_test (tc_libeascon, test_con_delete_valid_calendar_server_id);
 	}
 	//tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
 	//tcase_add_test (tc_libeascon, test_get_sync_handler);
