@@ -428,6 +428,7 @@ mainloop_password_store (gpointer data)
 	return FALSE;
 }
 
+// nb: can't be called from the main thread or will hang
 static GnomeKeyringResult
 writePasswordToKeyring (const gchar *password, const gchar* username, const gchar* serverUri)
 {
@@ -446,7 +447,7 @@ writePasswordToKeyring (const gchar *password, const gchar* username, const gcha
 	/* We can't use g_idle_add, as the default context here is the soup thread */
 	source = g_idle_source_new ();
 	g_source_set_callback (source, mainloop_password_store, response, NULL);
-	g_source_attach (source, NULL);
+	g_source_attach (source, NULL); //default context
 
 	e_flag_wait (response->semaphore);
 	e_flag_free (response->semaphore);
@@ -588,13 +589,15 @@ connection_authenticate (SoupSession *sess,
 
 	password = eas_account_get_password (cnc->priv->account);
 	if (password) {
-		g_warning ("Found password in GConf, writting it to Gnome Keyring");
+		g_warning ("Found password in GConf, writing it to Gnome Keyring");
 
 		if (GNOME_KEYRING_RESULT_OK != writePasswordToKeyring (password, username, serverUri)) {
 			g_warning ("Failed to store GConf password in Gnome Keyring");
 		}
 	}
 
+	g_debug("password written");
+	
 	password = NULL;
 
 	result = getPasswordFromKeyring (username, serverUri, &password);
@@ -2448,9 +2451,44 @@ eas_connection_cancel_request(EasConnection* cnc,
 	return ret;
 }
 
+/*
+void
+handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
+{
+	EasConnection *cnc = (EasConnection*)data;
+	EasConnectionPrivate *priv = cnc->priv;
+	EasAccount *acc = priv->account;
+	const gchar *protocol_versions = NULL;
+	
+	g_debug("handle_options_response++");
+	
+	// parse response store the list in GConf (via EasAccount)
+	if (HTTP_STATUS_OK != msg->status_code) {
+		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+	}	
+
+	// get supported protocols
+	protocol_versions = soup_message_headers_get_one(msg->response_headers, "MS-ASProtocolVersions");
+
+	g_debug("server supports protocols %s", protocol_versions);
+
+	// write the list to GConf using new EasAccount API
+	eas_account_set_server_protocols(acc, protocol_versions);
+
+	eas_account_list_save_item (g_account_list,
+				    priv->account,
+				    EAS_ACCOUNT_SERVER_PROTOCOLS);
+
+	g_debug("handle_options_response++");	
+}
+*/
 
 /*
- TODO - create own sync session rather than use the async session in the connection?
+ TODO - fails if we haven't authenticated. 
+ If we connect to the authenticate signal, then connection_authenticate will
+ hang since soup_session_send_message is being called from (and blocking) 
+ the same thread that the gnome keyring stuff uses the idle loop of.
+ 
  use the HTTP OPTIONS command to ask server for a list of protocols
  store results in GConf 
  */
@@ -2462,14 +2500,35 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	EasConnectionPrivate *priv = cnc->priv;
 	EasAccount *acc = priv->account;
 	const gchar *protocol_versions = NULL;
+	SoupSession* soup_session;
+	
+	soup_session = soup_session_sync_new_with_options (SOUP_SESSION_USE_NTLM,
+						     TRUE,
+						     SOUP_SESSION_TIMEOUT,
+						     120,
+						     NULL);	
+	/*
+	g_signal_connect (soup_session,
+			  "authenticate",
+			  G_CALLBACK (connection_authenticate),
+			  cnc);	
+	*/
 	
 	msg = soup_message_new("OPTIONS", eas_account_get_uri(acc));
+
+	soup_message_headers_append (msg->request_headers,
+				     "MS-ASProtocolVersion",
+				     priv->proto_str);
+	soup_message_headers_append (msg->request_headers,
+				     "User-Agent",
+				     "libeas");
 	
 	// use the sync version of soup request and parse msg on completion
 	// rather than go via handle_server_response which requires setting up
 	// eas request and message objects
-	soup_session_send_message(priv->soup_session, msg);
-	
+	g_debug("send options message");
+	soup_session_send_message(soup_session, msg);
+
 	// parse response store the list in GConf (via EasAccount)
 	if (HTTP_STATUS_OK != msg->status_code) {
 		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
@@ -2492,7 +2551,17 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 
 	eas_account_list_save_item (g_account_list,
 				    priv->account,
-				    EAS_ACCOUNT_SERVER_PROTOCOLS);		
+				    EAS_ACCOUNT_SERVER_PROTOCOLS);	
+	/*
+	soup_session_queue_message (priv->soup_session,
+				    msg,
+				    handle_options_response,
+				    cnc);	
+
+	// TODO wait for signal that protocol list has been updated?				    
+	*/
+	
+	
 cleanup:
 	
 	g_object_unref (msg);
