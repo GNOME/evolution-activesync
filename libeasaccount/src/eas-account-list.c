@@ -886,6 +886,7 @@ eas_account_list_save_item(EasAccountList *account_list,
 	case EAS_ACCOUNT_SERVER_PROTOCOLS:
 		{
 		gboolean ret;
+
 		gchar* server_protocols_Key_path = NULL;
 		server_protocols_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
 		// TODO this currently fails with "GConf Error: Text contains invalid UTF-8"

@@ -2504,7 +2504,7 @@ options_connection_authenticate (SoupSession *sess,
 {
 	EasConnection* cnc = (EasConnection *) data;
 	const gchar * username = eas_account_get_username (cnc->priv->account);
-	
+
 	gchar* password = NULL;
 
 	g_debug ("options_connection_authenticate++");
