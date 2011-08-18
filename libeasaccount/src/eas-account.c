@@ -419,17 +419,25 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 	guint len = 0;
 	guint i, j;
 	
-	g_debug("eas_account_server_protocols++");
+	g_debug("eas_account_set_server_protocols++");
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
 	if(server_protocols != NULL){
-		gchar **strv = g_strsplit (server_protocols, ",", 0);
+		strv = g_strsplit (server_protocols, ",", 0);
 		len = g_strv_length (strv);
+	}
+
+	g_debug("server supports %d protocols:", len);
+	for(i = 0; i < len; i++)
+	{
+		g_debug("%s\n", strv[i]);
+		
 	}
 	
 	if(priv->server_protocols == NULL){	// set previously unset:
 		for(i = 0; i < len; i++)
 		{
+			g_debug("appending %s to protocol list", strv[i]);
 			priv->server_protocols = g_slist_append(priv->server_protocols, strv[i]);
 		}
 		g_signal_emit (account, signals[CHANGED], 0, -1);
@@ -498,7 +506,7 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 	} 	
 
 	g_strfreev(strv);
-	g_debug("eas_account_server_protocols--");
+	g_debug("eas_account_set_server_protocols--");
 }
 
 GSList*	
