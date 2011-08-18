@@ -27,7 +27,7 @@ int main (void)
 
 //    srunner_add_suite (sr, eas_autodiscover_suite());
     srunner_add_suite (sr, eas_libeasmail_suite());
-//    srunner_add_suite (sr, eas_libeascal_suite());
+    srunner_add_suite (sr, eas_libeascal_suite());
 //    srunner_add_suite (sr, eas_libeassync_suite());
     srunner_add_suite (sr, eas_libeascon_suite()); 
 	srunner_add_suite (sr, eas_gobjectunittest_suite()); 
