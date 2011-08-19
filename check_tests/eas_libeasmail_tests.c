@@ -2444,6 +2444,44 @@ START_TEST (test_consume_response)
 
 }
 END_TEST
+
+START_TEST (test_get_provision_list)
+{
+	const gchar* accountuid = g_account_id;
+	EasEmailHandler *email_handler = NULL;
+	gchar *tid = NULL;
+	gchar *tid_status = NULL;
+	GSList *provision_list = NULL;
+	GError *error = NULL;
+
+	mark_point();
+	testGetMailHandler (&email_handler, accountuid);
+	mark_point();
+	eas_mail_handler_get_provision_list (email_handler, 
+	                                     &tid, 
+	                                     &tid_status, 
+	                                     &provision_list, 
+	                                     NULL, 
+	                                     &error);
+
+	mark_point();
+
+	fail_if (error != NULL, "Unexpected error");
+	fail_if (tid == NULL, "tid should have been set");
+	fail_if (tid_status == NULL, "tid_status should have been set");
+
+	g_debug ("tid [%s], tid_status[%s], provision_list[%p]", tid, tid_status, provision_list);
+
+	eas_mail_handler_accept_provision_list (email_handler, tid, tid_status, NULL, error);
+	g_free (tid);
+	g_free (tid_status);
+
+	fail_if (error != NULL, "Unexpected error");
+
+	g_object_unref (email_handler);
+}
+END_TEST
+
 Suite* eas_libeasmail_suite (void)
 {
     Suite* s = suite_create ("libeasmail");
@@ -2486,6 +2524,7 @@ Suite* eas_libeasmail_suite (void)
 		tcase_add_test (tc_libeasmail, test_eas_mail_get_crash);
 		tcase_add_test (tc_libeasmail, test_consume_response);			
 	}
+//	tcase_add_test (tc_libeasmail, test_get_provision_list);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);
  //   tcase_add_test (tc_libeasmail, test_eas_mail_handler_fetch_email_body);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_folder); // only uncomment this test if the folders returned are filtered for email only
