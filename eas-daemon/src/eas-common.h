@@ -116,6 +116,18 @@ eas_common_get_folders (EasCommon* self,
 			gboolean refresh,
 			DBusGMethodInvocation* context);
 
+gboolean
+eas_common_get_provision_list (EasCommon* self,
+			const gchar* account_uid,
+			DBusGMethodInvocation* context);
+
+gboolean
+eas_common_accept_provision_list (EasCommon* self,
+			const gchar* account_uid,
+			const gchar* tid,
+			const gchar* tid_status,
+			DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_COMMON_H_ */
