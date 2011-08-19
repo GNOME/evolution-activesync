@@ -888,11 +888,11 @@ eas_account_list_save_item(EasAccountList *account_list,
 		gboolean ret;
 
 		gchar* server_protocols_Key_path = NULL;
-		server_protocols_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-		// TODO this currently fails with "GConf Error: Text contains invalid UTF-8"
+		g_debug("EAS_ACCOUNT_SERVER_PROTOCOLS");
+		server_protocols_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS);
 		ret = gconf_client_set_list (account_list->priv->gconf,
 								server_protocols_Key_path,
-								GCONF_VALUE_STRING,
+								GCONF_VALUE_INT,
 								eas_account_get_server_protocols(account),
 								NULL);
 		if(!ret){

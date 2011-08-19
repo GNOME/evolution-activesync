@@ -2518,8 +2518,13 @@ options_connection_authenticate (SoupSession *sess,
 	g_debug ("  eas_connection - connection_authenticate--");
 }				
 
-/*
- TODO - fails if we haven't authenticated. 
+/* 
+ TODO - this isn't the right way to do this:
+ currently uses a temporary authenticate callback 
+ to avoid using the asynchronous gnome keyring functions
+ It may be necessary to add an equivalent function to the client libraries 
+	 rather than providing this 'shortcut' straight to easconnection. 
+ 
  If we connect to the authenticate signal, then connection_authenticate will
  hang since soup_session_send_message is being called from (and blocking) 
  the same thread that the gnome keyring stuff uses the idle loop of.
@@ -2545,7 +2550,6 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 						     NULL);	
 
 	// since we've created a new soup session, we'll need to authenticate
-	
 	g_signal_connect (soup_session,
 			  "authenticate",
 			  G_CALLBACK (options_connection_authenticate),
