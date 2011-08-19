@@ -373,6 +373,9 @@ void ConfigWizard::getProvisionReqts()
         }
 
 
+        // TODO:
+        // eas_mail_handler_get_provision_list()...
+        // eas_mail_handler_accept_provision_list()...
 
         g_object_unref(mailHandler);
     }
