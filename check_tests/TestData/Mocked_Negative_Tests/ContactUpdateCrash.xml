@@ -3,15 +3,9 @@
 <Sync xmlns="AirSync:">
   <Collections>
     <Collection>
-      <SyncKey>217860050</SyncKey>
-      <CollectionId>1</CollectionId>
-      <Status>1</Status>
-      <Responses>
-        <Change>
-          <ServerId>wrong</ServerId>
-          <Status>8</Status>
-        </Change>
-      </Responses>
+      <SyncKey>0</SyncKey>
+      <CollectionId>4</CollectionId>
+      <Status>3</Status>
     </Collection>
   </Collections>
 </Sync>
