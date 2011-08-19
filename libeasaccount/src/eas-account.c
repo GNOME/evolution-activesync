@@ -432,7 +432,7 @@ eas_account_set_server_protocols (EasAccount *account, const GSList *server_prot
 		g_debug( "server_protocols changed:");
 		for(i = 0; i < g_slist_length(priv->server_protocols); i++)
 		{
-			g_debug( "[%d]", (guint)g_slist_nth_data (priv->server_protocols, i)); 
+			g_debug( "[%p]", g_slist_nth_data (priv->server_protocols, i)); 
 		}
 	}else{	
 		if(len){ // compare to current, if different update:
