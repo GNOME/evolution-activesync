@@ -64,6 +64,7 @@ eas-mail-client-stub.h: $(mail_interface_xml)
 eas-common-client-stub.h: $(common_interface_xml)	
 	dbus-binding-tool --prefix=eas_common --mode=glib-client $< > $@
 	       
+EXTRA_DIST = eas-marshal.list
 BUILT_SOURCES = eas-mail-client-stub.h eas-common-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED

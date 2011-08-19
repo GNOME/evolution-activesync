@@ -80,4 +80,4 @@ activesyncd_LDADD = \
     $(INTI_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES) $(MARSHAL_GENERATED)
-EXTRA_DIST = eas-sync.xml eas-common.xml eas-mail.xml eas-test.xml
+EXTRA_DIST = eas-marshal.list eas-sync.xml eas-common.xml eas-mail.xml eas-test.xml
