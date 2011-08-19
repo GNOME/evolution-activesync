@@ -16,6 +16,10 @@
 
 QT       += core gui
 
+# Prevent the 'signals' and 'slots' pseudo-keywords from being defined (as they clash
+# with variable names in the C code). Now have to use Q_SLOTS and Q_SIGNALS instead.
+CONFIG   += no_keywords
+
 TARGET = QtActivesyncdConfig
 TEMPLATE = app
 CONFIG += link_pkgconfig
