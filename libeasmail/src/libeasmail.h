@@ -442,6 +442,22 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
                           GCancellable *cancellable,
 						  GError **error); 
 
+gboolean
+eas_mail_handler_get_provision_list (EasEmailHandler *self,
+									 gchar** tid,
+									 gchar** tid_status,
+									 GSList **provision_list,
+									 GCancellable *cancellable,
+									 GError **error);
+
+gboolean
+eas_mail_handler_accept_provision_list (EasEmailHandler *self,
+										const gchar* tid,
+										const gchar* tid_status,
+										GCancellable *cancellable,
+										GError **error);
+
+
 /*
 Outstanding issues:
 How do drafts work (AS docs say email can't be added to server using sync command with add)?
