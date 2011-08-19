@@ -213,14 +213,20 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 		} else if (strcmp(keyname, devover_Key_path) == 0) {
 			acc_info->device_id = gconf_value_to_string(value);
 		} else if (strcmp(keyname, servoprotovers_Key_path) == 0) {
-			GSList *list = gconf_value_get_list(value);
-			GConfValueType type = gconf_value_get_list_type (value);
+			GSList *list;
+			//GConfValueType type;
 			gint prot;
 			guint i;
+
+			//type = value->type;
+			//g_assert(type == GCONF_VALUE_LIST);
+			list = gconf_value_get_list(value);
+			//type = gconf_value_get_list_type (value);
+			//g_assert(type == GCONF_VALUE_INT);
 			g_debug("list length = %d", g_slist_length(list));
-			g_debug("type of elements in list: %d", type);
+			//g_debug("type of elements in list: %d", type);
 			for (i = 0; i < g_slist_length(list); i++){	
-				prot = GPOINTER_TO_UINT (g_slist_nth_data(list, i));
+				prot = GPOINTER_TO_INT (g_slist_nth_data(list, i));
 				g_debug("prot = %d", prot);
 				// lrm TODO - copy the list to account info
 				//acc_info->server_protocols = g_slist_append(acc_info->server_protocols, g_slist_nth_data(list, i));

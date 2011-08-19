@@ -94,7 +94,7 @@ EasEmailHandler *eas_mail_handler_new (const gchar* account_uid, GError **error)
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  
 */
-gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* this,
+gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 						 const gchar *sync_key,
                          const gchar *folder_id,
 						 guint *estimate,
@@ -151,7 +151,7 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_sync_folder_email_info (EasEmailHandler* this,
+gboolean eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 						  gchar *sync_key,
 						  const gchar *folder_id,
 						  GSList **emails_created,
@@ -183,7 +183,7 @@ gboolean eas_mail_handler_sync_folder_email_info (EasEmailHandler* this,
  *                              back through underlying layers
 */
 
-gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
+gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *self,
 					    const gchar *folder_id,
 					    const gchar *server_id,
 					    const gchar *mime_directory,
@@ -210,7 +210,7 @@ gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_fetch_email_attachment (EasEmailHandler* this,
+gboolean eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 						  const gchar *file_reference,
 						  const gchar *mime_directory,
 						  EasProgressFn progress_fn,
@@ -236,7 +236,7 @@ gboolean eas_mail_handler_fetch_email_attachment (EasEmailHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_delete_email (EasEmailHandler* this,
+gboolean eas_mail_handler_delete_email (EasEmailHandler* self,
 					gchar *sync_key,
 					const gchar *folder_id,
 					const GSList *items_deleted,
@@ -265,7 +265,7 @@ Note that the only valid changes are to the read flag and to categories (other c
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_update_email (EasEmailHandler* this,
+gboolean eas_mail_handler_update_email (EasEmailHandler* self,
 					gchar *sync_key,
 					const gchar *folder_id,
 					GSList *update_emails,
@@ -294,7 +294,7 @@ gboolean eas_mail_handler_update_email (EasEmailHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_send_email (EasEmailHandler* this,
+gboolean eas_mail_handler_send_email (EasEmailHandler* self,
 				      const gchar *client_email_id,
 				      const gchar *mime_file,
 				      EasProgressFn progress_fn,
@@ -321,7 +321,7 @@ gboolean eas_mail_handler_send_email (EasEmailHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_move_to_folder (EasEmailHandler* this,
+gboolean eas_mail_handler_move_to_folder (EasEmailHandler* self,
 					  const GSList *server_ids,
 					  const gchar *src_folder_id,
 					  const gchar *dest_folder_id,
@@ -345,7 +345,7 @@ gboolean eas_mail_handler_move_to_folder (EasEmailHandler* this,
  *                              could be related to errors in this API or errors propagated
  *                              back through underlying layers
 */
-gboolean eas_mail_handler_copy_to_folder (EasEmailHandler* this,
+gboolean eas_mail_handler_copy_to_folder (EasEmailHandler* self,
 					  const GSList *server_ids,
 					  const gchar *src_folder_id,
 					  const gchar *dest_folder_id,
@@ -426,7 +426,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
  *                              	could be related to errors in this API or errors propagated
  *                              	back through underlying layers
 */
-gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
+gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 						  const gchar *sync_key_in,
                           guint	time_window,
 						  const gchar *folder_id,
@@ -441,6 +441,56 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* this,
 						  gpointer progress_data,
                           GCancellable *cancellable,
 						  GError **error); 
+
+/* function name:               eas_mail_handler_get_provision_list
+ * function description:        Sends a provisioning request to the server, and 
+ *                              receives 2 tokens a list of provisioning requirements.
+ *                              If the list of requirements it accepted, this is indicated
+ *                              to the server by calling eas_mail_handler_accept_provision_list
+ *                              using the 2 tokens retrieved in this call.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
+ * gchar **tid (out):             	temporary ID token to be used in eas_mail_handler_accept_provision_list
+ * gchar **tid_status (out):      	temporary ID status token to be used in eas_mail_handler_accept_provision_list
+ * GSList **provision_list (out): 	a list of EasProvsionItem structs that contain
+ *                              	key / value pairs of provisioning information.
+ * GError **error (out):        	returns error information if an error occurs.  If no
+ *                              	error occurs this will unchanged.  This error information
+ *                              	could be related to errors in this API or errors propagated
+ *                              	back through underlying layers
+ */
+gboolean
+eas_mail_handler_get_provision_list (EasEmailHandler *self,
+									 gchar** tid,
+									 gchar** tid_status,
+									 GSList **provision_list,
+									 GCancellable *cancellable,
+									 GError **error);
+
+/* function name:               eas_mail_handler_accept_provision_list
+ * function description:        Sends a provisioning acceptance the server, taking 
+ *                              the 2 tokens retrieved during a previous call to
+ *                              eas_mail_handler_get_provision_list.
+ *                              A side effect of this function is that the final
+ *                              provisioning ID (PID) is written into GConf for the account.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
+ * const gchar *tid (in):       	temporary ID token retrieved in a previous call to eas_mail_handler_get_provision_list
+ * const gchar *tid_status (in):	temporary ID status token retrieved in a previous call to eas_mail_handler_get_provision_list
+ * GError **error (out):        	returns error information if an error occurs. If no
+ *                              	error occurs this will unchanged.  This error information
+ *                              	could be related to errors in this API or errors propagated
+ *                              	back through underlying layers
+ */
+gboolean
+eas_mail_handler_accept_provision_list (EasEmailHandler *self,
+										const gchar* tid,
+										const gchar* tid_status,
+										GCancellable *cancellable,
+										GError **error);
+
 
 /*
 Outstanding issues:

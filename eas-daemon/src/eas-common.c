@@ -58,6 +58,7 @@
 #include "eas-2way-sync-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-marshal.h"
+#include "eas-provision-req.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
 
@@ -373,3 +374,72 @@ eas_common_get_folders (EasCommon* self,
 	return TRUE;
 }
 
+gboolean
+eas_common_get_provision_list (EasCommon* self,
+			const gchar* account_uid,
+			DBusGMethodInvocation* context)
+{
+	EasConnection *connection;
+	GError *error = NULL;
+	EasProvisionReq *req = NULL;
+
+	g_debug ("%s++ : account_uid[%s]", __func__, (account_uid ?: "NULL"));
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_provision_req_new (NULL, NULL, context);
+
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+
+	eas_provision_req_Activate (req, &error);
+
+	g_debug ("%s--", __func__);
+	return TRUE;
+}
+
+gboolean
+eas_common_accept_provision_list (EasCommon* self,
+			const gchar* account_uid,
+			const gchar* tid,
+			const gchar* tid_status,
+			DBusGMethodInvocation* context)
+{
+	EasConnection *connection;
+	GError *error = NULL;
+	EasProvisionReq *req = NULL;
+
+	g_debug ("%s++ : account_uid[%s]", __func__, (account_uid ?: "NULL"));
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]",
+			     account_uid);
+
+		dbus_g_method_return_error (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_provision_req_new (tid_status, tid, context);
+
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+
+	eas_provision_req_Activate (req, &error);
+
+	g_debug ("%s--", __func__);
+	return TRUE;
+}

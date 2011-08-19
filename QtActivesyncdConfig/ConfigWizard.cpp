@@ -17,7 +17,12 @@
 #include <QStringList>
 #include <QTimer>
 // User includes
+
+// TODO: MUSTN'T link to libeas directly: replace with a client-side API
 #include "../eas-daemon/libeas/eas-connection.h"
+#include "../libeasaccount/src/eas-account.h"
+#include "../libeasaccount/src/eas-account-list.h"
+#include "../libeasmail/src/libeasmail.h"
 
 
 extern ConfigWizard* theWizard;
@@ -35,7 +40,7 @@ void autoDiscoverCallback(char* server_uri, void* /*data*/, GError* /*error*/)
         QString qServerUri(server_uri);
         if (!qServerUri.isEmpty())
         {
-            theWizard->getProvisionReqts(qServerUri);
+            theWizard->storeServerDetails(qServerUri);
             return;
         }
     }
@@ -50,7 +55,7 @@ void autoDiscoverCallback(char* server_uri, void* /*data*/, GError* /*error*/)
 ConfigWizard::ConfigWizard(QWidget *parent)
 : QDialog(parent),
   ui(new Ui::ConfigWizard),
-  manualConfigRequested(false)
+  serverDetailsEnteredManually(false)
 {
     ui->setupUi(this);
 
@@ -95,7 +100,7 @@ void ConfigWizard::onNext()
 
     case ManualServerDetails:
         username = ui->editUsername2->text().trimmed();
-        getProvisionReqts(ui->editServerUri->text().trimmed());
+        storeServerDetails(ui->editServerUri->text().trimmed());
         break;
 
     case ConfirmProvisionReqts:
@@ -127,7 +132,7 @@ void ConfigWizard::onBack()
 
     case GettingProvisionReqts:
     case ConfirmProvisionReqts:
-        changeState(manualConfigRequested ? ManualServerDetails : AutoDiscoverDetails);
+        changeState(serverDetailsEnteredManually ? ManualServerDetails : AutoDiscoverDetails);
         break;
 
     case Finish:
@@ -150,13 +155,51 @@ void ConfigWizard::onCancel()
 
 
 /**
- * Slot: Auto-discovery completed successfully
+ * Slot: Auto-discovery or manual server entry completed successfully
  */
-void ConfigWizard::getProvisionReqts(const QString& serverUri)
+void ConfigWizard::storeServerDetails(const QString& uri)
 {
-    qDebug() << "Entering getProvisionReqts() with serverUri=" << serverUri;
-    this->serverUri = serverUri;
-    changeState(GettingProvisionReqts);
+    qDebug() << "Entering storeServerDetails() with uri=" << uri;
+    serverUri = uri;
+
+    // TODO: ADD BETTER ERROR HANDLING?
+
+    // Store the account details in GConf
+    GConfClient* gconfClient = gconf_client_get_default();
+    if (gconfClient)
+    {
+        EasAccountList* easAccountList = eas_account_list_new(gconfClient);
+        if (easAccountList)
+        {
+            EasAccount* easAccount = eas_account_new();
+            if (easAccount)
+            {
+                eas_account_set_uid(easAccount, (const gchar*)emailAddress.toUtf8().constData());
+                eas_account_set_uri(easAccount, (const gchar*)serverUri.toUtf8().constData());
+                eas_account_set_username(easAccount, (const gchar*)username.toUtf8().constData());
+                eas_account_list_save_account(easAccountList, easAccount);
+                g_object_unref(easAccount);
+            }
+            else // easAccount is null
+            {
+                qWarning() << "Failed to create new EasAccountList in ConfigWizard::storeServerDetails()";
+            }
+
+            g_object_unref(easAccountList);
+        }
+        else // easAccountList is null
+        {
+            qWarning() << "Failed to create new EasAccount in ConfigWizard::storeServerDetails()";
+        }
+
+        g_object_unref(gconfClient);
+    }
+    else // gconfClienf is null
+    {
+        qWarning() << "Failed to create new GConfClient in ConfigWizard::storeServerDetails()";
+    }
+
+    getProvisionReqts();
 }
 
 
@@ -250,7 +293,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         break;
 
     case ManualServerDetails:
-        manualConfigRequested = true;
+        serverDetailsEnteredManually = true;
         ui->wizard->setCurrentWidget(ui->pageManualConfig);
         setTitle(tr("Manual configuration"), tr("Sorry, your Exchange server details could not be guessed. Please enter them below."));
         validateManualServerInputs();
@@ -260,12 +303,6 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         ui->wizard->setCurrentWidget(ui->pageBusy);
         ui->btnNext->setEnabled(false);
         setTitle(tr("Getting server provisioning requirements"), tr("Please wait..."));
-
-        // TODO: call eas_mail_handler_get_folder_list()
-
-        // TEMP
-        QTimer::singleShot(2000, this, SLOT(onConfigSuccess()));
-
         break;
 
     case ConfirmProvisionReqts:
@@ -303,6 +340,45 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 
     default:
         break;
+    }
+}
+
+
+/**
+ * Contact the server and get the provisioning requirements (if any)
+ */
+void ConfigWizard::getProvisionReqts()
+{
+    changeState(GettingProvisionReqts);
+
+    GError* error = 0;
+    EasEmailHandler* mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
+    if (error)
+    {
+        g_error_free(error);
+        error = 0;
+    }
+    if (mailHandler)
+    {
+        GSList* folderList = 0;
+        gboolean ret = eas_mail_handler_get_folder_list(mailHandler, true, &folderList, 0, &error);
+
+        // TODO: decide how to deal with this. Do we even need to call ...get_folder_list()?
+        // Will ...get_provision_list() on its own do?
+
+        if (error)
+        {
+            g_error_free(error);
+            error = 0;
+        }
+
+
+
+        g_object_unref(mailHandler);
+    }
+    else // mailHandler is null
+    {
+        qWarning() << "Failed to construct create new EasEmailHandler in ConfigWizard::changeState()";
     }
 }
 

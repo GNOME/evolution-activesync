@@ -5,7 +5,7 @@ bin_PROGRAMS=QtActivesyncdConfig
 
 QtActivesyncdConfig_SOURCES = main.cpp ConfigWizard.cpp ConfigWizard.h ConfigWizard.moc.cpp ConfigWizard.ui.h
 
-QtActivesyncdConfig_CXXFLAGS = $(QT_CXXFLAGS) $(AM_CXXFLAGS) $(GLIB_CFLAGS) $(LIBXML_CFLAGS)
+QtActivesyncdConfig_CXXFLAGS = $(QT_CXXFLAGS) $(AM_CXXFLAGS) $(GLIB_CFLAGS) $(LIBXML_CFLAGS) $(LIBEBOOK_CFLAGS)
 QtActivesyncdConfig_CPPFLAGS = $(QT_CPPFLAGS) $(AM_CPPFLAGS)
 QtActivesyncdConfig_LDFLAGS  = $(QT_LDFLAGS) $(LDFLAGS)
 QtActivesyncdConfig_LDADD    = $(QT_LIBS) $(LDADD) ../libeasaccount/src/libeasaccount.la

@@ -694,6 +694,173 @@ cleanup:
 }
 
 
+gboolean
+eas_mail_handler_get_provision_list (EasEmailHandler *self,
+									 gchar** tid,
+									 gchar** tid_status,
+									 GSList **provision_list,
+									 GCancellable *cancellable,
+									 GError **error)
+{
+	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = priv->remoteCommonEas;
+	gchar **_provision_list = NULL;
+	gchar *_tid = NULL;
+	gchar *_tid_status = NULL;
+	guint cancel_handler_id;
+	guint request_id = priv->next_request_id++;
+
+	g_debug ("%s++ : account_uid[%s]", __func__,
+		 (priv->account_uid ? priv->account_uid : "NULL"));
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_assert (self);
+	g_assert (*provision_list == NULL);
+
+	if (cancellable) {
+		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
+
+		cancel_info->handler = self;
+		cancel_info->request_id = request_id;
+		// connect to the "cancelled" signal
+		g_debug ("connect to cancellable");
+		cancel_handler_id = g_cancellable_connect (cancellable,
+							   G_CALLBACK (eas_mail_handler_cancel_common_request),
+							   (gpointer) cancel_info,
+							   g_free);				// data destroy func
+	}
+	
+	// call DBus API
+	ret = dbus_g_proxy_call (proxy, "get_provision_list",
+				 error,
+				 G_TYPE_STRING, priv->account_uid,
+				 G_TYPE_INVALID,
+				 G_TYPE_STRING, &_tid,
+				 G_TYPE_STRING, &_tid_status,
+				 G_TYPE_STRV, &_provision_list,
+				 G_TYPE_INVALID);
+
+	g_debug ("%s - dbus proxy called", __func__);
+
+	if (cancellable) {
+		// disconnect from cancellable
+		g_debug ("disconnect from cancellable");
+		g_cancellable_disconnect (cancellable, cancel_handler_id);
+	}
+	
+	if (!ret) {
+		if (error && *error) {
+			g_warning ("[%s][%d][%s]",
+				   g_quark_to_string ( (*error)->domain),
+				   (*error)->code,
+				   (*error)->message);
+		}
+		g_warning ("DBus dbus_g_proxy_call failed");
+		goto cleanup;
+	}
+
+	g_debug ("%s called successfully", __func__);
+
+	*tid = _tid; // full transfer
+	*tid_status = _tid_status; // full transfer
+
+	// TODO Build the provision list
+
+cleanup:
+	free_string_array (_provision_list);
+
+	if (!ret) { // failed - cleanup lists
+		g_assert (error == NULL || *error != NULL);
+		if (error) {
+			g_warning (" Error: %s", (*error)->message);
+		}
+		g_debug ("%s failure - cleanup lists", __func__);
+		g_slist_foreach (*provision_list, (GFunc) g_free, NULL);
+		g_free (*provision_list);
+		*provision_list = NULL;
+	}
+
+	g_debug ("%s--", __func__);
+	return ret;
+}
+
+gboolean
+eas_mail_handler_accept_provision_list (EasEmailHandler *self,
+										const gchar* tid,
+										const gchar* tid_status,
+										GCancellable *cancellable,
+										GError **error)
+{
+	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
+	gboolean ret = TRUE;
+	DBusGProxy *proxy = priv->remoteCommonEas;
+	guint cancel_handler_id;
+	guint request_id = priv->next_request_id++;
+
+	g_debug ("%s++ : account_uid[%s]", __func__,
+		 (priv->account_uid ? priv->account_uid : "NULL"));
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_assert (self);
+
+	if (cancellable) {
+		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
+
+		cancel_info->handler = self;
+		cancel_info->request_id = request_id;
+		// connect to the "cancelled" signal
+		g_debug ("connect to cancellable");
+		cancel_handler_id = g_cancellable_connect (cancellable,
+							   G_CALLBACK (eas_mail_handler_cancel_common_request),
+							   (gpointer) cancel_info,
+							   g_free);				// data destroy func
+	}
+	
+	// call DBus API
+	ret = dbus_g_proxy_call (proxy, "accept_provision_list",
+				 error,
+				 G_TYPE_STRING, priv->account_uid,
+				 G_TYPE_STRING, tid,
+				 G_TYPE_STRING, tid_status,
+				 G_TYPE_INVALID,
+				 G_TYPE_INVALID);
+
+	g_debug ("%s - dbus proxy called", __func__);
+
+	if (cancellable) {
+		// disconnect from cancellable
+		g_debug ("disconnect from cancellable");
+		g_cancellable_disconnect (cancellable, cancel_handler_id);
+	}
+	
+	if (!ret) {
+		if (error && *error) {
+			g_warning ("[%s][%d][%s]",
+				   g_quark_to_string ( (*error)->domain),
+				   (*error)->code,
+				   (*error)->message);
+		}
+		g_warning ("DBus dbus_g_proxy_call failed");
+		goto cleanup;
+	}
+
+	g_debug ("%s called successfully", __func__);
+
+cleanup:
+
+	if (!ret) { // failed - cleanup lists
+		g_assert (error == NULL || *error != NULL);
+		if (error) {
+			g_warning (" Error: %s", (*error)->message);
+		}
+	}
+
+	g_debug ("%s--", __func__);
+	return ret;
+}
+
+
 /* sync emails in a specified folder (no bodies retrieved).
 Returns lists of EasEmailInfos.
 Max changes in one sync = 100 (configurable via a config api)

@@ -29,10 +29,11 @@ FORMS    += ConfigWizard.ui
 
 
 # Remember to add any new ones to Makefile.am too
-PKGCONFIG += glib-2.0 libxml-2.0
+PKGCONFIG += glib-2.0 libxml-2.0 libedataserver-1.2 gconf-2.0
 
 # Remember to add any new libraries to Makefile.am too
 LIBS +=         -L../eas-daemon/libeas -leas -Wl,-rpath -Wl,$(PWD)/../eas-daemon/libeas/.libs
 
 OTHER_FILES += \
-    readme.txt
+    readme.txt \
+    Makefile.am
