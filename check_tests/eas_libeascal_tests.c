@@ -1248,7 +1248,7 @@ Suite* eas_libeascal_suite (void)
 		tcase_add_test (tc_libeascal, test_cal_delete_valid_calendar_server_id);
 		tcase_add_test (tc_libeascal, test_cal_update_invalid_server_id);
 
-	// crash functions will only consume mocked response. one dummy function should always be called after consume mocked reponse.		
+	// crash functions will not consume mocked response.Dummy function call after each test will consume the mocked response.	
 		tcase_add_test (tc_libeascal, test_cal_delete_crash);
 		tcase_add_test (tc_libeascal, test_consume_response);						
 		tcase_add_test (tc_libeascal, test_cal_update_crash);
