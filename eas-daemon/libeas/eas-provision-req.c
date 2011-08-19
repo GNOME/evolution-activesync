@@ -81,7 +81,7 @@ eas_provision_req_init (EasProvisionReq *object)
 
 	priv->msg = NULL;
 	priv->state = EasProvisionStep1;
-
+	
 	eas_request_base_SetRequestType (&object->parent_instance, EAS_REQ_PROVISION);
 }
 
@@ -122,26 +122,38 @@ eas_provision_req_class_init (EasProvisionReqClass *klass)
 
 
 EasProvisionReq*
-eas_provision_req_new (const gchar* policy_status, const gchar* policy_key)
+eas_provision_req_new (const gchar* policy_status, 
+                       const gchar* policy_key, 
+                       DBusGMethodInvocation *context)
 {
-	EasProvisionReq* req = NULL;
+	EasProvisionReq* self = g_object_new (EAS_TYPE_PROVISION_REQ, NULL);
+	EasProvisionReqPrivate *priv = EAS_PROVISION_REQ_PRIVATE (self);
 
-	req = g_object_new (EAS_TYPE_PROVISION_REQ, NULL);
-	if (req) {
-		EasProvisionReqPrivate *priv = req->priv;
-
+	if (self) 
+	{
 		// Build the message
 		priv->msg = eas_provision_msg_new ();
-		if (priv->msg) {
+		if (priv->msg) 
+		{
 			eas_provision_msg_set_policy_status (priv->msg, policy_status);
 			eas_provision_msg_set_policy_key (priv->msg, policy_key);
-		} else {
-			g_object_unref (req);
-			req = NULL;
+
+			if (policy_status && policy_key)
+			{
+				priv->state = EasProvisionStep2;
+			
+			}
+			
+			eas_request_base_SetContext (&self->parent_instance, context);
+		}
+		else
+		{
+			g_object_unref(self);
+			self = NULL;
 		}
 	}
 
-	return req;
+	return self;
 }
 
 gboolean
@@ -177,7 +189,6 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 	GError* error = NULL;
 	gboolean ret = FALSE;
 	EasProvisionReqPrivate *priv = self->priv;
-	gboolean cleanup = FALSE;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
 	g_debug ("eas_provision_req_MessageComplete++");
@@ -209,40 +220,23 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 	// We are receiving the temporary policy key and need to now make a
 	// second provision msg and send it using the new data.
 	case EasProvisionStep1: {
-		EasProvisionMsg *msg = NULL;
-
 		g_debug ("eas_provision_req_MessageComplete - EasProvisionStep1");
 
-		msg = eas_provision_msg_new (); //TODO check return
-		eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
-		eas_provision_msg_set_policy_key (msg, eas_provision_msg_get_policy_key (priv->msg));
-
-		eas_connection_set_policy_key (eas_request_base_GetConnection (&self->parent_instance),
-					       eas_provision_msg_get_policy_key (priv->msg));
-
-		g_object_unref (priv->msg);
-		priv->msg = msg;
-
-		priv->state = EasProvisionStep2;
-
-		ret = eas_provision_req_Activate (self, &error);
-		if (!ret) {
-			g_warning ("Failed to activate provision request");
-			goto finish;
-		}
+		dbus_g_method_return (eas_request_base_GetContext (parent),
+				eas_provision_msg_get_policy_key (priv->msg),
+				eas_provision_msg_get_policy_status (priv->msg),
+				NULL); // TODO Provision List
 	}
 	break;
 
-	// We now have the final provisioning policy key
-	// Set the policy key in the connection, allowing the original request
-	// from the daemon that triggered the provisioning to proceed.
+	// We now have the final provisioning policy key Set the policy key in the connection
 	case EasProvisionStep2: {
 		g_debug ("eas_provision_req_MessageComplete - EasProvisionStep2");
 
 		eas_connection_set_policy_key (eas_request_base_GetConnection (parent),
 					       eas_provision_msg_get_policy_key (priv->msg));
-		eas_connection_resume_request (eas_request_base_GetConnection (parent), TRUE);
-		cleanup = TRUE;
+
+		dbus_g_method_return (eas_request_base_GetContext (parent));
 	}
 	break;
 	}
@@ -251,15 +245,16 @@ finish:
 	xmlFreeDoc (doc);
 	if (!ret) {
 		g_assert (error != NULL);
-		// @@TRICKY For provisioning the context belongs to the original request.
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
-		// There has been an error - ensure that we clean this request up
-		cleanup = TRUE;
-		// We also need to clean up the 'resume request'
-		eas_connection_resume_request (eas_request_base_GetConnection (parent), FALSE);
 	}
 
 	g_debug ("eas_provision_req_MessageComplete--");
-	return cleanup;
+	return TRUE;
+}
+
+const gchar*
+eas_provision_req_GetTid (EasProvisionReq *self)
+{
+	return eas_provision_msg_get_policy_key (self->priv->msg);
 }

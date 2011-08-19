@@ -108,10 +108,6 @@ struct _EasConnectionPrivate {
 	gchar *folders_keyfile;
 	GKeyFile *folders;
 
-	const gchar* request_cmd;
-	xmlDoc* request_doc;
-	struct _EasRequestBase* request;
-	GError **request_error;
 
 	GSList* multipart_strings_list;
 
@@ -254,10 +250,6 @@ eas_connection_init (EasConnection *self)
 	priv->account = NULL; // Just a reference
 	priv->protocol_version = AS_DEFAULT_PROTOCOL;
 	priv->proto_str = NULL;
-	priv->request_cmd = NULL;
-	priv->request_doc = NULL;
-	priv->request = NULL;
-	priv->request_error = NULL;
 
 	priv->retrying_asked = FALSE;
 
@@ -313,13 +305,6 @@ eas_connection_dispose (GObject *object)
 		priv->soup_context = NULL;
 	}
 
-	if (priv->request) {
-		// TODO - @@WARNING Check this is a valid thing to do.
-		// It might only call the base gobject class finalize method not the
-		// correct method. Not sure if gobjects are properly polymorphic.
-		g_object_unref (priv->request);
-		priv->request = NULL;
-	}
 
 	if (priv->jobs) {
 		g_slist_free (priv->jobs);
@@ -344,25 +329,6 @@ eas_connection_finalize (GObject *object)
 	g_debug ("eas_connection_finalize++");
 
 	g_free (priv->accountUid);
-
-	if (priv->request_doc) {
-		if (priv->protocol_version < 140) {
-			if (!g_strcmp0 ("SendMail", priv->request_cmd)) {
-				g_free ( (gchar*) priv->request_doc);
-			} else {
-				xmlFreeDoc (priv->request_doc);
-			}
-		} else {
-			xmlFreeDoc (priv->request_doc);
-		}
-		priv->request_doc = NULL;
-	}
-
-	priv->request_cmd = NULL;
-
-	if (priv->request_error && *priv->request_error) {
-		g_error_free (*priv->request_error);
-	}
 
 	g_free (priv->proto_str);
 
@@ -723,50 +689,6 @@ eas_connection_get_protocol_version (EasConnection *self)
 	return priv->protocol_version;
 }
 
-void eas_connection_resume_request (EasConnection* self, gboolean provisionSuccessful)
-{
-	EasConnectionPrivate *priv = self->priv;
-
-	g_debug ("eas_connection_resume_request++");
-
-	if (!priv->request_cmd && !priv->request &&
-	    !priv->request_doc && !priv->request_error) {
-		g_warning ("Attempting to resume when no request stored, have we double provisioned?");
-	} else {
-		if (provisionSuccessful) {
-			const gchar *_cmd = priv->request_cmd;
-			struct _EasRequestBase *_request = priv->request;
-			xmlDoc *_doc = priv->request_doc;
-			GError **_error = priv->request_error;
-
-			priv->request_cmd   = NULL;
-			priv->request       = NULL;
-			priv->request_doc   = NULL;
-			priv->request_error = NULL;
-
-			g_debug ("Provisioning was successful - resending original request");
-
-			eas_connection_send_request (self, _cmd, _doc, _request, _error);
-		} else {
-			g_debug ("Provisioning failed - cleaning up original request");
-
-			// Clean up request data
-			if (priv->protocol_version < 140 &&
-			    !g_strcmp0 ("SendMail", priv->request_cmd)) {
-				g_free ( (gchar*) priv->request_doc);
-			} else {
-				xmlFreeDoc (priv->request_doc);
-			}
-
-			priv->request_cmd   = NULL;
-			priv->request       = NULL;
-			priv->request_doc   = NULL;
-			priv->request_error = NULL;
-		}
-	}
-
-	g_debug ("eas_connection_resume_request--");
-}
 
 static EasNode *
 eas_node_new ()
@@ -1092,28 +1014,6 @@ eas_connection_send_request (EasConnection* self,
 	EasNode *node = NULL;
 
 	g_debug ("eas_connection_send_request++");
-	// If not the provision request, store the request
-	if (g_strcmp0 (cmd, "Provision")) {
-		gint recursive = 1;
-		g_debug ("store the request");
-
-		if (priv->request_cmd || priv->request_doc)
-		{
-			g_critical ("Provisioning request stash already has data!");
-		}
-		
-		priv->request_cmd = cmd; // This should be a string literal valid for the lifetime of the request.
-
-		if (priv->protocol_version < 140 &&
-		    !g_strcmp0 (cmd, "SendMail")) {
-			priv->request_doc = (gpointer) g_strdup ( (gchar*) doc);
-		} else {
-			priv->request_doc = xmlCopyDoc (doc, recursive);
-		}
-
-		priv->request = request;
-		priv->request_error = error;
-	}
 
 	wbxml_ret = wbxml_conv_xml2wbxml_create (&conv);
 	if (wbxml_ret != WBXML_OK) {
@@ -1171,14 +1071,34 @@ eas_connection_send_request (EasConnection* self,
 				     "User-Agent",
 				     "libeas");
 
-	/* If policy key is set from provisioning add it, otherwise skip */
-	policy_key = eas_account_get_policy_key (priv->account);
-	if (policy_key)
+	if (0 == g_strcmp0 (cmd, "Provision")) 
 	{
-		soup_message_headers_append (msg->request_headers,
-					     "X-MS-PolicyKey", 
-					     policy_key);
+		EasProvisionReq *prov_req = EAS_PROVISION_REQ (request);
+		policy_key = eas_provision_req_GetTid (prov_req);
+		if (!policy_key)
+		{
+			soup_message_headers_append (msg->request_headers,
+						     "X-MS-PolicyKey", 
+						     "0");
+		}
+		else
+		{
+			soup_message_headers_append (msg->request_headers,
+						     "X-MS-PolicyKey", 
+						     policy_key);
+		}
 	}
+	else
+	{
+		/* If policy key is set from provisioning add it, otherwise skip */
+		if ( (policy_key = eas_account_get_policy_key (priv->account)) )
+		{
+			soup_message_headers_append (msg->request_headers,
+						     "X-MS-PolicyKey", 
+						     policy_key);
+		}
+	}
+	
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 	if (priv->protocol_version >= 140 || g_strcmp0 (cmd, "SendMail")) {
 		// Convert doc into a flat xml string
@@ -1309,10 +1229,17 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 
 	g_debug ("eas_connection - isResponseValid++");
 
+
 	if (HTTP_STATUS_PROVISION == msg->status_code) {
 		g_warning ("Server instructed 12.1 style re-provision");
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_REPROVISION,
+			     _("HTTP request failed: %d - %s"),
+			     msg->status_code, msg->reason_phrase);
 		return VALID_12_1_REPROVISION;
 	}
+
 
 	if (HTTP_STATUS_OK != msg->status_code) {
 		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
@@ -2032,7 +1959,6 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	xmlDoc *doc = NULL;
 	WB_UTINY *xml = NULL;
 	WB_ULONG xml_len = 0;
-	gboolean isProvisioningRequired = FALSE;
 	GError *error = NULL;
 	RequestValidity validity = FALSE;
 	gboolean cleanupRequest = FALSE;
@@ -2044,25 +1970,29 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	if(eas_request_base_IsCancelled(req))
 	{
 		g_debug("request was cancelled by caller");
-        g_set_error (&error, EAS_CONNECTION_ERROR,
-		     EAS_CONNECTION_ERROR_CANCELLED,
-		     _("request was cancelled by user"));
+		g_set_error (&error, 
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_CANCELLED,
+			     _("request was cancelled by user"));
 
 	    goto complete_request;
 	}
 	
 	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
 
-	if (INVALID == validity) {
+	if (INVALID == validity || VALID_12_1_REPROVISION == validity ) 
+	{
 		g_assert (error != NULL);
-		write_response_to_file ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
+		if (INVALID == validity)
+		{
+			write_response_to_file ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
+		}
 		goto complete_request;
 	}
 
-	if (VALID_12_1_REPROVISION != validity && !g_mock_response_list) {
-		if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 5)) {
-			dump_wbxml_response ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
-		}
+	if (!g_mock_response_list && getenv ("EAS_DEBUG") && atoi (g_getenv ("EAS_DEBUG")) >= 5) 
+	{
+		dump_wbxml_response ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
 	}
 
 	if (VALID_NON_EMPTY == validity) {
@@ -2168,50 +2098,21 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		if (xml) free (xml);
 	}
 
-	if (VALID_12_1_REPROVISION == validity) {
-		isProvisioningRequired = TRUE;
-	}
 
 complete_request:
-	if (!isProvisioningRequired) {
-		EasRequestType request_type = eas_request_base_GetRequestType (req);
+	g_debug ("  handle_server_response - no parsed provisioning required");
+	g_debug ("  handle_server_response - Handling request [%d]", eas_request_base_GetRequestType (req));
 
-		g_debug ("  handle_server_response - no parsed provisioning required");
-		g_debug ("  handle_server_response - Handling request [%d]", request_type);
+	cleanupRequest = eas_request_base_MessageComplete (req, doc, error);
 
-		if (request_type != EAS_REQ_PROVISION) {
-			// Clean up request data
-			g_debug ("Handling cmd = [%s]", priv->request_cmd);
-			if (priv->protocol_version < 140 && !g_strcmp0 ("SendMail", priv->request_cmd)) {
-				g_free ( (gchar*) priv->request_doc);
-			} else {
-				xmlFreeDoc (priv->request_doc);
-			}
-			
-			priv->request_cmd = NULL;
-			priv->request_doc = NULL;
-			priv->request = NULL;
-			priv->request_error = NULL;
-		}
-
-		cleanupRequest = eas_request_base_MessageComplete (req, doc, error);
-
-		//if cleanupRequest is set - we are done with this request, and should clean it up
-		if (cleanupRequest) {
-			g_object_unref (req);
-		}
-		//also need to clean up the multipart data
-		g_slist_foreach (priv->multipart_strings_list, (GFunc) g_free, NULL);
-		g_slist_free (priv->multipart_strings_list);
-		priv->multipart_strings_list = NULL;
-	} else {
-		EasProvisionReq *prov_req = eas_provision_req_new (NULL, NULL);
-		g_debug ("  handle_server_response - parsed provisioning required");
-
-		eas_request_base_SetConnection (&prov_req->parent_instance, self);
-		// Don't delete this request and create a provisioning request.
-		eas_provision_req_Activate (prov_req, &error);   // TODO check return
+	//if cleanupRequest is set - we are done with this request, and should clean it up
+	if (cleanupRequest) {
+		g_object_unref (req);
 	}
+	//also need to clean up the multipart data
+	g_slist_foreach (priv->multipart_strings_list, (GFunc) g_free, NULL);
+	g_slist_free (priv->multipart_strings_list);
+	priv->multipart_strings_list = NULL;
 
 	g_debug ("Queued mock responses [%u]", g_slist_length (g_mock_response_list));
 

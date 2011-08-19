@@ -92,7 +92,7 @@ GType eas_provision_req_get_type (void) G_GNUC_CONST;
  * @return An allocated EasProvisionReq GObject or NULL
  */
 EasProvisionReq*
-eas_provision_req_new (const gchar* policy_status, const gchar* policy_key);
+eas_provision_req_new (const gchar* policy_status, const gchar* policy_key, DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.
@@ -107,6 +107,7 @@ eas_provision_req_new (const gchar* policy_status, const gchar* policy_key);
  * @return TRUE if successful, otherwise FALSE.
  */
 gboolean eas_provision_req_Activate (EasProvisionReq* self, GError** error);
+
 
 /**
  * Called from the Soup thread when we have the final response from the server.
@@ -127,6 +128,8 @@ gboolean eas_provision_req_Activate (EasProvisionReq* self, GError** error);
 gboolean eas_provision_req_MessageComplete (EasProvisionReq* self,
 					    xmlDoc *doc,
 					    GError* error_in);
+
+const gchar* eas_provision_req_GetTid (EasProvisionReq *self);
 
 G_END_DECLS
 
