@@ -18,8 +18,7 @@ QT       += core gui
 
 TARGET = QtActivesyncdConfig
 TEMPLATE = app
-
-LIBS += -L../libeasaccount/src/.libs -leasaccount -Wl,-rpath -Wl,$(PWD)/../libeasaccount/src/.libs
+CONFIG += link_pkgconfig
 
 SOURCES += main.cpp\
         ConfigWizard.cpp
@@ -28,19 +27,12 @@ HEADERS  += ConfigWizard.h
 
 FORMS    += ConfigWizard.ui
 
-# Remember to add any new ones to Makefile.am too, and to do it *properly*
-# there using the appropriate FOO_CFLAGS variables rather than hard-coded
-# directories which are not portable.
-INCLUDEPATH +=  /usr/include/glib-2.0 \
-                /usr/lib/glib-2.0/include \
-                /usr/include/libxml2 \
-                /usr/include/evolution-data-server-2.32 \
-                /usr/include/gconf/2
+
+# Remember to add any new ones to Makefile.am too
+PKGCONFIG += glib-2.0 libxml-2.0
 
 # Remember to add any new libraries to Makefile.am too
-LIBS +=         -lglib-2.0 \
-                -lxml2
-LIBS +=         -L../eas-daemon/libeas -leas
+LIBS +=         -L../eas-daemon/libeas -leas -Wl,-rpath -Wl,$(PWD)/../eas-daemon/libeas/.libs
 
 OTHER_FILES += \
     readme.txt \

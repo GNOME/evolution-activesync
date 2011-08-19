@@ -29,9 +29,13 @@ START_TEST (test_fetch_server_protocols)
 	{
 		fail_if(TRUE, "eas_connection_fetch_server_protocols returned error %s", error->message);
 	}
+
+	mark_point();
+	ret = eas_connection_fetch_server_protocols (cnc, &error);	
+	mark_point();
 	
 	// TODO verify that the server protocol list is in GConf
-	
+	g_object_unref(cnc);
     mark_point ();
 }
 END_TEST

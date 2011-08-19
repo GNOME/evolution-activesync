@@ -950,7 +950,253 @@ START_TEST (test_con_update_invalid_server_id)
     g_object_unref (sync_handler);
 }
 END_TEST
+START_TEST (test_con_delete_crash)
+{
 
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactDeleteCrash.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      "abc",
+                                      &error);
+	
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_con_update_crash)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+	GError *error = NULL;
+	GSList *conItemToUpdate = NULL;
+	EasItemInfo *conItem = NULL;
+	EasItemInfo *updatedConItem = NULL;
+  	updatedConItem = eas_item_info_new();
+        updatedConItem->server_id = g_strdup ("wrong");
+        updatedConItem->data = g_strdup (TEST_VCARD_FROM_EVO_UPDATED);
+		conItemToUpdate = g_slist_append (conItemToUpdate, updatedConItem);
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactUpdateCrash.xml");
+   // mock Test
+	   rtn = eas_sync_handler_update_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_con_add_crash)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactAddCrash.xml");
+   // mock Test
+	   rtn = eas_sync_handler_add_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      "wrong",
+                                      &error);
+	
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+
+START_TEST (test_con_get_crash)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("ContactGetCrash.xml");
+   // mock Test
+	negativeTestGetLatestContacts (sync_handler,
+		                   "wrong",
+		                   &sync_key_out,
+		                   NULL,
+		                   &updated,
+		                   &deleted,
+		                   &error);
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST 
+START_TEST (test_consume_response)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // mock Test
+	   rtn = eas_sync_handler_add_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
+	        "The Error returned by the server is not correct.");
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
 Suite* eas_libeascon_suite (void)
 {
 	Suite* s = suite_create ("libeascon");
@@ -967,6 +1213,17 @@ Suite* eas_libeascon_suite (void)
 		tcase_add_test (tc_libeascon, test_con_delete_valid_invalid_server_id);
 		tcase_add_test (tc_libeascon, test_con_delete_valid_calendar_server_id);
 		tcase_add_test (tc_libeascon, test_con_update_invalid_server_id);
+
+	// crash functions will not consume mocked response.Dummy function call after each test will consume the mocked response.	
+		tcase_add_test (tc_libeascon, test_con_delete_crash);	
+		tcase_add_test (tc_libeascon, test_consume_response);					
+		tcase_add_test (tc_libeascon, test_con_update_crash);	
+		tcase_add_test (tc_libeascon, test_consume_response);	
+		tcase_add_test (tc_libeascon, test_con_add_crash);
+		tcase_add_test (tc_libeascon, test_consume_response);
+		tcase_add_test (tc_libeascon, test_con_get_crash);
+		tcase_add_test (tc_libeascon, test_consume_response);
+
 	}
 	//tcase_add_test (tc_libeascon, test_translate_vcard_to_xml);
 	//tcase_add_test (tc_libeascon, test_get_sync_handler);

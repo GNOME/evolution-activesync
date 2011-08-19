@@ -40,6 +40,7 @@
 #define EAS_ACCOUNT_KEY_PASSWORD	"/password"
 #define EAS_ACCOUNT_KEY_DEVICE_ID	"/device_id"
 #define EAS_ACCOUNT_KEY_PROTOCOL_VERSION "/protocol_version"
+#define EAS_ACCOUNT_KEY_SERVER_PROTOCOLS "/server_protocols"
 
 /* Standard GObject macros */
 #define EAS_TYPE_ACCOUNT_LIST \
