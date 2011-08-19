@@ -33,12 +33,10 @@ public slots:
     void validateAutoDiscoverInputs();
     void validateManualServerInputs();
 
-    void getProvisionReqts(const QString& serverUri);
+    void storeServerDetails(const QString& uri);
     void onAutoDiscoverFailure();
     void onProvisionSuccess();
     void onProvisionFailure();
-//    void onConfigSuccess();
-//    void onConfigFailure();
 
     void error(const QString& msg);
 
@@ -54,6 +52,7 @@ private:
         Error
     };
 
+    void getProvisionReqts();
     void changeState(State currentState);
     void setTitle(const QString title, const QString& subTitle);
     void setButtonCaptions(const QString& nextButtonCaption = "", const QString& backButtonCaption = "");
@@ -61,7 +60,7 @@ private:
 private:
     Ui::ConfigWizard* ui;
     State currentState;
-    bool manualConfigRequested;
+    bool serverDetailsEnteredManually;
     QString serverUri;
     QString emailAddress;
     QString username;

@@ -33,7 +33,9 @@ FORMS    += ConfigWizard.ui
 # directories which are not portable.
 INCLUDEPATH +=  /usr/include/glib-2.0 \
                 /usr/lib/glib-2.0/include \
-                /usr/include/libxml2
+                /usr/include/libxml2 \
+                /usr/include/evolution-data-server-2.32 \
+                /usr/include/gconf/2
 
 # Remember to add any new libraries to Makefile.am too
 LIBS +=         -lglib-2.0 \
@@ -41,4 +43,5 @@ LIBS +=         -lglib-2.0 \
 LIBS +=         -L../eas-daemon/libeas -leas
 
 OTHER_FILES += \
-    readme.txt
+    readme.txt \
+    Makefile.am
