@@ -2494,7 +2494,7 @@ handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
 }
 */
 
-// TODO This is a temporary workaround
+// TODO This is a temporary workaround until we're going via the client library/dbus
 static void
 options_connection_authenticate (SoupSession *sess,
 			 SoupMessage *msg,
@@ -2522,7 +2522,7 @@ options_connection_authenticate (SoupSession *sess,
  TODO - this isn't the right way to do this:
  currently uses a temporary authenticate callback 
  to avoid using the asynchronous gnome keyring functions
- It may be necessary to add an equivalent function to the client libraries 
+ It will be necessary to add an equivalent function to the client libraries 
 	 rather than providing this 'shortcut' straight to easconnection. 
  
  If we connect to the authenticate signal, then connection_authenticate will
@@ -2541,7 +2541,13 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	EasAccount *acc = priv->account;
 	const gchar *protocol_versions = NULL;
 	SoupSession* soup_session;
-
+	GSList *proto_vers = NULL;     // list of protocol versions supported by server (eg 120, 121, 140)
+	gchar **strv = NULL;    // array of protocol versions supported by server (eg "12.0", "12.1")
+	guint len, i;
+	gdouble proto_ver;      // eg 12.1
+	gint proto_ver_int;     // eg 120
+	gchar *endptr;
+	
 	// need our own synchronous session so we can use the sync soup call
 	soup_session = soup_session_sync_new_with_options (SOUP_SESSION_USE_NTLM,
 						     TRUE,
@@ -2587,9 +2593,23 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 
 	g_debug("server supports protocols %s", protocol_versions);
 
-	// write the list to GConf using new EasAccount API
-	eas_account_set_server_protocols(acc, protocol_versions);
+	// convert to list of ints
+	strv = g_strsplit (protocol_versions, ",", 0);
+	len = g_strv_length (strv);
+	for(i = 0; i < len; i++)
+	{       // nb: cast to float necessary here (why!?) to avoid losing decimal part:       
+		proto_ver = (gfloat)(g_strtod(strv[i], &endptr)) * 10.0;
+		//g_debug("proto_ver = %f", proto_ver);
+		proto_ver_int = proto_ver;
+		//g_debug("appending %d", proto_ver_int);
+		proto_vers = g_slist_append(proto_vers, GINT_TO_POINTER (proto_ver_int));
+	}	
 
+	// write the list to GConf using new EasAccount API
+	eas_account_set_server_protocols(acc, proto_vers);
+
+	g_slist_free(proto_vers);
+	
 	eas_account_list_save_item (g_account_list,
 				    priv->account,
 				    EAS_ACCOUNT_SERVER_PROTOCOLS);	

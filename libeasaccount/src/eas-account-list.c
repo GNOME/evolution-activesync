@@ -152,6 +152,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	gchar* password_Key_path = NULL;
 	gchar* protover_Key_path = NULL;
 	gchar* devover_Key_path = NULL;
+	gchar* servoprotovers_Key_path = NULL;
 	GSList *item = NULL;
 
 	/* g_debug("eas_account_list_set_account_info++"); */
@@ -175,7 +176,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	password_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
 	protover_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
 	devover_Key_path         = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-
+	servoprotovers_Key_path  = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS);
 	acc_info->uid = uid; // Ownership passed to the account into structure.
 
 	for (item = entry_list; item; item = item->next)
@@ -211,6 +212,19 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 			acc_info->protocol_version = gconf_value_get_int(value);
 		} else if (strcmp(keyname, devover_Key_path) == 0) {
 			acc_info->device_id = gconf_value_to_string(value);
+		} else if (strcmp(keyname, servoprotovers_Key_path) == 0) {
+			GSList *list = gconf_value_get_list(value);
+			GConfValueType type = gconf_value_get_list_type (value);
+			gint prot;
+			guint i;
+			g_debug("list length = %d", g_slist_length(list));
+			g_debug("type of elements in list: %d", type);
+			for (i = 0; i < g_slist_length(list); i++){	
+				prot = GPOINTER_TO_UINT (g_slist_nth_data(list, i));
+				g_debug("prot = %d", prot);
+				// lrm TODO - copy the list to account info
+				//acc_info->server_protocols = g_slist_append(acc_info->server_protocols, g_slist_nth_data(list, i));
+			}
 		} else {
 			g_warning ("Unknown key: %s (value: [%s])\n", keyname, gconf_value_get_string (value));
 		}
@@ -225,6 +239,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_pat
 	g_free (username_Key_path);         username_Key_path        = NULL;
 	g_free (protover_Key_path);         protover_Key_path        = NULL;
 	g_free (devover_Key_path);          devover_Key_path         = NULL;
+	g_free (servoprotovers_Key_path);   servoprotovers_Key_path  = NULL;
 
 	/* g_debug("eas_account_list_set_account_info--"); */
 }
@@ -381,6 +396,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	        g_free (accountInfo->calendar_folder);
 	        g_free (accountInfo->device_id);
 	        g_free (accountInfo->password);
+			g_free (accountInfo->server_protocols);
 		}
 
 		// Now free the memory allocated via g_new0

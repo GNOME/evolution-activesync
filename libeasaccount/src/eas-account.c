@@ -405,37 +405,28 @@ eas_account_set_protocol_version (EasAccount *account, int protocol_version)
 }
 
 /* 
- * Takes a comma delimited list of protocols (as provided by server) 
- * and saves as a list of ints representing the protocol versions (eg 120,121, 140)
- * TODO can probably be refactored
+ * Takes a list of protocols numbers (eg 120, 121, 140..) 
+ * and saves it in the account
  */
 void
-eas_account_set_server_protocols (EasAccount *account, const gchar* server_protocols)
+eas_account_set_server_protocols (EasAccount *account, const GSList *server_protocols)
 {
 	EasAccountPrivate *priv = account->priv;
-	gchar **strv = NULL;
 	guint len = 0;
 	guint i, j;
+	GSList* server_protocols_new = (GSList *)server_protocols;	// avoid const warnings
 	
 	g_debug("eas_account_set_server_protocols++");
-	g_debug("protocols: %s", server_protocols);
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
-	if(server_protocols != NULL){
-		strv = g_strsplit (server_protocols, ",", 0);
-		len = g_strv_length (strv);
+	if(server_protocols_new != NULL){
+		len = g_slist_length (server_protocols_new);
 	}
 	
 	if(priv->server_protocols == NULL){	// set previously unset:
-		gdouble proto_ver;
-		gint proto_ver_int;
-		gchar *endptr;
 		for(i = 0; i < len; i++)
 		{
-			proto_ver = g_strtod(strv[i], &endptr) * 10;
-			g_debug("proto_ver = %f", proto_ver);
-			proto_ver_int = proto_ver;
-			priv->server_protocols = g_slist_append(priv->server_protocols, GUINT_TO_POINTER (proto_ver_int));
+			priv->server_protocols = g_slist_append(priv->server_protocols, GUINT_TO_POINTER (g_slist_nth_data(server_protocols_new, i)));
 		}
 		g_signal_emit (account, signals[CHANGED], 0, -1);
 		g_debug( "server_protocols changed:");
@@ -448,14 +439,11 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 			gboolean changed = FALSE;
 			if(len == g_slist_length (priv->server_protocols)){// same length, may be unchanged
 				for (i = 0; i < len; i++){
+					guint proto_curr = GPOINTER_TO_UINT (g_slist_nth_data (server_protocols_new, i));
 					gboolean found = FALSE;
 					for(j = 0; j < len; j++){
-						gdouble proto_ver_new;
-						gint proto_ver_new_int;
-						gchar *endptr;
-						proto_ver_new = g_strtod(strv[i], &endptr) * 10;
-						proto_ver_new_int = proto_ver_new;
-						if(proto_ver_new_int == GPOINTER_TO_UINT (g_slist_nth_data (priv->server_protocols,j))){
+						guint proto_new = GPOINTER_TO_UINT (g_slist_nth_data (priv->server_protocols,j));
+						if( proto_curr == proto_new){
 							// got a match
 							found = TRUE;
 							break;
@@ -474,13 +462,9 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 			if(changed){ 
 				g_slist_free(priv->server_protocols);
 				for(i = 0; i < len; i++)
-				{
-					gdouble proto_ver_new;
-					gint proto_ver_new_int;
-					gchar *endptr;
-					proto_ver_new = g_strtod(strv[i], &endptr) * 10;
-					proto_ver_new_int = proto_ver_new;					
-					priv->server_protocols = g_slist_append(priv->server_protocols, strv[i]);
+				{			
+					guint proto = GPOINTER_TO_UINT (g_slist_nth_data (server_protocols_new, i));
+					priv->server_protocols = g_slist_append(priv->server_protocols, GUINT_TO_POINTER (proto));
 				}				
 				g_signal_emit (account, signals[CHANGED], 0, -1);
 				g_debug( "server_protocols changed: NULL\n");
@@ -495,7 +479,6 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 		}
 	} 	
 
-	g_strfreev(strv);
 	g_debug("eas_account_set_server_protocols--");
 }
 
@@ -563,7 +546,7 @@ eas_account_get_protocol_version (const EasAccount *account)
 gboolean
 eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo)
 {
-	/*g_debug("eas_account_set_from_info++"); */
+	g_debug("eas_account_set_from_info++"); 
 	/* account must have a uid*/
 	if (!accountinfo->uid)
 		return FALSE;
@@ -577,7 +560,8 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	eas_account_set_password (account, accountinfo->password);
 	eas_account_set_device_id (account, accountinfo->device_id);
 	eas_account_set_protocol_version (account, accountinfo->protocol_version);
-	/* g_debug("eas_account_set_from_info--");	*/
+	eas_account_set_server_protocols (account, accountinfo->server_protocols);
+	 g_debug("eas_account_set_from_info--");	
 	return TRUE;
 }
 
