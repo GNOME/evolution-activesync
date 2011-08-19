@@ -143,7 +143,7 @@ MEEGO_UI_DIR=meego/meego-ux-settings-activesync
 AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
 
-AT_WITH_QT(,,,[have_qt=no],[have_qt=yes])
+AT_WITH_QT(,no_keywords,,[have_qt=no],[have_qt=yes])
 AM_CONDITIONAL([ENABLE_QT_CONFIG_TOOL],[test "$have_qt" = yes])
 if (test "$have_qt" = "no"); then
    AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])

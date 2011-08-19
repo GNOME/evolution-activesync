@@ -25,7 +25,7 @@ public:
     explicit ConfigWizard(QWidget* parent = 0);
     ~ConfigWizard();
 
-public slots:
+public Q_SLOTS:
     void onNext();
     void onBack();
     void onCancel();

@@ -18,7 +18,7 @@ QT       += core gui
 
 TARGET = QtActivesyncdConfig
 TEMPLATE = app
-CONFIG += link_pkgconfig
+CONFIG += link_pkgconfig no_keywords
 
 SOURCES += main.cpp\
         ConfigWizard.cpp
