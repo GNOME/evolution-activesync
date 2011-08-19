@@ -10,5 +10,6 @@ privincludedir=@privincludedir@
 Name: libeasaccount
 Description: Client library for configuring ActiveSync dæmon accounts
 Version: @VERSION@
+Requires.private: glib-2.0 libedataserver-1.2
 Libs: -L${libdir} -leasaccount
 Cflags: -I${privincludedir}/eas-account

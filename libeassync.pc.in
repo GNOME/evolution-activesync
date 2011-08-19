@@ -10,5 +10,6 @@ privincludedir=@privincludedir@
 Name: libeassync
 Description: Client library for accessing ActiveSync dæmon via D-Bus
 Version: @VERSION@
+Requires.private: glib-2.0
 Libs: -L${libdir} -leassync
 Cflags: -I${privincludedir}/eas-sync
