@@ -1,0 +1,14 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+privincludedir=@privincludedir@
+
+Name: libeasaccount
+Description: Client library for configuring ActiveSync dæmon accounts
+Version: @VERSION@
+Libs: -L${libdir} -leasaccount
+Cflags: -I${privincludedir}/eas-account

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+<Sync xmlns="AirSync:">
+  <Collections>
+    <Collection>
+      <SyncKey>217860050</SyncKey>
+      <CollectionId>1</CollectionId>
+      <Status>1</Status>
+      <Responses>
+        <Change>
+          <ServerId>wrong</ServerId>
+          <Status>8</Status>
+        </Change>
+      </Responses>
+    </Collection>
+  </Collections>
+</Sync>

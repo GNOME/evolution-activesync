@@ -47,8 +47,8 @@ struct	_EasAccountPrivate
 	 gchar* contact_folder;
 	 gchar* password;
 	 gchar* device_id;
-     int protocol_version;
-	 gchar** server_protocols;	// array of protocols supported by server, eg "14.1,12.0"
+     int protocol_version;	
+	 GSList* server_protocols;	// list of protocols supported by server, eg "14.0","12.1","12.0" TODO - store as ints or strings?
 };
 	
 #define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
@@ -89,6 +89,7 @@ eas_account_init (EasAccount *account)
 	priv->contact_folder = NULL;
 	priv->password = NULL;
 	priv->device_id = NULL;
+	priv->server_protocols = NULL;
 	g_debug("eas_account_init--");
 }
 
@@ -107,7 +108,8 @@ eas_account_finalize (GObject *object)
 	g_free (priv->contact_folder);
 	g_free (priv->password);
 	g_free (priv->device_id);
-
+	g_slist_foreach (priv->server_protocols, (GFunc) g_free, NULL);	// free the strings
+	g_slist_free(priv->server_protocols);
 	G_OBJECT_CLASS (eas_account_parent_class)->finalize (object);
 	g_debug("eas_account_finalize--");
 }
@@ -403,38 +405,55 @@ eas_account_set_protocol_version (EasAccount *account, int protocol_version)
 	/*g_debug("eas_account_set_protocol_version--");*/
 }
 
-/*
- * Takes a comma delimited list of protocols (as provided by server) and saves as an array
+/* 
+ * Takes a comma delimited list of protocols (as provided by server) 
+ * and saves as a list of strings (eg "14.0", "12.1", "12.0")
+ * lrm - TODO save as a list of ints (x10) rather than strings 
+ * 		 to make comparison with protocol_version easier? 
  */
 void
 eas_account_set_server_protocols (EasAccount *account, const gchar* server_protocols)
 {
-	g_debug("eas_account_server_protocols++");
+	EasAccountPrivate *priv = account->priv;
+	gchar **strv = NULL;
+	guint len = 0;
+	guint i, j;
+	
+	g_debug("eas_account_set_server_protocols++");
 	g_return_if_fail (EAS_IS_ACCOUNT (account));
 
-	if(account->priv->server_protocols == NULL){	// set previously unset:
-		if(server_protocols != NULL){
-			int strvlen, i;
-			account->priv->server_protocols = g_strsplit (server_protocols, ",", 0);
-			strvlen = g_strv_length (account->priv->server_protocols);
-			g_signal_emit (account, signals[CHANGED], 0, -1);
-			g_debug( "server_protocols changed:");
-			for(i = 0; i < strvlen; i++)
-			{
-				g_debug( "[%s]\n", account->priv->server_protocols[i]);
-			}
+	if(server_protocols != NULL){
+		strv = g_strsplit (server_protocols, ",", 0);
+		len = g_strv_length (strv);
+	}
+
+	g_debug("server supports %d protocols:", len);
+	for(i = 0; i < len; i++)
+	{
+		g_debug("%s\n", strv[i]);
+		
+	}
+	
+	if(priv->server_protocols == NULL){	// set previously unset:
+		for(i = 0; i < len; i++)
+		{
+			g_debug("appending %s to protocol list", strv[i]);
+			priv->server_protocols = g_slist_append(priv->server_protocols, strv[i]);
+		}
+		g_signal_emit (account, signals[CHANGED], 0, -1);
+		g_debug( "server_protocols changed:");
+		for(i = 0; i < g_slist_length(priv->server_protocols); i++)
+		{
+			g_debug( "[%s]\n", (gchar*)g_slist_nth_data (priv->server_protocols, i)); 
 		}
 	}else{	
-		if(server_protocols != NULL){ // compare to current, if different update:
+		if(len){ // compare to current, if different update:
 			gboolean changed = FALSE;
-			gchar **strv = g_strsplit (server_protocols, ",", 0);
-			guint len = g_strv_length (strv);
-			if(len == g_strv_length (account->priv->server_protocols)){// same length, may be unchanged
-				guint i, j;
+			if(len == g_slist_length (priv->server_protocols)){// same length, may be unchanged
 				for (i = 0; i < len; i++){
 					gboolean found = FALSE;
 					for(j = 0; j < len; j++){
-						if(!strcmp(strv[i], account->priv->server_protocols[j])){
+						if(!strcmp(strv[i], g_slist_nth_data (priv->server_protocols,j))){
 							// got a match
 							found = TRUE;
 							break;
@@ -449,7 +468,7 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 				for (i = 0; i < len; i++){	// allow for the case where protocol repeated
 					for(j = 0; j < len){
 						gboolean found = FALSE;
-						if(!strcmp(strv[j], account->priv->server_protocols[i])){
+						if(!strcmp(strv[j], g_slist_nth_data (account->priv->server_protocols,i))){
 							// got a match
 							found = TRUE;
 							break;
@@ -464,26 +483,33 @@ eas_account_set_server_protocols (EasAccount *account, const gchar* server_proto
 				changed = TRUE;
 			}
 			
-			if(changed){
-				g_strfreev(account->priv->server_protocols);
-				account->priv->server_protocols = strv;
+			if(changed){ 
+				g_slist_foreach (priv->server_protocols, (GFunc) g_free, NULL);	// free the strings
+				g_slist_free(priv->server_protocols);
+				for(i = 0; i < len; i++)
+				{
+					priv->server_protocols = g_slist_append(priv->server_protocols, strv[i]);
+				}				
 				g_signal_emit (account, signals[CHANGED], 0, -1);
 				g_debug( "server_protocols changed: NULL\n");
-			}else{
-				g_strfreev(strv);
 			}
+
+			
+			
 		}else{	// delete:
-				g_strfreev (account->priv->server_protocols);
+				g_slist_foreach (priv->server_protocols, (GFunc) g_free, NULL);	// free the strings
+				g_slist_free(priv->server_protocols);			
 				account->priv->server_protocols = NULL;
 				g_signal_emit (account, signals[CHANGED], 0, -1);
 				g_debug( "server_protocols changed: NULL\n");
 		}
 	} 	
-	
-	g_debug("eas_account_server_protocols--");
+
+	g_strfreev(strv);
+	g_debug("eas_account_set_server_protocols--");
 }
 
-gchar**	
+GSList*	
 eas_account_get_server_protocols (const EasAccount *account)
 {
 	return account->priv->server_protocols;

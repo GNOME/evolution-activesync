@@ -37,10 +37,14 @@ AM_PROG_CC_C_O
 
 AC_SUBST(NO_UNDEFINED)
 
+IT_PROG_INTLTOOL([0.35.5])
 AM_GLIB_GNU_GETTEXT
 AM_PATH_GLIB_2_0
 AM_DISABLE_STATIC
 AC_PROG_LIBTOOL
+
+privincludedir='${includedir}'/eas-daemon
+AC_SUBST(privincludedir)
 
 PKG_CHECK_MODULES(GNOMEKEYRING, gnome-keyring-1)
 PKG_CHECK_MODULES(EDATASERVER, libedataserver-1.2)
@@ -156,6 +160,10 @@ AC_CONFIG_FILES([
     camel/Makefile
     syncevolution/Makefile
     meego/Makefile
+    po/Makefile.in
+    libeasaccount.pc
+    libeasmail.pc
+    libeassync.pc
     ])
 
 AC_CONFIG_COMMANDS_POST([test "$have_mlite" = "yes" && pushd ${srcdir}/${MEEGO_UI_DIR} && qmake && popd])

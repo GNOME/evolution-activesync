@@ -17,6 +17,8 @@ libeasaccount_la_SOURCES =	eas-account.h eas-account.c \
 							eas-account-list.h eas-account-list.c
 
 
+libeasaccountincludedir = $(privincludedir)/eas-account
+libeasaccountinclude_HEADERS = eas-account.h eas-account-list.h
 
 gconf_root = /apps/activesyncd/accounts
 

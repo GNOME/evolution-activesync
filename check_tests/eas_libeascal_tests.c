@@ -10,7 +10,7 @@
 #include "../libeassync/src/libeassync.h"
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-cal-info-translator.h"
-
+#include "../libeastest/src/libeastest.h"
 static gchar * g_account_id = TEST_ACCOUNT_ID;
 
 const char* TEST_VCALENDAR = "BEGIN:VCALENDAR\n\
@@ -213,7 +213,45 @@ DESCRIPTION:Reminder\n\
 END:VALARM\n\
 END:VEVENT\n\
 END:VCALENDAR\n";
-
+static void setMockNegTestGoodHttp(const gchar *mockedfile)
+{
+	guint status_code = 200;
+	GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
+	g_array_append_val(status_codes, status_code);
+    const gchar *mocks[] = {mockedfile, 0};
+    EasTestHandler *test_handler = eas_test_handler_new ();
+    if (test_handler)
+    {
+		//eas_test_handler_add_mock_responses (test_handler, mocks, NULL);
+        eas_test_handler_add_mock_responses (test_handler, mocks, status_codes);
+        g_object_unref (test_handler);
+        test_handler = NULL;
+    }
+	g_array_free(status_codes, TRUE);
+}
+static void negativeTestGetLatestCalendar (EasSyncHandler *sync_handler,
+                                   gchar *sync_key_in,
+                                   gchar **sync_key_out,
+                                   GSList **created,
+                                   GSList **updated,
+                                   GSList **deleted,
+                                   GError **error)
+{
+    gboolean ret = FALSE;
+    mark_point();
+	gboolean more = FALSE;	
+    ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CALENDAR, NULL,
+                                                & (*created),
+                                                & (*updated),
+                                                & (*deleted),
+                                                & more,
+                                               & (*error));
+    mark_point();  
+	 if ( (*error) == NULL)
+	{
+		fail_if (ret == TRUE, "%s","Function call should return FALSE");
+	}
+}
 gchar *
 random_uid_new (void)
 {
@@ -591,7 +629,368 @@ START_TEST (test_eas_sync_handler_add_cal)
     g_object_unref (sync_handler);
 }
 END_TEST
+START_TEST (test_cal_get_invalid_sync_key)
+{
 
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarGetInvalidSyncKey.xml");
+   // mock Test
+	negativeTestGetLatestCalendar (sync_handler,
+		                   "wrong",
+		                   &sync_key_out,
+		                   &created,
+		                   &updated,
+		                   &deleted,
+		                   &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
+	        "The Error returned by the server is not correct.");
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST 
+
+START_TEST (test_cal_add_invalid_sync_key)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarAddInvalidSyncKey.xml");
+   // mock Test
+	   rtn = eas_sync_handler_add_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
+	        "The Error returned by the server is not correct.");
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_cal_delete_invalid_sync_key)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarDeleteinvalidSyncKey.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
+	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
+	        "The Error returned by the server is not correct.");
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_cal_delete_invalid_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarDeleteInvalidServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST	
+START_TEST (test_cal_delete_valid_invalid_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarDeleteValidInvalidServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_cal_delete_valid_calendar_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+
+    GError *error = NULL;
+
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarDeleteValidCalendarServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+	
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
+START_TEST (test_cal_update_invalid_server_id)
+{
+
+    
+    const char* accountuid = g_account_id;
+    EasSyncHandler *sync_handler = NULL;
+	gint rtn = TRUE;
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetCalendarHandler (&sync_handler, accountuid);
+
+    // declare lists to hold the folder information returned by active sync
+    GSList *created = NULL; //receives a list of EasFolders
+    GSList *updated = NULL;
+    GSList *deleted = NULL;
+    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
+    // there is no persisted sync key from previous sync's, the returned information will be
+    // the complete folder hierarchy rather than a delta of any changes
+    
+	gchar* sync_key_out = NULL;
+	GError *error = NULL;
+	GSList *calitemToUpdate = NULL;
+        EasItemInfo *updatedcalitem = NULL;
+
+	updatedcalitem = eas_item_info_new();
+	updatedcalitem->server_id = g_strdup ("wrong");
+	updatedcalitem->data = g_strdup (TEST_VCALENDAR2);
+
+        calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
+    mark_point();
+   // set mock
+	setMockNegTestGoodHttp("CalendarUpdateInvalidServerId.xml");
+   // mock Test
+	   rtn = eas_sync_handler_update_items (sync_handler,
+                                      "wrong",
+                                      sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      calitemToUpdate,
+                                      &error);
+	
+	g_debug("error is %s",dbus_g_error_get_name(error));
+	fail_if(error,"Error is returned%s",dbus_g_error_get_name(error));
+    //  free everything!
+    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (deleted, (GFunc) g_object_unref, NULL);
+    g_slist_foreach (updated, (GFunc) g_object_unref, NULL);
+
+    g_slist_free (created);
+    g_slist_free (deleted);
+    g_slist_free (updated);
+
+    g_object_unref (sync_handler);
+}
+END_TEST
 
 
 Suite* eas_libeascal_suite (void)
@@ -601,7 +1000,16 @@ Suite* eas_libeascal_suite (void)
     /* tc_libeascal test case */
     TCase *tc_libeascal = tcase_create ("core");
     suite_add_tcase (s, tc_libeascal);
-
+	if(getenv ("EAS_USE_MOCKS") && (atoi (g_getenv ("EAS_USE_MOCKS")) >= 1))
+    	{
+		tcase_add_test (tc_libeascal, test_cal_get_invalid_sync_key);
+		tcase_add_test (tc_libeascal, test_cal_add_invalid_sync_key);
+		tcase_add_test (tc_libeascal, test_cal_delete_invalid_sync_key);
+		tcase_add_test (tc_libeascal, test_cal_delete_invalid_server_id);
+		tcase_add_test (tc_libeascal, test_cal_delete_valid_invalid_server_id);
+		tcase_add_test (tc_libeascal, test_cal_delete_valid_calendar_server_id);
+		tcase_add_test (tc_libeascal, test_cal_update_invalid_server_id);
+	}
 //    tcase_add_test (tc_libeascal, test_cal);
 //    tcase_add_test (tc_libeascal, test_get_sync_handler);
     tcase_add_test (tc_libeascal, test_get_latest_calendar_items);

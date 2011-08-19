@@ -91,8 +91,8 @@ typedef enum _eas_account_item_t {
 	EAS_ACCOUNT_CALENDAR_FOLDER,
 	EAS_ACCOUNT_DEVICE_ID,
 	EAS_ACCOUNT_PROTOCOL_VERSION,
-
-	E_ACCOUNT_ITEM_LAST
+	EAS_ACCOUNT_SERVER_PROTOCOLS,
+	
 } eas_account_item_t;
 
 GType		eas_account_get_type		(void) G_GNUC_CONST;
@@ -120,7 +120,7 @@ gchar*	eas_account_get_calendar_folder	(const EasAccount *account);
 gchar*	eas_account_get_password	(const EasAccount *account);
 int 	eas_account_get_protocol_version(const EasAccount *account);
 gchar*	eas_account_get_device_id	(const EasAccount *account);
-gchar**	eas_account_get_server_protocols (const EasAccount *account);
+GSList*	eas_account_get_server_protocols (const EasAccount *account);
 EasAccountInfo*	eas_account_get_account_info(const EasAccount *account);
 
 

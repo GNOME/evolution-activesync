@@ -49,7 +49,12 @@ libeasmail_la_SOURCES =		\
 		eas-mail-errors.h	\
 		eas-marshal.h 		\
 		eas-marshal.c		
-        
+
+libeasmailincludedir = $(privincludedir)/eas-mail
+libeasmailinclude_HEADERS = eas-attachment.h eas-folder.h libeasmail.h \
+			    eas-email-info.h eas-mail-errors.h
+
+
 mail_interface_xml =  ../../eas-daemon/src/eas-mail.xml
 common_interface_xml = ../../eas-daemon/src/eas-common.xml
 

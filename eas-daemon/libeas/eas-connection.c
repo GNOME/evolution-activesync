@@ -50,6 +50,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "eas-connection.h"
 #include <glib.h>
 #include <libsoup/soup.h>
@@ -60,6 +64,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <gnome-keyring.h>
+#include <glib/gi18n-lib.h>
 
 #include <sys/stat.h>
 
@@ -428,6 +433,7 @@ mainloop_password_store (gpointer data)
 	return FALSE;
 }
 
+// nb: can't be called from the main thread or will hang
 static GnomeKeyringResult
 writePasswordToKeyring (const gchar *password, const gchar* username, const gchar* serverUri)
 {
@@ -446,7 +452,7 @@ writePasswordToKeyring (const gchar *password, const gchar* username, const gcha
 	/* We can't use g_idle_add, as the default context here is the soup thread */
 	source = g_idle_source_new ();
 	g_source_set_callback (source, mainloop_password_store, response, NULL);
-	g_source_attach (source, NULL);
+	g_source_attach (source, NULL); //default context
 
 	e_flag_wait (response->semaphore);
 	e_flag_free (response->semaphore);
@@ -487,7 +493,7 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	g_debug ("fetch_and_store_password++");
 
 	argv[0] = (gchar *) ASKPASS;
-	argv[1] = g_strdup_printf ("Please enter your ActiveSync password for %s",
+	argv[1] = g_strdup_printf (_("Please enter your ActiveSync password for %s"),
 				   account_id);
 	argv[2] = NULL;
 
@@ -588,13 +594,13 @@ connection_authenticate (SoupSession *sess,
 
 	password = eas_account_get_password (cnc->priv->account);
 	if (password) {
-		g_warning ("Found password in GConf, writting it to Gnome Keyring");
+		g_warning ("Found password in GConf, writing it to Gnome Keyring");
 
 		if (GNOME_KEYRING_RESULT_OK != writePasswordToKeyring (password, username, serverUri)) {
 			g_warning ("Failed to store GConf password in Gnome Keyring");
 		}
 	}
-
+	
 	password = NULL;
 
 	result = getPasswordFromKeyring (username, serverUri, &password);
@@ -1113,7 +1119,7 @@ eas_connection_send_request (EasConnection* self,
 	if (wbxml_ret != WBXML_OK) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     ("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);
+			     _("error %d returned from wbxml_conv_xml2wbxml_create"), wbxml_ret);
 		ret = FALSE;
 		goto finish;
 	}
@@ -1143,7 +1149,7 @@ eas_connection_send_request (EasConnection* self,
 	if (!msg) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_SOUPERROR,
-			     ("soup_message_new returned NULL"));
+			     _("soup_message_new returned NULL"));
 		ret = FALSE;
 		goto finish;
 	}
@@ -1192,7 +1198,7 @@ eas_connection_send_request (EasConnection* self,
 		if (wbxml_ret != WBXML_OK) {
 			g_set_error (error, EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_WBXMLERROR,
-				     ("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);
+				     _("error %d returned from wbxml_conv_xml2wbxml_run"), wbxml_ret);
 			ret = FALSE;
 			goto finish;
 		}
@@ -1313,7 +1319,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP request failed: %d - %s",
+			     _("HTTP request failed: %d - %s"),
 			     msg->status_code, msg->reason_phrase);
 		return INVALID;
 	}
@@ -1337,7 +1343,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP response type was not WBXML");
+			     _("HTTP response type was not WBXML"));
 		return INVALID;
 	}
 	if (multipart && (0 != g_strcmp0 ("application/vnd.ms-sync.multipart", content_type))) {
@@ -1345,7 +1351,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP response type was not MULTIPART");
+			     _("HTTP response type was not MULTIPART"));
 		return INVALID;
 	}
 
@@ -1377,7 +1383,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (NULL == wbxml) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "wbxml is NULL!");
+			     _("wbxml is NULL!"));
 		g_warning ("  wbxml is NULL!");
 		ret = FALSE;
 		goto finish;
@@ -1386,7 +1392,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (0 == wbxml_len) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "wbxml_len is 0!");
+			     _("wbxml_len is 0!"));
 		g_warning ("  wbxml_len is 0!");
 		ret = FALSE;
 		goto finish;
@@ -1397,7 +1403,8 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (wbxml_ret != WBXML_OK) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "Failed to create WBXML to XML converter: %s", wbxml_errors_string (wbxml_ret));
+			     _("Failed to create WBXML to XML converter: %s"),
+			     wbxml_errors_string (wbxml_ret));
 		g_warning ("  Failed to create conv! %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
 		goto finish;
@@ -1415,7 +1422,7 @@ wbxml2xml (const WB_UTINY *wbxml, const WB_LONG wbxml_len, WB_UTINY **xml, WB_UL
 	if (WBXML_OK != wbxml_ret) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_WBXMLERROR,
-			     "Error converting WBXML to XML: %s",
+			     _("Error converting WBXML to XML: %s"),
 			     wbxml_errors_string (wbxml_ret));
 		g_warning ("  wbxml2xml Ret = %s", wbxml_errors_string (wbxml_ret));
 		ret = FALSE;
@@ -1532,7 +1539,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Status code: %d - Response from server",
+			     _("Status code: %d - Response from server"),
 			     status);
 		goto failed;
 	}
@@ -1547,7 +1554,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to parse autodiscover response XML");
+			     _("Failed to parse autodiscover response XML"));
 		goto failed;
 	}
 
@@ -1556,7 +1563,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Autodiscover> element");
+			     _("Failed to find <Autodiscover> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1567,7 +1574,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Response> element");
+			     _("Failed to find <Response> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1578,7 +1585,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Action> element");
+			     _("Failed to find <Action> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1589,7 +1596,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to find <Settings> element");
+			     _("Failed to find <Settings> element"));
 		goto failed;
 	}
 	for (node = node->children; node; node = node->next) {
@@ -1722,7 +1729,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Email is mandatory and must be provided");
+			     _("Email is mandatory and must be provided"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1732,7 +1739,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "Failed to extract domain from email address");
+			     _("Failed to extract domain from email address"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1743,7 +1750,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-			     "Failed create temp account for autodiscover");
+			     _("Failed create temp account for autodiscover"));
 		cb (NULL, cb_data, error);
 		return;
 	}
@@ -1844,6 +1851,7 @@ eas_connection_find (const gchar* accountId)
 			break;
 		}
 	}
+	g_object_unref (iter);
 
 	if (!account_found) {
 		g_warning ("No account details found for accountId [%s]", accountId);
@@ -1906,7 +1914,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_BADARG,
-			     "An account must be provided.");
+			     _("An account must be provided."));
 		return NULL;
 	}
 
@@ -1932,7 +1940,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
-			     "A server url and username must be provided.");
+			     _("A server url and username must be provided."));
 		g_static_mutex_unlock (&connection_list);
 		return NULL;
 	}
@@ -1945,7 +1953,7 @@ eas_connection_new (EasAccount* account, GError** error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FILEERROR,
-			     "Failed to create folder cache directory %s: %s",
+			     _("Failed to create folder cache directory %s: %s"),
 			     cachedir, strerror (errno));
 		g_free (cachedir);
 		g_object_unref (cnc);
@@ -2037,8 +2045,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	{
 		g_debug("request was cancelled by caller");
         g_set_error (&error, EAS_CONNECTION_ERROR,
-	                     EAS_CONNECTION_ERROR_CANCELLED,
-	                     ("request was cancelled by user"));
+		     EAS_CONNECTION_ERROR_CANCELLED,
+		     _("request was cancelled by user"));
 
 	    goto complete_request;
 	}
@@ -2146,7 +2154,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_set_error (&error,
 				     EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_XMLTOOLARGETODOM,
-				     "Failed to parse XML: %s", xmlerr?xmlerr->message:"<unknown error>");
+				     _("Failed to parse XML: %s"),
+				     xmlerr?xmlerr->message:"<unknown error>");
 		}
 
 
@@ -2320,6 +2329,7 @@ eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 	file = g_file_new_for_path (cnc->priv->folders_keyfile);
 	g_file_replace_contents (file, contents, size, NULL, FALSE,
 				 G_FILE_CREATE_PRIVATE, NULL, NULL, NULL);
+	g_free (contents);
 	g_object_unref (file);
 }
 
@@ -2337,27 +2347,30 @@ gchar **eas_connection_get_folders (EasConnection *cnc)
 	/* We re-use the original array, dropping the ##storedata element */
 	for (i = 0; folders[i]; i++) {
 		gchar *res = NULL;
-		
-		if (!strcmp (folders[i], "##storedata")) {
-			folders[i] = NULL;
-			continue;
+
+		if (strcmp (folders[i], "##storedata")) {
+			gchar *parent_id, *display_name;
+			int type;
+
+			parent_id = g_key_file_get_string (cnc->priv->folders,
+						   folders[i], "parent_id", NULL);
+			display_name = g_key_file_get_string (cnc->priv->folders,
+							      folders[i], "display_name", NULL);
+			type = g_key_file_get_integer (cnc->priv->folders,
+						       folders[i], "type", NULL);
+
+			res = g_strdup_printf ("%s\n%s\n%s\n%d", parent_id,
+					       folders[i], display_name, type);
+			g_free (parent_id);
+			g_free (display_name);
 		}
 
-		res = g_strdup_printf ("%s\n%s\n%s\n%d",
-				       g_key_file_get_string (cnc->priv->folders,
-							      folders[i], "parent_id", NULL),
-				       folders[i],
-				       g_key_file_get_string (cnc->priv->folders,
-							      folders[i], "display_name", NULL),
-				       g_key_file_get_integer (cnc->priv->folders,
-							       folders[i], "type", NULL));
-
-		/* Reuse the existing array. */
 		g_free (folders[i]);
-		if (i > j)
-			folders[i] = NULL;
+		folders[i] = NULL;
 
-		folders[j++] = res;
+		/* Reuse the existing array */
+		if (res)
+			folders[j++] = res;
 	}
 	return folders;
 }
@@ -2440,16 +2453,77 @@ eas_connection_cancel_request(EasConnection* cnc,
 	{
 		ret = FALSE;
 		g_set_error (error, EAS_CONNECTION_ERROR,
-                     EAS_CONNECTION_ERROR_BADARG,
-                     ("Request with id %d not in queue, can't cancel"), request_id);
+			     EAS_CONNECTION_ERROR_BADARG,
+			     _("Request with id %d not in queue; can't cancel"),
+			     request_id);
 	}
 	QUEUE_UNLOCK (cnc);
 
 	return ret;
 }
 
+/*
+void
+handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
+{
+	EasConnection *cnc = (EasConnection*)data;
+	EasConnectionPrivate *priv = cnc->priv;
+	EasAccount *acc = priv->account;
+	const gchar *protocol_versions = NULL;
+	
+	g_debug("handle_options_response++");
+	
+	// parse response store the list in GConf (via EasAccount)
+	if (HTTP_STATUS_OK != msg->status_code) {
+		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+	}	
+
+	// get supported protocols
+	protocol_versions = soup_message_headers_get_one(msg->response_headers, "MS-ASProtocolVersions");
+
+	g_debug("server supports protocols %s", protocol_versions);
+
+	// write the list to GConf using new EasAccount API
+	eas_account_set_server_protocols(acc, protocol_versions);
+
+	eas_account_list_save_item (g_account_list,
+				    priv->account,
+				    EAS_ACCOUNT_SERVER_PROTOCOLS);
+
+	g_debug("handle_options_response++");	
+}
+*/
+
+// TODO This is a temporary workaround
+static void
+options_connection_authenticate (SoupSession *sess,
+			 SoupMessage *msg,
+			 SoupAuth *auth,
+			 gboolean retrying,
+			 gpointer data)
+{
+	EasConnection* cnc = (EasConnection *) data;
+	const gchar * username = eas_account_get_username (cnc->priv->account);
+	
+	gchar* password = NULL;
+
+	g_debug ("options_connection_authenticate++");
+
+	// @@FIX ME - Temporary grab of password from GConf
+	password = eas_account_get_password (cnc->priv->account);
+
+	soup_auth_authenticate (auth,
+				username,
+				password);
+	g_debug ("  eas_connection - connection_authenticate--");
+}				
 
 /*
+ TODO - fails if we haven't authenticated. 
+ If we connect to the authenticate signal, then connection_authenticate will
+ hang since soup_session_send_message is being called from (and blocking) 
+ the same thread that the gnome keyring stuff uses the idle loop of.
+ 
  use the HTTP OPTIONS command to ask server for a list of protocols
  store results in GConf 
  */
@@ -2461,21 +2535,44 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	EasConnectionPrivate *priv = cnc->priv;
 	EasAccount *acc = priv->account;
 	const gchar *protocol_versions = NULL;
+	SoupSession* soup_session;
+
+	// need our own synchronous session so we can use the sync soup call
+	soup_session = soup_session_sync_new_with_options (SOUP_SESSION_USE_NTLM,
+						     TRUE,
+						     SOUP_SESSION_TIMEOUT,
+						     120,
+						     NULL);	
+
+	// since we've created a new soup session, we'll need to authenticate
+	
+	g_signal_connect (soup_session,
+			  "authenticate",
+			  G_CALLBACK (options_connection_authenticate),
+			  cnc);	
 	
 	msg = soup_message_new("OPTIONS", eas_account_get_uri(acc));
+
+	soup_message_headers_append (msg->request_headers,
+				     "MS-ASProtocolVersion",
+				     priv->proto_str);
+	soup_message_headers_append (msg->request_headers,
+				     "User-Agent",
+				     "libeas");
 	
 	// use the sync version of soup request and parse msg on completion
 	// rather than go via handle_server_response which requires setting up
 	// eas request and message objects
-	soup_session_send_message(priv->soup_session, msg);
-	
+	g_debug("send options message");
+	soup_session_send_message(soup_session, msg);
+
 	// parse response store the list in GConf (via EasAccount)
 	if (HTTP_STATUS_OK != msg->status_code) {
 		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     "HTTP request failed: %d - %s",
+			     _("HTTP request failed: %d - %s"),
 			     msg->status_code, msg->reason_phrase);
 		ret = FALSE;
 		goto cleanup;
@@ -2486,12 +2583,25 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 
 	g_debug("server supports protocols %s", protocol_versions);
 
-	// TODO write the list to GConf using new EasAccount API
+	// write the list to GConf using new EasAccount API
 	eas_account_set_server_protocols(acc, protocol_versions);
+
+	eas_account_list_save_item (g_account_list,
+				    priv->account,
+				    EAS_ACCOUNT_SERVER_PROTOCOLS);	
+	/*
+	soup_session_queue_message (priv->soup_session,
+				    msg,
+				    handle_options_response,
+				    cnc);	
+
+	// TODO wait for signal that protocol list has been updated?				    
+	*/
+	
 	
 cleanup:
 	
 	g_object_unref (msg);
-
+	
 	return ret;
 }

@@ -19,6 +19,7 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_libeasmail_tests.c \
                     eas_libeascal_tests.c \
                     eas_autodiscover_tests.c \
+                    eas_connection_tests.c \
                     eas_main_tests.c \
                     $(top_builddir)/libeasmail/src/libeasmail.h \
                     $(top_builddir)/libeassync/src/libeassync.h \

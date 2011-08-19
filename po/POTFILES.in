@@ -1,0 +1,5 @@
+# List of source files containing translatable strings.
+# Please keep this list in alphabetic order.
+[encoding: UTF-8]
+meego/meego-ux-settings-activesync/activesync-settings.desktop.in
+eas-daemon/libeas/eas-connection.c
