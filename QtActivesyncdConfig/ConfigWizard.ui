@@ -69,7 +69,7 @@
    <item>
     <widget class="QStackedWidget" name="wizard">
      <property name="currentIndex">
-      <number>3</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="pageAutoConfig">
       <layout class="QFormLayout" name="formLayout">
@@ -143,7 +143,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QLineEdit" name="editServerAddress">
+        <widget class="QLineEdit" name="editServerUri">
          <property name="placeholderText">
           <string>e.g. https://exchange.test.com</string>
          </property>
@@ -234,7 +234,23 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="pageError"/>
+     <widget class="QWidget" name="pageError">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QLabel" name="lblErrorDetails">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -294,7 +310,7 @@
   <tabstop>btnNext</tabstop>
   <tabstop>editEmailAddress</tabstop>
   <tabstop>editUsername1</tabstop>
-  <tabstop>editServerAddress</tabstop>
+  <tabstop>editServerUri</tabstop>
   <tabstop>editUsername2</tabstop>
   <tabstop>checkBox</tabstop>
   <tabstop>checkBox_2</tabstop>

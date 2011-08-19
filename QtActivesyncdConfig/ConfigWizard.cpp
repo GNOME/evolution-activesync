@@ -4,6 +4,7 @@
 // System includes
 #include <QAbstractButton>
 #include <QApplication>
+#include <QDebug>
 #include <QInputDialog>
 #include <QLineEdit>
 #include <QRegExp>
@@ -12,6 +13,31 @@
 #include <QStringList>
 #include <QTimer>
 // User includes
+#include "../eas-daemon/libeas/eas-connection.h"
+
+
+extern ConfigWizard* theWizard;
+
+
+/**
+ * Global callback, called after attempt at auto-discovery
+ */
+void autoDiscoverCallback(char* server_uri, void* /*data*/, GError* /*error*/)
+{
+    qDebug("Entering autoDiscoverCallback() with server_uri=%s", (server_uri ? server_uri : "0"));
+
+    if (server_uri)
+    {
+        QString qServerUri(server_uri);
+        if (!qServerUri.isEmpty())
+        {
+            theWizard->getProvisionReqts(qServerUri);
+            return;
+        }
+    }
+
+    theWizard->onAutoDiscoverFailure();
+}
 
 
 /**
@@ -25,21 +51,21 @@ ConfigWizard::ConfigWizard(QWidget *parent)
     ui->setupUi(this);
 
     ui->editEmailAddress->setValidator(new QRegExpValidator(QRegExp("^\\S{2,}@\\S{2,}\\.\\S{2,}"), ui->editEmailAddress));
-    ui->editServerAddress->setValidator(new QRegExpValidator(QRegExp("^\\S{2,}\\.\\S{2,}"), ui->editServerAddress));
+    ui->editServerUri->setValidator(new QRegExpValidator(QRegExp("^\\S{2,}\\.\\S{2,}"), ui->editServerUri));
     ui->editUsername2->setValidator(new QRegExpValidator(QRegExp("\\S+"), ui->editUsername2));
 
     // Connect signals/slots
     connect(ui->btnNext, SIGNAL(clicked()), SLOT(onNext()));
     connect(ui->btnBack, SIGNAL(clicked()), SLOT(onBack()));
     connect(ui->btnCancel, SIGNAL(clicked()), SLOT(onCancel()));
-    connect(ui->editEmailAddress, SIGNAL(textEdited(QString)), SLOT(validateAutoConfigInputs()));
-    connect(ui->editServerAddress, SIGNAL(textEdited(QString)), SLOT(validateManualConfigInputs()));
-    connect(ui->editUsername2, SIGNAL(textEdited(QString)), SLOT(validateManualConfigInputs()));
+    connect(ui->editEmailAddress, SIGNAL(textEdited(QString)), SLOT(validateAutoDiscoverInputs()));
+    connect(ui->editServerUri, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
+    connect(ui->editUsername2, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
     // Connect the two username fields
     connect(ui->editUsername1, SIGNAL(textChanged(QString)), ui->editUsername2, SLOT(setText(QString)));
     connect(ui->editUsername2, SIGNAL(textChanged(QString)), ui->editUsername1, SLOT(setText(QString)));
 
-    changeState(AutoConfigDetails);
+    changeState(AutoDiscoverDetails);
 }
 
 
@@ -59,19 +85,24 @@ void ConfigWizard::onNext()
 {
     switch (currentState)
     {
-    case AutoConfigDetails:
-        changeState(TryingAutoConfig);
+    case AutoDiscoverDetails:
+        changeState(TryingAutoDiscover);
         break;
-    case ManualConfigDetails:
-        changeState(TryingManualConfig);
+
+    case ManualServerDetails:
+        username = ui->editUsername2->text().trimmed();
+        getProvisionReqts(ui->editServerUri->text().trimmed());
         break;
-    case ConfirmRequirements:
+
+    case ConfirmProvisionReqts:
         changeState(Finish);
         break;
+
     case Finish:
         // TODO: apply settings
         QApplication::quit();
         break;
+
     default:
         break;
     }
@@ -85,19 +116,20 @@ void ConfigWizard::onBack()
 {
     switch (currentState)
     {
-    case TryingAutoConfig:
-    case ManualConfigDetails:
-        changeState(AutoConfigDetails);
+    case TryingAutoDiscover:
+    case ManualServerDetails:
+        changeState(AutoDiscoverDetails);
         break;
-    case TryingManualConfig:
-        changeState(ManualConfigDetails);
+
+    case GettingProvisionReqts:
+    case ConfirmProvisionReqts:
+        changeState(manualConfigRequested ? ManualServerDetails : AutoDiscoverDetails);
         break;
-    case ConfirmRequirements:
-        changeState(manualConfigRequested ? ManualConfigDetails : AutoConfigDetails);
-        break;
+
     case Finish:
-        changeState(ConfirmRequirements);
+        changeState(ConfirmProvisionReqts);
         break;
+
     default:
         break;
     }
@@ -114,27 +146,47 @@ void ConfigWizard::onCancel()
 
 
 /**
- * Slot: Auto-configuration completed successfully
+ * Slot: Auto-discovery completed successfully
  */
-void ConfigWizard::onConfigSuccess()
+void ConfigWizard::getProvisionReqts(const QString& serverUri)
 {
-    changeState(ConfirmRequirements);
+    qDebug() << "Entering getProvisionReqts() with serverUri=" << serverUri;
+    this->serverUri = serverUri;
+    changeState(GettingProvisionReqts);
 }
 
 
 /**
- * Slot: auto-configuration failed
+ * Slot: auto-discovery failed
  */
-void ConfigWizard::onConfigFailure()
+void ConfigWizard::onAutoDiscoverFailure()
 {
-    changeState(ManualConfigDetails);
+    changeState(ManualServerDetails);
+}
+
+
+/**
+ * Slot
+ */
+void ConfigWizard::onProvisionFailure()
+{
+
+}
+
+
+/**
+ * Slot
+ */
+void ConfigWizard::onProvisionSuccess()
+{
+
 }
 
 
 /**
  * Slot: text in one of the auto-config inputs has changed
  */
-void ConfigWizard::validateAutoConfigInputs()
+void ConfigWizard::validateAutoDiscoverInputs()
 {
     ui->btnNext->setEnabled(ui->editEmailAddress->hasAcceptableInput());
 }
@@ -143,9 +195,9 @@ void ConfigWizard::validateAutoConfigInputs()
 /**
  * Slot: text in one of the manual config inputs has changed
  */
-void ConfigWizard::validateManualConfigInputs()
+void ConfigWizard::validateManualServerInputs()
 {
-    ui->btnNext->setEnabled(ui->editServerAddress->hasAcceptableInput() && ui->editUsername2->hasAcceptableInput());
+    ui->btnNext->setEnabled(ui->editServerUri->hasAcceptableInput() && ui->editUsername2->hasAcceptableInput());
 }
 
 
@@ -154,55 +206,68 @@ void ConfigWizard::validateManualConfigInputs()
  */
 void ConfigWizard::changeState(ConfigWizard::State state)
 {
+    qDebug() << "Entering changeState";
+
     currentState = state;
 
     // Reset the button captions to defaults
     setButtonCaptions();
 
     // Set button defaults
-    ui->btnBack->setEnabled(state != AutoConfigDetails); // Enabled on all but the first page
+    ui->btnBack->setEnabled(state != AutoDiscoverDetails); // Enabled on all but the first page
     ui->btnNext->setEnabled(true);
     ui->btnCancel->setEnabled(true);
 
     switch (currentState)
     {
-    case AutoConfigDetails:
+    case AutoDiscoverDetails:
         ui->wizard->setCurrentWidget(ui->pageAutoConfig);
         setTitle(tr("Automatic configuration"), tr("Enter your e-mail adress and we'll try to guess your Exchange server details."));
-        validateAutoConfigInputs();
+        validateAutoDiscoverInputs();
         break;
 
-    case TryingAutoConfig:
+    case TryingAutoDiscover:
+        qDebug() << "Entering state: TryingAutoDiscover";
         ui->wizard->setCurrentWidget(ui->pageBusy);
         ui->btnNext->setEnabled(false);
         setTitle(tr("Attempting automatic configuration"), tr("Please wait..."));
 
-        // TEMP
-        QTimer::singleShot(2000, this, SLOT(onConfigFailure()));
+        qDebug() << "GOT TO HERE";
 
+        // Use username if entered, otherwise use the e-mail address
+        emailAddress = ui->editEmailAddress->text();
+        username = ui->editUsername1->text();
+        qDebug() << "Calling autodiscover with email address" << emailAddress << "username" << username;
+
+        eas_connection_autodiscover(
+            autoDiscoverCallback, 0,
+            (const gchar*)emailAddress.constData(),
+            (username.isEmpty() ? 0 : (const gchar*)username.constData()));
         break;
 
-    case ManualConfigDetails:
+    case ManualServerDetails:
         manualConfigRequested = true;
         ui->wizard->setCurrentWidget(ui->pageManualConfig);
         setTitle(tr("Manual configuration"), tr("Sorry, your Exchange server details could not be guessed. Please enter them below."));
-        validateManualConfigInputs();
+        validateManualServerInputs();
         break;
 
-    case TryingManualConfig:
+    case GettingProvisionReqts:
         ui->wizard->setCurrentWidget(ui->pageBusy);
         ui->btnNext->setEnabled(false);
-        setTitle(tr("Attempting configuration"), tr("Please wait..."));
+        setTitle(tr("Getting server provisioning requirements"), tr("Please wait..."));
+
+        // TODO: call eas_mail_handler_get_folder_list()
 
         // TEMP
         QTimer::singleShot(2000, this, SLOT(onConfigSuccess()));
 
         break;
 
-    case ConfirmRequirements:
+    case ConfirmProvisionReqts:
         {
         ui->wizard->setCurrentWidget(ui->pageConfirmRequirements);
-        setTitle(tr("Confirm ActiveSync requirements"), tr("The server at <b>%1</b> requires you to accept the following features before continuing.").arg(ui->editServerAddress->text().trimmed()));
+        setTitle(tr("Confirm ActiveSync requirements"), tr("The server at <b>%1</b> requires you to accept the following features before continuing.").arg(ui->editServerUri->text().trimmed()));
         setButtonCaptions(tr("Accept"));
 
         // TEMP
@@ -228,8 +293,8 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 
     case Error:
         ui->wizard->setCurrentWidget(ui->pageError);
-        setTitle(tr("An error has occurred"), tr("Sorry, it was not possible to configure this device for Exchange access."));
-        setButtonCaptions(tr("Finish"));
+        setTitle(tr("Error"), tr("Sorry, something has gone wrong."));
+        setButtonCaptions(tr("Quit"));
         break;
 
     default:
@@ -255,5 +320,12 @@ void ConfigWizard::setButtonCaptions(const QString& nextButtonCaption, const QSt
 {
     ui->btnNext->setText(nextButtonCaption.isEmpty() ? tr("Next") : nextButtonCaption);
     ui->btnBack->setText(backButtonCaption.isEmpty() ? tr("Back") : backButtonCaption);
+}
+
+
+void ConfigWizard::error(const QString& msg)
+{
+    ui->lblErrorDetails->setText(msg);
+    changeState(Error);
 }
 

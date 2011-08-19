@@ -28,20 +28,26 @@ public slots:
     void onBack();
     void onCancel();
 
-    void validateAutoConfigInputs();
-    void validateManualConfigInputs();
+    void validateAutoDiscoverInputs();
+    void validateManualServerInputs();
 
-    void onConfigSuccess();
-    void onConfigFailure();
+    void getProvisionReqts(const QString& serverUri);
+    void onAutoDiscoverFailure();
+    void onProvisionSuccess();
+    void onProvisionFailure();
+//    void onConfigSuccess();
+//    void onConfigFailure();
+
+    void error(const QString& msg);
 
 private:
     enum State
     {
-        AutoConfigDetails,
-        TryingAutoConfig,
-        ManualConfigDetails,
-        TryingManualConfig,
-        ConfirmRequirements,
+        AutoDiscoverDetails,
+        TryingAutoDiscover,
+        ManualServerDetails,
+        GettingProvisionReqts,
+        ConfirmProvisionReqts,
         Finish,
         Error
     };
@@ -52,9 +58,11 @@ private:
 
 private:
     Ui::ConfigWizard* ui;
-    QString password;
     State currentState;
     bool manualConfigRequested;
+    QString serverUri;
+    QString emailAddress;
+    QString username;
 };
 
 
