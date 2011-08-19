@@ -142,6 +142,13 @@ AC_SUBST(ASKPASS)
 MEEGO_UI_DIR=meego/meego-ux-settings-activesync
 AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
+
+AT_WITH_QT(,,,[have_qt=no],[have_qt=yes])
+AM_CONDITIONAL([ENABLE_QT_CONFIG_TOOL],[test "$have_qt" = yes])
+if (test "$have_qt" = "no"); then
+   AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])
+fi
+
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
@@ -160,6 +167,7 @@ AC_CONFIG_FILES([
     camel/Makefile
     syncevolution/Makefile
     meego/Makefile
+    QtActivesyncdConfig/Makefile
     po/Makefile.in
     libeasaccount.pc
     libeasmail.pc

@@ -1,5 +1,7 @@
-#ifndef CONFIGWIZARD_H
-#define CONFIGWIZARD_H
+/* We don't use CONFIGWIZARD_H for the include guard, because
+   in the autotools build, the ui.h file uses that. */
+#ifndef __ACTIVESYNC_CONFIGWIZARD_H__
+#define __ACTIVESYNC_CONFIGWIZARD_H__
 
 #include <QDialog>
 #include <QString>
@@ -66,4 +68,4 @@ private:
 };
 
 
-#endif // CONFIGWIZARD_H
+#endif // __ACTIVESYNC_CONFIGWIZARD_H__

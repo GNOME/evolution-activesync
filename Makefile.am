@@ -9,7 +9,11 @@ if ENABLE_MEEGO_UI
   MEEGO_DIR = meego
 endif
 
-SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(SYNCEVOLUTION_DIR) $(MEEGO_DIR) po
+if ENABLE_QT_CONFIG_TOOL
+  QTCONFIG_DIR = QtActivesyncdConfig
+endif
+
+SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(SYNCEVOLUTION_DIR) $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 EXTRA_DIST = autogen.sh
 

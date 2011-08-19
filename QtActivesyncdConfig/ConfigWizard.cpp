@@ -1,6 +1,10 @@
 // Class include
 #include "ConfigWizard.h"
+#ifdef HAVE_CONFIG_H /* In an autotools build */
+#include "ConfigWizard.ui.h"
+#else
 #include "ui_ConfigWizard.h"
+#endif
 // System includes
 #include <QAbstractButton>
 #include <QApplication>
