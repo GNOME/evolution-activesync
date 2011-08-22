@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <check.h>
+#include <dbus/dbus-glib.h>
 
 #include "eas_test_user.h"
 
