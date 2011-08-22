@@ -261,12 +261,9 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         break;
 
     case TryingAutoDiscover:
-        qDebug() << "Entering state: TryingAutoDiscover";
         ui->wizard->setCurrentWidget(ui->pageBusy);
         ui->btnNext->setEnabled(false);
         setTitle(tr("Attempting automatic configuration"), tr("Please wait..."));
-
-        qDebug() << "GOT TO HERE";
 
         // Use username if entered, otherwise use the e-mail address
         emailAddress = ui->editEmailAddress->text();
