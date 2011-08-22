@@ -191,7 +191,6 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 	// obtain file size:
 	fseek (file , 0 , SEEK_END);
 	size = ftell (file);
-	g_debug ("file size = %llu", size);
 	rewind (file);
 
 	// allocate memory to contain the whole file:
