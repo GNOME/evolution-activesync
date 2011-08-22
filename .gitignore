@@ -26,6 +26,8 @@ eas-daemon/src/eas-marshal.c
 eas-daemon/src/eas-marshal.h
 libeasmail/src/eas-marshal.c
 libeasmail/src/eas-marshal.h
+po/POTFILES
+po/stamp-it
 
 # Folders to ignore
 config/*
@@ -50,6 +52,8 @@ QtActivesyncdConfig-build-desktop/
 *.bak
 *.pro.user
 *.in
+*.pc
+po/*.gmo
 
 
 
