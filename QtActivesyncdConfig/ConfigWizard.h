@@ -3,8 +3,16 @@
 #ifndef __ACTIVESYNC_CONFIGWIZARD_H__
 #define __ACTIVESYNC_CONFIGWIZARD_H__
 
+
+// System includes
 #include <QDialog>
 #include <QString>
+// User includes
+// TODO: MUSTN'T link to libeas directly: replace with a client-side API
+#include "../eas-daemon/libeas/eas-connection.h"
+#include "../libeasaccount/src/eas-account.h"
+#include "../libeasaccount/src/eas-account-list.h"
+#include "../libeasmail/src/libeasmail.h"
 
 
 namespace Ui {
@@ -35,10 +43,8 @@ public Q_SLOTS:
 
     void storeServerDetails(const QString& uri);
     void onAutoDiscoverFailure();
-    void onProvisionSuccess();
-    void onProvisionFailure();
 
-    void error(const QString& msg);
+    void showError(const QString& msg);
 
 private:
     enum State
@@ -53,6 +59,7 @@ private:
     };
 
     void getProvisionReqts();
+    void acceptProvisionReqts();
     void changeState(State currentState);
     void setTitle(const QString title, const QString& subTitle);
     void setButtonCaptions(const QString& nextButtonCaption = "", const QString& backButtonCaption = "");
@@ -61,9 +68,16 @@ private:
     Ui::ConfigWizard* ui;
     State currentState;
     bool serverDetailsEnteredManually;
+    bool serverHasProvisioningReqts;
     QString serverUri;
     QString emailAddress;
     QString username;
+
+    EasEmailHandler* mailHandler;
+
+    // Tokens used when negotiating server provisioning requirements
+    gchar* tid;
+    gchar* tidStatus;
 };
 
 

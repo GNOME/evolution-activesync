@@ -18,12 +18,6 @@
 #include <QTimer>
 // User includes
 
-// TODO: MUSTN'T link to libeas directly: replace with a client-side API
-#include "../eas-daemon/libeas/eas-connection.h"
-#include "../libeasaccount/src/eas-account.h"
-#include "../libeasaccount/src/eas-account-list.h"
-#include "../libeasmail/src/libeasmail.h"
-
 
 extern ConfigWizard* theWizard;
 
@@ -55,7 +49,11 @@ void autoDiscoverCallback(char* server_uri, void* /*data*/, GError* /*error*/)
 ConfigWizard::ConfigWizard(QWidget *parent)
 : QDialog(parent),
   ui(new Ui::ConfigWizard),
-  serverDetailsEnteredManually(false)
+  serverDetailsEnteredManually(false),
+  serverHasProvisioningReqts(false),
+  mailHandler(0),
+  tid(0),
+  tidStatus(0)
 {
     ui->setupUi(this);
 
@@ -83,6 +81,8 @@ ConfigWizard::ConfigWizard(QWidget *parent)
  */
 ConfigWizard::~ConfigWizard()
 {
+    g_free(tid);
+    g_free(tidStatus);
     delete ui;
 }
 
@@ -104,7 +104,7 @@ void ConfigWizard::onNext()
         break;
 
     case ConfirmProvisionReqts:
-        changeState(Finish);
+        acceptProvisionReqts();
         break;
 
     case Finish:
@@ -136,7 +136,14 @@ void ConfigWizard::onBack()
         break;
 
     case Finish:
-        changeState(ConfirmProvisionReqts);
+        if (serverHasProvisioningReqts)
+        {
+            getProvisionReqts();
+        }
+        else
+        {
+            changeState(serverDetailsEnteredManually ? ManualServerDetails : AutoDiscoverDetails);
+        }
         break;
 
     default:
@@ -213,24 +220,6 @@ void ConfigWizard::onAutoDiscoverFailure()
 
 
 /**
- * Slot
- */
-void ConfigWizard::onProvisionFailure()
-{
-
-}
-
-
-/**
- * Slot
- */
-void ConfigWizard::onProvisionSuccess()
-{
-
-}
-
-
-/**
  * Slot: text in one of the auto-config inputs has changed
  */
 void ConfigWizard::validateAutoDiscoverInputs()
@@ -253,8 +242,6 @@ void ConfigWizard::validateManualServerInputs()
  */
 void ConfigWizard::changeState(ConfigWizard::State state)
 {
-    qDebug() << "Entering changeState";
-
     currentState = state;
 
     // Reset the button captions to defaults
@@ -310,18 +297,6 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         ui->wizard->setCurrentWidget(ui->pageConfirmRequirements);
         setTitle(tr("Confirm ActiveSync requirements"), tr("The server at <b>%1</b> requires you to accept the following features before continuing.").arg(ui->editServerUri->text().trimmed()));
         setButtonCaptions(tr("Accept"));
-
-        // TEMP
-        QStringList items;
-        items << tr("Remote wipe")
-              << tr("Disable all other POP and IMAP e-mail accounts on this device (and by the way, isn't this a long item?)")
-              << tr("Offer up first-born")
-              << tr("And another") << tr("And another") << tr("And another") << tr("And another")
-              << tr("And another") << tr("And another") << tr("And another") << tr("And another")
-              << tr("And another") << tr("And another") << tr("And another") << tr("And another")
-              << tr("And another") << tr("And another") << tr("And another") << tr("And another")
-              << tr("And another") << tr("And another");
-        ui->listRequirements->addItems(items);
         }
         break;
 
@@ -334,6 +309,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 
     case Error:
         ui->wizard->setCurrentWidget(ui->pageError);
+        ui->btnBack->setEnabled(false);
         setTitle(tr("Error"), tr("Sorry, something has gone wrong."));
         setButtonCaptions(tr("Quit"));
         break;
@@ -352,19 +328,30 @@ void ConfigWizard::getProvisionReqts()
     changeState(GettingProvisionReqts);
 
     GError* error = 0;
-    EasEmailHandler* mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
+
+    if (mailHandler != 0)
+    {
+        g_object_unref(mailHandler);
+        mailHandler = 0;
+    }
+
+    mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
     if (error)
     {
+        showError(QString(error->message));
         g_error_free(error);
         error = 0;
+        return;
     }
+
     if (mailHandler)
     {
         GSList* folderList = 0;
-        gboolean ret = eas_mail_handler_get_folder_list(mailHandler, true, &folderList, 0, &error);
-
-        // TODO: decide how to deal with this. Do we even need to call ...get_folder_list()?
-        // Will ...get_provision_list() on its own do?
+        if (eas_mail_handler_get_folder_list(mailHandler, true, &folderList, 0, &error))
+        {
+            // TODO: decide how to deal with this. Do we even need to call ...get_folder_list()?
+            // Will ...get_provision_list() on its own do?
+        }
 
         if (error)
         {
@@ -372,16 +359,78 @@ void ConfigWizard::getProvisionReqts()
             error = 0;
         }
 
+/*
+        GSList* reqtsList = 0;
+        if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &reqtsList, 0, &error)
+                && g_slist_length(reqtsList) > 0)
+        {
+            serverHasProvisioningReqts = true;
 
-        // TODO:
-        // eas_mail_handler_get_provision_list()...
+            // Ask the user to accept the provisioning requirements
+            ui->listRequirements->clear();
+            const int reqtsLength = g_slist_length(reqtsList);
+            for (int i = 0; i < reqtsLength; i++)
+            {
+                // TODO: when the API returns a proper list, insert its items
+                // into the list here...
+            }
+
+
+            changeState(ConfirmProvisionReqts);
+        }
+        else
+        {
+            // Skip the provisioning screen
+            changeState(Finish);
+        }
         // eas_mail_handler_accept_provision_list()...
+*/
 
-        g_object_unref(mailHandler);
+        // TEMP!!
+        QStringList reqtsStrList;
+        reqtsStrList << "Some requirements will go here" << "Honest" << "No really";
+        ui->listRequirements->clear();
+        ui->listRequirements->addItems(reqtsStrList);
+        changeState(ConfirmProvisionReqts);
     }
     else // mailHandler is null
     {
+        // TODO: showError()
         qWarning() << "Failed to construct create new EasEmailHandler in ConfigWizard::changeState()";
+    }
+}
+
+
+/**
+ * Inform the server the user has accepted the provisioning requirements
+ */
+void ConfigWizard::acceptProvisionReqts()
+{
+    if (mailHandler && tid && tidStatus)
+    {
+/*        GError* error = 0;
+        if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error))
+        {
+            changeState(Finish);
+        }
+        else
+        {
+            showError(tr("Failed to accept the server requirements."));
+        }*/
+    }
+
+    // TEMP!!
+    changeState(Finish);
+
+    // Tidy up any instantiated g-objects
+    g_free(tid);
+    tid = 0;
+    g_free(tidStatus);
+    tidStatus = 0;
+    if (mailHandler)
+    {
+        g_object_unref(mailHandler);
+        mailHandler = 0;
     }
 }
 
@@ -406,7 +455,7 @@ void ConfigWizard::setButtonCaptions(const QString& nextButtonCaption, const QSt
 }
 
 
-void ConfigWizard::error(const QString& msg)
+void ConfigWizard::showError(const QString& msg)
 {
     ui->lblErrorDetails->setText(msg);
     changeState(Error);

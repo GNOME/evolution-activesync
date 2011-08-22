@@ -49,6 +49,7 @@ QtActivesyncdConfig-build-desktop/
 *.orig
 *.bak
 *.pro.user
+*.in
 
 
 
