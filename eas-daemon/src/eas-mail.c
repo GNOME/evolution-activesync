@@ -283,7 +283,6 @@ eas_mail_delete_email (EasMail *easMailObj,
 	int index = 0;
 	const gchar* id = NULL;
 	EasDeleteReq *req = NULL;
-	GSList *item = NULL;
 
 	g_debug ("eas_mail_delete_email++");
 	g_assert (server_ids_array);
