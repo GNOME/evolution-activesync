@@ -139,9 +139,6 @@ static void
 eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-	EasMsgBaseClass* parent_class = EAS_MSG_BASE_CLASS (klass);
-	void *tmp = object_class;
-	tmp = parent_class;
 
 	g_debug ("eas_sync_folder_msg_class_init++");
 
@@ -150,7 +147,6 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 	object_class->finalize = eas_sync_folder_msg_finalize;
 	object_class->dispose = eas_sync_folder_msg_dispose;
 	g_debug ("eas_sync_folder_msg_class_init--");
-
 }
 
 
@@ -176,9 +172,7 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlDoc  *doc   = NULL;
-	xmlNode *node  = NULL,
-		 *child = NULL;
-	xmlNs   *ns    = NULL;
+	xmlNode *node  = NULL;
 
 	doc = xmlNewDoc ( (xmlChar *) "1.0");
 	node = xmlNewDocNode (doc, NULL, (xmlChar*) "FolderSync", NULL);
@@ -189,8 +183,8 @@ eas_sync_folder_msg_build_message (EasSyncFolderMsg* self)
 			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
 			    (xmlChar*) "http://www.microsoft.com/");
 
-	ns = xmlNewNs (node, (xmlChar *) "FolderHierarchy:", NULL);
-	child = xmlNewChild (node, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key);
+	xmlNewNs (node, (xmlChar *) "FolderHierarchy:", NULL);
+	xmlNewChild (node, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key);
 
 	return doc;
 }
