@@ -132,8 +132,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 {
 	EasSendEmailMsgPrivate *priv = self->priv;
 	xmlDoc  *doc   = NULL;
-	xmlNode *root  = NULL,
-		 *leaf = NULL;
+	xmlNode *root  = NULL;
 	gchar* base64data = NULL;
 
 	doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -148,8 +147,8 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 	// no namespaces required?
 	xmlNewNs (root, (xmlChar *) "ComposeMail:", NULL);
 
-	leaf = xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
-	leaf = xmlNewChild (root, NULL, (xmlChar *) "SaveInSentItems", NULL); // presence indicates true
+	xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
+	xmlNewChild (root, NULL, (xmlChar *) "SaveInSentItems", NULL); // presence indicates true
 
 	if (priv->mime_string)
 	{
@@ -161,7 +160,7 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 		priv->mime_string = NULL;
 
 		// TODO: we're potentially adding a HUGE string here. Is there a libxml2 limit (as there was for receive)?
-		leaf = xmlNewChild (root, NULL, (xmlChar *) "MIME", (xmlChar *) base64data);
+		xmlNewChild (root, NULL, (xmlChar *) "MIME", (xmlChar *) base64data);
 	}
 	else
 	{

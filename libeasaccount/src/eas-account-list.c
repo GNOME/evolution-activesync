@@ -514,7 +514,6 @@ void
 eas_account_list_save_account(EasAccountList *account_list,
 						EasAccount *account)
 {
-	gint uid_len;
 	gchar* uid =NULL;
 	
 	g_debug("eas_account_list_save_account++");
@@ -524,8 +523,6 @@ eas_account_list_save_account(EasAccountList *account_list,
 		g_warning("account must have a uid");
 		return;
 	}
-	
-	uid_len = strlen(uid);
 
 	if (eas_account_get_uri(account)){
 		gchar* serveruri_Key_path = NULL;
@@ -624,13 +621,11 @@ static void
 eas_account_list_save_account_from_info(EasAccountList *account_list,
 						EasAccountInfo *acc_info)
 {
-	gint uid_len;
 	gchar* uid =NULL;
 
 	g_debug("eas_account_list_save_account++");
 	
 	uid = acc_info->uid;
-	uid_len = strlen(uid);
 
 	if (acc_info->serverUri){
 		gchar* serveruri_Key_path = NULL;
@@ -790,7 +785,6 @@ void
 eas_account_list_save_item(EasAccountList *account_list,
 						EasAccount *account, eas_account_item_t type)
 {
-	gint uid_len;
 	gchar* uid =NULL;
 
 	g_debug("eas_account_list_save_item++");
@@ -798,7 +792,6 @@ eas_account_list_save_item(EasAccountList *account_list,
 	g_return_if_fail (eas_account_get_uid(account) != NULL);
 
 	uid = eas_account_get_uid(account);
-	uid_len = strlen(uid);
 	
 	switch (type) {
 	case EAS_ACCOUNT_SERVER_URI:

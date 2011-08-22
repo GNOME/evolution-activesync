@@ -225,7 +225,7 @@ static void try_send_email(gpointer data)
 
 static gboolean spawn_send_email_thread (gpointer data)
 {
-	sync_calls_thread = g_thread_create(try_send_email, data, TRUE, NULL);
+	sync_calls_thread = g_thread_create((GThreadFunc)try_send_email, data, TRUE, NULL);
 
 	return FALSE;	// run once (don't put back on mainloop again)
 }
@@ -242,7 +242,7 @@ static void testSendEmail (EasEmailHandler *email_handler,
 	progress_loop = g_main_loop_new (NULL, FALSE);
 	
 	// comment out if progress reports not desired:
-	progress_cb = test_email_request_progress_cb;
+	progress_cb = (EasProgressFn)test_email_request_progress_cb;
 
 	if(get_progress_updates)
 	{
@@ -279,9 +279,10 @@ static void setMockNegTestGoodHttp(const gchar *mockedfile)
 {
 	guint status_code = 200;
 	GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
+	const gchar *mocks[] = {mockedfile, 0};
+	EasTestHandler *test_handler = eas_test_handler_new ();
 	g_array_append_val(status_codes, status_code);
-    const gchar *mocks[] = {mockedfile, 0};
-    EasTestHandler *test_handler = eas_test_handler_new ();
+    
     if (test_handler)
     {
 		//eas_test_handler_add_mock_responses (test_handler, mocks, NULL);
@@ -302,7 +303,6 @@ START_TEST (test_eas_mail_handler_read_email_metadata)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -388,14 +388,14 @@ START_TEST (test_eas_mail_handler_update_email)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+ 
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;
-
+    gchar folder_sync_key_pre_update[64];
     // get a handle to the DBus interface
     testGetMailHandler (&email_handler, accountuid);
 
@@ -454,7 +454,7 @@ START_TEST (test_eas_mail_handler_update_email)
 		*/
 		
         // update the first mail in the folder
-		gchar folder_sync_key_pre_update[64];
+		
 		strcpy(folder_sync_key_pre_update, folder_sync_key);
 		
 		g_debug("folder sync key = %s (before eas_mail_handler_update_email)", folder_sync_key);
@@ -510,21 +510,8 @@ START_TEST (test_eas_mail_handler_update_email)
 
 }
 END_TEST
-
-void print_update(gpointer data, gpointer user_data)
-{
-	EasIdUpdate *update = data;
-	g_debug("update src id = %s", update->src_id);	
-	g_debug("update dst id = %s", update->dest_id);	
-	g_debug("update status = %s", update->status);	
-}
-void check_status(gpointer data, gpointer user_data)
-{
-	EasIdUpdate *update = data;
-	gchar* satus = user_data;
-	fail_if(g_strcmp0(update->status,user_data)!=0,"Not a valid status returned by the function ");
-
-}
+void print_update(gpointer  , gpointer  );
+void check_status(gpointer , gpointer );
 /*
  Move the first email in the inbox to a 'temp' folder (at same level as Inbox folder) 
 */
@@ -537,7 +524,7 @@ START_TEST (test_eas_mail_handler_move_to_folder)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
 	gchar temp_folder_sync_key[64] = "0";
@@ -702,7 +689,7 @@ START_TEST (test_get_init_eas_mail_sync_folder_hierarchy)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar sync_key[64] = "0";
+
     GError *error = NULL;
 
     // get a handle to the DBus interface and associate the account ID with
@@ -774,7 +761,7 @@ START_TEST (test_get_eas_mail_info_in_folder)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -824,7 +811,7 @@ START_TEST (test_get_eas_mail_info_in_inbox)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -869,7 +856,7 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -897,7 +884,7 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
 	                   "org.meego.activesyncd.SyncError.OBJECTNOTFOUND"),
 	        "Incorrect handling of invalid sync key");
 
-	g_debug(dbus_g_error_get_name(error));
+	g_debug("%s",dbus_g_error_get_name(error));
 
     //  free email objects in lists of email objects
     g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
@@ -962,7 +949,7 @@ static gboolean temp_func()
 
 static gboolean spawn_fetch_email_thread (gpointer data)
 {
-	sync_calls_thread = g_thread_create(try_fetch_email_body, data, TRUE, NULL);
+	sync_calls_thread = g_thread_create((GThreadFunc)try_fetch_email_body, data, TRUE, NULL);
 
 	//g_idle_add(temp_func, NULL);
 	
@@ -978,15 +965,18 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+   
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;
-//    EasFolder *folder = NULL;
     gboolean testMailFound = FALSE;
+    TryFetchBodyParams *fetch_params = g_new0 (TryFetchBodyParams, 1);
+//    EasFolder *folder = NULL;
+    
+    EasProgressFn progress_cb = (EasProgressFn)test_email_request_progress_cb;
 //    guint folderIndex;
 	progress_loop = g_main_loop_new (NULL, FALSE);	
 	
@@ -1018,7 +1008,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
     if (emails_created)
     {
         EasEmailInfo *email = NULL;
-        gboolean rtn = FALSE;
+        
         gchar *mime_directory = g_strconcat (getenv ("HOME"), "/mimeresponses/", NULL);
         gchar mime_file[256];
         FILE *hBody = NULL;
@@ -1054,9 +1044,9 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 
         mark_point();
 
-		EasProgressFn progress_cb = test_email_request_progress_cb;
+		
 
-		TryFetchBodyParams *fetch_params = g_new0 (TryFetchBodyParams, 1);
+		
 		fetch_params->email_handler = email_handler;
 		fetch_params->folder_id = g_inbox_id;
 		fetch_params->server_id = email->server_id;
@@ -1075,7 +1065,7 @@ START_TEST (test_eas_mail_handler_fetch_email_body)
 		
         g_free (mime_directory);
 
-        testMailFound = TRUE;
+        
         // if reported success check if body file exists
         hBody = fopen (mime_file, "r");
         fail_if (hBody == NULL, "email body file not created in specified directory");
@@ -1114,41 +1104,10 @@ struct _TryFetchAttachmentParams {
 	const gchar *mime_directory;	
 };
 
+
 typedef struct _TryFetchAttachmentParams TryFetchAttachmentParams;
-
-void try_fetch_email_attachment(gpointer data)
-{
-	TryFetchAttachmentParams *params = data;
-	gboolean rtn;
-
-	g_debug("call eas_mail_handler_fetch_email_attachment");
-	
-    rtn = eas_mail_handler_fetch_email_attachment (params->email_handler,
-                                                   params->file_reference,
-                                                   params->mime_directory,  
-                                                   params->progress_fn,
-                                                   params->progress_data,		
-                                                   params->error);	
-
-	g_debug("eas_mail_handler_fetch_email_attachment returned");
-	
-	if (!rtn)
-	{
-		fail_if(TRUE, "%s", (*params->error)->message);
-	}
-
-	g_free(params);
-	
-	return;
-}
-
-gboolean spawn_fetch_attachment_thread (gpointer data)
-{
-	sync_calls_thread = g_thread_create(try_fetch_email_attachment, data, TRUE, NULL);
-
-	return FALSE;	// run once (don't put back on mainloop again)
-}
-
+void try_fetch_email_attachment(gpointer );
+gboolean spawn_fetch_attachment_thread (gpointer );
 START_TEST (test_eas_mail_handler_fetch_email_attachments)
 {
     const gchar* accountuid = g_account_id;
@@ -1159,7 +1118,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -1173,6 +1132,8 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     EasEmailInfo *email = NULL;
     gint number_of_emails_created = 0;
     gint i = 0;
+    EasProgressFn progress_cb = NULL;
+    TryFetchAttachmentParams *fetch_params = g_new0 (TryFetchAttachmentParams, 1);
 	progress_loop = g_main_loop_new (NULL, FALSE);
 	
     // get a handle to the DBus interface and associate the account ID with
@@ -1217,7 +1178,7 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
     {
         EasAttachment *attachmentObj = NULL;
 //        gchar* file_reference = NULL;
-        gboolean rtn = FALSE;
+        
 
         mark_point();
         //Get all attachments for every email_created.
@@ -1264,14 +1225,14 @@ START_TEST (test_eas_mail_handler_fetch_email_attachments)
 
                 mark_point();
 
-				EasProgressFn progress_cb = NULL;
+				
 		
 				// comment out if progress reports not desired:
-				progress_cb = test_email_request_progress_cb;
+				progress_cb = (EasProgressFn)test_email_request_progress_cb;
 
-				TryFetchAttachmentParams *fetch_params = g_new0 (TryFetchAttachmentParams, 1);
+				
 				fetch_params->email_handler = email_handler;
-				fetch_params->file_reference = attachmentObj->file_reference;
+				fetch_params->file_reference = (gchar*)attachmentObj->file_reference;
 				fetch_params->mime_directory = mime_directory;
 				fetch_params->progress_fn = progress_cb;
 				fetch_params->progress_data = NULL;
@@ -1360,9 +1321,9 @@ static void try_sync_folder_email(gpointer data)
 {
 	TrySyncFolderEmailParams *params = data;
 	gboolean rtn;
-
+	EasEmailInfo *email = NULL;
 	g_debug("sync_folder_email with %s", params->sync_key_in);
-	g_debug("cancellable = %x", params->cancellable);
+	
 	//g_debug("short delay before doing sync folder request");
 	//g_usleep(50000);
 
@@ -1406,7 +1367,7 @@ static void try_sync_folder_email(gpointer data)
 	// TODO print out the server id of the first email to make sure it's sensible
 	fail_if(!params->emails_created, "need at least one email in the inbox for this test to pass");
 
-    EasEmailInfo *email = NULL;
+    
 
     // get email info for first email in the folder
     email = (g_slist_nth (*(params->emails_created), 0))->data;
@@ -1420,12 +1381,13 @@ cleanup:
 
 static gboolean spawn_sync_folder_email_thread (gpointer data)
 {
-	sync_calls_thread = g_thread_create(try_sync_folder_email, data, TRUE, NULL);
+	gboolean rtn = FALSE;	
+	sync_calls_thread = g_thread_create((GThreadFunc)try_sync_folder_email, data, TRUE, NULL);
 	
-	return FALSE;	// run once (don't put back on mainloop again)
+	return rtn;	// run once (don't put back on mainloop again)
 }	
 
-static try_cancel (gpointer data)
+static gboolean try_cancel (gpointer data)
 {
 	GCancellable *cancellable = data;
 
@@ -1444,14 +1406,23 @@ START_TEST (test_eas_mail_get_item_estimate)
     EasEmailHandler *email_handler = NULL;
 	GError *error = NULL;
     GSList *created = NULL;	// receives a list of folders
-	gchar hierarchy_sync_key[64] = "0";
+	
 	gchar folder_sync_key[64] = "0";
 	gchar* folder_sync_key_out = NULL;
 	gchar* folder_sync_key_out_2 = NULL;
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
-    gboolean more_available = FALSE;	
+    gboolean more_available = FALSE;
+    EasProgressFn progress_cb = (EasProgressFn)test_email_request_progress_cb;	
+    TrySyncFolderEmailParams *sync_params = g_new0 (TrySyncFolderEmailParams, 1);
+    EasEmailInfo *email = NULL;
+    	gboolean rtn = FALSE;
+   	GSList *change_emails = NULL;
+    	GSList *emails_created_2 = NULL; //receives a list of EasMails
+    	GSList *emails_updated_2 = NULL;
+    	GSList *emails_deleted_2 = NULL;
+	gchar* folder_sync_key_out_3 = NULL;
 	guint estimate = 0;
 	progress_loop = g_main_loop_new (NULL, FALSE);
 
@@ -1507,10 +1478,10 @@ START_TEST (test_eas_mail_get_item_estimate)
 	mark_point();
 
 	// sync with sync_key!=0, with progress updates
-	EasProgressFn progress_cb = test_email_request_progress_cb;	
+		
 
 	// set up params
-	TrySyncFolderEmailParams *sync_params = g_new0 (TrySyncFolderEmailParams, 1);
+	
 	sync_params->email_handler = email_handler;
 	sync_params->folder_id = g_inbox_id;
 	sync_params->sync_key_in = folder_sync_key_out;
@@ -1527,8 +1498,8 @@ START_TEST (test_eas_mail_get_item_estimate)
 	sync_params->progress_data = NULL;
 	sync_params->cancellable = NULL;	
 	sync_params->expect_cancelled = FALSE;
-
-	sync_params->error = &error;		
+	sync_params->error = &error;	
+		
 
 	// spawn a thread to make the synchronous call so this thread free to receive progress updates:
 	g_idle_add(spawn_sync_folder_email_thread, sync_params);	
@@ -1558,13 +1529,7 @@ START_TEST (test_eas_mail_get_item_estimate)
 	//fail_if(estimate != 0, "Expected estimate to be zero after second sync");
 
 	// use 2-way sync api to update the first mail in the folder
-	EasEmailInfo *email = NULL;
-    gboolean rtn = FALSE;
-    GSList *change_emails = NULL;
-    GSList *emails_created_2 = NULL; //receives a list of EasMails
-    GSList *emails_updated_2 = NULL;
-    GSList *emails_deleted_2 = NULL;
-	gchar* folder_sync_key_out_3 = NULL;
+	
 	
     // get email info for first email in the folder and see if it's been read
     email = (g_slist_nth (emails_created, 0))->data;
@@ -1605,7 +1570,6 @@ START_TEST (test_eas_mail_get_item_estimate)
         fail_if (rtn == FALSE, "%s", error->message);
     }
 
-	g_debug("");
 
 	mark_point();
 
@@ -1625,7 +1589,7 @@ START_TEST (test_eas_mail_cancel_sync)
     EasEmailHandler *email_handler = NULL;
 	GError *error = NULL;
     GSList *created = NULL;	// receives a list of folders
-	gchar hierarchy_sync_key[64] = "0";
+
 	gchar folder_sync_key[64] = "0";
 	gchar* folder_sync_key_out = NULL;
 	gchar* folder_sync_key_out_2 = NULL;
@@ -1633,10 +1597,14 @@ START_TEST (test_eas_mail_cancel_sync)
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
     gboolean more_available = FALSE;	
+    GCancellable *cancellable = NULL; 
+	EasProgressFn progress_cb;
+	TrySyncFolderEmailParams *sync_params;
 	guint estimate = 0;
+	guint items_in_inbox;
+	gchar *mime_file = g_strconcat (getenv ("HOME"), "/int07/testdata/mime_file.txt", NULL);
 	progress_loop = g_main_loop_new (NULL, FALSE);
-	GCancellable *cancellable = NULL; 
-
+	
 	g_type_init();	// must call before calling g_cancellable_new
 	g_thread_init (NULL);
 	cancellable = g_cancellable_new();	
@@ -1688,7 +1656,7 @@ START_TEST (test_eas_mail_cancel_sync)
 	}
 	g_debug("estimate = %d", estimate);	
 
-	guint items_in_inbox = estimate;
+	items_in_inbox = estimate;
 
 	// make sure we have 100 emails in the inbox so the sync request will take 
 	// long enough to allow us to cancel before it's done:
@@ -1700,7 +1668,6 @@ START_TEST (test_eas_mail_cancel_sync)
 		/* initialize random generator */
 		srand (time (NULL));
 		random_num = rand();
-		gchar *mime_file = g_strconcat (getenv ("HOME"), "/int07/testdata/mime_file.txt", NULL);
 		
 		g_debug("sending emails to fill up inbox");
 		for(i = 0; i < 10; i++)
@@ -1715,10 +1682,9 @@ START_TEST (test_eas_mail_cancel_sync)
 
 	g_debug("there should be at least 100 emails in inbox now");
 	// sync with new sync key, and cancel:
-	EasProgressFn progress_cb = test_email_request_progress_cb;	
-
+	 progress_cb = (EasProgressFn)test_email_request_progress_cb;	
 	// set up params
-	TrySyncFolderEmailParams *sync_params = g_new0 (TrySyncFolderEmailParams, 1);
+	sync_params = g_new0 (TrySyncFolderEmailParams, 1);
 	sync_params->email_handler = email_handler;
 	sync_params->folder_id = g_inbox_id;
 	sync_params->sync_key_in = folder_sync_key_out;
@@ -1766,7 +1732,6 @@ START_TEST (test_eas_mail_handler_delete_email)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
 	gchar *temp_sync_key;
@@ -1888,9 +1853,9 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
-    gchar folder_sync_key[64] = "0";
+    
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -1909,7 +1874,7 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
 	setMockNegTestGoodHttp("EmailListInvalidSyncKey.xml");
 
     // get the folder info for the inbox
-    GetFolderInfo_negativetests (email_handler, "wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -1946,7 +1911,7 @@ START_TEST (test_get_eas_mail_attachment_invalid_file_reference)
        setMockNegTestGoodHttp("EmailAttachmentInvalidFileReference.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_debug("error is %s",dbus_g_error_get_name(error));
        fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -1972,7 +1937,7 @@ START_TEST (test_get_eas_mail_delete_invalid_server_id)
        setMockNegTestGoodHttp("EmailDeleteInvalidServerId.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_debug("error is %s",dbus_g_error_get_name(error));
        fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -1990,7 +1955,7 @@ START_TEST (test_get_eas_mail_info_bad_folder_structure)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -2032,7 +1997,7 @@ START_TEST (test_get_eas_mail_info_invalid_folder)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -2094,7 +2059,7 @@ START_TEST (test_get_eas_mail_body_invalid_server_id)
        setMockNegTestGoodHttp("EmailBodyInvalidServerId.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_debug("error is %s",dbus_g_error_get_name(error));
        fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -2120,7 +2085,7 @@ START_TEST (test_get_eas_mail_attachment_invalid_mime_directory)
        setMockNegTestGoodHttp("EmailAttachmentInvalidMimeDirectory.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_debug("error is %s",dbus_g_error_get_name(error));
        fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -2146,7 +2111,7 @@ START_TEST (test_get_eas_mail_body_invalid_mime_directory)
        setMockNegTestGoodHttp("EmailBodyInvalidMimeDirectory.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (email_handler,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_debug("error is %s",dbus_g_error_get_name(error));
        fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -2164,7 +2129,7 @@ START_TEST (test_get_eas_mail_move_invalid_server_id)
        GError *error = NULL;
        GSList *updated_ids = NULL;
        GSList *server_ids = NULL;
-server_ids = g_slist_append(server_ids, "bad server id");
+server_ids = g_slist_append(server_ids, (gpointer)"bad server id");
        // get a handle to the DBus interface and associate the account ID with this object
        testGetMailHandler (&email_handler, accountuid);
 
@@ -2175,7 +2140,7 @@ server_ids = g_slist_append(server_ids, "bad server id");
        eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
       fail_if(error != NULL,"The server should not return error for this function call");
 
-	g_list_foreach(updated_ids,check_status,"1");
+	g_slist_foreach(updated_ids,check_status,(gpointer)"1");
        g_object_unref (email_handler);
 
 }
@@ -2187,7 +2152,7 @@ START_TEST (test_get_eas_mail_move_invalid_source_folder)
        GError *error = NULL;
        GSList *updated_ids = NULL;
        GSList *server_ids = NULL;
-server_ids = g_slist_append(server_ids, "bad server id");
+server_ids = g_slist_append(server_ids, (gpointer)"bad server id");
        // get a handle to the DBus interface and associate the account ID with this object
        testGetMailHandler (&email_handler, accountuid);
 
@@ -2198,7 +2163,7 @@ server_ids = g_slist_append(server_ids, "bad server id");
        eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
       fail_if(error != NULL,"The server should not return error for this function call");
 
-	g_list_foreach(updated_ids,check_status,"1");
+	g_slist_foreach(updated_ids,check_status,(gpointer)"1");
        g_object_unref (email_handler);
 
 }
@@ -2210,7 +2175,7 @@ START_TEST (test_get_eas_mail_move_invalid_destination_folder)
        GError *error = NULL;
        GSList *updated_ids = NULL;
        GSList *server_ids = NULL;
-server_ids = g_slist_append(server_ids, "bad server id");
+server_ids = g_slist_append(server_ids, (gpointer)"bad server id");
        // get a handle to the DBus interface and associate the account ID with this object
        testGetMailHandler (&email_handler, accountuid);
 
@@ -2221,7 +2186,7 @@ server_ids = g_slist_append(server_ids, "bad server id");
        eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
       fail_if(error != NULL,"The server should not return error for this function call");
 
-	g_list_foreach(updated_ids,check_status,"2");
+	g_slist_foreach(updated_ids,check_status,(gpointer)"2");
        g_object_unref (email_handler);
 
 }
@@ -2233,7 +2198,7 @@ START_TEST (test_get_eas_mail_move_same_source_destination)
        GError *error = NULL;
        GSList *updated_ids = NULL;
        GSList *server_ids = NULL;
-server_ids = g_slist_append(server_ids, "bad server id");
+server_ids = g_slist_append(server_ids, (gpointer)"bad server id");
        // get a handle to the DBus interface and associate the account ID with this object
        testGetMailHandler (&email_handler, accountuid);
 
@@ -2244,7 +2209,7 @@ server_ids = g_slist_append(server_ids, "bad server id");
        eas_mail_handler_move_to_folder (email_handler, server_ids,"mockTest","mockTest", &updated_ids, &error);               
       fail_if(error != NULL,"The server should not return error for this function call");
 
-	g_list_foreach(updated_ids,check_status,"4");
+	g_slist_foreach(updated_ids,check_status,(gpointer)"4");
        g_object_unref (email_handler);
 
 }
@@ -2254,9 +2219,9 @@ START_TEST (test_eas_mail_move_crash)
        const gchar* accountuid = g_account_id;
        EasEmailHandler *email_handler = NULL;
        GError *error = NULL;
-       GSList *updated_ids = NULL;
+       
        GSList *server_ids = NULL;
-server_ids = g_slist_append(server_ids, "bad server id");
+server_ids = g_slist_append(server_ids, (gpointer)"bad server id");
        // get a handle to the DBus interface and associate the account ID with this object
        testGetMailHandler (&email_handler, accountuid);
 
@@ -2287,7 +2252,7 @@ START_TEST (test_eas_mail_body_crash)
                                                  "mockTest", 
                                                  "mockTest",
                                                  "mockTest",
-                                                 "mockTest",
+                                               (EasProgressFn) "mockTest",
                                                  NULL,	
 		                                         NULL,
                                                  &error);
@@ -2312,7 +2277,7 @@ START_TEST (test_eas_mail_attachment_crash)
        setMockNegTestGoodHttp("EmailAttachmentCrash.xml");
 
        // mock Test
-       eas_mail_handler_fetch_email_attachment (NULL,"mockTest","mockTest","mockTest","mockTest",&error);
+       eas_mail_handler_fetch_email_attachment (NULL,"mockTest","mockTest",(EasProgressFn)"mockTest",(gpointer)"mockTest",&error);
        
        g_object_unref (email_handler);
 
@@ -2334,7 +2299,7 @@ START_TEST (test_eas_mail_delete_crash)
        setMockNegTestGoodHttp("EmailDeleteCrash.xml");
 
        // mock Test
-      eas_mail_handler_delete_email (email_handler, "mockTest","mockTest", NULL, NULL, &error); 
+      eas_mail_handler_delete_email (email_handler, (gchar *)"mockTest","mockTest", NULL, NULL, &error); 
        g_object_unref (email_handler);
 
 }
@@ -2349,7 +2314,7 @@ START_TEST (test_eas_mail_get_crash)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
     gchar folder_sync_key[64] = "0";
     GSList *emails_created = NULL; //receives a list of EasMails
@@ -2377,7 +2342,7 @@ START_TEST (test_eas_mail_get_crash)
 	                   "org.meego.activesyncd.SyncError.OBJECTNOTFOUND"),
 	        "Incorrect handling of invalid sync key");
 
-	g_debug(dbus_g_error_get_name(error));
+	g_debug("%s",dbus_g_error_get_name(error));
 
     //  free email objects in lists of email objects
     g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
@@ -2403,9 +2368,9 @@ START_TEST (test_consume_response)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    gchar folder_hierarchy_sync_key[64] = "0";
+    
     GError *error = NULL;
-    gchar folder_sync_key[64] = "0";
+    
     GSList *emails_created = NULL; //receives a list of EasMails
     GSList *emails_updated = NULL;
     GSList *emails_deleted = NULL;
@@ -2422,7 +2387,7 @@ START_TEST (test_consume_response)
 
 
     // get the folder info for the inbox
-    GetFolderInfo_negativetests (email_handler, "wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -2556,4 +2521,53 @@ Suite* eas_libeasmail_suite (void)
 
     return s;
 }
+
+void print_update(gpointer data, gpointer user_data)
+{
+	EasIdUpdate *update = data;
+	g_debug("update src id = %s", update->src_id);	
+	g_debug("update dst id = %s", update->dest_id);	
+	g_debug("update status = %s", update->status);	
+}
+
+void check_status(gpointer data, gpointer user_data)
+{
+	EasIdUpdate *update = data;
+
+	fail_if(g_strcmp0(update->status,user_data)!=0,"Not a valid status returned by the function ");
+
+}
+void try_fetch_email_attachment(gpointer data)
+{
+	TryFetchAttachmentParams *params = data;
+	gboolean rtn;
+
+	g_debug("call eas_mail_handler_fetch_email_attachment");
+	
+    rtn = eas_mail_handler_fetch_email_attachment (params->email_handler,
+                                                   params->file_reference,
+                                                   params->mime_directory,  
+                                                   params->progress_fn,
+                                                   params->progress_data,		
+                                                   params->error);	
+
+	g_debug("eas_mail_handler_fetch_email_attachment returned");
+	
+	if (!rtn)
+	{
+		fail_if(TRUE, "%s", (*params->error)->message);
+	}
+
+	g_free(params);
+	
+	return;
+}
+
+gboolean spawn_fetch_attachment_thread (gpointer data)
+{
+	sync_calls_thread = g_thread_create((GThreadFunc)try_fetch_email_attachment, data, TRUE, NULL);
+	return FALSE;	// run once (don't put back on mainloop again)
+}
+
+
 
