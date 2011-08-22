@@ -18,34 +18,36 @@
 //   Input Vcard file it shoulde use UTF-8 with CR+LF format   //
 //   To do that, you can use on linux  Leafpad 0.8.17          //
 //-------------------------------------------------------------//
-
-void test_info_translator_parse_request(const char* vCardName,const char* xmlName)
+Suite* eas_con_info_translator_suite (void);
+static void test_info_translator_parse_request(const char* vCardName,const char* xmlName)
 {
-
-        g_type_init();
+      
   //region init variable
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
 	FILE *fr,*fw;
 	gchar temp[]="3:1";
 	gchar* serv=temp;
-	gchar* res = NULL;
 	long lSize1,lSize2,lSize3;
 	gchar * buffer1=NULL;
 	gchar * buffer2=NULL;
 	gchar* 	buffer3=NULL;
+	gchar *ptr= NULL;
+	long size;
+	gchar *buf;
 	struct stat stFileInfo;
 	EasItemInfo* conInfo = NULL;
+	size_t readResult;
+
+ 	g_type_init();
 	conInfo = eas_item_info_new();
 	conInfo->server_id = serv;
 //endregion
 //check the VCard file, did the VCard file exists
-	gchar *ptr= NULL;
-	long size;
-	gchar *buf;
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
+	 
 	fail_if(!stat(g_strconcat (ptr, "/TestData/Con_Info_Translator/_Request/VCard_Data/",vCardName,NULL),&stFileInfo)==0,"The test file from VCard_Data folder does not exist,Please check your VCard_Data folder.(check_tests/TestData/Con_Info_Translator/_Request/VCard_Data");
 //end checking
 
@@ -56,8 +58,9 @@ void test_info_translator_parse_request(const char* vCardName,const char* xmlNam
 	lSize1 = ftell (fr);
 	rewind (fr);
 	buffer1 = (gchar*) malloc (sizeof(gchar)*lSize1 + 1);
-	fread (buffer1,sizeof(gchar),lSize1,fr);
-	buffer1[lSize1]=NULL;
+	readResult = fread (buffer1,sizeof(gchar),lSize1,fr);
+	fail_if(readResult==0);
+	buffer1[lSize1]='\0';
 	conInfo->data = buffer1;
 	fclose (fr);
 //end Loading
@@ -87,8 +90,9 @@ fr = fopen(g_strconcat (ptr, "/TestData/Con_Info_Translator/_Request/XML_Data/te
 	lSize2 = ftell (fr);
 	rewind (fr);
 	buffer2 = (gchar*) malloc (sizeof(gchar)*lSize2 + 1);
-	fread (buffer2,sizeof(gchar),lSize2,fr);
-	buffer2[lSize2]=NULL;
+	readResult = fread (buffer2,sizeof(gchar),lSize2,fr);
+	fail_if(readResult==0);
+	buffer2[lSize2]='\0';
 	fclose (fr);
 	remove(g_strconcat (ptr, "/TestData/Con_Info_Translator/_Request/XML_Data/temp.txt",NULL)); //Delete the temporary File temp.txt
 //end Loading Translation
@@ -100,8 +104,9 @@ fr = fopen(g_strconcat (ptr, "/TestData/Con_Info_Translator/_Request/XML_Data/",
 	lSize3 = ftell (fr);
 	rewind (fr);
 	buffer3 = (gchar*) malloc (sizeof(gchar)*lSize3 + 1);
-	fread (buffer3,sizeof(gchar),lSize3,fr);
-	buffer3[lSize3]=NULL;
+	readResult = fread (buffer3,sizeof(gchar),lSize3,fr);
+	fail_if(readResult==0);
+	buffer3[lSize3]='\0';
 	
 	fclose (fr);
 //end Loading XML Data
@@ -293,7 +298,7 @@ START_TEST (test_info_translator_parse_response_note)
 test_info_translator_parse_response("VCard_info_translator_parse_response_note.txt","_XML_info_translator_parse_response_note.xml");
 }
 END_TEST
-
+ 
 Suite* eas_con_info_translator_suite (void)
 {
     Suite* s = suite_create ("con_info_translator");
