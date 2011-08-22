@@ -12,6 +12,7 @@ QtActivesyncdConfig_LDADD    = $(QT_LIBS) $(LDADD) ../libeasaccount/src/libeasac
 
 # NO NO NO NO NO! Nothing but the dæmon may use libeas directly!
 QtActivesyncdConfig_LDADD   += $(QT_LIBS) $(LDADD) ../eas-daemon/libeas/libeas.la
+QtActivesyncdConfig_LDADD   += $(QT_LIBS) $(LDADD) ../libeasmail/src/.libs/libeasmail.la
 
 
 BUILT_SOURCES = ConfigWizard.moc.cpp ConfigWizard.ui.h

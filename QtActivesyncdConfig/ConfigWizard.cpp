@@ -108,7 +108,7 @@ void ConfigWizard::onNext()
         break;
 
     case Finish:
-        // TODO: apply settings
+    case Error:
         QApplication::quit();
         break;
 
@@ -310,7 +310,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
     case Error:
         ui->wizard->setCurrentWidget(ui->pageError);
         ui->btnBack->setEnabled(false);
-        setTitle(tr("Error"), tr("Sorry, something has gone wrong."));
+        setTitle(tr("Error"), tr("Sorry, something has gone wrong. See below for details."));
         setButtonCaptions(tr("Quit"));
         break;
 
@@ -329,11 +329,23 @@ void ConfigWizard::getProvisionReqts()
 
     GError* error = 0;
 
-    if (mailHandler != 0)
+    // Prepare member variable
+    if (mailHandler)
     {
         g_object_unref(mailHandler);
         mailHandler = 0;
     }
+    if (tid)
+    {
+        g_free(tid);
+        tid = 0;
+    }
+    if (tidStatus)
+    {
+        g_free(tidStatus);
+        tidStatus = 0;
+    }
+
 
     mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
     if (error)
@@ -352,17 +364,16 @@ void ConfigWizard::getProvisionReqts()
             // TODO: decide how to deal with this. Do we even need to call ...get_folder_list()?
             // Will ...get_provision_list() on its own do?
         }
-
         if (error)
         {
             g_error_free(error);
             error = 0;
         }
 
-/*
         GSList* reqtsList = 0;
         if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &reqtsList, 0, &error)
-                && g_slist_length(reqtsList) > 0)
+            && (error == 0)
+            && (g_slist_length(reqtsList) > 0))
         {
             serverHasProvisioningReqts = true;
 
@@ -378,25 +389,31 @@ void ConfigWizard::getProvisionReqts()
 
             changeState(ConfirmProvisionReqts);
         }
-        else
+        else if (error != 0)
+        {
+            showError(QString(error->message));
+            g_error_free(error);
+            return;
+        }
+        else // It returned OK but server didn't return any provisioning requirements
         {
             // Skip the provisioning screen
             changeState(Finish);
         }
-        // eas_mail_handler_accept_provision_list()...
-*/
 
+/*
         // TEMP!!
         QStringList reqtsStrList;
         reqtsStrList << "Some requirements will go here" << "Honest" << "No really";
         ui->listRequirements->clear();
         ui->listRequirements->addItems(reqtsStrList);
         changeState(ConfirmProvisionReqts);
+        */
     }
     else // mailHandler is null
     {
-        // TODO: showError()
-        qWarning() << "Failed to construct create new EasEmailHandler in ConfigWizard::changeState()";
+        showError("Failed to construct new EasEmailHandler in ConfigWizard::changeState()");
+        return;
     }
 }
 
@@ -408,19 +425,19 @@ void ConfigWizard::acceptProvisionReqts()
 {
     if (mailHandler && tid && tidStatus)
     {
-/*        GError* error = 0;
-        if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error))
+        GError* error = 0;
+        if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error) && (error == 0))
         {
             changeState(Finish);
         }
         else
         {
             showError(tr("Failed to accept the server requirements."));
-        }*/
+        }
     }
 
     // TEMP!!
-    changeState(Finish);
+//    changeState(Finish);
 
     // Tidy up any instantiated g-objects
     g_free(tid);

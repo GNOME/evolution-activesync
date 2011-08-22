@@ -22,7 +22,7 @@ CONFIG   += no_keywords
 
 TARGET = QtActivesyncdConfig
 TEMPLATE = app
-CONFIG += link_pkgconfig no_keywords
+CONFIG += link_pkgconfig
 
 SOURCES += main.cpp\
         ConfigWizard.cpp
@@ -36,7 +36,8 @@ FORMS    += ConfigWizard.ui
 PKGCONFIG += glib-2.0 libxml-2.0 libedataserver-1.2 gconf-2.0
 
 # Remember to add any new libraries to Makefile.am too
-LIBS +=         -L../eas-daemon/libeas -leas -Wl,-rpath -Wl,$(PWD)/../eas-daemon/libeas/.libs
+LIBS += -L../eas-daemon/libeas -leas -Wl,-rpath -Wl,$(PWD)/../eas-daemon/libeas/.libs
+LIBS += -L../libeasmail/src/.libs -leasmail -Wl,-rpath -Wl,$(PWD)/../libeasmail/src/.libs
 
 OTHER_FILES += \
     readme.txt \
