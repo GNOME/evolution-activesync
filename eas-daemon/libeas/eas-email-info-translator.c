@@ -400,16 +400,15 @@ eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNode *ap
 		ret = FALSE;
 	} else {
 		// Note that the only fields it's valid to update are flags and categories!
-		xmlNode *leaf;
 
 		// flags
 		if (email_info->flags & EAS_VALID_READ) {
 			if (email_info->flags & EAS_EMAIL_READ) {
 				g_debug ("setting Read to 1");
-				leaf = xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "1");
+				xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "1");
 			} else {
 				g_debug ("setting Read to 0");
-				leaf = xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "0");
+				xmlNewChild (app_data, NULL, (xmlChar *) "Read", (xmlChar*) "0");
 			}
 		}
 		if(email_info->categories)
