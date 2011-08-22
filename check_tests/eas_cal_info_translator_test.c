@@ -20,6 +20,7 @@
 //   To do that, you can use on linux  Leafpad 0.8.17          //
 //-------------------------------------------------------------//
 
+Suite* eas_cal_info_translator_suite (void);
 
 static void test_eas_cal_info_translator_parse_request(const char* vCalendarName,const char* xmlName)
 {
