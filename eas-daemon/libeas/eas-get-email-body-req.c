@@ -445,7 +445,7 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 				{
 					g_debug ("  GotChunk - MIME Data, Don't accumulate, write straight to file");
 					eas_get_email_msg_write_chunk_to_file(priv->emailBodyMsg,
-					                                      chunk->data, 
+					                                      (const guchar *)chunk->data, 
 							                      chunk->length);
 				}
 			}
