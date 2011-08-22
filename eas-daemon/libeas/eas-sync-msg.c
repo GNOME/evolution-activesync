@@ -164,7 +164,6 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 		  *collection = NULL,
 		   *options = NULL,
 		    *body_pref = NULL;
-	xmlNs   *ns    = NULL;
 	gchar filter[2] = "0";
 	GSList * iterator;
 
@@ -179,7 +178,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
 			    (xmlChar*) "http://www.microsoft.com/");
 
-	ns = xmlNewNs (node, (xmlChar *) "AirSync:", NULL);
+	xmlNewNs (node, (xmlChar *) "AirSync:", NULL);
 	xmlNewNs (node, (xmlChar *) "AirSyncBase:", (xmlChar *) "airsyncbase");
 	child = xmlNewChild (node, NULL, (xmlChar *) "Collections", NULL);
 	collection = xmlNewChild (child, NULL, (xmlChar *) "Collection", NULL);
