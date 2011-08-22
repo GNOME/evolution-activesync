@@ -1011,14 +1011,14 @@ eas_account_list_remove (EasAccountList *account_list,
  *
  * Returns: The account or %NULL if it doesn't exist.
  **/
-const EasAccount *
+EasAccount *
 eas_account_list_find (EasAccountList *account_list,
                      eas_account_find_t type,
                      const gchar *key)
 {
 
 	EIterator *it;
-	const EasAccount *account = NULL;
+	EasAccount *account = NULL;
 	g_debug("eas_account_list_find++");
 
 	if (!key)
@@ -1029,7 +1029,7 @@ eas_account_list_find (EasAccountList *account_list,
 	     e_iterator_next (it)) {
 		gint found = 0;
 
-		account = (const EasAccount *)e_iterator_get (it);
+		account = (EasAccount *)e_iterator_get (it);
 
 		switch (type) {
 		case EAS_ACCOUNT_FIND_ACCOUNT_UID:

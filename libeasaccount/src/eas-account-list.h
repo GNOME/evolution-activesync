@@ -113,7 +113,7 @@ void		eas_account_list_change		(EasAccountList *account_list,
 						 EasAccount *account);
 void		eas_account_list_remove		(EasAccountList *account_list,
 						 EasAccount *account);
-const EasAccount *eas_account_list_find		(EasAccountList *account_list,
+EasAccount *eas_account_list_find		(EasAccountList *account_list,
 						 eas_account_find_t type,
 						 const gchar *key);
 

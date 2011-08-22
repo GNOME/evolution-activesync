@@ -203,7 +203,7 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 	EasSyncFolderMsgPrivate *priv = self->priv;
 	xmlNode *node = NULL;
 	EasError error_details;
-	const EasAccount * acc = NULL;
+	EasAccount * acc = NULL;
 	EasAccountList *account_list = NULL;
 	GConfClient* client = NULL;
 
