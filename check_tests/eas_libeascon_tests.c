@@ -3,6 +3,8 @@
 #include <string.h>
 #include <check.h>
 #include <glib.h>
+#include <dbus/dbus-glib.h>
+#include <unistd.h>
 
 #include "eas_test_user.h"
 
