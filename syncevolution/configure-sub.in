@@ -1,7 +1,7 @@
 dnl -*- mode: Autoconf; -*-
 dnl Invoke autogen.sh to produce a configure script.
 
-PKG_CHECK_MODULES(EASSYNC, activesync, ACTIVESYNCFOUND=yes, [ACTIVESYNCFOUND=no])
+PKG_CHECK_MODULES(EASSYNC, libeassync, ACTIVESYNCFOUND=yes, [ACTIVESYNCFOUND=no])
 BACKEND_CPPFLAGS="$BACKEND_CPPFLAGS $EASSYNC_CFLAGS"
 
 AC_ARG_ENABLE_BACKEND(activesync, activesync,

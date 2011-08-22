@@ -27,11 +27,25 @@
 #define EAS_SYNC_H
 
 #include <glib-object.h>
-#include "../../eas-daemon/libeas/eas-request-base.h"
 #include "eas-item-info.h"
 
 
 G_BEGIN_DECLS
+
+typedef enum {
+	EAS_ITEM_NOT_SPECIFIED = 0,
+	EAS_ITEM_FOLDER,
+	EAS_ITEM_MAIL,
+	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
+	EAS_ITEM_CONTACT,     /**< vCard 3.0 contact */
+	EAS_ITEM_TODO,        /**< iCalendar 2.0 VTODO */
+	EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
+
+	// Add other items here
+
+	EAS_ITEM_LAST
+} EasItemType;
+
 
 #define EAS_TYPE_SYNC_HANDLER             (eas_sync_handler_get_type ())
 #define EAS_SYNC_HANDLER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), EAS_TYPE_SYNC_HANDLER, EasSyncHandler))

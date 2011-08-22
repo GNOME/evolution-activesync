@@ -61,6 +61,7 @@
 #include <string.h>
 #include "../src/eas-interface-base.h"
 #include "../src/eas-mail.h"
+#include "../../libeassync/src/libeassync.h"
 
 G_BEGIN_DECLS
 
@@ -112,20 +113,6 @@ typedef enum {
 
 	EAS_REQ_LAST
 } EasRequestType;
-
-typedef enum {
-	EAS_ITEM_NOT_SPECIFIED = 0,
-	EAS_ITEM_FOLDER,
-	EAS_ITEM_MAIL,
-	EAS_ITEM_CALENDAR,    /**< iCalendar 2.0 VEVENT */
-	EAS_ITEM_CONTACT,     /**< vCard 3.0 contact */
-	EAS_ITEM_TODO,        /**< iCalendar 2.0 VTODO */
-	EAS_ITEM_JOURNAL,     /**< iCalendar 2.0 VJOURNAL */
-
-	// Add other items here
-
-	EAS_ITEM_LAST
-} EasItemType;
 
 GType eas_request_base_get_type (void) G_GNUC_CONST;
 
