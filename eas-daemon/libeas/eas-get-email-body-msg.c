@@ -358,7 +358,7 @@ eas_get_email_body_msg_parse_response (EasGetEmailBodyMsg* self, xmlDoc *doc, GE
 		g_debug ("calendar parsing");
 		priv->item = eas_cal_info_translator_parse_response (node, g_strdup (priv->serverUid));
 		g_debug ("calinfo = %s", priv->item);
-	} else if (!g_strcmp0 (class, "Contact")) {
+	} else if (!g_strcmp0 (class, "Contacts")) {
 		g_debug ("contact parsing");
 		priv->item = eas_con_info_translator_parse_response (node, g_strdup (priv->serverUid));
 	}
