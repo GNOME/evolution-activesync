@@ -12,8 +12,8 @@
 #include "../libeassync/src/eas-item-info.h"
 #include "../eas-daemon/libeas/eas-con-info-translator.h"
  #include "../libeastest/src/libeastest.h"
-gchar * g_account_id = TEST_ACCOUNT_ID;
-
+gchar * g_account_id = (gchar *)TEST_ACCOUNT_ID;
+Suite* eas_libeascon_suite (void);
 const char* TEST_VCARD_FROM_EVO = "BEGIN:VCARD\n\
 VERSION:3.0\n\
 LABEL;TYPE=OTHER:myOtherAddress \nmyOtherCity, myOtherState\nmyOtherZip\nm\
@@ -210,9 +210,9 @@ static void setMockNegTestGoodHttp(const gchar *mockedfile)
 {
 	guint status_code = 200;
 	GArray *status_codes = g_array_new(FALSE, FALSE, sizeof(guint));
-	g_array_append_val(status_codes, status_code);
     const gchar *mocks[] = {mockedfile, 0};
     EasTestHandler *test_handler = eas_test_handler_new ();
+    g_array_append_val(status_codes, status_code);
     if (test_handler)
     {
 		//eas_test_handler_add_mock_responses (test_handler, mocks, NULL);
@@ -244,8 +244,8 @@ static void testGetLatestContacts (EasSyncHandler *sync_handler,
                                    GError **error)
 {
     gboolean ret = FALSE;
+    gboolean more = FALSE;
     mark_point();
-	gboolean more = FALSE;
     ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CONTACT, NULL,
                                                 & (*created),
                                                 & (*updated),
@@ -274,8 +274,8 @@ static void negativeTestGetLatestContacts (EasSyncHandler *sync_handler,
                                    GError **error)
 {
     gboolean ret = FALSE;
+    gboolean more = FALSE;
     mark_point();
-	gboolean more = FALSE;
     ret  = eas_sync_handler_get_items (sync_handler, sync_key_in, sync_key_out, EAS_ITEM_CONTACT, NULL,
                                                 & (*created),
                                                 & (*updated),
@@ -298,16 +298,19 @@ START_TEST (test_eas_sync_handler_add_con)
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
     gboolean testCalFound = FALSE;
-
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
-    gchar* folder_sync_key_in = NULL;
+     gchar* folder_sync_key_in = NULL;
 	gchar* folder_sync_key_out = NULL;
     GSList *calitems_created = NULL; 
     GSList *calitems_updated = NULL;
     GSList *calitems_deleted = NULL;
+    GSList *calitemToUpdate = NULL;
+    EasItemInfo *updatedcalitem = NULL;
+    gboolean rtn = FALSE;
+    gchar *random_uid = random_uid_new();
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
 
     testGetLatestContacts (sync_handler,
                            folder_sync_key_in,
@@ -317,14 +320,11 @@ START_TEST (test_eas_sync_handler_add_con)
                            &calitems_deleted,
                            &error);
 
-    GSList *calitemToUpdate = NULL;
-    EasItemInfo *updatedcalitem = NULL;
-    gboolean rtn = FALSE;
-    gchar *random_uid = random_uid_new();
+    
 
     updatedcalitem = eas_item_info_new();
     updatedcalitem->client_id = random_uid; // Pass ownership
-    updatedcalitem->data = g_strdup_printf(TEST_VCARD_FROM_EVO, random_uid);//TEST_VCARD
+    updatedcalitem->data = g_strdup_printf("%s%s",TEST_VCARD_FROM_EVO, random_uid);//TEST_VCARD
 
     g_debug("Random UID:     [%s]", random_uid);
     g_debug("TEST_VCARD_FROM_EVO	     [%s]", updatedcalitem->data);
@@ -338,7 +338,7 @@ START_TEST (test_eas_sync_handler_add_con)
 
     rtn = eas_sync_handler_add_items (sync_handler,
                                       folder_sync_key_in,
-                                      folder_sync_key_out,
+                                      (gchar**)&folder_sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       calitemToUpdate,
@@ -374,11 +374,6 @@ START_TEST (test_get_latest_contacts_items)
     // that the daemon uses
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
-
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -390,6 +385,11 @@ START_TEST (test_get_latest_contacts_items)
 	gchar* sync_key_out = NULL;
 
     GError *error = NULL;
+
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
 
     mark_point();
     // call into the daemon to get the folder hierarchy from the exchange server
@@ -412,12 +412,14 @@ END_TEST
 START_TEST (test_translate_vcard_to_xml)
 {
 	EasItemInfo contactInfo;// = eas_cal_info_new();
-    contactInfo.data = TEST_VCARD_FROM_EVO;
-    contactInfo.server_id = "1.0 (test value)";
+	xmlDocPtr doc;
+	xmlNodePtr node;
+    contactInfo.data = (gchar*)TEST_VCARD_FROM_EVO;
+    contactInfo.server_id = (gchar*)"1.0 (test value)";
 
-    xmlDocPtr doc = xmlNewDoc ("1.0");
-    doc->children = xmlNewDocNode (doc, NULL, "temp_root", NULL);
-    xmlNodePtr node = xmlNewChild (doc->children, NULL, "ApplicationData", NULL);
+    doc = xmlNewDoc ((xmlChar*)"1.0");
+    doc->children = xmlNewDocNode (doc, NULL, (xmlChar*)"temp_root", NULL);
+    node = xmlNewChild (doc->children, NULL, (xmlChar*)"ApplicationData", NULL);
 
     fail_if (!eas_con_info_translator_parse_request (doc, node, &contactInfo),
              "Calendar translation failed (iCal => XML)");
@@ -432,17 +434,18 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
 	const char* accountuid = g_account_id;
 	EasSyncHandler *sync_handler = NULL;
 	GError *error = NULL;
-
-	// get a handle to the DBus interface and associate the account ID with
-	// this object
-	testGetContactsHandler (&sync_handler, accountuid);
-
 	gchar* folder_sync_key_in = NULL;
 	gchar* folder_sync_key_out = NULL;
 	GSList *contactitems_created = NULL, *l = NULL;
 	GSList *contactitems_updated = NULL;
 	GSList *contactitems_deleted = NULL;
+	GSList *conitemToDel = NULL;
+	EasItemInfo *conitem = NULL;
+	// get a handle to the DBus interface and associate the account ID with
+	// this object
+	testGetContactsHandler (&sync_handler, accountuid);
 
+	
 	testGetLatestContacts (sync_handler,
 		                   folder_sync_key_in,
 		                   &folder_sync_key_out,
@@ -459,8 +462,6 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
     g_slist_free (contactitems_deleted); contactitems_deleted = NULL;
     g_slist_free (contactitems_updated); contactitems_updated = NULL;
 
-	GSList *conitemToDel = NULL;
-	EasItemInfo *conitem = NULL;
 	
 	for(l= contactitems_created; l ; l= l->next){
 		conitem = l->data;
@@ -476,7 +477,7 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
 		
 		// delete all contacts items in the folder
 		rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in,
-				                             folder_sync_key_out,
+				                             (gchar**)&folder_sync_key_out,
 				                             EAS_ITEM_CONTACT, NULL,
 				                             conitemToDel,
 				                             &error);
@@ -510,17 +511,21 @@ START_TEST (test_eas_sync_handler_update_con)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
     GError *error = NULL;
-    gboolean testCalFound = FALSE;
+
 
     // get a handle to the DBus interface and associate the account ID with
     // this object
-    testGetContactsHandler (&sync_handler, accountuid);
 
     gchar* folder_sync_key_in = NULL;
 	gchar* folder_sync_key_out = NULL;
 	GSList *contactitems_created = NULL, *l = NULL;
 	GSList *contactitems_updated = NULL;
 	GSList *contactitems_deleted = NULL;
+	GSList *conItemToUpdate = NULL;
+	EasItemInfo *conItem = NULL;
+	EasItemInfo *updatedConItem = NULL;
+
+        testGetContactsHandler (&sync_handler, accountuid);
 
 	testGetLatestContacts (sync_handler,
 		                   folder_sync_key_in,
@@ -538,9 +543,6 @@ START_TEST (test_eas_sync_handler_update_con)
     g_slist_free (contactitems_deleted); contactitems_deleted = NULL;
     g_slist_free (contactitems_updated); contactitems_updated = NULL;
 
-	GSList *conItemToUpdate = NULL;
-	EasItemInfo *conItem = NULL;
-	EasItemInfo *updatedConItem = NULL;
 	
 	for(l= contactitems_created; l ; l= l->next){
 		conItem = l->data;
@@ -561,7 +563,7 @@ START_TEST (test_eas_sync_handler_update_con)
 		// update all contacts items in the folder
         rtn = eas_sync_handler_update_items (sync_handler,
                                              folder_sync_key_in,
-                                             folder_sync_key_out,
+                                             (gchar**)&folder_sync_key_out,
                                              EAS_ITEM_CONTACT,
                                              NULL,
                                              conItemToUpdate,
@@ -596,10 +598,7 @@ START_TEST (test_con_get_invalid_sync_key)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
+  
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -612,12 +611,16 @@ START_TEST (test_con_get_invalid_sync_key)
 
     GError *error = NULL;
 
+  // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactGetInvalidSyncKey.xml");
    // mock Test
 	negativeTestGetLatestContacts (sync_handler,
-		                   "wrong",
+		                   (gchar*)"wrong",
 		                   &sync_key_out,
 		                   &created,
 		                   &updated,
@@ -649,10 +652,7 @@ START_TEST (test_con_add_invalid_sync_key)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
+    
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -665,13 +665,17 @@ START_TEST (test_con_add_invalid_sync_key)
 
     GError *error = NULL;
 
+// get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactAddInvalidSyncKey.xml");
    // mock Test
 	   rtn = eas_sync_handler_add_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -701,9 +705,7 @@ START_TEST (test_con_delete_invalid_sync_key)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+  
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -717,13 +719,17 @@ START_TEST (test_con_delete_invalid_sync_key)
 
     GError *error = NULL;
 
+  // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactDeleteinvalidSyncKey.xml");
    // mock Test
 	   rtn = eas_sync_handler_delete_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -753,9 +759,6 @@ START_TEST (test_con_delete_invalid_server_id)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -769,13 +772,17 @@ START_TEST (test_con_delete_invalid_server_id)
 
     GError *error = NULL;
 
+    // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactDeleteInvalidServerId.xml");
    // mock Test
 	   rtn = eas_sync_handler_delete_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -803,10 +810,7 @@ START_TEST (test_con_delete_valid_invalid_server_id)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
+   
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -819,13 +823,16 @@ START_TEST (test_con_delete_valid_invalid_server_id)
 
     GError *error = NULL;
 
+// get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactDeleteValidInvalidServerId.xml");
    // mock Test
 	   rtn = eas_sync_handler_delete_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -853,9 +860,7 @@ START_TEST (test_con_delete_valid_calendar_server_id)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+    
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -868,6 +873,9 @@ START_TEST (test_con_delete_valid_calendar_server_id)
 	gchar* sync_key_out = NULL;
 
     GError *error = NULL;
+// get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
 
     mark_point();
    // set mock
@@ -875,7 +883,7 @@ START_TEST (test_con_delete_valid_calendar_server_id)
    // mock Test
 	   rtn = eas_sync_handler_delete_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                     (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -900,14 +908,11 @@ END_TEST
 START_TEST (test_con_update_invalid_server_id)
 {
 
-    
+
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
+   
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -915,12 +920,14 @@ START_TEST (test_con_update_invalid_server_id)
     // Sync Key set to Zero.  This means that this is the first time the sync is being done,
     // there is no persisted sync key from previous sync's, the returned information will be
     // the complete folder hierarchy rather than a delta of any changes
-    
 	gchar* sync_key_out = NULL;
 	GError *error = NULL;
 	GSList *conItemToUpdate = NULL;
-	EasItemInfo *conItem = NULL;
 	EasItemInfo *updatedConItem = NULL;
+// get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
   	updatedConItem = eas_item_info_new();
         updatedConItem->server_id = g_strdup ("wrong");
         updatedConItem->data = g_strdup (TEST_VCARD_FROM_EVO_UPDATED);
@@ -932,7 +939,7 @@ START_TEST (test_con_update_invalid_server_id)
    // mock Test
 	   rtn = eas_sync_handler_update_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       conItemToUpdate,
@@ -959,9 +966,7 @@ START_TEST (test_con_delete_crash)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+ 
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -975,16 +980,20 @@ START_TEST (test_con_delete_crash)
 
     GError *error = NULL;
 
+   // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactDeleteCrash.xml");
    // mock Test
 	   rtn = eas_sync_handler_delete_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
-                                      "abc",
+                                      (GSList*)"mock",
                                       &error);
 	
 	
@@ -1007,9 +1016,7 @@ START_TEST (test_con_update_crash)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+ 
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -1022,8 +1029,12 @@ START_TEST (test_con_update_crash)
 	gchar* sync_key_out = NULL;
 	GError *error = NULL;
 	GSList *conItemToUpdate = NULL;
-	EasItemInfo *conItem = NULL;
 	EasItemInfo *updatedConItem = NULL;
+
+   // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
   	updatedConItem = eas_item_info_new();
         updatedConItem->server_id = g_strdup ("wrong");
         updatedConItem->data = g_strdup (TEST_VCARD_FROM_EVO_UPDATED);
@@ -1035,7 +1046,7 @@ START_TEST (test_con_update_crash)
    // mock Test
 	   rtn = eas_sync_handler_update_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
@@ -1061,9 +1072,7 @@ START_TEST (test_con_add_crash)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+   
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -1077,16 +1086,20 @@ START_TEST (test_con_add_crash)
 
     GError *error = NULL;
 
+ // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactAddCrash.xml");
    // mock Test
 	   rtn = eas_sync_handler_add_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
-                                      "wrong",
+                                      (GSList*)"wrong",
                                       &error);
 	
 	
@@ -1110,9 +1123,7 @@ START_TEST (test_con_get_crash)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
+   
 
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
@@ -1126,12 +1137,16 @@ START_TEST (test_con_get_crash)
 
     GError *error = NULL;
 
+ // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
     mark_point();
    // set mock
 	setMockNegTestGoodHttp("ContactGetCrash.xml");
    // mock Test
 	negativeTestGetLatestContacts (sync_handler,
-		                   "wrong",
+		                   (gchar*)"wrong",
 		                   &sync_key_out,
 		                   NULL,
 		                   &updated,
@@ -1156,10 +1171,7 @@ START_TEST (test_consume_response)
     const char* accountuid = g_account_id;
     EasSyncHandler *sync_handler = NULL;
 	gint rtn = TRUE;
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetContactsHandler (&sync_handler, accountuid);
-
+   
     // declare lists to hold the folder information returned by active sync
     GSList *created = NULL; //receives a list of EasFolders
     GSList *updated = NULL;
@@ -1172,11 +1184,16 @@ START_TEST (test_consume_response)
 
     GError *error = NULL;
 
+ // get a handle to the DBus interface and associate the account ID with
+    // this object
+    testGetContactsHandler (&sync_handler, accountuid);
+
+                                                                                                                                                                                                                                                                                                                                                 
     mark_point();
    // mock Test
 	   rtn = eas_sync_handler_add_items (sync_handler,
                                       "wrong",
-                                      sync_key_out,
+                                      (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
                                       NULL,
