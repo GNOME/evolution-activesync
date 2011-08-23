@@ -21,16 +21,14 @@
 #include <ctype.h>
 /** Uncomment for to enable Mocks **/
  #include "../libeastest/src/libeastest.h"
- 
- void test_eas_email_info_translator_add(const char* Serializeddata,const char* xmlName)
+ Suite* eas_email_info_translator_suite (void);
+static  void test_eas_email_info_translator_add(const char* Serializeddata,const char* xmlName)
  {
-	g_type_init();
-   
+	
   //server_id initialization
 	gchar temp[]="3:1";
 	gchar * server_id=g_strdup(temp);
   //end initialization of server_id
-   
   //region init variable
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
@@ -38,14 +36,14 @@
 	FILE *fr,*fw;
 	gchar * result=NULL;
 	gchar * buffer=NULL;
-	gchar * readResult=NULL;
+	size_t readResult;
 	long lSize;
-  //endregion
-
-  // check the XML file, did the XML file exists
 	gchar *ptr= NULL;
 	long size;
 	gchar *buf;
+  //endregion
+g_type_init();
+  // check the XML file, did the XML file exists
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
@@ -76,11 +74,10 @@
 	buffer = (gchar*) malloc (sizeof(gchar)*lSize+1);
 	readResult=fread (buffer,sizeof(gchar),lSize,fr);
 	fail_if(readResult == 0);
-	buffer[lSize]='\0';
+	buffer[lSize]= '\0';
   //end loading serialized data
 	fail_if(g_strcmp0 (buffer,result)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
  }
- 
 START_TEST(test_eas_email_info_translator_add_all)
 {
 	test_eas_email_info_translator_add("eas_email_info_translator_add_all.txt","eas_email_info_translator_add_all.xml");
@@ -102,12 +99,12 @@ START_TEST(test_eas_email_info_translator_add_category)
 } 
 END_TEST
 
+
 //---------------------------------------------------Update------------------------------------------------------------
 
-void test_eas_email_info_translator_update(const char* Serializeddata,const char* xmlName)
- {
-	g_type_init();
-   
+
+static void test_eas_email_info_translator_update(const char* Serializeddata,const char* xmlName)
+ {   
   //server_id initialization
 	gchar temp[]="3:1";
 	gchar * server_id=g_strdup(temp);
@@ -117,17 +114,19 @@ void test_eas_email_info_translator_update(const char* Serializeddata,const char
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
 	struct stat stFileInfo;
-	FILE *fr,*fw;
+	FILE *fr;
 	gchar * result=NULL;
 	gchar * buffer=NULL;
-	gchar * readResult=NULL;
+	 size_t readResult;
 	long lSize;
-  //endregion
-
-  // check the XML file, did the XML file exists
 	gchar *ptr= NULL;
 	long size;
 	gchar *buf;
+g_type_init();
+  //endregion
+
+  // check the XML file, did the XML file exists
+	
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
@@ -157,7 +156,7 @@ void test_eas_email_info_translator_update(const char* Serializeddata,const char
 	buffer = (gchar*) malloc (sizeof(gchar)*lSize+1);
 	readResult=fread (buffer,sizeof(gchar),lSize,fr);
 	fail_if(readResult == 0);
-	buffer[lSize]='\0';
+	buffer[lSize]= '\0';
   //end loading serialized data
 	fail_if(g_strcmp0 (buffer,result)!=0, "The XML file it was not properly translated. Please check input data. In other case, function does not work properly.");
 	
@@ -179,10 +178,9 @@ START_TEST(test_eas_email_info_translator_update_read)
 } 
 END_TEST
 
-void test_eas_email_info_translator_delete(const char* Serializeddata,const char* xmlName)
+static void test_eas_email_info_translator_delete(const char* Serializeddata,const char* xmlName)
  {
-	g_type_init();
-   
+	
   //server_id initialization
 	gchar temp[]="3:1";
 	gchar * server_id=g_strdup(temp);
@@ -192,17 +190,19 @@ void test_eas_email_info_translator_delete(const char* Serializeddata,const char
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
 	struct stat stFileInfo;
-	FILE *fr,*fw;
+	FILE *fr;
 	gchar * result=NULL;
 	gchar * buffer=NULL;
-	gchar * readResult=NULL;
+	 size_t readResult;
 	long lSize;
-  //endregion
-
-  // check the XML file, did the XML file exists
 	gchar *ptr= NULL;
 	long size;
 	gchar *buf;
+
+	g_type_init();   
+  //endregion
+
+  // check the XML file, did the XML file exists	
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)
 	ptr = getcwd(buf, (size_t)size);
@@ -247,13 +247,10 @@ END_TEST
 
 static void test_eas_mail_info_translator_build_update_request(const char* serializedData,const char* xmlName)
 {
-	g_type_init();
   //region init variable
 	xmlDocPtr doc;
 	xmlNodePtr nodeLevel1;
 	FILE *fr,*fw;
-	gchar temp[]="3:1";
-	gchar* serv=temp;
 	long lSize1,lSize2,lSize3;
 	gchar * buffer1=NULL;
 	gchar * buffer2=NULL;
