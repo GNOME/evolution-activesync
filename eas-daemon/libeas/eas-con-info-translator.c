@@ -215,9 +215,8 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 	EVCard *vcard = NULL;
 	EasItemInfo* conInfo = NULL;
 
-	g_debug ("eas_con_info_translator_parse_response ++");
+	
 
-	if (node && (node->type == XML_ELEMENT_NODE) && (!g_strcmp0 ( (char*) (node->name), EAS_ELEMENT_APPLICATIONDATA))) {
 		xmlNodePtr n = node;
 
 		gboolean nameElements = FALSE;
@@ -225,6 +224,8 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 		gboolean workAddrElements = FALSE;
 		gboolean otherAddrElements = FALSE;
 		gboolean titleElements = FALSE;
+
+	g_debug ("eas_con_info_translator_parse_response ++");
 
 		// vCard object
 		vcard = e_vcard_new();
@@ -501,7 +502,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				}
 			}
 		}
-	}
+	
 	conInfo = eas_item_info_new();
 	conInfo->server_id = (gchar*) server_id;
 	conInfo->data = e_vcard_to_string (vcard, EVC_FORMAT_VCARD_30); // no need to duplicate, e_vcard allocates memory
