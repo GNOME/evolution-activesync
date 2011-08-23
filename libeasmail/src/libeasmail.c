@@ -698,14 +698,14 @@ gboolean
 eas_mail_handler_get_provision_list (EasEmailHandler *self,
 									 gchar** tid,
 									 gchar** tid_status,
-									 GSList **provision_list,
+									 EasProvisionList **provision_list,
 									 GCancellable *cancellable,
 									 GError **error)
 {
 	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = priv->remoteCommonEas;
-	gchar **_provision_list = NULL;
+	gchar **_provision_list_buffer = NULL;
 	gchar *_tid = NULL;
 	gchar *_tid_status = NULL;
 	guint cancel_handler_id;
@@ -738,7 +738,7 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 				 G_TYPE_INVALID,
 				 G_TYPE_STRING, &_tid,
 				 G_TYPE_STRING, &_tid_status,
-				 G_TYPE_STRV, &_provision_list,
+				 G_TYPE_STRV, &_provision_list_buffer,
 				 G_TYPE_INVALID);
 
 	g_debug ("%s - dbus proxy called", __func__);
@@ -768,7 +768,7 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	// TODO Build the provision list
 
 cleanup:
-	free_string_array (_provision_list);
+	free_string_array (_provision_list_buffer);
 
 	if (!ret) { // failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);

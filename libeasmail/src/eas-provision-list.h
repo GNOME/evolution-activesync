@@ -48,6 +48,7 @@ struct _EasProvisionList
 	gchar* RequireDeviceEncryption;
 	gchar* AllowUnsignedApplications;
 	gchar* AllowUnsignedInstallationPackages;
+	gchar* MinDevicePasswordComplexCharacters;
 	gchar* AllowWifi;
 	gchar* AllowTextMessaging;
 	gchar* AllowPOPIMAPEmail;
@@ -72,12 +73,11 @@ struct _EasProvisionList
 	gchar* AllowInternetSharing;
 	GSList* UnapprovedInROMApplicationList;
 	GSList* ApprovedApplicationList;
-
-
-	
 };
 
 GType eas_provision_list_get_type (void) G_GNUC_CONST;
+
+EasProvisionList* eas_provision_list_new();
 
 gboolean
 eas_provision_list_serialise (EasProvisionList* list, gchar **result);

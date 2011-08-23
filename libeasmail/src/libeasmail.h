@@ -29,6 +29,8 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 #include "eas-email-info.h"
+#include "eas-provision-list.h"
+
 
 G_BEGIN_DECLS
 
@@ -453,8 +455,7 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* self,
  * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
  * gchar **tid (out):             	temporary ID token to be used in eas_mail_handler_accept_provision_list
  * gchar **tid_status (out):      	temporary ID status token to be used in eas_mail_handler_accept_provision_list
- * GSList **provision_list (out): 	a list of EasProvsionItem structs that contain
- *                              	key / value pairs of provisioning information.
+ * EasProvisionList** provision_list (out): 	a list of provisioning information.
  * GError **error (out):        	returns error information if an error occurs.  If no
  *                              	error occurs this will unchanged.  This error information
  *                              	could be related to errors in this API or errors propagated
@@ -464,7 +465,7 @@ gboolean
 eas_mail_handler_get_provision_list (EasEmailHandler *self,
 									 gchar** tid,
 									 gchar** tid_status,
-									 GSList **provision_list,
+									 EasProvisionList** provision_list,
 									 GCancellable *cancellable,
 									 GError **error);
 
