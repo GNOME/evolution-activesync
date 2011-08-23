@@ -5,7 +5,6 @@
 #include <glib-object.h>
 
 #include "../eas-daemon/libeas/eas-request-base.h"
-
 #include "../eas-daemon/libeas/eas-add-item-req.h"
 #include "../eas-daemon/libeas/eas-connection.h"
 #include "../eas-daemon/libeas/eas-delete-req.h"
@@ -44,7 +43,7 @@
 #include "../libeassync/src/libeassync.h"
 #include "../libeastest/src/libeastest.h"
 #include "../eas-daemon/libeas/eas-2way-sync-req.h"
-
+Suite* eas_gobjectunittest_suite (void);
 START_TEST (test_add_item_req_obj)
 {
 	EasAddItemReq* self_eas_add_item_req;
