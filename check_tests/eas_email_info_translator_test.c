@@ -256,7 +256,7 @@ static void test_eas_mail_info_translator_build_update_request(const char* seria
 	gchar * buffer2=NULL;
 	gchar* 	buffer3=NULL;
 	struct stat stFileInfo;
-	EasEmailInfo *email_info = eas_email_info_new();
+	EasEmailInfo *email_info;
 	size_t readResult;
 	gchar *ptr= NULL;
 	long size;
@@ -264,6 +264,7 @@ static void test_eas_mail_info_translator_build_update_request(const char* seria
 	gboolean parseResponse;
 
 	g_type_init();
+	 email_info = eas_email_info_new();
 //endregion
 //check the SerializedData file, did the serializedData file exists
 	size = pathconf(".", _PC_PATH_MAX);
