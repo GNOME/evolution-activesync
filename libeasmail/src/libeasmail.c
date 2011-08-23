@@ -705,9 +705,9 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
 	gboolean ret = TRUE;
 	DBusGProxy *proxy = priv->remoteCommonEas;
-	gchar **_provision_list_buffer = NULL;
-	gchar *_tid = NULL;
-	gchar *_tid_status = NULL;
+	gchar* _provision_list_buffer = NULL;
+	gchar* _tid = NULL;
+	gchar* _tid_status = NULL;
 	guint cancel_handler_id;
 	guint request_id = priv->next_request_id++;
 
@@ -765,7 +765,13 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	*tid = _tid; // full transfer
 	*tid_status = _tid_status; // full transfer
 
-	// TODO Build the provision list
+	// Build the provision list
+	provision_list = eas_provision_list_new();
+	ret = eas_provision_list_deserialise(provision_list, _provision_list_buffer);
+	if (!ret)
+	{
+		// TODO: error
+	}
 
 cleanup:
 	free_string_array (_provision_list_buffer);

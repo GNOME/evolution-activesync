@@ -55,6 +55,7 @@
 
 #include <glib-object.h>
 #include "eas-msg-base.h"
+#include "eas-provision-list.h"
 
 G_BEGIN_DECLS
 
@@ -142,6 +143,15 @@ gchar* eas_provision_msg_get_policy_key (EasProvisionMsg* self);
  */
 gchar* eas_provision_msg_get_policy_status (EasProvisionMsg* self);
 
+/**
+ * Getter for provision list
+ *
+ * @param[in] self
+ *	  The EasProvisionMsg GObject instance.
+ *
+ * @return NULL or the policy list. [no transfer]
+ */
+EasProvisionList* eas_provision_msg_get_provision_list (EasProvisionMsg* self);
 
 /**
  * Setter for policy key.

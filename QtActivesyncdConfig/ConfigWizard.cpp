@@ -17,6 +17,7 @@
 #include <QStringList>
 #include <QTimer>
 // User includes
+#include "../libeasmail/src/eas-provision-list.h"
 
 
 extern ConfigWizard* theWizard;
@@ -71,6 +72,13 @@ ConfigWizard::ConfigWizard(QWidget *parent)
     // Connect the two username fields
     connect(ui->editUsername1, SIGNAL(textChanged(QString)), ui->editUsername2, SLOT(setText(QString)));
     connect(ui->editUsername2, SIGNAL(textChanged(QString)), ui->editUsername1, SLOT(setText(QString)));
+
+
+    // TEMPORARY TEST DATA!!
+    ui->editEmailAddress->setText("andy@cstylianou.com");
+    ui->editUsername1->setText("andy"); // Will also set editUsername2 thanks to the signal/slot above
+    ui->editServerUri->setText("https://cstylianou.com/Microsoft-Server-ActiveSync");
+
 
     changeState(AutoDiscoverDetails);
 }
@@ -299,7 +307,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 
     case Finish:
         ui->wizard->setCurrentWidget(ui->pageFinish);
-        setTitle(tr("ActveSync is now configured"), tr("Please confirm which other services you would like to synchronise with this device."));
+        setTitle(tr("ActiveSync is now configured"), tr("Please confirm which other services you would like to synchronise with this device."));
         setButtonCaptions(tr("Finish"));
         ui->btnCancel->setEnabled(false);
         break;
@@ -367,45 +375,74 @@ void ConfigWizard::getProvisionReqts()
             error = 0;
         }
 
-        GSList* reqtsList = 0;
-        if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &reqtsList, 0, &error)
-            && (error == 0)
-            && (g_slist_length(reqtsList) > 0))
+        EasProvisionList* provisionList = 0;
+        if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &provisionList, 0, &error))
         {
-            serverHasProvisioningReqts = true;
-
-            // Ask the user to accept the provisioning requirements
-            ui->listRequirements->clear();
-            const int reqtsLength = g_slist_length(reqtsList);
-            for (int i = 0; i < reqtsLength; i++)
+            if (provisionList)
             {
-                // TODO: when the API returns a proper list, insert its items
-                // into the list here...
+                serverHasProvisioningReqts = true;
+
+                // Ask the user to accept the provisioning requirements
+                ui->listRequirements->clear();
+                ui->listRequirements->addItem(tr("DevicePasswordEnabled: ") + provisionList->DevicePasswordEnabled);
+                ui->listRequirements->addItem(tr("AlphaNumericDevicePasswordRequired: ") + provisionList->AlphaNumericDevicePasswordRequired);
+                ui->listRequirements->addItem(tr("PasswordRecoveryEnabled: ") + provisionList->PasswordRecoveryEnabled);
+                ui->listRequirements->addItem(tr("RequireStorageCardEncryption: ") + provisionList->RequireStorageCardEncryption);
+                ui->listRequirements->addItem(tr("AttachmentsEnabled: ") + provisionList->AttachmentsEnabled);
+                ui->listRequirements->addItem(tr("MinDevicePasswordLength: ") + provisionList->MinDevicePasswordLength);
+                ui->listRequirements->addItem(tr("MaxInactivityTimeDeviceLock: ") + provisionList->MaxInactivityTimeDeviceLock);
+                ui->listRequirements->addItem(tr("MaxDevicePasswordFailedAttempts: ") + provisionList->MaxDevicePasswordFailedAttempts);
+                ui->listRequirements->addItem(tr("MaxAttachmentSize: ") + provisionList->MaxAttachmentSize);
+                ui->listRequirements->addItem(tr("AllowSimpleDevicePassword: ") + provisionList->AllowSimpleDevicePassword);
+                ui->listRequirements->addItem(tr("DevicePasswordExpiration: ") + provisionList->DevicePasswordExpiration);
+                ui->listRequirements->addItem(tr("DevicePasswordHistory: ") + provisionList->DevicePasswordHistory);
+                ui->listRequirements->addItem(tr("AllowStorageCard: ") + provisionList->AllowStorageCard);
+                ui->listRequirements->addItem(tr("AllowCamera: ") + provisionList->AllowCamera);
+                ui->listRequirements->addItem(tr("RequireDeviceEncryption: ") + provisionList->RequireDeviceEncryption);
+                ui->listRequirements->addItem(tr("AllowUnsignedApplications: ") + provisionList->AllowUnsignedApplications);
+                ui->listRequirements->addItem(tr("AllowUnsignedInstallationPackages: ") + provisionList->AllowUnsignedInstallationPackages);
+                ui->listRequirements->addItem(tr("MinDevicePasswordComplexCharacters: ") + provisionList->MinDevicePasswordComplexCharacters);
+                ui->listRequirements->addItem(tr("AllowWifi: ") + provisionList->AllowWifi);
+                ui->listRequirements->addItem(tr("AllowTextMessaging: ") + provisionList->AllowTextMessaging);
+                ui->listRequirements->addItem(tr("AllowPOPIMAPEmail: ") + provisionList->AllowPOPIMAPEmail);
+                ui->listRequirements->addItem(tr("AllowBluetooth: ") + provisionList->AllowBluetooth);
+                ui->listRequirements->addItem(tr("AllowIrDA: ") + provisionList->AllowIrDA);
+                ui->listRequirements->addItem(tr("RequireManualSyncWhenRoaming: ") + provisionList->RequireManualSyncWhenRoaming);
+                ui->listRequirements->addItem(tr("AllowDesktopSync: ") + provisionList->AllowDesktopSync);
+                ui->listRequirements->addItem(tr("MaxCalendarAgeFilter: ") + provisionList->MaxCalendarAgeFilter);
+                ui->listRequirements->addItem(tr("AllowHTMLEmail: ") + provisionList->AllowHTMLEmail);
+                ui->listRequirements->addItem(tr("MaxEmailAgeFilter: ") + provisionList->MaxEmailAgeFilter);
+                ui->listRequirements->addItem(tr("MaxEmailBodyTruncationSize: ") + provisionList->MaxEmailBodyTruncationSize);
+                ui->listRequirements->addItem(tr("MaxEmailHTMLBodyTruncationSize: ") + provisionList->MaxEmailHTMLBodyTruncationSize);
+                ui->listRequirements->addItem(tr("RequireSignedSMIMEMessages: ") + provisionList->RequireSignedSMIMEMessages);
+                ui->listRequirements->addItem(tr("RequireEncryptedSMIMEMessages: ") + provisionList->RequireEncryptedSMIMEMessages);
+                ui->listRequirements->addItem(tr("RequireSignedSMIMEAlgorithm: ") + provisionList->RequireSignedSMIMEAlgorithm);
+                ui->listRequirements->addItem(tr("RequireEncryptionSMIMEAlgorithm: ") + provisionList->RequireEncryptionSMIMEAlgorithm);
+                ui->listRequirements->addItem(tr("AllowSMIMEEncryptionAlgorithmNegotiation: ") + provisionList->AllowSMIMEEncryptionAlgorithmNegotiation);
+                ui->listRequirements->addItem(tr("AllowSMIMESoftCerts: ") + provisionList->AllowSMIMESoftCerts);
+                ui->listRequirements->addItem(tr("AllowBrowser: ") + provisionList->AllowBrowser);
+                ui->listRequirements->addItem(tr("AllowConsumerEmail: ") + provisionList->AllowConsumerEmail);
+                ui->listRequirements->addItem(tr("AllowRemoteDesktop: ") + provisionList->AllowRemoteDesktop);
+                ui->listRequirements->addItem(tr("AllowInternetSharing: ") + provisionList->AllowInternetSharing);
+                // TODO: add the two list members too
+
+                changeState(ConfirmProvisionReqts);
             }
-
-
-            changeState(ConfirmProvisionReqts);
+            else
+            {
+                serverHasProvisioningReqts = false;
+                changeState(Finish);
+            }
         }
         else if (error != 0)
         {
             showError(QString(error->message));
             g_error_free(error);
-            return;
         }
-        else // It returned OK but server didn't return any provisioning requirements
+        else
         {
-            // Skip the provisioning screen
-            changeState(Finish);
+            showError(tr("Something went wrong and no error message was returned. :("));
         }
-
-/*
-        // TEMP!!
-        QStringList reqtsStrList;
-        reqtsStrList << "Some requirements will go here" << "Honest" << "No really";
-        ui->listRequirements->clear();
-        ui->listRequirements->addItems(reqtsStrList);
-        changeState(ConfirmProvisionReqts);
-        */
     }
     else // mailHandler is null
     {
@@ -423,7 +460,7 @@ void ConfigWizard::acceptProvisionReqts()
     if (mailHandler && tid && tidStatus)
     {
         GError* error = 0;
-        if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error) && (error == 0))
+        if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error))
         {
             changeState(Finish);
         }
@@ -432,9 +469,6 @@ void ConfigWizard::acceptProvisionReqts()
             showError(tr("Failed to accept the server requirements."));
         }
     }
-
-    // TEMP!!
-//    changeState(Finish);
 
     // Tidy up any instantiated g-objects
     g_free(tid);

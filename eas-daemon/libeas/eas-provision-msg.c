@@ -230,7 +230,7 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 	gboolean success = FALSE;
 	
 	EasProvisionMsgPrivate *priv = self->priv;
-	xmlNode *node = NULL;
+	xmlNode *node1 = NULL;
 
 	g_debug ("eas_provision_msg_parse_response++");
 
@@ -241,8 +241,11 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 	g_free (priv->policy_status);
 	priv->policy_status = NULL;
 
-	g_object_unref(priv->provision_list);
-	priv->provision_list = NULL;
+	if (priv->provision_list)
+	{
+		g_object_unref(priv->provision_list);
+		priv->provision_list = NULL;
+	}
 	priv->provision_list = eas_provision_list_new();
 
 	if (!doc) {
@@ -253,8 +256,8 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 	}
 
 	/* Check root node == <Provision> */
-	node = xmlDocGetRootElement (doc);
-	if (g_strcmp0 ( (char *) node->name, "Provision")) {
+	node1 = xmlDocGetRootElement (doc);
+	if (g_strcmp0 ( (char *) node1->name, "Provision")) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_COMMON_STATUS_INVALIDXML,
 			     ("Failed to find <Provision> element"));
@@ -262,156 +265,163 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 	}
 
 	/* Navigate to Provision > Policies */
-	for (node = node->children; node; node = node->next) {
-		if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node->name, "Policies")) {
+	for (node1 = node1->children; node1; node1 = node1->next) {
+		if (node1->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node1->name, "Policies")) {
 			/* Navigate to Provision > Policies > Policy */
-			for (node = node->children; node; node = node->next) {
-				if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node->name, "Policy")) {
+			xmlNode* node2;
+			for (node2 = node1->children; node2; node2 = node2->next) {
+				if (node2->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node2->name, "Policy")) {
 					/* Find Status & PolicyKey */
-					for (node = node->children; node; node = node->next) {
-						const char* name = (char*)node->name;
-						if (node->type != XML_ELEMENT_NODE)
+					xmlNode* node3;
+					for (node3 = node2->children; node3; node3 = node3->next) {
+						const char* name = (char*)node3->name;
+						if (node3->type != XML_ELEMENT_NODE)
 							continue;
-						
+
 						if (!g_strcmp0(name, "Status")) {
 							// TODO: check this makes a new copy
-							priv->policy_status = (gchar*)xmlNodeGetContent(node);
+							priv->policy_status = (gchar*)xmlNodeGetContent(node3);
 							g_debug ("Provisioned Policy Status:[%s]", priv->policy_status);
 						}
 						else if (!g_strcmp0(name, "PolicyKey")) {
 							// TODO: check this makes a new copy
-							priv->policy_key = (gchar*)xmlNodeGetContent(node);
+							priv->policy_key = (gchar*)xmlNodeGetContent(node3);
 							g_debug ("Provisioned Policy Key:[%s]", priv->policy_key);
 						}
 						else if (!g_strcmp0(name, "Data")) {
-							for (node = node->children; node; node = node->next) {
-								if (node->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node->name, "eas-provisioningdoc")) {
+							xmlNode* node4;
+							g_debug("Parsing <Data> node...");
+							for (node4 = node3->children; node4; node4 = node4->next) {
+								if (node4->type == XML_ELEMENT_NODE && !g_strcmp0((char*)node4->name, "EASProvisionDoc")) {
+									xmlNode* node5;
+									g_debug("Parsing <EasProvisionDoc> node...");
 									/* FINALLY! We've made it to the provisioning requirements */ 
-									for (node = node->children; node; node = node->next) {
-										const char* name = (char*)node->name;
-										if (node->type != XML_ELEMENT_NODE)
+									for (node5 = node4->children; node5; node5 = node5->next) {
+										const char* name = (char*)node5->name;
+										if (node5->type != XML_ELEMENT_NODE)
 											continue;
+
+										g_debug("Parsing provision list nodes...");
 						
 										if (!g_strcmp0(name, "DevicePasswordEnabled")) {
-											priv->provision_list->DevicePasswordEnabled = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->DevicePasswordEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AlphaNumericDevicePasswordRequired")) {
-											priv->provision_list->AlphaNumericDevicePasswordRequired = (gchar*)xmlNodeGetContent(node);
+										else if (!g_strcmp0(name, "AlphanumericDevicePasswordRequired")) {
+											priv->provision_list->AlphaNumericDevicePasswordRequired = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "PasswordRecoveryEnabled")) {
-											priv->provision_list->PasswordRecoveryEnabled = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->PasswordRecoveryEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequiresStorageCardEncryption")) {
-											priv->provision_list->RequireStorageCardEncryption = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireStorageCardEncryption = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AttachmentsEnabled")) {
-											priv->provision_list->AttachmentsEnabled = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AttachmentsEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MinDevicePasswordLength")) {
-											priv->provision_list->MinDevicePasswordLength = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MinDevicePasswordLength = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxInactivityTimeDeviceLock")) {
-											priv->provision_list->MaxInactivityTimeDeviceLock = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxInactivityTimeDeviceLock = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxDevicePasswordFailedAttempts")) {
-											priv->provision_list->MaxDevicePasswordFailedAttempts = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxDevicePasswordFailedAttempts = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxAttachmentSize")) {
-											priv->provision_list->MaxAttachmentSize = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxAttachmentSize = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowSimpleDevicePassword")) {
-											priv->provision_list->AllowSimpleDevicePassword = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowSimpleDevicePassword = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "DevicePasswordExpiration")) {
-											priv->provision_list->DevicePasswordExpiration = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->DevicePasswordExpiration = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "DevicePasswordHistory")) {
-											priv->provision_list->DevicePasswordHistory = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->DevicePasswordHistory = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowStorageCard")) {
-											priv->provision_list->AllowStorageCard = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowStorageCard = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowCamera")) {
-											priv->provision_list->AllowCamera = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowCamera = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireDeviceEncryption")) {
-											priv->provision_list->RequireDeviceEncryption = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireDeviceEncryption = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowUnsignedApplications")) {
-											priv->provision_list->AllowUnsignedApplications = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowUnsignedApplications = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowUnsignedInstallationPackages")) {
-											priv->provision_list->AllowUnsignedInstallationPackages = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowUnsignedInstallationPackages = (gchar*)xmlNodeGetContent(node5);
 										}
-										/* TODO: add support for this!! */
-/*										else if (!g_strcmp0(name, "MinDevicePasswordComplexCharacters")) {
-											priv->provision_list->XXXX = (gchar*)xmlNodeGetContent(node);
-										}*/
+										else if (!g_strcmp0(name, "MinDevicePasswordComplexCharacters")) {
+											priv->provision_list->MinDevicePasswordComplexCharacters = (gchar*)xmlNodeGetContent(node5);
+										}
 										else if (!g_strcmp0(name, "AllowWifi")) {
-											priv->provision_list->AllowWifi = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowWifi = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowTextMessaging")) {
-											priv->provision_list->AllowTextMessaging = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowTextMessaging = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowPOPIMAPEmail")) {
-											priv->provision_list->AllowPOPIMAPEmail = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowPOPIMAPEmail = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowBluetooth")) {
-											priv->provision_list->AllowBluetooth = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowBluetooth = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowIrDA")) {
-											priv->provision_list->AllowIrDA = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowIrDA = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireManualSyncWhenRoaming")) {
-											priv->provision_list->RequireManualSyncWhenRoaming = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireManualSyncWhenRoaming = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowDesktopSync")) {
-											priv->provision_list->AllowDesktopSync = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowDesktopSync = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxCalendarAgeFilter")) {
-											priv->provision_list->MaxCalendarAgeFilter = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxCalendarAgeFilter = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowHTMLEmail")) {
-											priv->provision_list->AllowHTMLEmail = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowHTMLEmail = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxEmailAgeFilter")) {
-											priv->provision_list->MaxEmailAgeFilter = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxEmailAgeFilter = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxEmailBodyTruncationSize")) {
-											priv->provision_list->MaxEmailBodyTruncationSize = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxEmailBodyTruncationSize = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxEmailHTMLBodyTruncationSize")) {
-											priv->provision_list->MaxEmailHTMLBodyTruncationSize = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->MaxEmailHTMLBodyTruncationSize = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireSignedSMIMEMessages")) {
-											priv->provision_list->RequireSignedSMIMEMessages = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireSignedSMIMEMessages = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireEncryptedSMIMEMessages")) {
-											priv->provision_list->RequireEncryptedSMIMEMessages = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireEncryptedSMIMEMessages = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireSignedSMIMEAlgorithm")) {
-											priv->provision_list->RequireSignedSMIMEAlgorithm = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireSignedSMIMEAlgorithm = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "RequireEncryptionSMIMEAlgorithm")) {
-											priv->provision_list->RequireEncryptionSMIMEAlgorithm = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->RequireEncryptionSMIMEAlgorithm = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowSMIMEEncryptionAlgorithmNegotiation")) {
-											priv->provision_list->AllowSMIMEEncryptionAlgorithmNegotiation = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowSMIMEEncryptionAlgorithmNegotiation = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowSMIMESoftCerts")) {
-											priv->provision_list->AllowSMIMESoftCerts = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowSMIMESoftCerts = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowBrowser")) {
-											priv->provision_list->AllowBrowser = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowBrowser = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowConsumerEmail")) {
-											priv->provision_list->AllowConsumerEmail = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowConsumerEmail = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowRemoteDesktop")) {
-											priv->provision_list->AllowRemoteDesktop = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowRemoteDesktop = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "AllowInternetSharing")) {
-											priv->provision_list->AllowInternetSharing = (gchar*)xmlNodeGetContent(node);
+											priv->provision_list->AllowInternetSharing = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "UnapprovedInROMApplicationList")) {
 											// TODO
@@ -420,16 +430,21 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 											// TODO
 										}
 									}
+									g_debug("End of for loop...");
 								}
 							}							
+							g_debug("End of for loop...");
 						}
 					}					
+					g_debug("End of for loop...");
 				}
 			}
+			g_debug("End of for loop...");
 		}
 	}
+	g_debug("End of for loop...");
 
-	/* Check for errors */	
+	/* Check for errors */
 	if (!priv->policy_status) {
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_COMMON_STATUS_INVALIDXML,
@@ -488,6 +503,14 @@ eas_provision_msg_get_policy_status (EasProvisionMsg* self)
 	EasProvisionMsgPrivate *priv = self->priv;
 	g_debug ("eas_provision_msg_get_policy_status+-");
 	return priv->policy_status;
+}
+
+EasProvisionList*
+eas_provision_msg_get_provision_list (EasProvisionMsg* self)
+{
+	EasProvisionMsgPrivate* priv = self->priv;
+	g_debug("eas_provision_msg_get_provision_list+-");
+	return priv->provision_list;
 }
 
 void

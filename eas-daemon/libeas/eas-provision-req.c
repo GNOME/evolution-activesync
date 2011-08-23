@@ -53,6 +53,7 @@
 #include "eas-provision-req.h"
 #include "eas-provision-msg.h"
 #include "eas-connection-errors.h"
+#include "eas-provision-list.h"
 
 typedef enum {
 	EasProvisionStep1 = 0,
@@ -220,12 +221,21 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 	// We are receiving the temporary policy key and need to now make a
 	// second provision msg and send it using the new data.
 	case EasProvisionStep1: {
-		g_debug ("eas_provision_req_MessageComplete - EasProvisionStep1");
+		gchar* serialised_provision_list = NULL;
+		EasProvisionList* list = NULL;
+		g_debug("eas_provision_req_MessageComplete - EasProvisionStep1");
+
+		list = eas_provision_msg_get_provision_list(priv->msg);
+		if(!eas_provision_list_serialise (list, &serialised_provision_list)){
+			// TODO: handle error
+		}
 
 		dbus_g_method_return (eas_request_base_GetContext (parent),
-				eas_provision_msg_get_policy_key (priv->msg),
-				eas_provision_msg_get_policy_status (priv->msg),
-				NULL); // TODO Provision List
+			eas_provision_msg_get_policy_key (priv->msg),
+			eas_provision_msg_get_policy_status (priv->msg),
+			serialised_provision_list);
+
+		g_free(serialised_provision_list);
 	}
 	break;
 
