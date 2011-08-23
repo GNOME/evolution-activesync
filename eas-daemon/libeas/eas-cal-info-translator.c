@@ -1020,7 +1020,7 @@ static GSList* _eas2ical_process_exceptions (xmlNodePtr n, icalcomponent* vevent
  * @param  exceptionEvents
  *      A list of hash tables, each containing the changed field values for a single exception
  */
-static void _eas2ical_add_exception_events (icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents)
+static void _eas2ical_add_exception_events (icalcomponent* vcalendar, icalcomponent* vevent, GSList* exceptionEvents, icalcomponent* vtimezone, gchar* tzid)
 {
 	if (vcalendar && vevent && exceptionEvents) {
 		const guint newEventCount = g_slist_length (exceptionEvents);
@@ -1075,23 +1075,70 @@ static void _eas2ical_add_exception_events (icalcomponent* vcalendar, icalcompon
 				// to the start time of the original event (as per [MS-ASCAL]).
 				// TODO: this needs testing: [MS-ASCAL] is a bit ambiguous around
 				// <StartTime> vs. <ExceptionStartTime>
+				int utc_offset = 0, isDaylight;
+				icaltimezone * icaltz;
+				icalparameter* param = NULL;
+				struct icaltimetype dateTime;
+				
 				if ( (prop = icalcomponent_get_first_property (newEvent, ICAL_DTSTART_PROPERTY)) != NULL) {
 					icalcomponent_remove_property (newEvent, prop); // Now we have ownership of prop
 					icalproperty_free (prop);
 					prop = NULL;
 				}
-				prop = icalproperty_new_dtstart (icaltime_from_string (value));
+				dateTime = icaltime_from_string (value);
+				
+				if(vtimezone){
+					g_debug("got a timezone");
+					icaltz = icaltimezone_new();
+					icaltimezone_set_component(icaltz, vtimezone);
+					utc_offset = icaltimezone_get_utc_offset (icaltz, &dateTime, &isDaylight);
+					if(utc_offset){
+						icaltime_adjust (&dateTime, 0, 0, 0, utc_offset);
+						dateTime.is_utc = 0;
+					}
+				}
+				prop = icalproperty_new_dtstart (dateTime);
+								
+				if (tzid && strlen (tzid)&& (utc_offset != 0)) { // Note: TZID not specified if it's a UTC time
+					g_debug("got a tzid, %s", tzid);
+					param = icalparameter_new_tzid (tzid);
+					icalproperty_add_parameter (prop, param);
+				}
 				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
 			}
 
 			// EndTime
 			if ( (value = (gchar*) g_hash_table_lookup (exceptionProperties, EAS_ELEMENT_ENDTIME)) != NULL) {
+				int utc_offset = 0, isDaylight;
+				icaltimezone * icaltz;
+				icalparameter* param = NULL;
+				struct icaltimetype dateTime;
+				
 				if ( (prop = icalcomponent_get_first_property (newEvent, ICAL_DTEND_PROPERTY)) != NULL) {
 					icalcomponent_remove_property (newEvent, prop); // Now we have ownership of prop
 					icalproperty_free (prop);
 					prop = NULL;
 				}
-				prop = icalproperty_new_dtend (icaltime_from_string (value));
+				dateTime = icaltime_from_string (value);
+				
+				if(vtimezone){
+					g_debug("got a timezone");
+					icaltz = icaltimezone_new();
+					icaltimezone_set_component(icaltz, vtimezone);
+					utc_offset = icaltimezone_get_utc_offset (icaltz, &dateTime, &isDaylight);
+					if(utc_offset){
+						icaltime_adjust (&dateTime, 0, 0, 0, utc_offset);
+						dateTime.is_utc = 0;
+					}
+				}
+				
+				prop = icalproperty_new_dtend (dateTime);
+
+				if (tzid && strlen (tzid)&& (utc_offset != 0)) { // Note: TZID not specified if it's a UTC time
+					g_debug("got a tzid, %s", tzid);
+					param = icalparameter_new_tzid (tzid);
+					icalproperty_add_parameter (prop, param);
+				}
 				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
 			}
 
@@ -1339,14 +1386,32 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 			// StartTime
 			//
 			else if (g_strcmp0 (name, EAS_ELEMENT_STARTTIME) == 0) {
+				int utc_offset = 0, isDaylight;
+				icaltimezone * icaltz; 
+				
 				value = (gchar*) xmlNodeGetContent (n);
 				dateTime = icaltime_from_string (value);
 				if (isAllDayEvent) {
 					// Ensure time is set to 00:00:00 for all-day events
 					dateTime.is_date = 1;
 				}
+
+				if(vtimezone){
+					g_debug("got a timezone");
+					icaltz = icaltimezone_new();
+					icaltimezone_set_component(icaltz, vtimezone);
+					utc_offset = icaltimezone_get_utc_offset (icaltz, &dateTime, &isDaylight);
+					if(utc_offset){
+						icaltime_adjust (&dateTime, 0, 0, 0, utc_offset);
+						dateTime.is_utc = 0;
+					}
+					
+				}
 				prop = icalproperty_new_dtstart (dateTime);
-				if (tzid && strlen (tzid) && !dateTime.is_utc) { // Note: TZID not specified if it's a UTC time
+				
+				
+				if (tzid && strlen (tzid)&& (utc_offset != 0)) { // Note: TZID not specified if it's a UTC time
+					g_debug("got a tzid, %s", tzid);
 					param = icalparameter_new_tzid (tzid);
 					icalproperty_add_parameter (prop, param);
 				}
@@ -1359,6 +1424,9 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 			// EndTime
 			//
 			else if (g_strcmp0 (name, EAS_ELEMENT_ENDTIME) == 0) {
+				int utc_offset = 0, isDaylight;
+				icaltimezone * icaltz; 
+				
 				value = (gchar*) xmlNodeGetContent (n);
 				dateTime = icaltime_from_string (value);
 				if (isAllDayEvent) {
@@ -1366,8 +1434,20 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 					dateTime.is_date = 1;
 					
 				}
+
+				if(vtimezone){
+					g_debug("got a timezone");
+					icaltz = icaltimezone_new();
+					icaltimezone_set_component(icaltz, vtimezone);
+					utc_offset = icaltimezone_get_utc_offset (icaltz, &dateTime, &isDaylight);
+					if(utc_offset){
+						icaltime_adjust (&dateTime, 0, 0, 0, utc_offset);
+						dateTime.is_utc = 0;
+					}
+				}
 				prop = icalproperty_new_dtend (dateTime);
-				if (tzid && strlen (tzid) && !dateTime.is_utc) { // Note: TZID not specified if it's a UTC time
+				if (tzid && strlen (tzid) && (utc_offset != 0)) { // Note: TZID not specified if it's a UTC time
+					g_debug("got a tzid, %s", tzid);
 					param = icalparameter_new_tzid (tzid);
 					icalproperty_add_parameter (prop, param);
 				}
@@ -1625,7 +1705,7 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 
 	// Now handle any non-trivial exception events we found in the <Exceptions> element
 	if (newExceptionEvents) {
-		_eas2ical_add_exception_events (vcalendar, vevent, newExceptionEvents);
+		_eas2ical_add_exception_events (vcalendar, vevent, newExceptionEvents, vtimezone, tzid);
 		// _eas2ical_add_exception_events() destroys the hash tables as it goes
 		// so all we need to do here is free the list
 		g_slist_free (newExceptionEvents);
