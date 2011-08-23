@@ -48,7 +48,9 @@ libeasmail_la_SOURCES =		\
         eas-attachment.c	\
 		eas-mail-errors.h	\
 		eas-marshal.h 		\
-		eas-marshal.c		
+		eas-marshal.c           \
+		eas-provision-list.h           \
+		eas-provision-list.c
 
 libeasmailincludedir = $(privincludedir)/eas-mail
 libeasmailinclude_HEADERS = eas-attachment.h eas-folder.h libeasmail.h \
