@@ -218,27 +218,45 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
                                      GError **error)
 {
         gboolean ret = TRUE;
-        DBusGProxy *proxy = self->priv->remoteEas;
+        DBusGProxy *proxy;
         gchar **created_item_array = NULL;
         gchar **deleted_item_array = NULL;
         gchar **updated_item_array = NULL;
 
 
         g_debug ("eas_sync_handler_get_calendar_items++ ");
-        g_debug ("sync_key_in = %s", sync_key_in);
+	
+        if (self == NULL)
+		{
+			 g_set_error (error, EAS_SYNC_ERROR,
+                             EAS_SYNC_ERROR_BADARG,
+                             ("get_items requires a valid EasSyncHandler object"));
+                return FALSE;
+		}
+		else if(items_created == NULL || items_updated == NULL || items_deleted == NULL)
+		{
+
+			 g_set_error (error, EAS_SYNC_ERROR,
+                             EAS_SYNC_ERROR_BADARG,
+                             ("get_items requires a valid  arguments items_created,items_updated & items_deleted"));
+                return FALSE;
+			
+		}
         //if sync_key not set - assign to 0 to re-initiate sync relationship
         if (sync_key_in == NULL || (strlen (sync_key_in) <= 0)) {
                 g_debug ("updating sync key to 0");
                 sync_key_in = "0";
         }
+		
 
-
+		g_debug ("sync_key_in = %s", sync_key_in);
         g_debug ("eas_sync_handler_get_latest_items - dbus proxy ok");
 
         g_assert (g_slist_length (*items_created) == 0);
         g_assert (g_slist_length (*items_updated) == 0);
         g_assert (g_slist_length (*items_deleted) == 0);
 
+		proxy= self->priv->remoteEas;
         // call DBus API
         ret = dbus_g_proxy_call (proxy, "get_latest_items", error,
                                  G_TYPE_STRING, self->priv->account_uid,
@@ -322,22 +340,29 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
                                GError **error)
 {
         gboolean ret = TRUE;
-        DBusGProxy *proxy = self->priv->remoteEas;
+        DBusGProxy *proxy=NULL;
+		
         // Build string array from items_deleted GSList
         guint list_length = g_slist_length ( (GSList*) items_deleted);
         gchar **deleted_items_array = NULL;
         int loop = 0;
-
+	
         g_debug ("eas_sync_handler_delete_items++");
-
-        if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
+		if (self == NULL)
+		{
+			 g_set_error (error, EAS_SYNC_ERROR,
+                             EAS_SYNC_ERROR_BADARG,
+                             ("delete_items requires a valid EasSyncHandler object"));
+                return FALSE;
+		}
+        else if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
                 g_set_error (error, EAS_SYNC_ERROR,
                              EAS_SYNC_ERROR_BADARG,
                              ("delete_items requires a valid sync key"));
                 return FALSE;
         }
 
-
+		proxy = self->priv->remoteEas;
 
         deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
         if (!deleted_items_array) {
@@ -386,12 +411,18 @@ eas_sync_handler_update_items (EasSyncHandler* self,
                                GError **error)
 {
         gboolean ret = TRUE;
-        DBusGProxy *proxy = self->priv->remoteEas;
+        DBusGProxy *proxy;
         gchar **updated_item_array = NULL;
 
         g_debug ("eas_sync_handler_update_items++");
-
-        if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
+		if(self == NULL)
+		{
+			 g_set_error (error, EAS_SYNC_ERROR,
+                             EAS_SYNC_ERROR_BADARG,
+                             ("update_items requires a valid EasSyncHandler object"));
+                return FALSE;
+		}
+        else if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
                 g_set_error (error, EAS_SYNC_ERROR,
                              EAS_SYNC_ERROR_BADARG,
                              ("update_items requires a valid sync key"));
@@ -401,7 +432,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
         g_debug ("eas_sync_handler_update_items - dbus proxy ok");
 
-        g_debug ("server_id = %s", ( (EasItemInfo*) (items_updated->data))->server_id);
+      	proxy = self->priv->remoteEas;
 
         build_serialised_calendar_info_array (&updated_item_array, items_updated, FALSE, error);
 
@@ -472,21 +503,27 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                             GError **error)
 {
         gboolean ret = TRUE;
-        DBusGProxy *proxy = self->priv->remoteEas;
+        DBusGProxy *proxy= NULL;
         gchar **added_item_array = NULL;
         gchar **created_item_array = NULL;
 
         g_debug ("eas_sync_handler_add_items++");
-
-        if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
+		if (self == NULL)
+		{
+			 g_set_error (error, EAS_SYNC_ERROR,
+                             EAS_SYNC_ERROR_BADARG,
+                             ("add_items requires a valid EasSyncHandler object"));
+                return FALSE;
+		}
+        else if (sync_key_in == NULL || (strlen (sync_key_in) <= 0) || !g_strcmp0 (sync_key_in, "0")) {
                 g_set_error (error, EAS_SYNC_ERROR,
                              EAS_SYNC_ERROR_BADARG,
                              ("add_items requires a valid sync key"));
                 return FALSE;
         }
 
-        g_debug ("eas_sync_handler_add_items to folder %s", folder_id);
-
+        
+		proxy = self->priv->remoteEas;
         build_serialised_calendar_info_array (&added_item_array, items_added, TRUE, error);
 
         // call DBus API

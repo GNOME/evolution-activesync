@@ -1024,12 +1024,12 @@ gchar* sync_key_out = NULL;
    // set mock
 	setMockNegTestGoodHttp("CalendarDeleteCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_delete_items (sync_handler,
+	   rtn = eas_sync_handler_delete_items (NULL,
                                       "wrong",
                                       (gchar**)&sync_key_out,
                                       EAS_ITEM_CALENDAR,
                                       NULL,
-                                      (GSList*)"abc",
+                                      NULL,
                                       &error);
 	
 	
@@ -1072,7 +1072,7 @@ gchar* sync_key_out = NULL;
    // set mock
 	setMockNegTestGoodHttp("CalendarUpdateCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_update_items (sync_handler,
+	   rtn = eas_sync_handler_update_items (NULL,
                                       "wrong",
                                       (gchar **)&sync_key_out,
                                       EAS_ITEM_CALENDAR,
@@ -1121,12 +1121,12 @@ START_TEST (test_cal_add_crash)
    // set mock
 	setMockNegTestGoodHttp("CalendarAddCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_add_items (sync_handler,
+	   rtn = eas_sync_handler_add_items (NULL,
                                       "wrong",
                                       (gchar**)&sync_key_out,
                                       EAS_ITEM_CALENDAR,
                                       NULL,
-                                      (GSList*)"wrong",
+                                      NULL,
                                       &error);
 	
 	
@@ -1171,12 +1171,12 @@ START_TEST (test_cal_get_crash)
    // set mock
 	setMockNegTestGoodHttp("CalendarGetCrash.xml");
    // mock Test
-	negativeTestGetLatestCalendar (sync_handler,
+	negativeTestGetLatestCalendar (NULL,
 		                   (gchar*)"wrong",
 		                   (gchar**)&sync_key_out,
 		                   NULL,
-		                   &updated,
-		                   &deleted,
+		                   NULL,
+		                   NULL,
 		                   &error);
     //  free everything!
     g_slist_foreach (created, (GFunc) g_object_unref, NULL);
@@ -1255,17 +1255,18 @@ Suite* eas_libeascal_suite (void)
 		tcase_add_test (tc_libeascal, test_cal_delete_invalid_server_id);
 		tcase_add_test (tc_libeascal, test_cal_delete_valid_invalid_server_id);
 		tcase_add_test (tc_libeascal, test_cal_delete_valid_calendar_server_id);
-		tcase_add_test (tc_libeascal, test_cal_update_invalid_server_id);
+		tcase_add_test (tc_libeascal, test_cal_update_invalid_server_id); 
 
-	// crash functions will not consume mocked response.Dummy function call after each test will consume the mocked response.	
+		// crash functions will not consume mocked response.Dummy function call after each test will consume the mocked response.	
 		tcase_add_test (tc_libeascal, test_cal_delete_crash);
-		tcase_add_test (tc_libeascal, test_consume_response);						
+		tcase_add_test (tc_libeascal, test_consume_response);				
 		tcase_add_test (tc_libeascal, test_cal_update_crash);
-		tcase_add_test (tc_libeascal, test_consume_response);		
+		tcase_add_test (tc_libeascal, test_consume_response);	
 		tcase_add_test (tc_libeascal, test_cal_add_crash);
 		tcase_add_test (tc_libeascal, test_consume_response);		
 		tcase_add_test (tc_libeascal, test_cal_get_crash);
 		tcase_add_test (tc_libeascal, test_consume_response);
+	
 	}
 //    tcase_add_test (tc_libeascal, test_cal);
 //    tcase_add_test (tc_libeascal, test_get_sync_handler);

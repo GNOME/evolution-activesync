@@ -988,12 +988,12 @@ START_TEST (test_con_delete_crash)
    // set mock
 	setMockNegTestGoodHttp("ContactDeleteCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_delete_items (sync_handler,
+	   rtn = eas_sync_handler_delete_items (NULL,
                                       "wrong",
                                       (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
-                                      (GSList*)"mock",
+                                      NULL,
                                       &error);
 	
 	
@@ -1044,7 +1044,7 @@ START_TEST (test_con_update_crash)
    // set mock
 	setMockNegTestGoodHttp("ContactUpdateCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_update_items (sync_handler,
+	   rtn = eas_sync_handler_update_items (NULL,
                                       "wrong",
                                       (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
@@ -1094,12 +1094,12 @@ START_TEST (test_con_add_crash)
    // set mock
 	setMockNegTestGoodHttp("ContactAddCrash.xml");
    // mock Test
-	   rtn = eas_sync_handler_add_items (sync_handler,
+	   rtn = eas_sync_handler_add_items (NULL,
                                       "wrong",
                                       (gchar**)&sync_key_out,
                                       EAS_ITEM_CONTACT,
                                       NULL,
-                                      (GSList*)"wrong",
+                                      NULL,
                                       &error);
 	
 	
