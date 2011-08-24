@@ -20,6 +20,11 @@
 #include "../libeasmail/src/eas-provision-list.h"
 
 
+const QString DEBUG_EMAIL_ADDRESS = "andy@cstylianou.com";
+const QString DEBUG_USERNAME = "andy";
+const QString DEBUG_SERVER_URI = "https://cstylianou.com/Microsoft-Server-ActiveSync";
+
+
 extern ConfigWizard* theWizard;
 
 
@@ -66,19 +71,16 @@ ConfigWizard::ConfigWizard(QWidget *parent)
     connect(ui->btnNext, SIGNAL(clicked()), SLOT(onNext()));
     connect(ui->btnBack, SIGNAL(clicked()), SLOT(onBack()));
     connect(ui->btnCancel, SIGNAL(clicked()), SLOT(onCancel()));
-    connect(ui->editEmailAddress, SIGNAL(textEdited(QString)), SLOT(validateAutoDiscoverInputs()));
+    connect(ui->editEmailAddress, SIGNAL(textChanged(QString)), SLOT(validateAutoDiscoverInputs()));
     connect(ui->editServerUri, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
     connect(ui->editUsername2, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
+    connect(ui->cbUseDebugValues, SIGNAL(clicked(bool)), SLOT(useDebugDetails(bool)));
     // Connect the two username fields
     connect(ui->editUsername1, SIGNAL(textChanged(QString)), ui->editUsername2, SLOT(setText(QString)));
     connect(ui->editUsername2, SIGNAL(textChanged(QString)), ui->editUsername1, SLOT(setText(QString)));
 
-
-    // TEMPORARY TEST DATA!!
-    ui->editEmailAddress->setText("andy@cstylianou.com");
-    ui->editUsername1->setText("andy"); // Will also set editUsername2 thanks to the signal/slot above
-    ui->editServerUri->setText("https://cstylianou.com/Microsoft-Server-ActiveSync");
-
+    // Respect the initial state of cbUseDebugValues
+    useDebugDetails(ui->cbUseDebugValues->isChecked());
 
     changeState(AutoDiscoverDetails);
 }
@@ -92,6 +94,26 @@ ConfigWizard::~ConfigWizard()
     g_free(tid);
     g_free(tidStatus);
     delete ui;
+}
+
+
+/**
+ * Slot: switch on/off use of debug details
+ */
+void ConfigWizard::useDebugDetails(bool useDebug)
+{
+    if (useDebug)
+    {
+        ui->editEmailAddress->setText(DEBUG_EMAIL_ADDRESS);
+        ui->editUsername1->setText(DEBUG_USERNAME); // Will also set editUsername2 thanks to the signal/slot above
+        ui->editServerUri->setText(DEBUG_SERVER_URI);
+    }
+    else
+    {
+        ui->editEmailAddress->clear();
+        ui->editUsername1->clear();
+        ui->editServerUri->clear();
+    }
 }
 
 
@@ -174,7 +196,6 @@ void ConfigWizard::onCancel()
  */
 void ConfigWizard::storeServerDetails(const QString& uri)
 {
-    qDebug() << "Entering storeServerDetails() with uri=" << uri;
     serverUri = uri;
 
     // TODO: ADD BETTER ERROR HANDLING?
@@ -276,7 +297,6 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         // Use username if entered, otherwise use the e-mail address
         emailAddress = ui->editEmailAddress->text();
         username = ui->editUsername1->text();
-        qDebug() << "Calling autodiscover with email address" << emailAddress << "username" << username;
 
         eas_connection_autodiscover(
             autoDiscoverCallback, 0,
@@ -310,6 +330,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         setTitle(tr("ActiveSync is now configured"), tr("Please confirm which other services you would like to synchronise with this device."));
         setButtonCaptions(tr("Finish"));
         ui->btnCancel->setEnabled(false);
+        ui->btnBack->setEnabled(false);
         break;
 
     case Error:
@@ -334,7 +355,7 @@ void ConfigWizard::getProvisionReqts()
 
     GError* error = 0;
 
-    // Prepare member variable
+    // Prepare member variables
     if (mailHandler)
     {
         g_object_unref(mailHandler);
@@ -360,115 +381,121 @@ void ConfigWizard::getProvisionReqts()
         error = 0;
         return;
     }
-
-    if (mailHandler)
-    {
-        GSList* folderList = 0;
-        if (eas_mail_handler_get_folder_list(mailHandler, true, &folderList, 0, &error))
-        {
-            // TODO: decide how to deal with this. Do we even need to call ...get_folder_list()?
-            // Will ...get_provision_list() on its own do?
-        }
-        if (error)
-        {
-            g_error_free(error);
-            error = 0;
-        }
-
-        EasProvisionList* provisionList = 0;
-        if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &provisionList, 0, &error))
-        {
-            if (provisionList)
-            {
-                serverHasProvisioningReqts = true;
-
-                // Ask the user to accept the provisioning requirements
-                ui->listRequirements->clear();
-                ui->listRequirements->addItem(tr("DevicePasswordEnabled: ") + provisionList->DevicePasswordEnabled);
-                ui->listRequirements->addItem(tr("AlphaNumericDevicePasswordRequired: ") + provisionList->AlphaNumericDevicePasswordRequired);
-                ui->listRequirements->addItem(tr("PasswordRecoveryEnabled: ") + provisionList->PasswordRecoveryEnabled);
-                ui->listRequirements->addItem(tr("RequireStorageCardEncryption: ") + provisionList->RequireStorageCardEncryption);
-                ui->listRequirements->addItem(tr("AttachmentsEnabled: ") + provisionList->AttachmentsEnabled);
-                ui->listRequirements->addItem(tr("MinDevicePasswordLength: ") + provisionList->MinDevicePasswordLength);
-                ui->listRequirements->addItem(tr("MaxInactivityTimeDeviceLock: ") + provisionList->MaxInactivityTimeDeviceLock);
-                ui->listRequirements->addItem(tr("MaxDevicePasswordFailedAttempts: ") + provisionList->MaxDevicePasswordFailedAttempts);
-                ui->listRequirements->addItem(tr("MaxAttachmentSize: ") + provisionList->MaxAttachmentSize);
-                ui->listRequirements->addItem(tr("AllowSimpleDevicePassword: ") + provisionList->AllowSimpleDevicePassword);
-                ui->listRequirements->addItem(tr("DevicePasswordExpiration: ") + provisionList->DevicePasswordExpiration);
-                ui->listRequirements->addItem(tr("DevicePasswordHistory: ") + provisionList->DevicePasswordHistory);
-                ui->listRequirements->addItem(tr("AllowStorageCard: ") + provisionList->AllowStorageCard);
-                ui->listRequirements->addItem(tr("AllowCamera: ") + provisionList->AllowCamera);
-                ui->listRequirements->addItem(tr("RequireDeviceEncryption: ") + provisionList->RequireDeviceEncryption);
-                ui->listRequirements->addItem(tr("AllowUnsignedApplications: ") + provisionList->AllowUnsignedApplications);
-                ui->listRequirements->addItem(tr("AllowUnsignedInstallationPackages: ") + provisionList->AllowUnsignedInstallationPackages);
-                ui->listRequirements->addItem(tr("MinDevicePasswordComplexCharacters: ") + provisionList->MinDevicePasswordComplexCharacters);
-                ui->listRequirements->addItem(tr("AllowWifi: ") + provisionList->AllowWifi);
-                ui->listRequirements->addItem(tr("AllowTextMessaging: ") + provisionList->AllowTextMessaging);
-                ui->listRequirements->addItem(tr("AllowPOPIMAPEmail: ") + provisionList->AllowPOPIMAPEmail);
-                ui->listRequirements->addItem(tr("AllowBluetooth: ") + provisionList->AllowBluetooth);
-                ui->listRequirements->addItem(tr("AllowIrDA: ") + provisionList->AllowIrDA);
-                ui->listRequirements->addItem(tr("RequireManualSyncWhenRoaming: ") + provisionList->RequireManualSyncWhenRoaming);
-                ui->listRequirements->addItem(tr("AllowDesktopSync: ") + provisionList->AllowDesktopSync);
-                ui->listRequirements->addItem(tr("MaxCalendarAgeFilter: ") + provisionList->MaxCalendarAgeFilter);
-                ui->listRequirements->addItem(tr("AllowHTMLEmail: ") + provisionList->AllowHTMLEmail);
-                ui->listRequirements->addItem(tr("MaxEmailAgeFilter: ") + provisionList->MaxEmailAgeFilter);
-                ui->listRequirements->addItem(tr("MaxEmailBodyTruncationSize: ") + provisionList->MaxEmailBodyTruncationSize);
-                ui->listRequirements->addItem(tr("MaxEmailHTMLBodyTruncationSize: ") + provisionList->MaxEmailHTMLBodyTruncationSize);
-                ui->listRequirements->addItem(tr("RequireSignedSMIMEMessages: ") + provisionList->RequireSignedSMIMEMessages);
-                ui->listRequirements->addItem(tr("RequireEncryptedSMIMEMessages: ") + provisionList->RequireEncryptedSMIMEMessages);
-                ui->listRequirements->addItem(tr("RequireSignedSMIMEAlgorithm: ") + provisionList->RequireSignedSMIMEAlgorithm);
-                ui->listRequirements->addItem(tr("RequireEncryptionSMIMEAlgorithm: ") + provisionList->RequireEncryptionSMIMEAlgorithm);
-                ui->listRequirements->addItem(tr("AllowSMIMEEncryptionAlgorithmNegotiation: ") + provisionList->AllowSMIMEEncryptionAlgorithmNegotiation);
-                ui->listRequirements->addItem(tr("AllowSMIMESoftCerts: ") + provisionList->AllowSMIMESoftCerts);
-                ui->listRequirements->addItem(tr("AllowBrowser: ") + provisionList->AllowBrowser);
-                ui->listRequirements->addItem(tr("AllowConsumerEmail: ") + provisionList->AllowConsumerEmail);
-                ui->listRequirements->addItem(tr("AllowRemoteDesktop: ") + provisionList->AllowRemoteDesktop);
-                ui->listRequirements->addItem(tr("AllowInternetSharing: ") + provisionList->AllowInternetSharing);
-
-                if (provisionList->UnapprovedInROMApplicationList)
-                {
-                    QStringList strList;
-                    const int listLength = g_slist_length(provisionList->UnapprovedInROMApplicationList);
-                    for (int i = 0; i < listLength; i++)
-                    {
-                        strList.append(QString((char*)g_slist_nth_data(provisionList->UnapprovedInROMApplicationList, i)));
-                    }
-                    ui->listRequirements->addItem(tr("UnapprovedInROMApplicationList: ") + strList.join(", "));
-                }
-
-                if (provisionList->ApprovedApplicationList)
-                {
-                    QStringList strList;
-                    const int listLength = g_slist_length(provisionList->ApprovedApplicationList);
-                    for (int i = 0; i < listLength; i++)
-                    {
-                        strList.append(QString((char*)g_slist_nth_data(provisionList->ApprovedApplicationList, i)));
-                    }
-                    ui->listRequirements->addItem(tr("ApprovedApplicationList: ") + strList.join(", "));
-                }
-
-                changeState(ConfirmProvisionReqts);
-            }
-            else
-            {
-                serverHasProvisioningReqts = false;
-                changeState(Finish);
-            }
-        }
-        else if (error != 0)
-        {
-            showError(QString(error->message));
-            g_error_free(error);
-        }
-        else
-        {
-            showError(tr("Something went wrong and no error message was returned. :("));
-        }
-    }
-    else // mailHandler is null
+    else if (!mailHandler)
     {
         showError("Failed to construct new EasEmailHandler in ConfigWizard::changeState()");
         return;
+    }
+
+    // Get a folder list. If this returns an error, we need to provision.
+    // Otherwise we can go straight to the finish screen.
+    GSList* folderList = 0;
+    eas_mail_handler_get_folder_list(mailHandler, true, &folderList, 0, &error);
+    if (folderList)
+    {
+        g_slist_free(folderList);
+        folderList = 0;
+    }
+    if (!error && !ui->cbForceProvisioning->isChecked())
+    {
+        changeState(Finish);
+        return;
+    }
+    else
+    {
+        g_error_free(error);
+        error = 0;
+    }
+
+    // Now request a list of provisioning requirements
+    EasProvisionList* provisionList = 0;
+    if (eas_mail_handler_get_provision_list(mailHandler, &tid, &tidStatus, &provisionList, 0, &error))
+    {
+        if (provisionList)
+        {
+            serverHasProvisioningReqts = true;
+
+            // Ask the user to accept the provisioning requirements
+            ui->listRequirements->clear();
+            ui->listRequirements->addItem(tr("DevicePasswordEnabled: ") + provisionList->DevicePasswordEnabled);
+            ui->listRequirements->addItem(tr("AlphaNumericDevicePasswordRequired: ") + provisionList->AlphaNumericDevicePasswordRequired);
+            ui->listRequirements->addItem(tr("PasswordRecoveryEnabled: ") + provisionList->PasswordRecoveryEnabled);
+            ui->listRequirements->addItem(tr("RequireStorageCardEncryption: ") + provisionList->RequireStorageCardEncryption);
+            ui->listRequirements->addItem(tr("AttachmentsEnabled: ") + provisionList->AttachmentsEnabled);
+            ui->listRequirements->addItem(tr("MinDevicePasswordLength: ") + provisionList->MinDevicePasswordLength);
+            ui->listRequirements->addItem(tr("MaxInactivityTimeDeviceLock: ") + provisionList->MaxInactivityTimeDeviceLock);
+            ui->listRequirements->addItem(tr("MaxDevicePasswordFailedAttempts: ") + provisionList->MaxDevicePasswordFailedAttempts);
+            ui->listRequirements->addItem(tr("MaxAttachmentSize: ") + provisionList->MaxAttachmentSize);
+            ui->listRequirements->addItem(tr("AllowSimpleDevicePassword: ") + provisionList->AllowSimpleDevicePassword);
+            ui->listRequirements->addItem(tr("DevicePasswordExpiration: ") + provisionList->DevicePasswordExpiration);
+            ui->listRequirements->addItem(tr("DevicePasswordHistory: ") + provisionList->DevicePasswordHistory);
+            ui->listRequirements->addItem(tr("AllowStorageCard: ") + provisionList->AllowStorageCard);
+            ui->listRequirements->addItem(tr("AllowCamera: ") + provisionList->AllowCamera);
+            ui->listRequirements->addItem(tr("RequireDeviceEncryption: ") + provisionList->RequireDeviceEncryption);
+            ui->listRequirements->addItem(tr("AllowUnsignedApplications: ") + provisionList->AllowUnsignedApplications);
+            ui->listRequirements->addItem(tr("AllowUnsignedInstallationPackages: ") + provisionList->AllowUnsignedInstallationPackages);
+            ui->listRequirements->addItem(tr("MinDevicePasswordComplexCharacters: ") + provisionList->MinDevicePasswordComplexCharacters);
+            ui->listRequirements->addItem(tr("AllowWifi: ") + provisionList->AllowWifi);
+            ui->listRequirements->addItem(tr("AllowTextMessaging: ") + provisionList->AllowTextMessaging);
+            ui->listRequirements->addItem(tr("AllowPOPIMAPEmail: ") + provisionList->AllowPOPIMAPEmail);
+            ui->listRequirements->addItem(tr("AllowBluetooth: ") + provisionList->AllowBluetooth);
+            ui->listRequirements->addItem(tr("AllowIrDA: ") + provisionList->AllowIrDA);
+            ui->listRequirements->addItem(tr("RequireManualSyncWhenRoaming: ") + provisionList->RequireManualSyncWhenRoaming);
+            ui->listRequirements->addItem(tr("AllowDesktopSync: ") + provisionList->AllowDesktopSync);
+            ui->listRequirements->addItem(tr("MaxCalendarAgeFilter: ") + provisionList->MaxCalendarAgeFilter);
+            ui->listRequirements->addItem(tr("AllowHTMLEmail: ") + provisionList->AllowHTMLEmail);
+            ui->listRequirements->addItem(tr("MaxEmailAgeFilter: ") + provisionList->MaxEmailAgeFilter);
+            ui->listRequirements->addItem(tr("MaxEmailBodyTruncationSize: ") + provisionList->MaxEmailBodyTruncationSize);
+            ui->listRequirements->addItem(tr("MaxEmailHTMLBodyTruncationSize: ") + provisionList->MaxEmailHTMLBodyTruncationSize);
+            ui->listRequirements->addItem(tr("RequireSignedSMIMEMessages: ") + provisionList->RequireSignedSMIMEMessages);
+            ui->listRequirements->addItem(tr("RequireEncryptedSMIMEMessages: ") + provisionList->RequireEncryptedSMIMEMessages);
+            ui->listRequirements->addItem(tr("RequireSignedSMIMEAlgorithm: ") + provisionList->RequireSignedSMIMEAlgorithm);
+            ui->listRequirements->addItem(tr("RequireEncryptionSMIMEAlgorithm: ") + provisionList->RequireEncryptionSMIMEAlgorithm);
+            ui->listRequirements->addItem(tr("AllowSMIMEEncryptionAlgorithmNegotiation: ") + provisionList->AllowSMIMEEncryptionAlgorithmNegotiation);
+            ui->listRequirements->addItem(tr("AllowSMIMESoftCerts: ") + provisionList->AllowSMIMESoftCerts);
+            ui->listRequirements->addItem(tr("AllowBrowser: ") + provisionList->AllowBrowser);
+            ui->listRequirements->addItem(tr("AllowConsumerEmail: ") + provisionList->AllowConsumerEmail);
+            ui->listRequirements->addItem(tr("AllowRemoteDesktop: ") + provisionList->AllowRemoteDesktop);
+            ui->listRequirements->addItem(tr("AllowInternetSharing: ") + provisionList->AllowInternetSharing);
+
+            if (provisionList->UnapprovedInROMApplicationList)
+            {
+                QStringList strList;
+                const int listLength = g_slist_length(provisionList->UnapprovedInROMApplicationList);
+                for (int i = 0; i < listLength; i++)
+                {
+                    strList.append(QString((char*)g_slist_nth_data(provisionList->UnapprovedInROMApplicationList, i)));
+                }
+                ui->listRequirements->addItem(tr("UnapprovedInROMApplicationList: ") + strList.join(", "));
+            }
+
+            if (provisionList->ApprovedApplicationList)
+            {
+                QStringList strList;
+                const int listLength = g_slist_length(provisionList->ApprovedApplicationList);
+                for (int i = 0; i < listLength; i++)
+                {
+                    strList.append(QString((char*)g_slist_nth_data(provisionList->ApprovedApplicationList, i)));
+                }
+                ui->listRequirements->addItem(tr("ApprovedApplicationList: ") + strList.join(", "));
+            }
+
+            changeState(ConfirmProvisionReqts);
+        }
+        else
+        {
+            serverHasProvisioningReqts = false;
+            changeState(Finish);
+        }
+    }
+    else if (error != 0)
+    {
+        showError(QString(error->message));
+        g_error_free(error);
+    }
+    else
+    {
+        showError(tr("Something went wrong and no error message was returned. :("));
     }
 }
 

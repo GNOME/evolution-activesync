@@ -46,6 +46,8 @@ public Q_SLOTS:
 
     void showError(const QString& msg);
 
+    void useDebugDetails(bool useDebug);
+
 private:
     enum State
     {
