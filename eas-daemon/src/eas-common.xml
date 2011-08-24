@@ -65,7 +65,7 @@
       <arg type="s" name="account_uid" direction="in"/>
       <arg type="s" name="tid" direction="out"/>
       <arg type="s" name="tid_status" direction="out"/>
-      <arg type="as" name="provision_list" direction="out"/>
+      <arg type="s" name="provision_list" direction="out"/>
     </method>
 
     <method name="accept_provision_list">

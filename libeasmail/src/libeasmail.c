@@ -738,7 +738,7 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 				 G_TYPE_INVALID,
 				 G_TYPE_STRING, &_tid,
 				 G_TYPE_STRING, &_tid_status,
-				 G_TYPE_STRV, &_provision_list_buffer,
+				 G_TYPE_STRING, &_provision_list_buffer,
 				 G_TYPE_INVALID);
 
 	g_debug ("%s - dbus proxy called", __func__);
@@ -766,15 +766,15 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	*tid_status = _tid_status; // full transfer
 
 	// Build the provision list
-	provision_list = eas_provision_list_new();
-	ret = eas_provision_list_deserialise(provision_list, _provision_list_buffer);
+	*provision_list = eas_provision_list_new();
+	ret = eas_provision_list_deserialise(*provision_list, _provision_list_buffer);
 	if (!ret)
 	{
 		// TODO: error
 	}
 
 cleanup:
-	free_string_array (_provision_list_buffer);
+	g_free (_provision_list_buffer);
 
 	if (!ret) { // failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);
@@ -782,8 +782,7 @@ cleanup:
 			g_warning (" Error: %s", (*error)->message);
 		}
 		g_debug ("%s failure - cleanup lists", __func__);
-		g_slist_foreach (*provision_list, (GFunc) g_free, NULL);
-		g_free (*provision_list);
+		g_object_unref(*provision_list);
 		*provision_list = NULL;
 	}
 
