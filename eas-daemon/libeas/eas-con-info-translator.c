@@ -437,11 +437,11 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				//
 				// Nickname
 				//
-				else if (g_strcmp0 (name, EAS_ELEMENT_NICKNAME) == 0) {
+				else if (g_strcmp0 (name, EAS_ELEMENT_CONTACTS2_NICKNAME) == 0) {
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_NICKNAME);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_NICKNAME);
+					add_attr_value (attr, node->children, EAS_ELEMENT_CONTACTS2_NICKNAME);
 				}
 
 				//
