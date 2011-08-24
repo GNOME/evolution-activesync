@@ -232,29 +232,35 @@ static void add_name_attr_values (EVCardAttribute *attr, xmlNodePtr node)
 
 static void add_home_address_attr_values (EVCardAttribute *attr, xmlNodePtr node)
 {
-	add_attr_value (attr, node, EAS_ELEMENT_HOMECITY);
-	add_attr_value (attr, node, EAS_ELEMENT_HOMECOUNTRY);
-	add_attr_value (attr, node, EAS_ELEMENT_HOMEPOSTALCODE);
-	add_attr_value (attr, node, EAS_ELEMENT_HOMESTATE);
+	add_attr_value (attr, node, "POBox");
+	add_attr_value (attr, node, "extended");
 	add_attr_value (attr, node, EAS_ELEMENT_HOMESTREET);
+    add_attr_value (attr, node, EAS_ELEMENT_HOMECITY);
+	add_attr_value (attr, node, EAS_ELEMENT_HOMESTATE);
+	add_attr_value (attr, node, EAS_ELEMENT_HOMEPOSTALCODE);
+	add_attr_value (attr, node, EAS_ELEMENT_HOMECOUNTRY);
 }
 
 static void add_business_address_attr_values (EVCardAttribute *attr, xmlNodePtr node)
 {
-	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSCITY);
-	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSCOUNTRY);
-	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSPOSTALCODE);
-	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSSTATE);
+	add_attr_value (attr, node, "POBox");
+	add_attr_value (attr, node, "extended");
 	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSSTREET);
+    add_attr_value (attr, node, EAS_ELEMENT_BUSINESSCITY);
+	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSSTATE);
+	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSPOSTALCODE);
+	add_attr_value (attr, node, EAS_ELEMENT_BUSINESSCOUNTRY);
 }
 
 static void add_other_address_attr_values (EVCardAttribute *attr, xmlNodePtr node)
 {
-	add_attr_value (attr, node, EAS_ELEMENT_OTHERCITY);
-	add_attr_value (attr, node, EAS_ELEMENT_OTHERCOUNTRY);
-	add_attr_value (attr, node, EAS_ELEMENT_OTHERPOSTALCODE);
-	add_attr_value (attr, node, EAS_ELEMENT_OTHERSTATE);
+	add_attr_value (attr, node, "POBox");
+	add_attr_value (attr, node, "extended");
 	add_attr_value (attr, node, EAS_ELEMENT_OTHERSTREET);
+    add_attr_value (attr, node, EAS_ELEMENT_OTHERCITY);
+	add_attr_value (attr, node, EAS_ELEMENT_OTHERSTATE);
+	add_attr_value (attr, node, EAS_ELEMENT_OTHERPOSTALCODE);
+	add_attr_value (attr, node, EAS_ELEMENT_OTHERCOUNTRY);
 }
 
 gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
