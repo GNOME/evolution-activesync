@@ -314,7 +314,7 @@ eas_get_email_attachment_msg_write_file (EasGetEmailAttachmentMsg *self, gchar *
 		goto finish;
 	}
 	g_message ("data decoded   =--->:[%s]",   decoded_buf);
-	g_message ("data decoded length =--->:[%d]",  decoded_len);
+	g_message ("data decoded length =--->:[%zu]",  decoded_len);
 
 	fullFilePath = g_build_filename (priv->directoryPath, priv->fileReference, NULL);
 	g_message ("Attempting to write attachment to file [%s]", fullFilePath);
