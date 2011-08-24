@@ -4,6 +4,7 @@
 check_eas_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(DBUS_CFLAGS)		\
+		-I$(top_srcdir)/libeasmail/src/ \
 		$(EDATASERVER_CFLAGS)
 
 check_eas_LDFLAGS =			\
