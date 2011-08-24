@@ -417,7 +417,7 @@ eas_get_email_msg_write_chunk_to_file (EasGetEmailBodyMsg* self,const guchar* ch
 			g_warning ("Problem writing mime data segment to file!");
 			success = FALSE;
 		}
-		g_debug ("Wrote %u of %u bytes to file.", written, size);
+		g_debug ("Wrote %u of %zu bytes to file.", written, size);
 
 		fclose (hBody);
 	}
