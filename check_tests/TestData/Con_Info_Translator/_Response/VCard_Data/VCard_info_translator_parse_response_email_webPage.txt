@@ -1,5 +1,5 @@
 BEGIN:VCARD
 VERSION:3.0
-EMAIL;TYPE=internet:"example@example.com"<example@example.com>
+EMAIL;TYPE=internet:example@example.com
 URL:www.example.com
 END:VCARD
