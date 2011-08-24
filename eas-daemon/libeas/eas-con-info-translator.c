@@ -147,7 +147,57 @@
 #define EAS_ELEMENT_CONTACTS2_NICKNAME			"NickName"
 #define EAS_ELEMENT_CONTACTS2_MMS				"MMS"
 
+#define EAS_EMAIL_START "<"
+#define EAS_EMAIL_END ">"
 
+// helper function to trim a buffer based on a start string and an end string
+// eg. '"john.doe@work.com" <john.doe@work.com>'  trims to 'john.doe@work.com'
+// where start string is "<" and end string is ">"
+// returns a newly allocated string which must be freed
+static gchar* trimBuf(const gchar* buf, const gchar* startString, const gchar* endString)
+{
+	gchar ** split = NULL;
+	gchar ** split2 = NULL;
+	gchar * newString = NULL;
+
+	split = g_strsplit(buf, startString, 2);
+	split2 = g_strsplit(split[1], endString, 2);
+	newString = g_strdup(split2[0]);
+
+	g_strfreev(split);
+	g_strfreev(split2);
+
+	return newString;
+		
+}
+
+static void
+add_email_attr_value (EVCardAttribute *attr, xmlNodePtr node, const gchar *sought)
+{
+	xmlNodePtr n = node;
+	gchar *value = NULL;
+
+	// find sought value
+	while (n) {
+		if (!xmlStrcmp ( (const xmlChar*) (n->name), (const xmlChar *) sought)) {
+			value = (gchar *) xmlNodeGetContent (n);
+			break;
+		}
+		n = n->next;
+	}
+
+	if(value!=NULL){
+		gchar* trimmedAddress = trimBuf(value, EAS_EMAIL_START, EAS_EMAIL_END);
+		e_vcard_attribute_add_value (attr, trimmedAddress); // e_vcard copies value
+		g_free(trimmedAddress);
+	}else{
+		/* if sought not found (i.e. value = NULL) then e_vcard_attribute_add_value()
+		inserts a semicolon otherwise it adds the value*/
+		e_vcard_attribute_add_value (attr, value); // e_vcard copies value
+	}
+
+	xmlFree (value);
+}
 
 static void
 add_attr_value (EVCardAttribute *attr, xmlNodePtr node, const gchar *sought)
@@ -396,21 +446,21 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_EMAIL);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_EMAIL1ADDRESS);
+					add_email_attr_value (attr, node->children, EAS_ELEMENT_EMAIL1ADDRESS);
 					e_vcard_attribute_add_param_with_value (attr, param, "internet");
 				} else if (g_strcmp0 (name, EAS_ELEMENT_EMAIL2ADDRESS) == 0) {
 					EVCardAttributeParam *param = e_vcard_attribute_param_new ("TYPE");
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_EMAIL);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_EMAIL2ADDRESS);
+					add_email_attr_value (attr, node->children, EAS_ELEMENT_EMAIL2ADDRESS);
 					e_vcard_attribute_add_param_with_value (attr, param, "internet");
 				} else if (g_strcmp0 (name, EAS_ELEMENT_EMAIL3ADDRESS) == 0) {
 					EVCardAttributeParam *param = e_vcard_attribute_param_new ("TYPE");
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_EMAIL);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_EMAIL3ADDRESS);
+					add_email_attr_value (attr, node->children, EAS_ELEMENT_EMAIL3ADDRESS);
 					e_vcard_attribute_add_param_with_value (attr, param, "internet");
 				}
 
