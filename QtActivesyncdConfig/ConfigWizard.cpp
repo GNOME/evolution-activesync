@@ -424,7 +424,28 @@ void ConfigWizard::getProvisionReqts()
                 ui->listRequirements->addItem(tr("AllowConsumerEmail: ") + provisionList->AllowConsumerEmail);
                 ui->listRequirements->addItem(tr("AllowRemoteDesktop: ") + provisionList->AllowRemoteDesktop);
                 ui->listRequirements->addItem(tr("AllowInternetSharing: ") + provisionList->AllowInternetSharing);
-                // TODO: add the two list members too
+
+                if (provisionList->UnapprovedInROMApplicationList)
+                {
+                    QStringList strList;
+                    const int listLength = g_slist_length(provisionList->UnapprovedInROMApplicationList);
+                    for (int i = 0; i < listLength; i++)
+                    {
+                        strList.append(QString((char*)g_slist_nth_data(provisionList->UnapprovedInROMApplicationList, i)));
+                    }
+                    ui->listRequirements->addItem(tr("UnapprovedInROMApplicationList: ") + strList.join(", "));
+                }
+
+                if (provisionList->ApprovedApplicationList)
+                {
+                    QStringList strList;
+                    const int listLength = g_slist_length(provisionList->ApprovedApplicationList);
+                    for (int i = 0; i < listLength; i++)
+                    {
+                        strList.append(QString((char*)g_slist_nth_data(provisionList->ApprovedApplicationList, i)));
+                    }
+                    ui->listRequirements->addItem(tr("ApprovedApplicationList: ") + strList.join(", "));
+                }
 
                 changeState(ConfirmProvisionReqts);
             }
