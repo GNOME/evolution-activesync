@@ -841,7 +841,7 @@ soap_wrote_body_data (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
 	struct _EasRequestBase *request = data;
 	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection (request);
 
-	g_debug ("soap_wrote_body_data %u", chunk->length);
+	g_debug ("soap_wrote_body_data %zu", chunk->length);
 
 	if (outgoing_progress) {
 		emit_signal (chunk, request);
