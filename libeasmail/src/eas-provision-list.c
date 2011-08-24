@@ -10,7 +10,7 @@
 const gchar *list_separator = "\n";
 const gchar *app_separator = ",";
 
-#define STRING_LIST_SIZE 42
+#define STRING_LIST_SIZE 43
 
 
 G_DEFINE_TYPE (EasProvisionList, eas_provision_list, G_TYPE_OBJECT);
@@ -133,48 +133,49 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 	gchar* ApprovedList = NULL;
 	GSList *iterator = NULL;
 	gchar *strings[STRING_LIST_SIZE] = {
-		list->DevicePasswordEnabled,
-		list->AlphaNumericDevicePasswordRequired,
-		list->PasswordRecoveryEnabled,
-		list->RequireStorageCardEncryption,
-		list->AttachmentsEnabled,
-		list->MinDevicePasswordLength,
-		list->MaxInactivityTimeDeviceLock,
-		list->MaxDevicePasswordFailedAttempts,
-		list->MaxAttachmentSize,
-		list->AllowSimpleDevicePassword,
-		list->DevicePasswordExpiration,
-		list->DevicePasswordHistory,
-		list->AllowStorageCard,
-		list->AllowCamera,
-		list->RequireDeviceEncryption,
-		list->AllowUnsignedApplications,
-		list->AllowUnsignedInstallationPackages,
-		list->MinDevicePasswordComplexCharacters,
-		list->AllowWifi,
-		list->AllowTextMessaging,
-		list->AllowPOPIMAPEmail,
-		list->AllowBluetooth,
-		list->AllowIrDA,
-		list->RequireManualSyncWhenRoaming,
-		list->AllowDesktopSync,
-		list->MaxCalendarAgeFilter,
-		list->AllowHTMLEmail,
-		list->MaxEmailAgeFilter,
-		list->MaxEmailBodyTruncationSize,
-		list->MaxEmailHTMLBodyTruncationSize,
-		list->RequireSignedSMIMEMessages,
-		list->RequireEncryptedSMIMEMessages,
-		list->RequireSignedSMIMEAlgorithm,
-		list->RequireEncryptionSMIMEAlgorithm,
-		list->AllowSMIMEEncryptionAlgorithmNegotiation,
-		list->AllowSMIMESoftCerts,
-		list->AllowBrowser,
-		list->AllowConsumerEmail,
-		list->AllowRemoteDesktop,
-		list->AllowInternetSharing,
-		UnapprovedList,
-		ApprovedList
+		list->DevicePasswordEnabled?:"",
+		list->AlphaNumericDevicePasswordRequired?:"",
+		list->PasswordRecoveryEnabled?:"",
+		list->RequireStorageCardEncryption?:"",
+		list->AttachmentsEnabled?:"",
+		list->MinDevicePasswordLength?:"",
+		list->MaxInactivityTimeDeviceLock?:"",
+		list->MaxDevicePasswordFailedAttempts?:"",
+		list->MaxAttachmentSize?:"",
+		list->AllowSimpleDevicePassword?:"",
+		list->DevicePasswordExpiration?:"",
+		list->DevicePasswordHistory?:"",
+		list->AllowStorageCard?:"",
+		list->AllowCamera?:"",
+		list->RequireDeviceEncryption?:"",
+		list->AllowUnsignedApplications?:"",
+		list->AllowUnsignedInstallationPackages?:"",
+		list->MinDevicePasswordComplexCharacters?:"",
+		list->AllowWifi?:"",
+		list->AllowTextMessaging?:"",
+		list->AllowPOPIMAPEmail?:"",
+		list->AllowBluetooth?:"",
+		list->AllowIrDA?:"",
+		list->RequireManualSyncWhenRoaming?:"",
+		list->AllowDesktopSync?:"",
+		list->MaxCalendarAgeFilter?:"",
+		list->AllowHTMLEmail?:"",
+		list->MaxEmailAgeFilter?:"",
+		list->MaxEmailBodyTruncationSize?:"",
+		list->MaxEmailHTMLBodyTruncationSize?:"",
+		list->RequireSignedSMIMEMessages?:"",
+		list->RequireEncryptedSMIMEMessages?:"",
+		list->RequireSignedSMIMEAlgorithm?:"",
+		list->RequireEncryptionSMIMEAlgorithm?:"",
+		list->AllowSMIMEEncryptionAlgorithmNegotiation?:"",
+		list->AllowSMIMESoftCerts?:"",
+		list->AllowBrowser?:"",
+		list->AllowConsumerEmail?:"",
+		list->AllowRemoteDesktop?:"",
+		list->AllowInternetSharing?:"",
+		"",
+		"",
+		NULL
 	};
 	
 	iterator = g_slist_next(list->UnapprovedInROMApplicationList);
@@ -186,6 +187,10 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 		g_free(temp);
 		iterator = g_slist_next(list->UnapprovedInROMApplicationList);
 	}
+	if(UnapprovedList)
+		strings[STRING_LIST_SIZE - 3] = UnapprovedList;
+
+	
 	iterator = g_slist_next(list->ApprovedApplicationList);
 	while(iterator)
 	{
@@ -195,7 +200,8 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 		g_free(temp);
 		iterator = g_slist_next(list->ApprovedApplicationList);
 	}
-
+	if(ApprovedList)
+		strings[STRING_LIST_SIZE - 3] = ApprovedList;
 	
 	*result = g_strjoinv (list_separator, strings);
 
@@ -224,8 +230,8 @@ eas_provision_list_deserialise (EasProvisionList* list, const gchar *data)
 	g_assert (data);
 
 	strv = g_strsplit (data, list_separator, 0);
-	if (!strv || g_strv_length (strv) != STRING_LIST_SIZE) {
-		g_warning ("Received invalid eas_provision_list: '%s'", data);
+	if (!strv || g_strv_length (strv) != (STRING_LIST_SIZE-1)) {
+		g_warning ("Received invalid eas_provision_list: '%s', %d", data, g_strv_length (strv));
 		g_strfreev (strv);
 		return FALSE;
 	}
