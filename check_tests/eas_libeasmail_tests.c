@@ -2299,65 +2299,12 @@ START_TEST (test_eas_mail_delete_crash)
        setMockNegTestGoodHttp("EmailDeleteCrash.xml");
 
        // mock Test
-      eas_mail_handler_delete_email (email_handler, (gchar *)"mockTest","mockTest", NULL, NULL, &error); 
+      eas_mail_handler_delete_email (email_handler, (gchar *)"mockTest",NULL, NULL, NULL, &error); 
        g_object_unref (email_handler);
 
 }
 END_TEST
 
-START_TEST (test_eas_mail_get_crash)
-{
-    const gchar* accountuid = g_account_id;
-    EasEmailHandler *email_handler = NULL;
-    // declare lists to hold the folder information returned by active sync
-    GSList *created = NULL; //receives a list of EasFolders
-    // Sync Key set to Zero.  This means that this is the first time the sync is being done,
-    // there is no persisted sync key from previous sync's, the returned information will be
-    // the complete folder hierarchy rather than a delta of any changes
-    
-    GError *error = NULL;
-    gchar folder_sync_key[64] = "0";
-    GSList *emails_created = NULL; //receives a list of EasMails
-    GSList *emails_updated = NULL;
-    GSList *emails_deleted = NULL;
-    gboolean more_available = FALSE;
-
-    // get a handle to the DBus interface and associate the account ID with
-    // this object
-    testGetMailHandler (&email_handler, accountuid);
-
-    // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, &created, &error);
-
-    // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
-
-	// set mock
-	setMockNegTestGoodHttp("EmailGetCrash.xml");
-	
-    // get the folder info for the inbox
-    GetFolderInfo_negativetests (email_handler, folder_sync_key, "wrong", NULL, &emails_updated, &emails_deleted, &more_available, &error);
-
-	fail_if(g_strcmp0 (dbus_g_error_get_name(error),
-	                   "org.meego.activesyncd.SyncError.OBJECTNOTFOUND"),
-	        "Incorrect handling of invalid sync key");
-
-	g_debug("%s",dbus_g_error_get_name(error));
-
-    //  free email objects in lists of email objects
-    g_slist_foreach (emails_deleted, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (emails_updated, (GFunc) g_object_unref, NULL);
-    g_slist_foreach (emails_created, (GFunc) g_object_unref, NULL);
-
-    //  free folder objects in lists of folder objects
-    g_slist_foreach (created, (GFunc) g_object_unref, NULL);
-
-    g_slist_free (created);
-
-    g_object_unref (email_handler);
-
-}
-END_TEST
 
 START_TEST (test_consume_response)
 {
@@ -2486,8 +2433,7 @@ Suite* eas_libeasmail_suite (void)
 		tcase_add_test (tc_libeasmail, test_consume_response);
 		tcase_add_test (tc_libeasmail, test_eas_mail_delete_crash);
 		tcase_add_test (tc_libeasmail, test_consume_response);
-		tcase_add_test (tc_libeasmail, test_eas_mail_get_crash);
-		tcase_add_test (tc_libeasmail, test_consume_response);			
+				
 	}
 //	tcase_add_test (tc_libeasmail, test_get_provision_list);
  //   tcase_add_test (tc_libeasmail, test_get_eas_mail_info_in_inbox);

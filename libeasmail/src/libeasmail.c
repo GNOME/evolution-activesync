@@ -1119,12 +1119,23 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 				   GError **error)
 {
 	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv = self->priv;
+	EasEmailHandlerPrivate *priv;
 	guint request_id;
 	DBusGProxyCall *call;
 	guint cancel_handler_id;
 	
 	g_debug ("eas_mail_handler_fetch_email_body++");
+
+		if (self == NULL || folder_id == NULL || server_id == NULL || mime_directory == NULL)
+		{
+			 g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_fetch_email_body requires valid arguments");
+                ret = FALSE;
+			goto finish;
+		}
+	
 	g_assert (self);
 	g_assert (folder_id);
 	g_assert (server_id);
@@ -1132,6 +1143,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	priv = self->priv;
 	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
 	request_id = priv->next_request_id++;
 
@@ -1197,17 +1209,28 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 					 GError **error)
 {
 	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv = self->priv;
+	EasEmailHandlerPrivate *priv;
 	guint request_id;
 	DBusGProxyCall *call;
 
 	g_debug ("eas_mail_handler_fetch_email_attachment++");
+
+	if (self == NULL || file_reference == NULL || mime_directory == NULL)
+		{
+			 g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_fetch_email_attachment requires valid arguments");
+                ret = FALSE;
+			goto finish;
+		}
+	
 	g_assert (self);
 	g_assert (file_reference);
 	g_assert (mime_directory);
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
+	priv = self->priv;
 	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
 	request_id = priv->next_request_id++;
 
@@ -1253,24 +1276,39 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
                    GCancellable *cancellable,
 			       GError **error)
 {
-	EasEmailHandlerPrivate *priv = self->priv;
+	EasEmailHandlerPrivate *priv;
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = priv->remoteEas;
+	DBusGProxy *proxy;
 	gchar *ret_sync_key = NULL;
 	gchar **deleted_items_array = NULL;
 	// Build string array from items_deleted GSList
 	guint list_length = g_slist_length ( (GSList*) items_deleted);
 	int loop = 0;
 	guint cancel_handler_id;
-	guint request_id = priv->next_request_id++;
+	guint request_id;
 	
 	g_debug ("eas_mail_handler_delete_emails++");
+
+	if (self == NULL || sync_key == NULL || items_deleted == NULL)
+		{
+			 g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_sync_move_to_folder requires valid arguments");
+                ret = FALSE;
+			goto finish;
+		}
+	
 	g_assert (self);
 	g_assert (sync_key);
 	g_assert (items_deleted);
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
+	
+	priv = self->priv;
+	proxy = priv->remoteEas;
+	request_id = priv->next_request_id++;
+		
 	deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
 	if (!deleted_items_array) {
 		g_set_error (error, EAS_MAIL_ERROR,
@@ -1567,7 +1605,7 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 				 GError **error)
 {
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteEas;
+	DBusGProxy *proxy;
 	gchar **updated_ids_array = NULL;
 	gchar **server_ids_array = NULL;
 	guint i = 0;
@@ -1575,11 +1613,22 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 
 	g_debug ("eas_mail_handler_move_to_folder++");
 
+	if (self == NULL || server_ids == NULL || src_folder_id == NULL || dest_folder_id == NULL)
+		{
+			 g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_sync_move_to_folder requires valid arguments");
+                ret = FALSE;
+				goto finish;
+		}
+	
 	g_assert (self);
 	g_assert (server_ids);
 	g_assert (src_folder_id);
 	g_assert (dest_folder_id);
 
+	proxy =  self->priv->remoteEas;
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	// convert lists to array for passing over dbus
