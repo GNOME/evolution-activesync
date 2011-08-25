@@ -1922,14 +1922,14 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 	//
 	// WKST
 	//
-	/*if (rrule.week_start)
+	if (rrule.week_start)
 	{
 		// EAS value is 0=Sunday..6=Saturday
 		// libical value is 0=NoDay, 1=Sunday..7=Saturday
 		xmlValue = g_strdup_printf("%d", rrule.week_start - 1);
 		xmlNewTextChild(recurNode, NULL, (const xmlChar*)EAS_NAMESPACE_CALENDAR EAS_ELEMENT_FIRSTDAYOFWEEK, (const xmlChar*)xmlValue);
 		g_free(xmlValue); xmlValue = NULL;
-	}*/
+	}
 
 	//
 	// BYMONTH
