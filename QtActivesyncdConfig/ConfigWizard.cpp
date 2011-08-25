@@ -41,27 +41,6 @@ extern ConfigWizard* theWizard;
 
 
 /**
- * Global callback, called after attempt at auto-discovery
- */
-void autoDiscoverCallback(char* server_uri, void* /*data*/, GError* /*error*/)
-{
-    qDebug("Entering autoDiscoverCallback() with server_uri=%s", (server_uri ? server_uri : "0"));
-
-    if (server_uri)
-    {
-        QString qServerUri(server_uri);
-        if (!qServerUri.isEmpty())
-        {
-            theWizard->storeServerDetails(qServerUri);
-            return;
-        }
-    }
-
-    theWizard->onAutoDiscoverFailure();
-}
-
-
-/**
  * Constructor
  */
 ConfigWizard::ConfigWizard(QWidget *parent)
@@ -292,6 +271,8 @@ void ConfigWizard::validateManualServerInputs()
  */
 void ConfigWizard::changeState(ConfigWizard::State state)
 {
+    GError* error = 0;
+    gchar* uri = 0;
     currentState = state;
 
     // Reset the button captions to defaults
@@ -320,10 +301,43 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         emailAddress = ui->editEmailAddress->text().trimmed();
         username = ui->editUsername1->text().trimmed();
 
-        eas_connection_autodiscover(
-            autoDiscoverCallback, 0,
-            (const gchar*)emailAddress.toUtf8().constData(),
-            (username.isEmpty() ? 0 : (const gchar*)username.toUtf8().constData()));
+        if (mailHandler)
+        {
+            g_object_unref(mailHandler);
+            mailHandler = 0;
+        }
+        mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
+        if (error)
+        {
+            theWizard->onAutoDiscoverFailure();
+            g_error_free(error);
+            error = 0;
+            return;
+        }
+        else if (!mailHandler)
+        {
+            theWizard->onAutoDiscoverFailure();
+			return;
+        }
+
+        eas_mail_handler_autodiscover(mailHandler,
+                                         (const gchar*)emailAddress.toUtf8().constData(),
+                                         (username.isEmpty() ? 0 : (const gchar*)username.toUtf8().constData()),
+                                         &uri,
+                                         NULL,
+                                         &error);
+
+        if (uri)
+        {
+            QString qServerUri(uri);
+            if (!qServerUri.isEmpty())
+            {
+                theWizard->storeServerDetails(qServerUri);
+                return;
+            }
+        }
+
+        theWizard->onAutoDiscoverFailure();
         break;
 
     case ManualServerDetails:

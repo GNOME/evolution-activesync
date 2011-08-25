@@ -469,6 +469,28 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 									 GCancellable *cancellable,
 									 GError **error);
 
+/* function name:               eas_mail_handlerautodiscover
+ * function description:        Sends an autodiscover request to the daemon, and 
+ *                              receives a uri of the server for the account provided.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
+ * gchar *email (in):             	email address to for which a server URI is required
+ * gchar *username (in):        	username of the account for which a server UIR is required
+ * gchar** uri (out):           	uri of server, if found
+ * GError **error (out):        	returns error information if an error occurs.  If no
+ *                              	error occurs this will unchanged.  This error information
+ *                              	could be related to errors in this API or errors propagated
+ *                              	back through underlying layers
+ */ 
+gboolean
+eas_mail_handler_autodiscover (EasEmailHandler *self,
+									 const gchar* email,
+									 const gchar* username,
+									 gchar** uri,
+									 GCancellable *cancellable,
+									 GError **error);
+
 /* function name:               eas_mail_handler_accept_provision_list
  * function description:        Sends a provisioning acceptance the server, taking 
  *                              the 2 tokens retrieved during a previous call to

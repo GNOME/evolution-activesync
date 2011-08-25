@@ -1431,8 +1431,7 @@ typedef struct {
 	EasConnection *cnc;
 	GSimpleAsyncResult *simple;
 	SoupMessage *msgs[2];
-	EasAutoDiscoverCallback cb;
-	gpointer cbdata;
+	DBusGMethodInvocation* context;
 	EasAccount* account;
 } EasAutoDiscoverData;
 
@@ -1584,8 +1583,9 @@ autodiscover_simple_cb (GObject *cnc, GAsyncResult *res, gpointer data)
 		url = g_simple_async_result_get_op_res_gpointer (simple);
 	}
 
-	// Url ownership transferred to cb
-	adData->cb (url, adData->cbdata, error);
+	// Url ownership transferred to dbus
+	dbus_g_method_return( adData->context,
+			url);
 	g_object_unref (G_OBJECT (adData->cnc));
 	g_object_unref (G_OBJECT (adData->account));
 	g_free (adData);
@@ -1633,10 +1633,9 @@ autodiscover_as_soup_msg (gchar *url, xmlOutputBuffer *buf)
  *	  Exchange Server username in the format DOMAIN\username
  */
 void
-eas_connection_autodiscover (EasAutoDiscoverCallback cb,
-			     gpointer cb_data,
-			     const gchar* email,
-			     const gchar* username)
+eas_connection_autodiscover (const gchar* email,
+			     const gchar* username,
+                             DBusGMethodInvocation* context)
 {
 	GError *error = NULL;
 	gchar* domain = NULL;
@@ -1657,7 +1656,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("Email is mandatory and must be provided"));
-		cb (NULL, cb_data, error);
+		dbus_g_method_return_error (context, error);
 		return;
 	}
 
@@ -1667,7 +1666,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("Failed to extract domain from email address"));
-		cb (NULL, cb_data, error);
+		dbus_g_method_return_error (context, error);
 		return;
 	}
 	++domain; // Advance past the '@'
@@ -1678,7 +1677,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 			     _("Failed create temp account for autodiscover"));
-		cb (NULL, cb_data, error);
+		dbus_g_method_return_error (context, error);
 		return;
 	}
 #if 0
@@ -1700,7 +1699,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	cnc = eas_connection_new (account, &error);
 
 	if (!cnc) {
-		cb (NULL, cb_data, error);
+		dbus_g_method_return_error (context, error);
 		g_object_unref (account);
 		return;
 	}
@@ -1711,8 +1710,7 @@ eas_connection_autodiscover (EasAutoDiscoverCallback cb,
 	xmlOutputBufferFlush (txBuf);
 
 	autoDiscData = g_new0 (EasAutoDiscoverData, 1);
-	autoDiscData->cb = cb;
-	autoDiscData->cbdata = cb_data;
+	autoDiscData->context = context;
 	autoDiscData->cnc = cnc;
 	autoDiscData->account = account;
 	autoDiscData->simple = g_simple_async_result_new (G_OBJECT (cnc),

@@ -74,6 +74,13 @@
       <arg type="s" name="tid" direction="in"/>
       <arg type="s" name="tid_status" direction="in"/>
     </method>
+    
+    <method name="autodiscover">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="email" direction="in"/>
+      <arg type="s" name="username" direction="in"/>
+      <arg type="s" name="url" direction="out"/>
+    </method>
 
   <!-- TODO: Insert your common exposed APIs here -->
 

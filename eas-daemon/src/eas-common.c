@@ -409,6 +409,16 @@ eas_common_get_provision_list (EasCommon* self,
 }
 
 gboolean
+eas_common_autodiscover (EasCommon* self,
+			const gchar* email,
+            const gchar* username,
+			DBusGMethodInvocation* context)
+{
+	eas_connection_autodiscover (email, username, context);
+	return TRUE;
+}
+
+gboolean
 eas_common_accept_provision_list (EasCommon* self,
 			const gchar* account_uid,
 			const gchar* tid,
