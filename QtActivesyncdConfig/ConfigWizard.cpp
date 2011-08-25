@@ -316,8 +316,8 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 
         eas_connection_autodiscover(
             autoDiscoverCallback, 0,
-            (const gchar*)emailAddress.constData(),
-            (username.isEmpty() ? 0 : (const gchar*)username.constData()));
+            (const gchar*)emailAddress.toUtf8().constData(),
+            (username.isEmpty() ? 0 : (const gchar*)username.toUtf8().constData()));
         break;
 
     case ManualServerDetails:
