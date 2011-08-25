@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QProcess>
 #include <QRegExp>
 #include <QRegExpValidator>
 #include <QStackedWidget>
@@ -27,9 +28,13 @@ const QString DEBUG_EMAIL_ADDRESS = "andy@cstylianou.com";
 const QString DEBUG_USERNAME = "andy";
 const QString DEBUG_SERVER_URI = "https://cstylianou.com/Microsoft-Server-ActiveSync";
 
-// %1 = e-mail address
-// %2 = server URI
-const QString ACCOUNT_URL_PATTERN = "eas:///;account_uid=%1;passwd_exp_warn_period=7;ad_limit=500;check_all;command=ssh%20-C%20-l%20%25u%20%25h%20exec%20/usr/sbin/imapd;use_lsub;owa_url=%2";
+// %1 = e-mail address, %2 = server URI
+const QString EVOLUTION_ACCOUNT_URL_FORMAT = "eas:///;account_uid=%1;passwd_exp_warn_period=7;ad_limit=500;check_all;command=ssh%20-C%20-l%20%25u%20%25h%20exec%20/usr/sbin/imapd;use_lsub;owa_url=%2";
+
+// %1 = e-mail address, %2 = email domain (mustn't contain @ symbol)
+const QString SYNC_EVOLUTION_CONFIG_ACCESS_FORMAT = "syncevolution --configure syncURL= username=%1 addressbook/backend=eas-contacts calendar/backend=eas-events todo/backend=eas-todos memo/backend=eas-memos target-config@%2 addressbook calendar todo memo";
+// %1 = email domain (mustn't contain @ symbol)
+const QString SYNC_EVOLUTION_CONFIG_SYNC_FORMAT = "syncevolution --configure --template SyncEvolution_Client syncURL=local://@%1 username= password= %1 calendar addressbook";
 
 
 extern ConfigWizard* theWizard;
@@ -150,6 +155,7 @@ void ConfigWizard::onNext()
 
     case Finish:
         createEvolutionMailAccount();
+        createSyncEvolutionAccounts();
         QApplication::quit();
         break;
 
@@ -582,7 +588,7 @@ void ConfigWizard::showError(const QString& msg)
  */
 void ConfigWizard::createEvolutionMailAccount()
 {
-    QByteArray url = ACCOUNT_URL_PATTERN.arg(emailAddress).arg(serverUri).toUtf8();
+    QByteArray url = EVOLUTION_ACCOUNT_URL_FORMAT.arg(emailAddress).arg(serverUri).toUtf8();
 
     GConfClient* gconfClient = gconf_client_get_default();
     if (gconfClient)
@@ -650,4 +656,16 @@ void ConfigWizard::createEvolutionMailAccount()
     }
 }
 
+
+/**
+ * Create appropriate SyncEvolution accounts for Contacts & Calendar
+ */
+void ConfigWizard::createSyncEvolutionAccounts()
+{
+    QString emailDomain = emailAddress.split('@', QString::SkipEmptyParts).last();
+    int ret = QProcess::execute(SYNC_EVOLUTION_CONFIG_ACCESS_FORMAT.arg(emailAddress).arg(emailDomain));
+    qDebug() << "First syncevolution --configure call returned" << ret;
+    ret = QProcess::execute(SYNC_EVOLUTION_CONFIG_SYNC_FORMAT.arg(emailDomain));
+    qDebug() << "Second syncevolution --configure call returned" << ret;
+}
 

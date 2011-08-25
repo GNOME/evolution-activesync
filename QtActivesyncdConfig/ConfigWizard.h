@@ -66,6 +66,7 @@ private:
     void setTitle(const QString title, const QString& subTitle);
     void setButtonCaptions(const QString& nextButtonCaption = "", const QString& backButtonCaption = "");
     void createEvolutionMailAccount();
+    void createSyncEvolutionAccounts();
 
 private:
     Ui::ConfigWizard* ui;
