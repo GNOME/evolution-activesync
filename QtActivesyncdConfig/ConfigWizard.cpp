@@ -16,13 +16,20 @@
 #include <QStackedWidget>
 #include <QStringList>
 #include <QTimer>
+#include <libedataserver/e-account.h>
+#include <libedataserver/e-account-list.h>
 // User includes
 #include "../libeasmail/src/eas-provision-list.h"
 
 
+const QString DEBUG_FULL_NAME = "Andy Gould";
 const QString DEBUG_EMAIL_ADDRESS = "andy@cstylianou.com";
 const QString DEBUG_USERNAME = "andy";
 const QString DEBUG_SERVER_URI = "https://cstylianou.com/Microsoft-Server-ActiveSync";
+
+// %1 = e-mail address
+// %2 = server URI
+const QString ACCOUNT_URL_PATTERN = "eas:///;account_uid=%1;passwd_exp_warn_period=7;ad_limit=500;check_all;command=ssh%20-C%20-l%20%25u%20%25h%20exec%20/usr/sbin/imapd;use_lsub;owa_url=%2";
 
 
 extern ConfigWizard* theWizard;
@@ -63,6 +70,7 @@ ConfigWizard::ConfigWizard(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->editFullName->setValidator(new QRegExpValidator(QRegExp(".*\\S.*"), ui->editFullName));
     ui->editEmailAddress->setValidator(new QRegExpValidator(QRegExp("^\\S{2,}@\\S{2,}\\.\\S{2,}"), ui->editEmailAddress));
     ui->editServerUri->setValidator(new QRegExpValidator(QRegExp("^\\S{2,}\\.\\S{2,}"), ui->editServerUri));
     ui->editUsername2->setValidator(new QRegExpValidator(QRegExp("\\S+"), ui->editUsername2));
@@ -71,6 +79,7 @@ ConfigWizard::ConfigWizard(QWidget *parent)
     connect(ui->btnNext, SIGNAL(clicked()), SLOT(onNext()));
     connect(ui->btnBack, SIGNAL(clicked()), SLOT(onBack()));
     connect(ui->btnCancel, SIGNAL(clicked()), SLOT(onCancel()));
+    connect(ui->editFullName, SIGNAL(textChanged(QString)), SLOT(validateAutoDiscoverInputs()));
     connect(ui->editEmailAddress, SIGNAL(textChanged(QString)), SLOT(validateAutoDiscoverInputs()));
     connect(ui->editServerUri, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
     connect(ui->editUsername2, SIGNAL(textEdited(QString)), SLOT(validateManualServerInputs()));
@@ -104,12 +113,14 @@ void ConfigWizard::useDebugDetails(bool useDebug)
 {
     if (useDebug)
     {
+        ui->editFullName->setText(DEBUG_FULL_NAME);
         ui->editEmailAddress->setText(DEBUG_EMAIL_ADDRESS);
         ui->editUsername1->setText(DEBUG_USERNAME); // Will also set editUsername2 thanks to the signal/slot above
         ui->editServerUri->setText(DEBUG_SERVER_URI);
     }
     else
     {
+        ui->editFullName->clear();
         ui->editEmailAddress->clear();
         ui->editUsername1->clear();
         ui->editServerUri->clear();
@@ -138,6 +149,10 @@ void ConfigWizard::onNext()
         break;
 
     case Finish:
+        createEvolutionMailAccount();
+        QApplication::quit();
+        break;
+
     case Error:
         QApplication::quit();
         break;
@@ -253,7 +268,7 @@ void ConfigWizard::onAutoDiscoverFailure()
  */
 void ConfigWizard::validateAutoDiscoverInputs()
 {
-    ui->btnNext->setEnabled(ui->editEmailAddress->hasAcceptableInput());
+    ui->btnNext->setEnabled(ui->editFullName->hasAcceptableInput() && ui->editEmailAddress->hasAcceptableInput());
 }
 
 
@@ -294,9 +309,10 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         ui->btnNext->setEnabled(false);
         setTitle(tr("Attempting automatic configuration"), tr("Please wait..."));
 
+        fullName = ui->editFullName->text().trimmed();
         // Use username if entered, otherwise use the e-mail address
-        emailAddress = ui->editEmailAddress->text();
-        username = ui->editUsername1->text();
+        emailAddress = ui->editEmailAddress->text().trimmed();
+        username = ui->editUsername1->text().trimmed();
 
         eas_connection_autodiscover(
             autoDiscoverCallback, 0,
@@ -551,9 +567,85 @@ void ConfigWizard::setButtonCaptions(const QString& nextButtonCaption, const QSt
 }
 
 
+/**
+ * show the error screen
+ */
 void ConfigWizard::showError(const QString& msg)
 {
     ui->lblErrorDetails->setText(msg);
     changeState(Error);
 }
+
+
+/**
+ * Create a GConf entry for a new Evolution account
+ */
+void ConfigWizard::createEvolutionMailAccount()
+{
+    QByteArray url = ACCOUNT_URL_PATTERN.arg(emailAddress).arg(serverUri).toUtf8();
+
+    GConfClient* gconfClient = gconf_client_get_default();
+    if (gconfClient)
+    {
+        EAccountList* accountList = e_account_list_new(gconfClient);
+        if (accountList)
+        {
+            EAccount* account = e_account_new();
+            if (account)
+            {
+                e_account_set_string(account, E_ACCOUNT_NAME, emailAddress.toUtf8().constData());
+                e_account_set_string(account, E_ACCOUNT_ID_NAME, fullName.toUtf8().constData());
+                e_account_set_string(account, E_ACCOUNT_ID_ADDRESS, emailAddress.toUtf8().constData());
+                e_account_set_string(account, E_ACCOUNT_SOURCE_URL, url.constData());
+                e_account_set_bool(account, E_ACCOUNT_SOURCE_SAVE_PASSWD, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_SOURCE_KEEP_ON_SERVER, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_SOURCE_AUTO_CHECK, FALSE);
+                e_account_set_int(account, E_ACCOUNT_SOURCE_AUTO_CHECK_TIME, 10);
+                e_account_set_string(account, E_ACCOUNT_TRANSPORT_URL, url.constData());
+                e_account_set_bool(account, E_ACCOUNT_TRANSPORT_SAVE_PASSWD, FALSE);
+
+                // Not sure what to do about Drafts & Sent folder - if we leave them will it pick up defaults??
+
+                e_account_set_bool(account, E_ACCOUNT_CC_ALWAYS, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_BCC_ALWAYS, FALSE);
+
+                e_account_set_int(account, E_ACCOUNT_RECEIPT_POLICY, E_ACCOUNT_RECEIPT_NEVER);
+
+                e_account_set_bool(account, E_ACCOUNT_PGP_ENCRYPT_TO_SELF, TRUE);
+                e_account_set_bool(account, E_ACCOUNT_PGP_ALWAYS_SIGN, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_PGP_ALWAYS_TRUST, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_PGP_NO_IMIP_SIGN, FALSE);
+
+                e_account_set_bool(account, E_ACCOUNT_SMIME_ENCRYPT_TO_SELF, TRUE);
+                e_account_set_bool(account, E_ACCOUNT_SMIME_SIGN_DEFAULT, FALSE);
+                e_account_set_bool(account, E_ACCOUNT_SMIME_ENCRYPT_DEFAULT, FALSE);
+
+                e_account_list_add(accountList, account);
+                e_account_list_save(accountList);
+
+                g_object_unref(account);
+            }
+            else // !account
+            {
+                // Fail silently
+                qWarning() << "Failed to construct EasAccount object in ConfigWizard::createEvolutionMailAccount()";
+            }
+
+            g_object_unref(accountList);
+        }
+        else // !accountList
+        {
+            // Fail silently
+            qWarning() << "Failed to construct EasAccountList object in ConfigWizard::createEvolutionMailAccount()";
+        }
+
+        g_object_unref(gconfClient);
+    }
+    else // !gconfClient
+    {
+        // Fail silently
+        qWarning() << "Failed to construct GConfClient object in ConfigWizard::createEvolutionMailAccount()";
+    }
+}
+
 

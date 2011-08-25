@@ -68,7 +68,7 @@ typedef struct _EasAccountListClass EasAccountListClass;
 typedef struct _EasAccountListPrivate EasAccountListPrivate;
 
 /* search options for the find command */
-typedef enum _e_account_find_t {
+typedef enum _eas_account_find_t {
 	EAS_ACCOUNT_FIND_ACCOUNT_UID,
 	EAS_ACCOUNT_FIND_SERVER_URI,
 	EAS_ACCOUNT_FIND_USER_NAME,

@@ -65,14 +65,16 @@ private:
     void changeState(State currentState);
     void setTitle(const QString title, const QString& subTitle);
     void setButtonCaptions(const QString& nextButtonCaption = "", const QString& backButtonCaption = "");
+    void createEvolutionMailAccount();
 
 private:
     Ui::ConfigWizard* ui;
     State currentState;
     bool serverDetailsEnteredManually;
     bool serverHasProvisioningReqts;
-    QString serverUri;
+    QString fullName;
     QString emailAddress;
+    QString serverUri;
     QString username;
 
     EasEmailHandler* mailHandler;

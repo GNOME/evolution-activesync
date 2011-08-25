@@ -69,7 +69,7 @@
    <item>
     <widget class="QStackedWidget" name="wizard">
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pageAutoConfig">
       <layout class="QFormLayout" name="formLayout">
@@ -146,6 +146,16 @@
          </property>
          <property name="checked">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="editFullName"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Full name:</string>
          </property>
         </widget>
        </item>
@@ -331,14 +341,17 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>btnNext</tabstop>
+  <tabstop>editFullName</tabstop>
   <tabstop>editEmailAddress</tabstop>
   <tabstop>editUsername1</tabstop>
+  <tabstop>cbUseDebugValues</tabstop>
+  <tabstop>cbForceProvisioning</tabstop>
   <tabstop>editServerUri</tabstop>
   <tabstop>editUsername2</tabstop>
+  <tabstop>listRequirements</tabstop>
   <tabstop>checkBox</tabstop>
   <tabstop>checkBox_2</tabstop>
-  <tabstop>listRequirements</tabstop>
+  <tabstop>btnNext</tabstop>
   <tabstop>btnBack</tabstop>
   <tabstop>btnCancel</tabstop>
  </tabstops>
