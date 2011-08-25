@@ -620,6 +620,8 @@ void ConfigWizard::createEvolutionMailAccount()
                 e_account_set_bool(account, E_ACCOUNT_SMIME_SIGN_DEFAULT, FALSE);
                 e_account_set_bool(account, E_ACCOUNT_SMIME_ENCRYPT_DEFAULT, FALSE);
 
+                account->enabled = TRUE;
+
                 e_account_list_add(accountList, account);
                 e_account_list_save(accountList);
 
