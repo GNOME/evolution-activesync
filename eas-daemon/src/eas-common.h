@@ -128,6 +128,12 @@ eas_common_accept_provision_list (EasCommon* self,
 			const gchar* tid_status,
 			DBusGMethodInvocation* context);
 
+gboolean
+eas_common_autodiscover (EasCommon* self,
+			const gchar* email,
+            const gchar* username,
+			DBusGMethodInvocation* context);
+
 G_END_DECLS
 
 #endif /* _EAS_COMMON_H_ */

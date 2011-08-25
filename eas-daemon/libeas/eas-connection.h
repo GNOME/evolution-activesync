@@ -55,6 +55,7 @@
 
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
+#include <dbus/dbus-glib.h>
 #include "eas-connection-errors.h"
 #include "../../libeasaccount/src/eas-account.h"
 
@@ -114,10 +115,10 @@ typedef void (*EasAutoDiscoverCallback) (char* serverUri, gpointer data, GError 
  *		including a windows domain if required. e.g 'DOMAIN\\username'.
  *		If not required can be set to NULL.
  */
-void eas_connection_autodiscover (EasAutoDiscoverCallback cb,
-				  gpointer cb_data,
-				  const gchar* email,
-				  const gchar* username);
+void
+eas_connection_autodiscover (const gchar* email,
+			     const gchar* username,
+                             DBusGMethodInvocation* context);
 
 /**
  * Searches for an existing open connection for the GConf account details

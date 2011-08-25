@@ -8,8 +8,6 @@
 #include <QDialog>
 #include <QString>
 // User includes
-// TODO: MUSTN'T link to libeas directly: replace with a client-side API
-#include "../eas-daemon/libeas/eas-connection.h"
 #include "../libeasaccount/src/eas-account.h"
 #include "../libeasaccount/src/eas-account-list.h"
 #include "../libeasmail/src/libeasmail.h"
