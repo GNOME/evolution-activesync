@@ -155,7 +155,7 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
 /*
 translates from eas provision status code to GError
 */
-static void set_provision_status_error (guint provision_status, GError **error)
+/*static void set_provision_status_error (guint provision_status, GError **error)
 {
 	switch (provision_status) {
 	case 2: {
@@ -183,7 +183,7 @@ static void set_provision_status_error (guint provision_status, GError **error)
 			     ("Unrecognised provisioning error"));
 	}
 	}
-}
+}*/
 
 /*
 translates from eas policy status code to GError
