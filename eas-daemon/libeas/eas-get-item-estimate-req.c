@@ -192,6 +192,7 @@ eas_get_item_estimate_req_Activate (EasGetItemEstimateReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "GetItemEstimate",
 					    doc, // full transfer
+	                                    FALSE,
 					    error);
 finish:
 	if (!ret) {

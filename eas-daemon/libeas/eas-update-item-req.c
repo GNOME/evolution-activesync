@@ -213,6 +213,7 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
 	success = eas_request_base_SendRequest (parent,
 						"Sync",
 						doc,
+	                                        FALSE,
 						error);
 
 	g_debug ("eas_update_item_req_Activate4");

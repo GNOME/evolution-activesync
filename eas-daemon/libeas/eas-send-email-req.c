@@ -250,6 +250,7 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "SendMail",
 					    doc, // full transfer
+	                                    FALSE,
 					    error);
 finish:
 	if (file)

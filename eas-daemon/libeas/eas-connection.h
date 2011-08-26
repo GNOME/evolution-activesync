@@ -183,6 +183,7 @@ gboolean eas_connection_send_request (EasConnection* self,
 				      const gchar* cmd,
 				      xmlDoc* doc,
 				      struct _EasRequestBase *request,
+                                      gboolean highpriority,
 				      GError** error);
 
 

@@ -398,7 +398,7 @@ eas_common_get_provision_list (EasCommon* self,
 		return FALSE;
 	}
 
-	req = eas_provision_req_new (NULL, NULL, context);
+	req = eas_provision_req_new (FALSE, NULL, NULL, context);
 
 	eas_request_base_SetConnection (&req->parent_instance, connection);
 
@@ -444,7 +444,7 @@ eas_common_accept_provision_list (EasCommon* self,
 		return FALSE;
 	}
 
-	req = eas_provision_req_new (tid_status, tid, context);
+	req = eas_provision_req_new (FALSE, tid_status, tid, context);
 
 	eas_request_base_SetConnection (&req->parent_instance, connection);
 

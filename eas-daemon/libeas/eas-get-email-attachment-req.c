@@ -184,6 +184,7 @@ eas_get_email_attachment_req_Activate (EasGetEmailAttachmentReq* self, GError** 
 	ret = eas_request_base_SendRequest (parent,
 					    "ItemOperations",
 					    doc,
+	                                    FALSE,
 					    error);
 finish:
 	if (!ret) {

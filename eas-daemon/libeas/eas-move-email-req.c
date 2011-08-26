@@ -200,6 +200,7 @@ eas_move_email_req_Activate (EasMoveEmailReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "MoveItems",
 					    doc,
+	                                    FALSE,
 					    error);
 finish:
 	if (!ret) {

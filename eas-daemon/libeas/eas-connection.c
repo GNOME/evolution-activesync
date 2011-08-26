@@ -997,6 +997,7 @@ eas_connection_send_request (EasConnection* self,
 			     const gchar* cmd,
 			     xmlDoc* doc,
 			     EasRequestBase *request,
+                             gboolean highpriority,
 			     GError** error)
 {
 	gboolean ret = TRUE;

@@ -194,6 +194,7 @@ eas_ping_req_Activate (EasPingReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "Ping",
 					    doc, // full transfer
+	                    FALSE,
 					    error);
 
 finish:

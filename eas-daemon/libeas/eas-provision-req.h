@@ -92,7 +92,7 @@ GType eas_provision_req_get_type (void) G_GNUC_CONST;
  * @return An allocated EasProvisionReq GObject or NULL
  */
 EasProvisionReq*
-eas_provision_req_new (const gchar* policy_status, const gchar* policy_key, DBusGMethodInvocation *context);
+eas_provision_req_new (gboolean internal, const gchar* policy_status, const gchar* policy_key, DBusGMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

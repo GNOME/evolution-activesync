@@ -63,6 +63,7 @@ typedef enum {
 struct _EasProvisionReqPrivate {
 	EasProvisionMsg* msg;
 	EasProvisionState state;
+	gboolean internal;
 
 };
 
@@ -123,7 +124,8 @@ eas_provision_req_class_init (EasProvisionReqClass *klass)
 
 
 EasProvisionReq*
-eas_provision_req_new (const gchar* policy_status, 
+eas_provision_req_new (gboolean internal,
+                       const gchar* policy_status, 
                        const gchar* policy_key, 
                        DBusGMethodInvocation *context)
 {
@@ -136,6 +138,7 @@ eas_provision_req_new (const gchar* policy_status,
 		priv->msg = eas_provision_msg_new ();
 		if (priv->msg) 
 		{
+			priv->internal = internal;
 			eas_provision_msg_set_policy_status (priv->msg, policy_status);
 			eas_provision_msg_set_policy_key (priv->msg, policy_key);
 
@@ -144,8 +147,8 @@ eas_provision_req_new (const gchar* policy_status,
 				priv->state = EasProvisionStep2;
 			
 			}
-			
-			eas_request_base_SetContext (&self->parent_instance, context);
+			if(!internal)
+				eas_request_base_SetContext (&self->parent_instance, context);
 		}
 		else
 		{
@@ -179,6 +182,7 @@ eas_provision_req_Activate (EasProvisionReq* self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "Provision",
 					    doc, // full transfer
+	                                    priv->internal, //if internal then high priority
 					    error);
 finish:
 	return ret;
@@ -221,21 +225,46 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 	// We are receiving the temporary policy key and need to now make a
 	// second provision msg and send it using the new data.
 	case EasProvisionStep1: {
-		gchar* serialised_provision_list = NULL;
-		EasProvisionList* list = NULL;
-		g_debug("eas_provision_req_MessageComplete - EasProvisionStep1");
+		if(priv->internal){
+			EasProvisionMsg *msg = NULL;
 
-		list = eas_provision_msg_get_provision_list(priv->msg);
-		if(!eas_provision_list_serialise (list, &serialised_provision_list)){
-			// TODO: handle error
+			g_debug ("eas_provision_req_MessageComplete - EasProvisionStep1");
+
+			msg = eas_provision_msg_new (); //TODO check return
+			eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
+			eas_provision_msg_set_policy_key (msg, eas_provision_msg_get_policy_key (priv->msg));
+
+			eas_connection_set_policy_key (eas_request_base_GetConnection (&self->parent_instance),
+					      eas_provision_msg_get_policy_key (priv->msg));
+
+			g_object_unref (priv->msg);
+			priv->msg = msg;
+
+			priv->state = EasProvisionStep2;
+
+			ret = eas_provision_req_Activate (self, &error);
+			if (!ret) {
+				g_warning ("Failed to activate provision request");
+				goto finish;
+			}
 		}
+		else{
+			gchar* serialised_provision_list = NULL;
+			EasProvisionList* list = NULL;
+			g_debug("eas_provision_req_MessageComplete - EasProvisionStep1");
 
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-			eas_provision_msg_get_policy_key (priv->msg),
-			eas_provision_msg_get_policy_status (priv->msg),
-			serialised_provision_list);
+			list = eas_provision_msg_get_provision_list(priv->msg);
+			if(!eas_provision_list_serialise (list, &serialised_provision_list)){
+				// TODO: handle error
+			}
 
-		g_free(serialised_provision_list);
+			dbus_g_method_return (eas_request_base_GetContext (parent),
+				eas_provision_msg_get_policy_key (priv->msg),
+				eas_provision_msg_get_policy_status (priv->msg),
+				serialised_provision_list);
+
+			g_free(serialised_provision_list);
+		}
 	}
 	break;
 
@@ -246,7 +275,9 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 		eas_connection_set_policy_key (eas_request_base_GetConnection (parent),
 					       eas_provision_msg_get_policy_key (priv->msg));
 
-		dbus_g_method_return (eas_request_base_GetContext (parent));
+		if(!priv->internal){
+			dbus_g_method_return (eas_request_base_GetContext (parent));
+		}
 	}
 	break;
 	}

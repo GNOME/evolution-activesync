@@ -186,6 +186,7 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "Sync",
 					    doc, // full transfer
+	                                    FALSE,
 					    error);
 
 finish:

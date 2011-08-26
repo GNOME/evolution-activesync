@@ -233,6 +233,7 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "ItemOperations",
 					    doc, // full transfer
+	                                    FALSE,
 					    error);
 
 	g_debug ("eas_get_email_body_req_Activate--");

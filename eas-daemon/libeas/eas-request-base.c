@@ -214,6 +214,7 @@ gboolean
 eas_request_base_SendRequest (EasRequestBase* self,
 			      const gchar* cmd,
 			      xmlDoc *doc,
+                  gboolean highpriority,
 			      GError **error)
 {
 	EasRequestBasePrivate *priv = self->priv;
@@ -224,6 +225,7 @@ eas_request_base_SendRequest (EasRequestBase* self,
 					    cmd,
 					    doc, // full transfer
 					    self,
+	                    highpriority,
 					    error);
 }
 

@@ -209,6 +209,7 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 	success = eas_request_base_SendRequest (parent,
 						"Sync",
 						doc, // full transfer
+	                                        FALSE,
 						error);
 	if (!success) {
 		g_assert (error == NULL || (*error != NULL));

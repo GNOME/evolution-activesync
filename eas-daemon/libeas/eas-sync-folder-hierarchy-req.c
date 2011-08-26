@@ -211,7 +211,7 @@ eas_sync_folder_hierarchy_req_Activate (EasSyncFolderHierarchyReq* self, GError*
 		goto finish;
 	}
 
-	ret = eas_request_base_SendRequest (parent, "FolderSync", doc, error);
+	ret = eas_request_base_SendRequest (parent, "FolderSync", doc, FALSE, error);
 
 finish:
 	g_debug ("eas_sync_folder_hierarchy_req_Activate--");

@@ -266,6 +266,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 		ret = eas_request_base_SendRequest (parent,
 						    "FolderSync",
 						    doc, // full transfer
+		                                    FALSE,
 						    error);
 
 	} else {
@@ -310,6 +311,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 		ret = eas_request_base_SendRequest (parent,
 						    "Sync",
 						    doc, // full transfer
+		                                    FALSE,
 						    error);
 	}
 finish:
@@ -441,6 +443,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		ret = eas_request_base_SendRequest (parent,
 						    "Sync",
 						    doc,
+		                                    FALSE,
 						    &error);
 
 	}
@@ -484,6 +487,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		ret = eas_request_base_SendRequest (parent,
 						    "Sync",
 						    doc,
+		                                    FALSE,
 						    &error);
 		if (!ret) {
 			g_assert (error != NULL);
@@ -532,6 +536,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				ret = eas_request_base_SendRequest (parent,
 								    "FolderSync",
 								    doc, // full transfer
+				                                    FALSE,
 								    &error);
 				if (ret)
 					priv->state = EasSyncReqStep1;

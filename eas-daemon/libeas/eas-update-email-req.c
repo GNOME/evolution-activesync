@@ -237,6 +237,7 @@ eas_update_email_req_Activate (EasUpdateEmailReq *self, GError** error)
 	ret = eas_request_base_SendRequest (parent,
 					    "Sync",
 					    doc, // full transfer
+	                                    FALSE,
 					    error);
 
 finish:

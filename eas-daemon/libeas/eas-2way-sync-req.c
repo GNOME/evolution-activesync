@@ -297,6 +297,7 @@ eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
 		ret = eas_request_base_SendRequest (parent,
 						    "FolderSync",
 						    doc, // full transfer
+		                                    FALSE,
 						    error);
 
 	} else {
@@ -336,6 +337,7 @@ eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
 		ret = eas_request_base_SendRequest (parent,
 						    "Sync",
 						    doc, // full transfer
+		                                    FALSE,
 						    error);
 	}
 finish:
@@ -444,6 +446,7 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 		ret = eas_request_base_SendRequest (parent,
 						    "Sync",
 						    doc,
+		                                    FALSE,
 						    &error);
 
 	}
