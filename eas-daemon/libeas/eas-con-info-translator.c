@@ -543,6 +543,26 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				}
 
 				//
+				// MANAGER
+				//
+				else if (g_strcmp0 (name, EAS_ELEMENT_CONTACTS2_MANAGERNAME) == 0) {
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, "X-EVOLUTION-MANAGER");
+
+					e_vcard_add_attribute (vcard, attr);
+					add_attr_value (attr, node->children, EAS_ELEMENT_CONTACTS2_MANAGERNAME);
+				}
+				
+				//
+				// ASSISTANT
+				//
+				else if (g_strcmp0 (name, EAS_ELEMENT_ASSISTANTNAME) == 0) {
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, "X-EVOLUTION-ASSISTANT");
+
+					e_vcard_add_attribute (vcard, attr);
+					add_attr_value (attr, node->children, EAS_ELEMENT_ASSISTANTNAME);
+				}
+
+				//
 				// Note
 				//
 				else if (g_strcmp0 (name, EAS_ELEMENT_BODY) == 0) {
