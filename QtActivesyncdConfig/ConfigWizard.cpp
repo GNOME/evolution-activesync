@@ -271,8 +271,6 @@ void ConfigWizard::validateManualServerInputs()
  */
 void ConfigWizard::changeState(ConfigWizard::State state)
 {
-    GError* error = 0;
-    gchar* uri = 0;
     currentState = state;
 
     // Reset the button captions to defaults
@@ -301,43 +299,10 @@ void ConfigWizard::changeState(ConfigWizard::State state)
         emailAddress = ui->editEmailAddress->text().trimmed();
         username = ui->editUsername1->text().trimmed();
 
-        if (mailHandler)
-        {
-            g_object_unref(mailHandler);
-            mailHandler = 0;
-        }
-        mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
-        if (error)
+        if (!attemptAutoDiscovery())
         {
             theWizard->onAutoDiscoverFailure();
-            g_error_free(error);
-            error = 0;
-            return;
         }
-        else if (!mailHandler)
-        {
-            theWizard->onAutoDiscoverFailure();
-			return;
-        }
-
-        eas_mail_handler_autodiscover(mailHandler,
-                                         (const gchar*)emailAddress.toUtf8().constData(),
-                                         (username.isEmpty() ? 0 : (const gchar*)username.toUtf8().constData()),
-                                         &uri,
-                                         NULL,
-                                         &error);
-
-        if (uri)
-        {
-            QString qServerUri(uri);
-            if (!qServerUri.isEmpty())
-            {
-                theWizard->storeServerDetails(qServerUri);
-                return;
-            }
-        }
-
-        theWizard->onAutoDiscoverFailure();
         break;
 
     case ManualServerDetails:
@@ -382,6 +347,57 @@ void ConfigWizard::changeState(ConfigWizard::State state)
 }
 
 
+bool ConfigWizard::attemptAutoDiscovery()
+{
+    bool success = false;
+
+    AutoWaitCursor ac;
+    GError* error = 0;
+    gchar* uri = 0;
+
+    if (mailHandler)
+    {
+        g_object_unref(mailHandler);
+        mailHandler = 0;
+    }
+    mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
+    if (error)
+    {
+        theWizard->onAutoDiscoverFailure();
+        g_error_free(error);
+        error = 0;
+        success = false;
+    }
+    else if (!mailHandler)
+    {
+        theWizard->onAutoDiscoverFailure();
+        success = false;
+    }
+    else
+    {
+        eas_mail_handler_autodiscover(
+            mailHandler,
+            (const gchar*)emailAddress.toUtf8().constData(),
+            (username.isEmpty() ? 0 : (const gchar*)username.toUtf8().constData()),
+            &uri,
+            NULL,
+            &error);
+
+        if (uri)
+        {
+            QString qServerUri(uri);
+            if (!qServerUri.isEmpty())
+            {
+                theWizard->storeServerDetails(qServerUri);
+                success = true;
+            }
+        }
+    }
+
+    return success;
+}
+
+
 /**
  * Contact the server and get the provisioning requirements (if any)
  */
@@ -408,7 +424,7 @@ void ConfigWizard::getProvisionReqts()
         tidStatus = 0;
     }
 
-
+    AutoWaitCursor ac;
     mailHandler = eas_mail_handler_new(emailAddress.toUtf8().constData(), &error);
     if (error)
     {
@@ -544,6 +560,7 @@ void ConfigWizard::acceptProvisionReqts()
     if (mailHandler && tid && tidStatus)
     {
         GError* error = 0;
+        AutoWaitCursor ac;
         if (eas_mail_handler_accept_provision_list(mailHandler, tid, tidStatus, 0, &error))
         {
             changeState(Finish);

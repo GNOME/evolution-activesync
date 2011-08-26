@@ -5,6 +5,7 @@
 
 
 // System includes
+#include <QApplication>
 #include <QDialog>
 #include <QString>
 // User includes
@@ -58,6 +59,7 @@ private:
         Error
     };
 
+    bool attemptAutoDiscovery();
     void getProvisionReqts();
     void acceptProvisionReqts();
     void changeState(State currentState);
@@ -81,6 +83,23 @@ private:
     // Tokens used when negotiating server provisioning requirements
     gchar* tid;
     gchar* tidStatus;
+
+private:
+    /**
+     * Simple class for showing a wait cursor that automatically dismisses when the function returns.
+     * Can also be started/stopped manually and ensures the cursor stack is always emptied when stopped.
+     * (See http://doc.qt.nokia.com/4.7/qapplication.html#setOverrideCursor)
+     */
+    class AutoWaitCursor
+    {
+    public:
+        AutoWaitCursor() : count(0) { start(); }
+        ~AutoWaitCursor() { stop(); }
+        void start() { QApplication::setOverrideCursor(QCursor(Qt::WaitCursor)); count++; }
+        void stop() { while (count--) QApplication::restoreOverrideCursor(); }
+    private:
+        int count;
+    };
 };
 
 
