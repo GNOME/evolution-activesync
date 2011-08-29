@@ -592,14 +592,18 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	do {
 		guint total, unread;
 		GError *local_error = NULL;
+		gchar *new_sync_key = NULL;
 
 		items_created = items_updated = items_deleted = NULL;
 
 		g_mutex_lock (priv->server_lock);
-		res = eas_mail_handler_sync_folder_email_info (handler, sync_state, priv->server_id,
-							       &items_created,
-							       &items_updated, &items_deleted,
-							       &more_available, NULL, &local_error);
+		res = eas_mail_handler_sync_folder_email (handler, sync_state, 0, priv->server_id,
+							  NULL, NULL, &new_sync_key,
+							  &items_created,
+							  &items_updated, &items_deleted,
+							  &more_available,
+							  NULL, NULL,
+							  cancellable, &local_error);
 
 		/* We use strcasecmp() instead of dbus_g_error_has_name() because
 		   the error names will probably become CamelCase when we manage
@@ -622,7 +626,10 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 			g_clear_error (&local_error);
 			res = TRUE;
 		}
-
+		if (new_sync_key) {
+			strncpy (sync_state, new_sync_key, 64);
+			g_free (new_sync_key);
+		}
 		g_mutex_unlock (priv->server_lock);
 
 		if (!res) {
