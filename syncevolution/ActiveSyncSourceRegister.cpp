@@ -197,6 +197,22 @@ static TestingSyncSource *createEASSource(const ClientTestConfig::createsource_t
     }
 }
 
+// common settings for all kinds of data
+static void updateConfigEAS(const RegisterSyncSourceTest */* me */,
+                            ClientTestConfig &config)
+{
+        // cannot run tests involving a second database:
+        // wrap orginal source creation, set default database for
+        // database #0 and refuse to return a source for database #1
+        config.createSourceA = boost::bind(createEASSource, config.createSourceA,
+                                           _1, _2, _3);
+        config.createSourceB = boost::bind(createEASSource, config.createSourceB,
+                                           _1, _2, _3);
+
+        config.dump = DumpItems;
+        config.sourceLUIDsAreVolatile = true;
+}
+
 static class ActiveSyncContactTest : public RegisterSyncSourceTest {
 public:
     ActiveSyncContactTest() :
@@ -211,15 +227,7 @@ public:
         // TODO: provide comprehensive set of vCard 3.0 contacts as they are understood by the ActiveSync library
         // config.testcases = "testcases/eas_contact.vcf";
 
-        // cannot run tests involving a second database:
-        // wrap orginal source creation, set default database for
-        // database #0 and refuse to return a source for database #1
-        config.createSourceA = boost::bind(createEASSource, config.createSourceA,
-                                           _1, _2, _3);
-        config.createSourceB = boost::bind(createEASSource, config.createSourceB,
-                                           _1, _2, _3);
-
-        config.dump = DumpItems;
+        updateConfigEAS(this, config);
     }
 } ActiveSyncContactTest;
 
@@ -232,11 +240,7 @@ public:
     virtual void updateConfig(ClientTestConfig &config) const
     {
         config.type = "eas-events";
-        config.createSourceA = boost::bind(createEASSource, config.createSourceA,
-                                           _1, _2, _3);
-        config.createSourceB = boost::bind(createEASSource, config.createSourceB,
-                                           _1, _2, _3);
-        config.dump = DumpItems;
+        updateConfigEAS(this, config);
     }
 } ActiveSyncEventTest;
 
@@ -249,11 +253,7 @@ public:
     virtual void updateConfig(ClientTestConfig &config) const
     {
         config.type = "eas-todos";
-        config.createSourceA = boost::bind(createEASSource, config.createSourceA,
-                                           _1, _2, _3);
-        config.createSourceB = boost::bind(createEASSource, config.createSourceB,
-                                           _1, _2, _3);
-        config.dump = DumpItems;
+        updateConfigEAS(this, config);
     }
 } ActiveSyncTodoTest;
 
@@ -266,11 +266,7 @@ public:
     virtual void updateConfig(ClientTestConfig &config) const
     {
         config.type = "eas-memos";
-        config.createSourceA = boost::bind(createEASSource, config.createSourceA,
-                                           _1, _2, _3);
-        config.createSourceB = boost::bind(createEASSource, config.createSourceB,
-                                           _1, _2, _3);
-        config.dump = DumpItems;
+        updateConfigEAS(this, config);
     }
 } ActiveSyncMemoTest;
 
