@@ -210,7 +210,7 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 		ret = FALSE;
 	}
 
-	return (*result ? TRUE : FALSE);
+	return ret;
 	
 }
 
