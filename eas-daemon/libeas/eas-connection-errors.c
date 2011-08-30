@@ -227,7 +227,7 @@ static const GEnumValue err_values[] = {
 };
 
 #define compile_time_assert(cond, msg)  \
-	char msg[(cond)?1:-1]
+	char msg[(cond)?1:-1] __attribute__((unused))
 
 GType eas_connection_error_get_type (void)
 {
