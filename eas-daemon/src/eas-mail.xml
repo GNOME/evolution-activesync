@@ -22,24 +22,6 @@
 	  <arg type="u" name="ret_estimate" direction="out"/>
     </method>
     
-<!--
- sync entire EMAIL folder hierarchy (folder structure only, not contents)
- EAS only allows sync of entire hierarchy (inc email, contacts...) so daemon will need to filter to ‘email’ type folders
- will use AS FolderSync command	
--->
-
-<!-- OBSOLETE: Use EasCommon::get_email_folders() instead. The dæmon must manage
-     the folder list centrally for all clients. -->
-    <method name="sync_email_folder_hierarchy">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="s" name="account_uid" direction="in"/>	<!-- t == UINT64-->
-      <arg type="s" name="sync_key" direction="in"/>
-      <arg type="s" name="ret_sync_key" direction="out"/>
-      <arg type="as" name="ret_created_folder_array" direction="out"/>
-      <arg type="as" name="ret_deleted_folder_array" direction="out"/>
-      <arg type="as" name="ret_updated_folder_array" direction="out"/>
-    </method>
-
 <!-- 1-way sync (from server to client) of specified email folder. This will sync email headers only, not bodies will use AS 'Sync' command -->
     <method name="sync_folder_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>

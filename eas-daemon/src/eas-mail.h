@@ -104,14 +104,6 @@ gboolean eas_mail_get_item_estimate (EasMail* self,
 				     DBusGMethodInvocation* context);
 
 /*
-	sync the entire email folder hierarchy
-*/
-gboolean eas_mail_sync_email_folder_hierarchy (EasMail* self,
-					       const gchar* account_uid,
-					       const gchar* sync_key,
-					       DBusGMethodInvocation* context);
-
-/*
 	synchronize an email folder. Gets email headers only, not bodies
 */
 gboolean eas_mail_sync_folder_email (EasMail* easMailObj,
