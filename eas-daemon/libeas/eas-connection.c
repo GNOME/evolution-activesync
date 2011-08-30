@@ -2066,7 +2066,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 					      xml_len,
 					      "sync.xml",
 					      NULL,
-					      0);
+					      XML_PARSE_RECOVER|XML_PARSE_NOERROR);
 		}
 
 		if (doc) {
