@@ -1,10 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4 -I m4-repo
 #SUBDIRS = libeasmail/tests
 
-if ENABLE_ACTIVESYNC
-  SYNCEVOLUTION_DIR = syncevolution
-endif
-
 if ENABLE_MEEGO_UI
   MEEGO_DIR = meego
 endif
@@ -13,7 +9,7 @@ if ENABLE_QT_CONFIG_TOOL
   QTCONFIG_DIR = QtActivesyncdConfig
 endif
 
-SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(SYNCEVOLUTION_DIR) $(MEEGO_DIR) $(QTCONFIG_DIR) po
+SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 EXTRA_DIST = autogen.sh
 

@@ -57,9 +57,6 @@ PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
-PKG_CHECK_MODULES(SYNCEVOLUTION, syncevolution,
-				 have_syncevolution="yes",
-				 have_syncevolution="no")
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
 # Check for the MeeGo "mlite" library.  If it exists, enable the MeeGo
@@ -70,65 +67,6 @@ PKG_CHECK_MODULES([MLITE],
 		  [have_mlite="no"
                    AC_MSG_NOTICE([MeeGo ActiveSync Settings UI will not be built])])
 
-if (test "${have_syncevolution}" = "yes"); then
-    # Dummy compilation check. If it fails, it's almost certainly because
-    # syncevolution.pc specifies a -lsynthesissdk which doesn't exist.
-    AC_CHECK_LIB(syncevolution, main,
-                 [ ],
-                 [
-                    have_syncevolution="no";
-                    AC_MSG_NOTICE([Your syncevolution installation is broken (missing -lsynthesissdk?)])
-                 ],
-                 ${SYNCEVOLUTION_LIBS})
-fi
-if (test "${have_syncevolution}" = "yes"); then
-    AC_LANG_PUSH([C++])
-    AC_CHECK_HEADER(syncevo/GLibSupport.h, ,
-                 [have_syncevolution="no";
-                 AC_MSG_NOTICE([Your syncevolution installation lacks GLibSupport.h (or boost-devel is not installed?)])],
-                 [AC_INCLUDES_DEFAULT])
-    AC_LANG_POP([C++])
-fi
-
-# Ignore the naming: it is called "ENABLE_ACTIVESYNC" because the code
-# also compiles inside SyncEvolution where that name is
-# necessary.
-AM_CONDITIONAL(ENABLE_ACTIVESYNC, [test "${have_syncevolution}" = "yes"])
-if (test "${have_syncevolution}" = "yes"); then
-    AX_BOOST_BASE(1.34)
-    AC_DEFINE([ENABLE_ACTIVESYNC], [], [SyncEvolution ActiveSync backend])
-    AC_DEFINE([ENABLE_ICAL], [], [libical support in SyncEvolution backend])
-    AC_DEFINE([HAVE_LIBICAL_R], [], [SyncEvolution backend can use _r variants in libical])
-
-    # If syncevolution.pc has a backenddir variable (as it should), then use it
-    # Otherwise, fall back to *its* $libdir/syncevolution/backends
-    AC_MSG_CHECKING([where to install SyncEvolution plugin])
-    if (test "${syncevo_backenddir}" = ""); then
-        syncevo_backenddir=`$PKG_CONFIG --variable=backenddir syncevolution`
-        if (test "${syncevo_backenddir}" = ""); then
-            syncevo_backenddir=`$PKG_CONFIG --variable=libdir syncevolution`/syncevolution/backends
-        fi
-    fi
-    AC_MSG_RESULT([$syncevo_backenddir])
-fi
-AC_SUBST(syncevo_backenddir)
-
-# use the "build as module" part of syncevolution/Makefile.am,
-# unconditionally when compiling as part of activesyncd
-AM_CONDITIONAL([ENABLE_MODULES], [true])
-AC_DEFINE([ENABLE_MODULES], [], [tell SyncEvolution backend that it builds as a module])
-
-# enable the integration tests support for syncevolution
-# unconditionally when compiling as part of activesyncd
-AC_DEFINE([ENABLE_INTEGRATION_TESTS], [true], [Enable integration tests for syncevolution])
-
-# Compile flags for syncevolution backend.
-# Don't hard-code them in syncevolution/Makefile.am, that file
-# is also used when compiling inside SyncEvolution.
-EASSYNC_CFLAGS='-DHAVE_CONFIG_H -DHAVE_GLIB -I. -I$(top_srcdir)/libeassync/src $(GLIB_CFLAGS) $(SOUP_CFLAGS) $(LIBXML_CFLAGS) $(EDATASERVER_CFLAGS) $(DBUS_GLIB_CFLAGS)'
-EASSYNC_LIBS='$(top_builddir)/libeassync/src/libeassync.la'
-AC_SUBST(EASSYNC_CFLAGS)
-AC_SUBST(EASSYNC_LIBS)
 
 dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(dbus_servicesdir)
@@ -165,7 +103,6 @@ AC_CONFIG_FILES([
     check_tests/Makefile
     logger/Makefile
     camel/Makefile
-    syncevolution/Makefile
     meego/Makefile
     QtActivesyncdConfig/Makefile
     po/Makefile.in
