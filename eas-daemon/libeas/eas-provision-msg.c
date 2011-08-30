@@ -117,7 +117,6 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
 {
 	EasProvisionMsgPrivate *priv = self->priv;
 	xmlDoc *doc = NULL;
-	xmlDtd *dtd = NULL;
 	xmlNode *node = NULL,
 		 *child = NULL,
 		  *grandchild = NULL;
@@ -129,10 +128,10 @@ eas_provision_msg_build_message (EasProvisionMsg* self)
 	node = xmlNewDocNode (doc, NULL, (xmlChar*) "Provision", NULL);
 	xmlDocSetRootElement (doc, node);
 
-	dtd = xmlCreateIntSubset (doc,
-				  (xmlChar*) "ActiveSync",
-				  (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
-				  (xmlChar*) "http://www.microsoft.com/");
+	xmlCreateIntSubset (doc,
+			    (xmlChar*) "ActiveSync",
+			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
+			    (xmlChar*) "http://www.microsoft.com/");
 
 	ns = xmlNewNs (node, (xmlChar *) "Provision:", NULL);
 	xmlNewNsProp (node, ns, (xmlChar*) "xmlns:settings", (xmlChar*) "Settings:");
