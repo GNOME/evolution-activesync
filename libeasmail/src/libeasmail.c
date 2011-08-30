@@ -216,7 +216,7 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 		priv->email_progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	}
 	g_debug ("insert progress function into table");
-	g_hash_table_insert (priv->email_progress_fns_table, (gpointer) request_id, progress_info);
+	g_hash_table_insert (priv->email_progress_fns_table, GUINT_TO_POINTER (request_id), progress_info);
 	g_static_mutex_unlock (&progress_table);
 finish:
 	return ret;
@@ -1078,7 +1078,8 @@ progress_signal_handler (DBusGProxy* proxy,
 	if ( (self->priv->email_progress_fns_table) && (percent > 0)) {
 		// if there's a progress function for this request in our hashtable, call it:
 		g_static_mutex_lock (&progress_table);
-		progress_callback_info = g_hash_table_lookup (self->priv->email_progress_fns_table, (gpointer) request_id);
+		progress_callback_info = g_hash_table_lookup (self->priv->email_progress_fns_table,
+							      GUINT_TO_POINTER (request_id));
 		g_static_mutex_unlock (&progress_table);
 		if (progress_callback_info) {
 			if (percent > progress_callback_info->percent_last_sent) {
