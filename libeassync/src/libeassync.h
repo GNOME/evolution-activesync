@@ -195,37 +195,6 @@ gboolean eas_sync_handler_add_items (EasSyncHandler* self,
                                      GSList *items_added,
                                      GError **error);
 
-/* function name:               eas_sync_handler_sync_folder_hierarchy
- * function description:        pulls down changes in folder structure (folders
- *                              added/deleted/updated). Supplies lists of EasFolders
- *                              note that each folder has a sync key and the folder
- *                              *structure* has a separate sync_key
- * return value:                TRUE if function success, FALSE if error
- * params:
- * EasSyncHandler* this (in):  use value returned from eas_sync_hander_new()
- * gchar *sync_key (in / out):  use zero for initial hierarchy or saved value returned
- *                              from exchange server for subsequent sync requests
- * GSList **folders_created (out): returns a list of EasFolder structs that describe
- *                              created folders.  If there are no new created folders
- *                              this parameter will be unchanged.
- * GSList **folders_updated (out): returns a list of EasFolder structs that describe
- *                              updated folders.  If there are no new updated folders
- *                              this parameter will be unchanged.
- * GSList **folders_deleted (out): returns a list of EasFolder structs that describe
- *                              deleted folders.  If there are no new deleted folders
- *                              this parameter will be unchanged.
- * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  This error information
- *                              could be related to errors in this API or errors propagated
- *                              back through underlying layers
-*/
-gboolean eas_sync_handler_sync_folder_hierarchy (EasSyncHandler* self,
-                                                 const gchar *sync_key,
-                                                 gchar **sync_key_out,
-                                                 GSList **folders_created,
-                                                 GSList **folders_updated,
-                                                 GSList **folders_deleted,
-                                                 GError **error);
 
 /* function name:               eas_sync_handler_fetch_item
  * function description:        fetch an item from a folder
