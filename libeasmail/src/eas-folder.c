@@ -98,7 +98,7 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 		ret = FALSE;
 	}
 
-	return (*result ? TRUE : FALSE);
+	return ret;
 }
 
 
