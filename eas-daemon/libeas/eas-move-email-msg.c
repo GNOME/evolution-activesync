@@ -158,8 +158,7 @@ eas_move_email_msg_build_message (EasMoveEmailMsg* self)
 	const GSList *l = NULL;
 	xmlDoc  *doc   = NULL;
 	xmlNode *root  = NULL,
-		 *leaf = NULL,
-		  *move = NULL;
+		*move = NULL;
 
 	doc = xmlNewDoc ( (xmlChar *) "1.0");
 	root = xmlNewDocNode (doc, NULL, (xmlChar*) "MoveItems", NULL);
@@ -177,9 +176,9 @@ eas_move_email_msg_build_message (EasMoveEmailMsg* self)
 	// for each email in the list create a Move entry:
 	for (l = priv->server_ids_list; l != NULL; l = g_slist_next (l)) {
 		move = xmlNewChild (root, NULL, (xmlChar *) "Move", NULL);
-		leaf = xmlNewChild (move, NULL, (xmlChar *) "SrcMsgId", (xmlChar*) l->data);
-		leaf = xmlNewChild (move, NULL, (xmlChar *) "SrcFldId", (xmlChar*) (priv->src_folder_id));
-		leaf = xmlNewChild (move, NULL, (xmlChar *) "DstFldId", (xmlChar*) (priv->dest_folder_id));
+		xmlNewChild (move, NULL, (xmlChar *) "SrcMsgId", (xmlChar*) l->data);
+		xmlNewChild (move, NULL, (xmlChar *) "SrcFldId", (xmlChar*) (priv->src_folder_id));
+		xmlNewChild (move, NULL, (xmlChar *) "DstFldId", (xmlChar*) (priv->dest_folder_id));
 	}
 
 	return doc;

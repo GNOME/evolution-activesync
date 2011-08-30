@@ -146,9 +146,8 @@ eas_get_item_estimate_msg_build_message (EasGetItemEstimateMsg* self)
 	EasGetItemEstimateMsgPrivate *priv = self->priv;
 	xmlDoc  *doc   = NULL;
 	xmlNode *root  = NULL,
-		 *collections = NULL,
-		  *collection = NULL,
-		   *leaf = NULL;
+		*collections = NULL,
+		*collection = NULL;
 	int protover = eas_connection_get_protocol_version (priv->connection);
 
 	g_debug ("protover = %d", protover);
@@ -167,18 +166,18 @@ eas_get_item_estimate_msg_build_message (EasGetItemEstimateMsg* self)
 	collections = xmlNewChild (root, NULL, (xmlChar *) "Collections", NULL);
 	collection = xmlNewChild (collections, NULL, (xmlChar *) "Collection", NULL);
 	if (protover <= 121) { // 12.1: options element not supported, SyncKey element is placed after the FilterType element
-		leaf = xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));
-		//leaf = xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar*) "Email");   // including class produces a bad collection status
-		leaf = xmlNewChild (collection, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
-		leaf = xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));
+		xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));
+		//xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar*) "Email");   // including class produces a bad collection status
+		xmlNewChild (collection, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+		xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));
 	} else {
-		leaf = xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));
-		leaf = xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));
+		xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) (priv->sync_key));
+		xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) (priv->folder_id));
 		// TODO we may want to specify a time window in future (needs to match sync).
 		/*
 		options = xmlNewChild (collection, NULL, (xmlChar *) "Options", NULL);
-		leaf = xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
-		leaf = xmlNewChild (options, NULL, (xmlChar *) "Class", (xmlChar*) "Email");
+		xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) "0");
+		xmlNewChild (options, NULL, (xmlChar *) "Class", (xmlChar*) "Email");
 		*/
 	}
 	return doc;

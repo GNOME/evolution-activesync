@@ -146,9 +146,8 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 	xmlDoc* doc = NULL;
 	xmlNode *root = NULL;
 	xmlNode *fetch = NULL,
-		 *options = NULL,
-		  *body_pref = NULL,
-		   *leaf = NULL;
+		*options = NULL,
+		*body_pref = NULL;
 
 	g_debug ("eas_get_email_body_msg_build_message++");
 
@@ -167,9 +166,9 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 
 	fetch = xmlNewChild (root, NULL, (xmlChar *) "Fetch", NULL);
 
-	leaf = xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
-	leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsync:CollectionId", (xmlChar*) priv->collectionId);
-	leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsync:ServerId", (xmlChar*) priv->serverUid);
+	xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
+	xmlNewChild (fetch, NULL, (xmlChar *) "airsync:CollectionId", (xmlChar*) priv->collectionId);
+	xmlNewChild (fetch, NULL, (xmlChar *) "airsync:ServerId", (xmlChar*) priv->serverUid);
 
 	//if we provide a mime directory location, then this will be an email request, otherwise,
 	// don't include mime options, as we don't want that included
@@ -177,17 +176,17 @@ eas_get_email_body_msg_build_message (EasGetEmailBodyMsg* self)
 
 		options = xmlNewChild (fetch, NULL, (xmlChar *) "Options", NULL);
 
-		leaf = xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
+		xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
 		body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
 
-		leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
+		xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4");  // Plain text 1, HTML 2, MIME 4
 	} else {
 		options = xmlNewChild (fetch, NULL, (xmlChar *) "Options", NULL);
 
-		leaf = xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
+		xmlNewChild (options, NULL, (xmlChar *) "airsync:MIMESupport", (xmlChar*) "2"); // gives a protocol error in 12.1
 		body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
 
-		leaf = xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "1");  // Plain text 1, HTML 2, MIME 4
+		xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "1");  // Plain text 1, HTML 2, MIME 4
 
 	}
 	g_debug ("eas_get_email_body_msg_build_message--");

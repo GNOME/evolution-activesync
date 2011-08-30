@@ -132,8 +132,7 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 	xmlDoc* doc = NULL;
 
 	xmlNode *root = NULL;
-	xmlNode *fetch = NULL,
-		 *leaf = NULL;
+	xmlNode *fetch = NULL;
 
 	g_debug ("eas_get_email_attachment_msg_build_message++");
 
@@ -151,8 +150,8 @@ eas_get_email_attachment_msg_build_message (EasGetEmailAttachmentMsg* self)
 	xmlNewNs (root, (xmlChar *) "AirSyncBase:", (xmlChar *) "airsyncbase");
 
 	fetch = xmlNewChild (root, NULL, (xmlChar *) "Fetch", NULL);
-	leaf = xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
-	leaf = xmlNewChild (fetch, NULL, (xmlChar *) "airsyncbase:FileReference", (xmlChar*) priv->fileReference);
+	xmlNewChild (fetch, NULL, (xmlChar *) "Store", (xmlChar*) "Mailbox");
+	xmlNewChild (fetch, NULL, (xmlChar *) "airsyncbase:FileReference", (xmlChar*) priv->fileReference);
 
 	g_debug ("eas_get_email_attachment_msg_build_message--");
 	return doc;
