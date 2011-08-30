@@ -1206,13 +1206,21 @@ eas_connection_send_request (EasConnection* self,
 		node->cnc = self;
 
 		QUEUE_LOCK (node->cnc);
-		/* Add to job queue */
+		/* Add to a job queue */
+		//if we are high priority, we go on the front of the provisioning queue
 		if(highpriority){
 			self->priv->provisioning_jobs = g_slist_prepend (self->priv->provisioning_jobs, (gpointer *) node);
 			g_debug ("eas_connection_send_request : provisioning job++ queuelength=%d", g_slist_length (self->priv->provisioning_jobs));
 		}else{
-			self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
-			g_debug ("eas_connection_send_request : job++ queuelength=%d", g_slist_length (self->priv->jobs));
+			//if we are currently reprovisioning, then add to the provisioning queue to ensure that 
+			//policy gets updated when provisioning is finished
+			if(self->priv->reprovisioning){
+				self->priv->provisioning_jobs = g_slist_append (self->priv->provisioning_jobs, (gpointer *) node);
+				g_debug ("eas_connection_send_request : provisioning job++ queuelength=%d", g_slist_length (self->priv->provisioning_jobs));
+			}else{
+				self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
+				g_debug ("eas_connection_send_request : job++ queuelength=%d", g_slist_length (self->priv->jobs));
+			}
 		}
 		QUEUE_UNLOCK (node->cnc);
 
