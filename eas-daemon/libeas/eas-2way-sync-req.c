@@ -490,6 +490,7 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 				ret = eas_request_base_SendRequest (parent,
 								    "FolderSync",
 								    doc, // full transfer
+				                                    FALSE,
 								    &error);
 				if (ret)
 					priv->state = Eas2WaySyncReqStep1;
