@@ -88,11 +88,11 @@ CamelFolderInfo *
 
 void	camel_eas_utils_clear_folder (CamelEasFolder *eas_folder);
 
-void	camel_eas_utils_sync_deleted_items	(CamelEasFolder *eas_folder,
+int	camel_eas_utils_sync_deleted_items	(CamelEasFolder *eas_folder,
 						 GSList *items_deleted);
-void	camel_eas_utils_sync_created_items	(CamelEasFolder *eas_folder,
+int	camel_eas_utils_sync_created_items	(CamelEasFolder *eas_folder,
 						 GSList *items_created);
-void	camel_eas_utils_sync_updated_items	(CamelEasFolder *eas_folder,
+int	camel_eas_utils_sync_updated_items	(CamelEasFolder *eas_folder,
 						 GSList *items_updated);
 
 gboolean

@@ -235,7 +235,7 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 	return;
 }
 
-void
+int
 camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_deleted)
 {
 	CamelFolder *folder;
@@ -244,6 +244,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
 	GSList *l;
+	int count = 0;
 
 	ci = camel_folder_change_info_new ();
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
@@ -258,6 +259,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 		camel_folder_change_info_remove_uid (ci, item->server_id);
 		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
 		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
+		count++;
 	}
 	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 
@@ -267,6 +269,8 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
 	g_slist_free (items_deleted);
 	g_slist_free (uids_deleted);
+
+	return count;
 }
 
 void
@@ -340,12 +344,13 @@ eas_utils_get_server_flags (EEasItem *item)
 
 #endif
 
-void
+int
 camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_updated)
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
 	GSList *l;
+	int count = 0;
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
@@ -380,23 +385,27 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 		}
 
 		g_object_unref (item);
+		count++;
 	}
 
 	camel_folder_summary_save_to_db (folder->summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
+
+	return count;
 }
 
-void
+int
 camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_created)
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
 	GSList *l;
+	int count = 0;
 
 	if (!items_created)
-		return;
+		return 0;
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
@@ -457,12 +466,16 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		camel_folder_change_info_recent_uid (ci, item->server_id);
 
 		g_object_unref (item);
+
+		count++;
 	}
 
 	camel_folder_summary_save_to_db (folder->summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_created);
+
+	return count;
 }
 
 #if 0
