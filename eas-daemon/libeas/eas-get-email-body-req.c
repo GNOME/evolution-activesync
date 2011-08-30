@@ -346,7 +346,7 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 							 priv->accumulationBuffer[ (j + 4) ];
 
 					priv->parts = g_slist_append (priv->parts, item);
-					g_debug ("  GotChunk - Metadata [%d]:Offset[%u], Size[%zu]", i, item->startPos, item->itemsize);
+					g_debug ("  GotChunk - Metadata [%d]:Offset[%u], Size[%u]", i, item->startPos, item->itemsize);
 				}
 
 				priv->gotMetadata = TRUE;
@@ -408,7 +408,7 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 					eas_request_base_SetWbxmlFromChunking (parent, priv->accumulationBuffer, item->itemsize);
 
 					excess = priv->accBufSize - item->itemsize;
-					g_debug ("  GotChunk - Size of excess after WBXML = [%u]", excess);
+					g_debug ("  GotChunk - Size of excess after WBXML = [%zu]", excess);
 					if (excess > 0)
 					{
 						guchar* tmp = g_malloc (excess);

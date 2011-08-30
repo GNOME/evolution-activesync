@@ -303,7 +303,7 @@ eas_get_email_attachment_msg_write_file (EasGetEmailAttachmentMsg *self, gchar *
 	gboolean ret = TRUE;
 	EasGetEmailAttachmentMsgPrivate *priv = self->priv;
 
-	g_message ("data ecoded length  =--->:[%d]",  strlen (data));
+	g_message ("data ecoded length  =--->:[%zu]",  strlen (data));
 	g_message ("data encoded   =--->:[%s]",   data);
 
 	if (!decoded_len) {
