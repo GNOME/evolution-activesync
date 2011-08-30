@@ -108,7 +108,6 @@ eas_ping_msg_build_message (EasPingMsg* self, const gchar* accountId, const gcha
 	xmlNode *node  = NULL,
 		 *child = NULL,
 		  *folder = NULL;
-	xmlNs   *ns    = NULL;
 	GSList * iterator;
 	gchar *folder_id = NULL;
 
@@ -121,7 +120,7 @@ eas_ping_msg_build_message (EasPingMsg* self, const gchar* accountId, const gcha
 			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
 			    (xmlChar*) "http://www.microsoft.com/");
 
-	ns = xmlNewNs (node, (xmlChar *) "Ping:", NULL);
+	xmlNewNs (node, (xmlChar *) "Ping:", NULL);
 	child = xmlNewChild (node, NULL, (xmlChar *) "HeartbeatInterval", (xmlChar*) heartbeat);
 	child = xmlNewChild (node, NULL, (xmlChar *) "Folders", NULL);
 	for (iterator = folders; iterator; iterator = iterator->next) {
