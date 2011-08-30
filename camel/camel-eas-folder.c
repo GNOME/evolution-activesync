@@ -651,7 +651,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		goto out;
 
 	do {
-		guint total, unread;
 		GError *local_error = NULL;
 		gchar *new_sync_key = NULL;
 
@@ -706,9 +705,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 
 		if (items_updated)
 			progress_data.fetched += camel_eas_utils_sync_updated_items (eas_folder, items_updated);
-
-                total = camel_folder_summary_count (folder->summary);
-                unread = folder->summary->unread_count;
 
                 camel_folder_summary_save_to_db (folder->summary, NULL);
 
