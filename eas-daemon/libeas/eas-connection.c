@@ -1425,7 +1425,7 @@ static xmlDoc *
 autodiscover_as_xml (const gchar *email)
 {
 	xmlDoc *doc;
-	xmlNode *node, *child;
+	xmlNode *node;
 	xmlNs *ns;
 
 	doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -1433,8 +1433,8 @@ autodiscover_as_xml (const gchar *email)
 	xmlDocSetRootElement (doc, node);
 	ns = xmlNewNs (node, (xmlChar *) "http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestschema/2006", NULL);
 	node = xmlNewChild (node, ns, (xmlChar *) "Request", NULL);
-	child = xmlNewChild (node, ns, (xmlChar *) "EMailAddress", (xmlChar *) email);
-	child = xmlNewChild (node, ns, (xmlChar *) "AcceptableResponseSchema",
+	xmlNewChild (node, ns, (xmlChar *) "EMailAddress", (xmlChar *) email);
+	xmlNewChild (node, ns, (xmlChar *) "AcceptableResponseSchema",
 			     (xmlChar *) "http://schemas.microsoft.com/exchange/autodiscover/mobilesync/responseschema/2006");
 
 	return doc;
