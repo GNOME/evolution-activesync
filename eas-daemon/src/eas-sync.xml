@@ -59,22 +59,6 @@
       <arg type="s" name="ret_sync_key" direction="out"/>
     </method>
     
-    <!--
- sync entire folder hierarchy (folder structure only, not contents)
- EAS only allows sync of entire hierarchy (inc email, contacts...) 
- will use AS FolderSync command	
--->
-
-    <method name="sync_folder_hierarchy">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
-      <arg type="s" name="account_uid" direction="in"/>	<!-- t == UINT64-->
-      <arg type="s" name="sync_key" direction="in"/>
-      <arg type="s" name="ret_sync_key" direction="out"/>
-      <arg type="as" name="ret_created_folder_array" direction="out"/>
-      <arg type="as" name="ret_deleted_folder_array" direction="out"/>
-      <arg type="as" name="ret_updated_folder_array" direction="out"/>
-    </method>
-    
         <method name="fetch_item">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
    	<arg type="s" name="account_uid" direction="in"/>
