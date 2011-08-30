@@ -553,6 +553,35 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
         return folder;
 }
 
+struct sync_progress_data {
+	guint estimate;
+	guint fetched;
+	void *operation;
+};
+
+static void eas_sync_progress (void *data, int pc)
+{
+	struct sync_progress_data *s = data;
+	int fetched;
+
+	if (!s->estimate)
+		return;
+
+	/* Estimate the number of items to be fetched in the running call */
+	fetched = s->estimate - s->fetched;
+	/* The dæmon hard-codes window size to 100. */
+	if (fetched > 100)
+		fetched = 100;
+
+	/* Factor in the percentage we've been told */
+	fetched *= pc;
+	fetched /= 100;
+
+	/* Add in the number that were obtained in previous calls */
+	fetched += s->fetched;
+
+	camel_operation_progress (s->operation, fetched * 100 / s->estimate);
+}
 
 static gboolean
 eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError **error)
@@ -566,6 +595,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	gboolean more_available = TRUE;
 	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
 	gboolean resynced = FALSE;
+	struct sync_progress_data progress_data;
         EVO2(GCancellable *cancellable = NULL);
 
         eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
@@ -589,6 +619,37 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
         handler = camel_eas_store_get_handler (eas_store);
 
         sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
+
+	EVO2(progress_data.operation = camel_operation_registered());
+	EVO3(progress_data.operation = cancellable);
+	progress_data.estimate = 0;
+	progress_data.fetched = 0;
+
+	if (!strcmp (sync_state, "0")) {
+		gchar *new_sync_key = NULL;
+		res = eas_mail_handler_sync_folder_email (handler, sync_state, 0, priv->server_id,
+							  NULL, NULL, &new_sync_key,
+							  &items_created,
+							  &items_updated, &items_deleted,
+							  &more_available,
+							  NULL, NULL,
+							  cancellable, error);
+		if (!res)
+			goto out;
+		strncpy (sync_state, new_sync_key, 64);
+		g_free (new_sync_key);
+	}
+	res = eas_mail_handler_get_item_estimate (handler, sync_state, priv->server_id,
+						  &progress_data.estimate, error);
+	if (!res)
+		goto out;
+
+	/* Hopefully the server doesn't lie. It is an *estimate* but estimating
+	   zero when the number is non-zero would be kind of crap. But then again,
+	   this *is* Exchange we're talking about... */
+	if (!progress_data.estimate)
+		goto out;
+
 	do {
 		guint total, unread;
 		GError *local_error = NULL;
@@ -602,7 +663,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 							  &items_created,
 							  &items_updated, &items_deleted,
 							  &more_available,
-							  NULL, NULL,
+							  (EasProgressFn)eas_sync_progress, &progress_data,
 							  cancellable, &local_error);
 
 		/* We use strcasecmp() instead of dbus_g_error_has_name() because
@@ -638,13 +699,13 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		}
 
 		if (items_deleted)
-			camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
+			progress_data.fetched += camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
 
 		if (items_created)
-			camel_eas_utils_sync_created_items (eas_folder, items_created);
+			progress_data.fetched += camel_eas_utils_sync_created_items (eas_folder, items_created);
 
 		if (items_updated)
-			camel_eas_utils_sync_updated_items (eas_folder, items_updated);
+			progress_data.fetched += camel_eas_utils_sync_updated_items (eas_folder, items_updated);
 
                 total = camel_folder_summary_count (folder->summary);
                 unread = folder->summary->unread_count;
@@ -653,6 +714,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 
         } while (more_available);
 
+ out:
         g_mutex_lock (priv->state_lock);
         priv->refreshing = FALSE;
         g_mutex_unlock (priv->state_lock);
