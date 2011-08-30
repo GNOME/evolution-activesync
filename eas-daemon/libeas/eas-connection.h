@@ -273,6 +273,12 @@ gboolean eas_connection_cancel_request(EasConnection* self,
  */
 gboolean eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error);
 
+void eas_connection_set_reprovisioning(EasConnection *cnc, gboolean reprovisioning);
+
+void eas_connection_replace_policy_key(EasConnection *cnc);
+
+void update_policy_key(gpointer job, gpointer policy_key);
+
 G_END_DECLS
 
 #endif /* _EAS_CONNECTION_H_ */

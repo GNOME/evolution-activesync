@@ -193,6 +193,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 {
 	GError* error = NULL;
 	gboolean ret = FALSE;
+	gboolean cleanup = FALSE;
 	EasProvisionReqPrivate *priv = self->priv;
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 
@@ -277,6 +278,14 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 
 		if(!priv->internal){
 			dbus_g_method_return (eas_request_base_GetContext (parent));
+			cleanup = TRUE;
+		}
+		else{
+			//tell connection that we are back to dealing with standard requests
+			eas_connection_set_reprovisioning (eas_request_base_GetConnection (parent),
+			                                   FALSE);
+			//and update policy key on all queued messages
+			eas_connection_replace_policy_key(eas_request_base_GetConnection (parent));
 		}
 	}
 	break;
@@ -284,14 +293,14 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 
 finish:
 	xmlFreeDoc (doc);
-	if (!ret) {
+	if (!ret && !priv->internal) {
 		g_assert (error != NULL);
 		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	}
 
 	g_debug ("eas_provision_req_MessageComplete--");
-	return TRUE;
+	return cleanup;
 }
 
 const gchar*

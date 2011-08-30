@@ -115,8 +115,10 @@ struct _EasConnectionPrivate {
 	gchar *proto_str;
 
 	GSList *jobs;
+	GSList *provisioning_jobs;
 	GSList *active_job_queue;
 	GStaticRecMutex queue_lock;
+	gboolean reprovisioning;
 };
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
@@ -250,6 +252,7 @@ eas_connection_init (EasConnection *self)
 	priv->account = NULL; // Just a reference
 	priv->protocol_version = AS_DEFAULT_PROTOCOL;
 	priv->proto_str = NULL;
+	priv->reprovisioning = FALSE;
 
 	priv->retrying_asked = FALSE;
 
@@ -309,6 +312,10 @@ eas_connection_dispose (GObject *object)
 	if (priv->jobs) {
 		g_slist_free (priv->jobs);
 		priv->jobs = NULL;
+	}
+	if (priv->provisioning_jobs) {
+		g_slist_free (priv->provisioning_jobs);
+		priv->provisioning_jobs = NULL;
 	}
 
 	if (priv->active_job_queue) {
@@ -887,12 +894,19 @@ eas_next_request (gpointer _cnc)
 	EasConnection *cnc = _cnc;
 	GSList *l;
 	EasNode *node;
+	gboolean using_provisioning_queue=FALSE;
 	g_debug ("eas_next_request++");
 
 	QUEUE_LOCK (cnc);
 
-	l = cnc->priv->jobs;
+	l = cnc->priv->provisioning_jobs;
 
+	if(l){
+		using_provisioning_queue=TRUE;
+	}else{
+		l = cnc->priv->jobs;
+	}
+	
 	if (!l || g_slist_length (cnc->priv->active_job_queue) >= EAS_CONNECTION_MAX_REQUESTS) {
 		QUEUE_UNLOCK (cnc);
 		return FALSE;
@@ -912,12 +926,16 @@ eas_next_request (gpointer _cnc)
 #endif
 
 	/* Remove the node from the job queue */
-	cnc->priv->jobs = g_slist_remove (cnc->priv->jobs, (gconstpointer *) node);
-	g_debug ("eas_next_request : job-- queuelength=%d", g_slist_length (cnc->priv->jobs));
-
-	/* Add to active job queue */
+	if(using_provisioning_queue){
+		cnc->priv->provisioning_jobs = g_slist_remove (cnc->priv->provisioning_jobs, (gconstpointer *) node);
+		g_debug ("eas_next_request : provisioning job-- queuelength=%d", g_slist_length (cnc->priv->provisioning_jobs));
+	}else{
+		cnc->priv->jobs = g_slist_remove (cnc->priv->jobs, (gconstpointer *) node);
+		g_debug ("eas_next_request : job-- queuelength=%d", g_slist_length (cnc->priv->jobs));
+	}
+	/* Add to active job list */
 	cnc->priv->active_job_queue = g_slist_append (cnc->priv->active_job_queue, node);
-	g_debug ("eas_next_request: active_job++  queuelength=%d", g_slist_length (cnc->priv->active_job_queue));
+	g_debug ("eas_next_request: active_job++  listlength=%d", g_slist_length (cnc->priv->active_job_queue));
 
 	soup_session_queue_message (cnc->priv->soup_session,
 				    SOUP_MESSAGE (eas_request_base_GetSoupMessage (node->request)),
@@ -1188,9 +1206,14 @@ eas_connection_send_request (EasConnection* self,
 		node->cnc = self;
 
 		QUEUE_LOCK (node->cnc);
-		/* Add to active job queue */
-		self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
-		g_debug ("eas_connection_send_request : job++ queuelength=%d", g_slist_length (self->priv->jobs));
+		/* Add to job queue */
+		if(highpriority){
+			self->priv->provisioning_jobs = g_slist_prepend (self->priv->provisioning_jobs, (gpointer *) node);
+			g_debug ("eas_connection_send_request : provisioning job++ queuelength=%d", g_slist_length (self->priv->provisioning_jobs));
+		}else{
+			self->priv->jobs = g_slist_append (self->priv->jobs, (gpointer *) node);
+			g_debug ("eas_connection_send_request : job++ queuelength=%d", g_slist_length (self->priv->jobs));
+		}
 		QUEUE_UNLOCK (node->cnc);
 
 		eas_trigger_next_request (node->cnc);
@@ -1961,6 +1984,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	GError *error = NULL;
 	RequestValidity validity = FALSE;
 	gboolean cleanupRequest = FALSE;
+	gboolean isProvisioningRequired = FALSE;
 
 	eas_active_job_dequeue(node->cnc, node);
 
@@ -1978,6 +2002,15 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	}
 	
 	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
+
+	//if we get a reprovision error set flag - and move request to provisioning queue
+	if (VALID_12_1_REPROVISION == validity) {
+		//add reference to msg, so that it doesn't get nuked after handle_server_response completes
+		g_object_ref(msg);
+               isProvisioningRequired = TRUE;
+		self->priv->reprovisioning = TRUE;
+		self->priv->provisioning_jobs = g_slist_append(self->priv->provisioning_jobs, (gpointer *)node);
+        }
 
 	if (INVALID == validity || VALID_12_1_REPROVISION == validity ) 
 	{
@@ -2095,10 +2128,21 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 
 complete_request:
-	g_debug ("  handle_server_response - no parsed provisioning required");
-	g_debug ("  handle_server_response - Handling request [%d]", eas_request_base_GetRequestType (req));
+	if(isProvisioningRequired){
+		//createa a new internal provision req
+		EasProvisionReq *prov_req = eas_provision_req_new (TRUE, NULL, NULL, NULL);
+                g_debug ("  handle_server_response - parsed provisioning required");
+		eas_request_base_SetConnection (&prov_req->parent_instance, self);
+                //activate provisioning request.
+                eas_provision_req_Activate (prov_req, NULL);   // TODO check return
+		cleanupRequest = FALSE;
+	}else{
+		g_debug ("  handle_server_response - no parsed provisioning required");
+		g_debug ("  handle_server_response - Handling request [%d]", eas_request_base_GetRequestType (req));
 
-	cleanupRequest = eas_request_base_MessageComplete (req, doc, error);
+	
+		cleanupRequest = eas_request_base_MessageComplete (req, doc, error);
+	}
 
 	//if cleanupRequest is set - we are done with this request, and should clean it up
 	if (cleanupRequest) {
@@ -2115,8 +2159,9 @@ complete_request:
 		g_debug ("eas_connection - (mock test)handle_server_response--");
 		return;
 		}
-	
-	eas_active_job_done (node->cnc, node);
+	if(!self->priv->reprovisioning){
+		eas_active_job_done (node->cnc, node);
+	}
 	g_debug ("eas_connection - handle_server_response--");
 }
 
@@ -2525,3 +2570,29 @@ cleanup:
 	
 	return ret;
 }
+
+void eas_connection_set_reprovisioning(EasConnection *cnc, gboolean reprovisioning)
+{
+	cnc->priv->reprovisioning = reprovisioning;
+}
+
+void update_policy_key(gpointer job, gpointer policy_key)
+{
+	EasNode *node = (EasNode*) job;
+	SoupMessage* msg = eas_request_base_GetSoupMessage (node->request);
+	SoupMessageHeaders *headers = msg->request_headers;
+
+	soup_message_headers_remove(headers, "X-MS-PolicyKey");
+
+	soup_message_headers_append (headers,
+				     "X-MS-PolicyKey", 
+				     policy_key);
+}
+
+void eas_connection_replace_policy_key(EasConnection *cnc)
+{
+	g_slist_foreach(cnc->priv->provisioning_jobs,
+	                update_policy_key,
+	                (gpointer*)eas_account_get_policy_key (cnc->priv->account)) ;
+}
+
