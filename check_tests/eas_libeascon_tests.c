@@ -619,15 +619,15 @@ START_TEST (test_con_get_invalid_sync_key)
    // set mock
 	setMockNegTestGoodHttp("ContactGetInvalidSyncKey.xml");
    // mock Test
-	negativeTestGetLatestContacts (sync_handler,
-		                   (gchar*)"wrong",
-		                   &sync_key_out,
-		                   &created,
-		                   &updated,
-		                   &deleted,
-		                   &error);
+	eas_sync_handler_delete_items (sync_handler,
+                                      "wrong",
+                                      (gchar**)&sync_key_out,
+                                      EAS_ITEM_CONTACT,
+                                      NULL,
+                                      NULL,
+                                      &error);
 	
-	g_debug("error from test_con_get_invalid_sync_key is %s",dbus_g_error_get_name(error));
+	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
 	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
 	        "The Error returned by the server is not correct.");
