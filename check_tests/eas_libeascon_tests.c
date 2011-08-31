@@ -627,7 +627,7 @@ START_TEST (test_con_get_invalid_sync_key)
 		                   &deleted,
 		                   &error);
 	
-	g_debug("error is %s",dbus_g_error_get_name(error));
+	g_debug("error from test_con_get_invalid_sync_key is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
 	                   "org.meego.activesyncd.SyncError.INVALIDSYNCKEY"),  
 	        "The Error returned by the server is not correct.");
