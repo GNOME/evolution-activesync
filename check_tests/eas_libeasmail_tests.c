@@ -869,10 +869,10 @@ START_TEST (test_get_eas_mail_info_bad_folder_id)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, &created, &error);
+  //  testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
+   // fail_unless (NULL != created, "No folder information returned from exchange server");
 
 	// set mock
 	setMockNegTestGoodHttp("EmailGetInfoBadFolderId.xml");
@@ -1865,16 +1865,16 @@ START_TEST (test_get_eas_mail_info_bad_sync_key)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, &created, &error);
+ //   testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
+  //  fail_unless (NULL != created, "No folder information returned from exchange server");
 
 	// set mock
 	setMockNegTestGoodHttp("EmailListInvalidSyncKey.xml");
 
     // get the folder info for the inbox
-    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", "8:1", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -2009,10 +2009,10 @@ START_TEST (test_get_eas_mail_info_invalid_folder)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-   testGetFolderHierarchy (email_handler, &created, &error);
+ //  testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
+  //  fail_unless (NULL != created, "No folder information returned from exchange server");
 
        // set mock
        setMockNegTestGoodHttp("EmailInfoInvalidFolder.xml");
@@ -2327,14 +2327,14 @@ START_TEST (test_consume_response)
     testGetMailHandler (&email_handler, accountuid);
 
     // call into the daemon to get the folder hierarchy from the exchange server
-    testGetFolderHierarchy (email_handler, &created, &error);
+//    testGetFolderHierarchy (email_handler, &created, &error);
 
     // fail the test if there is no folder information
-    fail_unless (NULL != created, "No folder information returned from exchange server");
+   // fail_unless (NULL != created, "No folder information returned from exchange server");
 
 
     // get the folder info for the inbox
-    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", g_inbox_id, &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
+    GetFolderInfo_negativetests (email_handler, (gchar *)"wrong", "8:1", &emails_created, &emails_updated, &emails_deleted, &more_available, &error);
 
 	g_debug("error is %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
