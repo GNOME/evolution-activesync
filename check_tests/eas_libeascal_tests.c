@@ -662,13 +662,14 @@ GError *error = NULL;
    // set mock
 	setMockNegTestGoodHttp("CalendarGetInvalidSyncKey.xml");
    // mock Test
-	negativeTestGetLatestCalendar (sync_handler,
-		                   (gchar*)"wrong",
-		                   &sync_key_out,
-		                   &created,
-		                   &updated,
-		                   &deleted,
-		                   &error);
+	 // mock Test
+	   eas_sync_handler_add_items (sync_handler,
+                                      "wrong",
+                                      (gchar**)&sync_key_out,
+                                      EAS_ITEM_CALENDAR,
+                                      NULL,
+                                      NULL,
+                                      &error);
 	
 	g_debug("error from test_cal_get_invalid_sync_key is  %s",dbus_g_error_get_name(error));
 	fail_if(g_strcmp0 (dbus_g_error_get_name(error),         
@@ -1218,7 +1219,7 @@ START_TEST (test_consume_response)
 	   rtn = eas_sync_handler_add_items (sync_handler,
                                       "wrong",
                                       (gchar**)&sync_key_out,
-                                      EAS_ITEM_CONTACT,
+                                      EAS_ITEM_CALENDAR,
                                       NULL,
                                       NULL,
                                       &error);
