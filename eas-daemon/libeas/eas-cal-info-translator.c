@@ -1036,7 +1036,7 @@ static GSList* _eas2ical_process_exceptions (xmlNodePtr n, icalcomponent* vevent
 				if (newEventValues == NULL) {
 					newEventValues = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 				}
-				g_hash_table_insert (newEventValues, g_strdup (name), g_strdup (categories->str));
+				g_hash_table_insert (newEventValues, g_strdup (name), g_string_free (categories, FALSE));
 			} else if (strlen (value) > 0) {
 				// We've got a non-trivial exception that will
 				// require adding a new event: build a hash of its values
