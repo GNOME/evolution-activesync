@@ -1268,7 +1268,13 @@ static void _eas2ical_add_exception_events (icalcomponent* vcalendar, icalcompon
 
 			// ExceptionStartTime -> convert to RecurrenceID
 			if ( (value = (gchar*) g_hash_table_lookup (exceptionProperties, EAS_ELEMENT_EXCEPTIONSTARTTIME)) != NULL) {
-				prop = icalproperty_new_recurrenceid(icaltime_from_string (value));
+				icalparameter* param = NULL;
+				icaltimetype recurrence_time = icaltime_from_string (value);
+				prop = icalproperty_new_recurrenceid(recurrence_time);
+				if (tzid && strlen (tzid)) { // Note: TZID not specified if it's a UTC time
+					param = icalparameter_new_tzid (tzid);
+					icalproperty_add_parameter (prop, param);
+				}
 				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
 			}
 			
