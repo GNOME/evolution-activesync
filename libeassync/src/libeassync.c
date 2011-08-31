@@ -555,6 +555,7 @@ eas_sync_handler_add_items (EasSyncHandler* self,
                         eas_item_info_deserialise (cal, created_item_array[i]);
                         g_debug ("created item server id = %s", cal->server_id);
                         updated->server_id = g_strdup (cal->server_id);
+			updated->status = g_strdup (cal->status);
                         g_debug ("created updated server id in list = %s", cal->server_id);
                         i++;
                 }
