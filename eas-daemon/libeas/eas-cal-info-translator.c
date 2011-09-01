@@ -1144,10 +1144,6 @@ static gboolean _eas2ical_add_exception_events (icalcomponent* vcalendar,
 	if (vcalendar && vevent && exceptionEvents) {
 		const guint newEventCount = g_slist_length (exceptionEvents);
 		guint index = 0;
-		struct icaltimetype dtstart = icalcomponent_get_dtstart (vevent);
-		const icaltimezone *dtstartZone = NULL;
-		if (!icaltime_is_utc (dtstart))
-			dtstartZone = icaltime_get_timezone (dtstart);
 
 		// Iterate through the list adding each exception event in turn
 		for (index = 0; index < newEventCount; index++) {
