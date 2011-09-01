@@ -1776,6 +1776,36 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 	return result;
 }
 
+/**
+ * Convert icaltimetype to string in UTC format. Date-only values are set
+ * to occur at 00:00:00 of the given day.
+ *
+ * @param   tt
+ *      the value which needs to be converted, either defined in UTC or relative to icaltz
+ * @param   icaltz
+ *      the default time zone for the event (see eas_cal_info_translator_parse_request()
+ *      comment about events with more than one time zone)
+ * @return
+ *      allocated string, caller must free it
+ */
+static gchar *_ical2eas_convert_icaltime_to_utcstr(icaltimetype tt, const icaltimezone* icaltz)
+{
+	const gchar* timestamp = NULL;
+
+	// first tell libical what we know about the time zone
+	if (icaltz && !icaltime_is_utc(tt))
+		tt = icaltime_set_timezone (&tt, icaltz);
+
+	// then make it a date-time value
+	tt.is_date = 0;
+
+	// finally convert to UTC
+	tt = icaltime_convert_to_zone(tt, icaltimezone_get_utc_timezone());
+
+	// don't depend on libical string buffer, strdup explicitly
+	timestamp = icaltime_as_ical_string (tt);
+	return g_strdup (timestamp);
+}
 
 /**
  * Process the RRULE (recurrence rule) property during parsing of an iCalendar VEVENT component
@@ -1785,7 +1815,8 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, struct icaltimetype *startTime)
+static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, struct icaltimetype *startTime,
+				     const icaltimezone* icaltz)
 {
 	// Get the iCal RRULE property
 	struct icalrecurrencetype rrule = icalproperty_get_rrule (prop);
@@ -1846,8 +1877,9 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 		g_free (xmlValue);
 		xmlValue = NULL;
 	} else if (!icaltime_is_null_time (rrule.until)) {
-		// Note: icaltime_as_ical_string() retains ownership of the string, so no need to free
-		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UNTIL, (const xmlChar*) icaltime_as_ical_string (rrule.until));
+		gchar *modified = _ical2eas_convert_icaltime_to_utcstr(rrule.until, icaltz);
+		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UNTIL, (const xmlChar*)modified);
+		g_free (modified);
 	}
 
 	//
@@ -2071,41 +2103,15 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 
 			// DTSTART
 			case ICAL_DTSTART_PROPERTY: {
-				int utc_offset, isDaylight;
 				struct icaltimetype tt;
 				gchar* modified = NULL;
-				const gchar* timestamp = NULL;
 
 				//get start time, convert it to UTC and suffix Z onto it
 				tt = icalproperty_get_dtstart (prop);
-
-				utc_offset = icaltimezone_get_utc_offset (icaltz, &tt, &isDaylight);
-				icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
-				timestamp = icaltime_as_ical_string (tt);
-				if (!g_str_has_suffix (timestamp, "Z")) {
-					if (strlen (timestamp) <= 8) {
-						//need to add midnight timestamp and Z for UTC
-						modified = g_strconcat (timestamp, "T000000", "Z", NULL);
-					} else {
-						//just add Z
-						modified = g_strconcat (timestamp, "Z", NULL);
-					}
-				} else {
-					if (strlen (timestamp) <= 9) {
-						//need to add midnight timestamp before last characters
-						//first remove last character
-						gchar * temp = g_strndup (timestamp, (strlen (timestamp) - 1));
-						//then concatenate timestamp + "Z"
-						modified = g_strconcat (temp, "T000000", "Z", NULL);
-						g_free (temp);
-					} else {
-						modified = g_strdup (timestamp);
-					}
-				}
-
+				modified = _ical2eas_convert_icaltime_to_utcstr(tt, icaltz);
 				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, (const xmlChar*) modified);
 				// And additionally store the start time so we can calculate the AllDayEvent value later
-				startTime = icalproperty_get_dtstart (prop);
+				startTime = tt;
 				g_debug ("dtstart cleanup");
 				g_free (modified);
 			}
@@ -2113,36 +2119,12 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 
 			// DTEND
 			case ICAL_DTEND_PROPERTY: {
-				int utc_offset, isDaylight;
 				struct icaltimetype tt;
 				gchar* modified = NULL;
-				const gchar* timestamp = NULL;
 
 				//get end time, convert it to UTC and suffix Z onto it
 				tt = icalproperty_get_dtend (prop);
-				utc_offset = icaltimezone_get_utc_offset (icaltz, &tt, &isDaylight);
-				icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
-				timestamp = icaltime_as_ical_string (tt);
-				if (!g_str_has_suffix (timestamp, "Z")) {
-					if (strlen (timestamp) <= 8) {
-						//need to add midnight timestamp and Z for UTC
-						modified = g_strconcat (timestamp, "T000000", "Z", NULL);
-					} else {
-						//just add Z
-						modified = g_strconcat (timestamp, "Z", NULL);
-					}
-				} else {
-					if (strlen (timestamp) <= 9) {
-						//need to add midnight timestamp before last characters
-						//first remove last character
-						gchar * temp = g_strndup (timestamp, (strlen (timestamp) - 1));
-						//then concatenate timestamp + "Z"
-						modified = g_strconcat (temp, "T000000", "Z", NULL);
-						g_free (temp);
-					} else {
-						modified = g_strdup (timestamp);
-					}
-				}
+				modified = _ical2eas_convert_icaltime_to_utcstr(tt, icaltz);
 				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*) modified);
 				// And additionally store the end time so we can calculate the AllDayEvent value later
 				endTime = icalproperty_get_dtend (prop);
@@ -2239,7 +2221,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			break;
 			// RRULE
 			case ICAL_RRULE_PROPERTY: {
-				_ical2eas_process_rrule (prop, appData, &startTime);
+				_ical2eas_process_rrule (prop, appData, &startTime, icaltz);
 			}
 			break;
 
@@ -2288,7 +2270,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				// EXDATE consists of a list of date/times, comma separated.
 				// However, libical breaks this up for us and converts it into
 				// a number of single-value properties.
-				const gchar* start = NULL;
+				struct icaltimetype tt;
 				gchar *modified = NULL;
 
 				xmlNodePtr exception = NULL;
@@ -2302,25 +2284,9 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				exception = xmlNewChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DELETED, (const xmlChar*) EAS_BOOLEAN_TRUE);
 
-				start = icalproperty_get_value_as_string (prop);
-				if (strlen (start) <= 9) {
-					if (!g_str_has_suffix (start, "Z")) {
-						modified = g_strconcat (start, "T000000Z", NULL);
-					} else {
-						//need to add midnight timestamp before last characters
-						//first remove last character
-						gchar * temp = g_strndup (start, (strlen (start) - 1));
-						//then concatenate timestamp + "Z"
-						modified = g_strconcat (temp, "T000000", "Z", NULL);
-						g_free (temp);
-					}
-				} else {
-					if (!g_str_has_suffix (start, "Z")) {
-						modified = g_strconcat (start, "Z", NULL);
-					} else {
-						modified = g_strdup (start);
-					}
-				}
+				tt = icalproperty_get_exdate (prop);
+				// TODO: handle VALUE=DATE for events which are not all-day events
+				modified = _ical2eas_convert_icaltime_to_utcstr (tt, icaltz);
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
 				g_free (modified);
 			}
@@ -2577,21 +2543,28 @@ static void _ical2eas_process_xstandard_xdaylight (icalcomponent* subcomponent, 
 	}
 }
 
-
 /**
  * Process the VTIMEZONE component during parsing of an iCalendar
  *
  * @param  vtimezone
  *      Pointer to the iCalendar VTIMEZONE component
+ * @param  forceTimezone
+ *      Send empty time zone (= UTC) if vtimezone is empty; useful
+ *      in one particular case (recurring all-day property with
+ *      exceptions), otherwise Exchange didn't handle the event
+ *      properly (dropped exceptions, see BMC #22780).
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
-static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, xmlNodePtr appData)
+static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forceTimezone, xmlNodePtr appData)
 {
+	EasTimeZone timezoneStruct;
+	gchar* timezoneBase64 = NULL;
+
+	// all empty == UTC as default
+	memset (&timezoneStruct, 0, sizeof (EasTimeZone));
 	if (vtimezone) {
-		EasTimeZone timezoneStruct;
 		icalcomponent* subcomponent = NULL;
-		gchar* timezoneBase64 = NULL;
 
 		// Only one property in a VTIMEZONE: the TZID
 		icalproperty* tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
@@ -2616,14 +2589,13 @@ static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, xmlNodePtr ap
 		     subcomponent = icalcomponent_get_next_component (vtimezone, ICAL_ANY_COMPONENT)) {
 			_ical2eas_process_xstandard_xdaylight (subcomponent, &timezoneStruct, icalcomponent_isa (subcomponent));
 		}
+	} else if (!forceTimezone)
+		return;
 
-		// Write the timezone into the XML, base64-encoded
-
-
-		timezoneBase64 = g_base64_encode ( (const guchar *) (&timezoneStruct), sizeof (EasTimeZone));
-		xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*) timezoneBase64);
-		g_free (timezoneBase64);
-	}
+	// Write the timezone into the XML, base64-encoded.
+	timezoneBase64 = g_base64_encode ( (const guchar *) (&timezoneStruct), sizeof (EasTimeZone));
+	xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*) timezoneBase64);
+	g_free (timezoneBase64);
 }
 
 /**
@@ -2655,91 +2627,111 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		icalcomponent* vtimezone = NULL;
 		icaltimezone* icaltz = NULL;
 		icalproperty* tzid = NULL;
+		struct icaltimetype tt;
+		icalproperty* prop = NULL;
+		gboolean forceTimezone = FALSE;
+		xmlNodePtr exceptions = NULL;
+		xmlNodePtr subNode   = NULL;
+		icalcomponent* comp;
+
+		// The code here assumes that there is either no or one VTIMEZONE,
+		// and that if there is one, all time stamps use that zone. This is a slight
+		// oversimplification (iCalendar 2.0 allows multiple different VTIMEZONEs
+		// to be used, and both the Evolution and Google Calendar UI support that).
+		//
+		// TODO: choose one time zone for ActiveSync, properly convert times with other
+		// time zones into it.
 
 		vtimezone = icalcomponent_get_first_component (ical, ICAL_VTIMEZONE_COMPONENT);
-
-		tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
+		if (vtimezone)
+			tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
 
 		if (tzid) {
 			icaltz = icaltimezone_new();
 			icaltimezone_set_component(icaltz, vtimezone);
 		}
 
+		// Use UTC time zone as fallback. May happen for all-day events (which need
+		// no time zone) or events which truly were defined as local time. In the
+		// latter case it would be better to use the system time zone, but we don't
+		// know what that is. Besides, such events are broken by design and shouldn't occur.
+		if (!icaltz)
+			icaltz = icaltimezone_get_utc_timezone();
 
-		// Process the components of the VCALENDAR
-		_ical2eas_process_vtimezone (vtimezone, appData);
-		vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
+		// Process the components of the VCALENDAR.
+		// Don't make assumptions about any particular order, check RECURRENCE-ID
+		// to find exceptions.
+		for (comp = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
+		     comp;
+		     comp = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT)) {
+			if (!icalcomponent_get_first_property (comp, ICAL_RECURRENCEID_PROPERTY)) {
+				vevent = comp;
+				break;
+			}
+		}
+		if (!vevent)
+			// TODO: not really an error, supported individual detached recurrences without
+			// parent (BMC #22831)
+			goto error;
+		prop = icalcomponent_get_first_property (vevent, ICAL_DTSTART_PROPERTY);
+		if (!prop)
+			goto error;
+		tt = icalproperty_get_dtstart (prop);
+
+		// Recurring all-day events with detached recurrences got mangled
+		// by Exchange 2010 (stored without error, but came back without
+		// the exceptions). Sending a dummy UTC time zone definition avoided
+		// the problem (see BMC #22780). We ignore the time zone when receiving all-day
+		// events, so it is safe to send it (conversion back will produce
+		// "nice" all-day event without time zone again, other peers should
+		// deal with it okay, too - verified with Exchange/OWA).
+		if (tt.is_date)
+			forceTimezone = TRUE;
+		_ical2eas_process_vtimezone (vtimezone, forceTimezone, appData);
 		_ical2eas_process_vevent (vevent, appData, icaltz, FALSE);
 
-		exceptionvevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT);
-		if (exceptionvevent) {
-			xmlNodePtr exceptions = NULL;
-			xmlNodePtr subNode   = NULL;
-			// check if <Exceptions> node Already exists otherwise create a new <Exceptions> Node
-			for (subNode = appData->children; subNode; subNode = subNode->next) {
-
-				if (subNode->type == XML_ELEMENT_NODE && g_strcmp0 ( (gchar*) subNode->name, EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS) == 0) {
-					exceptions = subNode;
-					break;
-				}
+		// Always include <Exceptions> even if empty. Might have helped with removing
+		// existing exceptions in an update (SyncEvolution testLinkedItemsRemoveNormal)
+		// but didn't (BMC #22849).
+		//
+		// check if <Exceptions> node Already exists otherwise create a new <Exceptions> Node
+		// TODO: why should it exist? We haven't created one yet, have we?
+		for (subNode = appData->children; subNode; subNode = subNode->next) {
+			if (subNode->type == XML_ELEMENT_NODE && g_strcmp0 ( (gchar*) subNode->name, EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS) == 0) {
+				exceptions = subNode;
+				break;
 			}
-			if (exceptions == NULL)
-				exceptions = xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
-			//end check
-
-			do {
-				int utc_offset, isDaylight;
-				struct icaltimetype tt;
-				gchar* modified = NULL;
-				const gchar* timestamp = NULL;
-				
-				xmlNodePtr exception = xmlNewTextChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
-				icalproperty* prop = NULL;
-				g_debug ("Processing multiple vevents as exceptions");
-
-				_ical2eas_process_vevent (exceptionvevent, exception, icaltz, TRUE);
-				_ical2eas_process_valarm (icalcomponent_get_first_component (exceptionvevent, ICAL_VALARM_COMPONENT), exception);
-
-				
-
-				//get recurrenceID ( which is a timestamp), convert it to UTC and suffix Z onto it
-				prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
-				if(prop){
-					tt = icaltime_from_string(icalproperty_get_value_as_string (prop));
-					utc_offset = icaltimezone_get_utc_offset (icaltz, &tt, &isDaylight);
-					icaltime_adjust (&tt, 0, 0, 0, -utc_offset);
-					timestamp = icaltime_as_ical_string (tt);
-					if (!g_str_has_suffix (timestamp, "Z")) {
-						if (strlen (timestamp) <= 8) {
-							//need to add midnight timestamp and Z for UTC
-							modified = g_strconcat (timestamp, "T000000", "Z", NULL);
-						} else {
-							//just add Z
-							modified = g_strconcat (timestamp, "Z", NULL);
-						}
-					} else {
-						if (strlen (timestamp) <= 9) {
-							//need to add midnight timestamp before last characters
-							//first remove last character
-							gchar * temp = g_strndup (timestamp, (strlen (timestamp) - 1));
-							//then concatenate timestamp + "Z"
-							modified = g_strconcat (temp, "T000000", "Z", NULL);
-							g_free (temp);
-						} else {
-							modified = g_strdup (timestamp);
-						}
-					}
-					xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) modified);
-					g_free (modified);
-				}else{
-					xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, NULL);
-				}
-
-				exceptionvevent = NULL;
-				exceptionvevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT);
-			} while (exceptionvevent);
 		}
+		if (!exceptions)
+			exceptions = xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, NULL);
 
+
+		for (exceptionvevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
+		     exceptionvevent;
+		     exceptionvevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT)) {
+			// ignore parent
+			if (!icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY))
+				continue;
+
+			gchar* modified = NULL;
+
+			xmlNodePtr exception = xmlNewTextChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+			g_debug ("Processing multiple vevents as exceptions");
+
+			_ical2eas_process_vevent (exceptionvevent, exception, icaltz, TRUE);
+			_ical2eas_process_valarm (icalcomponent_get_first_component (exceptionvevent, ICAL_VALARM_COMPONENT), exception);
+
+			//get recurrenceID ( which is a timestamp), convert it to UTC and suffix Z onto it
+			prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
+			if(prop){
+				tt = icaltime_from_string(icalproperty_get_value_as_string (prop));
+				modified = _ical2eas_convert_icaltime_to_utcstr(tt, icaltz);
+				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) modified);
+				g_free (modified);
+			}else{
+				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, NULL);
+			}
+		}
 
 		_ical2eas_process_valarm (icalcomponent_get_first_component (vevent, ICAL_VALARM_COMPONENT), appData);
 
@@ -2755,6 +2747,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		success = TRUE;
 	}
 
+ error:
 	if (ical) {
 		icalcomponent_free (ical);
 	}
