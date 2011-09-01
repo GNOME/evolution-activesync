@@ -68,7 +68,6 @@ eas_send_to_sync (CamelTransport *transport,
 		  EVO3(GCancellable *cancellable,)
 		  GError **error)
 {
-	EVO2(GCancellable *cancellable = NULL;)
 	gpointer progress_data;
 	CamelService *service;
 	EasEmailHandler *handler;
