@@ -2705,13 +2705,13 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		for (exceptionvevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
 		     exceptionvevent;
 		     exceptionvevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT)) {
+			xmlNodePtr exception;
+
 			// ignore parent
 			if (!icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY))
 				continue;
 
-			gchar* modified = NULL;
-
-			xmlNodePtr exception = xmlNewTextChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+			exception = xmlNewTextChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
 			g_debug ("Processing multiple vevents as exceptions");
 
 			_ical2eas_process_vevent (exceptionvevent, exception, icaltz, TRUE);
@@ -2720,6 +2720,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			//get recurrenceID ( which is a timestamp), convert it to UTC and suffix Z onto it
 			prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
 			if(prop){
+				gchar* modified = NULL;
 				tt = icaltime_from_string(icalproperty_get_value_as_string (prop));
 				modified = _ical2eas_convert_icaltime_to_utcstr(tt, icaltz);
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) modified);
