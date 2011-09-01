@@ -69,7 +69,7 @@ eas-common-client-stub.h: $(common_interface_xml)
 EXTRA_DIST = eas-marshal.list
 BUILT_SOURCES = eas-mail-client-stub.h eas-common-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
+AM_CFLAGS += -g $(WARNING_FLAGS)
 
 libeasmail_la_LIBADD = ../../logger/libeaslogger.la
 

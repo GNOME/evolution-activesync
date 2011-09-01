@@ -30,6 +30,7 @@ eas-mail-stub.h: eas-mail.xml
 eas-test-stub.h: eas-test.xml
 	dbus-binding-tool --prefix=eas_test --mode=glib-server $< > $@
 
+activesyncd_CFLAGS = $(WARNING_FLAGS)
 
 activesyncd_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\

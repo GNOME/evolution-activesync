@@ -1,8 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 lib_LTLIBRARIES = libeasaccount.la
 
-AM_CXXFLAGS = $(INTI_CXXFLAGS)
+AM_CXXFLAGS = $(INTI_CXXFLAGS) $(WARNING_FLAGS)
 
+libeasaccount_la_CFLAGS = $(WARNING_FLAGS)
 
 libeasaccount_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\

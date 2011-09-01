@@ -5,22 +5,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.10 no-define])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AS_COMPILER_FLAGS(WARNING_FLAGS,
-        "-Wall -Wextra
-        -Wno-missing-field-initializers
-        -Wno-sign-compare
-        -Wno-unused-parameter
-        -Werror=pointer-to-int-cast
-        -Wdeclaration-after-statement
-        -Werror-implicit-function-declaration
-        -Wformat-nonliteral -Wformat-security -Winit-self
-        -Wmissing-declarations -Wmissing-include-dirs
-        -Wmissing-noreturn -Wnested-externs -Wpointer-arith
-        -Wundef -Wwrite-strings")
-AC_SUBST(WARNING_FLAGS)
-
-CFLAGS="$CFLAGS $WARNING_FLAGS"
-
 # Checks for libraries.
 
 # find compile flags for the "check" C++ unit testing framework
@@ -32,6 +16,29 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettex
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AM_PROG_CC_C_O
+
+DK_ARG_ENABLE_WARNINGS([WARNING_FLAGS],
+        [-Wall],
+        [-Wall
+         -Wextra
+         -Wno-missing-field-initializers
+         -Wno-sign-compare
+         -Wno-unused-parameter
+         -Werror=pointer-to-int-cast
+         -Wdeclaration-after-statement
+         -Werror-implicit-function-declaration
+         -Wformat-nonliteral
+         -Wformat-security
+         -Winit-self
+         -Wmissing-declarations
+         -Wmissing-include-dirs
+         -Wmissing-noreturn
+         -Wnested-externs
+         -Wpointer-arith
+         -Wundef
+         -Wwrite-strings],
+        [G])
+
 
 #AC_CONFIG_SRCDIR(src/libeasmail.c)
 

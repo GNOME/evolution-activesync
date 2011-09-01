@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libeaslogger.la
 
 #TODO remove unnecessary includes
 libeaslogger_la_CFLAGS =		\
+                $(WARNING_FLAGS) \
 		$(GLIB_CFLAGS)
 
 #TODO remove unnecessary libs	  
@@ -15,7 +16,7 @@ libeaslogger_la_SOURCES =	\
 
 	       
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
+AM_CFLAGS += -g $(WARNING_FLAGS)
 
 MOSTLYCLEANFILES = libeaslogger.la
 MAINTAINERCLEANFILES = Makefile.in

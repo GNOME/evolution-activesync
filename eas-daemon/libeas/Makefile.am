@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libeas.la
 
 AM_CXXFLAGS = $(INTI_CXXFLAGS)
 
+libeas_la_CFLAGS = $(WARNING_FLAGS)
 
 libeas_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\

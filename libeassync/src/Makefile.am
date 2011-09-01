@@ -39,7 +39,7 @@ eas-sync-client-stub.h: $(interface_xml)
 	       
 BUILT_SOURCES = eas-sync-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
+AM_CFLAGS += -g $(WARNING_FLAGS)
 
 # We need libeasmail.la for eas_folder_serialise()
 libeassync_la_LIBADD = \

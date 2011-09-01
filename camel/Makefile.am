@@ -1,6 +1,8 @@
 camel_provider_LTLIBRARIES = libcameleas.la
 camel_provider_DATA = libcameleas.urls
 
+libcameleas_la_CFLAGS = $(WARNING_FLAGS)
+
 libcameleas_la_CPPFLAGS = \
 	$(AM_CPPFLAGS)				\
 	$(CAMEL_CFLAGS)				\

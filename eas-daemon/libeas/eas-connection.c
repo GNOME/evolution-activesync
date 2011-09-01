@@ -291,7 +291,7 @@ eas_connection_dispose (GObject *object)
 		g_object_unref (priv->soup_session);
 		priv->soup_session = NULL;
 
-		if (g_main_is_running (priv->soup_loop)) {
+		if (g_main_loop_is_running (priv->soup_loop)) {
 			g_main_loop_quit (priv->soup_loop);
 		} else {
 			g_main_loop_unref (priv->soup_loop);

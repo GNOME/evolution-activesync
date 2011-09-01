@@ -14,7 +14,7 @@ libeasaccount_test_LDFLAGS =			\
 		$(GCONF)
 		
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall
+AM_CFLAGS += -g $(WARNING_FLAGS)
 
 libeasaccount_test_SOURCES =libeasaccount_test.c
 

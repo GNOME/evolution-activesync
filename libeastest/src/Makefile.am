@@ -33,7 +33,7 @@ eas-test-client-stub.h: $(interface_xml)
 	       
 BUILT_SOURCES = eas-test-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
+AM_CFLAGS += -g $(WARNING_FLAGS)
 
 libeastest_la_LIBADD = \
 	../../logger/libeaslogger.la \
