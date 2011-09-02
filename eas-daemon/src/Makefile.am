@@ -30,7 +30,6 @@ eas-mail-stub.h: eas-mail.xml
 eas-test-stub.h: eas-test.xml
 	dbus-binding-tool --prefix=eas_test --mode=glib-server $< > $@
 
-activesyncd_CFLAGS = $(WARNING_FLAGS)
 
 activesyncd_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
@@ -52,7 +51,7 @@ activesyncd_LDFLAGS =			\
 
 
 AM_CFLAGS = $(INTI_CFLAGS)
-AM_CFLAGS += -g -Wall -DG_DISABLE_DEPRECATED
+AM_CFLAGS += $(WARNING_FLAGS)
 AM_CFLAGS += -DDISABLE_EAS_DAEMON
 
 
