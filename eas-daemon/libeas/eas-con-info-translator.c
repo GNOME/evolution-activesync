@@ -219,6 +219,29 @@ add_attr_value (EVCardAttribute *attr, xmlNodePtr node, const gchar *sought)
 	xmlFree (value);
 }
 
+/** strip time if zero, otherwise convert back to vCard 3.0 date-time */
+static void add_bday_attr_value (EVCardAttribute *attr, xmlNodePtr node)
+{
+	gchar* value = (gchar *) xmlNodeGetContent (node);
+	if (value) {
+		/* inverse operation of set_xml_contact_date():
+		   YYYY-MM-DDT00:00:00.000Z -> YYYY-MM-DD (strip empty time)
+		   YYYY-MM-DDThh:mm:ss.mmmZ -> YYYY-MM-DDThh:mm:ssZ */
+		gchar* tmp = strchr (value, 'T');
+		if (tmp) {
+			if (!strcmp (tmp, "T00:00:00.000Z"))
+				*tmp = 0;
+			else if ((tmp = strchr (value, '.')) != NULL) {
+				*tmp = 'Z';
+				tmp++;
+				*tmp = 0;
+			}
+		}
+		e_vcard_attribute_add_value (attr, value);
+		xmlFree (value);
+	}
+}
+
 static void add_name_attr_values (EVCardAttribute *attr, xmlNodePtr node)
 {
 	add_attr_value (attr, node, EAS_ELEMENT_LASTNAME);
@@ -477,7 +500,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_BDAY);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_BIRTHDAY);
+					add_bday_attr_value (attr, n);
 				}
 
 				//
@@ -894,14 +917,69 @@ set_xml_Note (xmlNodePtr appData, EVCardAttribute *attr)
 static void
 set_xml_contact_date (xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_element)
 {
-	/* vCard/Evolution defines the date as YYYY-MM-DD we need to convert it to
-	 ActiveSync YYYY-MM-DDT00:00:00.000Z */
-	const gchar* date = NULL;
-	gchar* dateZ = NULL;
-	date = attribute_get_nth_value (attr, 0);
-	dateZ = g_strconcat (date, "T00:00:00.000Z", NULL);
-	set_xml_element (appData, (const xmlChar*) eas_element, (const xmlChar*) dateZ);
-	g_free (dateZ);
+	/* vCard/Evolution defines the date as YYYY-MM-DD[Thh:mm:ssZ|Thh:mm:ss[+-]hh:mm]
+	   we need to convert it to ActiveSync YYYY-MM-DDT00:00:00.000Z */
+	const gchar* date = attribute_get_nth_value (attr, 0);
+	gchar *time = strchr (date, 'T');
+	size_t datelen = time ? (time - date) : strlen(date);
+	int seconds = 0;
+	long value;
+	gchar buffer[80];
+
+	/*
+	 * parse optional hh:mm:ssZ|Thh:mm:ss[+-]hh:mm:
+	 * no error handling, garbage in/garbage out,
+	 * time in UTC before midnight not supported
+	 * (=> 20101201T00:00:00-01:00 becomes
+	 *     20101201T00:00:00.000Z instead of
+	 *     decreasing the date)
+	 */
+	if (time) {
+		value = strtol (time + 1, &time, 10);
+		seconds += value * 60 * 60;
+		if (time && *time == ':') {
+			value = strtol (time + 1, &time, 10);
+			seconds += value * 60;
+			if (time && *time == ':') {
+				value = strtol (time + 1, &time, 10);
+				seconds += value;
+				if (time && (*time == '-' || *time == '+')) {
+					/* UTC offset as hour:min */
+					int sign = *time == '-' ? -1 : +1;
+					value = strtol (time + 1, &time, 10);
+					seconds -= sign * value * 60 * 60;
+					if (time && (*time == ':')) {
+						value = strtol (time + 1, &time, 10);
+						seconds -= sign * value * 60;
+					}
+				}
+			}
+		}
+	}
+
+	/* accept both long (YYYY-MM-DD) and short format for date, produce long version */
+	if (datelen > sizeof(buffer) - 40)
+		datelen = sizeof(buffer) - 40;
+	if (datelen == 4 + 2 + 2)
+		sprintf (buffer, "%.4s-%.2s-%2.s",
+			 date,
+			 date + 4,
+			 date + 4 + 2);
+	else {
+		memcpy (buffer, date, datelen);
+		buffer[datelen] = 0;
+	}
+
+	/* now format the time */
+	if (seconds < 0) {
+		/* would have to change the date; instead reset to midnight */
+		seconds = 0;
+	}
+	sprintf (buffer + strlen (buffer), "T%02d:%02d:%02d.000Z",
+		 seconds / (60 * 60) % 24,
+		 seconds / 60 % 60,
+		 seconds % 60);
+	set_xml_element (appData, (const xmlChar*) eas_element, (const xmlChar*)buffer);
 }
 
 gboolean
