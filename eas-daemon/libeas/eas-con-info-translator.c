@@ -456,7 +456,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 
 					e_vcard_add_attribute (vcard, attr);
 					add_attr_value (attr, node->children, EAS_ELEMENT_RADIOPHONENUMBER);
-					e_vcard_attribute_add_param_with_value (attr, param, "CELL");
+					e_vcard_attribute_add_param_with_value (attr, param, "RADIO");
 				} else if (g_strcmp0 (name, EAS_ELEMENT_PAGER) == 0) {
 					EVCardAttributeParam *param = e_vcard_attribute_param_new ("TYPE");
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_TEL);
