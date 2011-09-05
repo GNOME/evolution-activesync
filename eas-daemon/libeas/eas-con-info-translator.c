@@ -97,7 +97,6 @@
 #define EAS_ELEMENT_BIRTHDAY                  "Birthday"
 #define EAS_ELEMENT_URL                       "WebPage"
 #define EAS_ELEMENT_NICKNAME                  "Alias"
-#define EAS_ELEMENT_ORG                       "CompanyName"
 #define EAS_ELEMENT_PAGER                     "PagerNumber"
 #define EAS_ELEMENT_ROLE                      "JobTitle"
 #define EAS_ELEMENT_PHOTO                     "Picture" 	/* VCard name: "PHOTO" */
@@ -280,6 +279,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 		gboolean workAddrElements = FALSE;
 		gboolean otherAddrElements = FALSE;
 		gboolean titleElements = FALSE;
+		gboolean orgElements = FALSE;
 
 	g_debug ("eas_con_info_translator_parse_response ++");
 
@@ -503,11 +503,17 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				//
 				// Org
 				//
-				else if (g_strcmp0 (name, EAS_ELEMENT_ORG) == 0) {
+				else if ( ( g_strcmp0 (name, EAS_ELEMENT_COMPANYNAME) == 0 ||
+					    g_strcmp0 (name, EAS_ELEMENT_DEPARTMENT) == 0 ||
+					    g_strcmp0 (name, EAS_ELEMENT_OFFICELOCATION) == 0 )
+					  && !orgElements) {
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_ORG);
 
 					e_vcard_add_attribute (vcard, attr);
-					add_attr_value (attr, node->children, EAS_ELEMENT_ORG);
+					add_attr_value (attr, node->children, EAS_ELEMENT_COMPANYNAME);
+					add_attr_value (attr, node->children, EAS_ELEMENT_DEPARTMENT);
+					add_attr_value (attr, node->children, EAS_ELEMENT_OFFICELOCATION);
+					orgElements = TRUE;
 				}
 
 				//
