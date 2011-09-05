@@ -634,19 +634,88 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 	return result;
 }
 
+/** known TYPE values */
+enum Type {
+	OTHER,
+	HOME,
+	WORK,
+	CAR,
+	RADIO,
+	CELL,
+	VOICE,
+	FAX,
+	PAGER,
+};
 
-/* ------------------------------------------------------ */
-/* Functionality to deal with Contacts request translator */
-/* -------------------------------------------------------*/
-static const char *
-property_get_nth_value (EVCardAttributeParam *param, int nth)
+static int
+string_to_type (const gchar *type)
 {
-	const char *ret = NULL;
-	GList *values = e_vcard_attribute_param_get_values (param);
-	if (!values)
-		return NULL;
-	ret = g_list_nth_data (values, nth);
-	/*g_list_free(values);*/
+	static struct map {
+		const gchar *name;
+		enum Type type;
+	} map[] = {
+#define entry(_x) { #_x, _x }
+		entry(OTHER),
+		entry(HOME),
+		entry(WORK),
+		entry(CAR),
+		entry(RADIO),
+		entry(CELL),
+		entry(VOICE),
+		entry(FAX),
+		entry(PAGER),
+#undef entry
+		{ NULL }
+	},
+		  * entry;
+
+	for (entry = map; type && entry->name; entry++) {
+		if (!g_ascii_strcasecmp (type, entry->name))
+			return 1 << entry->type;
+	}
+	return 0;
+}
+
+enum TypeMask {
+#define entry(_x) _x ## _MASK = (1 << _x)
+	entry(OTHER),
+	entry(HOME),
+	entry(WORK),
+	entry(CAR),
+	entry(RADIO),
+	entry(CELL),
+	entry(VOICE),
+	entry(FAX),
+	entry(PAGER)
+#undef entry
+};
+
+/** gather bit map of types, regardless whether short form (TEL;WORK;VOICE)
+    or long form (TEL;TYPE=WORK,VOICE) is used */
+static int
+attribute_get_type (EVCardAttribute *attr)
+{
+	int ret = 0;
+	GList *params = e_vcard_attribute_get_params (attr);
+	GList *p;
+	int match;
+
+	for (p = params; p; p = p->next) {
+		EVCardAttributeParam *param = p->data;
+		const gchar *name = e_vcard_attribute_param_get_name (param);
+		if (name && !g_ascii_strcasecmp (name, "TYPE")) {
+			GList *values = e_vcard_attribute_param_get_values (param);
+			GList *v;
+			for (v = values; v; v = v->next) {
+				const gchar *value = v->data;
+				match = string_to_type (value);
+				ret |= match;
+			}
+		} else {
+			match = string_to_type (name);
+			ret |= match;
+		}
+	}
 	return ret;
 }
 
@@ -720,6 +789,9 @@ set_xml_address2 (xmlNodePtr appData, EVCardAttribute *attr, const xmlChar* add0
 		  const xmlChar* add1, const xmlChar* add2, const xmlChar* add3,
 		  const xmlChar* add4, const xmlChar* add5, const xmlChar* add6)
 {
+	/* cannot add already existing type of address again */
+	if (is_element_set (appData, (const gchar *)add2))
+		return;
 
 #if 0
 	/ * AS does not support PostalBox * /
@@ -744,7 +816,7 @@ set_xml_address2 (xmlNodePtr appData, EVCardAttribute *attr, const xmlChar* add0
 }
 
 static void
-set_xml_address (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
+set_xml_address (xmlNodePtr appData, EVCardAttribute *attr)
 {
 
 	/*
@@ -762,19 +834,10 @@ set_xml_address (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam
 		postal code;
 		country name.
 	*/
-	const char *propname = NULL;
-	propname = property_get_nth_value (param, 0);
+	int type = attribute_get_type (attr);
 
-	if (!strcmp (propname, "WORK")) {
-		set_xml_address2 (appData, attr,
-				  (const xmlChar*) "PostalBox",
-				  (const xmlChar*) "ExtendedAddress",
-				  (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
-				  (const xmlChar*) EAS_ELEMENT_BUSINESSCITY,
-				  (const xmlChar*) EAS_ELEMENT_BUSINESSSTATE,
-				  (const xmlChar*) EAS_ELEMENT_BUSINESSPOSTALCODE,
-				  (const xmlChar*) EAS_ELEMENT_BUSINESSCOUNTRY);
-	} else if (!strcmp (propname, "HOME")) {
+	/* HOME and OTHER must be set explicitly, WORK is the default */
+	if (type & HOME_MASK) {
 		set_xml_address2 (appData, attr,
 				  (const xmlChar*) "PostalBox",
 				  (const xmlChar*) "ExtendedAddress",
@@ -783,7 +846,7 @@ set_xml_address (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam
 				  (const xmlChar*) EAS_ELEMENT_HOMESTATE,
 				  (const xmlChar*) EAS_ELEMENT_HOMEPOSTALCODE,
 				  (const xmlChar*) EAS_ELEMENT_HOMECOUNTRY);
-	} else {
+	} else if (type & OTHER_MASK) {
 		/* deal with possible other vCard type of addresses:
 		 "dom", "intl", "postal", "parcel", "pref" / iana-type / x-name */
 		set_xml_address2 (appData, attr,
@@ -794,20 +857,57 @@ set_xml_address (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam
 				  (const xmlChar*) EAS_ELEMENT_OTHERSTATE,
 				  (const xmlChar*) EAS_ELEMENT_OTHERPOSTALCODE,
 				  (const xmlChar*) EAS_ELEMENT_OTHERCOUNTRY);
+	} else {
+		set_xml_address2 (appData, attr,
+				  (const xmlChar*) "PostalBox",
+				  (const xmlChar*) "ExtendedAddress",
+				  (const xmlChar*) EAS_ELEMENT_BUSINESSSTREET,
+				  (const xmlChar*) EAS_ELEMENT_BUSINESSCITY,
+				  (const xmlChar*) EAS_ELEMENT_BUSINESSSTATE,
+				  (const xmlChar*) EAS_ELEMENT_BUSINESSPOSTALCODE,
+				  (const xmlChar*) EAS_ELEMENT_BUSINESSCOUNTRY);
 	}
 }
 
 
 static void
-set_xml_tel (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
+set_xml_tel (xmlNodePtr appData, EVCardAttribute *attr)
 {
-	const char *propname0 = NULL;
-	const char *propname1 = NULL;
+	int type = attribute_get_type (attr);
 
-	propname0 = property_get_nth_value (param, 0);
-	propname1 = property_get_nth_value (param, 1);
-
-	if (strcmp (propname0, "WORK") == 0 && strcmp (propname1, "VOICE") == 0) {
+	/* check most specific types first, ignore unknown types (PREF, ISDN, MODEM, ...) */
+	if ((type & WORK_MASK) && (type & FAX_MASK)) {
+		if (!is_element_set (appData, EAS_ELEMENT_BUSINESSFAXNUMBER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_BUSINESSFAXNUMBER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if ((type & HOME_MASK) && (type & FAX_MASK)) {
+		if (!is_element_set (appData, EAS_ELEMENT_HOMEFAXNUMBER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_HOMEFAXNUMBER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if (type & CELL_MASK) {
+		if (!is_element_set (appData, EAS_ELEMENT_MOBILEPHONENUMBER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if (type & CAR_MASK) {
+		if (!is_element_set (appData, EAS_ELEMENT_CARPHONENUMBER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if (type & RADIO_MASK) {
+		if (!is_element_set (appData, EAS_ELEMENT_RADIOPHONENUMBER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if (type & PAGER_MASK) {
+		if (!is_element_set (appData, EAS_ELEMENT_PAGER)) {
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_PAGER,
+					 (const xmlChar*) attribute_get_nth_value (attr, 0));
+		}
+	} else if (type & WORK_MASK) {
+		/* VOICE is the default which is used if FAX/CELL/... wasn't set explicitly */
 		if (!is_element_set (appData, EAS_ELEMENT_BUSINESSPHONENUMBER)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_BUSINESSPHONENUMBER,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
@@ -816,12 +916,8 @@ set_xml_tel (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *pa
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_BUSINESS2PHONENUMBER,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 		}
-	} else if (strcmp (propname0, "WORK") == 0 && strcmp (propname1, "FAX") == 0) {
-		if (!is_element_set (appData, EAS_ELEMENT_BUSINESSFAXNUMBER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_BUSINESSFAXNUMBER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
-	} else if (strcmp (propname0, "HOME") == 0 && strcmp (propname1, "VOICE") == 0) {
+	} else {
+		/* VOICE,HOME is the default */
 		if (!is_element_set (appData, EAS_ELEMENT_HOMEPHONENUMBER)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_HOMEPHONENUMBER,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
@@ -829,43 +925,12 @@ set_xml_tel (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *pa
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_HOME2PHONENUMBER,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 		}
-	} else if (strcmp (propname0, "HOME") == 0 && strcmp (propname1, "FAX") == 0) {
-		if (!is_element_set (appData, EAS_ELEMENT_HOMEFAXNUMBER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_HOMEFAXNUMBER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
-	} else if (!strcmp (propname0, "CELL")) {
-		if (!is_element_set (appData, EAS_ELEMENT_MOBILEPHONENUMBER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_MOBILEPHONENUMBER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
-	} else if (!strcmp (propname0, "CAR")) {
-		if (!is_element_set (appData, EAS_ELEMENT_CARPHONENUMBER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_CARPHONENUMBER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
-	} else if (!strcmp (propname0, "RADIO")) {
-		if (!is_element_set (appData, EAS_ELEMENT_RADIOPHONENUMBER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_RADIOPHONENUMBER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
-	} else if (!strcmp (propname0, "PAGER")) {
-		if (!is_element_set (appData, EAS_ELEMENT_PAGER)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_PAGER,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
-		}
 	}
-
-	else
-		g_debug ("Tel Type not supported by ActiveSync: %s", propname0);
-
 }
 
 static void
-set_xml_email (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *param)
+set_xml_email (xmlNodePtr appData, EVCardAttribute *attr)
 {
-	const char *propname0 = NULL;
-	propname0 = property_get_nth_value (param, 0);
 	if (!is_element_set (appData, EAS_ELEMENT_EMAIL1ADDRESS)) {
 		set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_EMAIL1ADDRESS,
 				 (const xmlChar*) attribute_get_nth_value (attr, 0));
@@ -876,7 +941,7 @@ set_xml_email (xmlNodePtr appData, EVCardAttribute *attr, EVCardAttributeParam *
 		set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_EMAIL3ADDRESS,
 				 (const xmlChar*) attribute_get_nth_value (attr, 0));
 	} else
-		g_debug ("Email type not Supported by ActiveSync: %s", propname0);
+		g_debug ("all three emails already set, dropping remaining one(s)");
 
 }
 
@@ -989,7 +1054,6 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 {
 	gboolean success = FALSE;
 	EVCard* vcard = NULL;
-	GList *p = NULL;
 	GList *a = NULL;
 	GList *attributes = NULL;
 
@@ -1011,7 +1075,6 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 
 	for (a = attributes; a; a = a->next) {
 		const char *name = NULL;
-		GList *params = NULL;
 		EVCardAttribute *attr = a->data;
 		success = TRUE;
 		name = e_vcard_attribute_get_name (attr);
@@ -1024,7 +1087,6 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 		if (!strcmp (name, EVC_VERSION))
 			continue;
 
-		params = e_vcard_attribute_get_params (attr);
 
 		/* process attributes that have no param */
 
@@ -1140,28 +1202,22 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 			continue;
 		}
 
-		/* process attributes that have param */
-		for (p = params; p; p = p->next) {
-			EVCardAttributeParam *param = p->data;
-			/* Address */
-			if (!strcmp (name, EVC_ADR)) {
-				set_xml_address (appData, attr, param);
-				continue;
-			}
+		/* EMail */
+		if (!strcmp (name, EVC_EMAIL)) {
+			set_xml_email (appData, attr);
+			continue;
+		}
 
+		/* Telephone */
+		if (!strcmp (name, EVC_TEL)) {
+			set_xml_tel (appData, attr);
+			continue;
+		}
 
-			/* Telephone */
-			if (!strcmp (name, EVC_TEL)) {
-				set_xml_tel (appData, attr, param);
-				continue;
-			}
-
-			/* EMail */
-			if (!strcmp (name, EVC_EMAIL)) {
-				set_xml_email (appData, attr, param);
-				continue;
-			}
-
+		if (!strcmp (name, EVC_ADR)) {
+			set_xml_address (appData, attr);
+			continue;
+		}
 
 #if 0
 			/* ActiveSync does not support the following vCard fields: */
@@ -1216,10 +1272,6 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 				continue;
 			}
 #endif
-
-		}
-
-
 	}
 
 
