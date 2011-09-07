@@ -1026,7 +1026,7 @@ set_xml_contact_date (xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_elem
 	if (datelen > sizeof(buffer) - 40)
 		datelen = sizeof(buffer) - 40;
 	if (datelen == 4 + 2 + 2)
-		sprintf (buffer, "%.4s-%.2s-%2.s",
+		sprintf (buffer, "%.4s-%.2s-%.2s",
 			 date,
 			 date + 4,
 			 date + 4 + 2);
