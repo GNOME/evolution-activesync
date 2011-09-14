@@ -54,7 +54,7 @@
 #include "eas-ping-msg.h"
 #include "eas-email-info-translator.h"
 #include "eas-connection-errors.h"
-#include "../../libeasmail/src/eas-folder.h"
+#include <eas-folder.h>
 
 struct _EasPingMsgPrivate {
 	GSList* updated_folders;

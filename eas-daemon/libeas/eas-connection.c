@@ -89,7 +89,7 @@
 #endif
 
 /* For the number of connections */
-#define EAS_CONNECTION_MAX_REQUESTS 10
+#define EAS_CONNECTION_MAX_REQUESTS 1
 
 #define QUEUE_LOCK(x) (g_static_rec_mutex_lock(&(x)->priv->queue_lock))
 #define QUEUE_UNLOCK(x) (g_static_rec_mutex_unlock(&(x)->priv->queue_lock))

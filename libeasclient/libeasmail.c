@@ -31,14 +31,14 @@
 #include <libxml/xmlsave.h>
 #include <libedataserver/e-flag.h>
 
-#include "../../eas-daemon/src/activesyncd-common-defs.h"
+#include "../eas-daemon/src/activesyncd-common-defs.h"
+#include "libeassync.h"
 #include "libeasmail.h"
 #include "eas-mail-client-stub.h"
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
-#include "../../logger/eas-logger.h"
+#include "eas-logger.h"
 #include "eas-marshal.h"
-#include "../../eas-daemon/libeas/eas-request-base.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 

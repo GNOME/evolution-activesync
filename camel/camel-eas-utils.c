@@ -35,7 +35,7 @@
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
 
-#include "../libeasmail/src/eas-folder.h"
+#include <eas-folder.h>
 #include "camel-eas-utils.h"
 #include "camel-eas-compat.h"
 

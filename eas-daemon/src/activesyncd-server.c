@@ -66,7 +66,7 @@
 #include "eas-mail.h"
 #include "eas-test.h"
 
-#include "../../logger/eas-logger.h"
+#include <eas-logger.h>
 
 #ifdef DISABLE_EAS_DAEMON
 #define dbg(fmtstr, args...) (g_debug(":%s: " fmtstr "", __func__, ##args))

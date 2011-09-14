@@ -9,9 +9,9 @@ if ENABLE_QT_CONFIG_TOOL
   QTCONFIG_DIR = QtActivesyncdConfig
 endif
 
-SUBDIRS = . logger libeasaccount/src libeasmail/src libeassync/src libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(MEEGO_DIR) $(QTCONFIG_DIR) po
+SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 EXTRA_DIST = autogen.sh
 
 pkgconfigdir = ${libdir}/pkgconfig
-pkgconfig_DATA = libeasaccount.pc libeassync.pc libeasmail.pc
+pkgconfig_DATA = libeasaccount.pc libeasclient.pc

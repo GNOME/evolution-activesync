@@ -36,7 +36,7 @@ AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g $(WARNING_FLAGS)
 
 libeastest_la_LIBADD = \
-	../../logger/libeaslogger.la \
+	../../libeasclient/libeasclient.la \
 	$(top_builddir)/eas-daemon/libeas/libeas.la
 
 # Correctly clean the generated headers, but keep the xml description

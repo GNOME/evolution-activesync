@@ -11,7 +11,7 @@
 // User includes
 #include "../libeasaccount/src/eas-account.h"
 #include "../libeasaccount/src/eas-account-list.h"
-#include "../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 
 
 namespace Ui {

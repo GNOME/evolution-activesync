@@ -55,7 +55,7 @@
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
 
-#include "../../libeassync/src/eas-item-info.h"
+#include <eas-item-info.h>
 
 /**
  * Parse a calendar sync response message

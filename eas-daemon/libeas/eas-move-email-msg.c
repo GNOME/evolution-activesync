@@ -52,7 +52,7 @@
 
 #include "eas-connection-errors.h"
 #include "eas-move-email-msg.h"
-#include "../../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 
 #include <wbxml/wbxml.h>
 #include <glib.h>

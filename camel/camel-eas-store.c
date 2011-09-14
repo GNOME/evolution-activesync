@@ -39,8 +39,8 @@
 
 #include <libedataserver/e-flag.h>
 
-#include "../libeasmail/src/eas-folder.h"
-#include "../libeasmail/src/libeasmail.h"
+#include <eas-folder.h>
+#include <libeasmail.h>
 #include "camel-eas-compat.h"
 #include "camel-eas-folder.h"
 #include "camel-eas-store.h"

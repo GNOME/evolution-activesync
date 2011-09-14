@@ -55,7 +55,7 @@
 
 #include <glib-object.h>
 #include <libxml/xmlreader.h>
-#include "../../libeasmail/src/eas-email-info.h"
+#include <eas-email-info.h>
 
 G_BEGIN_DECLS
 

@@ -55,9 +55,9 @@
 
 #include <time.h>
 #include "eas-email-info-translator.h"
-#include "../../libeasmail/src/eas-folder.h"
-#include "../../libeasmail/src/eas-attachment.h"
-#include "../../libeasmail/src/eas-email-info.h"
+#include <eas-folder.h>
+#include <eas-attachment.h>
+#include <eas-email-info.h>
 #include <libxml/tree.h>
 #include <string.h>
 #include <ctype.h>

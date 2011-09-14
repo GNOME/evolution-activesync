@@ -27,7 +27,7 @@
 #define CAMEL_EAS_STORE_H
 
 #include <camel/camel.h>
-#include "../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 #include "camel-eas-store-summary.h"
 
 /* Standard GObject macros */

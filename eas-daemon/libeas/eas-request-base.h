@@ -61,7 +61,7 @@
 #include <string.h>
 #include "../src/eas-interface-base.h"
 #include "../src/eas-mail.h"
-#include "../../libeassync/src/libeassync.h"
+#include <libeassync.h>
 
 G_BEGIN_DECLS
 

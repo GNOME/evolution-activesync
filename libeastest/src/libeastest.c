@@ -5,7 +5,7 @@
 
 #include "libeastest.h"
 #include "../../eas-daemon/src/activesyncd-common-defs.h"
-#include "../../logger/eas-logger.h"
+#include "../../libeasclient/eas-logger.h"
 
 #define EAS_TEST_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_TEST_HANDLER, EasTestHandlerPrivate))
 

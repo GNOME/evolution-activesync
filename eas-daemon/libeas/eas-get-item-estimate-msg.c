@@ -52,7 +52,7 @@
 
 #include "eas-connection-errors.h"
 #include "eas-get-item-estimate-msg.h"
-#include "../../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 
 #include <wbxml/wbxml.h>
 #include <glib.h>

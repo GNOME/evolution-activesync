@@ -14,8 +14,9 @@ libcameleas_la_CPPFLAGS = \
 	$(LIBEBACKEND_CFLAGS)			\
 	$(E_DATA_SERVER_CFLAGS)			\
 	$(DBUS_GLIB_CFLAGS)			\
-	-DG_LOG_DOMAIN=\"camel-eas-provider\"\
-	-I$(top_srcdir)/camel
+	-DG_LOG_DOMAIN=\"camel-eas-provider\"	\
+	-I$(top_srcdir)/camel			\
+	-I$(top_srcdir)/libeasclient
 
 libcameleas_la_SOURCES = 			\
 	camel-eas-folder.c                	\
@@ -39,7 +40,7 @@ noinst_HEADERS =         			\
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 
 libcameleas_la_LIBADD =					\
-	$(top_builddir)/libeasmail/src/libeasmail.la	\
+	$(top_builddir)/libeasclient/libeasclient.la	\
 	$(CAMEL_LIBS)                                   \
 	$(EVOLUTION_PLUGIN_LIBS)			\
 	$(LIBEDATASERVER_LIBS)				\

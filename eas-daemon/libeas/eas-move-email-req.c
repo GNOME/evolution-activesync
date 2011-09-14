@@ -52,7 +52,7 @@
 
 #include <stdio.h>
 
-#include "../../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 #include "eas-move-email-req.h"
 #include "eas-move-email-msg.h"
 

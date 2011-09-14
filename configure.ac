@@ -103,19 +103,16 @@ AC_CONFIG_FILES([
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
     libeastest/src/Makefile
-    libeasmail/src/Makefile
-    libeassync/src/Makefile
+    libeasclient/Makefile
     libeasaccount/src/Makefile
     libeasaccount/tests/Makefile
     check_tests/Makefile
-    logger/Makefile
     camel/Makefile
     meego/Makefile
     QtActivesyncdConfig/Makefile
     po/Makefile.in
     libeasaccount.pc
-    libeasmail.pc
-    libeassync.pc
+    libeasclient.pc
     ])
 
 AC_CONFIG_COMMANDS_POST([test "$have_mlite" = "yes" && pushd ${srcdir}/${MEEGO_UI_DIR} && qmake && popd])

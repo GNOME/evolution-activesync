@@ -56,7 +56,7 @@
 #include "eas-update-item-req.h"
 #include "eas-add-item-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
-#include "../../libeassync/src/eas-item-info.h"
+#include <eas-item-info.h>
 #include "eas-get-email-body-req.h"
 
 #include "../libeas/eas-connection.h"

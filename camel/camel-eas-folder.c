@@ -39,7 +39,7 @@
 
 #include <dbus/dbus-glib.h>
 
-#include "../libeasmail/src/libeasmail.h"
+#include <libeasmail.h>
 #include "camel-eas-compat.h"
 #include "camel-eas-folder.h"
 #include "camel-eas-private.h"

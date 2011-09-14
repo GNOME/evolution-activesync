@@ -39,7 +39,7 @@ activesyncd_CPPFLAGS =			\
 		$(SOUP_CFLAGS)		\
 		-DG_LOG_DOMAIN=\"activesyncd\" \
 		-I$(top_srcdir)/eas-daemon/libeas \
-		-I$(top_srcdir)/libeasmail/src
+		-I$(top_srcdir)/libeasclient
 
 
 activesyncd_LDFLAGS =			\
@@ -69,13 +69,9 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-marshal.c \
 		      eas-interface-base.h \
 		      eas-interface-base.c		      
-		      
 
 activesyncd_LDADD = \
-    ../../logger/libeaslogger.la \
     ../libeas/libeas.la \
-    ../../libeasmail/src/libeasmail.la \
-    ../../libeassync/src/libeassync.la \
     ../../libeastest/src/libeastest.la \
     $(INTI_LIBS)
 

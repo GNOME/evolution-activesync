@@ -20,7 +20,7 @@
 #include <libedataserver/e-account.h>
 #include <libedataserver/e-account-list.h>
 // User includes
-#include "../libeasmail/src/eas-provision-list.h"
+#include <eas-provision-list.h>
 
 
 const QString DEBUG_FULL_NAME = "Andy Gould";

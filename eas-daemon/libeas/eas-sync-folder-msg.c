@@ -52,7 +52,7 @@
 
 #include "eas-connection-errors.h"
 #include "eas-sync-folder-msg.h"
-#include "../../libeasmail/src/eas-folder.h"
+#include <eas-folder.h>
 #include "../../libeasaccount/src/eas-account-list.h"
 
 struct _EasSyncFolderMsgPrivate {

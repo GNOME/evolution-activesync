@@ -7,9 +7,9 @@ datadir=@datadir@
 
 privincludedir=@privincludedir@
 
-Name: libeassync
+Name: libeasclient
 Description: Client library for accessing ActiveSync dæmon via D-Bus
 Version: @VERSION@
-Requires.private: glib-2.0
-Libs: -L${libdir} -leassync
-Cflags: -I${privincludedir}/eas-sync
+Requires.private: glib-2.0 libxml-2.0
+Libs: -L${libdir} -leasclient
+Cflags: -I${privincludedir}

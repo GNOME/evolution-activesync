@@ -27,7 +27,7 @@
 #define CAMEL_EAS_STORE_SUMMARY_H
 
 #include <camel/camel.h>
-#include "../libeasmail/src/eas-folder.h"
+#include <eas-folder.h>
 
 /* Standard GObject macros */
 #define CAMEL_TYPE_EAS_STORE_SUMMARY \

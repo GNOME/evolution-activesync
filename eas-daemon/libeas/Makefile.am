@@ -17,7 +17,7 @@ libeas_la_CPPFLAGS =			\
 		$(LIBEBOOK_CFLAGS)	\
 		$(GNOMEKEYRING_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeas\" \
-		-I$(top_srcdir)/libeasmail/src/ \
+		-I$(top_srcdir)/libeasclient \
 		-DASKPASS=\"@ASKPASS@\"
 
 libeas_la_LDFLAGS =			\
@@ -35,7 +35,7 @@ libeas_la_LDFLAGS =			\
 
 # We need libeassync for eas_item_info_serialise()
 libeas_la_LIBADD = ../../libeasaccount/src/libeasaccount.la \
-		   ../../libeassync/src/libeassync.la
+		   ../../libeasclient/libeasclient.la
 
 
 libeas_la_SOURCES =		\
