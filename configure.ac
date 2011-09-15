@@ -66,6 +66,18 @@ PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
+PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin)
+AC_SUBST(EVOLUTION_PLUGIN_CFLAGS)
+AC_SUBST(EVOLUTION_PLUGIN_LIBS)
+
+PKG_CHECK_MODULES(EVOLUTION_MAIL, evolution-mail)
+AC_SUBST(EVOLUTION_MAIL_CFLAGS)
+AC_SUBST(EVOLUTION_MAIL_LIBS)
+
+PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell)
+AC_SUBST(EVOLUTION_SHELL_CFLAGS)
+AC_SUBST(EVOLUTION_SHELL_LIBS)
+
 # Check for the MeeGo "mlite" library.  If it exists, enable the MeeGo
 # ActiveSync UI.
 PKG_CHECK_MODULES([MLITE],
@@ -80,6 +92,15 @@ AC_SUBST(dbus_servicesdir)
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
+
+plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin`"
+AC_SUBST(plugindir)
+
+EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin`"
+AC_SUBST(EVOLUTION_PLUGIN_errordir)
+
+EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell`"
+AC_SUBST(EVOLUTION_imagesdir)
 
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
@@ -102,6 +123,7 @@ AC_CONFIG_FILES([
     eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
+    eplugin/Makefile
     libeastest/src/Makefile
     libeasclient/Makefile
     libeasaccount/src/Makefile
