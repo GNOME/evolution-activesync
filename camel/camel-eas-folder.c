@@ -596,6 +596,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	GSList *items_created = NULL, *items_updated = NULL, *items_deleted = NULL;
 	gboolean resynced = FALSE;
 	struct sync_progress_data progress_data;
+	GError *local_error = NULL;
         EVO2(GCancellable *cancellable = NULL);
 
         eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
@@ -625,6 +626,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	progress_data.estimate = 0;
 	progress_data.fetched = 0;
 
+ resync:
 	if (!strcmp (sync_state, "0")) {
 		gchar *new_sync_key = NULL;
 		res = eas_mail_handler_sync_folder_email (handler, sync_state, 0, priv->server_id,
@@ -640,9 +642,32 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		g_free (new_sync_key);
 	}
 	res = eas_mail_handler_get_item_estimate (handler, sync_state, priv->server_id,
-						  &progress_data.estimate, error);
-	if (!res)
+						  &progress_data.estimate, &local_error);
+	/* We use strcasecmp() instead of dbus_g_error_has_name() because
+	   the error names will probably become CamelCase when we manage
+	   to auto-generate the list on the server side. */
+	if (!res && !resynced && local_error->domain == DBUS_GERROR &&
+	    local_error->code == DBUS_GERROR_REMOTE_EXCEPTION &&
+	    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
+				"org.meego.activesyncd.GetItemEstimateError.INVALIDSYNCKEY")) {
+		/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
+		   wipe the folder and start again */
+		g_warning ("Invalid SyncKey!!!");
+		camel_eas_utils_clear_folder (eas_folder);
+		strcpy (sync_state, "0");
+
+		/* Make it go round again. But only once; we don't want to
+		   loop for ever if the server really hates us */
+		resynced = TRUE;
+		more_available = TRUE;
+
+		g_clear_error (&local_error);
+		goto resync;
+	}
+	if (!res) {
+		g_propagate_error (error, local_error);
 		goto out;
+	}
 
 	/* Hopefully the server doesn't lie. It is an *estimate* but estimating
 	   zero when the number is non-zero would be kind of crap. But then again,
@@ -651,7 +676,6 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 		goto out;
 
 	do {
-		GError *local_error = NULL;
 		gchar *new_sync_key = NULL;
 
 		items_created = items_updated = items_deleted = NULL;
@@ -663,39 +687,16 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 							  &items_updated, &items_deleted,
 							  &more_available,
 							  (EasProgressFn)eas_sync_progress, &progress_data,
-							  cancellable, &local_error);
+							  cancellable, error);
 
-		/* We use strcasecmp() instead of dbus_g_error_has_name() because
-		   the error names will probably become CamelCase when we manage
-		   to auto-generate the list on the server side. */
-		if (!res && !resynced && local_error->domain == DBUS_GERROR &&
-		    local_error->code == DBUS_GERROR_REMOTE_EXCEPTION &&
-		    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
-					"org.meego.activesyncd.SyncError.INVALIDSYNCKEY")) {
-			/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
-			   wipe the folder and start again */
-			g_warning ("Invalid SyncKey!!!");
-			camel_eas_utils_clear_folder (eas_folder);
-			strcpy (sync_state, "0");
-
-			/* Make it go round again. But only once; we don't want to
-			   loop for ever if the server really hates us */
-			resynced = TRUE;
-			more_available = TRUE;
-
-			g_clear_error (&local_error);
-			res = TRUE;
-		}
 		if (new_sync_key) {
 			strncpy (sync_state, new_sync_key, 64);
 			g_free (new_sync_key);
 		}
 		g_mutex_unlock (priv->server_lock);
 
-		if (!res) {
-			g_propagate_error (error, local_error);
+		if (!res)
 			break;
-		}
 
 		if (items_deleted)
 			progress_data.fetched += camel_eas_utils_sync_deleted_items (eas_folder, items_deleted);
