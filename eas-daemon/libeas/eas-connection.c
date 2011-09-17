@@ -1979,6 +1979,50 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 	}
 }
 
+WB_UTINY *sanitize_utf8(WB_UTINY *in)
+{
+	int i;
+	char *out = strdup((char *)in);
+
+	/* Validate and convert any invalid bytes to the replacement
+	   character U+FFFD �. */
+	for (i=0; out[i]; i++) {
+		int nr_more;
+		int j;
+
+		if (!(out[i] & 0x80))
+			continue;
+		if ((out[i] & 0xc0) == 0x80)
+			goto invalid;
+		if ((out[i] & 0xe0) == 0xc0)
+			nr_more = 1;
+		else if ((out[i] & 0xf0) == 0xe0)
+			nr_more = 2;
+		else if ((out[i] & 0xf8) == 0xf0)
+			nr_more = 3;
+		else
+			goto invalid;
+
+		for (j = 0; j < nr_more; j++)
+			if ((out[i+j+1] & 0xc0) != 0x80)
+				goto invalid;
+		i += nr_more;
+		continue;
+
+	invalid:
+		printf("byte %x is invalid\n", (unsigned char)out[i]);
+		out = g_realloc(out, strlen(out) + 3);
+		printf("move out[%d]=%02x to out[%d]=%02x\n",
+		       i, out[i], i+3, out[i+3]);
+		memmove (out + i + 3, out + i + 1, strlen(out + i));
+		out[i++] = 0xef;
+		out[i++] = 0xbf;
+		out[i] = 0xbd;
+	}
+
+	return (WB_UTINY *)out;
+}
+
 void
 handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 {
@@ -2096,6 +2140,16 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 					 &xml,
 					 &xml_len, &error))
 				goto complete_request;
+
+			/* Exchange has a habit of returning invalid data, and libxml does
+			   strange things if we set XML_PARSE_RECOVER. So process it in
+			   advance and turn any invalid bytes to � characters. This doesn't
+			   break fetches of email which is *correctly* represented in legacy
+			   8-bit charsets, because those are handled as multi-part fetches.
+			   Anything we get here is going to be passed out to dbus in a string
+			   type, and dbus would end up silently calling exit() if we pass it
+			   non-UTF8 anyway */
+			xml = sanitize_utf8 (xml);
 
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
