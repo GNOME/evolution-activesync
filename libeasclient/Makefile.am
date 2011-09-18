@@ -56,9 +56,9 @@ libeasclient_la_SOURCES =		\
 	eas-logger.h
 
 libeasclientincludedir = $(privincludedir)/eas-client
-libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeasmail.h \
- eas-attachment.h eas-folder.h libeasmail.h \
-			    eas-email-info.h eas-mail-errors.h eas-logger.h
+libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h \
+			eas-attachment.h eas-folder.h libeasmail.h \
+			eas-email-info.h eas-mail-errors.h
 
 
 mail_interface_xml =  ../eas-daemon/src/eas-mail.xml
