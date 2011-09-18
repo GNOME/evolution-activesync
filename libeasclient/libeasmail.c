@@ -1134,8 +1134,8 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_fetch_email_body requires valid arguments");
-                ret = FALSE;
-			goto finish;
+			 ret = FALSE;
+			 goto out;
 		}
 	
 	g_assert (self);
@@ -1193,7 +1193,10 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 		g_cancellable_disconnect (cancellable, cancel_handler_id);
 	}	
 
-finish:
+ finish:
+	g_hash_table_remove (priv->email_progress_fns_table,
+			     GUINT_TO_POINTER (request_id));
+ out:
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
@@ -1223,8 +1226,8 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_fetch_email_attachment requires valid arguments");
-                ret = FALSE;
-			goto finish;
+			 ret = FALSE;
+			 goto out;
 		}
 	
 	g_assert (self);
@@ -1259,7 +1262,10 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 				     error,
 				     G_TYPE_INVALID);
 
-finish:
+ finish:
+	g_hash_table_remove (priv->email_progress_fns_table,
+			     GUINT_TO_POINTER (request_id));
+ out:
 	g_debug ("eas_mail_handler_fetch_email_attachments--");
 
 	if (!ret) {
@@ -1590,6 +1596,7 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 	}
 	
 finish:
+	g_hash_table_remove (priv->email_progress_fns_table, GUINT_TO_POINTER (request_id));
 	g_debug ("eas_mail_handler_send_email--");
 
 	if (!ret) {
@@ -1841,7 +1848,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	if (progress_fn) {
 		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
 		if (!ret)
-			goto cleanup;
+			goto finish;
 	}
 
 	// build string array from delete_emails list
@@ -1862,7 +1869,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 				     ("out of memory"));
 			change_emails_array[i] = NULL;
-			goto cleanup;
+			goto finish;
 		}
 		change_emails_array[i] = serialised_email;
 		g_debug ("change_emails_array[%d] = %s", i, change_emails_array[i]);
@@ -1982,7 +1989,10 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		g_free (ret_failed_changes_array);
 	}
 
-cleanup:
+ finish:
+	g_hash_table_remove (priv->email_progress_fns_table,
+			     GUINT_TO_POINTER (request_id));
+ cleanup:
 		// free the change_emails array
 		for (i = 0; i < change_list_length && change_emails_array[i]; i++) {
 			g_free (change_emails_array[i]);
