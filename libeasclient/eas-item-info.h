@@ -42,16 +42,16 @@ typedef struct _EasItemInfoClass EasItemInfoClass;
 typedef struct _EasItemInfo EasItemInfo;
 
 struct _EasItemInfoClass {
-        GObjectClass parent_class;
+	GObjectClass parent_class;
 };
 
 struct _EasItemInfo {
-        GObject parent_instance;
+	GObject parent_instance;
 
-        gchar* client_id;	   // from Local app - needed for add operations
-        gchar*  server_id;		// from AS server
-        gchar*  data;		// The iCalendar (RFC 5545) formatted payload
-        gchar* status;
+	gchar* client_id;	   // from Local app - needed for add operations
+	gchar*  server_id;		// from AS server
+	gchar*  data;		// The iCalendar (RFC 5545) formatted payload
+	gchar* status;
 };
 
 GType eas_item_info_get_type (void) G_GNUC_CONST;

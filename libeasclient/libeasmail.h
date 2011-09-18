@@ -66,7 +66,7 @@ typedef void (*EasProgressFn) (gpointer object, gint percent);
 /*
  Free the memory for a EasIdUpdate
 */
-void eas_updatedid_free(EasIdUpdate* updated_id);
+void eas_updatedid_free (EasIdUpdate* updated_id);
 
 /*
 take the contents of the structure and turn it into a null terminated string
@@ -85,22 +85,22 @@ EasEmailHandler *eas_mail_handler_new (const gchar* account_uid, GError **error)
 
 /* function name:               eas_mail_handler_get_item_estimate
  * function description:        estimates the number of emails to be synchronised for the specified folder
- *                              
+ *
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in):  		value returned from the previous sync/update/delete request for this folder
- * const gchar *folder_id (in): 
+ * const gchar *folder_id (in):
  * guint *estimate (out): 		returns the estimated number of items to be synchronised for the specified folder
 
  * GError **error (out):        returns error information if an error occurs.  If no
- *                              error occurs this will unchanged.  
+ *                              error occurs this will unchanged.
 */
 gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
-						 const gchar *sync_key,
-                         const gchar *folder_id,
-						 guint *estimate,
-						 GError **error); 
+					     const gchar *sync_key,
+					     const gchar *folder_id,
+					     guint *estimate,
+					     GError **error);
 
 /* function name:               eas_mail_handler_get_folder_list
  * function description:        gets current folder structure of account. Supplies
@@ -160,7 +160,7 @@ gboolean eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 						  GSList **emails_updated,
 						  GSList **emails_deleted,
 						  gboolean *more_available,
-                          GCancellable *cancellable,
+						  GCancellable *cancellable,
 						  GError **error);
 
 
@@ -191,7 +191,7 @@ gboolean eas_mail_handler_fetch_email_body (EasEmailHandler *self,
 					    const gchar *mime_directory,
 					    EasProgressFn progress_fn,
 					    gpointer progress_data,
-                        GCancellable *cancellable,
+					    GCancellable *cancellable,
 					    GError **error);
 
 
@@ -242,7 +242,7 @@ gboolean eas_mail_handler_delete_email (EasEmailHandler* self,
 					gchar *sync_key,
 					const gchar *folder_id,
 					const GSList *items_deleted,
-                    GCancellable *cancellable,
+					GCancellable *cancellable,
 					GError **error);
 
 
@@ -260,7 +260,7 @@ Note that the only valid changes are to the read flag and to categories (other c
  * EasEmailHandler* this (in):  use value returned from eas_mail_hander_new()
  * gchar *sync_key (in/out):  	use value returned from the previous sync/update/delete request on this folder
  * gchar *folder_id (in):		id of folder that contains email to update
- * const GSList *update_emails (in/out): identifies the emails to update. List of EasEmailInfos. 
+ * const GSList *update_emails (in/out): identifies the emails to update. List of EasEmailInfos.
  *								The 'status' field for an individual EasEmailInfo may be set to reflect a problem with that email if the update is (otherwise) successful
  * GError **error (out):        returns error information if an error occurs.  If no
  *                              error occurs this will unchanged.  This error information
@@ -301,7 +301,7 @@ gboolean eas_mail_handler_send_email (EasEmailHandler* self,
 				      const gchar *mime_file,
 				      EasProgressFn progress_fn,
 				      gpointer progress_data,
-                      GCancellable *cancellable,     
+				      GCancellable *cancellable,
 				      GError **error);
 
 
@@ -406,7 +406,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
  * const gchar *folder_id (in): 	this value identifies the folder to get the email info from.
  * 									Use the EasFolder->folder_id value in the EasFolder structs
  *                              	returned from the eas_mail_handler_get_folder_list() call.
- * GSList *delete_emails	(in):	list of email's server ids to delete 
+ * GSList *delete_emails	(in):	list of email's server ids to delete
  * GSList *change_emails 	(in/out):	list of emails to update. In the case of an unsuccessful update the status will be set to indicate the problem
  * gchar *sync_key_out	 	(out):	updated sync key
  * GSList **emails_created (out): 	returns a list of EasEmailInfos structs that describe
@@ -429,23 +429,23 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
  *                              	back through underlying layers
 */
 gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* self,
-						  const gchar *sync_key_in,
-                          guint	time_window,
-						  const gchar *folder_id,
-						  GSList *delete_emails,
-						  GSList *change_emails, 
-                          gchar **sync_key_out,
-						  GSList **emails_created,
-						  GSList **emails_changed,
-						  GSList **emails_deleted,
-						  gboolean *more_available,
-						  EasProgressFn progress_fn,
-						  gpointer progress_data,
-                          GCancellable *cancellable,
-						  GError **error); 
+					     const gchar *sync_key_in,
+					     guint	time_window,
+					     const gchar *folder_id,
+					     GSList *delete_emails,
+					     GSList *change_emails,
+					     gchar **sync_key_out,
+					     GSList **emails_created,
+					     GSList **emails_changed,
+					     GSList **emails_deleted,
+					     gboolean *more_available,
+					     EasProgressFn progress_fn,
+					     gpointer progress_data,
+					     GCancellable *cancellable,
+					     GError **error);
 
 /* function name:               eas_mail_handler_get_provision_list
- * function description:        Sends a provisioning request to the server, and 
+ * function description:        Sends a provisioning request to the server, and
  *                              receives 2 tokens a list of provisioning requirements.
  *                              If the list of requirements it accepted, this is indicated
  *                              to the server by calling eas_mail_handler_accept_provision_list
@@ -463,14 +463,14 @@ gboolean eas_mail_handler_sync_folder_email (EasEmailHandler* self,
  */
 gboolean
 eas_mail_handler_get_provision_list (EasEmailHandler *self,
-									 gchar** tid,
-									 gchar** tid_status,
-									 EasProvisionList** provision_list,
-									 GCancellable *cancellable,
-									 GError **error);
+				     gchar** tid,
+				     gchar** tid_status,
+				     EasProvisionList** provision_list,
+				     GCancellable *cancellable,
+				     GError **error);
 
 /* function name:               eas_mail_handlerautodiscover
- * function description:        Sends an autodiscover request to the daemon, and 
+ * function description:        Sends an autodiscover request to the daemon, and
  *                              receives a uri of the server for the account provided.
  * return value:                TRUE if function success, FALSE if error
  * params:
@@ -482,17 +482,17 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
  *                              	error occurs this will unchanged.  This error information
  *                              	could be related to errors in this API or errors propagated
  *                              	back through underlying layers
- */ 
+ */
 gboolean
 eas_mail_handler_autodiscover (EasEmailHandler *self,
-									 const gchar* email,
-									 const gchar* username,
-									 gchar** uri,
-									 GCancellable *cancellable,
-									 GError **error);
+			       const gchar* email,
+			       const gchar* username,
+			       gchar** uri,
+			       GCancellable *cancellable,
+			       GError **error);
 
 /* function name:               eas_mail_handler_accept_provision_list
- * function description:        Sends a provisioning acceptance the server, taking 
+ * function description:        Sends a provisioning acceptance the server, taking
  *                              the 2 tokens retrieved during a previous call to
  *                              eas_mail_handler_get_provision_list.
  *                              A side effect of this function is that the final
@@ -509,10 +509,10 @@ eas_mail_handler_autodiscover (EasEmailHandler *self,
  */
 gboolean
 eas_mail_handler_accept_provision_list (EasEmailHandler *self,
-										const gchar* tid,
-										const gchar* tid_status,
-										GCancellable *cancellable,
-										GError **error);
+					const gchar* tid,
+					const gchar* tid_status,
+					GCancellable *cancellable,
+					GError **error);
 
 
 /*

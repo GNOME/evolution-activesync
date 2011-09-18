@@ -115,7 +115,7 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 	gchar *category = NULL;
 
 	g_debug ("eas_email_info_serialise++");
-	
+
 	// serialise everything:
 	//server_id
 	g_debug ("serialising serverid");
@@ -166,9 +166,9 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 	g_string_append_printf (ser, "%zu\n%ld\n%d\n", self->estimated_size, self->date_received, self->importance);
 
 	// status
-	g_debug("serialising status %s", self->status);
-	g_string_append_printf (ser, "%s", (self->status?:""));
-	
+	g_debug ("serialising status %s", self->status);
+	g_string_append_printf (ser, "%s", (self->status ? : ""));
+
 	if (ret) {
 		*result = ser->str;
 		g_string_free (ser, FALSE);
@@ -317,13 +317,13 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	}
 	self->status = strv[idx++];
 	g_debug ("status = %s", self->status);
-	
+
 	ret = TRUE;
 out:
 	while (strv[idx])
 		g_free (strv[idx++]);
 	g_free (strv[idx]);
-	g_free(strv);
+	g_free (strv);
 
 	if (!ret) {
 		g_warning ("failed!");

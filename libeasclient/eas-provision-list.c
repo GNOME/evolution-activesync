@@ -2,7 +2,7 @@
 /*
  * git
  * Copyright (C)  2011 <>
- * 
+ *
  */
 
 #include "eas-provision-list.h"
@@ -120,7 +120,7 @@ eas_provision_list_class_init (EasProvisionListClass *klass)
 EasProvisionList*
 eas_provision_list_new()
 {
-	EasProvisionList* self = g_object_new(EAS_TYPE_PROVISION_LIST, NULL);
+	EasProvisionList* self = g_object_new (EAS_TYPE_PROVISION_LIST, NULL);
 	return self;
 }
 
@@ -132,78 +132,76 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 	gchar* UnapprovedList = NULL;
 	gchar* ApprovedList = NULL;
 	GSList *iterator = NULL;
-	gchar *empty = (gchar *)"";
+	gchar *empty = (gchar *) "";
 	gchar *strings[STRING_LIST_SIZE] = {
-		list->DevicePasswordEnabled?:empty,
-		list->AlphaNumericDevicePasswordRequired?:empty,
-		list->PasswordRecoveryEnabled?:empty,
-		list->RequireStorageCardEncryption?:empty,
-		list->AttachmentsEnabled?:empty,
-		list->MinDevicePasswordLength?:empty,
-		list->MaxInactivityTimeDeviceLock?:empty,
-		list->MaxDevicePasswordFailedAttempts?:empty,
-		list->MaxAttachmentSize?:empty,
-		list->AllowSimpleDevicePassword?:empty,
-		list->DevicePasswordExpiration?:empty,
-		list->DevicePasswordHistory?:empty,
-		list->AllowStorageCard?:empty,
-		list->AllowCamera?:empty,
-		list->RequireDeviceEncryption?:empty,
-		list->AllowUnsignedApplications?:empty,
-		list->AllowUnsignedInstallationPackages?:empty,
-		list->MinDevicePasswordComplexCharacters?:empty,
-		list->AllowWifi?:empty,
-		list->AllowTextMessaging?:empty,
-		list->AllowPOPIMAPEmail?:empty,
-		list->AllowBluetooth?:empty,
-		list->AllowIrDA?:empty,
-		list->RequireManualSyncWhenRoaming?:empty,
-		list->AllowDesktopSync?:empty,
-		list->MaxCalendarAgeFilter?:empty,
-		list->AllowHTMLEmail?:empty,
-		list->MaxEmailAgeFilter?:empty,
-		list->MaxEmailBodyTruncationSize?:empty,
-		list->MaxEmailHTMLBodyTruncationSize?:empty,
-		list->RequireSignedSMIMEMessages?:empty,
-		list->RequireEncryptedSMIMEMessages?:empty,
-		list->RequireSignedSMIMEAlgorithm?:empty,
-		list->RequireEncryptionSMIMEAlgorithm?:empty,
-		list->AllowSMIMEEncryptionAlgorithmNegotiation?:empty,
-		list->AllowSMIMESoftCerts?:empty,
-		list->AllowBrowser?:empty,
-		list->AllowConsumerEmail?:empty,
-		list->AllowRemoteDesktop?:empty,
-		list->AllowInternetSharing?:empty,
+		list->DevicePasswordEnabled ? : empty,
+		list->AlphaNumericDevicePasswordRequired ? : empty,
+		list->PasswordRecoveryEnabled ? : empty,
+		list->RequireStorageCardEncryption ? : empty,
+		list->AttachmentsEnabled ? : empty,
+		list->MinDevicePasswordLength ? : empty,
+		list->MaxInactivityTimeDeviceLock ? : empty,
+		list->MaxDevicePasswordFailedAttempts ? : empty,
+		list->MaxAttachmentSize ? : empty,
+		list->AllowSimpleDevicePassword ? : empty,
+		list->DevicePasswordExpiration ? : empty,
+		list->DevicePasswordHistory ? : empty,
+		list->AllowStorageCard ? : empty,
+		list->AllowCamera ? : empty,
+		list->RequireDeviceEncryption ? : empty,
+		list->AllowUnsignedApplications ? : empty,
+		list->AllowUnsignedInstallationPackages ? : empty,
+		list->MinDevicePasswordComplexCharacters ? : empty,
+		list->AllowWifi ? : empty,
+		list->AllowTextMessaging ? : empty,
+		list->AllowPOPIMAPEmail ? : empty,
+		list->AllowBluetooth ? : empty,
+		list->AllowIrDA ? : empty,
+		list->RequireManualSyncWhenRoaming ? : empty,
+		list->AllowDesktopSync ? : empty,
+		list->MaxCalendarAgeFilter ? : empty,
+		list->AllowHTMLEmail ? : empty,
+		list->MaxEmailAgeFilter ? : empty,
+		list->MaxEmailBodyTruncationSize ? : empty,
+		list->MaxEmailHTMLBodyTruncationSize ? : empty,
+		list->RequireSignedSMIMEMessages ? : empty,
+		list->RequireEncryptedSMIMEMessages ? : empty,
+		list->RequireSignedSMIMEAlgorithm ? : empty,
+		list->RequireEncryptionSMIMEAlgorithm ? : empty,
+		list->AllowSMIMEEncryptionAlgorithmNegotiation ? : empty,
+		list->AllowSMIMESoftCerts ? : empty,
+		list->AllowBrowser ? : empty,
+		list->AllowConsumerEmail ? : empty,
+		list->AllowRemoteDesktop ? : empty,
+		list->AllowInternetSharing ? : empty,
 		empty,
 		empty,
 		NULL
 	};
-	
-	iterator = g_slist_next(list->UnapprovedInROMApplicationList);
-	while(iterator)
-	{
-		gchar* temp = g_strdup(UnapprovedList);
-		g_free(UnapprovedList);
-		UnapprovedList = g_strconcat(temp, app_separator,(gchar*)iterator->data, NULL );
-		g_free(temp);
-		iterator = g_slist_next(list->UnapprovedInROMApplicationList);
+
+	iterator = g_slist_next (list->UnapprovedInROMApplicationList);
+	while (iterator) {
+		gchar* temp = g_strdup (UnapprovedList);
+		g_free (UnapprovedList);
+		UnapprovedList = g_strconcat (temp, app_separator, (gchar*) iterator->data, NULL);
+		g_free (temp);
+		iterator = g_slist_next (list->UnapprovedInROMApplicationList);
 	}
-	if(UnapprovedList)
+	if (UnapprovedList)
 		strings[STRING_LIST_SIZE - 3] = UnapprovedList;
 
-	
-	iterator = g_slist_next(list->ApprovedApplicationList);
-	while(iterator)
-	{
-		gchar* temp = g_strdup(ApprovedList);
-		g_free(ApprovedList);
-		ApprovedList = g_strconcat(temp, app_separator,(gchar*)iterator->data, NULL );
-		g_free(temp);
-		iterator = g_slist_next(list->ApprovedApplicationList);
+
+	iterator = g_slist_next (list->ApprovedApplicationList);
+	while (iterator) {
+		gchar* temp = g_strdup (ApprovedList);
+		g_free (ApprovedList);
+		ApprovedList = g_strconcat (temp, app_separator, (gchar*) iterator->data, NULL);
+		g_free (temp);
+		iterator = g_slist_next (list->ApprovedApplicationList);
 	}
-	if(ApprovedList)
+	if (ApprovedList)
 		strings[STRING_LIST_SIZE - 3] = ApprovedList;
-	
+
 	*result = g_strjoinv (list_separator, strings);
 
 	if (!*result) {
@@ -211,7 +209,7 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 	}
 
 	return ret;
-	
+
 }
 
 
@@ -223,15 +221,15 @@ eas_provision_list_deserialise (EasProvisionList* list, const gchar *data)
 	gchar **strx;
 
 	gint i = 0;
-	
+
 	gchar* UnapprovedList = NULL;
 	gchar* ApprovedList = NULL;
-	
+
 	g_assert (list);
 	g_assert (data);
 
 	strv = g_strsplit (data, list_separator, 0);
-	if (!strv || g_strv_length (strv) != (STRING_LIST_SIZE-1)) {
+	if (!strv || g_strv_length (strv) != (STRING_LIST_SIZE - 1)) {
 		g_warning ("Received invalid eas_provision_list: '%s', %d", data, g_strv_length (strv));
 		g_strfreev (strv);
 		return FALSE;
@@ -282,13 +280,13 @@ eas_provision_list_deserialise (EasProvisionList* list, const gchar *data)
 	ApprovedList  = strv[i++];
 
 	strx = g_strsplit (UnapprovedList, app_separator, 0);
-	for (i = 0; i < g_strv_length(strx); i++) {
-		list->UnapprovedInROMApplicationList = g_slist_append(list->UnapprovedInROMApplicationList, strx[i]);
+	for (i = 0; i < g_strv_length (strx); i++) {
+		list->UnapprovedInROMApplicationList = g_slist_append (list->UnapprovedInROMApplicationList, strx[i]);
 	}
 
 	strx = g_strsplit (ApprovedList, app_separator, 0);
 	for (i = 0; i < g_strv_length (strx); i++) {
-		list->ApprovedApplicationList = g_slist_append(list->ApprovedApplicationList, strx[i]);
+		list->ApprovedApplicationList = g_slist_append (list->ApprovedApplicationList, strx[i]);
 	}
 
 	/* We don't use g_strfreev() because we actually stole most of the

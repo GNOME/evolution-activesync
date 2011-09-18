@@ -2,7 +2,7 @@
 /*
  * git
  * Copyright (C)  2011 <>
- * 
+ *
  */
 
 #ifndef _EAS_PROVISION_LIST_H_
@@ -22,15 +22,13 @@ G_BEGIN_DECLS
 typedef struct _EasProvisionListClass EasProvisionListClass;
 typedef struct _EasProvisionList EasProvisionList;
 
-struct _EasProvisionListClass
-{
+struct _EasProvisionListClass {
 	GObjectClass parent_class;
 };
 
-struct _EasProvisionList
-{
+struct _EasProvisionList {
 	GObject parent_instance;
-	
+
 	gchar* DevicePasswordEnabled;
 	gchar* AlphaNumericDevicePasswordRequired;
 	gchar* PasswordRecoveryEnabled;

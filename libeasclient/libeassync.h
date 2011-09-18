@@ -60,12 +60,12 @@ typedef struct _EasSyncHandlerPrivate EasSyncHandlerPrivate;
 
 
 struct _EasSyncHandlerClass {
-        GObjectClass parent_class;
+	GObjectClass parent_class;
 };
 
 struct _EasSyncHandler {
-        GObject parent_instance;
-        EasSyncHandlerPrivate *priv;
+	GObject parent_instance;
+	EasSyncHandlerPrivate *priv;
 };
 
 GType eas_sync_handler_get_type (void) G_GNUC_CONST;
@@ -106,15 +106,15 @@ EasSyncHandler *eas_sync_handler_new (const char* account_uid);
  *                              back through underlying layers
 */
 gboolean eas_sync_handler_get_items (EasSyncHandler* self,
-                                     const gchar *sync_key_in,
-                                     gchar **sync_key_out,
-                                     EasItemType type,
-                                     const gchar* folder_id,
-                                     GSList **items_created,
-                                     GSList **items_updated,
-                                     GSList **items_deleted,
-                                     gboolean *more_available,   // if there are more changes to sync (window_size exceeded)
-                                     GError **error);
+				     const gchar *sync_key_in,
+				     gchar **sync_key_out,
+				     EasItemType type,
+				     const gchar* folder_id,
+				     GSList **items_created,
+				     GSList **items_updated,
+				     GSList **items_deleted,
+				     gboolean *more_available,   // if there are more changes to sync (window_size exceeded)
+				     GError **error);
 
 /* function name:               eas_sync_handler_delete_items
  * function description:        delete items in calendar folder
@@ -135,12 +135,12 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
  *                              back through underlying layers
 */
 gboolean eas_sync_handler_delete_items (EasSyncHandler* self,
-                                        const gchar *sync_key_in,
-                                        gchar ** sync_key_out,
-                                        EasItemType type,
-                                        const gchar* folder_id,
-                                        GSList *items_deleted,
-                                        GError **error);
+					const gchar *sync_key_in,
+					gchar ** sync_key_out,
+					EasItemType type,
+					const gchar* folder_id,
+					GSList *items_deleted,
+					GError **error);
 
 /* function name:               eas_sync_handler_update_items
  * function description:        update items in calendar folder
@@ -161,12 +161,12 @@ gboolean eas_sync_handler_delete_items (EasSyncHandler* self,
  *                              back through underlying layers
 */
 gboolean eas_sync_handler_update_items (EasSyncHandler* self,
-                                        const gchar *sync_key_in,
-                                        gchar **sync_key_out,
-                                        EasItemType type,
-                                        const gchar* folder_id,
-                                        GSList *items_updated,
-                                        GError **error);
+					const gchar *sync_key_in,
+					gchar **sync_key_out,
+					EasItemType type,
+					const gchar* folder_id,
+					GSList *items_updated,
+					GError **error);
 
 /* function name:               eas_sync_handler_add_items
  * function description:        add items in calendar folder
@@ -188,12 +188,12 @@ gboolean eas_sync_handler_update_items (EasSyncHandler* self,
  *                              back through underlying layers
 */
 gboolean eas_sync_handler_add_items (EasSyncHandler* self,
-                                     const gchar *sync_key_in,
-                                     gchar **sync_key_out,
-                                     EasItemType type,
-                                     const gchar* folder_id,
-                                     GSList *items_added,
-                                     GError **error);
+				     const gchar *sync_key_in,
+				     gchar **sync_key_out,
+				     EasItemType type,
+				     const gchar* folder_id,
+				     GSList *items_added,
+				     GError **error);
 
 
 /* function name:               eas_sync_handler_fetch_item
@@ -213,11 +213,11 @@ gboolean eas_sync_handler_add_items (EasSyncHandler* self,
 
 gboolean
 eas_sync_handler_fetch_item (EasSyncHandler* self,
-                             const gchar *folder_id,
-                             const gchar *server_id,
-                             EasItemInfo* item,
-                             EasItemType type,
-                             GError **error);
+			     const gchar *folder_id,
+			     const gchar *server_id,
+			     EasItemInfo* item,
+			     EasItemType type,
+			     GError **error);
 
 G_END_DECLS
 
