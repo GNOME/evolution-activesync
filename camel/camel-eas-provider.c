@@ -44,12 +44,6 @@ static gint eas_url_equal (gconstpointer a, gconstpointer b);
 static CamelProviderConfEntry eas_conf_entries[] = {
 	/* override the labels/defaults of the standard settings */
 
-	{ CAMEL_PROVIDER_CONF_SECTION_START, "account", NULL,
-	  N_("Account details") },
-	{ CAMEL_PROVIDER_CONF_ENTRY, "account_uid", NULL,
-	  N_("ActiveSync Account UID") },
-	{ CAMEL_PROVIDER_CONF_SECTION_END },
-
 	{ CAMEL_PROVIDER_CONF_SECTION_START, "mailcheck", NULL,
 	  N_("Checking for new mail") },
 	{ CAMEL_PROVIDER_CONF_CHECKBOX, "check_all", NULL,
@@ -81,7 +75,7 @@ static CamelProvider eas_provider = {
 	CAMEL_PROVIDER_IS_REMOTE | CAMEL_PROVIDER_IS_SOURCE |
 	CAMEL_PROVIDER_IS_STORAGE | CAMEL_PROVIDER_IS_EXTERNAL,
 
-	0, //CAMEL_URL_ALLOW_USER | CAMEL_URL_ALLOW_AUTH | CAMEL_URL_HIDDEN_HOST,
+	CAMEL_URL_HIDDEN_USER | CAMEL_URL_HIDDEN_AUTH | CAMEL_URL_HIDDEN_HOST,
 
 	eas_conf_entries,
 
@@ -104,7 +98,7 @@ camel_provider_module_init(void)
 {
 	eas_provider.url_hash = eas_url_hash;
 	eas_provider.url_equal = eas_url_equal;
-	//	eas_provider.authtypes = g_list_prepend (eas_provider.authtypes, &camel_eas_password_authtype);
+	eas_provider.authtypes = g_list_prepend (eas_provider.authtypes, &camel_eas_password_authtype);
 	eas_provider.translation_domain = GETTEXT_PACKAGE;
 
 	eas_provider.object_types[CAMEL_PROVIDER_STORE] =  camel_eas_store_get_type ();
