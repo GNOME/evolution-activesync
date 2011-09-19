@@ -26,7 +26,8 @@ liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 	$(EVOLUTION_SHELL_CFLAGS) \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LDAP_CFLAGS)		\
-	$(SYNCEVOLUTION_DBUS_CFLAGS)
+	$(SYNCEVOLUTION_DBUS_CFLAGS) \
+	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient
 
 
 liborg_gnome_exchange_activesync_la_SOURCES = 	\
@@ -35,7 +36,7 @@ liborg_gnome_exchange_activesync_la_SOURCES = 	\
 	eas-account-listener.h
 
 liborg_gnome_exchange_activesync_la_LIBADD = \
-	../libeasmail/src/libeasmail.la	\
+	$(top_srcdir)/libeasclient/libeasclient.la \
 	$(EVOLUTION_DATA_SERVER_LIBS) \
 	$(EVOLUTION_PLUGIN_LIBS) \
 	$(EVOLUTION_SHELL_LIBS) \

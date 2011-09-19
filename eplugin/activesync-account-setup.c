@@ -37,9 +37,9 @@
 #include "mail/em-account-editor.h"
 #include "mail/em-config.h"
 
-#include "libeasaccount/src/eas-account.h"
-#include "libeasaccount/src/eas-account-list.h"
-#include "libeasmail/src/libeasmail.h"
+#include <eas-account.h>
+#include <eas-account-list.h>
+#include <libeasmail.h>
 #include "eas-account-listener.h"
 
 static EasAccountListener *config_listener = NULL;
