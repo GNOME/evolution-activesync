@@ -155,19 +155,21 @@
 // returns a newly allocated string which must be freed
 static gchar *extract_addrspec(const gchar* buf)
 {
-	gchar ** split = NULL;
-	gchar ** split2 = NULL;
-	gchar * newString = NULL;
+	gchar *start, *end;
 
-	split = g_strsplit(buf, EAS_EMAIL_START, 2);
-	split2 = g_strsplit(split[1], EAS_EMAIL_END, 2);
-	newString = g_strdup(split2[0]);
+	/* FIXME: This will behave incorrectly given an address like
+	   "Foo<bar" <foo@bar.com>
+	   ... but at least it no longer segfaults. */
+	start = strchr(buf, '<');
+	if (!start)
+		return g_strdup(buf);
 
-	g_strfreev(split);
-	g_strfreev(split2);
+	start++;
+	end = strchr(start, '>');
+	if (!end)
+		return g_strdup(buf);
 
-	return newString;
-		
+	return g_strndup(start, end - start);
 }
 
 static void
