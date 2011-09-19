@@ -153,14 +153,14 @@
 // eg. '"john.doe@work.com" <john.doe@work.com>'  trims to 'john.doe@work.com'
 // where start string is "<" and end string is ">"
 // returns a newly allocated string which must be freed
-static gchar* trimBuf(const gchar* buf, const gchar* startString, const gchar* endString)
+static gchar *extract_addrspec(const gchar* buf)
 {
 	gchar ** split = NULL;
 	gchar ** split2 = NULL;
 	gchar * newString = NULL;
 
-	split = g_strsplit(buf, startString, 2);
-	split2 = g_strsplit(split[1], endString, 2);
+	split = g_strsplit(buf, EAS_EMAIL_START, 2);
+	split2 = g_strsplit(split[1], EAS_EMAIL_END, 2);
 	newString = g_strdup(split2[0]);
 
 	g_strfreev(split);
@@ -186,7 +186,7 @@ add_email_attr_value (EVCardAttribute *attr, xmlNodePtr node, const gchar *sough
 	}
 
 	if(value!=NULL){
-		gchar* trimmedAddress = trimBuf(value, EAS_EMAIL_START, EAS_EMAIL_END);
+		gchar* trimmedAddress = extract_addrspec(value);
 		e_vcard_attribute_add_value (attr, trimmedAddress); // e_vcard copies value
 		g_free(trimmedAddress);
 	}else{
