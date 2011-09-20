@@ -66,15 +66,22 @@ PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
-PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin)
+
+if $PKG_CONFIG --atleast-version=3.0 libedataserver-1.2; then
+	EVO_PKG="-3.0"
+else
+	EVO_PKG=""
+fi
+
+PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin${EVO_PKG})
 AC_SUBST(EVOLUTION_PLUGIN_CFLAGS)
 AC_SUBST(EVOLUTION_PLUGIN_LIBS)
 
-PKG_CHECK_MODULES(EVOLUTION_MAIL, evolution-mail)
+PKG_CHECK_MODULES(EVOLUTION_MAIL, evolution-mail${EVO_PKG})
 AC_SUBST(EVOLUTION_MAIL_CFLAGS)
 AC_SUBST(EVOLUTION_MAIL_LIBS)
 
-PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell)
+PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell${EVO_PKG})
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
 
@@ -93,7 +100,7 @@ AC_SUBST(dbus_servicesdir)
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
 AC_SUBST(camel_providerdir)
 
-plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin`"
+plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin${EVO_PKG}`"
 AC_SUBST(plugindir)
 
 EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin`"
