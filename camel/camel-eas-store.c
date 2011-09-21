@@ -90,25 +90,76 @@ static inline gboolean camel_offline_store_get_online(CamelOfflineStore *store)
 
 extern CamelServiceAuthType camel_eas_password_authtype; /*for the query_auth_types function*/
 
+static gboolean
+eas_store_construct	(CamelService *service, CamelSession *session,
+			 CamelProvider *provider, CamelURL *url,
+			 GError **error);
+
+#if EDS_CHECK_VERSION(3,1,0)
+static void camel_eas_store_initable_init (GInitableIface *interface);
+static GInitableIface *parent_initable_interface;
+
+G_DEFINE_TYPE_WITH_CODE (CamelEasStore, camel_eas_store,
+			 CAMEL_TYPE_OFFLINE_STORE,
+			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
+						camel_eas_store_initable_init))
+
+static gboolean
+eas_store_initable_init		(GInitable *initable,
+				 GCancellable *cancellable,
+				 GError **error)
+{
+	CamelService *service;
+	CamelSession *session;
+	CamelURL *url;
+	gboolean ret;
+
+	service = CAMEL_SERVICE (initable);
+	url = camel_service_get_camel_url (service);
+	session = camel_service_get_session (service);
+
+	/* Chain up to parent interface's init() method. */
+	if (!parent_initable_interface->init (initable, cancellable, error))
+		return FALSE;
+
+	ret = eas_store_construct (service, session, NULL, url, error);
+
+	/* Add transport here ? */
+
+	return ret;
+}
+
+static void
+camel_eas_store_initable_init (GInitableIface *interface)
+{
+	parent_initable_interface = g_type_interface_peek_parent (interface);
+
+	interface->init = eas_store_initable_init;
+}
+
+#else
 G_DEFINE_TYPE (CamelEasStore, camel_eas_store, CAMEL_TYPE_OFFLINE_STORE)
+#endif
 
 static gboolean
 eas_store_construct	(CamelService *service, CamelSession *session,
 			 CamelProvider *provider, CamelURL *url,
 			 GError **error)
 {
-	CamelServiceClass *service_class;
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
 	gchar *summary_file, *session_storage_path;
-
-	eas_store = (CamelEasStore *) service;
-	priv = eas_store->priv;
+#if ! EDS_CHECK_VERSION(3,1,0)
+	CamelServiceClass *service_class;
 
 	/* Chain up to parent's construct() method. */
 	service_class = CAMEL_SERVICE_CLASS (camel_eas_store_parent_class);
 	if (!service_class->construct (service, session, provider, url, error))
 		return FALSE;
+#endif
+
+	eas_store = (CamelEasStore *) service;
+	priv = eas_store->priv;
 
 	/* Disable virtual trash and junk folders. Exchange has real
 	   folders for that */
@@ -522,7 +573,9 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	object_class->finalize = eas_store_finalize;
 
 	service_class = CAMEL_SERVICE_CLASS (class);
+#if !EDS_CHECK_VERSION(3,1,0)
 	service_class->construct = eas_store_construct;
+#endif
 	service_class->EVO3_sync(query_auth_types) = eas_store_query_auth_types_sync;
 	service_class->get_name = eas_get_name;
 	service_class->EVO3_sync(connect) = eas_connect_sync;
