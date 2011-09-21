@@ -53,11 +53,11 @@ eas_transport_get_name (CamelService *service,
 	if (brief)
 		return g_strdup_printf (
 			_("Exchange server %s"),
-			service->url->host);
+			camel_service_get_camel_url(service)->host);
 	else
 		return g_strdup_printf (
 			_("Exchange mail delivery via %s"),
-			service->url->host);
+			camel_service_get_camel_url(service)->host);
 }
 
 static gboolean
@@ -83,7 +83,8 @@ eas_send_to_sync (CamelTransport *transport,
 	EVO2(progress_data = camel_operation_registered());
 
 	service = CAMEL_SERVICE (transport);
-	account_uid = camel_url_get_param (service->url, "account_uid");
+	account_uid = camel_url_get_param (camel_service_get_camel_url(service),
+					   "account_uid");
 
 	handler = eas_mail_handler_new (account_uid, error);
 	if (!handler)

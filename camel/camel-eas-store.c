@@ -333,7 +333,8 @@ static gchar *
 eas_service_get_path (CamelService *service)
 {
 	return g_build_filename (service->provider->protocol,
-				 camel_url_get_param (service->url, "account_uid"),
+				 camel_url_get_param (camel_service_get_camel_url(service),
+						      "account_uid"),
 				 NULL);
 }
 
@@ -415,11 +416,14 @@ eas_rename_folder_sync	(CamelStore *store,
 gchar *
 eas_get_name (CamelService *service, gboolean brief)
 {
+	CamelURL *url = camel_service_get_camel_url (service);
+
 	if (brief)
-		return g_strdup_printf(_("Exchange ActiveSync server %s"), service->url->host);
+		return g_strdup_printf(_("Exchange ActiveSync server %s"),
+				       url->host);
 	else
 		return g_strdup_printf(_("Exchange ActiveSync service for %s on %s"),
-				       service->url->user, service->url->host);
+				       url->user, url->host);
 }
 
 EasEmailHandler *
@@ -444,7 +448,8 @@ eas_can_refresh_folder (CamelStore *store, CamelFolderInfo *info, GError **error
 
 	/* Delegate decision to parent class */
 	return CAMEL_STORE_CLASS(camel_eas_store_parent_class)->can_refresh_folder (store, info, error) ||
-			(camel_url_get_param (((CamelService *)store)->url, "check_all") != NULL);
+		(camel_url_get_param (camel_service_get_camel_url(CAMEL_SERVICE(store)),
+				      "check_all") != NULL);
 }
 
 gboolean

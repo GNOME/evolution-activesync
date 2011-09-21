@@ -46,7 +46,7 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	CamelFolderInfo *fi;
 	gchar *url;
 
-	url = camel_url_to_string (CAMEL_SERVICE (store)->url,
+	url = camel_url_to_string (camel_service_get_camel_url(CAMEL_SERVICE (store)),
 			(CAMEL_URL_HIDE_PASSWORD|
 			 CAMEL_URL_HIDE_PARAMS|
 			 CAMEL_URL_HIDE_AUTH) );
