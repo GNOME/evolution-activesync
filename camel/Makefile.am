@@ -25,7 +25,8 @@ libcameleas_la_SOURCES = 			\
 	camel-eas-summary.c               	\
 	camel-eas-provider.c			\
 	camel-eas-utils.c			\
-	camel-eas-transport.c
+	camel-eas-transport.c			\
+	camel-eas-compat.c
 
 noinst_HEADERS =         			\
 	camel-eas-folder.h			\

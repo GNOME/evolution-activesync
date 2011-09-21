@@ -25,7 +25,11 @@
 
 /* Fugly as hell, but it does the job... */
 
+#include <camel/camel.h>
 #include <libedataserver/eds-version.h>
+#include <glib.h>
+#include <gio/gio.h>
+
 #if EDS_CHECK_VERSION(2,33,0)
 #define EVO2(...)
 #define EVO3(...) __VA_ARGS__
@@ -34,6 +38,35 @@
 #define EVO2(...) __VA_ARGS__
 #define EVO3(...)
 #define EVO3_sync(x) x
+#endif
+
+gchar *
+camel_session_get_password_compat (CamelSession *session,
+				   CamelService *service,
+				   const gchar *domain,
+				   const gchar *prompt,
+				   const gchar *item,
+				   guint32 flags,
+				   GError **error);
+
+CamelService *
+camel_session_get_service_compat (CamelSession *session,
+				  const gchar *url,
+				  CamelProviderType type);
+
+#if ! EDS_CHECK_VERSION(3,1,0)
+
+CamelURL *
+camel_service_get_camel_url (CamelService *service);
+
+CamelServiceConnectionStatus
+camel_service_get_connection_status (CamelService *service);
+
+#else
+gchar *
+camel_session_get_storage_path (CamelSession *session,
+				CamelService *service,
+				GError **error);
 #endif
 
 
