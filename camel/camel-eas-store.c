@@ -218,7 +218,7 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 	eas_store = (CamelEasStore *) service;
 	priv = eas_store->priv;
 
-	if (service->status == CAMEL_SERVICE_DISCONNECTED)
+	if (camel_service_get_connection_status (service) == CAMEL_SERVICE_DISCONNECTED)
 		return FALSE;
 
 	camel_service_lock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
@@ -235,7 +235,6 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 		return FALSE;
 	}
 
-	service->status = CAMEL_SERVICE_CONNECTED;
 	camel_offline_store_set_online_sync (
 		CAMEL_OFFLINE_STORE (eas_store), TRUE, cancellable, NULL);
 
