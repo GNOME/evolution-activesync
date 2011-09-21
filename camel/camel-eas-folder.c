@@ -508,6 +508,9 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
 
         folder = g_object_new (
                 CAMEL_TYPE_EAS_FOLDER,
+#if EDS_CHECK_VERSION(3,1,0)
+                "display_" /* Evo 3.1 calls it "display_name" */
+#endif
                 "name", short_name, "full-name", folder_name,
                 "parent_store", store, NULL);
 
