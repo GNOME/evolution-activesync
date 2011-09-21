@@ -24,7 +24,8 @@
 #include "config.h"
 #endif
 
-#include "libedataserver/e-account.h"
+#include <libedataserver/e-account.h>
+#include <libedataserver/eds-version.h>
 #include "e-util/e-alert-dialog.h"
 
 #include <string.h>
@@ -41,6 +42,12 @@
 #include <eas-account-list.h>
 #include <libeasmail.h>
 #include "eas-account-listener.h"
+
+#if EDS_CHECK_VERSION(3,1,0)
+#define MODIFIED_ACCT modified_account
+#else
+#define MODIFIED_ACCT account
+#endif
 
 static EasAccountListener *config_listener = NULL;
 
@@ -88,7 +95,8 @@ url_entry_changed(GtkWidget *entry, EConfig *config)
 	g_strstrip (uri);
 
 	if (uri && uri[0]) {
-		const char *address = e_account_get_string (target->account, E_ACCOUNT_ID_ADDRESS);
+		const char *address = e_account_get_string (target->MODIFIED_ACCT,
+							    E_ACCOUNT_ID_ADDRESS);
 		GConfClient *client = gconf_client_get_default ();
 		char *key;
 
@@ -96,8 +104,10 @@ url_entry_changed(GtkWidget *entry, EConfig *config)
 		gconf_client_set_string (client, key, uri, NULL);
 		g_free (key);
 		g_object_unref (client);
-		update_url_account (target->account, E_ACCOUNT_SOURCE_URL, uri);
-		update_url_account (target->account, E_ACCOUNT_TRANSPORT_URL, uri);
+		update_url_account (target->MODIFIED_ACCT,
+				    E_ACCOUNT_SOURCE_URL, uri);
+		update_url_account (target->MODIFIED_ACCT,
+				    E_ACCOUNT_TRANSPORT_URL, uri);
 
 	} 
 
@@ -115,7 +125,8 @@ username_entry_changed (GtkWidget *entry, EConfig *config)
 	g_strstrip (name);
 
 	if (name && name[0]) {
-		const char *address = e_account_get_string (target->account, E_ACCOUNT_ID_ADDRESS);
+		const char *address = e_account_get_string (target->MODIFIED_ACCT,
+							    E_ACCOUNT_ID_ADDRESS);
 		GConfClient *client = gconf_client_get_default ();
 		char *key;
 
@@ -141,7 +152,8 @@ discover_server_url (GtkWidget *button, EConfig  *config)
 	GtkWidget *entry = (GtkWidget *) g_object_get_data ((GObject *) button, "url-entry");
 	GConfClient *client = gconf_client_get_default();
 
-	address = e_account_get_string (target->account, E_ACCOUNT_ID_ADDRESS);
+	address = e_account_get_string (target->MODIFIED_ACCT,
+					E_ACCOUNT_ID_ADDRESS);
 
 	handler = eas_mail_handler_new(address, &error);
 	if (error) {
@@ -169,8 +181,10 @@ discover_server_url (GtkWidget *button, EConfig  *config)
 	if (!error && uri && *uri)
 		gtk_entry_set_text ((GtkEntry *) entry, uri);
 
-	update_url_account (target->account, E_ACCOUNT_SOURCE_URL, uri);
-	update_url_account (target->account, E_ACCOUNT_TRANSPORT_URL, uri);
+	update_url_account (target->MODIFIED_ACCT,
+			    E_ACCOUNT_SOURCE_URL, uri);
+	update_url_account (target->MODIFIED_ACCT,
+			    E_ACCOUNT_TRANSPORT_URL, uri);
 
 	g_free (key);
 	g_free (username);
@@ -194,7 +208,8 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 	GError *error = NULL;
 
 	target_account = (EMConfigTargetAccount *)data->config->target;
-	source_url = e_account_get_string (target_account->account,  E_ACCOUNT_SOURCE_URL);
+	source_url = e_account_get_string (target_account->MODIFIED_ACCT,
+					   E_ACCOUNT_SOURCE_URL);
 	if (source_url && source_url[0] != '\0')
 		url = camel_url_new(source_url, NULL);
 	else
@@ -220,7 +235,8 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 	}
 
 
-	address = e_account_get_string (target_account->account, E_ACCOUNT_ID_ADDRESS);
+	address = e_account_get_string (target_account->MODIFIED_ACCT,
+					E_ACCOUNT_ID_ADDRESS);
 	key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", address);
 
 	username = gconf_client_get_string (client, key, NULL);
@@ -285,7 +301,8 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 		gchar *uri;
 
 		uri = g_strdup_printf (EVOLUTION_ACCOUNT_URL_FORMAT, address, address, "");
-		e_account_set_string(target_account->account,  E_ACCOUNT_SOURCE_URL, uri);
+		e_account_set_string(target_account->MODIFIED_ACCT,
+				     E_ACCOUNT_SOURCE_URL, uri);
 		g_free(uri);
 	}
 
@@ -306,10 +323,12 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 	    strcmp (data->pageid, "20.receive_options") == 0) {
 		char *url;
 		char *key;
-		const char *address = e_account_get_string (target->account, E_ACCOUNT_ID_ADDRESS);
+		const char *address = e_account_get_string (target->MODIFIED_ACCT,
+							    E_ACCOUNT_ID_ADDRESS);
 		GConfClient *client = gconf_client_get_default ();
 		CamelURL *curl;
-		const gchar * target_url = e_account_get_string(target->account,  E_ACCOUNT_SOURCE_URL);
+		const gchar * target_url = e_account_get_string(target->MODIFIED_ACCT,
+								E_ACCOUNT_SOURCE_URL);
 
 		curl = camel_url_new(target_url, NULL);
 		if (!curl)
@@ -339,7 +358,8 @@ org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetAccount *target_account)
 	CamelURL *url;
 
 	printf("\n\n\n\n*********************************\n\n\n");
-	source_url = e_account_get_string (target_account->account,  E_ACCOUNT_SOURCE_URL);
+	source_url = e_account_get_string (target_account->MODIFIED_ACCT,
+					   E_ACCOUNT_SOURCE_URL);
 	if (source_url && source_url[0] != '\0')
 		url = camel_url_new (source_url, NULL);
 	else
