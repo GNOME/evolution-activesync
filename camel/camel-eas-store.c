@@ -379,6 +379,9 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 	return root_fi;
 }
 
+#if !EDS_CHECK_VERSION(3,1,0)
+/* in Evo 3.1 and onwards, the storage path is based on UID anyway, so
+   we don't need this */
 static gchar *
 eas_service_get_path (CamelService *service)
 {
@@ -387,6 +390,7 @@ eas_service_get_path (CamelService *service)
 						      "account_uid"),
 				 NULL);
 }
+#endif
 
 static CamelFolderInfo *
 eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EVO3(GCancellable *cancellable,) GError **error)
@@ -574,12 +578,12 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	service_class = CAMEL_SERVICE_CLASS (class);
 #if !EDS_CHECK_VERSION(3,1,0)
 	service_class->construct = eas_store_construct;
+	service_class->get_path = eas_service_get_path;
 #endif
 	service_class->EVO3_sync(query_auth_types) = eas_store_query_auth_types_sync;
 	service_class->get_name = eas_get_name;
 	service_class->EVO3_sync(connect) = eas_connect_sync;
 	service_class->EVO3_sync(disconnect) = eas_disconnect_sync;
-	service_class->get_path = eas_service_get_path;
 
 	store_class = CAMEL_STORE_CLASS (class);
 	store_class->hash_folder_name = eas_hash_folder_name;
