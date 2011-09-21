@@ -62,9 +62,15 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	fi = camel_folder_info_new ();
 	fi->full_name = camel_eas_store_summary_get_folder_full_name (eas_summary,
 								      fid, NULL);
+#if EDS_CHECK_VERSION(3,1,0)
+	fi->display_name = camel_eas_store_summary_get_folder_name (eas_summary,
+								    fid, NULL);
+#else
 	fi->name = camel_eas_store_summary_get_folder_name (eas_summary,
 							    fid, NULL);
 	fi->uri = g_strconcat (url, fi->full_name, NULL);
+#endif
+
 	switch (camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL)) {
 	case EAS_FOLDER_TYPE_DEFAULT_INBOX:
 		fi->flags = CAMEL_FOLDER_TYPE_INBOX;
