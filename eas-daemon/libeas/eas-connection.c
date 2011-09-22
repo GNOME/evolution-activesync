@@ -2445,6 +2445,7 @@ eas_connection_cancel_request(EasConnection* cnc,
 				// the callback will be invoked before soup_session_cancel_message() returns
 				// call_soup_session_cancel_message(request);
 				source = g_idle_source_new ();
+				g_source_set_priority(source, G_PRIORITY_HIGH);
 				g_source_set_callback (source, call_soup_session_cancel_message, request, NULL);
 				g_source_attach (source, priv->soup_context);	
 				break;  // out of for loop
