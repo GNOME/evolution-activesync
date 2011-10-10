@@ -1979,7 +1979,7 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 	}
 }
 
-WB_UTINY *sanitize_utf8(WB_UTINY *in)
+static WB_UTINY *sanitize_utf8(WB_UTINY *in)
 {
 	int i;
 	char *out = strdup((char *)in);
