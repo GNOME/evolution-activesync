@@ -66,6 +66,8 @@
 #include "activesyncd-common-defs.h"
 #include "eas-marshal.h"
 #include "eas-get-item-estimate-req.h"
+#include <dbus/dbus.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
 
@@ -122,6 +124,26 @@ EasMail* eas_mail_new (void)
 	return easMail;
 }
 
+static void set_request_owner_id (EasRequestBase *request,
+				  guint32 request_id,
+				  DBusGMethodInvocation *context)
+{
+	/* We don't *send* this reply; it's just the only way we can
+	   get the serial# and sender address */
+	DBusMessage *reply = dbus_g_method_get_reply (context);
+	gchar *sender;
+
+	/* We'll phase out the caller-provided request_id and just
+	   use the serial#.... eventually. */
+	if (!request_id)
+		request_id = dbus_message_get_reply_serial (reply);
+
+	sender = g_strdup (dbus_message_get_destination (reply));
+	dbus_message_unref (reply);
+
+	eas_request_base_SetRequestOwner (request, sender);
+	eas_request_base_SetRequestId (request, request_id);
+}
 
 gboolean
 eas_mail_get_item_estimate (EasMail* self,
@@ -382,7 +404,9 @@ eas_mail_fetch_email_body (EasMail* self,
 	eas_request_base_SetConnection (&req->parent_instance, connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (self));
-	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+
+	set_request_owner_id (&req->parent_instance, request_id, context);
+
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 
 	ret = eas_get_email_body_req_Activate (req, &error);
@@ -436,7 +460,7 @@ eas_mail_fetch_attachment (EasMail* self,
 	eas_request_base_SetConnection (&req->parent_instance, connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (self));
-	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	set_request_owner_id (&req->parent_instance, request_id, context);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, FALSE);//incoming progress updates
 
 	ret = eas_get_email_attachment_req_Activate (req, &error);
@@ -487,7 +511,7 @@ eas_mail_send_email (EasMail* easMailObj,
 					connection);
 
 	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
-	eas_request_base_SetRequestId (&req->parent_instance, request_id);
+	set_request_owner_id (&req->parent_instance, request_id, context);
 	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);//incoming progress updates
 
 	// Activate Request
