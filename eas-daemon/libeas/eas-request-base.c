@@ -59,6 +59,7 @@ struct _EasRequestBasePrivate {
 	DBusGMethodInvocation *context;
 	EasInterfaceBase *dbus_interface;
 	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
+	gchar *request_owner;			// dbus sender of message
 	guint request_id;			// passed back with progress signal
 	gboolean cancelled;			// whether the request has been cancelled
 	guint data_length_so_far;	// amount of data received/sent so far 
@@ -121,6 +122,7 @@ eas_request_base_init (EasRequestBase *object)
 	priv->data_length_so_far = 0;
 	priv->data_size = 0;
 	priv->request_id = 0;
+	priv->request_owner = NULL;
 	priv->cancelled = FALSE;
 	priv->use_multipart = FALSE;
 	priv->wbxml = NULL;
@@ -152,6 +154,7 @@ eas_request_base_finalize (GObject *object)
 	
 	g_debug ("eas_request_base_finalize++");
 	g_free (priv->wbxml);
+	g_free (priv->request_owner);
 	G_OBJECT_CLASS (eas_request_base_parent_class)->finalize (object);
 	g_debug ("eas_request_base_finalize--");
 }
@@ -252,6 +255,24 @@ eas_request_base_SetRequestId (EasRequestBase* self, guint request_id)
 	EasRequestBasePrivate *priv = self->priv;
 
 	priv->request_id = request_id;
+
+	return ;
+}
+
+const gchar *
+eas_request_base_GetRequestOwner (EasRequestBase* self)
+{
+	EasRequestBasePrivate *priv = self->priv;
+
+	return priv->request_owner;
+}
+
+void
+eas_request_base_SetRequestOwner (EasRequestBase* self, gchar *request_owner)
+{
+	EasRequestBasePrivate *priv = self->priv;
+
+	priv->request_owner = request_owner;
 
 	return ;
 }

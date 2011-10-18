@@ -202,6 +202,26 @@ guint eas_request_base_GetRequestId (EasRequestBase* self);
 void eas_request_base_SetRequestId (EasRequestBase* self, guint request_id);
 
 /**
+ * Getter for request owner.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ *
+ * @return The request_owner currently set for this instance.
+ */
+const gchar *eas_request_base_GetRequestOwner (EasRequestBase* self);
+
+/**
+ * Setter for request owner.
+ *
+ * @param[in] self
+ *      GObject Instance.
+ * @param[in] request_owner
+ *      The request_owner to be set.
+ */
+void eas_request_base_SetRequestOwner (EasRequestBase* self, gchar *request_owner);
+
+/**
  * Getter for cancelled.
  *
  * @param[in] self
