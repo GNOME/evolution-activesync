@@ -377,7 +377,9 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 		for (l = deleted_uids; l != NULL; l = g_slist_next (l)) {
 			gchar *uid = l->data;
 			camel_folder_summary_lock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
+#if ! EDS_CHECK_VERSION(3,3,0)
 			camel_eas_summary_delete_id (folder->summary, uid);
+#endif
 			camel_folder_change_info_remove_uid (changes, uid);
 			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->cache, "cache", uid, NULL);
 			camel_folder_summary_unlock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
@@ -422,7 +424,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
  more:
 	for ( ; success && i < uids->len && item_list_len < 25; i++) {
 		guint32 flags_changed;
-		CamelEasMessageInfo *mi = (void *)camel_folder_summary_uid (folder->summary, uids->pdata[i]);
+		CamelEasMessageInfo *mi = (void *)camel_folder_summary_get (folder->summary, uids->pdata[i]);
 		if (!mi)
 			continue;
 
@@ -491,6 +493,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, EVO3(GCancellable *
 
 	return success;
 }
+
 
 CamelFolder *
 camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, gchar *folder_id, GCancellable *cancellable, GError **error)
@@ -761,7 +764,12 @@ eas_expunge_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError *
 	GSList *deleted_items = NULL;
 	EVO2(GCancellable *cancellable = NULL;)
 	gboolean expunge = FALSE;
-	gint i, count;
+	gint i;
+#if EDS_CHECK_VERSION(3,3,0)
+	GPtrArray *known_uids;
+#else
+	gint count;
+#endif
 
 	parent_store = camel_folder_get_parent_store (folder);
 	eas_store = CAMEL_EAS_STORE (parent_store);
@@ -773,6 +781,28 @@ eas_expunge_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError *
 	if (folder->folder_flags & CAMEL_FOLDER_IS_TRASH)
 		expunge = TRUE;
 
+#if EDS_CHECK_VERSION(3,3,0)
+	/* Collect UIDs of deleted messages. */
+	camel_folder_summary_prepare_fetch_all (folder->summary, NULL);
+	known_uids = camel_folder_summary_get_array (folder->summary);
+	if (!known_uids)
+		return TRUE;
+
+	/* Collect UIDs of deleted messages. */
+	for (i = 0; i < known_uids->len; i++) {
+		const gchar *uid = g_ptr_array_index (known_uids, i);
+
+		info = camel_folder_summary_get (folder->summary, uid);
+
+		eas_info = (CamelEasMessageInfo *) info;
+		if (eas_info && (eas_info->info.flags & CAMEL_MESSAGE_DELETED))
+			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
+
+		camel_message_info_free (info);
+	}
+	camel_folder_summary_free_array (known_uids);
+
+#else
 	/* Collect UIDs of deleted messages. */
 	count = camel_folder_summary_count (folder->summary);
 	for (i = 0; i < count; i++) {
@@ -784,7 +814,7 @@ eas_expunge_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GError *
 		}
 		camel_message_info_free (info);
 	}
-
+#endif
 	if (deleted_items)
 		return eas_delete_messages (folder, deleted_items, expunge, cancellable, error);
 	else

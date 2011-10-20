@@ -363,8 +363,8 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 		fi = camel_eas_utils_build_folder_info (store, l->data);
 		if (!camel_folder_summary_header_load_from_db (s, CAMEL_STORE (store),
 							       fi->full_name, NULL)) {
-			fi->unread = s->unread_count;
-			fi->total = s->saved_count;
+			fi->unread = camel_folder_summary_get_unread_count (s);
+			fi->total = camel_folder_summary_get_saved_count (s);
 		}
 		g_ptr_array_add	(folder_infos, fi);
 	}

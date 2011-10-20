@@ -69,5 +69,17 @@ camel_session_get_storage_path (CamelSession *session,
 				GError **error);
 #endif
 
+#if ! EDS_CHECK_VERSION(3,3,0)
+
+#define camel_folder_summary_get_unread_count(s) ((s)->unread_count)
+#define camel_folder_summary_get_saved_count(s) ((s)->saved_count)
+#define camel_folder_summary_get_folder(s) ((s)->folder)
+#define camel_folder_summary_get camel_folder_summary_uid
+
+#else
+
+#define CAMEL_URL_HIDE_PASSWORD (0)
+
+#endif
 
 #endif /* CAMEL_EAS_COMPAT_H */

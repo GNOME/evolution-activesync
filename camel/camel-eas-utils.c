@@ -246,11 +246,15 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 {
 	CamelFolder *folder;
 	const gchar *full_name;
-	GSList *uids_deleted = NULL;
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
 	GSList *l;
 	int count = 0;
+#if EDS_CHECK_VERSION(3,3,0)
+	GList *uids_deleted = NULL;
+#else
+	GSList *uids_deleted = NULL;
+#endif
 
 	ci = camel_folder_change_info_new ();
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
@@ -261,9 +265,13 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	for (l = items_deleted; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
 
+#if ! EDS_CHECK_VERSION(3,3,0)
 		camel_eas_summary_delete_id (folder->summary, item->server_id);
-		camel_folder_change_info_remove_uid (ci, item->server_id);
 		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
+#else
+		uids_deleted = g_list_prepend (uids_deleted, item->server_id);
+#endif
+		camel_folder_change_info_remove_uid (ci, item->server_id);
 		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
 		count++;
 	}
@@ -274,7 +282,11 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 
 	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
 	g_slist_free (items_deleted);
+#if EDS_CHECK_VERSION(3,3,0)
+	g_list_free (uids_deleted);
+#else
 	g_slist_free (uids_deleted);
+#endif
 
 	return count;
 }
@@ -284,10 +296,16 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 {
 	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
 	const gchar *full_name;
-	GSList *uids_deleted = NULL;
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
 	gchar *uid;
+#if EDS_CHECK_VERSION(3,3,0)
+	GList *uids_deleted = NULL;
+	GPtrArray *known_uids = NULL;
+	int i;
+#else
+	GSList *uids_deleted = NULL;
+#endif
 
 	if (!camel_folder_summary_count (folder->summary))
 		return;
@@ -298,6 +316,20 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	folder = (CamelFolder *) eas_folder;
 	full_name = camel_folder_get_full_name (folder);
 
+#if EDS_CHECK_VERSION(3,3,0)
+	known_uids = camel_folder_summary_get_array (folder->summary);
+	if (!known_uids)
+		return;
+	for (i = 0; i < known_uids->len; i++) {
+		uid = g_ptr_array_index (known_uids, i);
+
+		camel_folder_change_info_remove_uid (ci, uid);
+		uids_deleted = g_list_prepend (uids_deleted, uid);
+		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
+	}
+	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+	g_list_free (uids_deleted);
+#else
 	while ( (uid = camel_folder_summary_uid_from_index (folder->summary, 0)) ) {
 		camel_eas_summary_delete_id (folder->summary, uid);
 		camel_folder_change_info_remove_uid (ci, uid);
@@ -305,12 +337,12 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
 	}
 	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
-
+	g_slist_foreach (uids_deleted, (GFunc) g_free, NULL);
+	g_slist_free (uids_deleted);
+#endif
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 
-	g_slist_foreach (uids_deleted, (GFunc) g_free, NULL);
-	g_slist_free (uids_deleted);
 }
 
 #if 0
@@ -365,7 +397,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 		EasEmailInfo *item = l->data;
 		CamelEasMessageInfo *mi;
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
+		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
 		if (mi) {
 			gint flags = mi->info.flags;
 
@@ -428,7 +460,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_uid (folder->summary, item->server_id);
+		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
 		if (mi) {
 			camel_message_info_free (mi);
 			g_object_unref (item);

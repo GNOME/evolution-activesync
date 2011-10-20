@@ -27,6 +27,7 @@
 #define CAMEL_GW_SUMMARY_H
 
 #include <camel/camel.h>
+#include <libedataserver/eds-version.h>
 
 /* Standard GObject macros */
 #define CAMEL_TYPE_EAS_SUMMARY \
@@ -101,9 +102,11 @@ void	camel_eas_summary_add_message_info
 					(CamelFolderSummary *summary,
 					 guint32 server_flags,
 					 CamelMessageInfo *info);
+#if ! EDS_CHECK_VERSION(3,3,0)
 void
 camel_eas_summary_delete_id		(CamelFolderSummary *summary,
 					 const gchar *id);
+#endif
 void	eas_summary_clear		(CamelFolderSummary *summary,
 					 gboolean uncache);
 

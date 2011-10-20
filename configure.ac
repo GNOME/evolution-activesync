@@ -62,7 +62,6 @@ PKG_CHECK_MODULES(SOUP, libsoup-2.4)
 PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
-PKG_CHECK_MODULES(CAMEL, camel-provider-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
 #PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
@@ -72,6 +71,14 @@ if $PKG_CONFIG --atleast-version=3.0 libedataserver-1.2; then
 else
 	EVO_PKG=""
 fi
+
+if $PKG_CONFIG --atleast-version=3.3 libedataserver-1.2; then
+	CAMEL_PKG="camel-1.2"
+else
+	CAMEL_PKG="camel-provider-1.2"
+fi
+
+PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG})
 
 PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin${EVO_PKG})
 AC_SUBST(EVOLUTION_PLUGIN_CFLAGS)
@@ -97,7 +104,7 @@ PKG_CHECK_MODULES([MLITE],
 dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(dbus_servicesdir)
 
-camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir camel-provider-1.2`
+camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir ${CAMEL_PKG}`
 AC_SUBST(camel_providerdir)
 
 plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin${EVO_PKG}`"
