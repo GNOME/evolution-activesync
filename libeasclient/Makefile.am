@@ -34,6 +34,8 @@ libeasclient_la_LDFLAGS =		\
 		$(SOUP_LIBS)
 
 libeasclient_la_SOURCES =		\
+	eas-errors.c			\
+	eas-errors.h			\
 	eas-sync-errors.h		\
         libeassync.h			\
         libeassync.c			\
