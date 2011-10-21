@@ -36,6 +36,7 @@
 
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 
 #include <dbus/dbus-glib.h>
 
@@ -653,10 +654,9 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	/* We use strcasecmp() instead of dbus_g_error_has_name() because
 	   the error names will probably become CamelCase when we manage
 	   to auto-generate the list on the server side. */
-	if (!res && !resynced && local_error->domain == DBUS_GERROR &&
-	    local_error->code == DBUS_GERROR_REMOTE_EXCEPTION &&
+	if (!res && !resynced && g_dbus_error_is_remote_error (local_error) &&
 	    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
-				"org.meego.activesyncd.GetItemEstimateError.INVALIDSYNCKEY")) {
+				"GDBus.Error:org.meego.activesyncd.GetItemEstimateError.INVALIDSYNCKEY")) {
 		/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
 		   wipe the folder and start again */
 		g_warning ("Invalid SyncKey!!!");
