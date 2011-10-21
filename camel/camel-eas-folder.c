@@ -655,7 +655,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	   the error names will probably become CamelCase when we manage
 	   to auto-generate the list on the server side. */
 	if (!res && !resynced && g_dbus_error_is_remote_error (local_error) &&
-	    !g_ascii_strcasecmp(dbus_g_error_get_name (local_error),
+	    !g_ascii_strcasecmp(g_dbus_error_get_remote_error (local_error),
 				"GDBus.Error:org.meego.activesyncd.GetItemEstimateError.INVALIDSYNCKEY")) {
 		/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
 		   wipe the folder and start again */
