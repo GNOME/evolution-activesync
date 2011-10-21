@@ -1294,10 +1294,7 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 					 gpointer progress_data,
 					 GError **error)
 {
-	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv;
-	guint request_id;
-	DBusGProxyCall *call;
+	gboolean ret = FALSE;
 
 	g_debug ("eas_mail_handler_fetch_email_attachment++");
 
@@ -1306,51 +1303,19 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_fetch_email_attachment requires valid arguments");
-		ret = FALSE;
 		goto out;
 	}
 
-	g_assert (self);
-	g_assert (file_reference);
-	g_assert (mime_directory);
+	ret = eas_gdbus_mail_call (self, "fetch_attachment",
+				   progress_fn, progress_data,
+				   "(sssu)", NULL,
+				   NULL, error,
+				   self->priv->account_uid, file_reference,
+				   mime_directory, 0);
 
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	priv = self->priv;
-	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
-	request_id = priv->next_request_id++;
-
-	if (progress_fn) {
-		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
-		if (!ret)
-			goto finish;
-	}
-
-	call = dbus_g_proxy_begin_call (priv->remoteEas, "fetch_attachment",
-					dbus_call_completed,
-					NULL, 								// userdata
-					NULL, 								// destroy notification
-					G_TYPE_STRING, priv->account_uid,
-					G_TYPE_STRING, file_reference,
-					G_TYPE_STRING, mime_directory,
-					G_TYPE_UINT, request_id,
-					G_TYPE_INVALID);
-
-	g_debug ("block until results available");
-	// blocks until results are available:
-	ret = dbus_g_proxy_end_call (priv->remoteEas,
-				     call,
-				     error,
-				     G_TYPE_INVALID);
-
-finish:
-	g_hash_table_remove (priv->email_progress_fns_table,
-			     GUINT_TO_POINTER (request_id));
 out:
 	g_debug ("eas_mail_handler_fetch_email_attachments--");
 
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
-	}
 	return ret;
 }
 
