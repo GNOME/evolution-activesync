@@ -30,7 +30,7 @@
 #include <gio/gio.h>
 #include "eas-email-info.h"
 #include "eas-provision-list.h"
-
+#include "eas-errors.h"
 
 G_BEGIN_DECLS
 
