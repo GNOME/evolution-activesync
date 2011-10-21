@@ -1304,16 +1304,12 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 			       GCancellable *cancellable,
 			       GError **error)
 {
-	EasEmailHandlerPrivate *priv;
-	gboolean ret = TRUE;
-	DBusGProxy *proxy;
+	gboolean ret = FALSE;
 	gchar *ret_sync_key = NULL;
 	gchar **deleted_items_array = NULL;
 	// Build string array from items_deleted GSList
 	guint list_length = g_slist_length ( (GSList*) items_deleted);
 	int loop = 0;
-	guint cancel_handler_id;
-	guint request_id;
 
 	g_debug ("eas_mail_handler_delete_emails++");
 
@@ -1322,19 +1318,8 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_sync_move_to_folder requires valid arguments");
-		ret = FALSE;
 		goto finish;
 	}
-
-	g_assert (self);
-	g_assert (sync_key);
-	g_assert (items_deleted);
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	priv = self->priv;
-	proxy = priv->remoteEas;
-	request_id = priv->next_request_id++;
 
 	deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
 	if (!deleted_items_array) {
@@ -1349,33 +1334,14 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 		g_debug ("Deleted Id: [%s]", deleted_items_array[loop]);
 	}
 
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_mail_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
-	}
-
-	ret = dbus_g_proxy_call (proxy, "delete_email", error,
-				 G_TYPE_STRING, priv->account_uid,
-				 G_TYPE_STRING, sync_key,
-				 G_TYPE_STRING, folder_id,
-				 G_TYPE_STRV, deleted_items_array,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, &ret_sync_key,
-				 G_TYPE_INVALID);
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
+	ret = eas_gdbus_mail_call (self, "delete_email",
+				   NULL, NULL,
+				   "(sss^as)", "(s)",
+				   NULL, error,
+				   self->priv->account_uid,
+				   sync_key, folder_id,
+				   deleted_items_array,
+				   &ret_sync_key);
 
 	// Clean up string array
 	for (loop = 0; loop < list_length; ++loop) {
