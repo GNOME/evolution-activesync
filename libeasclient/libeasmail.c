@@ -31,6 +31,7 @@
 #include <libxml/xmlsave.h>
 #include <libedataserver/e-flag.h>
 
+#include "eas-errors.h"
 #include "../eas-daemon/src/activesyncd-common-defs.h"
 #include "libeassync.h"
 #include "libeasmail.h"
@@ -238,6 +239,9 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	g_type_init();
 
 	dbus_g_thread_init();
+
+	/* Ick. See https://bugzilla.gnome.org/show_bug.cgi?id=662396 */
+	eas_connection_error_quark();
 
 	g_log_set_handler (G_LOG_DOMAIN,
 			   G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
