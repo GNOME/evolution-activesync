@@ -62,9 +62,13 @@ const gchar *updated_id_separator = ",";
 static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
 
 struct _EasEmailHandlerPrivate {
+	/* New GIO/GDBus code: */
+	GDBusConnection *connection;
+	/* Obsolescent dbus-glib bits: */
 	DBusGConnection *bus;
 	DBusGProxy *remoteEas;
 	DBusGProxy *remoteCommonEas;
+
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
 	guint next_request_id;			// request id to be used for next dbus call
@@ -114,6 +118,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	/* allocate internal structure */
 	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
+	priv->connection = NULL;
 	priv->remoteEas = NULL;
 	priv->remoteCommonEas = NULL;
 	priv->bus = NULL;
@@ -163,6 +168,8 @@ eas_mail_handler_finalize (GObject *object)
 		g_object_unref (priv->remoteCommonEas);
 	}
 
+	if (priv->connection)
+		g_object_unref (priv->connection);
 
 	g_free (priv->account_uid);
 
@@ -287,11 +294,13 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 		return NULL;
 	}
 
-
 	dbus_g_proxy_set_default_timeout (priv->remoteEas, 1000000);
 	dbus_g_proxy_set_default_timeout (priv->remoteCommonEas, 1000000);
 	priv->account_uid = g_strdup (account_uid);
 
+	priv->connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+	if (!priv->connection)
+		return NULL;
 
 	/* Register dbus signal marshaller */
 	dbus_g_object_register_marshaller (eas_marshal_VOID__UINT_UINT,
@@ -327,6 +336,165 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 
 	g_debug ("eas_mail_handler_new--");
 	return object;
+}
+
+/* g_dbus_connection_call() doesn't let us see the serial#, and ideally
+   we want that in order to let the progress messages use it rather than
+   having to make up a new handle for ourselves. So we do it ourselves. */
+
+struct _eas_call_data {
+	GAsyncResult *result;
+	GMainLoop *loop;
+	gboolean cancelled;
+};
+
+static void
+_call_done (GObject *conn, GAsyncResult *result, gpointer _call)
+{
+	struct _eas_call_data *call = _call;
+
+	call->result = g_object_ref (result);
+	g_main_loop_quit (call->loop);
+}
+
+static void
+_call_cancel (GCancellable *cancellable, gpointer _call)
+{
+	struct _eas_call_data *call = _call;
+
+	/* We can't send the DBus message from here; the GDBusConnection will
+	   deadlock itself in g_cancellable_disconnect, because it wants its
+	   *own* cancel handler to complete but ends up waiting for *this* one,
+	   which in turn is waiting for the connection lock. */
+	call->cancelled = TRUE;
+}
+
+static gboolean
+eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
+		     EasProgressFn progress_fn, gpointer progress_data,
+		     const gchar *in_params, const gchar *out_params,
+		     GCancellable *cancellable, GError **error, ...)
+{
+	GDBusMessage *message;
+	struct _eas_call_data call;
+	GMainContext *ctxt;
+	GDBusMessage *reply;
+	GVariant *v = NULL;
+	va_list ap;
+	gboolean success = FALSE;
+	guint cancel_handler_id;
+	guint32 serial = 0;
+
+	va_start (ap, error);
+
+	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,
+						  EAS_SERVICE_MAIL_OBJECT_PATH,
+						  EAS_SERVICE_MAIL_INTERFACE,
+						  method);
+
+	v = g_variant_new_va (in_params, NULL, &ap);
+	g_dbus_message_set_body (message, v);
+
+	call.cancelled = FALSE;
+	call.result = NULL;
+	ctxt = g_main_context_new ();
+	call.loop = g_main_loop_new (ctxt, FALSE);
+
+	g_main_context_push_thread_default (ctxt);
+
+	g_dbus_connection_send_message_with_reply (self->priv->connection,
+						   message,
+						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+						   1000000,
+						   &serial,
+						   cancellable,
+						   _call_done,
+						   (gpointer) &call);
+	if (cancellable)
+		cancel_handler_id = g_cancellable_connect (cancellable,
+							  G_CALLBACK (_call_cancel),
+							  (gpointer) &call, NULL);
+
+	/* Ignore error; it's not the end of the world if progress info
+	   is lost, and it should never happen anyway */
+	eas_mail_add_progress_info_to_table (self, serial,
+					     progress_fn, progress_data, NULL);
+
+	g_main_loop_run (call.loop);
+
+	reply = g_dbus_connection_send_message_with_reply_finish(self->priv->connection,
+								 call.result,
+								 error);
+	if (cancellable)
+		g_cancellable_disconnect (cancellable, cancel_handler_id);
+
+	if (call.cancelled) {
+		message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,
+							  EAS_SERVICE_COMMON_OBJECT_PATH,
+							  EAS_SERVICE_COMMON_INTERFACE,
+							  "cancel_request");
+		g_dbus_message_set_body (message,
+					 g_variant_new ("(su)",
+							self->priv->account_uid,
+							serial));
+
+		g_dbus_connection_send_message (self->priv->connection,
+						message,
+						G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+						NULL, NULL);
+	}
+
+	if (!reply)
+		goto out_no_reply;
+
+	g_main_context_pop_thread_default (ctxt);
+	g_main_context_unref (ctxt);
+	g_main_loop_unref (call.loop);
+
+	switch (g_dbus_message_get_message_type (reply)) {
+	case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		/* An empty (successful) response will give a NULL GVariant here */
+		v = g_dbus_message_get_body (reply);
+		if (!out_params) {
+			if (v)
+				goto inval;
+			else {
+				success = TRUE;
+				break;
+			}
+		}
+		if (!g_variant_is_of_type (v, G_VARIANT_TYPE (out_params))) {
+		inval:
+			g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+				     "ActiveSync DBus call returned invalid response type %s",
+				     v?g_variant_get_type_string (v):"()");
+			goto out;
+			g_object_unref (reply);
+		}
+		g_variant_get_va (v, out_params, NULL, &ap);
+		success = TRUE;
+		break;
+
+	case G_DBUS_MESSAGE_TYPE_ERROR:
+		g_dbus_message_to_gerror (reply, error);
+		break;
+
+	default:
+		g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+			     "EAS DBus call returned weird message type %d",
+			     g_dbus_message_get_message_type (reply));
+		break;
+	}
+
+ out:
+	g_object_unref (reply);
+ out_no_reply:
+	if (serial)
+		g_hash_table_remove (self->priv->email_progress_fns_table,
+				     GUINT_TO_POINTER (serial));
+
+	va_end (ap);
+	return success;
 }
 
 // takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
@@ -571,42 +739,11 @@ gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 					     guint *estimate,
 					     GError **error)
 {
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteEas;
-
-	g_debug ("eas_mail_handler_get_item_estimate++");
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	// TODO replace asserts with EAS_CONNECTION_ERROR_BADARG
-	g_assert (self);
-	g_assert (sync_key);
-
-	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "get_item_estimate",
-				 error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_STRING, sync_key,
-				 G_TYPE_STRING, folder_id,	//folder
-				 G_TYPE_INVALID,
-				 G_TYPE_UINT, estimate,
-				 G_TYPE_INVALID);
-
-	g_debug ("get_item_estimate - dbus call returned");
-
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
-		if (error && *error) {
-			g_warning ("[%s][%d][%s]",
-				   g_quark_to_string ( (*error)->domain),
-				   (*error)->code,
-				   (*error)->message);
-		}
-		g_warning ("DBus dbus_g_proxy_call failed");
-	}
-
-	g_debug ("eas_mail_handler_get_item_estimate--");
-	return ret;
+	return eas_gdbus_mail_call (self, "get_item_estimate",
+				    NULL, NULL, "(sss)", "(u)",
+				    NULL, error,
+				    self->priv->account_uid, sync_key, folder_id,
+				    estimate);
 }
 
 gboolean
