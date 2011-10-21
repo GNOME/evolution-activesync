@@ -444,12 +444,14 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 						NULL, NULL);
 	}
 
-	if (!reply)
-		goto out_no_reply;
-
 	g_main_context_pop_thread_default (ctxt);
 	g_main_context_unref (ctxt);
 	g_main_loop_unref (call.loop);
+	g_object_unref (call.result);
+
+	if (!reply)
+		goto out_no_reply;
+
 
 	switch (g_dbus_message_get_message_type (reply)) {
 	case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
