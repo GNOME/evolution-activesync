@@ -1563,8 +1563,7 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 				 GSList **updated_ids_list,
 				 GError **error)
 {
-	gboolean ret = TRUE;
-	DBusGProxy *proxy;
+	gboolean ret = FALSE;
 	gchar **updated_ids_array = NULL;
 	gchar **server_ids_array = NULL;
 	guint i = 0;
@@ -1577,22 +1576,12 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_sync_move_to_folder requires valid arguments");
-		ret = FALSE;
 		goto finish;
 	}
-
-	g_assert (self);
-	g_assert (server_ids);
-	g_assert (src_folder_id);
-	g_assert (dest_folder_id);
-
-	proxy =  self->priv->remoteEas;
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	// convert lists to array for passing over dbus
 	server_ids_array = g_malloc0 ( (list_len + 1) * sizeof (gchar*));
 	if (!server_ids_array) {
-		ret = FALSE;
 		g_set_error (error, EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));
@@ -1604,15 +1593,13 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 		g_debug ("server Id: [%s]", server_ids_array[i]);
 	}
 
-// call dbus api
-	ret = dbus_g_proxy_call (proxy, "move_emails_to_folder", error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_STRV, server_ids_array,
-				 G_TYPE_STRING, src_folder_id,
-				 G_TYPE_STRING, dest_folder_id,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRV, &updated_ids_array,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_mail_call (self, "move_emails_to_folder",
+				   NULL, NULL,
+				   "(s^asss)", "(^as)",
+				   NULL, error,
+				   self->priv->account_uid, server_ids_array,
+				   src_folder_id, dest_folder_id,
+				   &updated_ids_array);
 
 	// Clean up string array
 	for (i = 0; i < list_len; ++i) {
