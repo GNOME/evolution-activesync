@@ -1262,11 +1262,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 				   GCancellable *cancellable,
 				   GError **error)
 {
-	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv;
-	guint request_id;
-	DBusGProxyCall *call;
-	guint cancel_handler_id;
+	gboolean ret = FALSE;
 
 	g_debug ("eas_mail_handler_fetch_email_body++");
 
@@ -1275,72 +1271,16 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "eas_mail_handler_fetch_email_body requires valid arguments");
-		ret = FALSE;
 		goto out;
 	}
 
-	g_assert (self);
-	g_assert (folder_id);
-	g_assert (server_id);
-	g_assert (mime_directory);
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	priv = self->priv;
-	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
-	request_id = priv->next_request_id++;
-
-	if (progress_fn) {
-		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
-		if (!ret)
-			goto finish;
-	}
-
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_mail_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
-	}
-
-	call = dbus_g_proxy_begin_call (priv->remoteEas,
-					"fetch_email_body",
-					dbus_call_completed,
-					NULL, 							// userdata passed to callback
-					NULL, 							// destroy notification
-					G_TYPE_STRING, priv->account_uid,
-					G_TYPE_STRING, folder_id,
-					G_TYPE_STRING, server_id,
-					G_TYPE_STRING, mime_directory,
-					G_TYPE_UINT, request_id,
-					G_TYPE_INVALID);
-
-	g_debug ("block until results available");
-	// blocks until results are available:
-	ret = dbus_g_proxy_end_call (priv->remoteEas,
-				     call,
-				     error,
-				     G_TYPE_INVALID);
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
-
-finish:
-	g_hash_table_remove (priv->email_progress_fns_table,
-			     GUINT_TO_POINTER (request_id));
+	ret = eas_gdbus_mail_call (self, "fetch_email_body",
+				   progress_fn, progress_data,
+				   "(ssssu)", NULL,
+				   cancellable, error,
+				   self->priv->account_uid, folder_id,
+				   server_id, mime_directory, 0);
 out:
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
-	}
 	g_debug ("eas_mail_handler_fetch_email_body--");
 	return ret;
 }
