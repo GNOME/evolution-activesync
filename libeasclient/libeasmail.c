@@ -1410,9 +1410,7 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 			       GCancellable *cancellable,
 			       GError **error)
 {
-	EasEmailHandlerPrivate *priv = self->priv;
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = priv->remoteEas;
+	gboolean ret = FALSE;
 	// serialise the emails
 	guint num_emails = g_slist_length ( (GSList *) update_emails);
 	gchar **serialised_email_array = g_malloc0 ( (num_emails + 1) * sizeof (gchar*)); // null terminated array of strings
@@ -1421,15 +1419,16 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	gchar **ret_failed_updates_array = NULL;
 	guint i = 0;
 	GSList *l = (GSList *) update_emails;
-	guint request_id = priv->next_request_id++;
-	guint cancel_handler_id;
 
 	g_debug ("eas_mail_handler_update_emails++");
-	g_assert (self);
-	g_assert (sync_key);
-	g_assert (update_emails);
 
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	if (self == NULL || sync_key == NULL || update_emails == NULL) {
+		g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_update_email requires valid arguments");
+		goto cleanup;
+	}
 
 	g_debug ("sync_key = %s", sync_key);
 	g_debug ("%d emails to update", num_emails);
@@ -1440,7 +1439,6 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 		g_debug ("serialising email %d", i);
 		ret = eas_email_info_serialise (email, &serialised_email);
 		if (!ret) {
-			// set the error
 			g_set_error (error, EAS_MAIL_ERROR,
 				     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 				     ("out of memory"));
@@ -1454,35 +1452,15 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 	}
 	serialised_email_array[i] = NULL;
 
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_mail_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
-	}
-
-	// call dbus api
-	ret = dbus_g_proxy_call (proxy, "update_emails", error,
-				 G_TYPE_STRING, priv->account_uid,
-				 G_TYPE_STRING, sync_key,
-				 G_TYPE_STRING, folder_id,
-				 G_TYPE_STRV, serialised_email_array,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, &ret_sync_key,
-				 G_TYPE_STRV, &ret_failed_updates_array,
-				 G_TYPE_INVALID);
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
+	ret = eas_gdbus_mail_call (self, "update_emails",
+				   NULL, NULL,
+				   "(sss^as)", "(s^as)",
+				   cancellable, error,
+				   self->priv->account_uid,
+				   sync_key, folder_id,
+				   serialised_email_array,
+				   &ret_sync_key,
+				   &ret_failed_updates_array);
 
 	if (ret && ret_sync_key && ret_sync_key[0]) {
 		g_debug ("%s ret_Sync_key %s", __func__, ret_sync_key);
@@ -1528,9 +1506,6 @@ cleanup:
 	}
 	g_free (serialised_email_array);
 	g_free (ret_sync_key);
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
-	}
 
 	g_debug ("eas_mail_handler_update_emails--");
 
