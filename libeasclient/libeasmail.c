@@ -389,6 +389,7 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 	gboolean success = FALSE;
 	guint cancel_handler_id;
 	guint32 serial = 0;
+	gchar *out_params_type = (gchar *) out_params;
 
 	va_start (ap, error);
 
@@ -457,7 +458,27 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 	if (!reply)
 		goto out_no_reply;
 
+	/* g_variant_is_of_type() will fail to match a DBus return
+	   of (sas) with a format string of (s^as), where the ^ is
+	   required to make it convert to a strv instead of something
+	   more complicated. So we remove all ^ characters from the
+	   string that we show to g_variant_is_of_type(). Ick. */
+	if (out_params && strchr (out_params, '^')) {
+		gchar *x, *y;
 
+		out_params_type = g_strdup (out_params);
+
+		x = y = strchr (out_params_type, '^');
+		y++;
+
+		while (*y) {
+			if (*y == '^')
+				y++;
+			else
+				*(x++) = *(y++);
+		}
+		*x = 0;
+	}
 	switch (g_dbus_message_get_message_type (reply)) {
 	case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
 		/* An empty (successful) response will give a NULL GVariant here */
@@ -470,7 +491,7 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 				break;
 			}
 		}
-		if (!g_variant_is_of_type (v, G_VARIANT_TYPE (out_params))) {
+		if (!g_variant_is_of_type (v, G_VARIANT_TYPE (out_params_type))) {
 		inval:
 			g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
 				     "ActiveSync DBus call returned invalid response type %s",
@@ -494,6 +515,9 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 	}
 
  out:
+	if (out_params_type != out_params)
+		g_free (out_params_type);
+
 	g_object_unref (reply);
  out_no_reply:
 	if (serial)
