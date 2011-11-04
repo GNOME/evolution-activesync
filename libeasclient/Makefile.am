@@ -60,6 +60,7 @@ libeasclient_la_SOURCES =		\
 libeasclientincludedir = $(privincludedir)/eas-client
 libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h \
 			eas-attachment.h eas-folder.h libeasmail.h \
+			eas-errors.h \
 			eas-email-info.h eas-mail-errors.h
 
 
