@@ -106,9 +106,6 @@ static void progress_signal_handler (DBusGProxy * proxy,
 static void eas_mail_handler_cancel_common_request (GCancellable *cancellable,
 						    gpointer user_data);
 
-static void eas_mail_handler_cancel_mail_request (GCancellable *cancellable,
-						  gpointer user_data);
-
 // TODO - how much verification of args should happen??
 
 static void
@@ -2023,12 +2020,4 @@ eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user
 	eas_mail_handler_cancel_request	(cancellable, user_data, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE);
 	g_debug ("eas_mail_handler_cancel_common_request--");
 
-}
-
-static void
-eas_mail_handler_cancel_mail_request (GCancellable *cancellable, gpointer user_data)
-{
-	g_debug ("eas_mail_handler_cancel_mail_request++");
-	eas_mail_handler_cancel_request	(cancellable, user_data, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE);
-	g_debug ("eas_mail_handler_cancel_mail_request--");
 }
