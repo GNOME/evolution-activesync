@@ -72,6 +72,7 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 
 activesyncd_LDADD = \
     ../libeas/libeas.la \
+    ../../libeasclient/libeasclient.la \
     ../../libeastest/src/libeastest.la \
     $(INTI_LIBS)
 
