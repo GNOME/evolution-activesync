@@ -783,68 +783,33 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 				  GCancellable *cancellable,
 				  GError **error)
 {
-	EasEmailHandlerPrivate *priv = self->priv;
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = priv->remoteCommonEas;
+	gboolean ret = FALSE;
 	gchar **folder_array = NULL;
-	guint cancel_handler_id;
-	guint request_id = priv->next_request_id++;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
 		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
 
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_assert (self);
-	g_assert (*folders == NULL);
-
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_common_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
+	if (self == NULL || folders == NULL || *folders != NULL) {
+		g_set_error (error,
+			     EAS_MAIL_ERROR,
+			     EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_get_folder_list requires valid arguments");
+		goto out;
 	}
 
-	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "get_folders",
-				 error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_BOOLEAN, force_refresh,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRV, &folder_array,
-				 G_TYPE_INVALID);
-
-	g_debug ("%s - dbus proxy called", __func__);
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
-
-	if (!ret) {
-		if (error && *error) {
-			g_warning ("[%s][%d][%s]",
-				   g_quark_to_string ( (*error)->domain),
-				   (*error)->code,
-				   (*error)->message);
-		}
-		g_warning ("DBus dbus_g_proxy_call failed");
-		goto cleanup;
-	}
+	ret = eas_gdbus_common_call (self, "get_folders", NULL, NULL,
+				     "(sb)", "(^as)", cancellable, error,
+				     self->priv->account_uid, force_refresh,
+				     &folder_array);
+	if (!ret)
+		goto out;
 
 	g_debug ("%s called successfully", __func__);
 
 	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
 	ret = build_folder_list ( (const gchar **) folder_array, folders, error);
 
-cleanup:
-	free_string_array (folder_array);
+	g_strfreev (folder_array);
 
 	if (!ret) { // failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);
@@ -856,7 +821,7 @@ cleanup:
 		g_free (*folders);
 		*folders = NULL;
 	}
-
+ out:
 	g_debug ("%s--", __func__);
 	return ret;
 }
