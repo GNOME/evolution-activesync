@@ -371,11 +371,15 @@ _call_cancel (GCancellable *cancellable, gpointer _call)
 	call->cancelled = TRUE;
 }
 
+#define eas_gdbus_mail_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
+#define eas_gdbus_common_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
+
 static gboolean
-eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
-		     EasProgressFn progress_fn, gpointer progress_data,
-		     const gchar *in_params, const gchar *out_params,
-		     GCancellable *cancellable, GError **error, ...)
+eas_gdbus_call (EasEmailHandler *self, const gchar *object,
+		const gchar *interface, const gchar *method,
+		EasProgressFn progress_fn, gpointer progress_data,
+		const gchar *in_params, const gchar *out_params,
+		GCancellable *cancellable, GError **error, ...)
 {
 	GDBusMessage *message;
 	struct _eas_call_data call;
@@ -390,10 +394,8 @@ eas_gdbus_mail_call (EasEmailHandler *self, const gchar *method,
 
 	va_start (ap, error);
 
-	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,
-						  EAS_SERVICE_MAIL_OBJECT_PATH,
-						  EAS_SERVICE_MAIL_INTERFACE,
-						  method);
+	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME, object,
+						  interface, method);
 
 	v = g_variant_new_va (in_params, NULL, &ap);
 	g_dbus_message_set_body (message, v);
