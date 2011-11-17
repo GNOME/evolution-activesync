@@ -78,7 +78,8 @@ const guint DAY_OF_WEEK_FRIDAY         = 0x00000020;
 const guint DAY_OF_WEEK_SATURDAY       = 0x00000040;
 const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 
-
+/* summary for synthesized events, see eas_cal_info_translator_parse_request() */
+#define ACTIVESYNCD_PSEUDO_EVENT "[[activesyncd pseudo event - ignore me]]"
 
 // EAS string value definitions
 #define EAS_NAMESPACE_CALENDAR                "calendar:"
@@ -193,6 +194,71 @@ typedef struct {
 } __attribute__ ( (packed)) EasTimeZone;	// 172
 
 compile_time_assert ( (sizeof (EasTimeZone) == 172), EasTimeZone_not_expected_size);
+
+/**     @brief Get a DATE or DATE-TIME property as an icaltime
+ *
+ *      If the property is a DATE-TIME with a timezone parameter and a
+ *      corresponding VTIMEZONE is present in the component, the
+ *      returned component will already be in the correct timezone;
+ *      otherwise the caller is responsible for converting it.
+ *
+ *      FIXME this is useless until we can flag the failure
+ *
+ *      A copy of icalcomponent_get_datetime(), which is not part of the libical API.
+ */
+static struct icaltimetype
+_eas2cal_get_datetime (const icalcomponent *comp, const icalproperty *prop) {
+
+    const icalcomponent *c;
+    icalparameter      *param;
+    struct icaltimetype ret;
+
+    ret = icalvalue_get_datetime(icalproperty_get_value(prop));
+
+    if ((param = icalproperty_get_first_parameter((icalproperty *)prop, ICAL_TZID_PARAMETER))
+        != NULL) {
+        const char     *tzid = icalparameter_get_tzid(param);
+        icaltimezone   *tz = NULL;
+
+        for (c = comp; c != NULL; c = icalcomponent_get_parent((icalcomponent *)c)) {
+            tz = icalcomponent_get_timezone((icalcomponent *)c, tzid);
+            if (tz != NULL)
+                break;
+        }
+
+        if (tz == NULL)
+            tz = icaltimezone_get_builtin_timezone_from_tzid(tzid);
+
+        if (tz != NULL)
+            ret = icaltime_set_timezone(&ret, tz);
+    }
+
+    return ret;
+}
+
+/** missing in libical header files?! */
+extern icalcomponent *icalproperty_get_parent (const icalproperty *prop);
+
+/**
+ * In contrast to icalproperty_get_recurrenceid(), this function sets the
+ * time zone of the returned value based on the TZID and VTIMEZONE of
+ * the calender in which the property is set.
+ */
+static struct icaltimetype
+_eas2cal_property_get_recurrenceid (const icalproperty *prop)
+{
+	return _eas2cal_get_datetime (icalproperty_get_parent (prop),
+				      prop);
+}
+
+static struct icaltimetype
+_eas2cal_component_get_recurrenceid (const icalcomponent *comp)
+{
+	icalproperty *prop = icalcomponent_get_first_property ((icalcomponent *)comp, ICAL_RECURRENCEID_PROPERTY);
+	return prop ?
+		_eas2cal_get_datetime (comp, prop) :
+		icaltime_null_time();
+}
 
 /**
  * Convert a <Sensitivity> value from EAS XML into an iCal CLASS property value
@@ -437,7 +503,7 @@ static gboolean _eas2ical_convert_component(icalcomponent *vevent,
 	     prop = icalcomponent_get_next_property (vevent, ICAL_RECURRENCEID_PROPERTY)) {
 		// Must match all-day status of *parent* here!
 		if (_eas2ical_convert_datetime_property (prop, icaltz, parentIsAllDayEvent,
-							 icalproperty_get_recurrenceid,
+							 _eas2cal_property_get_recurrenceid,
 							 icalproperty_set_recurrenceid))
 			needtz = TRUE;
 	}
@@ -885,6 +951,7 @@ static void _eas2ical_process_recurrence (xmlNodePtr n, icalcomponent* vevent)
 			// 2.2.2.18) in a Sync command request. If both elements are included, then the server MUST respect
 			// the value of the Occurrences element and ignore the Until element.
 			if (recur.count == 0) {
+				// fix inclusive vs. exclusive difference by subtracting one second
 				recur.until = icaltime_from_string (value);
 			}
 		}
@@ -1006,13 +1073,13 @@ static GSList* _eas2ical_process_exceptions (xmlNodePtr n, icalcomponent* vevent
 				for (bodySubNode = subNode->children; bodySubNode; bodySubNode = bodySubNode->next) {
 					if (bodySubNode->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) bodySubNode->name, EAS_ELEMENT_DATA)) {
 						value = (gchar*) xmlNodeGetContent (bodySubNode);
+						if (newEventValues == NULL) {
+							newEventValues = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+						}
+						g_hash_table_insert (newEventValues, g_strdup (name), g_strdup (value));
 						break;
 					}
 				}
-				if (newEventValues == NULL) {
-					newEventValues = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-				}
-				g_hash_table_insert (newEventValues, g_strdup (name), g_strdup (value));
 			}
 			// contents of all <Category> present in <Categories> is required to be stored in hashTable
 			else if (g_strcmp0 (name, EAS_ELEMENT_CATEGORIES) == 0) {
@@ -1737,6 +1804,14 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 		// _eas2ical_add_exception_events() destroys the hash tables as it goes
 		// so all we need to do here is free the list
 		g_slist_free (newExceptionEvents);
+
+		// remove synthesized parent (see eas_cal_info_translator_parse_request())
+		if (!g_strcmp0 (icalcomponent_get_summary (vevent), ACTIVESYNCD_PSEUDO_EVENT) &&
+		    g_getenv ("EAS_DEBUG_DETACHED_RECURRENCES") == NULL) {
+			icalcomponent_remove_component (vcalendar, vevent);
+			icalcomponent_free (vevent);
+			vevent = NULL;
+		}
 	}
 
 	if (needtz)
@@ -1873,7 +1948,9 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 		g_free (xmlValue);
 		xmlValue = NULL;
 	} else if (!icaltime_is_null_time (rrule.until)) {
-		gchar *modified = _ical2eas_convert_icaltime_to_utcstr(rrule.until, icaltz);
+		/* Exchange seems to have exclusive end date, while iCalendar is inclusive. Add one second. */
+		struct icaltimetype until = rrule.until;
+		gchar *modified = _ical2eas_convert_icaltime_to_utcstr(until, icaltz);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UNTIL, (const xmlChar*)modified);
 		g_free (modified);
 	}
@@ -2594,6 +2671,203 @@ static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forc
 	g_free (timezoneBase64);
 }
 
+/** compare icaltimetype in qsort() */
+static int comparetimes(const void *a, const void *b)
+{
+	return icaltime_compare (*(const icaltimetype *)a,
+				 *(const icaltimetype *)b);
+}
+
+/**
+ * Check whether a recurrence rule covers all detached recurrences.
+ * Parameters see calculateRecurrence().
+ *
+ * Done by expanding the rrule with the first detached recurrence
+ * as start time and then checking against the next recurrence
+ * until one is found which is not covered or we are done.
+ */
+static gboolean
+rruleMatches (const struct icalrecurrencetype *recur,
+	      int numDetached, const icaltimetype *detached)
+{
+	icalrecur_iterator* ritr = icalrecur_iterator_new (*recur, detached[0]);
+	struct icaltimetype instance;
+	int next = 0;
+	gboolean res = TRUE;
+	while (res &&
+	       next < numDetached &&
+	       (instance = icalrecur_iterator_next (ritr),
+		!icaltime_is_null_time (instance))) {
+		int cmp = icaltime_compare (detached[next], instance);
+		if (cmp == 0) {
+			/* okay, move on to next detached recurrence */
+			next++;
+		} else if (cmp < 0) {
+			/* failure, the current recurrence was not covered */
+			res = FALSE;
+		}
+	}
+
+	if (res &&
+	    (next < numDetached /* iterator did not return enough results */ ||
+	     (instance = icalrecur_iterator_next (ritr),
+	      !icaltime_is_null_time (instance)) /* iterator returns too many results */))
+		res = FALSE;
+
+	icalrecur_iterator_free (ritr);
+	return res;
+}
+
+/**
+ * Generate recurrence rule covering the detached recurrence times.
+ * The time zone of the first detached recurrence is used.
+ *
+ * @param   numDetached
+ *      Number of entries in detached array, > 0.
+ * @param   detached
+ *      date-times of detached recurrences, with time zone,
+ *      sorted from oldest to most recent
+ */
+static struct icalrecurrencetype
+calculateRecurrence (int numDetached, const icaltimetype *detached)
+{
+	static const struct icalrecurrencetype recur = {
+		.freq = ICAL_NO_RECURRENCE,
+		.interval = 1,
+		.week_start = ICAL_MONDAY_WEEKDAY,
+		.by_second = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_minute = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_hour = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_day = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_month_day = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_year_day = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_week_no = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_month = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX },
+		.by_set_pos = { ICAL_RECURRENCE_ARRAY_MAX, ICAL_RECURRENCE_ARRAY_MAX }
+	};
+	int freq;
+	struct icaldurationtype delta;
+	if (numDetached >= 2)
+		delta = icaltime_subtract (detached[1], detached[0]);
+
+	// try yearly, monthly, ... , secondly recurrence
+	for (freq = ICAL_YEARLY_RECURRENCE;
+	     freq >= ICAL_SECONDLY_RECURRENCE;
+	     freq--) {
+		struct icalrecurrencetype res = recur;
+		res.freq = freq;
+		res.until = detached[numDetached - 1];
+			/* icaltime_convert_to_zone (detached[numDetached - 1],
+			   icaltimezone_get_utc_timezone ()); */
+
+		switch (freq) {
+		case ICAL_YEARLY_RECURRENCE:
+			res.by_month[0] = detached[0].month;
+			res.by_month_day[0] = detached[0].day;
+			break;
+		case ICAL_MONTHLY_RECURRENCE:
+			res.by_month_day[0] = detached[0].day;
+			break;
+		case ICAL_WEEKLY_RECURRENCE:
+			res.by_day[0] = icaltime_day_of_week(detached[0]);
+			break;
+		}
+
+		// Try special case first:
+		// calculate delta between first and second recurrence,
+		// use that to set an interval. If we only have two
+		// recurrences, then this will result in an rrule with
+		// no need for EXDATEs. If we have more, perhaps we are
+		// lucky and the rule still matches the rest.
+		if (numDetached >= 2) {
+			res.interval = 0;
+			switch (freq) {
+				/*
+				 * interval > 1 replaced with interval = 1 by Exchange, avoid generating such rules
+				 * case ICAL_YEARLY_RECURRENCE:
+				 * res.interval = detached[1].year - detached[0].year;
+				 * break;
+				 */
+			case ICAL_MONTHLY_RECURRENCE: {
+				int months = detached[1].month - detached[0].month;
+				if (months <= 0) {
+					months += 12;
+				}
+				res.interval = months;
+				break;
+			}
+			case ICAL_DAILY_RECURRENCE:
+				res.interval = delta.weeks * 7 + delta.days;
+				break;
+			case ICAL_HOURLY_RECURRENCE:
+				res.interval = (delta.weeks * 7 + delta.days) * 24 + delta.hours;
+				break;
+			case ICAL_MINUTELY_RECURRENCE:
+				res.interval = ((delta.weeks * 7 + delta.days) * 24 + delta.hours) * 60 + delta.minutes;
+				break;
+			case ICAL_SECONDLY_RECURRENCE:
+				res.interval = (((delta.weeks * 7 + delta.days) * 24 + delta.hours) * 60 + delta.minutes) * 60 + delta.seconds;
+				break;
+			}
+			if (res.interval) {
+				/*
+				 * start with interval + 1, because if a time zone change
+				 * happens between the two detached recurrences, the actual
+				 * delta in time will have +- 1 hour
+				 */
+				for (res.interval++;
+				     res.interval > 1;
+				     res.interval--) {
+					if (rruleMatches (&res, numDetached, detached))
+						return res;
+				}
+			}
+		}
+
+		// general case
+		res.interval = 1;
+		if (rruleMatches (&res, numDetached, detached))
+			return res;
+	}
+
+	// nothing found, will probably fail later somewhere
+	return recur;
+}
+
+/**
+ * Iterate over all regular recurrences of an artificial parent
+ * event and add EXDATEs for all recurrences which do not
+ * have a detached recurrence.
+ */
+static void calculateExdates (icalcomponent *parent,
+			      const struct icalrecurrencetype *recur,
+			      int numDetached,
+			      icaltimetype *detached)
+{
+	icalrecur_iterator* ritr = icalrecur_iterator_new (*recur, detached[0]);
+	struct icaltimetype instance;
+	int next = 0;
+	icalproperty *dtstart = icalcomponent_get_first_property (parent, ICAL_DTSTART_PROPERTY);
+	icalparameter *tzid = icalproperty_get_first_parameter (dtstart, ICAL_TZID_PROPERTY);
+	while ((instance = icalrecur_iterator_next (ritr),
+		!icaltime_is_null_time (instance))) {
+		int cmp = icaltime_compare (detached[next], instance);
+		if (cmp == 0) {
+			/* has detached recurrence, move on to next one */
+			next++;
+		} else if (cmp < 0) {
+			/* Not matched?! Shouldn't happen, but so be it. */
+			next++;
+		} else {
+			icalproperty *prop = icalproperty_vanew_exdate (instance,
+									tzid ? icalparameter_new_clone (tzid) : (void *)0,
+									(void *)0);
+			icalcomponent_add_property (parent, prop);
+		}
+	}
+	icalrecur_iterator_free (ritr);
+}
+
 /**
  * Parse an EasCalInfo structure and convert to EAS XML format
  *
@@ -2608,6 +2882,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 {
 	gboolean success = FALSE;
 	icalcomponent* ical = NULL;
+	icaltimetype *recurrenceTimes = NULL;
 
 	g_debug (" Cal Data: %s", calInfo->data);
 
@@ -2647,12 +2922,50 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			icaltimezone_set_component(icaltz, vtimezone);
 		}
 
-		// Use UTC time zone as fallback. May happen for all-day events (which need
+		// Use Europe/Berlin time zone as fallback. May happen for all-day events (which need
 		// no time zone) or events which truly were defined as local time. In the
 		// latter case it would be better to use the system time zone, but we don't
 		// know what that is. Besides, such events are broken by design and shouldn't occur.
+		//
+		// UTC was used as fallback earlier, but Exchange 2010 rejected the synthesized
+		// recurring parent event unless a real time zone was used. This here was rejected (UTC fallback):
+		// <ApplicationData>
+		//   <calendar:StartTime>20000101T000000Z</calendar:StartTime>
+		//   <calendar:EndTime>20000101T000000Z</calendar:EndTime>
+		//   <calendar:UID>20080407T193125Z-19554-727-1-50-YY@gollum</calendar:UID>
+		//   <calendar:Subject>[[activesyncd pseudo event - ignore me]]</calendar:Subject>
+		//   <calendar:Recurrence>
+		//     <calendar:Recurrence_Type>5</calendar:Recurrence_Type>
+		//     <calendar:Recurrence_MonthOfYear>1</calendar:Recurrence_MonthOfYear>
+		//     <calendar:Recurrence_DayOfMonth>1</calendar:Recurrence_DayOfMonth>
+		//   </calendar:Recurrence>
+		//   <calendar:AllDayEvent>0</calendar:AllDayEvent>
+		//   <calendar:Exceptions>
+		//     <calendar:Exception>
+		//       <calendar:Sensitivity>0</calendar:Sensitivity>
+		//       <calendar:BusyStatus>2</calendar:BusyStatus>
+		//       <calendar:Subject>Recurring 2: Child I without Parent</calendar:Subject>
+		//       <calendar:StartTime>20080413T090000Z</calendar:StartTime>
+		//       <calendar:EndTime>20080413T093000Z</calendar:EndTime>
+		//       <calendar:AllDayEvent>0</calendar:AllDayEvent>
+		//       <calendar:Exception_StartTime>20000101T000000Z</calendar:Exception_StartTime>
+		//     </calendar:Exception>
+		//   </calendar:Exceptions>
+		// </ApplicationData>
+		//
+		// This worked (Europe/Berlin):
+		if (!icaltz)
+			icaltz = icaltimezone_get_builtin_timezone ("Europe/Berlin");
+
+		// No Europe/Berlin?! Use UTC after all.
 		if (!icaltz)
 			icaltz = icaltimezone_get_utc_timezone();
+		if (!icaltz)
+			goto error;
+		vtimezone = icaltimezone_get_component (icaltz);
+		tzid = vtimezone ?
+			icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY) :
+			NULL;
 
 		// Process the components of the VCALENDAR.
 		// Don't make assumptions about any particular order, check RECURRENCE-ID
@@ -2665,10 +2978,75 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 				break;
 			}
 		}
-		if (!vevent)
-			// TODO: not really an error, supported individual detached recurrences without
-			// parent (BMC #22831)
-			goto error;
+
+		/* regenerate artificial parent */
+		if (vevent &&
+		    !g_strcmp0 (icalcomponent_get_summary (vevent), ACTIVESYNCD_PSEUDO_EVENT)) {
+			icalcomponent_remove_component (ical, vevent);
+			icalcomponent_free (vevent);
+			vevent = NULL;
+		}
+
+		if (!vevent) {
+			// Create fake parent with same time zone and same UID
+			// as first detached recurrence. It must have a recurrence
+			// pattern which covers all detached recurrences (because
+			// Exchange rejects those otherwise). In addition, it must
+			// never be visible at any of the recurrences. Add EXDATE
+			// for those recurrences not covered by detached recurrences.
+
+			// Calculate "minimal" recurrence rule (= produces as little
+			// recurrences as possible) based on RECURRENCE-IDs of the
+			// the detached recurrences. The relevant time zone for
+			// recurrences is the one of the fictious parent event.
+			int numDetached = 1;
+			struct icalrecurrencetype recur;
+			int i;
+			icalproperty *rid;
+			icalparameter *tzid;
+
+			vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
+			if (!vevent)
+				goto error;
+			while (icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT))
+				numDetached++;
+			recurrenceTimes = g_malloc (sizeof(icaltimetype) * numDetached);
+			for (vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT), i = 0;
+			     vevent;
+			     vevent = icalcomponent_get_next_component (ical, ICAL_VEVENT_COMPONENT), i++)
+				recurrenceTimes[i] = _eas2cal_component_get_recurrenceid (vevent);
+			qsort (recurrenceTimes, numDetached, sizeof(icaltimetype),
+			       comparetimes);
+
+			recur = calculateRecurrence (numDetached, recurrenceTimes);
+
+			/* take tzid from any of the detached recurrences, but the
+			   start time must come the oldest one */
+			vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
+			rid = icalcomponent_get_first_property (vevent, ICAL_RECURRENCEID_PROPERTY);
+			tzid = icalproperty_get_first_parameter (rid, ICAL_TZID_PARAMETER);
+
+			vevent =
+				icalcomponent_vanew (ICAL_VEVENT_COMPONENT,
+						     icalproperty_vanew_dtstart (recurrenceTimes[0],
+										 tzid ? icalparameter_new_clone (tzid) : (void *)0,
+										 (void *)0),
+						     icalproperty_vanew_dtend (recurrenceTimes[0],
+									       tzid ? icalparameter_new_clone (tzid) : (void *)0,
+									       (void *)0),
+						     icalproperty_new_uid (icalcomponent_get_uid (vevent)),
+						     icalproperty_new_summary (ACTIVESYNCD_PSEUDO_EVENT),
+						     icalproperty_new_rrule (recur),
+						     (void *)0
+						     );
+			if (!vevent)
+				goto error;
+
+			// add EXDATE properties
+			calculateExdates (vevent, &recur, numDetached, recurrenceTimes);
+
+			icalcomponent_add_component (ical, vevent);
+		}
 		prop = icalcomponent_get_first_property (vevent, ICAL_DTSTART_PROPERTY);
 		if (!prop)
 			goto error;
@@ -2748,6 +3126,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 	if (ical) {
 		icalcomponent_free (ical);
 	}
+	g_free (recurrenceTimes);
 
 	return success;
 }
