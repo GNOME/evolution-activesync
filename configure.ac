@@ -133,6 +133,7 @@ AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
     Makefile
+    eas-daemon/Makefile
     eas-daemon/data/Makefile
     eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile

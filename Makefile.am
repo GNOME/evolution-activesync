@@ -9,7 +9,7 @@ if ENABLE_QT_CONFIG_TOOL
   QTCONFIG_DIR = QtActivesyncdConfig
 endif
 
-SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon/libeas libeastest/src eas-daemon/src eas-daemon/data check_tests camel eplugin $(MEEGO_DIR) $(QTCONFIG_DIR) po
+SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests camel eplugin $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 EXTRA_DIST = autogen.sh
 
