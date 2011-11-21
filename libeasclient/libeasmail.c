@@ -835,63 +835,31 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 				     GCancellable *cancellable,
 				     GError **error)
 {
-	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = priv->remoteCommonEas;
+	gboolean ret = FALSE;
 	gchar* _provision_list_buffer = NULL;
 	gchar* _tid = NULL;
 	gchar* _tid_status = NULL;
-	guint cancel_handler_id;
-	guint request_id = priv->next_request_id++;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (priv->account_uid ? priv->account_uid : "NULL"));
+		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
 
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_assert (self);
-	g_assert (*provision_list == NULL);
-
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_common_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
+	if (self == NULL || tid == NULL || tid_status == NULL || provision_list == NULL ||
+	    *tid != NULL || *tid_status != NULL || *provision_list != NULL) {
+		g_set_error (error,
+			     EAS_MAIL_ERROR, EAS_MAIL_ERROR_BADARG,
+			     "eas_mail_handler_get_provision_list requires valid arguments");
+		goto out;
 	}
 
-	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "get_provision_list",
-				 error,
-				 G_TYPE_STRING, priv->account_uid,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, &_tid,
-				 G_TYPE_STRING, &_tid_status,
-				 G_TYPE_STRING, &_provision_list_buffer,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_common_call (self, "get_provision_list", NULL, NULL,
+				     "(s)", "(sss)", cancellable, error,
+				     self->priv->account_uid, &_tid, &_tid_status,
+				     &_provision_list_buffer);
 
 	g_debug ("%s - dbus proxy called", __func__);
 
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
-
-	if (!ret) {
-		if (error && *error) {
-			g_warning ("[%s][%d][%s]",
-				   g_quark_to_string ( (*error)->domain),
-				   (*error)->code,
-				   (*error)->message);
-		}
-		g_warning ("DBus dbus_g_proxy_call failed");
-		goto cleanup;
-	}
+	if (!ret)
+		goto out;
 
 	g_debug ("%s called successfully", __func__);
 
@@ -902,22 +870,19 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	*provision_list = eas_provision_list_new();
 	ret = eas_provision_list_deserialise (*provision_list, _provision_list_buffer);
 	if (!ret) {
-		// TODO: error
+		g_set_error (error,
+			     EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
+			     "eas_mail_handler_get_provision_list failed to unmarshal arguments");
 	}
 
-cleanup:
 	g_free (_provision_list_buffer);
 
-	if (!ret) { // failed - cleanup lists
-		g_assert (error == NULL || *error != NULL);
-		if (error) {
-			g_warning (" Error: %s", (*error)->message);
-		}
+	if (!ret && *provision_list) {
 		g_debug ("%s failure - cleanup lists", __func__);
 		g_object_unref (*provision_list);
 		*provision_list = NULL;
 	}
-
+ out:
 	g_debug ("%s--", __func__);
 	return ret;
 }
