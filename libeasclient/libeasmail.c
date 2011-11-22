@@ -1782,12 +1782,3 @@ eas_mail_handler_cancel_request (GCancellable *cancellable, gpointer user_data, 
 
 	g_debug ("eas_mail_handler_cancel_common_request--");
 }
-
-static void
-eas_mail_handler_cancel_common_request (GCancellable *cancellable, gpointer user_data)
-{
-	g_debug ("eas_mail_handler_cancel_common_request++");
-	eas_mail_handler_cancel_request	(cancellable, user_data, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE);
-	g_debug ("eas_mail_handler_cancel_common_request--");
-
-}
