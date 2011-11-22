@@ -1067,15 +1067,6 @@ progress_signal_handler (DBusGProxy* proxy,
 }
 
 
-static void
-dbus_call_completed (DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data)
-{
-	g_debug ("dbus call completed callback called");
-
-	return;
-}
-
-
 // get the entire email body for listed email
 // email body will be written to a file with the emailid as its name
 gboolean
@@ -1568,13 +1559,10 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				    GCancellable *cancellable,
 				    GError **error)
 {
-	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv = self->priv;
-	DBusGProxy *proxy_common = priv->remoteCommonEas;	// uses the common object, not the email object
+	gboolean ret = FALSE;
 	gchar **created_emailinfo_array = NULL;
 	gchar **deleted_emailinfo_array = NULL;
 	gchar **changed_emailinfo_array = NULL;
-	guint request_id;
 	gchar **delete_emails_array = NULL;
 	gchar **ret_failed_changes_array = NULL;
 	guint delete_list_length = g_slist_length ( (GSList*) delete_emails);
@@ -1584,8 +1572,6 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	int loop = 0;
 	guint i = 0;
 	GSList *l = (GSList *) change_emails;
-	DBusGProxyCall *call;
-	guint cancel_handler_id;
 
 	g_debug ("eas_mail_handler_sync_folder_email++");
 
@@ -1597,19 +1583,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
 			     "bad argument passed to eas_mail_handler_sync_folder_email");
-		ret = FALSE;
 		goto cleanup;
-	}
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	// if there's a progress function supplied, add it (and the progress_data) to the hashtable, indexed by id
-	request_id = priv->next_request_id++;
-
-	if (progress_fn) {
-		ret = eas_mail_add_progress_info_to_table (self, request_id, progress_fn, progress_data, error);
-		if (!ret)
-			goto finish;
 	}
 
 	// build string array from delete_emails list
@@ -1630,7 +1604,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 				     ("out of memory"));
 			change_emails_array[i] = NULL;
-			goto finish;
+			goto cleanup;
 		}
 		change_emails_array[i] = serialised_email;
 		g_debug ("change_emails_array[%d] = %s", i, change_emails_array[i]);
@@ -1639,59 +1613,29 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 	}
 	change_emails_array[i] = NULL;
 
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_common_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
-	}
-
 	// call dbus api with appropriate params
-	call = dbus_g_proxy_begin_call (proxy_common,
-					"sync_folder_items",
-					dbus_call_completed,
-					NULL, 							// userdata passed to callback
-					NULL, 							// destroy notification
-					G_TYPE_STRING, self->priv->account_uid,
-					G_TYPE_UINT, EAS_ITEM_MAIL,
-					G_TYPE_STRING, sync_key_in,
-					G_TYPE_STRING, folder_id,
-					G_TYPE_UINT, time_window,
-					G_TYPE_STRV, NULL,						// add items - always NULL for email
-					G_TYPE_STRV, delete_emails_array,      // delete items.
-					G_TYPE_STRV, change_emails_array,		// change items
-					G_TYPE_UINT, request_id,
-					G_TYPE_INVALID);
-
-	g_debug ("block until results available");
-
-	// blocks until results are available:
-	ret = dbus_g_proxy_end_call (proxy_common,
-				     call,
-				     error,
-				     G_TYPE_STRING, sync_key_out,
-				     G_TYPE_BOOLEAN, more_available,
-				     G_TYPE_STRV, &created_emailinfo_array,
-				     G_TYPE_STRV, &deleted_emailinfo_array,
-				     G_TYPE_STRV, &changed_emailinfo_array,
-				     G_TYPE_STRV, NULL,
-				     G_TYPE_STRV, NULL,
-				     G_TYPE_STRV, &ret_failed_changes_array,
-				     G_TYPE_INVALID);
+	ret = eas_gdbus_common_call (self, "sync_folder_items",
+				     progress_fn, progress_data,
+				     "(sussuas^as^asu)", "(sb^as^as^as^as^as^as)",
+				     cancellable, error,
+				     /* input parameters... */
+				     self->priv->account_uid, EAS_ITEM_MAIL,
+				     sync_key_in, folder_id,
+				     time_window,
+				     /* Note type 'as' for this, so that NULL doesn't cause a crash */
+				     NULL,			// add items - always NULL for email
+				     /* Ick. It crashes if we pass NULL. Hack around it... */
+				     delete_emails_array?:&change_emails_array[i],	// delete items.
+				     change_emails_array,	// change items
+				     0,				// request ID
+				     /* output parameters... */
+				     sync_key_out, more_available,
+				     &created_emailinfo_array,
+				     &deleted_emailinfo_array,
+				     &changed_emailinfo_array,
+				     NULL, NULL, &ret_failed_changes_array);
 
 	g_debug ("dbus call returned");
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
 
 	// convert created/deleted/changed emailinfo arrays into lists of emailinfo objects (deserialise results)
 	if (ret) {
@@ -1750,9 +1694,6 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 		g_free (ret_failed_changes_array);
 	}
 
-finish:
-	g_hash_table_remove (priv->email_progress_fns_table,
-			     GUINT_TO_POINTER (request_id));
 cleanup:
 	// free the change_emails array
 	for (i = 0; i < change_list_length && change_emails_array[i]; i++) {
