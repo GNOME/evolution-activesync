@@ -920,69 +920,20 @@ eas_mail_handler_accept_provision_list (EasEmailHandler *self,
 					GCancellable *cancellable,
 					GError **error)
 {
-	EasEmailHandlerPrivate *priv = EAS_EMAIL_HANDLER_PRIVATE (self);
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = priv->remoteCommonEas;
-	guint cancel_handler_id;
-	guint request_id = priv->next_request_id++;
+	gboolean ret = FALSE;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (priv->account_uid ? priv->account_uid : "NULL"));
-
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_assert (self);
-
-	if (cancellable) {
-		EasCancelInfo *cancel_info = g_new0 (EasCancelInfo, 1);	// freed on disconnect
-
-		cancel_info->handler = self;
-		cancel_info->request_id = request_id;
-		// connect to the "cancelled" signal
-		g_debug ("connect to cancellable");
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							   G_CALLBACK (eas_mail_handler_cancel_common_request),
-							   (gpointer) cancel_info,
-							   g_free);				// data destroy func
-	}
+		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
 
 	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "accept_provision_list",
-				 error,
-				 G_TYPE_STRING, priv->account_uid,
-				 G_TYPE_STRING, tid,
-				 G_TYPE_STRING, tid_status,
-				 G_TYPE_INVALID,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_common_call (self, "accept_provision_list",
+				     NULL, NULL, "(sss)", NULL,
+				     cancellable, error,
+				     self->priv->account_uid,
+				     tid, tid_status);
 
-	g_debug ("%s - dbus proxy called", __func__);
-
-	if (cancellable) {
-		// disconnect from cancellable
-		g_debug ("disconnect from cancellable");
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
-	}
-
-	if (!ret) {
-		if (error && *error) {
-			g_warning ("[%s][%d][%s]",
-				   g_quark_to_string ( (*error)->domain),
-				   (*error)->code,
-				   (*error)->message);
-		}
-		g_warning ("DBus dbus_g_proxy_call failed");
-		goto cleanup;
-	}
-
-	g_debug ("%s called successfully", __func__);
-
-cleanup:
-
-	if (!ret) { // failed - cleanup lists
-		g_assert (error == NULL || *error != NULL);
-		if (error) {
-			g_warning (" Error: %s", (*error)->message);
-		}
-	}
+	g_debug ("%s - dbus proxy called %ssuccessfully", __func__,
+		 ret ? "": "un");
 
 	g_debug ("%s--", __func__);
 	return ret;
