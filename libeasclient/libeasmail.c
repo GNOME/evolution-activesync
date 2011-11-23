@@ -103,9 +103,6 @@ static void progress_signal_handler (DBusGProxy * proxy,
 				     guint percent,
 				     gpointer user_data);
 
-static void eas_mail_handler_cancel_common_request (GCancellable *cancellable,
-						    gpointer user_data);
-
 // TODO - how much verification of args should happen??
 
 static void
@@ -1722,63 +1719,4 @@ cleanup:
 	g_debug ("eas_mail_handler_sync_folder_email_info--");
 
 	return ret;
-}
-
-static void
-eas_mail_handler_cancel_request (GCancellable *cancellable, gpointer user_data, const gchar *path, const gchar *iface)
-{
-	EasCancelInfo *cancel_info = user_data;
-	EasEmailHandler* self = cancel_info->handler;
-	EasEmailHandlerPrivate *priv = self->priv;
-	gboolean ret;
-	guint request_id = cancel_info->request_id;
-	GError *error = NULL;
-	DBusGConnection *bus;
-	DBusGProxy *proxy;
-
-	g_debug ("eas_mail_handler_cancel_request++");
-
-	g_debug ("call dbus to cancel request with id %d", request_id);
-
-	// create (and the tear down) a new dbus session to connect to dbus interface
-	// to allow us to send the cancel to dbus even if email handler's main
-	// dbus session is blocked
-	g_debug ("Connecting to new D-Bus Session to cancel");
-	bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
-	if (bus == NULL) {
-		g_warning ("Error: Couldn't connect to the Session bus (%s) ", error->message);
-	}
-
-	g_debug ("Creating a GLib proxy object for Eas.");
-	proxy =  dbus_g_proxy_new_for_name (bus,
-					    EAS_SERVICE_NAME,
-					    path,
-					    iface);
-
-	if (proxy == NULL) {
-		g_warning ("Error: Couldn't create the proxy object");
-	}
-
-	// call the cancel operation on the common interface
-	ret = dbus_g_proxy_call (proxy,
-				 "cancel_request",
-				 &error,
-				 G_TYPE_STRING, priv->account_uid,
-				 G_TYPE_UINT, request_id,
-				 G_TYPE_INVALID,
-				 G_TYPE_INVALID);	// no out params. fire and forget
-
-	g_debug ("dbus call to cancel request returned");
-
-	if (!ret) {
-		g_warning ("cancel request failed with %s", error->message);
-		g_error_free (error);
-	}
-
-	// disconnect from dbus
-	dbus_g_connection_unref (bus);
-
-	g_object_unref (proxy);
-
-	g_debug ("eas_mail_handler_cancel_common_request--");
 }
