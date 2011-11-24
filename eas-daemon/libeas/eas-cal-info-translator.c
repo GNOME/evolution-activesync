@@ -3033,42 +3033,10 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			icaltimezone_set_component(icaltz, vtimezone);
 		}
 
-		// Use Europe/Berlin time zone as fallback. May happen for all-day events (which need
+		// Use UTC time zone as fallback. May happen for all-day events (which need
 		// no time zone) or events which truly were defined as local time. In the
 		// latter case it would be better to use the system time zone, but we don't
 		// know what that is. Besides, such events are broken by design and shouldn't occur.
-		//
-		// UTC was used as fallback earlier, but Exchange 2010 rejected the synthesized
-		// recurring parent event unless a real time zone was used. This here was rejected (UTC fallback):
-		// <ApplicationData>
-		//   <calendar:StartTime>20000101T000000Z</calendar:StartTime>
-		//   <calendar:EndTime>20000101T000000Z</calendar:EndTime>
-		//   <calendar:UID>20080407T193125Z-19554-727-1-50-YY@gollum</calendar:UID>
-		//   <calendar:Subject>[[activesyncd pseudo event - ignore me]]</calendar:Subject>
-		//   <calendar:Recurrence>
-		//     <calendar:Recurrence_Type>5</calendar:Recurrence_Type>
-		//     <calendar:Recurrence_MonthOfYear>1</calendar:Recurrence_MonthOfYear>
-		//     <calendar:Recurrence_DayOfMonth>1</calendar:Recurrence_DayOfMonth>
-		//   </calendar:Recurrence>
-		//   <calendar:AllDayEvent>0</calendar:AllDayEvent>
-		//   <calendar:Exceptions>
-		//     <calendar:Exception>
-		//       <calendar:Sensitivity>0</calendar:Sensitivity>
-		//       <calendar:BusyStatus>2</calendar:BusyStatus>
-		//       <calendar:Subject>Recurring 2: Child I without Parent</calendar:Subject>
-		//       <calendar:StartTime>20080413T090000Z</calendar:StartTime>
-		//       <calendar:EndTime>20080413T093000Z</calendar:EndTime>
-		//       <calendar:AllDayEvent>0</calendar:AllDayEvent>
-		//       <calendar:Exception_StartTime>20000101T000000Z</calendar:Exception_StartTime>
-		//     </calendar:Exception>
-		//   </calendar:Exceptions>
-		// </ApplicationData>
-		//
-		// This worked (Europe/Berlin):
-		if (!icaltz)
-			icaltz = icaltimezone_get_builtin_timezone ("Europe/Berlin");
-
-		// No Europe/Berlin?! Use UTC after all.
 		if (!icaltz)
 			icaltz = icaltimezone_get_utc_timezone();
 		if (!icaltz)
