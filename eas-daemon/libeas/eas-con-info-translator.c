@@ -755,8 +755,7 @@ set_xml_element (xmlNodePtr appData, const xmlChar* name, const xmlChar* content
 	g_return_if_fail (name != NULL);
 	g_return_if_fail (content != NULL);
 
-	if (strlen ( (const char *) content) != 0)
-		xmlNewTextChild (appData, NULL, name, content);
+	xmlNewTextChild (appData, NULL, name, content);
 }
 
 static void
@@ -962,23 +961,27 @@ set_xml_categories (xmlNodePtr appData, EVCardAttribute *attr)
 }
 
 static void
-set_xml_Note (xmlNodePtr appData, EVCardAttribute *attr)
+set_xml_Note_text (xmlNodePtr appData, const char *text)
 {
 	xmlNodePtr body = NULL;
 
-	if (strlen(attribute_get_nth_value(attr, 0)) > 0){
-		body = xmlNewChild (appData, NULL, (xmlChar *)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
-		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE,
-			     (const xmlChar*) "1");
-		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_SIZE,
-			     (const xmlChar*) "0");
-		/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TRUNCATED,
-				(const xmlChar*) "0"); */
-		set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_DATA,
-			    (const xmlChar*) (const xmlChar*)attribute_get_nth_value(attr, 0));
-		/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_PREVIEW,
-			    (const xmlChar*) "0");*/
-	}
+	body = xmlNewChild (appData, NULL, (xmlChar *)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE,
+			(const xmlChar*) "1");
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_SIZE,
+			(const xmlChar*) "0");
+	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TRUNCATED,
+	   (const xmlChar*) "0"); */
+	set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_DATA,
+			(const xmlChar*) (const xmlChar*)text);
+	/* set_xml_element(body, (const xmlChar*)EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_PREVIEW,
+	   (const xmlChar*) "0");*/
+}
+
+static void
+set_xml_Note (xmlNodePtr appData, EVCardAttribute *attr)
+{
+	set_xml_Note_text (appData, attribute_get_nth_value(attr, 0));
 }
 
 static void
@@ -1047,6 +1050,63 @@ set_xml_contact_date (xmlNodePtr appData, EVCardAttribute *attr, gchar* eas_elem
 		 seconds / 60 % 60,
 		 seconds % 60);
 	set_xml_element (appData, (const xmlChar*) eas_element, (const xmlChar*)buffer);
+}
+
+/**
+ * Ensure that all XML properties are set. Otherwise removing
+ * properties is not possible. It would be nice if this could be
+ * limited to properties which exist on the server, but the daemon
+ * doesn't track that information.
+ */
+static void
+set_missing_contact_properties (xmlNodePtr appData)
+{
+	const char *elements[] = {
+		EAS_ELEMENT_LASTNAME,
+		EAS_ELEMENT_FIRSTNAME,
+		EAS_ELEMENT_MIDDLENAME,
+		EAS_ELEMENT_SUFFIX,
+		EAS_ELEMENT_COMPANYNAME,
+		EAS_ELEMENT_DEPARTMENT,
+		EAS_ELEMENT_OFFICELOCATION,
+		EAS_ELEMENT_BUSINESSFAXNUMBER,
+		EAS_ELEMENT_HOMEFAXNUMBER,
+		EAS_ELEMENT_MOBILEPHONENUMBER,
+		EAS_ELEMENT_CARPHONENUMBER,
+		EAS_ELEMENT_RADIOPHONENUMBER,
+		EAS_ELEMENT_PAGER,
+		EAS_ELEMENT_BUSINESSPHONENUMBER,
+		EAS_ELEMENT_BUSINESS2PHONENUMBER,
+		EAS_ELEMENT_HOMEPHONENUMBER,
+		EAS_ELEMENT_HOME2PHONENUMBER,
+		EAS_ELEMENT_EMAIL1ADDRESS,
+		EAS_ELEMENT_EMAIL2ADDRESS,
+		EAS_ELEMENT_EMAIL3ADDRESS,
+		EAS_ELEMENT_CONTACTS2_NICKNAME,
+		EAS_ELEMENT_WEBPAGE,
+		EAS_ELEMENT_TITLE,
+		EAS_ELEMENT_JOBTITLE,
+		EAS_ELEMENT_SPOUSE,
+		EAS_ELEMENT_FILEAS,
+		EAS_ELEMENT_ASSISTANTNAME,
+		EAS_ELEMENT_CONTACTS2_MANAGERNAME,
+		EAS_ELEMENT_OFFICELOCATION,
+		EAS_ELEMENT_PICTURE,
+
+		/* can be set like a text element */
+		EAS_ELEMENT_CATEGORIES,
+
+		NULL
+	};
+	int i;
+
+	for (i = 0; elements[i]; i++)
+		if (!is_element_set (appData, elements[i]))
+			set_xml_element (appData, (const xmlChar *)elements[i], (const xmlChar *)"");
+
+	/* special case for body */
+	if (!is_element_set (appData, EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY))
+		set_xml_Note_text (appData, "");
 }
 
 gboolean
@@ -1278,6 +1338,8 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 
 
 	g_object_unref (vcard);
+
+	set_missing_contact_properties (appData);
 
 	if (getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 4)) {
 		xmlChar* dump_buffer = NULL;

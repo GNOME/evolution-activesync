@@ -195,6 +195,20 @@ typedef struct {
 
 compile_time_assert ( (sizeof (EasTimeZone) == 172), EasTimeZone_not_expected_size);
 
+/* Check if a contact field allready set in the applicationdata xml children*/
+static gboolean
+is_element_set (xmlNodePtr appData, const gchar* name)
+{
+	xmlNodePtr node = NULL;
+	g_return_val_if_fail (appData != NULL && name != NULL, FALSE);
+	node = appData;
+	for (node = appData->children; node ; node = node->next)
+		if (!strcmp ( (char*) node->name, name))
+			return TRUE;
+
+	return FALSE;
+}
+
 /**     @brief Get a DATE or DATE-TIME property as an icaltime
  *
  *      If the property is a DATE-TIME with a timezone parameter and a
@@ -2129,6 +2143,103 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 
 }
 
+static void set_xml_body_text (xmlNodePtr appData, const char *text)
+{
+	xmlNodePtr bodyNode = xmlNewChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
+	xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE, (const xmlChar*) EAS_BODY_TYPE_PLAINTEXT);
+	xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*) EAS_BOOLEAN_FALSE);
+	xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*) text);
+	// All other fields are optional
+}
+
+
+/**
+ * Ensure that all XML properties are set. Otherwise removing
+ * properties is not possible. It would be nice if this could be
+ * limited to properties which exist on the server, but the daemon
+ * doesn't track that information.
+ */
+static void
+set_missing_calendar_properties (xmlNodePtr node, gboolean exception)
+{
+	/*
+	 * The default values must match the iCalendar 2.0 defaults,
+	 * so that a missing iCalendar 2.0 property leads to the right
+	 * explicit value in XML.
+	 */
+	static const struct {
+		const char *name;
+		const char *def;
+		gboolean notForExceptions;
+	} elements[] = {
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SUBJECT, "" },
+		/* no useful defaults for start and end time */
+		/* EAS_NAMESPACE_CALENDAR EAS_ELEMENT_STARTTIME, */
+		/* EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, */
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_LOCATION, "" },
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_SENSITIVITY, EAS_SENSITIVITY_NORMAL },
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_BUSYSTATUS, EAS_BUSYSTATUS_BUSY },
+
+		/* can only be set on parent event */
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, "0", TRUE },
+
+		/*
+		 * organizer information is added back by Exchange
+		 * anyway (by setting the calendar owner), so don't
+		 * bother sending empty properties
+		 */
+		/* EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_EMAIL, */
+		/* EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ORGANIZER_NAME, */
+
+		/* adding <Reminder> doesn't seem to be necessary to remove a reminder */
+		/* EAS_NAMESPACE_CALENDAR EAS_ELEMENT_REMINDER */
+
+		/* Can be set like a text element, but not on
+		   exceptions. <Categories> cannot be added without
+		   entries to an exception (which is allowed for the
+		   parent). Has the effect that exceptions cannot
+		   remove the categories of their parent. Attendees
+		   also cannot differ from the parent.
+		*/
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_CATEGORIES, "", TRUE },
+		{ EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ATTENDEES, "", TRUE },
+
+		/*
+		 * removing a recurrence rule is more difficult, not
+		 * currently supported: a <Type> has to be set, but there
+		 * is no value for "does not recur"
+		 */
+		/* { EAS_NAMESPACE_CALENDAR EAS_ELEMENT_RECURRENCE, "" }, */
+
+		/*
+		 * An empty <Exceptions> element is okay, but doesn't
+		 * help for removing EXDATE or detached recurrence: we
+		 * would have to send an explicit <Exception> with
+		 * <Exception_Deleted>0 and the right
+		 * <Exception_StartTime> to reset an exception on the
+		 * server. The daemon doesn't know about stored
+		 * exceptions and the iCalendar 2.0 item doesn't tell
+		 * us, so we can't do that here.
+		 *
+		 * TODO BMC #24290: The solution might be to add special
+		 * X-ACTIVESYNCD-OLD-EXDATE values when sending data to
+		 * the local client. Assuming that we get them back, we
+		 * could then add the right <Exception> elements.
+		 */
+		/* { EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONS, "" }, */
+		{ NULL, NULL }
+	};
+	int i;
+
+	for (i = 0; elements[i].name; i++)
+		if ((!exception || !elements[i].notForExceptions) &&
+		    !is_element_set (node, elements[i].name))
+			xmlNewTextChild (node, NULL, (const xmlChar *)elements[i].name, (const xmlChar *)elements[i].def);
+
+	/* special case for body */
+	if (!is_element_set (node, EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY))
+		set_xml_body_text (node, "");
+}
 
 /**
  * Process the VEVENT component during parsing of an iCalendar
@@ -2370,12 +2481,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 
 				// See [MS-ASAIRS] for format of the <Body> element:
 				// http://msdn.microsoft.com/en-us/library/dd299454(v=EXCHG.80).aspx
-				xmlNodePtr bodyNode = xmlNewChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY, NULL);
-				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_BODY_TYPE, (const xmlChar*) EAS_BODY_TYPE_PLAINTEXT);
-				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_TRUNCATED, (const xmlChar*) EAS_BOOLEAN_FALSE);
-				xmlNewTextChild (bodyNode, NULL, (const xmlChar*) EAS_NAMESPACE_AIRSYNCBASE EAS_ELEMENT_DATA, (const xmlChar*) icalproperty_get_description(prop));
-				// All other fields are optional
-
+				set_xml_body_text (appData, icalproperty_get_description(prop));
 			}
 			break;
 
@@ -2416,6 +2522,11 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 		} else {
 			xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*) EAS_BOOLEAN_FALSE);
 		}
+
+
+		// ensure that all properties are set so that missing ones
+		// really get removed on the server
+		set_missing_calendar_properties (appData, exception);
 	}
 }
 
