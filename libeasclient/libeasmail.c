@@ -40,7 +40,6 @@
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
 #include "eas-logger.h"
-#include "eas-marshal.h"
 
 G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
