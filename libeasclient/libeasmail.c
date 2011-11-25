@@ -71,7 +71,6 @@ struct _EasEmailHandlerPrivate {
 	/* Obsolescent dbus-glib bits: */
 	DBusGConnection *bus;
 	DBusGProxy *remoteEas;
-	DBusGProxy *remoteCommonEas;
 
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
@@ -121,7 +120,6 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 
 	priv->connection = NULL;
 	priv->remoteEas = NULL;
-	priv->remoteCommonEas = NULL;
 	priv->bus = NULL;
 	priv->account_uid = NULL;
 	priv->next_request_id = 1;
@@ -275,20 +273,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 		return NULL;
 	}
 
-	g_debug ("Creating a GLib proxy object for Eas.");
-	priv->remoteCommonEas =  dbus_g_proxy_new_for_name (priv->bus,
-							    EAS_SERVICE_NAME,
-							    EAS_SERVICE_COMMON_OBJECT_PATH,
-							    EAS_SERVICE_COMMON_INTERFACE);
-	if (priv->remoteCommonEas == NULL) {
-		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
-			     "Failed to create proxy for common interface");
-		g_warning ("Error: Couldn't create the proxy object for common");
-		return NULL;
-	}
-
 	dbus_g_proxy_set_default_timeout (priv->remoteEas, 1000000);
-	dbus_g_proxy_set_default_timeout (priv->remoteCommonEas, 1000000);
 	priv->account_uid = g_strdup (account_uid);
 
 	priv->connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
