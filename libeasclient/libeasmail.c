@@ -386,8 +386,9 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 
 	/* Ignore error; it's not the end of the world if progress info
 	   is lost, and it should never happen anyway */
-	eas_mail_add_progress_info_to_table (self, serial,
-					     progress_fn, progress_data, NULL);
+	if (progress_fn)
+		eas_mail_add_progress_info_to_table (self, serial, progress_fn,
+						     progress_data, NULL);
 
 	g_main_loop_run (call.loop);
 
@@ -483,7 +484,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 
 	g_object_unref (reply);
  out_no_reply:
-	if (serial)
+	if (serial && progress_fn)
 		g_hash_table_remove (self->priv->email_progress_fns_table,
 				     GUINT_TO_POINTER (serial));
 
