@@ -414,11 +414,6 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 						NULL, NULL);
 	}
 
-	g_main_context_pop_thread_default (ctxt);
-	g_main_context_unref (ctxt);
-	g_main_loop_unref (call.loop);
-	g_object_unref (call.result);
-
 	if (!reply)
 		goto out_no_reply;
 
@@ -489,6 +484,12 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 				     GUINT_TO_POINTER (serial));
 
 	va_end (ap);
+
+	g_main_context_pop_thread_default (ctxt);
+	g_main_context_unref (ctxt);
+	g_main_loop_unref (call.loop);
+	g_object_unref (call.result);
+
 	return success;
 }
 
