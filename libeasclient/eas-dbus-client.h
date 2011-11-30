@@ -74,4 +74,15 @@ eas_gdbus_call_finish (struct eas_gdbus_client *client, GAsyncResult *result,
 		       guint cancel_serial, const gchar *out_params,
 		       va_list *ap, GError **error);
 
+guint
+eas_gdbus_progress_subscribe (struct eas_gdbus_client *client,
+			      const gchar *interface,
+			      const gchar *signal,
+			      const gchar *object);
+
+void
+eas_gdbus_progress_unsubscribe (struct eas_gdbus_client *client,
+				guint handle);
+
+
 #endif /* EAS_DBUS_CLIENT_H */

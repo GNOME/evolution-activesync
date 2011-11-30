@@ -67,15 +67,6 @@ struct _EasEmailHandlerPrivate {
 	guint common_signal;
 };
 
-// fwd declarations:
-static void progress_signal_handler (GDBusConnection *connection,
-				     const gchar *sender_name,
-				     const gchar *object_path,
-				     const gchar *interface_name,
-				     const gchar *signal_name,
-				     GVariant *parameters,
-				     gpointer user_data);
-
 // TODO - how much verification of args should happen??
 
 static void
@@ -112,10 +103,8 @@ eas_mail_handler_finalize (GObject *object)
 
 	priv = cnc->priv;
 
-	g_dbus_connection_signal_unsubscribe (priv->eas_client.connection,
-					      priv->mail_signal);
-	g_dbus_connection_signal_unsubscribe (priv->eas_client.connection,
-					      priv->common_signal);
+	eas_gdbus_progress_unsubscribe (&priv->eas_client, priv->mail_signal);
+	eas_gdbus_progress_unsubscribe (&priv->eas_client, priv->common_signal);
 
 	eas_gdbus_client_destroy (&priv->eas_client);
 
@@ -179,27 +168,15 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 		return NULL;
 	}
 
-	priv->mail_signal =
-		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
-						    EAS_SERVICE_NAME,
-						    EAS_SERVICE_MAIL_INTERFACE,
-						    EAS_MAIL_SIGNAL_PROGRESS,
-						    EAS_SERVICE_MAIL_OBJECT_PATH,
-						    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
-						    progress_signal_handler,
-						    &priv->eas_client, NULL);
+	priv->mail_signal = eas_gdbus_progress_subscribe (&priv->eas_client,
+							  EAS_SERVICE_MAIL_INTERFACE,
+							  EAS_MAIL_SIGNAL_PROGRESS,
+							  EAS_SERVICE_MAIL_OBJECT_PATH);
 
-	priv->common_signal =
-		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
-						    EAS_SERVICE_NAME,
-						    EAS_SERVICE_COMMON_INTERFACE,
-						    EAS_MAIL_SIGNAL_PROGRESS,
-						    EAS_SERVICE_COMMON_OBJECT_PATH,
-						    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
-						    progress_signal_handler,
-						    &priv->eas_client, NULL);
-
-
+	priv->common_signal = eas_gdbus_progress_subscribe (&priv->eas_client,
+							   EAS_SERVICE_COMMON_INTERFACE,
+							   EAS_MAIL_SIGNAL_PROGRESS,
+							   EAS_SERVICE_COMMON_OBJECT_PATH);
 	g_debug ("eas_mail_handler_new--");
 	return object;
 }
@@ -710,59 +687,6 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 	g_debug ("sync_key = %s", sync_key);
 
 	return ret;
-}
-
-
-
-static void
-progress_signal_handler(GDBusConnection *connection,
-			const gchar *sender_name,
-			const gchar *object_path,
-			const gchar *interface_name,
-			const gchar *signal_name,
-			GVariant *parameters,
-			gpointer user_data)
-{
-	EasProgressCallbackInfo *progress_callback_info;
-	struct eas_gdbus_client *client = user_data;
-	guint request_id, percent;
-
-	g_debug ("progress_signal_handler++");
-
-	if (!parameters) {
-		g_debug ("Got progress signal with no parameters\n");
-		goto out;
-	}
-
-	if (!g_variant_is_of_type (parameters, G_VARIANT_TYPE ("(uu)"))) {
-		g_debug ("Got progress signal with wrong parameters (%s)\n",
-			 g_variant_get_type_string (parameters));
-		goto out;
-	}
-
-	g_variant_get (parameters, "(uu)", &request_id, &percent);
-
-	if (percent > 0) {
-		// if there's a progress function for this request in our hashtable, call it:
-		g_mutex_lock (client->progress_lock);
-		progress_callback_info = g_hash_table_lookup (client->progress_fns_table,
-							      GUINT_TO_POINTER (request_id));
-		g_mutex_unlock (client->progress_lock);
-		if (progress_callback_info) {
-			if (percent > progress_callback_info->percent_last_sent) {
-				EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
-
-				g_debug ("call progress function with %d%c", percent, '%');
-				progress_callback_info->percent_last_sent = percent;
-
-				progress_fn (progress_callback_info->progress_data, percent);
-			}
-		}
-	}
-
- out:
-	g_debug ("progress_signal_handler--");
-	return;
 }
 
 
