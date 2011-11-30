@@ -1461,30 +1461,84 @@ eas_mail_handler_copy_to_folder (EasEmailHandler* self,
 	/* TODO */
 }
 
-static void watch_email_folder_completed (DBusGProxy* proxy, DBusGProxyCall* call, gpointer user_data)
+struct _eas_ping_call {
+	EasEmailHandler *handler;
+	guint cancel_handler_id;
+	guint32 serial;
+	GCancellable *cancellable;
+	gboolean cancelled;
+	EasPushEmailCallback cb;
+	gpointer cbdata;
+};
+
+/* Ick. eas_gdbus_call_finish maybe shouldn't take a va_list *, and then we wouldn't
+   have to jump through this hoop. Maybe make it return a GVariant? */
+static gboolean
+eas_gdbus_ping_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel_serial,
+		       const gchar *out_params, GError **error, ...)
 {
+	va_list ap;
+	gboolean ret;
+
+	va_start (ap, error);
+	ret = eas_gdbus_call_finish (self, result, cancel_serial, out_params, &ap, error);
+	va_end (ap);
+
+	return ret;
+}
+
+static void
+_ping_done (GObject *conn, GAsyncResult *result, gpointer _call)
+{
+	struct _eas_ping_call *call = _call;
+	GDBusMessage *reply;
 	GError *error = NULL;
-	gchar* id;
-	gchar **changed_folder_array = NULL;
-	gint index = 0;
 	GSList *folder_list = NULL;
-	EasPushEmailCallback callback = NULL;
+	gchar **results = NULL;
+	int i;
 
-	g_debug ("watch_email_folder_completed");
+	reply = g_dbus_connection_send_message_with_reply_finish (call->handler->priv->connection,
+								  result, &error);
+	if (reply) {
+		eas_gdbus_ping_finish (call->handler, result,
+				       call->cancelled ? call->serial : 0,
+				       "(^as)", &error, &results);
 
-	dbus_g_proxy_end_call (proxy, call, &error,
-			       G_TYPE_STRV, &changed_folder_array,
-			       G_TYPE_INVALID);
+		if (results) {
+			for (i=0; results[i]; i++) {
+				g_debug ("Folder '%s' changed in Ping results", results[i]);
+				folder_list = g_slist_append (folder_list, g_strdup (results[i]));
+			}
+			g_strfreev (results);
+		}
+		g_object_unref (reply);
+	}
+	/* Callee must free list *and* error */
+	call->cb (folder_list, error);
 
-	while ( (id = changed_folder_array[index++])) {
-		g_debug ("Folder id = [%s]", id);
-		folder_list = g_slist_prepend (folder_list, g_strdup (id));
+	g_object_unref (call->handler);
+	g_clear_error (&error);
+	g_slist_foreach (folder_list, (GFunc)g_free, NULL);
+	g_slist_free (folder_list);
+
+	if (call->cancellable) {
+		g_cancellable_disconnect (call->cancellable, call->cancel_handler_id);
+		g_object_unref (call->cancellable);
 	}
 
-	callback = (EasPushEmailCallback) (user_data);
-	callback (folder_list, error);
+	g_slice_free (struct _eas_ping_call, call);
+}
 
-	return;
+static void
+_ping_cancel (GCancellable *cancellable, gpointer _call)
+{
+	struct _eas_ping_call *call = _call;
+
+	/* We can't send the DBus message from here; the GDBusConnection will
+	   deadlock itself in g_cancellable_disconnect, because it wants its
+	   *own* cancel handler to complete but ends up waiting for *this* one,
+	   which in turn is waiting for the connection lock. */
+	call->cancelled = TRUE;
 }
 
 gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
@@ -1493,11 +1547,11 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 					       EasPushEmailCallback cb,
 					       GError **error)
 {
-	gboolean ret = TRUE;
-	DBusGProxy *proxy = self->priv->remoteEas;
+	GCancellable *cancellable = NULL;
+	GDBusMessage *message;
 	gchar **folder_array = NULL;
-	// Build string array from items_deleted GSList
 	guint list_length = g_slist_length ( (GSList*) folder_ids);
+	struct _eas_ping_call *call;
 	int loop = 0;
 
 	g_debug ("eas_mail_handler_watch_email_folders++");
@@ -1513,6 +1567,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 		g_set_error (error, EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
 			     ("out of memory"));
+		return FALSE;
 	}
 
 	for (; loop < list_length; ++loop) {
@@ -1523,24 +1578,38 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 
 
 	g_debug ("eas_mail_handler_watch_email_folders1");
-	// call dbus api
-	dbus_g_proxy_begin_call (proxy, "watch_email_folders",
-				 watch_email_folder_completed,
-				 cb, 				//callback pointer
-				 NULL, 						// destroy notification
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_STRING, heartbeat,
-				 G_TYPE_STRV, folder_array,
-				 G_TYPE_INVALID);
+	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,
+						  EAS_SERVICE_MAIL_OBJECT_PATH,
+						  EAS_SERVICE_MAIL_INTERFACE,
+						  "watch_email_folders");
+	g_dbus_message_set_body (message,
+				 g_variant_new ("(ss^as)",
+						self->priv->account_uid,
+						heartbeat, folder_array));
 	g_strfreev (folder_array);
 
-
-
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
+	call = g_slice_new0 (struct _eas_ping_call);
+	call->handler = g_object_ref (self);
+	call->cb = cb;
+	if (cancellable) {
+		call->cancellable = g_object_ref (cancellable);
+		call->cancel_handler_id = g_cancellable_connect (cancellable,
+								 G_CALLBACK (_ping_cancel),
+								 (gpointer) call, NULL);
 	}
+
+	g_dbus_connection_send_message_with_reply (self->priv->connection,
+						   message,
+						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+						   1000000,
+						   &call->serial,
+						   cancellable,
+						   _ping_done,
+						   call);
+	g_object_unref (message);
+
 	g_debug ("eas_mail_handler_watch_email_folders--");
-	return ret;
+	return TRUE;
 
 }
 gboolean
