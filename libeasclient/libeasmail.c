@@ -83,13 +83,6 @@ struct _EasProgressCallbackInfo {
 
 typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
 
-struct _EasCancelInfo {
-	EasEmailHandler *handler;	// the email handler in use
-	guint request_id;			// request id to cancel
-};
-
-typedef struct _EasCancelInfo EasCancelInfo;
-
 // fwd declarations:
 static void progress_signal_handler (GDBusConnection *connection,
 				     const gchar *sender_name,
