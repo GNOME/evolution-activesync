@@ -109,9 +109,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	/* allocate internal structure */
 	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
-	priv->eas_client.connection = NULL;
-	priv->eas_client.account_uid = NULL;
-	priv->eas_client.progress_fns_table = NULL;
+	memset (&priv->eas_client, 0, sizeof (priv->eas_client));
 	g_debug ("eas_mail_handler_init--");
 }
 
@@ -124,6 +122,32 @@ eas_mail_handler_dispose (GObject *object)
 	priv = cnc->priv;
 #endif
 	G_OBJECT_CLASS (eas_mail_handler_parent_class)->dispose (object);
+}
+
+static void
+eas_gdbus_client_destroy (struct eas_gdbus_client *client)
+{
+	if (client->connection) {
+		g_object_unref (client->connection);
+		client->connection = NULL;
+	}
+
+	if (client->progress_lock) {
+#if GLIB_CHECK_VERSION (2,31,0)
+		g_mutex_clear (client->progress_lock);
+#else
+		g_mutex_free (client->progress_lock);
+#endif
+		client->progress_lock = NULL;
+	}
+
+	g_free (client->account_uid);
+	client->account_uid = NULL;
+
+	if (client->progress_fns_table) {
+		g_hash_table_remove_all (client->progress_fns_table);
+		client->progress_fns_table = NULL;
+	}
 }
 
 static void
@@ -140,21 +164,7 @@ eas_mail_handler_finalize (GObject *object)
 	g_dbus_connection_signal_unsubscribe (priv->eas_client.connection,
 					      priv->common_signal);
 
-	if (priv->eas_client.connection)
-		g_object_unref (priv->eas_client.connection);
-#if GLIB_CHECK_VERSION (2,31,0)
-	g_mutex_clear (priv->eas_client.progress_lock);
-#else
-	g_mutex_free (priv->eas_client.progress_lock);
-#endif
-
-	g_free (priv->eas_client.account_uid);
-
-	// free the hashtable
-	if (priv->eas_client.progress_fns_table) {
-		g_hash_table_remove_all (priv->eas_client.progress_fns_table);
-	}
-	// nothing to do to 'free' proxy
+	eas_gdbus_client_destroy (&priv->eas_client);
 
 	G_OBJECT_CLASS (eas_mail_handler_parent_class)->finalize (object);
 	g_debug ("eas_mail_handler_finalize--");
