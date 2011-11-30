@@ -202,6 +202,24 @@ finish:
 	return ret;
 }
 
+static gboolean
+eas_gdbus_client_init (struct eas_gdbus_client *client, const gchar *account_uid, GError **error)
+{
+	client->connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+	if (!client->connection)
+		return FALSE;
+
+	client->account_uid = g_strdup (account_uid);
+#if GLIB_CHECK_VERSION (2,31,0)
+	client->progress_lock = client->_mutex;
+	g_mutex_init (client->progress_lock);
+#else
+	client->progress_lock = g_mutex_new ();
+#endif
+	client->progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
+	return TRUE;
+}
+
 EasEmailHandler *
 eas_mail_handler_new (const char* account_uid, GError **error)
 {
@@ -239,16 +257,10 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	}
 	priv = object->priv;
 
-	priv->eas_client.account_uid = g_strdup (account_uid);
-#if GLIB_CHECK_VERSION (2,31,0)
-	priv->eas_client.progress_lock = priv->eas_client._mutex;
-	g_mutex_init (priv->eas_client.progress_lock);
-#else
-	priv->eas_client.progress_lock = g_mutex_new ();
-#endif
-	priv->eas_client.connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
-	if (!priv->eas_client.connection)
+	if (!eas_gdbus_client_init (&priv->eas_client, account_uid, error)) {
+		g_object_unref (object);
 		return NULL;
+	}
 
 	priv->mail_signal =
 		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
@@ -270,7 +282,6 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						    progress_signal_handler,
 						    &priv->eas_client, NULL);
 
-	priv->eas_client.progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 
 	g_debug ("eas_mail_handler_new--");
 	return object;
