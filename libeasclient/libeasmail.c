@@ -258,7 +258,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						    EAS_SERVICE_MAIL_OBJECT_PATH,
 						    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
 						    progress_signal_handler,
-						    object, NULL);
+						    &priv->eas_client, NULL);
 
 	priv->common_signal =
 		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
@@ -268,7 +268,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						    EAS_SERVICE_COMMON_OBJECT_PATH,
 						    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
 						    progress_signal_handler,
-						    object, NULL);
+						    &priv->eas_client, NULL);
 
 	priv->eas_client.progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 
@@ -998,7 +998,7 @@ progress_signal_handler(GDBusConnection *connection,
 			gpointer user_data)
 {
 	EasProgressCallbackInfo *progress_callback_info;
-	EasEmailHandler* self = (EasEmailHandler*) user_data;
+	struct eas_gdbus_client *client = user_data;
 	guint request_id, percent;
 
 	g_debug ("progress_signal_handler++");
@@ -1016,12 +1016,12 @@ progress_signal_handler(GDBusConnection *connection,
 
 	g_variant_get (parameters, "(uu)", &request_id, &percent);
 
-	if ( (self->priv->eas_client.progress_fns_table) && (percent > 0)) {
+	if (percent > 0) {
 		// if there's a progress function for this request in our hashtable, call it:
-		g_mutex_lock (self->priv->eas_client.progress_lock);
-		progress_callback_info = g_hash_table_lookup (self->priv->eas_client.progress_fns_table,
+		g_mutex_lock (client->progress_lock);
+		progress_callback_info = g_hash_table_lookup (client->progress_fns_table,
 							      GUINT_TO_POINTER (request_id));
-		g_mutex_unlock (self->priv->eas_client.progress_lock);
+		g_mutex_unlock (client->progress_lock);
 		if (progress_callback_info) {
 			if (percent > progress_callback_info->percent_last_sent) {
 				EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
