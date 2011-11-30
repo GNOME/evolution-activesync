@@ -362,6 +362,8 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 						message,
 						G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						NULL, NULL);
+
+		g_object_unref (message);
 	}
 
 	if (!reply)
@@ -472,6 +474,8 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 						   cancellable,
 						   _call_done,
 						   (gpointer) &call);
+	g_object_unref (message);
+
 	if (cancellable)
 		cancel_handler_id = g_cancellable_connect (cancellable,
 							  G_CALLBACK (_call_cancel),
