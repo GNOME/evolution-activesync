@@ -25,7 +25,6 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <dbus/dbus-glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libxml/xmlreader.h>
@@ -63,19 +62,12 @@ const gchar *updated_id_separator = ",";
 static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
 
 struct _EasEmailHandlerPrivate {
-	/* New GIO/GDBus code: */
 	GDBusConnection *connection;
 	guint mail_signal;
 	guint common_signal;
 
-	/* Obsolescent dbus-glib bits: */
-	DBusGConnection *bus;
-	DBusGProxy *remoteEas;
-
-	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+	gchar* account_uid;
 	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
-	guint next_request_id;			// request id to be used for next dbus call
-
 };
 
 
@@ -119,10 +111,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
 	priv->connection = NULL;
-	priv->remoteEas = NULL;
-	priv->bus = NULL;
 	priv->account_uid = NULL;
-	priv->next_request_id = 1;
 	priv->email_progress_fns_table = NULL;
 	g_debug ("eas_mail_handler_init--");
 }
@@ -130,15 +119,11 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 static void
 eas_mail_handler_dispose (GObject *object)
 {
+#if 0
 	EasEmailHandler *cnc = EAS_EMAIL_HANDLER (object);
 	EasEmailHandlerPrivate *priv;
 	priv = cnc->priv;
-
-	if (priv->bus) {
-		dbus_g_connection_unref (priv->bus);
-		priv->bus = NULL;
-	}
-
+#endif
 	G_OBJECT_CLASS (eas_mail_handler_parent_class)->dispose (object);
 }
 
@@ -254,26 +239,6 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	}
 	priv = object->priv;
 
-	g_debug ("Connecting to Session D-Bus.");
-	priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, error);
-	if (priv->bus == NULL) {
-		g_warning ("Error: Couldn't connect to the Session bus (%s) ", error ? (*error)->message : "<discarded error>");
-		return NULL;
-	}
-
-	g_debug ("Creating a GLib proxy object for Eas.");
-	priv->remoteEas =  dbus_g_proxy_new_for_name (priv->bus,
-						      EAS_SERVICE_NAME,
-						      EAS_SERVICE_MAIL_OBJECT_PATH,
-						      EAS_SERVICE_MAIL_INTERFACE);
-	if (priv->remoteEas == NULL) {
-		g_set_error (error, EAS_MAIL_ERROR, EAS_MAIL_ERROR_UNKNOWN,
-			     "ailed to create proxy for mail interface");
-		g_warning ("Error: Couldn't create the proxy object");
-		return NULL;
-	}
-
-	dbus_g_proxy_set_default_timeout (priv->remoteEas, 1000000);
 	priv->account_uid = g_strdup (account_uid);
 
 	priv->connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
