@@ -335,70 +335,20 @@ _call_cancel (GCancellable *cancellable, gpointer _call)
 	call->cancelled = TRUE;
 }
 
-#define eas_gdbus_mail_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
-#define eas_gdbus_common_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
-
 static gboolean
-eas_gdbus_call (EasEmailHandler *self, const gchar *object,
-		const gchar *interface, const gchar *method,
-		EasProgressFn progress_fn, gpointer progress_data,
-		const gchar *in_params, const gchar *out_params,
-		GCancellable *cancellable, GError **error, ...)
+eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel_serial,
+		       const gchar *out_params, va_list *ap, GError **error)
 {
-	GDBusMessage *message;
-	struct _eas_call_data call;
-	GMainContext *ctxt;
 	GDBusMessage *reply;
-	GVariant *v = NULL;
-	va_list ap;
-	gboolean success = FALSE;
-	guint cancel_handler_id;
-	guint32 serial = 0;
 	gchar *out_params_type = (gchar *) out_params;
-
-	va_start (ap, error);
-
-	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME, object,
-						  interface, method);
-
-	v = g_variant_new_va (in_params, NULL, &ap);
-	g_dbus_message_set_body (message, v);
-
-	call.cancelled = FALSE;
-	call.result = NULL;
-	ctxt = g_main_context_new ();
-	call.loop = g_main_loop_new (ctxt, FALSE);
-
-	g_main_context_push_thread_default (ctxt);
-
-	g_dbus_connection_send_message_with_reply (self->priv->connection,
-						   message,
-						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
-						   1000000,
-						   &serial,
-						   cancellable,
-						   _call_done,
-						   (gpointer) &call);
-	if (cancellable)
-		cancel_handler_id = g_cancellable_connect (cancellable,
-							  G_CALLBACK (_call_cancel),
-							  (gpointer) &call, NULL);
-
-	/* Ignore error; it's not the end of the world if progress info
-	   is lost, and it should never happen anyway */
-	if (progress_fn)
-		eas_mail_add_progress_info_to_table (self, serial, progress_fn,
-						     progress_data, NULL);
-
-	g_main_loop_run (call.loop);
+	gboolean success = FALSE;
+	GVariant *v;
 
 	reply = g_dbus_connection_send_message_with_reply_finish(self->priv->connection,
-								 call.result,
-								 error);
-	if (cancellable)
-		g_cancellable_disconnect (cancellable, cancel_handler_id);
+								 result, error);
+	if (cancel_serial) {
+		GDBusMessage *message;
 
-	if (call.cancelled) {
 		message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,
 							  EAS_SERVICE_COMMON_OBJECT_PATH,
 							  EAS_SERVICE_COMMON_INTERFACE,
@@ -406,7 +356,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 		g_dbus_message_set_body (message,
 					 g_variant_new ("(su)",
 							self->priv->account_uid,
-							serial));
+							cancel_serial));
 
 		g_dbus_connection_send_message (self->priv->connection,
 						message,
@@ -415,7 +365,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 	}
 
 	if (!reply)
-		goto out_no_reply;
+		return FALSE;
 
 	/* g_variant_is_of_type() will fail to match a DBus return
 	   of (sas) with a format string of (s^as), where the ^ is
@@ -458,7 +408,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 			goto out;
 			g_object_unref (reply);
 		}
-		g_variant_get_va (v, out_params, NULL, &ap);
+		g_variant_get_va (v, out_params, NULL, ap);
 		success = TRUE;
 		break;
 
@@ -478,7 +428,69 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 		g_free (out_params_type);
 
 	g_object_unref (reply);
- out_no_reply:
+	return success;
+}
+#define eas_gdbus_mail_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
+#define eas_gdbus_common_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
+
+static gboolean
+eas_gdbus_call (EasEmailHandler *self, const gchar *object,
+		const gchar *interface, const gchar *method,
+		EasProgressFn progress_fn, gpointer progress_data,
+		const gchar *in_params, const gchar *out_params,
+		GCancellable *cancellable, GError **error, ...)
+{
+	GDBusMessage *message;
+	struct _eas_call_data call;
+	GMainContext *ctxt;
+	GVariant *v = NULL;
+	va_list ap;
+	gboolean success;
+	guint cancel_handler_id;
+	guint32 serial = 0;
+
+	va_start (ap, error);
+
+	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME, object,
+						  interface, method);
+
+	v = g_variant_new_va (in_params, NULL, &ap);
+	g_dbus_message_set_body (message, v);
+
+	call.cancelled = FALSE;
+	call.result = NULL;
+	ctxt = g_main_context_new ();
+	call.loop = g_main_loop_new (ctxt, FALSE);
+
+	g_main_context_push_thread_default (ctxt);
+
+	g_dbus_connection_send_message_with_reply (self->priv->connection,
+						   message,
+						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+						   1000000,
+						   &serial,
+						   cancellable,
+						   _call_done,
+						   (gpointer) &call);
+	if (cancellable)
+		cancel_handler_id = g_cancellable_connect (cancellable,
+							  G_CALLBACK (_call_cancel),
+							  (gpointer) &call, NULL);
+
+	/* Ignore error; it's not the end of the world if progress info
+	   is lost, and it should never happen anyway */
+	if (progress_fn)
+		eas_mail_add_progress_info_to_table (self, serial, progress_fn,
+						     progress_data, NULL);
+
+	g_main_loop_run (call.loop);
+
+	if (cancellable)
+		g_cancellable_disconnect (cancellable, cancel_handler_id);
+
+	success = eas_gdbus_call_finish (self, call.result, call.cancelled ? serial : 0,
+					 out_params, &ap, error);
+
 	if (serial && progress_fn)
 		g_hash_table_remove (self->priv->email_progress_fns_table,
 				     GUINT_TO_POINTER (serial));
