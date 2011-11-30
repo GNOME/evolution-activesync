@@ -61,13 +61,17 @@ const gchar *updated_id_separator = ",";
 
 static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
 
-struct _EasEmailHandlerPrivate {
+struct eas_gdbus_client {
 	GDBusConnection *connection;
+	gchar* account_uid;
+	GHashTable *progress_fns_table;
+};
+	
+struct _EasEmailHandlerPrivate {
+	struct eas_gdbus_client eas_client;
+
 	guint mail_signal;
 	guint common_signal;
-
-	gchar* account_uid;
-	GHashTable *email_progress_fns_table;	// hashtable of request progress functions
 };
 
 
@@ -103,9 +107,9 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	/* allocate internal structure */
 	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
 
-	priv->connection = NULL;
-	priv->account_uid = NULL;
-	priv->email_progress_fns_table = NULL;
+	priv->eas_client.connection = NULL;
+	priv->eas_client.account_uid = NULL;
+	priv->eas_client.progress_fns_table = NULL;
 	g_debug ("eas_mail_handler_init--");
 }
 
@@ -129,19 +133,19 @@ eas_mail_handler_finalize (GObject *object)
 
 	priv = cnc->priv;
 
-	g_dbus_connection_signal_unsubscribe (priv->connection,
+	g_dbus_connection_signal_unsubscribe (priv->eas_client.connection,
 					      priv->mail_signal);
-	g_dbus_connection_signal_unsubscribe (priv->connection,
+	g_dbus_connection_signal_unsubscribe (priv->eas_client.connection,
 					      priv->common_signal);
 
-	if (priv->connection)
-		g_object_unref (priv->connection);
+	if (priv->eas_client.connection)
+		g_object_unref (priv->eas_client.connection);
 
-	g_free (priv->account_uid);
+	g_free (priv->eas_client.account_uid);
 
 	// free the hashtable
-	if (priv->email_progress_fns_table) {
-		g_hash_table_remove_all (priv->email_progress_fns_table);
+	if (priv->eas_client.progress_fns_table) {
+		g_hash_table_remove_all (priv->eas_client.progress_fns_table);
 	}
 	// nothing to do to 'free' proxy
 
@@ -185,11 +189,11 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 	progress_info->percent_last_sent = 0;
 
 	g_static_mutex_lock (&progress_table);
-	if (priv->email_progress_fns_table == NULL) {
-		priv->email_progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
+	if (priv->eas_client.progress_fns_table == NULL) {
+		priv->eas_client.progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	}
 	g_debug ("insert progress function into table");
-	g_hash_table_insert (priv->email_progress_fns_table, GUINT_TO_POINTER (request_id), progress_info);
+	g_hash_table_insert (priv->eas_client.progress_fns_table, GUINT_TO_POINTER (request_id), progress_info);
 	g_static_mutex_unlock (&progress_table);
 finish:
 	return ret;
@@ -232,14 +236,14 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	}
 	priv = object->priv;
 
-	priv->account_uid = g_strdup (account_uid);
+	priv->eas_client.account_uid = g_strdup (account_uid);
 
-	priv->connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
-	if (!priv->connection)
+	priv->eas_client.connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+	if (!priv->eas_client.connection)
 		return NULL;
 
 	priv->mail_signal =
-		g_dbus_connection_signal_subscribe (priv->connection,
+		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
 						    EAS_SERVICE_NAME,
 						    EAS_SERVICE_MAIL_INTERFACE,
 						    EAS_MAIL_SIGNAL_PROGRESS,
@@ -249,7 +253,7 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						    object, NULL);
 
 	priv->common_signal =
-		g_dbus_connection_signal_subscribe (priv->connection,
+		g_dbus_connection_signal_subscribe (priv->eas_client.connection,
 						    EAS_SERVICE_NAME,
 						    EAS_SERVICE_COMMON_INTERFACE,
 						    EAS_MAIL_SIGNAL_PROGRESS,
@@ -302,7 +306,7 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 	gboolean success = FALSE;
 	GVariant *v;
 
-	reply = g_dbus_connection_send_message_with_reply_finish(self->priv->connection,
+	reply = g_dbus_connection_send_message_with_reply_finish(self->priv->eas_client.connection,
 								 result, error);
 	if (cancel_serial) {
 		GDBusMessage *message;
@@ -313,10 +317,10 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 							  "cancel_request");
 		g_dbus_message_set_body (message,
 					 g_variant_new ("(su)",
-							self->priv->account_uid,
+							self->priv->eas_client.account_uid,
 							cancel_serial));
 
-		g_dbus_connection_send_message (self->priv->connection,
+		g_dbus_connection_send_message (self->priv->eas_client.connection,
 						message,
 						G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						NULL, NULL);
@@ -424,7 +428,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 
 	g_main_context_push_thread_default (ctxt);
 
-	g_dbus_connection_send_message_with_reply (self->priv->connection,
+	g_dbus_connection_send_message_with_reply (self->priv->eas_client.connection,
 						   message,
 						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						   1000000,
@@ -454,7 +458,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 					 out_params, &ap, error);
 
 	if (serial && progress_fn)
-		g_hash_table_remove (self->priv->email_progress_fns_table,
+		g_hash_table_remove (self->priv->eas_client.progress_fns_table,
 				     GUINT_TO_POINTER (serial));
 
 	va_end (ap);
@@ -712,7 +716,7 @@ gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 	return eas_gdbus_mail_call (self, "get_item_estimate",
 				    NULL, NULL, "(sss)", "(u)",
 				    NULL, error,
-				    self->priv->account_uid, sync_key, folder_id,
+				    self->priv->eas_client.account_uid, sync_key, folder_id,
 				    estimate);
 }
 
@@ -727,7 +731,7 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 	gchar **folder_array = NULL;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
 
 	if (self == NULL || folders == NULL || *folders != NULL) {
 		g_set_error (error,
@@ -739,7 +743,7 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 
 	ret = eas_gdbus_common_call (self, "get_folders", NULL, NULL,
 				     "(sb)", "(^as)", cancellable, error,
-				     self->priv->account_uid, force_refresh,
+				     self->priv->eas_client.account_uid, force_refresh,
 				     &folder_array);
 	if (!ret)
 		goto out;
@@ -781,7 +785,7 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 	gchar* _tid_status = NULL;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
 
 	if (self == NULL || tid == NULL || tid_status == NULL || provision_list == NULL ||
 	    *tid != NULL || *tid_status != NULL || *provision_list != NULL) {
@@ -793,7 +797,7 @@ eas_mail_handler_get_provision_list (EasEmailHandler *self,
 
 	ret = eas_gdbus_common_call (self, "get_provision_list", NULL, NULL,
 				     "(s)", "(sss)", cancellable, error,
-				     self->priv->account_uid, &_tid, &_tid_status,
+				     self->priv->eas_client.account_uid, &_tid, &_tid_status,
 				     &_provision_list_buffer);
 
 	g_debug ("%s - dbus proxy called", __func__);
@@ -838,7 +842,7 @@ eas_mail_handler_autodiscover (EasEmailHandler *self,
 	gboolean ret = FALSE;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
 
 	// call DBus API
 	ret = eas_gdbus_common_call (self, "autodiscover", NULL, NULL,
@@ -863,13 +867,13 @@ eas_mail_handler_accept_provision_list (EasEmailHandler *self,
 	gboolean ret = FALSE;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
-		 (self->priv->account_uid ? self->priv->account_uid : "NULL"));
+		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
 
 	// call DBus API
 	ret = eas_gdbus_common_call (self, "accept_provision_list",
 				     NULL, NULL, "(sss)", NULL,
 				     cancellable, error,
-				     self->priv->account_uid,
+				     self->priv->eas_client.account_uid,
 				     tid, tid_status);
 
 	g_debug ("%s - dbus proxy called %ssuccessfully", __func__,
@@ -920,7 +924,7 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 				   NULL, NULL,
 				   "(sss)", "(sb^as^as^as)",
 				   NULL, error,
-				   self->priv->account_uid, sync_key, collection_id,
+				   self->priv->eas_client.account_uid, sync_key, collection_id,
 				   &updatedSyncKey, more_available,
 				   &created_emailinfo_array,
 				   &deleted_emailinfo_array,
@@ -1002,10 +1006,10 @@ progress_signal_handler(GDBusConnection *connection,
 
 	g_variant_get (parameters, "(uu)", &request_id, &percent);
 
-	if ( (self->priv->email_progress_fns_table) && (percent > 0)) {
+	if ( (self->priv->eas_client.progress_fns_table) && (percent > 0)) {
 		// if there's a progress function for this request in our hashtable, call it:
 		g_static_mutex_lock (&progress_table);
-		progress_callback_info = g_hash_table_lookup (self->priv->email_progress_fns_table,
+		progress_callback_info = g_hash_table_lookup (self->priv->eas_client.progress_fns_table,
 							      GUINT_TO_POINTER (request_id));
 		g_static_mutex_unlock (&progress_table);
 		if (progress_callback_info) {
@@ -1054,7 +1058,7 @@ eas_mail_handler_fetch_email_body (EasEmailHandler* self,
 				   progress_fn, progress_data,
 				   "(ssssu)", NULL,
 				   cancellable, error,
-				   self->priv->account_uid, folder_id,
+				   self->priv->eas_client.account_uid, folder_id,
 				   server_id, mime_directory, 0);
 out:
 	g_debug ("eas_mail_handler_fetch_email_body--");
@@ -1086,7 +1090,7 @@ eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 				   progress_fn, progress_data,
 				   "(sssu)", NULL,
 				   NULL, error,
-				   self->priv->account_uid, file_reference,
+				   self->priv->eas_client.account_uid, file_reference,
 				   mime_directory, 0);
 
 out:
@@ -1139,7 +1143,7 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 				   NULL, NULL,
 				   "(sss^as)", "(s)",
 				   NULL, error,
-				   self->priv->account_uid,
+				   self->priv->eas_client.account_uid,
 				   sync_key, folder_id,
 				   deleted_items_array,
 				   &ret_sync_key);
@@ -1232,7 +1236,7 @@ eas_mail_handler_update_email (EasEmailHandler* self,
 				   NULL, NULL,
 				   "(sss^as)", "(s^as)",
 				   cancellable, error,
-				   self->priv->account_uid,
+				   self->priv->eas_client.account_uid,
 				   sync_key, folder_id,
 				   serialised_email_array,
 				   &ret_sync_key,
@@ -1321,7 +1325,7 @@ eas_mail_handler_send_email (EasEmailHandler* self,
 				   progress_fn, progress_data,
 				   "(sssu)", NULL,
 				   cancellable, error,
-				   self->priv->account_uid,
+				   self->priv->eas_client.account_uid,
 				   client_email_id, mime_file, 0);
 
 finish:
@@ -1372,7 +1376,7 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 				   NULL, NULL,
 				   "(s^asss)", "(^as)",
 				   NULL, error,
-				   self->priv->account_uid, server_ids_array,
+				   self->priv->eas_client.account_uid, server_ids_array,
 				   src_folder_id, dest_folder_id,
 				   &updated_ids_array);
 
@@ -1455,7 +1459,7 @@ _ping_done (GObject *conn, GAsyncResult *result, gpointer _call)
 	gchar **results = NULL;
 	int i;
 
-	reply = g_dbus_connection_send_message_with_reply_finish (call->handler->priv->connection,
+	reply = g_dbus_connection_send_message_with_reply_finish (call->handler->priv->eas_client.connection,
 								  result, &error);
 	if (reply) {
 		eas_gdbus_ping_finish (call->handler, result,
@@ -1542,7 +1546,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 						  "watch_email_folders");
 	g_dbus_message_set_body (message,
 				 g_variant_new ("(ss^as)",
-						self->priv->account_uid,
+						self->priv->eas_client.account_uid,
 						heartbeat, folder_array));
 	g_strfreev (folder_array);
 
@@ -1556,7 +1560,7 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 								 (gpointer) call, NULL);
 	}
 
-	g_dbus_connection_send_message_with_reply (self->priv->connection,
+	g_dbus_connection_send_message_with_reply (self->priv->eas_client.connection,
 						   message,
 						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						   1000000,
@@ -1647,7 +1651,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 				     "(sussuas^as^asu)", "(sb^as^as^as^as^as^as)",
 				     cancellable, error,
 				     /* input parameters... */
-				     self->priv->account_uid, EAS_ITEM_MAIL,
+				     self->priv->eas_client.account_uid, EAS_ITEM_MAIL,
 				     sync_key_in, folder_id,
 				     time_window,
 				     /* Note type 'as' for this, so that NULL doesn't cause a crash */
