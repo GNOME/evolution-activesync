@@ -59,12 +59,14 @@ eas_mail_error_quark (void)
 
 const gchar *updated_id_separator = ",";
 
-static GStaticMutex progress_table = G_STATIC_MUTEX_INIT;
-
 struct eas_gdbus_client {
 	GDBusConnection *connection;
 	gchar* account_uid;
 	GHashTable *progress_fns_table;
+	GMutex *progress_lock;
+#if GLIB_CHECK_VERSION (2,31,0)
+	GMutex _mutex;
+#endif
 };
 	
 struct _EasEmailHandlerPrivate {
@@ -140,6 +142,11 @@ eas_mail_handler_finalize (GObject *object)
 
 	if (priv->eas_client.connection)
 		g_object_unref (priv->eas_client.connection);
+#if GLIB_CHECK_VERSION (2,31,0)
+	g_mutex_clear (priv->eas_client.progress_lock);
+#else
+	g_mutex_free (priv->eas_client.progress_lock);
+#endif
 
 	g_free (priv->eas_client.account_uid);
 
@@ -169,10 +176,9 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 
 
 static gboolean
-eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, EasProgressFn progress_fn, gpointer progress_data, GError **error)
+eas_mail_add_progress_info_to_table (struct eas_gdbus_client *client, guint request_id, EasProgressFn progress_fn, gpointer progress_data, GError **error)
 {
 	gboolean ret = TRUE;
-	EasEmailHandlerPrivate *priv = self->priv;
 	EasProgressCallbackInfo *progress_info = g_malloc0 (sizeof (EasProgressCallbackInfo));
 
 	if (!progress_info) {
@@ -188,13 +194,10 @@ eas_mail_add_progress_info_to_table (EasEmailHandler* self, guint request_id, Ea
 	progress_info->progress_data = progress_data;
 	progress_info->percent_last_sent = 0;
 
-	g_static_mutex_lock (&progress_table);
-	if (priv->eas_client.progress_fns_table == NULL) {
-		priv->eas_client.progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
-	}
+	g_mutex_lock (client->progress_lock);
 	g_debug ("insert progress function into table");
-	g_hash_table_insert (priv->eas_client.progress_fns_table, GUINT_TO_POINTER (request_id), progress_info);
-	g_static_mutex_unlock (&progress_table);
+	g_hash_table_insert (client->progress_fns_table, GUINT_TO_POINTER (request_id), progress_info);
+	g_mutex_unlock (client->progress_lock);
 finish:
 	return ret;
 }
@@ -237,7 +240,12 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	priv = object->priv;
 
 	priv->eas_client.account_uid = g_strdup (account_uid);
-
+#if GLIB_CHECK_VERSION (2,31,0)
+	priv->eas_client.progress_lock = priv->eas_client._mutex;
+	g_mutex_init (priv->eas_client.progress_lock);
+#else
+	priv->eas_client.progress_lock = g_mutex_new ();
+#endif
 	priv->eas_client.connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
 	if (!priv->eas_client.connection)
 		return NULL;
@@ -261,6 +269,8 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 						    NULL, G_DBUS_SIGNAL_FLAGS_NONE,
 						    progress_signal_handler,
 						    object, NULL);
+
+	priv->eas_client.progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 
 	g_debug ("eas_mail_handler_new--");
 	return object;
@@ -298,7 +308,7 @@ _call_cancel (GCancellable *cancellable, gpointer _call)
 }
 
 static gboolean
-eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel_serial,
+eas_gdbus_call_finish (struct eas_gdbus_client *client, GAsyncResult *result, guint cancel_serial,
 		       const gchar *out_params, va_list *ap, GError **error)
 {
 	GDBusMessage *reply;
@@ -306,7 +316,7 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 	gboolean success = FALSE;
 	GVariant *v;
 
-	reply = g_dbus_connection_send_message_with_reply_finish(self->priv->eas_client.connection,
+	reply = g_dbus_connection_send_message_with_reply_finish(client->connection,
 								 result, error);
 	if (cancel_serial) {
 		GDBusMessage *message;
@@ -317,10 +327,10 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 							  "cancel_request");
 		g_dbus_message_set_body (message,
 					 g_variant_new ("(su)",
-							self->priv->eas_client.account_uid,
+							client->account_uid,
 							cancel_serial));
 
-		g_dbus_connection_send_message (self->priv->eas_client.connection,
+		g_dbus_connection_send_message (client->connection,
 						message,
 						G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						NULL, NULL);
@@ -394,11 +404,11 @@ eas_gdbus_call_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel
 	g_object_unref (reply);
 	return success;
 }
-#define eas_gdbus_mail_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
-#define eas_gdbus_common_call(self, ...) eas_gdbus_call(self, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
+#define eas_gdbus_mail_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
+#define eas_gdbus_common_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
 
 static gboolean
-eas_gdbus_call (EasEmailHandler *self, const gchar *object,
+eas_gdbus_call (struct eas_gdbus_client *client, const gchar *object,
 		const gchar *interface, const gchar *method,
 		EasProgressFn progress_fn, gpointer progress_data,
 		const gchar *in_params, const gchar *out_params,
@@ -428,7 +438,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 
 	g_main_context_push_thread_default (ctxt);
 
-	g_dbus_connection_send_message_with_reply (self->priv->eas_client.connection,
+	g_dbus_connection_send_message_with_reply (client->connection,
 						   message,
 						   G_DBUS_SEND_MESSAGE_FLAGS_NONE,
 						   1000000,
@@ -446,7 +456,7 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 	/* Ignore error; it's not the end of the world if progress info
 	   is lost, and it should never happen anyway */
 	if (progress_fn)
-		eas_mail_add_progress_info_to_table (self, serial, progress_fn,
+		eas_mail_add_progress_info_to_table (client, serial, progress_fn,
 						     progress_data, NULL);
 
 	g_main_loop_run (call.loop);
@@ -454,11 +464,11 @@ eas_gdbus_call (EasEmailHandler *self, const gchar *object,
 	if (cancellable)
 		g_cancellable_disconnect (cancellable, cancel_handler_id);
 
-	success = eas_gdbus_call_finish (self, call.result, call.cancelled ? serial : 0,
+	success = eas_gdbus_call_finish (client, call.result, call.cancelled ? serial : 0,
 					 out_params, &ap, error);
 
 	if (serial && progress_fn)
-		g_hash_table_remove (self->priv->eas_client.progress_fns_table,
+		g_hash_table_remove (client->progress_fns_table,
 				     GUINT_TO_POINTER (serial));
 
 	va_end (ap);
@@ -1008,10 +1018,10 @@ progress_signal_handler(GDBusConnection *connection,
 
 	if ( (self->priv->eas_client.progress_fns_table) && (percent > 0)) {
 		// if there's a progress function for this request in our hashtable, call it:
-		g_static_mutex_lock (&progress_table);
+		g_mutex_lock (self->priv->eas_client.progress_lock);
 		progress_callback_info = g_hash_table_lookup (self->priv->eas_client.progress_fns_table,
 							      GUINT_TO_POINTER (request_id));
-		g_static_mutex_unlock (&progress_table);
+		g_mutex_unlock (self->priv->eas_client.progress_lock);
 		if (progress_callback_info) {
 			if (percent > progress_callback_info->percent_last_sent) {
 				EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
@@ -1436,14 +1446,14 @@ struct _eas_ping_call {
 /* Ick. eas_gdbus_call_finish maybe shouldn't take a va_list *, and then we wouldn't
    have to jump through this hoop. Maybe make it return a GVariant? */
 static gboolean
-eas_gdbus_ping_finish (EasEmailHandler *self, GAsyncResult *result, guint cancel_serial,
+eas_gdbus_ping_finish (struct eas_gdbus_client *client, GAsyncResult *result, guint cancel_serial,
 		       const gchar *out_params, GError **error, ...)
 {
 	va_list ap;
 	gboolean ret;
 
 	va_start (ap, error);
-	ret = eas_gdbus_call_finish (self, result, cancel_serial, out_params, &ap, error);
+	ret = eas_gdbus_call_finish (client, result, cancel_serial, out_params, &ap, error);
 	va_end (ap);
 
 	return ret;
@@ -1462,7 +1472,7 @@ _ping_done (GObject *conn, GAsyncResult *result, gpointer _call)
 	reply = g_dbus_connection_send_message_with_reply_finish (call->handler->priv->eas_client.connection,
 								  result, &error);
 	if (reply) {
-		eas_gdbus_ping_finish (call->handler, result,
+		eas_gdbus_ping_finish (&call->handler->priv->eas_client, result,
 				       call->cancelled ? call->serial : 0,
 				       "(^as)", &error, &results);
 
