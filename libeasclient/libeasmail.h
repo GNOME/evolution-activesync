@@ -31,6 +31,7 @@
 #include "eas-email-info.h"
 #include "eas-provision-list.h"
 #include "eas-errors.h"
+#include "eas-dbus-client.h"
 
 G_BEGIN_DECLS
 
@@ -60,8 +61,6 @@ struct _EasIdUpdate {
 	gchar *dest_id;
 	gchar *status;	//indicates a problem with the update if not a null/empty string
 };
-
-typedef void (*EasProgressFn) (gpointer object, gint percent);
 
 /*
  Free the memory for a EasIdUpdate

@@ -38,7 +38,9 @@ libeasclient_la_SOURCES =		\
 	eas-provision-list.h		\
 	eas-provision-list.c		\
 	eas-logger.c			\
-	eas-logger.h
+	eas-logger.h			\
+	eas-dbus-client.c		\
+	eas-dbus-client.h
 
 libeasclientincludedir = $(privincludedir)/eas-client
 libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h \
