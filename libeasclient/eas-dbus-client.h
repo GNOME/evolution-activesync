@@ -42,19 +42,6 @@ struct eas_gdbus_client {
 #endif
 };
 
-struct _EasProgressCallbackInfo {
-	EasProgressFn progress_fn;
-	gpointer progress_data;
-	guint percent_last_sent;
-
-	guint handler_id;	//
-	GCancellable cancellable;	//
-
-};
-
-typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
-
-
 void
 eas_gdbus_client_destroy (struct eas_gdbus_client *client);
 

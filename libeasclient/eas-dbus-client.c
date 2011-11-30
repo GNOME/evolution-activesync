@@ -200,6 +200,18 @@ eas_gdbus_call_finish (struct eas_gdbus_client *client, GAsyncResult *result,
 	g_object_unref (reply);
 	return success;
 }
+
+struct _EasProgressCallbackInfo {
+	EasProgressFn progress_fn;
+	gpointer progress_data;
+	guint percent_last_sent;
+
+	guint handler_id;
+	GCancellable cancellable;
+};
+
+typedef struct _EasProgressCallbackInfo EasProgressCallbackInfo;
+
 static gboolean
 eas_client_add_progress_info_to_table (struct eas_gdbus_client *client, guint request_id, EasProgressFn progress_fn, gpointer progress_data, GError **error)
 {
