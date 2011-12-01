@@ -37,8 +37,10 @@ struct eas_gdbus_client {
 	gchar* account_uid;
 	GHashTable *progress_fns_table;
 	GMutex *progress_lock;
+	GCond *progress_cond;
 #if GLIB_CHECK_VERSION (2,31,0)
 	GMutex _mutex;
+	GCond _cond;
 #endif
 };
 

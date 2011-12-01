@@ -38,8 +38,11 @@ eas_gdbus_client_init (struct eas_gdbus_client *client, const gchar *account_uid
 #if GLIB_CHECK_VERSION (2,31,0)
 	client->progress_lock = client->_mutex;
 	g_mutex_init (client->progress_lock);
+	client->progress_cond = client->_cond;
+	g_cond_init (client->progress_cond);
 #else
 	client->progress_lock = g_mutex_new ();
+	client->progress_cond = g_cond_new ();
 #endif
 	client->progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	return TRUE;
@@ -60,6 +63,15 @@ eas_gdbus_client_destroy (struct eas_gdbus_client *client)
 		g_mutex_free (client->progress_lock);
 #endif
 		client->progress_lock = NULL;
+	}
+
+	if (client->progress_cond) {
+#if GLIB_CHECK_VERSION (2,31,0)
+		g_cond_clear (client->progress_cond);
+#else
+		g_cond_free (client->progress_cond);
+#endif
+		client->progress_cond = NULL;
 	}
 
 	g_free (client->account_uid);
@@ -205,6 +217,7 @@ struct _EasProgressCallbackInfo {
 	EasProgressFn progress_fn;
 	gpointer progress_data;
 	guint percent_last_sent;
+	gboolean calling;
 
 	guint handler_id;
 	GCancellable cancellable;
@@ -299,9 +312,27 @@ eas_gdbus_call (struct eas_gdbus_client *client, const gchar *object,
 	success = eas_gdbus_call_finish (client, call.result, call.cancelled ? serial : 0,
 					 out_params, &ap, error);
 
-	if (serial && progress_fn)
-		g_hash_table_remove (client->progress_fns_table,
-				     GUINT_TO_POINTER (serial));
+	if (serial && progress_fn) {
+		EasProgressCallbackInfo *cbinfo;
+
+		g_mutex_lock (client->progress_lock);
+		cbinfo = g_hash_table_lookup (client->progress_fns_table,
+					      GUINT_TO_POINTER (serial));
+		if (cbinfo && cbinfo->calling) {
+			g_debug ("Progress for call %u is running; wait for it to complete",
+				 serial);
+			g_hash_table_steal (client->progress_fns_table,
+					    GUINT_TO_POINTER (serial));
+			do {
+				g_cond_wait (client->progress_cond, client->progress_lock);
+			} while (cbinfo->calling);
+			g_free (cbinfo);
+		} else if (cbinfo) {
+			g_hash_table_remove (client->progress_fns_table,
+					     GUINT_TO_POINTER (serial));
+		}
+		g_mutex_unlock (client->progress_lock);
+	}
 
 	va_end (ap);
 
@@ -346,17 +377,23 @@ progress_signal_handler(GDBusConnection *connection,
 		g_mutex_lock (client->progress_lock);
 		progress_callback_info = g_hash_table_lookup (client->progress_fns_table,
 							      GUINT_TO_POINTER (request_id));
-		g_mutex_unlock (client->progress_lock);
-		if (progress_callback_info) {
-			if (percent > progress_callback_info->percent_last_sent) {
-				EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
+		if (progress_callback_info &&
+		    percent > progress_callback_info->percent_last_sent) {
+			EasProgressFn progress_fn = (EasProgressFn) (progress_callback_info->progress_fn);
 
-				g_debug ("call progress function with %d%c", percent, '%');
-				progress_callback_info->percent_last_sent = percent;
+			progress_callback_info->calling = TRUE;
+			g_mutex_unlock (client->progress_lock);
 
-				progress_fn (progress_callback_info->progress_data, percent);
-			}
+			g_debug ("call progress function with %d%c", percent, '%');
+			progress_callback_info->percent_last_sent = percent;
+
+			progress_fn (progress_callback_info->progress_data, percent);
+
+			g_mutex_lock (client->progress_lock);
+			progress_callback_info->calling = FALSE;
+			g_cond_broadcast (client->progress_cond);
 		}
+		g_mutex_unlock (client->progress_lock);
 	}
 
  out:
