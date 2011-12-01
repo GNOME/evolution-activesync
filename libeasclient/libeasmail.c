@@ -29,13 +29,11 @@
 #include <string.h>
 #include <libxml/xmlreader.h>
 #include <libxml/xmlsave.h>
-#include <libedataserver/e-flag.h>
 
 #include "eas-errors.h"
 #include "../eas-daemon/src/activesyncd-common-defs.h"
 #include "libeassync.h"
 #include "libeasmail.h"
-#include "eas-mail-client-stub.h"
 #include "eas-folder.h"
 #include "eas-mail-errors.h"
 #include "eas-logger.h"

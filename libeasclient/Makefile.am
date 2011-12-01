@@ -3,16 +3,12 @@ lib_LTLIBRARIES =  libeasclient.la
 
 libeasclient_la_CPPFLAGS =		\
 		$(GLIB_CFLAGS)		\
-		$(EDATASERVER_CFLAGS)	\
 		$(LIBXML_CFLAGS)	\
-		$(SOUP_CFLAGS)		\
 		-DG_LOG_DOMAIN=\"libeasclient\"
 
 libeasclient_la_LDFLAGS =		\
 		$(GLIB_LIBS)		\
-		$(EDATASERVER_LIBS)	\
-		$(LIBXML_LIBS)		\
-		$(SOUP_LIBS)
+		$(LIBXML_LIBS)
 
 libeasclient_la_SOURCES =		\
 	eas-errors.c			\

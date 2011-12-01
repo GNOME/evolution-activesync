@@ -28,7 +28,6 @@
 #include <string.h>
 #include <libxml/xmlreader.h>
 #include <libxml/xmlsave.h>
-#include <libedataserver/e-flag.h>
 
 #include "../eas-daemon/src/activesyncd-common-defs.h"
 #include "eas-folder.h"
