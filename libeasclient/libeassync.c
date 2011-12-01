@@ -557,7 +557,6 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 {
 	gboolean ret = TRUE;
 	EasSyncHandlerPrivate *priv = self->priv;
-	DBusGProxyCall *call;
 	gchar* flatitem = NULL;
 
 	g_debug ("eas_sync_handler_fetch_item++");
@@ -567,25 +566,16 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 
-	call = dbus_g_proxy_begin_call (priv->remoteEas,
-					"fetch_item",
-					NULL,
-					NULL, 							// userdata passed to callback
-					NULL, 							// destroy notification
-					G_TYPE_STRING, priv->account_uid,
-					G_TYPE_STRING, folder_id,
-					G_TYPE_STRING, server_id,
-					G_TYPE_UINT64, (guint64) type,
-					G_TYPE_INVALID);
 
-
-	// blocks until results are available:
-	ret = dbus_g_proxy_end_call (priv->remoteEas,
-				     call,
-				     error,
-				     G_TYPE_STRING, &flatitem,
-				     G_TYPE_INVALID);
-
+	ret = eas_gdbus_sync_call (self, "fetch_item",
+				   NULL, NULL, /* progress */
+				   "(ssst)", "(s)",
+				   NULL, error,
+				   priv->account_uid,
+				   folder_id,
+				   server_id,
+				   (guint64) type,
+				   &flatitem);
 
 	eas_item_info_deserialise (item, flatitem);
 
