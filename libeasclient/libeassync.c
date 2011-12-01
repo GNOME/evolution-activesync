@@ -330,7 +330,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 			       GError **error)
 {
 	gboolean ret = TRUE;
-	DBusGProxy *proxy = NULL;
 
 	// Build string array from items_deleted GSList
 	guint list_length = g_slist_length ( (GSList*) items_deleted);
@@ -350,8 +349,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 		return FALSE;
 	}
 
-	proxy = self->priv->remoteEas;
-
 	deleted_items_array = g_malloc0 ( (list_length + 1) * sizeof (gchar*));
 	if (!deleted_items_array) {
 		g_set_error (error, EAS_MAIL_ERROR,
@@ -369,15 +366,16 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 	g_debug ("eas_sync_handler_delete_items - dbus proxy ok");
 
 	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "delete_items", error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_UINT64, (guint64) type,
-				 G_TYPE_STRING, folder_id,
-				 G_TYPE_STRING, sync_key_in,
-				 G_TYPE_STRV, deleted_items_array,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, sync_key_out,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_sync_call (self, "delete_items",
+				   NULL, NULL, /* progress */
+				   "(stss^as)", "(s)",
+				   NULL, error,
+				   self->priv->account_uid,
+				   (guint64) type,
+				   folder_id,
+				   sync_key_in,
+				   deleted_items_array,
+				   sync_key_out);
 
 	g_debug ("eas_sync_handler_delete_items - dbus proxy called");
 
