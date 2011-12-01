@@ -39,6 +39,7 @@
 #include "eas-sync-errors.h"
 
 #include "eas-logger.h"
+#include "eas-dbus-client.h"
 
 G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
 
@@ -59,6 +60,7 @@ eas_sync_error_quark (void)
 
 
 struct _EasSyncHandlerPrivate {
+	struct eas_gdbus_client eas_client;
 	DBusGConnection* bus;
 	DBusGProxy *remoteEas;
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
@@ -80,7 +82,7 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 
 	priv->remoteEas = NULL;
 	priv->bus = NULL;
-	priv->account_uid = NULL;
+	memset (&priv->eas_client, 0, sizeof (priv->eas_client));
 	cnc->priv = priv;
 	g_debug ("eas_sync_handler_init--");
 	srand (time (NULL) + rand());
@@ -107,6 +109,7 @@ eas_sync_handler_finalize (GObject *object)
 
 	g_debug ("eas_sync_handler_finalize++");
 
+	eas_gdbus_client_destroy (&priv->eas_client);
 	g_free (priv->account_uid);
 
 	G_OBJECT_CLASS (eas_sync_handler_parent_class)->finalize (object);
@@ -173,7 +176,13 @@ eas_sync_handler_new (const gchar* account_uid)
 	}
 
 	dbus_g_proxy_set_default_timeout (object->priv->remoteEas, 1000000);
+
 	object->priv->account_uid = g_strdup (account_uid);
+
+	if (!eas_gdbus_client_init (&object->priv->eas_client, account_uid, NULL)) {
+		g_object_unref (object);
+		return NULL;
+	}
 
 	g_debug ("eas_sync_handler_new--");
 	return object;
@@ -190,6 +199,7 @@ free_string_array (gchar **array)
 	g_free (array);
 
 }
+#define eas_gdbus_sync_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_SYNC_OBJECT_PATH, EAS_SERVICE_SYNC_INTERFACE, __VA_ARGS__)
 
 gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 				     const gchar *sync_key_in,
