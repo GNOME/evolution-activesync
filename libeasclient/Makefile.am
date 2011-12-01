@@ -47,19 +47,6 @@ libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h \
 			eas-email-info.h eas-mail-errors.h
 
 
-mail_interface_xml =  ../eas-daemon/src/eas-mail.xml
-common_interface_xml = ../eas-daemon/src/eas-common.xml
-sync_interface_xml =  ../eas-daemon/src/eas-sync.xml
-
-#Rule to generate the binding headers
-eas-sync-client-stub.h: $(sync_interface_xml)
-	dbus-binding-tool --prefix=eas_object --mode=glib-client $< > $@
-eas-mail-client-stub.h: $(mail_interface_xml)
-	dbus-binding-tool --prefix=eas_object --mode=glib-client $< > $@
-eas-common-client-stub.h: $(common_interface_xml)	
-	dbus-binding-tool --prefix=eas_common --mode=glib-client $< > $@
-
-BUILT_SOURCES = eas-sync-client-stub.h eas-mail-client-stub.h eas-common-client-stub.h
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g $(WARNING_FLAGS)
 
