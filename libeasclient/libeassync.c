@@ -397,7 +397,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 			       GError **error)
 {
 	gboolean ret = TRUE;
-	DBusGProxy *proxy;
 	gchar **updated_item_array = NULL;
 
 	g_debug ("eas_sync_handler_update_items++");
@@ -416,20 +415,19 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 
 	g_debug ("eas_sync_handler_update_items - dbus proxy ok");
 
-	proxy = self->priv->remoteEas;
-
 	build_serialised_calendar_info_array (&updated_item_array, items_updated, FALSE, error);
 
 	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "update_items", error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_UINT64, (guint64) type,
-				 G_TYPE_STRING, folder_id,
-				 G_TYPE_STRING, sync_key_in,
-				 G_TYPE_STRV, updated_item_array,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, sync_key_out,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_sync_call (self, "update_items",
+				   NULL, NULL, /* progress */
+				   "(stss^as)", "(s)",
+				   NULL, error,
+				   self->priv->account_uid,
+				   (guint64) type,
+				   folder_id,
+				   sync_key_in,
+				   updated_item_array,
+				   sync_key_out);
 
 	g_debug ("eas_sync_handler_update_items - dbus proxy called");
 
