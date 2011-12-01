@@ -134,8 +134,6 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 
 	g_type_init();
 
-	dbus_g_thread_init();
-
 	/* Ick. See https://bugzilla.gnome.org/show_bug.cgi?id=662396 */
 	eas_connection_error_quark();
 
