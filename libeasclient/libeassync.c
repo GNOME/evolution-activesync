@@ -213,7 +213,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 				     GError **error)
 {
 	gboolean ret = TRUE;
-	DBusGProxy *proxy;
 	gchar **created_item_array = NULL;
 	gchar **deleted_item_array = NULL;
 	gchar **updated_item_array = NULL;
@@ -248,20 +247,19 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 	g_assert (g_slist_length (*items_updated) == 0);
 	g_assert (g_slist_length (*items_deleted) == 0);
 
-	proxy = self->priv->remoteEas;
-	// call DBus API
-	ret = dbus_g_proxy_call (proxy, "get_latest_items", error,
-				 G_TYPE_STRING, self->priv->account_uid,
-				 G_TYPE_UINT64, (guint64) type,
-				 G_TYPE_STRING, folder_id,
-				 G_TYPE_STRING, sync_key_in,
-				 G_TYPE_INVALID,
-				 G_TYPE_STRING, sync_key_out,
-				 G_TYPE_BOOLEAN, more_available,
-				 G_TYPE_STRV, &created_item_array,
-				 G_TYPE_STRV, &deleted_item_array,
-				 G_TYPE_STRV, &updated_item_array,
-				 G_TYPE_INVALID);
+	ret = eas_gdbus_sync_call (self, "get_latest_items",
+				   NULL, NULL, /* progress */
+				   "(stss)", "(sb^as^as^as)",
+				   NULL, error,
+				   self->priv->account_uid,
+				   (guint64) type,
+				   folder_id,
+				   sync_key_in,
+				   sync_key_out,
+				   more_available,
+				   &created_item_array,
+				   &deleted_item_array,
+				   &updated_item_array);
 
 	g_debug ("eas_sync_handler_get_latest_items - dbus proxy called");
 
