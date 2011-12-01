@@ -62,8 +62,6 @@ struct _EasSyncHandlerPrivate {
 	DBusGConnection* bus;
 	DBusGProxy *remoteEas;
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
-	GMainLoop* main_loop;
-
 };
 
 static gboolean
@@ -83,7 +81,6 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 	priv->remoteEas = NULL;
 	priv->bus = NULL;
 	priv->account_uid = NULL;
-	priv->main_loop = NULL;
 	cnc->priv = priv;
 	g_debug ("eas_sync_handler_init--");
 	srand (time (NULL) + rand());
@@ -111,10 +108,6 @@ eas_sync_handler_finalize (GObject *object)
 	g_debug ("eas_sync_handler_finalize++");
 
 	g_free (priv->account_uid);
-
-	if (priv->main_loop) {
-		g_main_loop_quit (priv->main_loop);
-	}
 
 	G_OBJECT_CLASS (eas_sync_handler_parent_class)->finalize (object);
 	g_debug ("eas_sync_handler_finalize--");
@@ -157,14 +150,6 @@ eas_sync_handler_new (const gchar* account_uid)
 
 	if (object == NULL) {
 		g_critical ("Error: Couldn't create sync handler");
-		return NULL;
-	}
-
-	object->priv->main_loop = g_main_loop_new (NULL, TRUE);
-
-	if (object->priv->main_loop == NULL) {
-		g_object_unref (object);
-		g_critical ("Error: Failed to create the mainloop");
 		return NULL;
 	}
 
