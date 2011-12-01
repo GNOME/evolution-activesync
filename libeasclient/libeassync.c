@@ -24,7 +24,6 @@
  */
 
 #include <glib.h>
-#include <dbus/dbus-glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libxml/xmlreader.h>
@@ -61,8 +60,6 @@ eas_sync_error_quark (void)
 
 struct _EasSyncHandlerPrivate {
 	struct eas_gdbus_client eas_client;
-	DBusGConnection* bus;
-	DBusGProxy *remoteEas;
 	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
 };
 
@@ -80,8 +77,6 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 	/* allocate internal structure */
 	cnc->priv = priv = EAS_SYNC_HANDLER_PRIVATE (cnc);
 
-	priv->remoteEas = NULL;
-	priv->bus = NULL;
 	memset (&priv->eas_client, 0, sizeof (priv->eas_client));
 	cnc->priv = priv;
 	g_debug ("eas_sync_handler_init--");
@@ -91,13 +86,6 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 static void
 eas_sync_handler_dispose (GObject *object)
 {
-	EasSyncHandler *cnc = (EasSyncHandler *) object;
-	EasSyncHandlerPrivate *priv = cnc->priv;
-
-	if (priv->bus) {
-		dbus_g_connection_unref (priv->bus);
-		priv->bus = NULL;
-	}
 	G_OBJECT_CLASS (eas_sync_handler_parent_class)->dispose (object);
 }
 
@@ -137,7 +125,6 @@ eas_sync_handler_new (const gchar* account_uid)
 	EasSyncHandler *object = NULL;
 
 	g_type_init();
-	dbus_g_thread_init();
 
 	g_log_set_handler (G_LOG_DOMAIN,
 			   G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
@@ -156,30 +143,9 @@ eas_sync_handler_new (const gchar* account_uid)
 		return NULL;
 	}
 
-	g_debug ("Connecting to Session D-Bus.");
-	object->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
-	if (error != NULL) {
-		g_object_unref (object);
-		g_critical ("Error: Couldn't connect to the Session bus (%s) ", error->message);
-		return NULL;
-	}
-
-	g_debug ("Creating a GLib proxy object for Eas.");
-	object->priv->remoteEas =  dbus_g_proxy_new_for_name (object->priv->bus,
-							      EAS_SERVICE_NAME,
-							      EAS_SERVICE_SYNC_OBJECT_PATH,
-							      EAS_SERVICE_SYNC_INTERFACE);
-	if (object->priv->remoteEas == NULL) {
-		g_critical ("Error: Couldn't create the proxy object");
-		g_object_unref (object);
-		return NULL;
-	}
-
-	dbus_g_proxy_set_default_timeout (object->priv->remoteEas, 1000000);
-
 	object->priv->account_uid = g_strdup (account_uid);
 
-	if (!eas_gdbus_client_init (&object->priv->eas_client, account_uid, NULL)) {
+	if (!eas_gdbus_client_init (&object->priv->eas_client, account_uid, &error)) {
 		g_object_unref (object);
 		return NULL;
 	}
