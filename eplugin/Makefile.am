@@ -15,9 +15,9 @@
 ### EVO_PLUGIN_RULE ### end ###
 
 
-plugin_DATA = org-gnome-exchange-activesync.eplug
-
-plugin_LTLIBRARIES = liborg-gnome-exchange-activesync.la
+# plugin_DATA = org-gnome-exchange-activesync.eplug
+# plugin_LTLIBRARIES = liborg-gnome-exchange-activesync.la
+noinst_LTLIBRARIES = liborg-gnome-exchange-activesync.la
 
 liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
@@ -36,7 +36,7 @@ liborg_gnome_exchange_activesync_la_SOURCES = 	\
 	eas-account-listener.h
 
 liborg_gnome_exchange_activesync_la_LIBADD = \
-	$(top_srcdir)/libeasclient/libeasclient.la \
+	$(top_builddir)/libeasclient/libeasclient.la \
 	$(EVOLUTION_DATA_SERVER_LIBS) \
 	$(EVOLUTION_PLUGIN_LIBS) \
 	$(EVOLUTION_SHELL_LIBS) \

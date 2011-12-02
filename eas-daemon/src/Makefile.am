@@ -16,7 +16,7 @@ eas-marshal.c: eas-marshal.h
 	&& mv eas-marshal.tmp eas-marshal.c ) \
 	|| ( rm -f eas-marshal.tmp && exit 1  )
 
-eas-mail.c: $(MARSHAL_GENERATED)
+eas-mail.c eas-common.c: $(MARSHAL_GENERATED)
 
 eas-sync-stub.h: eas-sync.xml
 	dbus-binding-tool --prefix=eas_sync --mode=glib-server $< > $@
