@@ -215,6 +215,16 @@ eas_connection_accounts_init()
 }
 
 static void
+eas_soup_logger_printer (SoupLogger *logger,
+			 SoupLoggerLogLevel level,
+			 char direction,
+			 const char *data,
+			 gpointer user_data)
+{
+	g_debug ("%c %s", direction, data);
+}
+
+static void
 eas_connection_init (EasConnection *self)
 {
 	EasConnectionPrivate *priv;
@@ -245,6 +255,7 @@ eas_connection_init (EasConnection *self)
 	if (getenv ("EAS_SOUP_LOGGER") && (atoi (g_getenv ("EAS_SOUP_LOGGER")) >= 1)) {
 		SoupLogger *logger;
 		logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
+		soup_logger_set_printer (logger, eas_soup_logger_printer, NULL, NULL);
 		soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE (logger));
 	}
 
