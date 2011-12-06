@@ -1802,7 +1802,7 @@ eas_connection_find (const gchar* accountId)
 	iter = e_list_get_iterator (E_LIST (g_account_list));
 	for (; e_iterator_is_valid (iter);  e_iterator_next (iter)) {
 		account = EAS_ACCOUNT (e_iterator_get (iter));
-		g_print ("account->uid=%s\n", eas_account_get_uid (account));
+		g_debug ("account->uid=%s\n", eas_account_get_uid (account));
 		if (strcmp (eas_account_get_uid (account), accountId) == 0) {
 			account_found = TRUE;
 			break;

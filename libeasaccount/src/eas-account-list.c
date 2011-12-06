@@ -259,7 +259,7 @@ void dump_accounts(EasAccountList *account_list)
 	gint i=0;
 
 	num_of_accounts = e_list_length((EList*)account_list);		
-	g_print(" There are %d accounts in GConf \n", num_of_accounts );
+	g_debug(" There are %d accounts in GConf \n", num_of_accounts );
 	
 	if (!num_of_accounts)
 		return;
@@ -269,15 +269,15 @@ void dump_accounts(EasAccountList *account_list)
 	     e_iterator_next (iter)) {
 		account = EAS_ACCOUNT (e_iterator_get (iter));
 
-		g_print("Account %d Info: \n", ++i);
-		g_print("account->uid=%s\n", eas_account_get_uid(account));
-		g_print("account->uri=%s\n", eas_account_get_uri(account));
-		g_print("account->username=%s\n", eas_account_get_username(account));
-		g_print("account->protocol_version=%d\n", eas_account_get_protocol_version(account));
-		g_print("account->policy_key=%s\n", eas_account_get_policy_key(account));
-		g_print("account->calendar_folder=%s\n", eas_account_get_calendar_folder(account));
-		g_print("account->contact_folder=%s\n", eas_account_get_contact_folder(account));
-		g_print("account->password=%s\n", eas_account_get_password(account));
+		g_debug("Account %d Info: \n", ++i);
+		g_debug("account->uid=%s\n", eas_account_get_uid(account));
+		g_debug("account->uri=%s\n", eas_account_get_uri(account));
+		g_debug("account->username=%s\n", eas_account_get_username(account));
+		g_debug("account->protocol_version=%d\n", eas_account_get_protocol_version(account));
+		g_debug("account->policy_key=%s\n", eas_account_get_policy_key(account));
+		g_debug("account->calendar_folder=%s\n", eas_account_get_calendar_folder(account));
+		g_debug("account->contact_folder=%s\n", eas_account_get_contact_folder(account));
+		g_debug("account->password=%s\n", eas_account_get_password(account));
 	}
 
 	g_object_unref (iter);

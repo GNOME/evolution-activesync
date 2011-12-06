@@ -235,7 +235,7 @@ eas_utils_sync_folders (CamelEasStore *eas_store, GSList *folder_list)
 
 	camel_eas_store_summary_save (eas_store->summary, &error);
 	if (error != NULL) {
-		g_print ("Error while saving store summary %s \n", error->message);
+		g_debug ("Error while saving store summary %s \n", error->message);
 		g_clear_error (&error);
 	}
 	return;
