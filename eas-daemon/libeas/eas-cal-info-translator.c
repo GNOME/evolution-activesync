@@ -2753,25 +2753,27 @@ static void _ical2eas_process_xstandard_xdaylight (icalcomponent* subcomponent, 
  * @param  vtimezone
  *      Pointer to the iCalendar VTIMEZONE component
  * @param  forceTimezone
- *      Send empty time zone (= UTC) if vtimezone is empty; useful
+ *      Send UTC if vtimezone is empty; useful
  *      in one particular case (recurring all-day property with
  *      exceptions), otherwise Exchange didn't handle the event
- *      properly (dropped exceptions, see BMC #22780).
+ *      properly (dropped exceptions, see BMC #22780), and
+ *      in another where not sending any time zone information
+ *      caused some default to be added (123together.com)
  * @param  appData
  *      Pointer to the <ApplicationData> element to add parsed elements to
  */
 static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forceTimezone, xmlNodePtr appData)
 {
-	EasTimeZone timezoneStruct;
-	gchar* timezoneBase64 = NULL;
-
-	// all empty == UTC as default
-	memset (&timezoneStruct, 0, sizeof (EasTimeZone));
 	if (vtimezone) {
+		EasTimeZone timezoneStruct;
+		gchar* timezoneBase64 = NULL;
 		icalcomponent* subcomponent = NULL;
+		icalproperty* tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
+
+		// all empty == UTC as default
+		memset (&timezoneStruct, 0, sizeof (EasTimeZone));
 
 		// Only one property in a VTIMEZONE: the TZID
-		icalproperty* tzid = icalcomponent_get_first_property (vtimezone, ICAL_TZID_PROPERTY);
 		if (tzid) {
 			// Get the ASCII value from the iCal
 			gchar* tzidValue8 = (gchar*) icalproperty_get_value_as_string (tzid);
@@ -2798,13 +2800,18 @@ static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forc
 		     subcomponent = icalcomponent_get_next_component (vtimezone, ICAL_ANY_COMPONENT)) {
 			_ical2eas_process_xstandard_xdaylight (subcomponent, &timezoneStruct, icalcomponent_isa (subcomponent));
 		}
-	} else if (!forceTimezone)
-		return;
 
-	// Write the timezone into the XML, base64-encoded.
-	timezoneBase64 = g_base64_encode ( (const guchar *) (&timezoneStruct), sizeof (EasTimeZone));
-	xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*) timezoneBase64);
-	g_free (timezoneBase64);
+		// Write the timezone into the XML, base64-encoded.
+		timezoneBase64 = g_base64_encode ( (const guchar *) (&timezoneStruct), sizeof (EasTimeZone));
+		xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*) timezoneBase64);
+		g_free (timezoneBase64);
+	} else if (forceTimezone) {
+		// This is Exchange 2010's idea of UTC. Corresponds to:
+		// bias 0, standard bias 0, daylight bias 0,
+		// standard '(UTC) Coordinated Universal Time',
+		// daylight '(UTC) Coordinated Universal Time'
+		xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TIMEZONE, (const xmlChar*)"AAAAACgAVQBUAEMAKQAgAEMAbwBvAHIAZABpAG4AYQB0AGUAZAAgAFUAbgBpAHYAZQByAHMAYQBsACAAVABpAG0AZQAAAAAAAAAAAAAAAAAAAAAAAAAAACgAVQBUAEMAKQAgAEMAbwBvAHIAZABpAG4AYQB0AGUAZAAgAFUAbgBpAHYAZQByAHMAYQBsACAAVABpAG0AZQAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+	}
 }
 
 /** compare icaltimetype in qsort() */
@@ -3166,7 +3173,12 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		// events, so it is safe to send it (conversion back will produce
 		// "nice" all-day event without time zone again, other peers should
 		// deal with it okay, too - verified with Exchange/OWA).
-		if (tt.is_date)
+		//
+		// Also explicitly send a dummy UTC timezone if we use UTC.
+		// Some Exchange 2010 servers were fine without it (time stamps
+		// are in UTC anyway), but the installation on 123together.com
+		// added its own local time when no explicit timezone was sent.
+		if (tt.is_date || icaltz == icaltimezone_get_utc_timezone ())
 			forceTimezone = TRUE;
 		_ical2eas_process_vtimezone (vtimezone, forceTimezone, appData);
 		_ical2eas_process_vevent (vevent, appData, icaltz, FALSE);
