@@ -3019,6 +3019,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 {
 	gboolean success = FALSE;
 	icalcomponent* ical = NULL;
+	icaltimezone* icaltz = NULL;
 	icaltimetype *recurrenceTimes = NULL;
 
 	g_debug (" Cal Data: %s", calInfo->data);
@@ -3033,7 +3034,6 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 		icalcomponent* vevent = NULL;
 		icalcomponent* exceptionvevent = NULL;
 		icalcomponent* vtimezone = NULL;
-		icaltimezone* icaltz = NULL;
 		icalproperty* tzid = NULL;
 		struct icaltimetype tt;
 		icalproperty* prop = NULL;
@@ -3233,6 +3233,8 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 	}
 
  error:
+	if (icaltz && icaltz != icaltimezone_get_utc_timezone ())
+		icaltimezone_free (icaltz, TRUE);
 	if (ical) {
 		icalcomponent_free (ical);
 	}
