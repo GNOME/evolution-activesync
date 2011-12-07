@@ -899,10 +899,12 @@ static void _eas2ical_process_recurrence (xmlNodePtr n, icalcomponent* vevent)
 		value = (gchar*) xmlNodeGetContent (subNode);
 
 
-		if (subNode->type != XML_ELEMENT_NODE)
-			continue;
+		// nothing to do
+		if (subNode->type != XML_ELEMENT_NODE) {
+		}
+
 		// Type
-		if (g_strcmp0 (elemName, EAS_ELEMENT_TYPE) == 0) {
+		else if (g_strcmp0 (elemName, EAS_ELEMENT_TYPE) == 0) {
 			int typeInt = atoi (value);
 			switch (typeInt) {
 			case 0: // Recurs daily
@@ -1116,6 +1118,7 @@ static GSList* _eas2ical_process_exceptions (xmlNodePtr n, icalcomponent* vevent
 				xmlNodePtr bodySubNode = NULL;
 				for (bodySubNode = subNode->children; bodySubNode; bodySubNode = bodySubNode->next) {
 					if (bodySubNode->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) bodySubNode->name, EAS_ELEMENT_DATA)) {
+						if (value) xmlFree (value);
 						value = (gchar*) xmlNodeGetContent (bodySubNode);
 						if (newEventValues == NULL) {
 							newEventValues = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -1132,6 +1135,7 @@ static GSList* _eas2ical_process_exceptions (xmlNodePtr n, icalcomponent* vevent
 				int categoryLength, index = 0;
 				for (catNode = subNode->children; catNode; catNode = catNode->next) {
 					if (catNode->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) catNode->name, EAS_ELEMENT_CATEGORY)) {
+						if (value) xmlFree (value);
 						value = (gchar*) xmlNodeGetContent (catNode);
 						for (index = 0, categoryLength = strlen (value); index < categoryLength; index++) {
 							if (value[index] == ',')
@@ -1536,9 +1540,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 	// Variable for the return value
 	gchar* result = NULL;
 
-	// Variable for property values as they're read from the XML
-	gchar* value  = NULL;
-
 	// Variable to store the TZID value when decoding a <calendar:Timezone> element
 	// so we can use it in the rest of the iCal's date/time fields.
 	gchar* tzid   = NULL;
@@ -1581,6 +1582,7 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 	for (n = n->children; n; n = n->next) {
 		if (n->type == XML_ELEMENT_NODE) {
 			const gchar* name = (const gchar*) (n->name);
+			gchar* value  = NULL;
 
 			//
 			// Subject
@@ -1589,8 +1591,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				value = (gchar*) xmlNodeGetContent (n);
 				prop = icalproperty_new_summary (value);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1601,8 +1601,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				dateTime = icaltime_from_string (value);
 				prop = icalproperty_new_dtstart (dateTime);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1613,8 +1611,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				dateTime = icaltime_from_string (value);
 				prop = icalproperty_new_dtend (dateTime);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1625,8 +1621,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				dateTime = icaltime_from_string (value);
 				prop = icalproperty_new_dtstamp (dateTime);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1636,8 +1630,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				value = (gchar*) xmlNodeGetContent (n);
 				prop = icalproperty_new_uid (value);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1647,8 +1639,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				value = (gchar*) xmlNodeGetContent (n);
 				prop = icalproperty_new_location (value);
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1658,11 +1648,10 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				xmlNodePtr subNode = NULL;
 				for (subNode = n->children; subNode; subNode = subNode->next) {
 					if (subNode->type == XML_ELEMENT_NODE && !g_strcmp0 ( (gchar*) subNode->name, EAS_ELEMENT_DATA)) {
+						if (value) xmlFree (value);
 						value = (gchar*) xmlNodeGetContent (subNode);
 						prop = icalproperty_new_description (value);
 						icalcomponent_add_property (vevent, prop);
-						xmlFree (value);
-						value = NULL;
 						break;
 					}
 				}
@@ -1675,8 +1664,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				value = (gchar*) xmlNodeGetContent (n);
 				prop = icalproperty_new_class (_eas2ical_convert_sensitivity_to_class (value));
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1686,8 +1673,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				value = (gchar*) xmlNodeGetContent (n);
 				prop = icalproperty_new_transp (_eas2ical_convert_busystatus_to_transp (value));
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1699,6 +1684,7 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 					if (catNode->type != XML_ELEMENT_NODE)
 						continue;
 
+					if (value) xmlFree (value);
 					value = (gchar*) xmlNodeGetContent (catNode);
 					prop = icalproperty_new_categories (value);
 					icalcomponent_add_property (vevent, prop);
@@ -1724,9 +1710,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 
 				prop = icalproperty_new_trigger (trigger);
 				icalcomponent_add_property (valarm, prop);
-
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1735,8 +1718,6 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 			else if (g_strcmp0 (name, EAS_ELEMENT_ALLDAYEVENT) == 0) {
 				value = (gchar*) xmlNodeGetContent (n);
 				isAllDayEvent = atoi (value) == 1;
-				xmlFree (value);
-				value = NULL;
 			}
 
 			//
@@ -1800,11 +1781,12 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				icalproperty_set_x_name (prop, propertyName);
 				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
 				icalcomponent_add_property (vevent, prop);
-				xmlFree (value);
-				value = NULL;
 				g_free (propertyName);
 				propertyName = NULL;
 			}
+
+			if (value) xmlFree (value);
+			value = NULL;
 		}
 	}
 
