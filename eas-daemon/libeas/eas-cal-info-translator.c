@@ -2885,6 +2885,9 @@ calculateRecurrence (int numDetached, const icaltimetype *detached)
 	struct icaldurationtype delta;
 	if (numDetached >= 2)
 		delta = icaltime_subtract (detached[1], detached[0]);
+	else
+		// keep compiler happy (doesn't detect that delta is not used in this case)
+		memset (&delta, 0, sizeof(delta));
 
 	// try yearly, monthly, ... , secondly recurrence
 	for (freq = ICAL_YEARLY_RECURRENCE;
