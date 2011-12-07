@@ -156,9 +156,11 @@ eas_delete_req_Activate (EasDeleteReq *self, GError** error)
 		acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
 		switch (priv->itemType) {
 		case EAS_ITEM_CALENDAR:
+			g_free (priv->folder_id);
 			priv->folder_id = g_strdup (eas_account_get_calendar_folder (acc));
 			break;
 		case EAS_ITEM_CONTACT:
+			g_free (priv->folder_id);
 			priv->folder_id = g_strdup (eas_account_get_contact_folder (acc));
 			break;
 		default:

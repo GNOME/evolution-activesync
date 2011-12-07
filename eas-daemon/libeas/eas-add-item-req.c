@@ -190,9 +190,11 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 		acc = eas_connection_get_account (conn);
 		switch (priv->item_type) {
 		case EAS_ITEM_CALENDAR:
+			g_free (priv->folder_id);
 			priv->folder_id = g_strdup (eas_account_get_calendar_folder (acc));
 			break;
 		case EAS_ITEM_CONTACT:
+			g_free (priv->folder_id);
 			priv->folder_id = g_strdup (eas_account_get_contact_folder (acc));
 			break;
 		default:

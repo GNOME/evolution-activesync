@@ -739,6 +739,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 			// No need to support more than one: the EAS calendar will only have one Timezone
 			// element. And no need to localise, as it's only used internally.
 			if (*tzid == NULL || strlen (*tzid) == 0) {
+				g_free (*tzid);
 				*tzid = g_strdup (ICAL_DEFAULT_TZID);
 			}
 			// if timezone id contains character UTC and Bias is 0, then don't add it to the ICAL

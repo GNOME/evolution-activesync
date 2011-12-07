@@ -210,9 +210,11 @@ eas_get_email_body_req_Activate (EasGetEmailBodyReq* self, GError** error)
 		acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
 		switch (priv->item_type) {
 		case EAS_ITEM_CALENDAR:
+			g_free (priv->collectionId);
 			priv->collectionId = g_strdup (eas_account_get_calendar_folder (acc));
 			break;
 		case EAS_ITEM_CONTACT:
+			g_free (priv->collectionId);
 			priv->collectionId = g_strdup (eas_account_get_contact_folder (acc));
 			break;
 		default:
