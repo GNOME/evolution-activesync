@@ -79,6 +79,7 @@ eas_gdbus_client_destroy (struct eas_gdbus_client *client)
 
 	if (client->progress_fns_table) {
 		g_hash_table_remove_all (client->progress_fns_table);
+		g_hash_table_unref (client->progress_fns_table);
 		client->progress_fns_table = NULL;
 	}
 }
