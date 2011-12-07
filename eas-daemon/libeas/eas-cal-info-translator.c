@@ -682,14 +682,27 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 	EasTimeZone    timeZoneStruct;
 	icaltimezone*  icaltz = NULL;
 
-	xmlFree (timeZoneBase64Buffer);
-
 	// TODO Check decode of timezone for endianess problems
 
 	if (timeZoneRawBytesSize == sizeof (EasTimeZone)) {
 		memcpy (&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
 		g_free (timeZoneRawBytes);
 		timeZoneRawBytes = NULL;
+
+		{
+			char *standard = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.StandardName,
+							   (sizeof (timeZoneStruct.StandardName) / sizeof (guint16)), NULL, NULL, NULL);
+			char *daylight = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.DaylightName,
+							   (sizeof (timeZoneStruct.DaylightName) / sizeof (guint16)), NULL, NULL, NULL);
+			g_debug ("process timezone %s => bias %d, standard bias %d, daylight bias %d, standard '%s', daylight '%s'",
+				 timeZoneBase64Buffer,
+				 timeZoneStruct.Bias,
+				 timeZoneStruct.StandardBias,
+				 timeZoneStruct.DaylightBias,
+				 standard, daylight);
+			g_free (standard);
+			g_free (daylight);
+		}
 
 		{
 			// Calculate the timezone offsets. See _ical2eas_process_xstandard_xdaylight()
@@ -700,7 +713,6 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 			icalcomponent*              xdaylight             = NULL;
 			struct icalrecurrencetype   rrule;
 			struct icaltimetype         time;
-
 
 			// Using StandardName as the TZID
 			// (Doesn't matter if it's not an exact description: this field is only used internally
@@ -840,6 +852,8 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 		g_critical ("TimeZone BLOB did not match sizeof(EasTimeZone)");
 	}
 
+ done:
+	xmlFree (timeZoneBase64Buffer);
 	return icaltz;
 }
 
