@@ -1990,7 +1990,7 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 	}
 }
 
-static WB_UTINY *sanitize_utf8(WB_UTINY *in)
+static WB_UTINY *sanitize_utf8(const WB_UTINY *in)
 {
 	int i;
 	char *out = strdup((char *)in);
@@ -2160,7 +2160,11 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			   Anything we get here is going to be passed out to dbus in a string
 			   type, and dbus would end up silently calling exit() if we pass it
 			   non-UTF8 anyway */
-			xml = sanitize_utf8 (xml);
+			if (xml) {
+				WB_UTINY *sanexml = sanitize_utf8 (xml);
+				free (xml);
+				xml = sanexml;
+			}
 
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
