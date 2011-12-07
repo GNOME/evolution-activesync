@@ -113,7 +113,7 @@ eas_sync_handler_class_init (EasSyncHandlerClass *klass)
 	g_type_class_add_private (klass, sizeof (EasSyncHandlerPrivate));
 
 	object_class->finalize = eas_sync_handler_finalize;
-	object_class->finalize = eas_sync_handler_dispose;
+	object_class->dispose = eas_sync_handler_dispose;
 	g_debug ("eas_sync_handler_class_init--");
 }
 
