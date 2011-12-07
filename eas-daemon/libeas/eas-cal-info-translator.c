@@ -714,6 +714,12 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 			struct icalrecurrencetype   rrule;
 			struct icaltimetype         time;
 
+			if (standardUtcOffsetMins == 0 &&
+			    daylightUtcOffsetMins == 0) {
+				// is UTC time zone, ignore it
+				goto done;
+			}
+
 			// Using StandardName as the TZID
 			// (Doesn't matter if it's not an exact description: this field is only used internally
 			// during iCalendar encoding/decoding)
