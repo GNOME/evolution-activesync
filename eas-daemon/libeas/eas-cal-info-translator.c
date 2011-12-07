@@ -1383,7 +1383,6 @@ static gboolean _eas2ical_add_exception_events (icalcomponent* vcalendar,
 				prop = icalproperty_new_categories (category->str);
 				icalcomponent_add_property (newEvent, prop); // vevent takes ownership
 				g_string_free (category, TRUE);
-				category = g_string_new ("");
 			}
 
 			// Sensitivity
