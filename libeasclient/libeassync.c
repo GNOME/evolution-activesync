@@ -348,6 +348,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 		g_debug ("delete_items called successfully");
 	}
 
+	free_string_array (deleted_items_array);
 	g_debug ("eas_sync_handler_delete_items--");
 	return ret;
 }
@@ -400,6 +401,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 		g_debug ("update_calendar_items called successfully");
 	}
 
+	free_string_array (updated_item_array);
 	g_debug ("eas_sync_handler_update_items--");
 	return ret;
 }
@@ -508,6 +510,8 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 		}
 	}
 
+	free_string_array (added_item_array);
+	free_string_array (created_item_array);
 	g_debug ("eas_sync_handler_add_items--");
 	return ret;
 }
@@ -543,6 +547,7 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 				   &flatitem);
 
 	eas_item_info_deserialise (item, flatitem);
+	g_free (flatitem);
 
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
