@@ -460,8 +460,17 @@ static gboolean _eas2ical_convert_datetime_property(icalproperty *prop,
 	// NOP without either of these
 	if (icaltz || isAllDayEvent) {
 		struct icaltimetype tt = get (prop);
-		if (icaltz)
-			tt = icaltime_convert_to_zone (tt, icaltz);
+		if (icaltz) {
+			struct icaltimetype localtt = icaltime_convert_to_zone (tt, icaltz);
+			// Sanity check for all day events: should align with midnight after conversion.
+			// If it doesn't, something is wrong. Happened with Exchange 2010
+			// on 123together.com, but only for events created via ActiveSync,
+			// not for events created via OWA. If the check fails, then don't
+			// do the conversion to local time.
+			if (!isAllDayEvent ||
+			    (!localtt.hour && !localtt.minute && !localtt.second))
+				tt = localtt;
+		}
 		if (isAllDayEvent)
 			tt.is_date = 1;
 		set (prop, tt);
