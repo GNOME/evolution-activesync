@@ -1,6 +1,9 @@
 EAS_USE_MOCKS 0 don't use mocks, >0 use mocks
 EAS_CAPTURE_RESPONSE 0 don't write server response to file, >0 write server response to file (for mock test dev)
 EAS_DEBUG 1 output 'critical', 2 output 'warnings' and above, 3 output 'messages' and above, 4 output 'debug' and above, 5 output libsoup debug and XML responses
-EAS_DEBUG_FILE <filename> writes debug output to specified file
-EAS_SOUP_LOGGER 0 don't output soup logger debug, >0 output soup logger debug
 
+EAS_DEBUG_FILE <filename> writes debug output to specified file (only
+in activesyncd binary, libraries use glib logging with default handler
+for their domains: libeas, libeasclient, libeastest)
+
+EAS_SOUP_LOGGER 0 don't output soup logger debug, >0 output soup logger debug

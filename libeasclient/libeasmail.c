@@ -135,11 +135,6 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 	/* Ick. See https://bugzilla.gnome.org/show_bug.cgi?id=662396 */
 	eas_connection_error_quark();
 
-	g_log_set_handler (G_LOG_DOMAIN,
-			   G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
-			   eas_logger,
-			   NULL);
-
 	g_debug ("eas_mail_handler_new++ : account_uid[%s]", (account_uid ? account_uid : "NULL"));
 
 	if (!account_uid) {
