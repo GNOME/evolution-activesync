@@ -56,7 +56,6 @@
 #include <unistd.h>
 #include <libsoup/soup.h>
 #include <signal.h>
-#include <dbus/dbus.h>
 
 //user include
 #include "activesyncd-common-defs.h"
@@ -340,8 +339,6 @@ int main (int argc, char** argv)
 		dbus_g_connection_flush (bus);
 		dbus_g_connection_unref(bus);
 	}
-
-	dbus_shutdown ();
 
 	g_debug ("Exiting main()");
 	return 0;

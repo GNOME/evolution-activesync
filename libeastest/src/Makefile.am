@@ -5,7 +5,6 @@ lib_LTLIBRARIES =  libeastest.la
 libeastest_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
-		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
@@ -16,7 +15,6 @@ libeastest_la_CPPFLAGS =			\
 libeastest_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
-		$(DBUS_LIBS)		\
 		$(DBUS_GLIB_LIBS)	\
 		$(LIBXML_LIBS)	\
 		$(SOUP_LIBS)

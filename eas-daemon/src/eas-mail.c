@@ -66,7 +66,6 @@
 #include "activesyncd-common-defs.h"
 #include "eas-marshal.h"
 #include "eas-get-item-estimate-req.h"
-#include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
 
 G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);

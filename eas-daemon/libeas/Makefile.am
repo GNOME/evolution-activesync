@@ -8,7 +8,6 @@ libeas_la_CFLAGS = $(WARNING_FLAGS)
 libeas_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
-		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
@@ -23,7 +22,6 @@ libeas_la_CPPFLAGS =			\
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
-		$(DBUS_LIBS)		\
 		$(DBUS_GLIB_LIBS)	\
 		$(LIBXML_LIBS)		\
 		$(SOUP_LIBS)		\

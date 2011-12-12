@@ -34,7 +34,6 @@ eas-test-stub.h: eas-test.xml
 activesyncd_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(EDATASERVER_CFLAGS)	\
-		$(DBUS_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
 		-DG_LOG_DOMAIN=\"activesyncd\" \
@@ -45,7 +44,6 @@ activesyncd_CPPFLAGS =			\
 activesyncd_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
-		$(DBUS_LIBS)		\
 		$(DBUS_GLIB_LIBS)	\
 		$(SOUP_LIBS)
 
