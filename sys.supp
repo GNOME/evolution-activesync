@@ -1,0 +1,38 @@
+# A set of suppressions for valgrind reports that seem to be
+# caused by the environment that activesyncd runs in.
+
+# seen on Debian Testing
+#
+# ==1818== 24 bytes in 1 blocks are definitely lost in loss record 998 of 2,670
+# ==1818==    at 0x4C27673: malloc (vg_replace_malloc.c:263)
+# ==1818==    by 0x5538C02: g_malloc (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.3000.2)
+# ==1818==    by 0xB25F92C: ??? (in /lib/x86_64-linux-gnu/libgcrypt.so.11.7.0)
+# ==1818==    by 0xB260888: ??? (in /lib/x86_64-linux-gnu/libgcrypt.so.11.7.0)
+# ==1818==    by 0xB260BCE: ??? (in /lib/x86_64-linux-gnu/libgcrypt.so.11.7.0)
+# ==1818==    by 0xB2A9A09: ??? (in /lib/x86_64-linux-gnu/libgcrypt.so.11.7.0)
+# ==1818==    by 0x809F8CA: ??? (in /usr/lib/x86_64-linux-gnu/libgnome-keyring.so.0.1.1)
+# ==1818==    by 0x809449B: ??? (in /usr/lib/x86_64-linux-gnu/libgnome-keyring.so.0.1.1)
+# ==1818==    by 0x8094751: ??? (in /usr/lib/x86_64-linux-gnu/libgnome-keyring.so.0.1.1)
+# ==1818==    by 0x8093B50: ??? (in /usr/lib/x86_64-linux-gnu/libgnome-keyring.so.0.1.1)
+# ==1818==    by 0x5061D49: ??? (in /lib/x86_64-linux-gnu/libdbus-1.so.3.5.8)
+# ==1818==    by 0x5064FD9: dbus_connection_dispatch (in /lib/x86_64-linux-gnu/libdbus-1.so.3.5.8)
+# ==1818==    by 0x809EC14: ??? (in /usr/lib/x86_64-linux-gnu/libgnome-keyring.so.0.1.1)
+# ==1818==    by 0x55320CE: g_main_context_dispatch (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.3000.2)
+# ==1818==    by 0x55328C7: ??? (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.3000.2)
+# ==1818==    by 0x5532E01: g_main_loop_run (in /lib/x86_64-linux-gnu/libglib-2.0.so.0.3000.2)
+# ==1818==    by 0x402F86: main (activesyncd-server.c:301)
+# ==1818== 
+{
+   gcrypt/GNOME keyring leak
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   obj:*libgcrypt*
+   ...
+   obj:*libgnome-keyring*
+   ...
+   fun:dbus_connection_dispatch
+   ...
+   fun:g_main_loop_run
+   fun:main
+}
