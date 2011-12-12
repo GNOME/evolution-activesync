@@ -2767,11 +2767,11 @@ static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forc
 		// Only one property in a VTIMEZONE: the TZID
 		if (tzid) {
 			// Get the ASCII value from the iCal
-			gchar* tzidValue8 = (gchar*) icalproperty_get_value_as_string (tzid);
+			const char* tzidValue8 = icalproperty_get_value_as_string (tzid);
 
 			// Convert to Unicode, max. 32 chars (including the trailing 0)
 			glong words;
-			gunichar2* tzidValue16 = g_utf8_to_utf16 (tzidValue8, 31, NULL, &words, NULL);
+			gunichar2* tzidValue16 = g_utf8_to_utf16 ((const gchar *)tzidValue8, 31, NULL, &words, NULL);
 
 			// Copy this into the EasTimeZone struct as both StandardName and DaylightName
 			if (tzidValue16) {
@@ -2781,8 +2781,6 @@ static void _ical2eas_process_vtimezone (icalcomponent* vtimezone, gboolean forc
 					MIN(sizeof (gunichar2) * words, sizeof(timezoneStruct.DaylightName)));
 				g_free (tzidValue16);
 			}
-
-			g_free (tzidValue8);
 		}
 
 		// Now process the STANDARD and DAYLIGHT subcomponents
