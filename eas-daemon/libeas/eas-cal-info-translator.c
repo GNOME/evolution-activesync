@@ -3139,6 +3139,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 									       (void *)0),
 						     icalproperty_new_uid (icalcomponent_get_uid (vevent)),
 						     icalproperty_new_summary (ACTIVESYNCD_PSEUDO_EVENT),
+						     icalproperty_new_transp (ICAL_TRANSP_TRANSPARENT),
 						     icalproperty_new_rrule (recur),
 						     (void *)0
 						     );
