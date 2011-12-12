@@ -1882,11 +1882,11 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
  *      the default time zone for the event (see eas_cal_info_translator_parse_request()
  *      comment about events with more than one time zone)
  * @return
- *      allocated string, caller must free it
+ *      allocated string, caller must free it *using free()* (not g_free())
  */
-static gchar *_ical2eas_convert_icaltime_to_utcstr(icaltimetype tt, const icaltimezone* icaltz)
+static char *_ical2eas_convert_icaltime_to_utcstr(icaltimetype tt, const icaltimezone* icaltz)
 {
-	const gchar* timestamp = NULL;
+	char* timestamp = NULL;
 
 	// first tell libical what we know about the time zone
 	if (icaltz && !icaltime_is_utc(tt))
@@ -1898,9 +1898,9 @@ static gchar *_ical2eas_convert_icaltime_to_utcstr(icaltimetype tt, const icalti
 	// finally convert to UTC
 	tt = icaltime_convert_to_zone(tt, icaltimezone_get_utc_timezone());
 
-	// don't depend on libical string buffer, strdup explicitly
-	timestamp = icaltime_as_ical_string (tt);
-	return g_strdup (timestamp);
+	// don't depend on libical string buffer, allocate anew
+	timestamp = icaltime_as_ical_string_r (tt);
+	return timestamp;
 }
 
 /**
@@ -1975,9 +1975,9 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 	} else if (!icaltime_is_null_time (rrule.until)) {
 		/* Exchange seems to have exclusive end date, while iCalendar is inclusive. Add one second. */
 		struct icaltimetype until = rrule.until;
-		gchar *modified = _ical2eas_convert_icaltime_to_utcstr(until, icaltz);
+		char *modified = _ical2eas_convert_icaltime_to_utcstr(until, icaltz);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_UNTIL, (const xmlChar*)modified);
-		g_free (modified);
+		free (modified);
 	}
 
 	//
@@ -2299,7 +2299,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			// DTSTART
 			case ICAL_DTSTART_PROPERTY: {
 				struct icaltimetype tt;
-				gchar* modified = NULL;
+				char* modified = NULL;
 
 				//get start time, convert it to UTC and suffix Z onto it
 				tt = icalproperty_get_dtstart (prop);
@@ -2308,14 +2308,14 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				// And additionally store the start time so we can calculate the AllDayEvent value later
 				startTime = tt;
 				g_debug ("dtstart cleanup");
-				g_free (modified);
+				free (modified);
 			}
 			break;
 
 			// DTEND
 			case ICAL_DTEND_PROPERTY: {
 				struct icaltimetype tt;
-				gchar* modified = NULL;
+				char* modified = NULL;
 
 				//get end time, convert it to UTC and suffix Z onto it
 				tt = icalproperty_get_dtend (prop);
@@ -2323,7 +2323,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ENDTIME, (const xmlChar*) modified);
 				// And additionally store the end time so we can calculate the AllDayEvent value later
 				endTime = icalproperty_get_dtend (prop);
-				g_free (modified);
+				free (modified);
 			}
 			break;
 
@@ -2466,7 +2466,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				// However, libical breaks this up for us and converts it into
 				// a number of single-value properties.
 				struct icaltimetype tt;
-				gchar *modified = NULL;
+				char *modified = NULL;
 
 				xmlNodePtr exception = NULL;
 
@@ -2483,7 +2483,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				// TODO: handle VALUE=DATE for events which are not all-day events
 				modified = _ical2eas_convert_icaltime_to_utcstr (tt, icaltz);
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
-				g_free (modified);
+				free (modified);
 			}
 			break;
 
@@ -3206,11 +3206,11 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			//get recurrenceID ( which is a timestamp), convert it to UTC and suffix Z onto it
 			prop = icalcomponent_get_first_property (exceptionvevent, ICAL_RECURRENCEID_PROPERTY);
 			if(prop){
-				gchar* modified = NULL;
+				char* modified = NULL;
 				tt = icaltime_from_string(icalproperty_get_value_as_string (prop));
 				modified = _ical2eas_convert_icaltime_to_utcstr(tt, icaltz);
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar *) modified);
-				g_free (modified);
+				free (modified);
 			}else{
 				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, NULL);
 			}
