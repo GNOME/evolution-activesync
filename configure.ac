@@ -128,6 +128,18 @@ if (test "$have_qt" = "no"); then
    AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])
 fi
 
+AC_ARG_ENABLE(camel-backend,
+              AS_HELP_STRING([--disable-camel-backend],
+                             [Can be used to disable compiling the libcamel email backend. Enabled by default.]),
+              [enable_camel="$enableval"], [enable_camel="yes"])
+AM_CONDITIONAL([ENABLE_CAMEL_BACKEND], [test "$enable_camel" = "yes"])
+
+AC_ARG_ENABLE(eplugin,
+              AS_HELP_STRING([--disable-eplugin],
+                             [Can be used to disable compiling the Evolution config plugin. Enabled by default.]),
+              [enable_eplugin="$enableval"], [enable_eplugin="yes"])
+AM_CONDITIONAL([ENABLE_EPLUGIN], [test "$enable_eplugin" = "yes"])
+
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
