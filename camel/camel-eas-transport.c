@@ -50,14 +50,25 @@ static gchar *
 eas_transport_get_name (CamelService *service,
                               gboolean brief)
 {
+	const gchar *host;
+#if EDS_CHECK_VERSION(3,3,90)
+	CamelNetworkSettings *network_settings;
+	CamelSettings *settings;
+
+	settings = camel_service_get_settings (service);
+
+	network_settings = CAMEL_NETWORK_SETTINGS (settings);
+	host = camel_network_settings_get_host (network_settings);
+#else
+	host = camel_service_get_camel_url (service)->host;
+#endif
+
 	if (brief)
 		return g_strdup_printf (
-			_("Exchange server %s"),
-			camel_service_get_camel_url(service)->host);
+			_("Exchange server %s"), host);
 	else
 		return g_strdup_printf (
-			_("Exchange mail delivery via %s"),
-			camel_service_get_camel_url(service)->host);
+			_("Exchange mail delivery via %s"), host);
 }
 
 static gboolean

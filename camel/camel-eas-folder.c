@@ -545,9 +545,16 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
         }
 
         if (!g_ascii_strcasecmp (folder_name, "Inbox")) {
+#if EDS_CHECK_VERSION(3,3,90)
+		CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (CAMEL_SERVICE (store)));
+
+                if (camel_store_settings_get_filter_inbox (settings))
+                        folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+#else
                 if (camel_url_get_param (camel_service_get_camel_url (CAMEL_SERVICE(store)),
 					 "filter"))
                         folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+#endif
         }
 
         eas_folder->search = camel_folder_search_new ();
@@ -871,19 +878,26 @@ eas_folder_dispose (GObject *object)
 static void
 eas_folder_constructed (GObject *object)
 {
-	CamelFolder *folder;
-	CamelStore *parent_store;
-	CamelURL *url;
-	const gchar *full_name;
+	CamelFolder *folder = CAMEL_FOLDER (object);
+	CamelStore *parent_store = camel_folder_get_parent_store (folder);
+	const gchar *full_name = camel_folder_get_full_name (folder);
 	gchar *description;
+	const gchar *user, *host;
 
-	folder = CAMEL_FOLDER (object);
-	full_name = camel_folder_get_full_name (folder);
-	parent_store = camel_folder_get_parent_store (folder);
-	url = camel_service_get_camel_url (CAMEL_SERVICE (parent_store));
+#if EDS_CHECK_VERSION(3,3,90)
+        CamelService *service = CAMEL_SERVICE (parent_store);
+	CamelSettings *settings = camel_service_get_settings (service);
+        CamelNetworkSettings *network_settings = CAMEL_NETWORK_SETTINGS (settings);
 
-	description = g_strdup_printf (
-		"%s@%s:%s", url->user, url->host, full_name);
+        host = camel_network_settings_get_host (network_settings);
+        user = camel_network_settings_get_user (network_settings);
+#else
+	CamelURL *url = camel_service_get_camel_url (CAMEL_SERVICE (parent_store));
+
+	user = url->user;
+	host = url->host;
+#endif
+	description = g_strdup_printf ("%s@%s:%s", user, host, full_name);
 	camel_folder_set_description (folder, description);
 	g_free (description);
 }

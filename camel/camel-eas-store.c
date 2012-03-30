@@ -92,7 +92,10 @@ extern CamelServiceAuthType camel_eas_password_authtype; /*for the query_auth_ty
 
 static gboolean
 eas_store_construct	(CamelService *service, CamelSession *session,
-			 CamelProvider *provider, CamelURL *url,
+			 CamelProvider *provider,
+#if !EDS_CHECK_VERSION(3,3,90)
+			 CamelURL *url,
+#endif
 			 GError **error);
 
 #if EDS_CHECK_VERSION(3,1,0)
@@ -109,20 +112,22 @@ eas_store_initable_init		(GInitable *initable,
 				 GCancellable *cancellable,
 				 GError **error)
 {
-	CamelService *service;
-	CamelSession *session;
-	CamelURL *url;
+	CamelService *service = CAMEL_SERVICE (initable);
+	CamelSession *session = camel_service_get_session (service);
+#if !EDS_CHECK_VERSION(3,3,90)
+	CamelURL *url = camel_service_get_camel_url (service);
+#endif
 	gboolean ret;
-
-	service = CAMEL_SERVICE (initable);
-	url = camel_service_get_camel_url (service);
-	session = camel_service_get_session (service);
 
 	/* Chain up to parent interface's init() method. */
 	if (!parent_initable_interface->init (initable, cancellable, error))
 		return FALSE;
 
-	ret = eas_store_construct (service, session, NULL, url, error);
+	ret = eas_store_construct (service, session, NULL,
+#if !EDS_CHECK_VERSION(3,3,90)
+				   url,
+#endif
+				   error);
 
 	/* Add transport here ? */
 
@@ -143,7 +148,10 @@ G_DEFINE_TYPE (CamelEasStore, camel_eas_store, CAMEL_TYPE_OFFLINE_STORE)
 
 static gboolean
 eas_store_construct	(CamelService *service, CamelSession *session,
-			 CamelProvider *provider, CamelURL *url,
+			 CamelProvider *provider,
+#if !EDS_CHECK_VERSION(3,3,90)
+			 CamelURL *url,
+#endif
 			 GError **error)
 {
 	CamelEasStore *eas_store;

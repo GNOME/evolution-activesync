@@ -45,12 +45,14 @@
 #define d(x)
 
 /*Prototypes*/
+#if !EDS_CHECK_VERSION(3,3,90)
 static gint eas_summary_header_load (CamelFolderSummary *, FILE *);
 static gint eas_summary_header_save (CamelFolderSummary *, FILE *);
 
 static CamelMessageInfo *eas_message_info_migrate (CamelFolderSummary *s, FILE *in);
 
 static CamelMessageContentInfo * eas_content_info_migrate (CamelFolderSummary *s, FILE *in);
+#endif
 #if EDS_CHECK_VERSION(3,3,0)
 #define SUM_DB_RETTYPE gboolean
 #define SUM_DB_RET_OK TRUE
@@ -123,10 +125,12 @@ camel_eas_summary_class_init (CamelEasSummaryClass *class)
 	folder_summary_class->content_info_size = sizeof (CamelEasMessageContentInfo);
 	folder_summary_class->message_info_clone = eas_message_info_clone;
 	folder_summary_class->message_info_free = eas_message_info_free;
+#if !EDS_CHECK_VERSION(3,3,90)
 	folder_summary_class->summary_header_load = eas_summary_header_load;
 	folder_summary_class->summary_header_save = eas_summary_header_save;
 	folder_summary_class->message_info_migrate = eas_message_info_migrate;
 	folder_summary_class->content_info_migrate = eas_content_info_migrate;
+#endif
 #if ! EDS_CHECK_VERSION(3,3,0)
 	/* In EDS 3.3+ the parent class does everything we need */
 	folder_summary_class->info_set_flags = eas_info_set_flags;
@@ -172,8 +176,9 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 	summary->folder = folder;
 #endif
 	camel_folder_summary_set_build_content (summary, TRUE);
+#if !EDS_CHECK_VERSION(3,3,90)
 	camel_folder_summary_set_filename (summary, filename);
-
+#endif
 	camel_folder_summary_load_from_db (summary, NULL);
 
 	return summary;
@@ -202,6 +207,7 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 	return SUM_DB_RET_OK;
 }
 
+#if !EDS_CHECK_VERSION(3,3,90)
 static gint
 eas_summary_header_load (CamelFolderSummary *s, FILE *in)
 {
@@ -217,6 +223,7 @@ eas_summary_header_load (CamelFolderSummary *s, FILE *in)
 		return -1;
 	return 0;
 }
+#endif
 
 static CamelFIRecord *
 summary_header_to_db (CamelFolderSummary *s, GError **error)
@@ -234,6 +241,7 @@ summary_header_to_db (CamelFolderSummary *s, GError **error)
 
 }
 
+#if !EDS_CHECK_VERSION(3,3,90)
 static gint
 eas_summary_header_save (CamelFolderSummary *s, FILE *out)
 {
@@ -245,6 +253,7 @@ eas_summary_header_save (CamelFolderSummary *s, FILE *out)
 	camel_file_util_encode_fixed_int32(out, CAMEL_EAS_SUMMARY_VERSION);
 	return camel_file_util_encode_string (out, gms->sync_state);
 }
+#endif
 
 static CamelMessageInfo *
 message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
@@ -270,6 +279,7 @@ message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
 	return info;
 }
 
+#if !EDS_CHECK_VERSION(3,3,90)
 static CamelMessageInfo *
 eas_message_info_migrate (CamelFolderSummary *s, FILE *in)
 {
@@ -288,6 +298,7 @@ error:
 	camel_message_info_free (info);
 	return NULL;
 }
+#endif
 
 static CamelMIRecord *
 message_info_to_db (CamelFolderSummary *s, CamelMessageInfo *info)
@@ -322,6 +333,7 @@ content_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
 		return camel_folder_summary_content_info_new (s);
 }
 
+#if !EDS_CHECK_VERSION(3,3,90)
 static CamelMessageContentInfo *
 eas_content_info_migrate (CamelFolderSummary *s, FILE *in)
 {
@@ -330,6 +342,7 @@ eas_content_info_migrate (CamelFolderSummary *s, FILE *in)
 	else
 		return camel_folder_summary_content_info_new (s);
 }
+#endif
 
 static SUM_DB_RETTYPE
 content_info_to_db (CamelFolderSummary *s, CamelMessageContentInfo *info, CamelMIRecord *mir)
