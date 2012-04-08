@@ -1990,10 +1990,10 @@ parse_for_status (xmlNode *node, gboolean *isErrorStatus)
 	}
 }
 
-static WB_UTINY *sanitize_utf8(const WB_UTINY *in)
+static WB_UTINY *sanitize_utf8(WB_UTINY *in)
 {
 	int i;
-	char *out = strdup((char *)in);
+	WB_UTINY *out = in;
 
 	/* Validate and convert any invalid bytes to the replacement
 	   character U+FFFD �. */
@@ -2005,13 +2005,19 @@ static WB_UTINY *sanitize_utf8(const WB_UTINY *in)
 			continue;
 		if ((out[i] & 0xc0) == 0x80)
 			goto invalid;
-		if ((out[i] & 0xe0) == 0xc0)
+		if ((out[i] & 0xe0) == 0xc0) {
+			if (out[i] < 0xc2) /* non-canonical < 0x80 */
+				goto invalid;
 			nr_more = 1;
-		else if ((out[i] & 0xf0) == 0xe0)
+		} else if ((out[i] & 0xf0) == 0xe0) {
+			if (out[i] == 0xe0 && out[i+1] < 0xa0) /* non-canonical < 0x800 */
+				goto invalid;
 			nr_more = 2;
-		else if ((out[i] & 0xf8) == 0xf0)
+		} else if ((out[i] & 0xf8) == 0xf0) {
+			if (out[i] == 0xf0 && out[i+1] < 0x90) /* non-caninical < 0x10000 */
+				goto invalid;
 			nr_more = 3;
-		else
+		} else
 			goto invalid;
 
 		for (j = 0; j < nr_more; j++)
@@ -2021,11 +2027,11 @@ static WB_UTINY *sanitize_utf8(const WB_UTINY *in)
 		continue;
 
 	invalid:
-		printf("byte %x is invalid\n", (unsigned char)out[i]);
-		out = g_realloc(out, strlen(out) + 3);
-		printf("move out[%d]=%02x to out[%d]=%02x\n",
-		       i, out[i], i+3, out[i+3]);
-		memmove (out + i + 3, out + i + 1, strlen(out + i));
+		g_debug("byte %x is invalid", out[i]);
+		out = realloc((char *)out, strlen((char *)out) + 3);
+		g_debug("move out[%d]=%02x to out[%d]=%02x",
+			i, out[i], i+3, out[i+3]);
+		memmove (out + i + 3, out + i + 1, strlen((char *)out + i));
 		out[i++] = 0xef;
 		out[i++] = 0xbf;
 		out[i] = 0xbd;
@@ -2160,11 +2166,8 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			   Anything we get here is going to be passed out to dbus in a string
 			   type, and dbus would end up silently calling exit() if we pass it
 			   non-UTF8 anyway */
-			if (xml) {
-				WB_UTINY *sanexml = sanitize_utf8 (xml);
-				free (xml);
-				xml = sanexml;
-			}
+			if (xml)
+				xml = sanitize_utf8 (xml);
 
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
