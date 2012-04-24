@@ -44,6 +44,8 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 {
 	CamelEasStoreSummary *eas_summary = store->summary;
 	CamelFolderInfo *fi;
+
+#if !EDS_CHECK_VERSION(3,1,0)	
 	gchar *url;
 
 	url = camel_url_to_string (camel_service_get_camel_url(CAMEL_SERVICE (store)),
@@ -58,6 +60,7 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 		g_free ((gchar *)url);
 		url = temp_url;
 	}
+#endif
 
 	fi = camel_folder_info_new ();
 	fi->full_name = camel_eas_store_summary_get_folder_full_name (eas_summary,
@@ -87,8 +90,9 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	default:
 		;
 	}
-
+#if !EDS_CHECK_VERSION(3,1,0)
 	g_free (url);
+#endif
 
 	return fi;
 }

@@ -52,6 +52,10 @@
 #include <ws2tcpip.h>
 #endif
 
+#if EDS_CHECK_VERSION(3,3,90)
+#include "camel-eas-settings.h"
+#endif
+
 #define d(x) x
 #define CURSOR_ITEM_LIMIT 100
 
@@ -157,6 +161,9 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
 	gchar *summary_file, *session_storage_path;
+#if EDS_CHECK_VERSION(3,3,90)
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
+#endif	
 #if ! EDS_CHECK_VERSION(3,1,0)
 	CamelServiceClass *service_class;
 
@@ -184,7 +191,11 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 	}
 	eas_store->storage_path = session_storage_path;
 
+#if EDS_CHECK_VERSION(3,3,90)
+	priv->account_uid = g_strdup(camel_eas_settings_get_account_uid ((CamelEasSettings *) settings));
+#else	
 	priv->account_uid = g_strdup (camel_url_get_param (url, "account_uid"));
+#endif	
 	if (!priv->account_uid) {
 		g_set_error (
 			error, CAMEL_STORE_ERROR,
@@ -478,6 +489,7 @@ eas_rename_folder_sync	(CamelStore *store,
 gchar *
 eas_get_name (CamelService *service, gboolean brief)
 {
+#if !EDS_CHECK_VERSION (3,3,90)	
 	CamelURL *url = camel_service_get_camel_url (service);
 
 	if (brief)
@@ -486,6 +498,25 @@ eas_get_name (CamelService *service, gboolean brief)
 	else
 		return g_strdup_printf(_("Exchange ActiveSync service for %s on %s"),
 				       url->user, url->host);
+#else
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
+	const char *account_uid = camel_eas_settings_get_account_uid ((CamelEasSettings *) settings);
+	/* Account UID is nothing but the email or user@host */
+	char **strings;
+	char *ret;
+
+	strings = g_strsplit (account_uid, "@", 0);
+	if (brief)
+		ret = g_strdup_printf(_("Exchange ActiveSync server %s"),
+				       strings[1]);
+	else
+		ret = g_strdup_printf(_("Exchange ActiveSync service for %s on %s"),
+				       strings[0], strings[1]);
+	
+	g_strfreev (strings);
+
+	return ret;
+#endif
 }
 
 EasEmailHandler *
@@ -505,13 +536,20 @@ eas_get_trash_folder_sync (CamelStore *store, EVO3(GCancellable *cancellable,) G
 static gboolean
 eas_can_refresh_folder (CamelStore *store, CamelFolderInfo *info, GError **error)
 {
+#if EDS_CHECK_VERSION (3,3,90)	
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (CAMEL_SERVICE(store)));
+#endif	
 	/* Skip unselectable folders from automatic refresh */
 	if (info && (info->flags & CAMEL_FOLDER_NOSELECT) != 0) return FALSE;
 
+#if !EDS_CHECK_VERSION (3,3,90)	
 	/* Delegate decision to parent class */
 	return CAMEL_STORE_CLASS(camel_eas_store_parent_class)->can_refresh_folder (store, info, error) ||
 		(camel_url_get_param (camel_service_get_camel_url(CAMEL_SERVICE(store)),
 				      "check_all") != NULL);
+#else
+	return CAMEL_STORE_CLASS(camel_eas_store_parent_class)->can_refresh_folder (store, info, error) || camel_eas_settings_get_check_all ((CamelEasSettings *)settings);
+#endif	
 }
 
 gboolean

@@ -26,7 +26,8 @@ libcameleas_la_SOURCES = 			\
 	camel-eas-provider.c			\
 	camel-eas-utils.c			\
 	camel-eas-transport.c			\
-	camel-eas-compat.c
+	camel-eas-compat.c			\
+	camel-eas-settings.c
 
 noinst_HEADERS =         			\
 	camel-eas-folder.h			\
@@ -36,7 +37,8 @@ noinst_HEADERS =         			\
 	camel-eas-summary.h			\
 	camel-eas-utils.h			\
 	camel-eas-transport.h                   \
-        camel-eas-compat.h
+        camel-eas-compat.h			\
+	camel-eas-settings.h
 
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
 

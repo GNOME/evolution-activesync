@@ -36,6 +36,10 @@
 #include "camel-eas-store.h"
 #include "camel-eas-transport.h"
 
+#if EDS_CHECK_VERSION(3,3,90)
+#include "camel-eas-settings.h"
+#endif
+
 G_DEFINE_TYPE (CamelEasTransport, camel_eas_transport, CAMEL_TYPE_TRANSPORT)
 
 static gboolean
@@ -80,7 +84,7 @@ eas_send_to_sync (CamelTransport *transport,
 		  GError **error)
 {
 	gpointer progress_data;
-	CamelService *service;
+	CamelService *service = CAMEL_SERVICE (transport);
 	EasEmailHandler *handler;
 	CamelStream *mimefile, *filtered;
 	CamelMimeFilter *filter;
@@ -89,14 +93,19 @@ eas_send_to_sync (CamelTransport *transport,
 	const gchar *msgid;
 	int fd;
 	gboolean res;
-
+#if EDS_CHECK_VERSION(3,3,90)
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
+#endif	
+	
 	EVO3(progress_data = cancellable);
 	EVO2(progress_data = camel_operation_registered());
 
-	service = CAMEL_SERVICE (transport);
+#if EDS_CHECK_VERSION(3,3,90)
+	account_uid = g_strdup(camel_eas_settings_get_account_uid ((CamelEasSettings *) settings));
+#else
 	account_uid = camel_url_get_param (camel_service_get_camel_url(service),
 					   "account_uid");
-
+#endif
 	handler = eas_mail_handler_new (account_uid, error);
 	if (!handler)
 		return FALSE;

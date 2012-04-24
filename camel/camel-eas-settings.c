@@ -1,0 +1,254 @@
+/*
+ * camel-eas-settings.c
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with the program; if not, see <http://www.gnu.org/licenses/>
+ *
+ */
+
+#include "camel-eas-settings.h"
+
+#define CAMEL_EAS_SETTINGS_GET_PRIVATE(obj) \
+	(G_TYPE_INSTANCE_GET_PRIVATE \
+	((obj), CAMEL_TYPE_EAS_SETTINGS, CamelEasSettingsPrivate))
+
+struct _CamelEasSettingsPrivate {
+	gboolean check_all;	
+	gchar *owaurl;
+	gchar *account_uid;
+};
+
+enum {
+	PROP_0,
+	PROP_CHECK_ALL,	
+	PROP_OWAURL,
+	PROP_ACCOUNT_UID,
+};
+
+G_DEFINE_TYPE_WITH_CODE (
+	CamelEasSettings,
+	camel_eas_settings,
+	CAMEL_TYPE_OFFLINE_SETTINGS,
+	G_IMPLEMENT_INTERFACE (
+		CAMEL_TYPE_NETWORK_SETTINGS, NULL))
+
+static void
+eas_settings_set_property (GObject *object,
+                            guint property_id,
+                            const GValue *value,
+                            GParamSpec *pspec)
+{
+	switch (property_id) {
+		case PROP_CHECK_ALL:
+			camel_eas_settings_set_check_all (
+				CAMEL_EAS_SETTINGS (object),
+				g_value_get_boolean (value));
+			return;
+
+		case PROP_OWAURL:
+			camel_eas_settings_set_owaurl (
+				CAMEL_EAS_SETTINGS (object),
+				g_value_get_string (value));
+			return;
+
+		case PROP_ACCOUNT_UID:
+			camel_eas_settings_set_account_uid (
+				CAMEL_EAS_SETTINGS (object),
+				g_value_get_string (value));
+			return;
+	}
+
+	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+}
+
+static void
+eas_settings_get_property (GObject *object,
+                            guint property_id,
+                            GValue *value,
+                            GParamSpec *pspec)
+{
+	switch (property_id) {
+		case PROP_CHECK_ALL:
+			g_value_set_boolean (
+				value,
+				camel_eas_settings_get_check_all (
+				CAMEL_EAS_SETTINGS (object)));
+			return;
+		
+		case PROP_OWAURL:
+			g_value_set_string (
+				value,
+				camel_eas_settings_get_owaurl (
+				CAMEL_EAS_SETTINGS (object)));
+			return;
+
+		case PROP_ACCOUNT_UID:
+			g_value_set_string (
+				value,
+				camel_eas_settings_get_account_uid (
+				CAMEL_EAS_SETTINGS (object)));
+			return;
+	}
+
+	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+}
+
+static void
+eas_settings_finalize (GObject *object)
+{
+	CamelEasSettingsPrivate *priv;
+
+	priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (object);
+
+	g_free (priv->owaurl);
+	g_free (priv->account_uid);
+
+	/* Chain up to parent's finalize() method. */
+	G_OBJECT_CLASS (camel_eas_settings_parent_class)->finalize (object);
+}
+
+static void
+camel_eas_settings_class_init (CamelEasSettingsClass *class)
+{
+	GObjectClass *object_class;
+
+	g_type_class_add_private (class, sizeof (CamelEasSettingsPrivate));
+
+	object_class = G_OBJECT_CLASS (class);
+	object_class->set_property = eas_settings_set_property;
+	object_class->get_property = eas_settings_get_property;
+	object_class->finalize = eas_settings_finalize;
+
+	g_object_class_install_property (
+		object_class,
+		PROP_OWAURL,
+		g_param_spec_string (
+			"owaurl",
+			"OWA URL",
+			"OWA URL",
+			NULL,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT |
+			G_PARAM_STATIC_STRINGS));
+
+
+	g_object_class_install_property (
+		object_class,
+		PROP_CHECK_ALL,
+		g_param_spec_boolean (
+			"check-all",
+			"Check All",
+			"Check all folders for new messages",
+			FALSE,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT |
+			G_PARAM_STATIC_STRINGS));
+
+	g_object_class_install_property (
+		object_class,
+		PROP_ACCOUNT_UID,
+		g_param_spec_string (
+			"account-uid",
+			"Account UID",
+			"Account UID",
+			NULL,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT |
+			G_PARAM_STATIC_STRINGS));
+
+}
+
+static void
+camel_eas_settings_init (CamelEasSettings *settings)
+{
+	settings->priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (settings);
+}
+
+
+const gchar *
+camel_eas_settings_get_oaburl (CamelEasSettings *settings)
+{
+	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), NULL);
+
+	return settings->priv->owaurl;
+}
+
+void
+camel_eas_settings_set_owaurl (CamelEasSettings *settings,
+                                const gchar *url)
+{
+	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
+
+	g_free (settings->priv->owaurl);
+	settings->priv->owaurl = g_strdup (url);
+
+	g_object_notify (G_OBJECT (settings), "owaurl");
+}
+
+const gchar *
+camel_eas_settings_get_account_uid (CamelEasSettings *settings)
+{
+	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), NULL);
+
+	return settings->priv->account_uid;
+}
+
+void
+camel_eas_settings_set_account_uid (CamelEasSettings *settings,
+                               	    const gchar *account_uid)
+{
+	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
+
+	g_free (settings->priv->account_uid);
+	settings->priv->account_uid= g_strdup (account_uid);
+
+	g_object_notify (G_OBJECT (settings), "account-uid");
+}
+
+/**
+ * camel_eas_settings_get_check_all:
+ * @settings: a #CamelEasSettings
+ *
+ * Returns whether to check all folders for new messages.
+ *
+ * Returns: whether to check all folders for new messages
+ *
+ * Since: 3.4
+ **/
+gboolean
+camel_eas_settings_get_check_all (CamelEasSettings *settings)
+{
+	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), FALSE);
+
+	return settings->priv->check_all;
+}
+
+/**
+ * camel_eas_settings_set_check_all:
+ * @settings: a #CamelEasSettings
+ * @check_all: whether to check all folders for new messages
+ *
+ * Sets whether to check all folders for new messages.
+ *
+ * Since: 3.4
+ **/
+void
+camel_eas_settings_set_check_all (CamelEasSettings *settings,
+                                  gboolean check_all)
+{
+	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
+
+	settings->priv->check_all = check_all;
+
+	g_object_notify (G_OBJECT (settings), "check-all");
+}
