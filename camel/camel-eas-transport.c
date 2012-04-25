@@ -162,6 +162,9 @@ camel_eas_transport_class_init (CamelEasTransportClass *class)
 	CamelTransportClass *transport_class;
 
 	service_class = CAMEL_SERVICE_CLASS (class);
+#if EDS_CHECK_VERSION(3,3,90)	
+	service_class->settings_type = CAMEL_TYPE_EAS_SETTINGS;
+#endif	
 	service_class->EVO3_sync(connect) = eas_transport_connect_sync;
 	service_class->get_name = eas_transport_get_name;
 

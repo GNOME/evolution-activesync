@@ -626,6 +626,9 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	service_class->construct = eas_store_construct;
 	service_class->get_path = eas_service_get_path;
 #endif
+#if EDS_CHECK_VERSION(3,3,90)
+	service_class->settings_type = CAMEL_TYPE_EAS_SETTINGS;	
+#endif
 	service_class->EVO3_sync(query_auth_types) = eas_store_query_auth_types_sync;
 	service_class->get_name = eas_get_name;
 	service_class->EVO3_sync(connect) = eas_connect_sync;
