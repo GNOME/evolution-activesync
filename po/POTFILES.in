@@ -1,5 +1,13 @@
 # List of source files containing translatable strings.
 # Please keep this list in alphabetic order.
 [encoding: UTF-8]
-meego/meego-ux-settings-activesync/activesync-settings.desktop.in
+camel/camel-eas-folder.c
+camel/camel-eas-provider.c
+camel/camel-eas-store.c
+camel/camel-eas-transport.c
+camel/camel-eas-utils.c
 eas-daemon/libeas/eas-connection.c
+eas-daemon/libeas/eas-connection.c
+eplugin/activesync-account-setup.c
+eplugin/eas-account-listener.c
+eplugin/org-gnome-exchange-activesync.eplug.xml
