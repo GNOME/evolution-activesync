@@ -27,7 +27,6 @@
 #include <string.h>
 #include <glib/gi18n.h>
 #include <camel/camel.h>
-#include "e-util/e-alert-dialog.h"
 #include <libedataserver/e-account.h>
 #include <libecal/e-cal.h>
 #include <shell/e-shell.h>

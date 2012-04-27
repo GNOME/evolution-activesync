@@ -11,15 +11,15 @@
     <_description>Exchange Activesync plugin for Evolution.</_description>
 	
 	<hook class="org.gnome.evolution.mail.config:1.0">
-		<group target="account" id="org.gnome.evolution.mail.config.accountEditor" check="org_gnome_exchange_check_options" commit="org_gnome_exchange_commit">
+		<group target="settings" id="org.gnome.evolution.mail.config.accountEditor" check="org_gnome_exchange_check_options" commit="org_gnome_exchange_commit">
 			<item type="item_table" path="10.receive/10.config/20.eas" factory="org_gnome_exchange_server_url"/>
 		</group>
 
-		<group target="account" id="org.gnome.evolution.mail.config.accountAssistant" check="org_gnome_exchange_check_options">
+		<group target="settings" id="org.gnome.evolution.mail.config.accountAssistant" check="org_gnome_exchange_check_options">
 			<item type="item_table" path="10.receive/10.config/20.eas" factory="org_gnome_exchange_server_url"/>
 		</group>
 
-		<group target="account" id="org.gnome.evolution.mail.config.accountWizard" check="org_gnome_exchange_check_options">
+		<group target="settings" id="org.gnome.evolution.mail.config.accountWizard" check="org_gnome_exchange_check_options">
 			<item type="item_table" path="10.receive/10.config/20.eas" factory="org_gnome_exchange_server_url"/>
 		</group>
 

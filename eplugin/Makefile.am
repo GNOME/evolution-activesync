@@ -27,7 +27,7 @@ liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LDAP_CFLAGS)		\
 	$(SYNCEVOLUTION_DBUS_CFLAGS) \
-	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient
+	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel
 
 
 liborg_gnome_exchange_activesync_la_SOURCES = 	\
