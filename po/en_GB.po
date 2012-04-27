@@ -1,4 +1,0 @@
-
-#: meego/meego-ux-settings-activesync/activesync-settings.desktop.in:4
-msgid "ActiveSync"
-msgstr "ActiveSync"
