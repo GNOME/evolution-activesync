@@ -22,9 +22,6 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_autodiscover_tests.c \
                     eas_connection_tests.c \
                     eas_main_tests.c \
-                    $(top_builddir)/libeasmail/src/libeasmail.h \
-                    $(top_builddir)/libeassync/src/libeassync.h \
-                    $(top_builddir)/libeastest/src/libeastest.h \
                     eas_libeassync_tests.c \
                     eas_libeascon_tests.c \
 		    eas_folderhierarchy_tests.c \
@@ -32,7 +29,7 @@ check_eas_SOURCES = eas_daemon_tests.c \
                     eas_cal_info_translator_test.c \
                     eas_gobjects_unittests.c \
 		    eas_email_info_translator_test.c
-                    
+
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS) $(WARNING_FLAGS)
 
 check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
