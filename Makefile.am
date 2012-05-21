@@ -18,7 +18,7 @@ if ENABLE_EPLUGIN
 endif
 
 # full set of directories for "make dist"
-DIST_SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests camel eplugin meego QtActivesyncdConfig po
+DIST_SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests libevoeas camel eplugin meego QtActivesyncdConfig po
 # subset of that list for "make && make install"
 SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests $(CAMEL_DIRS) $(EPLUGIN_DIR) $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
