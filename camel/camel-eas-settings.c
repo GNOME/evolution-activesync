@@ -31,8 +31,12 @@ struct _CamelEasSettingsPrivate {
 enum {
 	PROP_0,
 	PROP_CHECK_ALL,	
-	PROP_OWAURL,
 	PROP_ACCOUNT_UID,
+	PROP_HOST,
+	PROP_PORT,
+	PROP_USER,
+	PROP_SECURITY_METHOD,
+	PROP_AUTH_MECHANISM,
 };
 
 G_DEFINE_TYPE_WITH_CODE (
@@ -55,15 +59,39 @@ eas_settings_set_property (GObject *object,
 				g_value_get_boolean (value));
 			return;
 
-		case PROP_OWAURL:
-			camel_eas_settings_set_owaurl (
+		case PROP_ACCOUNT_UID:
+			camel_eas_settings_set_account_uid (
 				CAMEL_EAS_SETTINGS (object),
 				g_value_get_string (value));
 			return;
 
-		case PROP_ACCOUNT_UID:
-			camel_eas_settings_set_account_uid (
-				CAMEL_EAS_SETTINGS (object),
+		case PROP_AUTH_MECHANISM:
+			camel_network_settings_set_auth_mechanism (
+				CAMEL_NETWORK_SETTINGS (object),
+				g_value_get_string (value));
+			return;
+
+		case PROP_HOST:
+			camel_network_settings_set_host (
+				CAMEL_NETWORK_SETTINGS (object),
+				g_value_get_string (value));
+			return;
+
+		case PROP_PORT:
+			camel_network_settings_set_port (
+				CAMEL_NETWORK_SETTINGS (object),
+				g_value_get_uint (value));
+			return;
+
+		case PROP_SECURITY_METHOD:
+			camel_network_settings_set_security_method (
+				CAMEL_NETWORK_SETTINGS (object),
+				g_value_get_enum (value));
+			return;
+
+		case PROP_USER:
+			camel_network_settings_set_user (
+				CAMEL_NETWORK_SETTINGS (object),
 				g_value_get_string (value));
 			return;
 	}
@@ -85,19 +113,48 @@ eas_settings_get_property (GObject *object,
 				CAMEL_EAS_SETTINGS (object)));
 			return;
 		
-		case PROP_OWAURL:
-			g_value_set_string (
-				value,
-				camel_eas_settings_get_owaurl (
-				CAMEL_EAS_SETTINGS (object)));
-			return;
-
 		case PROP_ACCOUNT_UID:
 			g_value_set_string (
 				value,
 				camel_eas_settings_get_account_uid (
 				CAMEL_EAS_SETTINGS (object)));
 			return;
+
+		case PROP_AUTH_MECHANISM:
+			g_value_take_string (
+				value,
+				camel_network_settings_dup_auth_mechanism (
+				CAMEL_NETWORK_SETTINGS (object)));
+			return;
+
+		case PROP_HOST:
+			g_value_take_string (
+				value,
+				camel_network_settings_dup_host (
+				CAMEL_NETWORK_SETTINGS (object)));
+			return;
+
+		case PROP_PORT:
+			g_value_set_uint (
+				value,
+				camel_network_settings_get_port (
+				CAMEL_NETWORK_SETTINGS (object)));
+			return;
+
+		case PROP_SECURITY_METHOD:
+			g_value_set_enum (
+				value,
+				camel_network_settings_get_security_method (
+				CAMEL_NETWORK_SETTINGS (object)));
+			return;
+
+		case PROP_USER:
+			g_value_take_string (
+				value,
+				camel_network_settings_dup_user (
+				CAMEL_NETWORK_SETTINGS (object)));
+			return;
+
 	}
 
 	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -131,19 +188,6 @@ camel_eas_settings_class_init (CamelEasSettingsClass *class)
 
 	g_object_class_install_property (
 		object_class,
-		PROP_OWAURL,
-		g_param_spec_string (
-			"owaurl",
-			"OWA URL",
-			"OWA URL",
-			NULL,
-			G_PARAM_READWRITE |
-			G_PARAM_CONSTRUCT |
-			G_PARAM_STATIC_STRINGS));
-
-
-	g_object_class_install_property (
-		object_class,
 		PROP_CHECK_ALL,
 		g_param_spec_boolean (
 			"check-all",
@@ -165,6 +209,32 @@ camel_eas_settings_class_init (CamelEasSettingsClass *class)
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT |
 			G_PARAM_STATIC_STRINGS));
+
+	/* Inherited from CamelNetworkSettings. */
+	g_object_class_override_property (
+		object_class,
+		PROP_AUTH_MECHANISM,
+		"auth-mechanism");
+
+	g_object_class_override_property (
+		object_class,
+		PROP_HOST,
+		"host");
+
+	g_object_class_override_property (
+		object_class,
+		PROP_PORT,
+		"port");
+
+	g_object_class_override_property (
+		object_class,
+		PROP_SECURITY_METHOD,
+		"security-method");
+
+	g_object_class_override_property (
+		object_class,
+		PROP_USER,
+		"user");
 
 }
 
