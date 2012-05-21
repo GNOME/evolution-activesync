@@ -36,9 +36,9 @@ eas_gdbus_client_init (struct eas_gdbus_client *client, const gchar *account_uid
 
 	client->account_uid = g_strdup (account_uid);
 #if GLIB_CHECK_VERSION (2,31,0)
-	client->progress_lock = client->_mutex;
+	client->progress_lock = &client->_mutex;
 	g_mutex_init (client->progress_lock);
-	client->progress_cond = client->_cond;
+	client->progress_cond = &client->_cond;
 	g_cond_init (client->progress_cond);
 #else
 	client->progress_lock = g_mutex_new ();
