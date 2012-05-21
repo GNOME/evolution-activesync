@@ -664,6 +664,7 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 	if (!res && !resynced &&
 	    g_error_matches (local_error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_GETITEMESTIMATE_ERROR_INVALID_SYNC_KEY)) {
+	invsync:
 		/* Invalid sync key. Treat it like a UIDVALIDITY change in IMAP;
 		   wipe the folder and start again */
 		g_warning ("Invalid SyncKey!!!");
@@ -701,7 +702,18 @@ eas_refresh_info_sync (CamelFolder *folder, EVO3(GCancellable *cancellable,) GEr
 							  &items_updated, &items_deleted,
 							  &more_available,
 							  (EasProgressFn)eas_sync_progress, &progress_data,
-							  cancellable, error);
+							  cancellable, &local_error);
+
+		/* Google has been observed (2012-05-21) to response happily to GetItemEstimate
+		   (with an estimate of 1), but then complain of Invalid Sync Key on an immediately
+		   subsequent Sync call with the *same* SyncKey! So handle this here too... */
+		if (!res) {
+			if (!resynced && !progress_data.fetched &&
+			    g_error_matches (local_error, EAS_CONNECTION_ERROR,
+					     EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCKEY))
+				goto invsync;
+			g_propagate_error(error, local_error);
+		}
 
 		if (new_sync_key) {
 			strncpy (sync_state, new_sync_key, 64);
