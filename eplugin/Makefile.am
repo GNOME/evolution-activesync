@@ -15,9 +15,9 @@
 ### EVO_PLUGIN_RULE ### end ###
 
 
-# plugin_DATA = org-gnome-exchange-activesync.eplug
-# plugin_LTLIBRARIES = liborg-gnome-exchange-activesync.la
-noinst_LTLIBRARIES = liborg-gnome-exchange-activesync.la
+plugin_DATA = org-gnome-exchange-activesync.eplug
+plugin_LTLIBRARIES = liborg-gnome-exchange-activesync.la
+#noinst_LTLIBRARIES = liborg-gnome-exchange-activesync.la
 
 liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
@@ -27,7 +27,8 @@ liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LDAP_CFLAGS)		\
 	$(SYNCEVOLUTION_DBUS_CFLAGS) \
-	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel
+	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel -I$(top_srcdir)/libevoeas
+
 
 
 liborg_gnome_exchange_activesync_la_SOURCES = 	\
@@ -37,6 +38,7 @@ liborg_gnome_exchange_activesync_la_SOURCES = 	\
 
 liborg_gnome_exchange_activesync_la_LIBADD = \
 	$(top_builddir)/libeasclient/libeasclient.la \
+	$(top_builddir)/libevoeas/libevoeas.la		\
 	$(EVOLUTION_DATA_SERVER_LIBS) \
 	$(EVOLUTION_PLUGIN_LIBS) \
 	$(EVOLUTION_SHELL_LIBS) \

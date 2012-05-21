@@ -24,7 +24,6 @@
 
 struct _CamelEasSettingsPrivate {
 	gboolean check_all;	
-	gchar *owaurl;
 	gchar *account_uid;
 };
 
@@ -167,7 +166,6 @@ eas_settings_finalize (GObject *object)
 
 	priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (object);
 
-	g_free (priv->owaurl);
 	g_free (priv->account_uid);
 
 	/* Chain up to parent's finalize() method. */
@@ -244,26 +242,6 @@ camel_eas_settings_init (CamelEasSettings *settings)
 	settings->priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (settings);
 }
 
-
-const gchar *
-camel_eas_settings_get_oaburl (CamelEasSettings *settings)
-{
-	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), NULL);
-
-	return settings->priv->owaurl;
-}
-
-void
-camel_eas_settings_set_owaurl (CamelEasSettings *settings,
-                                const gchar *url)
-{
-	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
-
-	g_free (settings->priv->owaurl);
-	settings->priv->owaurl = g_strdup (url);
-
-	g_object_notify (G_OBJECT (settings), "owaurl");
-}
 
 const gchar *
 camel_eas_settings_get_account_uid (CamelEasSettings *settings)

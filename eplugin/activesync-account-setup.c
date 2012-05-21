@@ -114,9 +114,6 @@ url_entry_changed(GtkWidget *entry, EConfig *config)
 		g_free (key);
 		g_object_unref (client);
 
-		camel_eas_settings_set_owaurl ((CamelEasSettings *) target->storage_settings, uri);
-		camel_eas_settings_set_owaurl ((CamelEasSettings *)target->transport_settings, uri);
-	
 		camel_eas_settings_set_account_uid ((CamelEasSettings *)target->storage_settings, address);
 		camel_eas_settings_set_account_uid ((CamelEasSettings *)target->transport_settings, address);
 
@@ -250,9 +247,6 @@ discover_server_url (GtkWidget *button, EConfig  *config)
 	if (!error && uri && *uri)
 		gtk_entry_set_text ((GtkEntry *) entry, uri);
 
-	camel_eas_settings_set_owaurl ((CamelEasSettings *)target->storage_settings, uri);
-	camel_eas_settings_set_owaurl ((CamelEasSettings *)target->transport_settings, uri);
-	
 	camel_eas_settings_set_account_uid ((CamelEasSettings *)target->storage_settings, address);
 	camel_eas_settings_set_account_uid ((CamelEasSettings *)target->transport_settings, address);
 
@@ -334,7 +328,7 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 	target_account = (EMConfigTargetSettings *)data->config->target;
 	settings = target_account->storage_settings;
 
-	if (!CAMEL_IS_EWS_SETTINGS (settings)) {
+	if (!CAMEL_IS_EAS_SETTINGS (settings)) {
 		if (data->old
 		    && (label = g_object_get_data((GObject *)data->old, "authenticate-label")))
 			gtk_widget_destroy(label);
@@ -548,7 +542,7 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 	CamelEasSettings *eas_settings;
 	gint status = TRUE;
 
-	if (!CAMEL_IS_EWS_SETTINGS (target->storage_settings))
+	if (!CAMEL_IS_EAS_SETTINGS (target->storage_settings))
 		return TRUE;
 
 	eas_settings = CAMEL_EAS_SETTINGS (target->storage_settings);

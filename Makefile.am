@@ -10,7 +10,7 @@ if ENABLE_QT_CONFIG_TOOL
 endif
 
 if ENABLE_CAMEL_BACKEND
-  CAMEL_DIR = camel
+  CAMEL_DIRS = camel libevoeas
 endif
 
 if ENABLE_EPLUGIN
@@ -20,7 +20,7 @@ endif
 # full set of directories for "make dist"
 DIST_SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests camel eplugin meego QtActivesyncdConfig po
 # subset of that list for "make && make install"
-SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests $(CAMEL_DIR) $(EPLUGIN_DIR) $(MEEGO_DIR) $(QTCONFIG_DIR) po
+SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests $(CAMEL_DIRS) $(EPLUGIN_DIR) $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 EXTRA_DIST = autogen.sh
 

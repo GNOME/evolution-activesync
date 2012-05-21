@@ -112,6 +112,10 @@ AC_SUBST(EVOLUTION_PLUGIN_errordir)
 EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell`"
 AC_SUBST(EVOLUTION_imagesdir)
 
+EVOLUTION_privlibdir=`$PKG_CONFIG --variable=privlibdir evolution-data-server-1.2`
+AC_SUBST(EVOLUTION_privlibdir)
+
+
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
 
@@ -153,6 +157,7 @@ AC_CONFIG_FILES([
     libeasaccount/tests/Makefile
     check_tests/Makefile
     camel/Makefile
+    libevoeas/Makefile
     meego/Makefile
     QtActivesyncdConfig/Makefile
     po/Makefile.in
