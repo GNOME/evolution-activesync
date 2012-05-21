@@ -100,9 +100,6 @@ PKG_CHECK_MODULES([MLITE],
                    AC_MSG_NOTICE([MeeGo ActiveSync Settings UI will not be built])])
 
 
-dbus_servicesdir=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
-AC_SUBST(dbus_servicesdir)
-
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir ${CAMEL_PKG}`
 AC_SUBST(camel_providerdir)
 
