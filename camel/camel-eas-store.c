@@ -67,7 +67,6 @@
 
 struct _CamelEasStorePrivate {
 
-	gchar *account_uid;
 	time_t last_refresh_time;
 	GMutex *get_finfo_lock;
 	EasEmailHandler *handler;
@@ -159,11 +158,8 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 			 GError **error)
 {
 	CamelEasStore *eas_store;
-	CamelEasStorePrivate *priv;
 	gchar *summary_file, *session_storage_path;
-#if EDS_CHECK_VERSION(3,3,90)
-	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
-#endif	
+
 #if ! EDS_CHECK_VERSION(3,1,0)
 	CamelServiceClass *service_class;
 
@@ -174,7 +170,6 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 #endif
 
 	eas_store = (CamelEasStore *) service;
-	priv = eas_store->priv;
 
 	/* Disable virtual trash and junk folders. Exchange has real
 	   folders for that */
@@ -190,19 +185,6 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 		return FALSE;
 	}
 	eas_store->storage_path = session_storage_path;
-
-#if EDS_CHECK_VERSION(3,3,90)
-	priv->account_uid = g_strdup(camel_eas_settings_get_account_uid ((CamelEasSettings *) settings));
-#else	
-	priv->account_uid = g_strdup (camel_url_get_param (url, "account_uid"));
-#endif	
-	if (!priv->account_uid) {
-		g_set_error (
-			error, CAMEL_STORE_ERROR,
-			CAMEL_STORE_ERROR_INVALID,
-			_("EAS service has no account UID"));
-		return FALSE;
-	}
 
 	g_mkdir_with_parents (eas_store->storage_path, 0700);
 	summary_file = g_build_filename (eas_store->storage_path, "folder-tree-v2", NULL);
@@ -233,6 +215,7 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 	EVO2(GCancellable *cancellable = NULL;)
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
+	const gchar *account_uid;
 
 	eas_store = (CamelEasStore *) service;
 	priv = eas_store->priv;
@@ -247,7 +230,21 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 		return TRUE;
 	}
 
-	priv->handler = eas_mail_handler_new (priv->account_uid, error);
+#if !EDS_CHECK_VERSION (3,3,90)
+	account_uid = camel_url_get_param (camel_service_get_camel_url(service), "account_uid");
+#else
+	account_uid = camel_eas_settings_get_account_uid (CAMEL_EAS_SETTINGS (camel_service_get_settings (service)));
+#endif
+	if (!account_uid) {
+		g_set_error (
+			error, CAMEL_STORE_ERROR,
+			CAMEL_STORE_ERROR_INVALID,
+			_("EAS service has no account UID"));
+		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
+		return FALSE;
+	}
+
+	priv->handler = eas_mail_handler_new (account_uid, error);
 	if (!priv->handler) {
 		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
 		EVO3_sync(camel_service_disconnect) (service, TRUE, NULL);
@@ -599,8 +596,6 @@ eas_store_finalize (GObject *object)
 
 	eas_store = CAMEL_EAS_STORE (object);
 
-	g_free (eas_store->priv->account_uid);
-
 	g_free (eas_store->storage_path);
 	g_mutex_free (eas_store->priv->get_finfo_lock);
 
@@ -654,7 +649,6 @@ camel_eas_store_init (CamelEasStore *eas_store)
 	eas_store->priv =
 		CAMEL_EAS_STORE_GET_PRIVATE (eas_store);
 
-	eas_store->priv->account_uid = NULL;
 	eas_store->priv->handler = NULL;
 	eas_store->priv->last_refresh_time = time (NULL) - (FINFO_REFRESH_INTERVAL + 10);
 	eas_store->priv->get_finfo_lock = g_mutex_new ();
