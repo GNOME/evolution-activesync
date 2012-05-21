@@ -123,11 +123,19 @@ MEEGO_UI_DIR=meego/meego-ux-settings-activesync
 AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
 
-AT_WITH_QT(,no_keywords,,[have_qt=no],[have_qt=yes])
-AM_CONDITIONAL([ENABLE_QT_CONFIG_TOOL],[test "$have_qt" = yes])
-if (test "$have_qt" = "no"); then
-   AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])
+AC_ARG_ENABLE(qtconfig,
+              AS_HELP_STRING([--disable-qtconfig],
+                             [Can be used to disable compiling the Qt configuration UI. Enabled by default.]),
+              [enable_qtconfig="$enableval"], [enable_qtconfig="yes"])
+
+if test "$enable_qtconfig" = "yes"; then
+   AT_WITH_QT(,no_keywords,,[have_qt=no],[have_qt=yes])
+   if (test "$have_qt" = "no"); then
+      AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])
+      enable_qtconfig=no
+   fi
 fi
+AM_CONDITIONAL([ENABLE_QT_CONFIG_TOOL],[test "$enable_qtconfig" = "yes"])
 
 AC_ARG_ENABLE(camel-backend,
               AS_HELP_STRING([--disable-camel-backend],
