@@ -16,3 +16,4 @@ QtActivesyncdConfig_LDADD   += $(QT_LIBS) $(LDADD) ../libeasclient/libeasclient.
 
 
 BUILT_SOURCES = ConfigWizard.moc.cpp ConfigWizard.ui.h
+EXTRA_DIST = ConfigWizard.ui
