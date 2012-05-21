@@ -10,7 +10,7 @@ if ENABLE_QT_CONFIG_TOOL
 endif
 
 if ENABLE_CAMEL_BACKEND
-  CAMEL_DIRS = camel libevoeas
+  CAMEL_DIRS = libevoeas camel
 endif
 
 if ENABLE_EPLUGIN
