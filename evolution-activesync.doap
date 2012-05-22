@@ -4,7 +4,7 @@
          xmlns:gnome="http://api.gnome.org/doap-extensions#"
          xmlns="http://usefulinc.com/ns/doap#">
 
-  <name xml:lang="en">evolution-ews</name>
+  <name xml:lang="en">evolution-activesync</name>
   <shortdesc xml:lang="en">ActiveSync client support for Evolution</shortdesc>
   <homepage rdf:resource="http://projects.gnome.org/evolution" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/evolution-list" />
