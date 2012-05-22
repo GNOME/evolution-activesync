@@ -54,12 +54,12 @@
 
 static EasAccountListener *config_listener = NULL;
 
-GtkWidget *org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data);
-gboolean org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data);
+GtkWidget *org_gnome_activesync_server_url(EPlugin *epl, EConfigHookItemFactoryData *data);
+gboolean org_gnome_activesync_check_options(EPlugin *epl, EConfigHookPageCheckData *data);
 #if EDS_CHECK_VERSION (3,3,90)
-void org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetSettings *target_account);
+void org_gnome_activesync_commit (EPlugin *epl, EMConfigTargetSettings *target_account);
 #else
-void org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetAccount *target_account);
+void org_gnome_activesync_commit (EPlugin *epl, EMConfigTargetAccount *target_account);
 #endif
 
 #define EVOLUTION_ACCOUNT_URL_FORMAT "eas://%s/;account_uid=%s;passwd_exp_warn_period=7;ad_limit=500;check_all;owa_url=%s"
@@ -309,7 +309,7 @@ discover_server_url (GtkWidget *button, EConfig  *config)
 
 #if EDS_CHECK_VERSION(3,3,90)
 GtkWidget *
-org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
+org_gnome_activesync_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 {
 	EMConfigTargetSettings *target_account;
 	const gchar *source_url;
@@ -414,7 +414,7 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 #else
 /* used by editor and assistant - same code */
 GtkWidget *
-org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
+org_gnome_activesync_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 {
 	EMConfigTargetAccount *target_account;
 	const gchar *source_url;
@@ -536,7 +536,7 @@ org_gnome_exchange_server_url(EPlugin *epl, EConfigHookItemFactoryData *data)
 
 #if EDS_CHECK_VERSION (3,3,90)
 gboolean
-org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
+org_gnome_activesync_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 {
 	EMConfigTargetSettings *target = (EMConfigTargetSettings *)(data->config->target);
 	CamelEasSettings *eas_settings;
@@ -560,7 +560,7 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 		g_object_unref (client);
 		g_free (key);
 	
-			/* Note: we only care about exchange url's, we WILL get called on all other url's too. */
+			/* Note: we only care about activesync url's, we WILL get called on all other url's too. */
 		if ((!url|| !*url)
 		    && strcmp(target->storage_protocol, "eas") == 0) {
 			status = FALSE;
@@ -574,7 +574,7 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 
 #else
 gboolean
-org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
+org_gnome_activesync_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 {
 	EMConfigTargetAccount *target = (EMConfigTargetAccount *)data->config->target;
 	gint status = TRUE;
@@ -600,7 +600,7 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 		g_object_unref (client);
 		g_free (key);
 	
-			/* Note: we only care about exchange url's, we WILL get called on all other url's too. */
+			/* Note: we only care about activesync url's, we WILL get called on all other url's too. */
 		if ((!url|| !*url)
 		    && strcmp(curl->protocol, "eas") == 0) {
 			status = FALSE;
@@ -615,7 +615,7 @@ org_gnome_exchange_check_options(EPlugin *epl, EConfigHookPageCheckData *data)
 
 #if EDS_CHECK_VERSION (3,3,90)
 void 
-org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetSettings *target_account)
+org_gnome_activesync_commit (EPlugin *epl, EMConfigTargetSettings *target_account)
 {
 	if (!CAMEL_IS_EAS_SETTINGS (target_account->storage_settings))
 		return;
@@ -628,7 +628,7 @@ org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetSettings *target_account)
 }
 #else
 void
-org_gnome_exchange_commit (EPlugin *epl, EMConfigTargetAccount *target_account)
+org_gnome_activesync_commit (EPlugin *epl, EMConfigTargetAccount *target_account)
 {
 	const gchar *source_url;
 	CamelURL *url;

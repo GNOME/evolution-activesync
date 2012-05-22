@@ -66,9 +66,9 @@ static CamelProviderConfEntry eas_conf_entries[] = {
 
 static CamelProvider eas_provider = {
 	"eas",
-	N_("Exchange ActiveSync"),
+	N_("ActiveSync"),
 
-	N_("For accessing Exchange servers using ActiveSync"),
+	N_("For accessing servers using ActiveSync"),
 
 	"mail",
 
@@ -86,7 +86,7 @@ static CamelProvider eas_provider = {
 CamelServiceAuthType camel_eas_password_authtype = {
 	N_("Password"),
 
-	N_("This option will connect to the Exchange server using a "
+	N_("This option will connect to the ActiveSync server using a "
 	   "plaintext password."),
 
 	"",

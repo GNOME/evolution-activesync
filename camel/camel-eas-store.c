@@ -490,10 +490,10 @@ eas_get_name (CamelService *service, gboolean brief)
 	CamelURL *url = camel_service_get_camel_url (service);
 
 	if (brief)
-		return g_strdup_printf(_("Exchange ActiveSync server %s"),
+		return g_strdup_printf(_("ActiveSync server %s"),
 				       url->host);
 	else
-		return g_strdup_printf(_("Exchange ActiveSync service for %s on %s"),
+		return g_strdup_printf(_("ActiveSync service for %s on %s"),
 				       url->user, url->host);
 #else
 	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
@@ -504,10 +504,10 @@ eas_get_name (CamelService *service, gboolean brief)
 
 	strings = g_strsplit (account_uid, "@", 0);
 	if (brief)
-		ret = g_strdup_printf(_("Exchange ActiveSync server %s"),
+		ret = g_strdup_printf(_("ActiveSync server %s"),
 				       strings[1]);
 	else
-		ret = g_strdup_printf(_("Exchange ActiveSync service for %s on %s"),
+		ret = g_strdup_printf(_("ActiveSync service for %s on %s"),
 				       strings[0], strings[1]);
 	
 	g_strfreev (strings);

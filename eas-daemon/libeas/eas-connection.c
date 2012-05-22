@@ -393,7 +393,7 @@ static gboolean
 mainloop_password_store (gpointer data)
 {
 	EasGnomeKeyringResponse *response = data;
-	gchar * description = g_strdup_printf ("Exchange Server Password for %s@%s",
+	gchar * description = g_strdup_printf ("ActiveSync Server Password for %s@%s",
 					       response->username,
 					       response->serverUri);
 
@@ -1002,7 +1002,7 @@ eas_active_job_dequeue (EasConnection *cnc, EasNode *eas_node)
 
 
 /**
- * WBXML encode the message and send to exchange server via libsoup.
+ * WBXML encode the message and send to activesync server via libsoup.
  * May also be required to temporarily hold the request message whilst
  * provisioning with the server occurs.
  *
@@ -1332,7 +1332,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 
 
 /**
- * Converts from Microsoft Exchange Server protocol WBXML to XML
+ * Converts from Microsoft ActiveSync Server protocol WBXML to XML
  * @param wbxml input buffer
  * @param wbxml_len input buffer length
  * @param xml output buffer [full transfer]

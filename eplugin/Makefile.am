@@ -15,11 +15,11 @@
 ### EVO_PLUGIN_RULE ### end ###
 
 
-plugin_DATA = org-gnome-exchange-activesync.eplug
-plugin_LTLIBRARIES = liborg-gnome-exchange-activesync.la
-#noinst_LTLIBRARIES = liborg-gnome-exchange-activesync.la
+plugin_DATA = org-gnome-evolution-activesync.eplug
+plugin_LTLIBRARIES = liborg-gnome-evolution-activesync.la
+#noinst_LTLIBRARIES = liborg-gnome-evolution-activesync.la
 
-liborg_gnome_exchange_activesync_la_CPPFLAGS = \
+liborg_gnome_evolution_activesync_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	$(EVOLUTION_DATA_SERVER_CFLAGS) \
 	$(EVOLUTION_PLUGIN_CFLAGS) \
@@ -31,12 +31,12 @@ liborg_gnome_exchange_activesync_la_CPPFLAGS = \
 
 
 
-liborg_gnome_exchange_activesync_la_SOURCES = 	\
+liborg_gnome_evolution_activesync_la_SOURCES = 	\
 	activesync-account-setup.c	\
 	eas-account-listener.c	\
 	eas-account-listener.h
 
-liborg_gnome_exchange_activesync_la_LIBADD = \
+liborg_gnome_evolution_activesync_la_LIBADD = \
 	$(top_builddir)/libeasclient/libeasclient.la \
 	$(top_builddir)/libevoeas/libevoeas.la		\
 	$(EVOLUTION_DATA_SERVER_LIBS) \
@@ -47,17 +47,17 @@ liborg_gnome_exchange_activesync_la_LIBADD = \
 	$(SYNCEVOLUTION_DBUS_LIBS) \
 	$(DNS_LIBS)
 
-liborg_gnome_exchange_activesync_la_LDFLAGS = \
+liborg_gnome_evolution_activesync_la_LDFLAGS = \
 	-module -avoid-version $(NO_UNDEFINED)
 
-error_DATA = org-gnome-exchange-activesync.error
+error_DATA = org-gnome-evolution-activesync.error
 errordir = $(EVOLUTION_PLUGIN_errordir)
 
 EXTRA_DIST = \
-	org-gnome-exchange-activesync.eplug.xml \
-	org-gnome-exchange-activesync.error.xml
+	org-gnome-evolution-activesync.eplug.xml \
+	org-gnome-evolution-activesync.error.xml
 
-BUILT_SOURCES = $(error_DATA) org-gnome-exchange-activesync.eplug 
+BUILT_SOURCES = $(error_DATA) org-gnome-evolution-activesync.eplug 
 
 CLEANFILES = $(BUILT_SOURCES)
 

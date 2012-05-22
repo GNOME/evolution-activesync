@@ -69,10 +69,10 @@ eas_transport_get_name (CamelService *service,
 
 	if (brief)
 		return g_strdup_printf (
-			_("Exchange server %s"), host);
+			_("ActiveSync server %s"), host);
 	else
 		return g_strdup_printf (
-			_("Exchange mail delivery via %s"), host);
+			_("ActiveSync mail delivery via %s"), host);
 }
 
 static gboolean

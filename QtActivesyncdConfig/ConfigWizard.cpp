@@ -285,7 +285,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
     {
     case AutoDiscoverDetails:
         ui->wizard->setCurrentWidget(ui->pageAutoConfig);
-        setTitle(tr("Automatic configuration"), tr("Enter your e-mail adress and we'll try to guess your Exchange server details."));
+        setTitle(tr("Automatic configuration"), tr("Enter your e-mail adress and we'll try to guess your ActiveSync server details."));
         validateAutoDiscoverInputs();
         break;
 
@@ -308,7 +308,7 @@ void ConfigWizard::changeState(ConfigWizard::State state)
     case ManualServerDetails:
         serverDetailsEnteredManually = true;
         ui->wizard->setCurrentWidget(ui->pageManualConfig);
-        setTitle(tr("Manual configuration"), tr("Sorry, your Exchange server details could not be guessed. Please enter them below."));
+        setTitle(tr("Manual configuration"), tr("Sorry, your ActiveSync server details could not be guessed. Please enter them below."));
         validateManualServerInputs();
         break;
 
