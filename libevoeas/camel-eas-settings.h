@@ -59,6 +59,12 @@ GType		camel_eas_settings_get_type			(void) G_GNUC_CONST;
 gboolean	camel_eas_settings_get_check_all		(CamelEasSettings *settings);
 void		camel_eas_settings_set_check_all		(CamelEasSettings *settings,
 								 gboolean check_all);
+gboolean	camel_eas_settings_get_filter_junk		(CamelEasSettings *settings);
+void		camel_eas_settings_set_filter_junk		(CamelEasSettings *settings,
+								 gboolean filter_junk);
+gboolean	camel_eas_settings_get_filter_junk_inbox	(CamelEasSettings *settings);
+void		camel_eas_settings_set_filter_junk_inbox	(CamelEasSettings *settings,
+								 gboolean filter_junk_inbox);
 const gchar *	camel_eas_settings_get_account_uid		(CamelEasSettings *settings);
 void		camel_eas_settings_set_account_uid		(CamelEasSettings *settings,
 								 const gchar *uid);

@@ -24,12 +24,16 @@
 
 struct _CamelEasSettingsPrivate {
 	gboolean check_all;	
+	gboolean filter_junk;
+	gboolean filter_junk_inbox;
 	gchar *account_uid;
 };
 
 enum {
 	PROP_0,
 	PROP_CHECK_ALL,	
+	PROP_FILTER_JUNK,
+	PROP_FILTER_JUNK_INBOX,
 	PROP_ACCOUNT_UID,
 	PROP_HOST,
 	PROP_PORT,
@@ -54,6 +58,18 @@ eas_settings_set_property (GObject *object,
 	switch (property_id) {
 		case PROP_CHECK_ALL:
 			camel_eas_settings_set_check_all (
+				CAMEL_EAS_SETTINGS (object),
+				g_value_get_boolean (value));
+			return;
+
+		case PROP_FILTER_JUNK:
+			camel_eas_settings_set_filter_junk (
+				CAMEL_EAS_SETTINGS (object),
+				g_value_get_boolean (value));
+			return;
+
+		case PROP_FILTER_JUNK_INBOX:
+			camel_eas_settings_set_filter_junk_inbox (
 				CAMEL_EAS_SETTINGS (object),
 				g_value_get_boolean (value));
 			return;
@@ -112,6 +128,20 @@ eas_settings_get_property (GObject *object,
 				CAMEL_EAS_SETTINGS (object)));
 			return;
 		
+		case PROP_FILTER_JUNK:
+			g_value_set_boolean (
+				value,
+				camel_eas_settings_get_filter_junk (
+				CAMEL_EAS_SETTINGS (object)));
+			return;
+
+		case PROP_FILTER_JUNK_INBOX:
+			g_value_set_boolean (
+				value,
+				camel_eas_settings_get_filter_junk_inbox (
+				CAMEL_EAS_SETTINGS (object)));
+			return;
+
 		case PROP_ACCOUNT_UID:
 			g_value_set_string (
 				value,
@@ -191,6 +221,30 @@ camel_eas_settings_class_init (CamelEasSettingsClass *class)
 			"check-all",
 			"Check All",
 			"Check all folders for new messages",
+			FALSE,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT |
+			G_PARAM_STATIC_STRINGS));
+
+	g_object_class_install_property (
+		object_class,
+		PROP_FILTER_JUNK,
+		g_param_spec_boolean (
+			"filter-junk",
+			"Filter Junk",
+			"Whether to filter junk from all folders",
+			FALSE,
+			G_PARAM_READWRITE |
+			G_PARAM_CONSTRUCT |
+			G_PARAM_STATIC_STRINGS));
+
+	g_object_class_install_property (
+		object_class,
+		PROP_FILTER_JUNK_INBOX,
+		g_param_spec_boolean (
+			"filter-junk-inbox",
+			"Filter Junk Inbox",
+			"Whether to filter junk from Inbox only",
 			FALSE,
 			G_PARAM_READWRITE |
 			G_PARAM_CONSTRUCT |
@@ -299,4 +353,42 @@ camel_eas_settings_set_check_all (CamelEasSettings *settings,
 	settings->priv->check_all = check_all;
 
 	g_object_notify (G_OBJECT (settings), "check-all");
+}
+
+gboolean
+camel_eas_settings_get_filter_junk (CamelEasSettings *settings)
+{
+	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), FALSE);
+
+	return settings->priv->filter_junk;
+}
+
+void
+camel_eas_settings_set_filter_junk (CamelEasSettings *settings,
+                                    gboolean filter_junk)
+{
+	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
+
+	settings->priv->filter_junk = filter_junk;
+
+	g_object_notify (G_OBJECT (settings), "filter-junk");
+}
+
+gboolean
+camel_eas_settings_get_filter_junk_inbox (CamelEasSettings *settings)
+{
+	g_return_val_if_fail (CAMEL_IS_EAS_SETTINGS (settings), FALSE);
+
+	return settings->priv->filter_junk_inbox;
+}
+
+void
+camel_eas_settings_set_filter_junk_inbox (CamelEasSettings *settings,
+                                          gboolean filter_junk_inbox)
+{
+	g_return_if_fail (CAMEL_IS_EAS_SETTINGS (settings));
+
+	settings->priv->filter_junk_inbox = filter_junk_inbox;
+
+	g_object_notify (G_OBJECT (settings), "filter-junk-inbox");
 }
