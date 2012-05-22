@@ -2,7 +2,7 @@ AC_INIT(evolution-activesync, 0.91)
 AC_PREREQ([2.59])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.10 no-define])
+AM_INIT_AUTOMAKE([1.10 no-define dist-xz no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Checks for libraries.
