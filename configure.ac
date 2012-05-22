@@ -1,4 +1,4 @@
-AC_INIT(eas-daemon, 0.9)
+AC_INIT(evolution-activesync, 0.9)
 AC_PREREQ([2.59])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
