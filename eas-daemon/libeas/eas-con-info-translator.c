@@ -113,21 +113,18 @@
 #define EAS_ELEMENT_ASSISTANTNAME				"AssistantName"
 #define EAS_ELEMENT_ASSISTANTPHONENUMBER		"AssistantPhoneNumber"
 #define EAS_ELEMENT_DEPARTMENT					"Department"
-#define EAS_ELEMENT_WEBPAGE						"WebPage"
 #define EAS_ELEMENT_FILEAS						"FileAs"
 #define EAS_ELEMENT_WEIGHTEDRANK				"WeightedRank"
 
 #define EAS_ELEMENT_COMPANYNAME					"CompanyName"
 
 #define EAS_ELEMENT_SPOUSE						"Spouse"
-#define EAS_ELEMENT_JOBTITLE					"JobTitle"
 
 #define EAS_ELEMENT_YOMIFIRSTNAME				"YomiFirstName"
 #define EAS_ELEMENT_YOMILASTNAME				"YomiLastName"
 #define EAS_ELEMENT_YOMICOMPANYNAME				"YomiCompanyName"
 
 #define EAS_ELEMENT_OFFICELOCATION				"OfficeLocation"
-#define EAS_ELEMENT_PICTURE						"Picture"
 #define EAS_ELEMENT_CATEGORIES					"Categories"
 #define EAS_ELEMENT_CATEGORY					"Category"
 #define EAS_ELEMENT_CHILDREN					"Children"
@@ -551,6 +548,13 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 					add_attr_value (attr, node->children, EAS_ELEMENT_ROLE);
 				}
 
+				else if (g_strcmp0 (name, EAS_ELEMENT_SPOUSE) == 0) {
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_X_SPOUSE);
+
+					e_vcard_add_attribute (vcard, attr);
+					add_attr_value (attr, node->children, EAS_ELEMENT_SPOUSE);
+				}
+
 				//
 				// Photo
 				//
@@ -567,7 +571,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				// FileAs
 				//
 				else if (g_strcmp0 (name, EAS_ELEMENT_FILEAS) == 0) {
-					EVCardAttribute *attr = e_vcard_attribute_new (NULL, "X-EVOLUTION-FILE-AS");
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_X_FILE_AS);
 
 					e_vcard_add_attribute (vcard, attr);
 					add_attr_value (attr, node->children, EAS_ELEMENT_FILEAS);
@@ -577,7 +581,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				// MANAGER
 				//
 				else if (g_strcmp0 (name, EAS_ELEMENT_CONTACTS2_MANAGERNAME) == 0) {
-					EVCardAttribute *attr = e_vcard_attribute_new (NULL, "X-EVOLUTION-MANAGER");
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_X_MANAGER);
 
 					e_vcard_add_attribute (vcard, attr);
 					add_attr_value (attr, node->children, EAS_ELEMENT_CONTACTS2_MANAGERNAME);
@@ -587,10 +591,17 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 				// ASSISTANT
 				//
 				else if (g_strcmp0 (name, EAS_ELEMENT_ASSISTANTNAME) == 0) {
-					EVCardAttribute *attr = e_vcard_attribute_new (NULL, "X-EVOLUTION-ASSISTANT");
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_X_ASSISTANT);
 
 					e_vcard_add_attribute (vcard, attr);
 					add_attr_value (attr, node->children, EAS_ELEMENT_ASSISTANTNAME);
+				}
+
+				else if (g_strcmp0 (name, EAS_ELEMENT_ANNIVERSARY) == 0) {
+					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_X_ANNIVERSARY);
+
+					e_vcard_add_attribute (vcard, attr);
+					add_attr_value (attr, node->children, EAS_ELEMENT_ANNIVERSARY);
 				}
 
 				//
@@ -1083,15 +1094,15 @@ set_missing_contact_properties (xmlNodePtr appData)
 		EAS_ELEMENT_EMAIL2ADDRESS,
 		EAS_ELEMENT_EMAIL3ADDRESS,
 		EAS_ELEMENT_CONTACTS2_NICKNAME,
-		EAS_ELEMENT_WEBPAGE,
+		EAS_ELEMENT_URL,
 		EAS_ELEMENT_TITLE,
-		EAS_ELEMENT_JOBTITLE,
+		EAS_ELEMENT_ROLE,
 		EAS_ELEMENT_SPOUSE,
 		EAS_ELEMENT_FILEAS,
 		EAS_ELEMENT_ASSISTANTNAME,
 		EAS_ELEMENT_CONTACTS2_MANAGERNAME,
 		EAS_ELEMENT_OFFICELOCATION,
-		EAS_ELEMENT_PICTURE,
+		EAS_ELEMENT_PHOTO,
 
 		/* can be set like a text element */
 		EAS_ELEMENT_CATEGORIES,
@@ -1177,7 +1188,7 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 
 		/* Url */
 		if (!strcmp (name, EVC_URL)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_WEBPAGE,
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_URL,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 
 			continue;
@@ -1198,49 +1209,42 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 
 		/* Role */
 		if (!strcmp (name, EVC_ROLE)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_JOBTITLE,
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_ROLE,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
 		/* Spouse - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
-		if (!strcmp (name, "X-EVOLUTION-SPOUSE")) {
+		if (!strcmp (name, EVC_X_SPOUSE)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_SPOUSE,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
-		/* FileAs - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
-		if (!strcmp (name, "X-EVOLUTION-FILE-AS")) {
+		/* FileAs - vCard does not support FileAs so we use X-EVOLUTION-FILE-AS*/
+		if (!strcmp (name, EVC_X_FILE_AS)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_FILEAS,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
-		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
-		if (!strcmp (name, "X-EVOLUTION-ASSISTANT")) {
+		/* AssistantName - vCard does not support Assistant so we use X-EVOLUTION-ASSISTANT*/
+		if (!strcmp (name, EVC_X_ASSISTANT)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_ASSISTANTNAME,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
-		/* AssistantName - vCard does not support Spouse so we use X-EVOLUTION-SPOUSE*/
-		if (!strcmp (name, "X-EVOLUTION-MANAGER")) {
+		/* ManagerName - vCard does not support Manager so we use X-EVOLUTION-MANAGER*/
+		if (!strcmp (name, EVC_X_MANAGER)) {
 			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_CONTACTS2_MANAGERNAME,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
 		/* Anniversary - vCard does not support Anniversary so we use X-EVOLUTION-ANNIVERSARY*/
-		if (!strcmp (name, "X-EVOLUTION-ANNIVERSARY")) {
+		if (!strcmp (name, EVC_X_ANNIVERSARY)) {
 			set_xml_contact_date (appData, attr, (gchar*) EAS_ELEMENT_ANNIVERSARY);
-			continue;
-		}
-
-		/* Office Location - vCard does not support it, so we use X-EVOLUTION-OFFICE*/
-		if (!strcmp (name, "X-EVOLUTION-OFFICE")) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_OFFICELOCATION,
-					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
 
@@ -1253,7 +1257,7 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 		/* Photo (AS: name is "Picture") */
 		/* Evolution saves Photo as base64 encoded so there is no need to encode*/
 		if (!strcmp (name, EVC_PHOTO)) {
-			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_PICTURE,
+			set_xml_element (appData, (const xmlChar*) EAS_ELEMENT_PHOTO,
 					 (const xmlChar*) attribute_get_nth_value (attr, 0));
 			continue;
 		}
