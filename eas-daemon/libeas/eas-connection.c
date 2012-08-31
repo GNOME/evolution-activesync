@@ -2084,7 +2084,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	if (INVALID == validity || VALID_12_1_REPROVISION == validity ) 
 	{
 		g_assert (error != NULL);
-		if (INVALID == validity)
+		if (INVALID == validity &&
+		    getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
+
 		{
 			write_response_to_file ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
 		}
