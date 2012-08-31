@@ -2265,7 +2265,8 @@ write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len)
 	fullPath = g_strconcat (path, filename, NULL);
 
 	if ( (file = fopen (fullPath, "w"))) {
-		fwrite (xml, 1, xml_len, file);
+		if (xml)
+			fwrite (xml, 1, xml_len, file);
 		fclose (file);
 	}
 
