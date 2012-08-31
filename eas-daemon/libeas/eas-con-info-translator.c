@@ -455,7 +455,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 
 					e_vcard_add_attribute (vcard, attr);
 					add_attr_value (attr, node->children, EAS_ELEMENT_RADIOPHONENUMBER);
-					e_vcard_attribute_add_param_with_value (attr, param, "RADIO");
+					e_vcard_attribute_add_param_with_value (attr, param, EVC_X_RADIO /* X-EVOLUTION-RADIO */);
 				} else if (g_strcmp0 (name, EAS_ELEMENT_PAGER) == 0) {
 					EVCardAttributeParam *param = e_vcard_attribute_param_new ("TYPE");
 					EVCardAttribute *attr = e_vcard_attribute_new (NULL, EVC_TEL);
@@ -672,7 +672,7 @@ string_to_type (const gchar *type)
 		entry(HOME),
 		entry(WORK),
 		entry(CAR),
-		entry(RADIO),
+		{ EVC_X_RADIO, RADIO },
 		entry(CELL),
 		entry(VOICE),
 		entry(FAX),
@@ -683,7 +683,14 @@ string_to_type (const gchar *type)
 		  * entry;
 
 	for (entry = map; type && entry->name; entry++) {
-		if (!g_ascii_strcasecmp (type, entry->name))
+		// match literally or with enclosing quotation marks;
+		// libebook writes TYPE="X-EVOLUTION-RADIO"
+		size_t len = strlen(type);
+		if (!g_ascii_strcasecmp (type, entry->name) ||
+		    (len == strlen(entry->name) + 2 &&
+		     type[0] == '"' &&
+		     type[len - 1] == '"' &&
+		     !g_ascii_strncasecmp (type + 1, entry->name, strlen(entry->name))))
 			return 1 << entry->type;
 	}
 	return 0;
