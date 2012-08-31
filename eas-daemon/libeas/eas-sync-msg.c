@@ -148,6 +148,7 @@ eas_sync_msg_new (const gchar* syncKey, EasConnection *conn, const gchar *folder
 	priv->more_available = FALSE;
 	priv->sync_key_in = g_strdup (syncKey);
 	priv->connection = g_object_ref (conn);
+	g_debug ("new sync message for folder '%s'", folderID);
 	priv->folderID = g_strdup (folderID);
 	priv->ItemType = type;
 
@@ -194,6 +195,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 			xmlNewChild (collection, NULL, (xmlChar *) "Class", (xmlChar *) "Calendar");
 	}
 	xmlNewChild (collection, NULL, (xmlChar *) "SyncKey", (xmlChar*) priv->sync_key_in);
+	g_debug ("sync message for collection '%s'", priv->folderID);
 	xmlNewChild (collection, NULL, (xmlChar *) "CollectionId", (xmlChar*) priv->folderID);
 	xmlNewChild (collection, NULL, (xmlChar *) "DeletesAsMoves", (xmlChar*) "1");
 

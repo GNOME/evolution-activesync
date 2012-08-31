@@ -222,9 +222,10 @@ eas_sync_req_Activate (EasSyncReq *self,
 		}
 		break;
 		case EAS_ITEM_CONTACT: {
-			g_debug ("default folder id for contacts = [%s]", priv->folderID);
+			g_debug ("get contact folder");
 			priv->folderID = g_strdup (eas_account_get_contact_folder (acc));
 			if (priv->folderID != NULL) {
+				g_debug ("default folder id for contacts = [%s]", priv->folderID);
 				priv->state = EasSyncReqStep2;
 			}
 		}
@@ -271,7 +272,7 @@ eas_sync_req_Activate (EasSyncReq *self,
 
 	} else {
 		EasConnection *conn = eas_request_base_GetConnection (EAS_REQUEST_BASE (self));
-		g_debug ("eas_sync_req_activate - new Sync  mesg");
+		g_debug ("eas_sync_req_activate - new Sync  mesg for folder '%s'", priv->folderID);
 
 		//create sync  msg type
 		priv->syncMsg = eas_sync_msg_new (priv->sync_key, conn, priv->folderID, priv->ItemType);
@@ -390,13 +391,9 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		eas_connection_update_folders(eas_request_base_GetConnection (EAS_REQUEST_BASE (self)), 
 		                              ret_sync_key, added_folders,
 					      updated_folders, deleted_folders, error);
-		
-		if (g_strcmp0 (priv->sync_key, "0")) {
-			g_debug ("switching state");
-			priv->state = EasSyncReqStep3;
-			goto start_step3;
-		}
-		priv->state = EasSyncReqStep2;
+
+		// ensure that we have priv->folderID for eas_sync_msg_new()
+		// below and in start_step3
 		if (!priv->folderID) {
 			if (priv->ItemType == EAS_ITEM_CALENDAR) {
 				// cannot get from gconf - as the update takes too long - get from sync msg response
@@ -405,12 +402,20 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				// cannot get from gconf - as the update takes too long - get from sync msg response
 				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_con_folder (priv->syncFolderMsg));
 			}
+			g_debug ("retrieved default folder '%s' from sync folder msg", priv->folderID);
 		}
 		//clean up old message
 		if (priv->syncFolderMsg) {
 			g_object_unref (priv->syncFolderMsg);
 			priv->syncFolderMsg = NULL;
 		}
+
+		if (g_strcmp0 (priv->sync_key, "0")) {
+			g_debug ("switching state");
+			priv->state = EasSyncReqStep3;
+			goto start_step3;
+		}
+		priv->state = EasSyncReqStep2;
 
 		g_assert (NULL == priv->syncMsg);
 		//create sync  msg type

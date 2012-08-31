@@ -360,6 +360,11 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 			f->folder_id = g_strdup (serverId);
 			f->display_name = g_strdup (displayName);
 			f->type = atoi (type);
+			g_debug ("analyzing folder info: name '%s', folder '%s', type %u",
+				 f->display_name, f->folder_id, f->type);
+			g_debug ("calendar folder '%s', contact folder '%s'",
+				 eas_account_get_calendar_folder (acc),
+				 eas_account_get_contact_folder (acc));
 
 			if (f->type == EAS_FOLDER_TYPE_DEFAULT_CALENDAR && eas_account_get_calendar_folder (acc) == NULL) {
 				g_debug ("setting default calendar account");
