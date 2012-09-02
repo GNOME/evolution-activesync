@@ -4,12 +4,14 @@
 # pomóc w jego rozwijaniu i pielęgnowaniu, napisz do nas:
 # gnomepl@aviary.pl
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Piotr Drąg <piotrdrag@gmail.com>, 2012.
+# Aviary.pl <gnomepl@aviary.pl>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-22 03:47+0200\n"
-"PO-Revision-Date: 2012-08-22 03:48+0200\n"
+"POT-Creation-Date: 2012-09-02 22:45+0200\n"
+"PO-Revision-Date: 2012-09-02 22:47+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <gnomepl@aviary.pl>\n"
 "Language: pl\n"
@@ -181,7 +183,7 @@ msgstr "błąd %d zwrócony z wbxml_conv_xml2wbxml_run"
 
 #: ../eas-daemon/libeas/eas-connection.c:1281
 #: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:2607
+#: ../eas-daemon/libeas/eas-connection.c:2610
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "Żądanie HTTP się nie powiodło: %d - %s"
@@ -283,12 +285,12 @@ msgstr "Utworzenie katalogu bufora katalogów %s się nie powiodło: %s"
 msgid "request was cancelled by user"
 msgstr "żądanie zostało anulowane przez użytkownika"
 
-#: ../eas-daemon/libeas/eas-connection.c:2195
+#: ../eas-daemon/libeas/eas-connection.c:2197
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Przetworzenie XML się nie powiodło: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2479
+#: ../eas-daemon/libeas/eas-connection.c:2482
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Żądanie o identyfikatorze %d nie jest w kolejce, nie można anulować"
