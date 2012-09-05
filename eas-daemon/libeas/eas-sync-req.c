@@ -403,6 +403,8 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_con_folder (priv->syncFolderMsg));
 			}
 			g_debug ("retrieved default folder '%s' from sync folder msg", priv->folderID);
+		} else {
+			g_debug ("continue to use default folder '%s'", priv->folderID);
 		}
 		//clean up old message
 		if (priv->syncFolderMsg) {

@@ -367,19 +367,21 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 				 eas_account_get_contact_folder (acc));
 
 			if (f->type == EAS_FOLDER_TYPE_DEFAULT_CALENDAR && eas_account_get_calendar_folder (acc) == NULL) {
-				g_debug ("setting default calendar account");
+				g_debug ("setting default calendar account %s in sync folder msg %p (priv %p)",
+					 f->folder_id, self, priv);
 				eas_account_set_calendar_folder (acc, f->folder_id);
 				eas_account_list_save_item (account_list,
 							    acc,
 							    EAS_ACCOUNT_CALENDAR_FOLDER);
-				priv->def_cal_folder = g_strdup (serverId);
+				priv->def_cal_folder = g_strdup (f->folder_id);
 			} else if (f->type == EAS_FOLDER_TYPE_DEFAULT_CONTACTS && eas_account_get_contact_folder (acc) == NULL) {
-				g_debug ("setting default contact account");
+				g_debug ("setting default contact account %s in sync folder msg %p (priv %p)",
+					 f->folder_id, self, priv);
 				eas_account_set_contact_folder (acc, f->folder_id);
 				eas_account_list_save_item (account_list,
 							    acc,
 							    EAS_ACCOUNT_CONTACT_FOLDER);
-				priv->def_con_folder = g_strdup (serverId);
+				priv->def_con_folder = g_strdup (f->folder_id);
 			}
 
 			if (!g_strcmp0 ("Add", topNodeName)) {
@@ -434,6 +436,8 @@ gchar*
 eas_sync_folder_msg_get_def_con_folder (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
+	g_debug ("returning default contact folder %s from sync folder msg %p (priv %p)",
+		 priv->def_con_folder, self, priv);
 	return priv->def_con_folder;
 }
 
@@ -441,5 +445,7 @@ gchar*
 eas_sync_folder_msg_get_def_cal_folder (EasSyncFolderMsg* self)
 {
 	EasSyncFolderMsgPrivate *priv = self->priv;
+	g_debug ("returning default calendar folder %s from sync folder msg %p (priv %p)",
+		 priv->def_cal_folder, self, priv);
 	return priv->def_cal_folder;
 }
