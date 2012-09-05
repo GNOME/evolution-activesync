@@ -145,11 +145,13 @@ void eas_logger (const gchar *log_domain,
 
 void signalHandler (int sig)
 {
-	g_debug ("signalHandler++\n");
-
-	g_main_loop_quit (g_mainloop);
-
-	g_debug ("signalHandler--\n");
+	if (g_mainloop) {
+		// Only quit the loop once. Doing it again
+		// leads to a race condition (main() unrefs
+		// loop, we use it again here).
+		g_main_loop_quit (g_mainloop);
+		g_mainloop = NULL;
+	}
 }
 
 /*
@@ -163,6 +165,7 @@ int main (int argc, char** argv)
 	EasCommon* EasCommonObj = NULL;
 	EasMail*EasMailObj = NULL;
 	EasTest* EasTestObj = NULL;
+	GMainLoop* loop = NULL;
 
 	guint result;
 	GError* error = NULL;
@@ -181,11 +184,14 @@ int main (int argc, char** argv)
 	signal (SIGTERM, &signalHandler);
 	signal (SIGINT, &signalHandler);
 
-	g_mainloop = g_main_loop_new (NULL, FALSE);
-	if (g_mainloop == NULL) {
+	loop = g_main_loop_new (NULL, FALSE);
+	if (loop == NULL) {
 		g_debug ("Error: Couldn't create GMainLoop");
 		exit (EXIT_FAILURE);
 	}
+
+	// Give signalHandler() access to the main loop.
+	g_mainloop = loop;
 
 	//Creating all the GObjects
 	g_debug ("activesyncd Daemon Started");
@@ -194,7 +200,7 @@ int main (int argc, char** argv)
 	EasSyncObj = eas_sync_new();
 	if (EasSyncObj == NULL) {
 		g_debug ("Error: Failed to create calendar  instance");
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -202,7 +208,7 @@ int main (int argc, char** argv)
 	EasCommonObj = g_object_new (EAS_TYPE_COMMON , NULL);
 	if (EasCommonObj == NULL) {
 		g_debug ("Error: Failed to create common  instance");
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -210,14 +216,14 @@ int main (int argc, char** argv)
 	EasMailObj = eas_mail_new ();
 	if (EasMailObj == NULL) {
 		g_debug ("Error: Failed to create common  instance");
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
 	EasTestObj = eas_test_new ();
 	if (NULL == EasTestObj) {
 		g_debug ("Failed to make EasTest instance");
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -226,7 +232,7 @@ int main (int argc, char** argv)
 	if (error != NULL) {
 		g_debug ("Error: Connecting to the session DBus (%s)", error->message);
 		g_clear_error (&error);
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -237,7 +243,7 @@ int main (int argc, char** argv)
 					      DBUS_INTERFACE_DBUS);
 	if (busProxy == NULL) {
 		g_debug ("Error: Failed to get a proxy for D-Bus");
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -258,7 +264,7 @@ int main (int argc, char** argv)
 				G_TYPE_INVALID)) {
 		g_debug ("Error: D-Bus RequestName RPC failed (%s)", error->message);
 		g_clear_error (&error);
-		g_main_loop_quit (g_mainloop);
+		g_main_loop_quit (loop);
 		exit (EXIT_FAILURE);
 	}
 
@@ -297,11 +303,12 @@ int main (int argc, char** argv)
 	g_debug ("Not daemonizing (built with DISABLE_EAS_DAEMON)");
 #endif
 
-	g_main_loop_run (g_mainloop);
+	g_main_loop_run (loop);
 
 	// Clean up
 	g_debug ("Main Cleanup");
-	g_main_loop_unref (g_mainloop);
+	g_mainloop = NULL;
+	g_main_loop_unref (loop);
 
 	// clean up dbus and all its objects
 	if (EasSyncObj) {
