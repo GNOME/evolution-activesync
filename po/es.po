@@ -217,7 +217,7 @@ msgstr "Error al convertir WBXML a XML: %s"
 #: ../eas-daemon/libeas/eas-connection.c:1511
 #, c-format
 msgid "Status code: %d - Response from server"
-msgstr "Código de estado: %s: respuesta del servidor"
+msgstr "Código de estado: %d: respuesta del servidor"
 
 #: ../eas-daemon/libeas/eas-connection.c:1526
 #, c-format
