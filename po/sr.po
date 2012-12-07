@@ -1,0 +1,313 @@
+# Serbian translation for evolution-activesync.
+# Copyright (C) 2012 evolution-activesync's COPYRIGHT HOLDER
+# This file is distributed under the same license as the evolution-activesync package.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-activesync master\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product"
+"=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2012-12-05 10:05+0000\n"
+"PO-Revision-Date: 2012-12-07 10:24+0200\n"
+"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"Language-Team: Serbian <gnom@prevod.org>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : "
+"n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Project-Style: gnome\n"
+
+#: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Не могу да направим путању оставе"
+
+#: ../camel/camel-eas-folder.c:224
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Нисам успео да преместим датотеку оставе поруке"
+
+#: ../camel/camel-eas-folder.c:531
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Не могу да учитам преглед за %s"
+
+#: ../camel/camel-eas-folder.c:756
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "Писање поруке у смештај поште није могућ у Радном усаглашавању"
+
+#: ../camel/camel-eas-folder.c:772
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Премештање порука још увек није примењено"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Вршим проверу за новом поштом"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "Провери за _новим порукама у свим фасциклама"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Могућности"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "_Примени пропуснике на нове поруке у сандучету овог сервера"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Провери да нема _непожељног садржаја међу новим порукама"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Провери да нема ђубрета само у фасцикли _САНДУЧЕ"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Сам _локално усагласи налог"
+
+#: ../camel/camel-eas-provider.c:69
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
+msgid "ActiveSync"
+msgstr "Радно усаглашавање"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "За приступање серверима Радним усаглашавањем"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Лозинка"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Ова опција ће вас повезати на сервер Радног усаглашавања користећи лозинку "
+"обичног текста."
+
+#: ../camel/camel-eas-store.c:184
+#, c-format
+msgid "Session has no storage path"
+msgstr "Сесија нема путању складишта"
+
+#: ../camel/camel-eas-store.c:242
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "Услуга ЕРУ нема ЈИБ налога"
+
+#: ../camel/camel-eas-store.c:339
+#, c-format
+msgid "No such folder: %s"
+msgstr "Нема такве фасцикле: %s"
+
+#: ../camel/camel-eas-store.c:458
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "Стварање фасцикле није могуће са Радним усаглашавањем"
+
+#: ../camel/camel-eas-store.c:469
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "Брисање фасцикле није могуће са Радним усаглашавањем"
+
+#: ../camel/camel-eas-store.c:482
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "Преименовање фасцикле није могуће са Радним усаглашавањем"
+
+#: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
+#: ../camel/camel-eas-transport.c:72
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "Сервер Радног усаглашавања „%s“"
+
+#: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "Услуга Радног усаглашавања за „%s“ на „%s“"
+
+#: ../camel/camel-eas-store.c:560
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Морате да будете на мрежи да бисте завршили ову операцију"
+
+#: ../camel/camel-eas-transport.c:75
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "Испорука поште Радног усаглашавања путем „%s“"
+
+#: ../camel/camel-eas-transport.c:121
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Нисам успео да направим привремену датотеку за слање поруке"
+
+#: ../camel/camel-eas-utils.c:611
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "Позив „Направи ставку“ није успео да врати ИБ за нову поруку"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Молим унесите вашу лозинку Радног усаглашавања за „%s“"
+
+#: ../eas-daemon/libeas/eas-connection.c:1052
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "грешка „%d“ је враћена са „вбхмл_претв_хмл2вбхмл_направи“"
+
+#: ../eas-daemon/libeas/eas-connection.c:1082
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "„нова_соуп_порука“ је вратило НИШТА"
+
+#: ../eas-daemon/libeas/eas-connection.c:1151
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "грешка „%d“ је враћена са „вбхмл_претв_хмл2вбхмл_покрени“"
+
+#: ../eas-daemon/libeas/eas-connection.c:1281
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:2610
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "Није успео ХТТП захтев: %d — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1316
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "Врста ХТТП одговора није била ВБИксМЛ"
+
+#: ../eas-daemon/libeas/eas-connection.c:1324
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "Врста ХТТП одговора није била ВИШЕДЕЛОВА"
+
+#: ../eas-daemon/libeas/eas-connection.c:1356
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "вбхмл је НИШТА!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1365
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "вбхмл_лен је 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1376
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Нисам успео да направим ВБИксМЛ у ИксМЛ претварач: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1395
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Грешка претварања ВБИксМЛ-а у ИксМЛ: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1511
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Код стања: %d — Одговор са сервера"
+
+#: ../eas-daemon/libeas/eas-connection.c:1526
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Нисам успео да обрадим самооткривајући одговор ИксМЛ-а"
+
+#: ../eas-daemon/libeas/eas-connection.c:1535
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Нисам успео да пронађем елемент <Самооткривање>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1546
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Нисам успео да пронађем елемент <Одговор>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1557
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Нисам успео да пронађем елемент <Радња>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1568
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Нисам успео да пронађем елемент <Подешавања>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1701
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "Ел. пошта је обавезна и мора бити достављена"
+
+#: ../eas-daemon/libeas/eas-connection.c:1711
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Нисам успео да извучем домен из адресе ел. поште"
+
+#: ../eas-daemon/libeas/eas-connection.c:1722
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Нисам успео да направим привремени налог за самооткривање"
+
+#: ../eas-daemon/libeas/eas-connection.c:1885
+#, c-format
+msgid "An account must be provided."
+msgstr "Налог мора бити достављен."
+
+#: ../eas-daemon/libeas/eas-connection.c:1911
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Адреса сервера и корисничко име морају бити достављени."
+
+#: ../eas-daemon/libeas/eas-connection.c:1924
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Нисам успео да направим директоријум оставе фасцикле %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2068
+#, c-format
+msgid "request was cancelled by user"
+msgstr "корисник је отказао захтев"
+
+#: ../eas-daemon/libeas/eas-connection.c:2197
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Нисам успео да обрадим ИксМЛ: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2482
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "Захтев са иб-ом %d није на чекању; не могу да откажем"
+
+#: ../eplugin/activesync-account-setup.c:367
+#: ../eplugin/activesync-account-setup.c:478
+msgid "User_name:"
+msgstr "Корисничко _име:"
+
+#: ../eplugin/activesync-account-setup.c:385
+#: ../eplugin/activesync-account-setup.c:496
+msgid "_Server URL:"
+msgstr "_Адреса сервера:"
+
+#: ../eplugin/activesync-account-setup.c:392
+#: ../eplugin/activesync-account-setup.c:504
+msgid "_Auto Detect"
+msgstr "_Сам откриј"
+
+#: ../eplugin/eas-account-listener.c:177
+msgid "Contacts"
+msgstr "Контакти"
+
+#: ../eplugin/eas-account-listener.c:207
+msgid "Calendar"
+msgstr "Календар"
+
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
+msgid "ActiveSync plugin for Evolution."
+msgstr "Прикључак Радног усаглашавања за Еволуцију."
