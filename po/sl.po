@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2012-12-05 00:01+0000\n"
-"PO-Revision-Date: 2012-12-05 11:00+0100\n"
+"POT-Creation-Date: 2012-12-07 09:27+0000\n"
+"PO-Revision-Date: 2012-12-12 08:29+0100\n"
 "Last-Translator: Matej Urbančič <mateju@svn.gnome.org>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl_SI\n"
@@ -23,17 +23,17 @@ msgstr ""
 "X-Generator: Poedit 1.5.4\n"
 
 #: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create cache path"
 msgstr "Ni mogoče ustvariti poti predpomnilnika"
 
 #: ../camel/camel-eas-folder.c:224
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to move message cache file"
 msgstr "Ni mogoče premakniti predpomnilniške datoteke sporočil"
 
 #: ../camel/camel-eas-folder.c:531
-#, fuzzy, c-format
+#, c-format
 msgid "Could not load summary for %s"
 msgstr "Ni mogoče naložiti povzetka za %s"
 
@@ -43,134 +43,126 @@ msgid "Writing message to mail store not possible in ActiveSync"
 msgstr ""
 
 #: ../camel/camel-eas-folder.c:772
-#, fuzzy, c-format
+#, c-format
 msgid "Moving messages not yet implemented"
-msgstr "Opravila strežnika še niso vključena"
+msgstr "Možnost premikanja sporoči še ni podprta."
 
 #: ../camel/camel-eas-provider.c:48
-#, fuzzy
 msgid "Checking for new mail"
 msgstr "Preverjanje za novo pošto"
 
 #: ../camel/camel-eas-provider.c:50
-#, fuzzy
 msgid "C_heck for new messages in all folders"
 msgstr "Preveri za _nova sporočila v vseh mapah"
 
 #: ../camel/camel-eas-provider.c:53
-#, fuzzy
 msgid "Options"
 msgstr "Možnosti"
 
 #: ../camel/camel-eas-provider.c:55
-#, fuzzy
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr ""
-"Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta na tem strežniku"
+"Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežnika"
 
 #: ../camel/camel-eas-provider.c:57
-#, fuzzy
 msgid "Check new messages for J_unk contents"
-msgstr "Med novimi sporočili preveri za neželeno pošto"
+msgstr "Med novimi sporočili preveri za _neželena"
 
 #: ../camel/camel-eas-provider.c:59
-#, fuzzy
 msgid "Only check for Junk messages in the IN_BOX folder"
-msgstr "Neželeno pošto preveri le v mapi _dohodnih sporočil"
+msgstr "Neželena sporočila preveri le v mapi _dohodnih sporočil"
 
 #: ../camel/camel-eas-provider.c:61
-#, fuzzy
 msgid "Automatically synchroni_ze account locally"
 msgstr "Samodejno _uskladi krajevni račun"
 
 #: ../camel/camel-eas-provider.c:69
 #: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
-msgstr ""
+msgstr "ActiveSync"
 
 #: ../camel/camel-eas-provider.c:71
-#, fuzzy
 msgid "For accessing servers using ActiveSync"
-msgstr "Za dostop do strežnikov Exchange preko spletnih storitev"
+msgstr "Za dostop do strežnikov preko storitev ActiveSync"
 
 #: ../camel/camel-eas-provider.c:87
 msgid "Password"
 msgstr "Geslo"
 
 #: ../camel/camel-eas-provider.c:89
-#, fuzzy
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Ta možnost bo vzpostavila povezavo s strežnikom IMAP z nešifriranim geslom."
+"Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim "
+"geslom."
 
 #: ../camel/camel-eas-store.c:184
-#, fuzzy, c-format
+#, c-format
 msgid "Session has no storage path"
 msgstr "Seja nima določene poti shrambe"
 
 #: ../camel/camel-eas-store.c:242
 #, c-format
 msgid "EAS service has no account UID"
-msgstr ""
+msgstr "Storitev EAS nima določenega UID računa."
 
 #: ../camel/camel-eas-store.c:339
-#, fuzzy, c-format
+#, c-format
 msgid "No such folder: %s"
 msgstr "Ni takšne mape: %s"
 
 #: ../camel/camel-eas-store.c:458
 #, c-format
 msgid "Create folder not possible with ActiveSync"
-msgstr ""
+msgstr "Ustvarjanje mape z ActiveSync ni podprto."
 
 #: ../camel/camel-eas-store.c:469
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
-msgstr ""
+msgstr "Brisanje mape z ActiveSync ni podprto."
 
 #: ../camel/camel-eas-store.c:482
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
-msgstr ""
+msgstr "Preimenovanje mape z ActiveSync ni podprto."
 
 #: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
 #: ../camel/camel-eas-transport.c:72
-#, fuzzy, c-format
+#, c-format
 msgid "ActiveSync server %s"
-msgstr "Zaupaj strežniku"
+msgstr "Strežnik ActiveSync %s"
 
 #: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
-#, fuzzy, c-format
+#, c-format
 msgid "ActiveSync service for %s on %s"
-msgstr "Storitev IMAP za %s na %s"
+msgstr "Storitev ActiveSync za %s na %s"
 
 #: ../camel/camel-eas-store.c:560
-#, fuzzy, c-format
+#, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Za dokončanje tega opravila je treba biti povezan v omrežje"
+msgstr "Za dokončanje tega opravila mora biti vzpostavljena omrežna povezava"
 
 #: ../camel/camel-eas-transport.c:75
-#, fuzzy, c-format
+#, c-format
 msgid "ActiveSync mail delivery via %s"
-msgstr "Dostava pošte s SMTP preko %s"
+msgstr "Dostava pošte z ActiveSync preko %s"
 
 #: ../camel/camel-eas-transport.c:121
 #, c-format
 msgid "Failed to create temporary file for sending message"
-msgstr ""
+msgstr "Ustvarjanje začasne datoteke za pošiljanje sporočil je spodletelo."
 
 #: ../camel/camel-eas-utils.c:611
-#, fuzzy, c-format
+#, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr ""
 "Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega "
 "sporočila"
 
 #: ../eas-daemon/libeas/eas-connection.c:480
-#, fuzzy, c-format
+#, c-format
 msgid "Please enter your ActiveSync password for %s"
-msgstr "Vnesite geslo za svoj nov račun ICQ."
+msgstr "Vnesite geslo za nov račun ActiveSync %s."
 
 #: ../eas-daemon/libeas/eas-connection.c:1052
 #, c-format
@@ -190,9 +182,9 @@ msgstr ""
 #: ../eas-daemon/libeas/eas-connection.c:1281
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:2610
-#, fuzzy, c-format
+#, c-format
 msgid "HTTP request failed: %d - %s"
-msgstr "Zahteva po obnovi je spodletela"
+msgstr "Zahteva HTTP je spodletela: %d - %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1316
 #, c-format
@@ -205,14 +197,14 @@ msgid "HTTP response type was not MULTIPART"
 msgstr ""
 
 #: ../eas-daemon/libeas/eas-connection.c:1356
-#, fuzzy, c-format
+#, c-format
 msgid "wbxml is NULL!"
-msgstr "Ključ je NULL"
+msgstr "wbxml je prazna vrednost!"
 
 #: ../eas-daemon/libeas/eas-connection.c:1365
 #, c-format
 msgid "wbxml_len is 0!"
-msgstr ""
+msgstr "wbxml_len je dolžine 0!"
 
 #: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
@@ -225,59 +217,59 @@ msgid "Error converting WBXML to XML: %s"
 msgstr ""
 
 #: ../eas-daemon/libeas/eas-connection.c:1511
-#, fuzzy, c-format
+#, c-format
 msgid "Status code: %d - Response from server"
-msgstr "Koda: %d - Nepričakovan odziv strežnika"
+msgstr "Koda stamka: %d - Odziv strežnika"
 
 #: ../eas-daemon/libeas/eas-connection.c:1526
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Razčlenjevanje samodejnega odgovora XML je spodletelo"
 
 #: ../eas-daemon/libeas/eas-connection.c:1535
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Iskanje predmeta <samodejnega zaznavanja> je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1546
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to find <Response> element"
 msgstr "Iskanje predmeta <odziva> je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1557
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to find <Action> element"
-msgstr "Iskanje predmeta <samodejnega zaznavanja> je spodletelo.\n"
+msgstr "Iskanje predmeta <dejanja> je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1568
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to find <Settings> element"
-msgstr "Iskanje predmeta <samodejnega zaznavanja> je spodletelo.\n"
+msgstr "Iskanje predmeta <nastavitev> je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1701
-#, fuzzy, c-format
+#, c-format
 msgid "Email is mandatory and must be provided"
-msgstr "Vpisati je treba elektronski naslov in geslo"
+msgstr "Podatek o elektronskem naslovu je obvezen in ga je treba vpisati."
 
 #: ../eas-daemon/libeas/eas-connection.c:1711
 #, c-format
 msgid "Failed to extract domain from email address"
-msgstr ""
+msgstr "Razčlenitev domene iz elektronskega naslova je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1722
 #, c-format
 msgid "Failed create temp account for autodiscover"
-msgstr ""
+msgstr "Ustvarjanje začasnega računa za samodejno odkrivanje je spodletelo."
 
 #: ../eas-daemon/libeas/eas-connection.c:1885
-#, fuzzy, c-format
+#, c-format
 msgid "An account must be provided."
-msgstr "Organizator mora biti nastavljen."
+msgstr "Račun mora biti podan."
 
 #: ../eas-daemon/libeas/eas-connection.c:1911
 #, c-format
 msgid "A server url and username must be provided."
-msgstr ""
+msgstr "Naslov URL strežnika in uporabniško ime morata biti podana."
 
 #: ../eas-daemon/libeas/eas-connection.c:1924
 #, c-format
@@ -285,14 +277,14 @@ msgid "Failed to create folder cache directory %s: %s"
 msgstr ""
 
 #: ../eas-daemon/libeas/eas-connection.c:2068
-#, fuzzy, c-format
+#, c-format
 msgid "request was cancelled by user"
-msgstr "Uporabnik je prekinil opravilo."
+msgstr "zahtevo je prekinil uporabnik."
 
 #: ../eas-daemon/libeas/eas-connection.c:2197
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse XML: %s"
-msgstr "Razčlenjevanje datoteke OAB XML je spodletelo."
+msgstr "Razčlenjevanje datoteke XML je spodletelo: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2482
 #, c-format
@@ -306,9 +298,8 @@ msgstr "Uporab_niško ime:"
 
 #: ../eplugin/activesync-account-setup.c:385
 #: ../eplugin/activesync-account-setup.c:496
-#, fuzzy
 msgid "_Server URL:"
-msgstr "URL zrcalnega strežnika:"
+msgstr "Naslov _URL strežnika:"
 
 #: ../eplugin/activesync-account-setup.c:392
 #: ../eplugin/activesync-account-setup.c:504
@@ -324,6 +315,5 @@ msgid "Calendar"
 msgstr "Koledar"
 
 #: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-#, fuzzy
 msgid "ActiveSync plugin for Evolution."
-msgstr "Vstavek Anjute za Devhelp"
+msgstr "Vstavek ActiveSync za program Evolution."
