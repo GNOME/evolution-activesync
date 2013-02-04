@@ -1127,6 +1127,12 @@ eas_connection_send_request (EasConnection* self,
 						     "X-MS-PolicyKey", 
 						     policy_key);
 		}
+		else
+		{
+			soup_message_headers_append (msg->request_headers,
+						     "X-MS-PolicyKey", 
+						     "0");
+		}
 	}
 	
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
