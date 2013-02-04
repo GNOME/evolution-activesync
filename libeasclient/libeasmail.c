@@ -175,56 +175,6 @@ eas_mail_handler_new (const char* account_uid, GError **error)
 #define eas_gdbus_mail_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_MAIL_OBJECT_PATH, EAS_SERVICE_MAIL_INTERFACE, __VA_ARGS__)
 #define eas_gdbus_common_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE, __VA_ARGS__)
 
-// takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
-static gboolean
-build_folder_list (const gchar **serialised_folder_array, GSList **folder_list, GError **error)
-{
-	gboolean ret = TRUE;
-	guint i = 0;
-
-	g_debug ("build_folder_list++");
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_assert (folder_list);
-	g_assert (*folder_list == NULL);
-
-	while (serialised_folder_array[i]) {
-		EasFolder *folder = eas_folder_new();
-		if (folder) {
-			*folder_list = g_slist_append (*folder_list, folder);   // add it to the list first to aid cleanup
-			if (!folder_list) {
-				g_free (folder);
-				ret = FALSE;
-				goto cleanup;
-			}
-			if (!eas_folder_deserialise (folder, serialised_folder_array[i])) {
-				ret = FALSE;
-				goto cleanup;
-			}
-		} else {
-			ret = FALSE;
-			goto cleanup;
-		}
-		i++;
-	}
-
-cleanup:
-	if (!ret) {
-		// set the error
-		g_set_error (error, EAS_MAIL_ERROR,
-			     EAS_MAIL_ERROR_NOTENOUGHMEMORY,
-			     ("out of memory"));
-		// clean up on error
-		g_slist_foreach (*folder_list, (GFunc) g_free, NULL);
-		g_slist_free (*folder_list);
-		*folder_list = NULL;
-	}
-
-	g_debug ("list has %d items", g_slist_length (*folder_list));
-	g_debug ("build_folder_list++");
-	return ret;
-}
-
-
 // takes an NULL terminated array of serialised emailinfos and creates a list of EasEmailInfo objects
 static gboolean
 build_emailinfo_list (const gchar **serialised_emailinfo_array, GSList **emailinfo_list, GError **error)
@@ -432,7 +382,6 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 				  GError **error)
 {
 	gboolean ret = FALSE;
-	gchar **folder_array = NULL;
 
 	g_debug ("%s++ : account_uid[%s]", __func__,
 		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
@@ -441,34 +390,13 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 		g_set_error (error,
 			     EAS_MAIL_ERROR,
 			     EAS_MAIL_ERROR_BADARG,
-			     "eas_mail_handler_get_folder_list requires valid arguments");
+			     "%s requires valid arguments", __func__);
 		goto out;
 	}
 
-	ret = eas_gdbus_common_call (self, "get_folders", NULL, NULL,
-				     "(sb)", "(^as)", cancellable, error,
-				     self->priv->eas_client.account_uid, force_refresh,
-				     &folder_array);
-	if (!ret)
-		goto out;
+	ret = eas_folder_get_folder_list (&(self)->priv->eas_client,
+					  force_refresh, folders, cancellable, error);
 
-	g_debug ("%s called successfully", __func__);
-
-	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
-	ret = build_folder_list ( (const gchar **) folder_array, folders, error);
-
-	g_strfreev (folder_array);
-
-	if (!ret) { // failed - cleanup lists
-		g_assert (error == NULL || *error != NULL);
-		if (error) {
-			g_warning (" Error: %s", (*error)->message);
-		}
-		g_debug ("%s failure - cleanup lists", __func__);
-		g_slist_foreach (*folders, (GFunc) g_free, NULL);
-		g_free (*folders);
-		*folders = NULL;
-	}
  out:
 	g_debug ("%s--", __func__);
 	return ret;

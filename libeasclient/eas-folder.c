@@ -28,6 +28,8 @@
 #include <stdlib.h>
 
 #include "eas-folder.h"
+#include "eas-errors.h"
+#include "eas-dbus-client.h"
 
 G_DEFINE_TYPE (EasFolder, eas_folder, G_TYPE_OBJECT);
 
@@ -130,3 +132,107 @@ eas_folder_deserialise (EasFolder* folder, const gchar *data)
 	return TRUE;
 }
 
+// takes an NULL terminated array of serialised folders and creates a list of EasFolder objects
+static gboolean
+build_folder_list (const gchar **serialised_folder_array, GSList **folder_list, GError **error)
+{
+	gboolean ret = TRUE;
+	guint i = 0;
+
+	g_debug ("build_folder_list++");
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_assert (folder_list);
+	g_assert (*folder_list == NULL);
+
+	while (serialised_folder_array[i]) {
+		EasFolder *folder = eas_folder_new();
+		if (folder) {
+			*folder_list = g_slist_append (*folder_list, folder);   // add it to the list first to aid cleanup
+			if (!folder_list) {
+				g_free (folder);
+				ret = FALSE;
+				goto cleanup;
+			}
+			if (!eas_folder_deserialise (folder, serialised_folder_array[i])) {
+				ret = FALSE;
+				goto cleanup;
+			}
+		} else {
+			ret = FALSE;
+			goto cleanup;
+		}
+		i++;
+	}
+
+cleanup:
+	if (!ret) {
+		// set the error
+		g_set_error (error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     ("out of memory"));
+		// clean up on error
+		g_slist_foreach (*folder_list, (GFunc) g_free, NULL);
+		g_slist_free (*folder_list);
+		*folder_list = NULL;
+	}
+
+	g_debug ("list has %d items", g_slist_length (*folder_list));
+	g_debug ("build_folder_list++");
+	return ret;
+}
+
+gboolean
+eas_folder_get_folder_list (void *client_ptr,
+				  gboolean force_refresh,
+				  GSList **folders,
+				  GCancellable *cancellable,
+				  GError **error)
+{
+  // client_ptr is void* so that eas-folder.h does not have to include
+  // eas-dbus-client.h.  Unfortunately eas_gdbus_client is just a struct
+  // not a GObject so we can't check the caller passed the correct type.
+	struct eas_gdbus_client *client = client_ptr;
+	gboolean ret = FALSE;
+	gchar **folder_array = NULL;
+
+	g_debug ("%s++ : account_uid[%s]", __func__,
+		 (client && client->account_uid ? client->account_uid : "NULL"));
+
+	if (client == NULL || folders == NULL || *folders != NULL) {
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_BADARG,
+			     "%s requires valid arguments", __func__);
+		goto out;
+	}
+
+	ret = eas_gdbus_call (client,
+			      EAS_SERVICE_COMMON_OBJECT_PATH, EAS_SERVICE_COMMON_INTERFACE,
+			      "get_folders", NULL, NULL,
+			      "(sb)", "(^as)", cancellable, error,
+			      client->account_uid, force_refresh,
+			      &folder_array);
+	if (!ret)
+		goto out;
+
+	g_debug ("%s called successfully", __func__);
+
+	// get 3 arrays of strings of 'serialised' EasFolders, convert to EasFolder lists:
+	ret = build_folder_list ( (const gchar **) folder_array, folders, error);
+
+	g_strfreev (folder_array);
+
+	if (!ret) { // failed - cleanup lists
+		g_assert (error == NULL || *error != NULL);
+		if (error) {
+			g_warning (" Error: %s", (*error)->message);
+		}
+		g_debug ("%s failure - cleanup lists", __func__);
+		g_slist_foreach (*folders, (GFunc) g_free, NULL);
+		g_free (*folders);
+		*folders = NULL;
+	}
+ out:
+	g_debug ("%s--", __func__);
+	return ret;
+}

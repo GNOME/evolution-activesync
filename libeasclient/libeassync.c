@@ -148,6 +148,34 @@ eas_sync_handler_new (const gchar* account_uid)
 	return object;
 }
 
+gboolean
+eas_sync_handler_get_folder_list (EasSyncHandler *self,
+				  gboolean force_refresh,
+				  GSList **folders,
+				  GCancellable *cancellable,
+				  GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_debug ("%s++ : account_uid[%s]", __func__,
+		 (self->priv->eas_client.account_uid ? self->priv->eas_client.account_uid : "NULL"));
+
+	if (self == NULL || folders == NULL || *folders != NULL) {
+		g_set_error (error,
+			     EAS_SYNC_ERROR,
+			     EAS_SYNC_ERROR_BADARG,
+			     "%s requires valid arguments", __func__);
+		goto out;
+	}
+
+	ret = eas_folder_get_folder_list (&(self)->priv->eas_client,
+					  force_refresh, folders, cancellable, error);
+
+ out:
+	g_debug ("%s--", __func__);
+	return ret;
+}
+
 static void
 free_string_array (gchar **array)
 {

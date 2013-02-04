@@ -27,6 +27,7 @@
 #define _EAS_MAIL_FOLDER_H_
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -101,6 +102,15 @@ gboolean eas_folder_serialise (EasFolder* folder, gchar **result);
 populate the object from a string
 */
 gboolean eas_folder_deserialise (EasFolder* folder, const gchar *data);
+
+/*
+fetch folders and create a list of EasFolder objects
+*/
+gboolean eas_folder_get_folder_list (void *client, // Must be a struct eas_gdbus_client*
+				     gboolean force_refresh,
+				     GSList **folders,
+				     GCancellable *cancellable,
+				     GError **error);
 
 
 G_END_DECLS

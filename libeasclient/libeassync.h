@@ -27,7 +27,9 @@
 #define EAS_SYNC_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 #include "eas-item-info.h"
+#include "eas-errors.h"
 
 
 G_BEGIN_DECLS
@@ -77,6 +79,28 @@ GType eas_sync_handler_get_type (void) G_GNUC_CONST;
 // this call.  This level of validation will be done on subsequent calls that take EasSyncHandler
 // as an argument
 EasSyncHandler *eas_sync_handler_new (const char* account_uid);
+
+/* function name:               eas_sync_handler_get_folder_list
+ * function description:        gets current folder structure of account. Supplies
+ *                              Supplies lists of EasFolders.
+ * return value:                TRUE if function success, FALSE if error
+ * params:
+ * EasEmailHandler* this (in):  use value returned from eas_sync_hander_new()
+ * gboolean force_update (in):  check for updates from the server. If FALSE, uses the
+ *                              information already cached by the ActiveSync dæmon.
+ * GSList **folders (out):      returns a list of EasFolder structs that describe the
+ *                              folders on the server.
+ * GError **error (out):        returns error information if an error occurs.  If no
+ *                              error occurs this will unchanged.  This error information
+ *                              could be related to errors in this API or errors propagated
+ *                              back through underlying layers
+*/
+gboolean
+eas_sync_handler_get_folder_list (EasSyncHandler *self,
+				  gboolean force_refresh,
+				  GSList **folders,
+				  GCancellable *cancellable,
+				  GError **error);
 
 /* function name:               eas_sync_handler_get calendar_items
  * function description:        pulls down changes in calendar folder
