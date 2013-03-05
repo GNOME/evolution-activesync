@@ -232,6 +232,9 @@ gchar*
 eas_connection_get_multipartdata (EasConnection* self, guint partID);
 
 void
+eas_connection_forget_folders (EasConnection *self, GError **error);
+
+void
 eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 			       GSList *added_folders, GSList *updated_folders,
 			       GSList *deleted_folders, GError *error);

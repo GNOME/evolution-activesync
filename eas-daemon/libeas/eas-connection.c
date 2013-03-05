@@ -2336,6 +2336,27 @@ eas_connection_get_multipartdata (EasConnection* self, guint partID)
 }
 
 void
+eas_connection_forget_folders (EasConnection *self, GError **error)
+{
+	GFile *file;
+
+	g_key_file_free(self->priv->folders);
+	self->priv->folders = g_key_file_new ();
+	if (!self->priv->folders) {
+		g_set_error (error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+			     "Could not reset folder list");
+		return;
+	}
+	g_key_file_set_string (self->priv->folders, "##storedata", "synckey", "0");
+
+	file = g_file_new_for_path (self->priv->folders_keyfile);
+	g_file_delete(file, NULL, error);
+	g_object_unref (file);
+}
+
+void
 eas_connection_update_folders (void *self, const gchar *ret_sync_key,
 			       GSList *added_folders, GSList *updated_folders,
 			       GSList *deleted_folders, GError *error)
