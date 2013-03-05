@@ -349,6 +349,15 @@ eas_common_get_folders (EasCommon* self,
 		state->context = context;
 		state->cnc = connection;
 
+		/* To workround problems when the ActiveSync server loses state, we
+		   always force a full sync of the folder list */
+		eas_connection_forget_folders(connection, &error);
+		if (error) {
+			g_free (state);
+			goto err;
+		}
+		sync_key = eas_connection_get_folder_sync_key (connection);
+
 		req = eas_sync_folder_hierarchy_req_new (sync_key, account_uid, context);
 
 		eas_sync_folder_hierarchy_req_set_results_fn (req, eas_common_update_folders,
