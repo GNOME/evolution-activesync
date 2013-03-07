@@ -2354,6 +2354,13 @@ eas_connection_forget_folders (EasConnection *self, GError **error)
 	file = g_file_new_for_path (self->priv->folders_keyfile);
 	g_file_delete(file, NULL, error);
 	g_object_unref (file);
+
+	/*
+	 * It is not an error when deleting fails because the file did
+	 * not exist in the first place.
+	 */
+	if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+		g_clear_error (error);
 }
 
 void
