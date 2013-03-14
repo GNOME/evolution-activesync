@@ -7,20 +7,20 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2012-12-07 09:27+0000\n"
-"PO-Revision-Date: 2012-12-12 08:29+0100\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2012-12-12 07:36+0000\n"
+"PO-Revision-Date: 2013-03-11 18:01+0100\n"
 "Last-Translator: Matej Urbančič <mateju@svn.gnome.org>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl_SI\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
-"%100==4 ? 3 : 0);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 1.5.4\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
 
 #: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
 #, c-format
@@ -40,7 +40,7 @@ msgstr "Ni mogoče naložiti povzetka za %s"
 #: ../camel/camel-eas-folder.c:756
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
-msgstr ""
+msgstr "Pisanje sporočila v shrambo pošte v načinu ActiveSync ni mogoče"
 
 #: ../camel/camel-eas-folder.c:772
 #, c-format
@@ -61,8 +61,7 @@ msgstr "Možnosti"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr ""
-"Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežnika"
+msgstr "Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežnika"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -90,11 +89,8 @@ msgid "Password"
 msgstr "Geslo"
 
 #: ../camel/camel-eas-provider.c:89
-msgid ""
-"This option will connect to the ActiveSync server using a plaintext password."
-msgstr ""
-"Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim "
-"geslom."
+msgid "This option will connect to the ActiveSync server using a plaintext password."
+msgstr "Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim geslom."
 
 #: ../camel/camel-eas-store.c:184
 #, c-format
@@ -155,9 +151,7 @@ msgstr "Ustvarjanje začasne datoteke za pošiljanje sporočil je spodletelo."
 #: ../camel/camel-eas-utils.c:611
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
-msgstr ""
-"Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega "
-"sporočila"
+msgstr "Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega sporočila"
 
 #: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
@@ -167,17 +161,17 @@ msgstr "Vnesite geslo za nov račun ActiveSync %s."
 #: ../eas-daemon/libeas/eas-connection.c:1052
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr ""
+msgstr "predmet wbxml_conv_xml2wbxml_create je vrnil napako %d"
 
 #: ../eas-daemon/libeas/eas-connection.c:1082
 #, c-format
 msgid "soup_message_new returned NULL"
-msgstr ""
+msgstr "predmet soup_message_new je vrnil prazno vrednost"
 
 #: ../eas-daemon/libeas/eas-connection.c:1151
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr ""
+msgstr "predmet wbxml_conv_xml2wbxml_run je vrnil napako %d"
 
 #: ../eas-daemon/libeas/eas-connection.c:1281
 #: ../eas-daemon/libeas/eas-connection.c:1292
@@ -189,12 +183,12 @@ msgstr "Zahteva HTTP je spodletela: %d - %s"
 #: ../eas-daemon/libeas/eas-connection.c:1316
 #, c-format
 msgid "HTTP response type was not WBXML"
-msgstr ""
+msgstr "Vrsta odziva HTTP ni WBXML"
 
 #: ../eas-daemon/libeas/eas-connection.c:1324
 #, c-format
 msgid "HTTP response type was not MULTIPART"
-msgstr ""
+msgstr "Vrsta odziva HTTP ni MULTIPART"
 
 #: ../eas-daemon/libeas/eas-connection.c:1356
 #, c-format
@@ -209,12 +203,12 @@ msgstr "wbxml_len je dolžine 0!"
 #: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
-msgstr ""
+msgstr "Ustvarjanje pretvornika WBXML v XML je spodletelo: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1395
 #, c-format
 msgid "Error converting WBXML to XML: %s"
-msgstr ""
+msgstr "Napaka med pretvarjanjem WBXML v XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1511
 #, c-format
@@ -274,7 +268,7 @@ msgstr "Naslov URL strežnika in uporabniško ime morata biti podana."
 #: ../eas-daemon/libeas/eas-connection.c:1924
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
-msgstr ""
+msgstr "Poskus ustvarjanja mape predpomnilnika %s je spodletel: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2068
 #, c-format
@@ -289,7 +283,7 @@ msgstr "Razčlenjevanje datoteke XML je spodletelo: %s"
 #: ../eas-daemon/libeas/eas-connection.c:2482
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
-msgstr ""
+msgstr "Zahteve z id %d ni v vrsti; opravila zato ni mogoče preklicati"
 
 #: ../eplugin/activesync-account-setup.c:367
 #: ../eplugin/activesync-account-setup.c:478
