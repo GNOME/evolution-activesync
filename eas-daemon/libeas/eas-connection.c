@@ -1658,8 +1658,13 @@ autodiscover_as_soup_msg (gchar *url, xmlOutputBuffer *buf)
 	soup_message_set_request (msg,
 				  "text/xml",
 				  SOUP_MEMORY_COPY,
+#ifdef LIBXML2_NEW_BUFFER
+				  (gchar *) xmlOutputBufferGetContent(buf),
+				  xmlOutputBufferGetSize(buf));
+#else
 				  (gchar*) buf->buffer->content,
 				  buf->buffer->use);
+#endif
 
 	g_debug ("autodiscover_as_soup_msg--");
 	return msg;
