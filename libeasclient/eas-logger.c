@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "eas-logger.h"
 
-static GStaticMutex g_mutex = G_STATIC_MUTEX_INIT;
+static GMutex g_mutex;
 
 void eas_logger (const gchar *log_domain,
 		 GLogLevelFlags log_level,
@@ -15,7 +15,7 @@ void eas_logger (const gchar *log_domain,
 	pid_t pid = getpid();
 	int envLevel = 4;
 
-	g_static_mutex_lock (&g_mutex);
+	g_mutex_lock (&g_mutex);
 
 	if (getenv ("EAS_DEBUG_FILE")) {
 		logfile = fopen (g_getenv ("EAS_DEBUG_FILE"), "a");
@@ -27,7 +27,7 @@ void eas_logger (const gchar *log_domain,
 
 	if (log_level == G_LOG_LEVEL_ERROR) {
 		g_log_default_handler (log_domain, log_level, message, user_data);
-		g_static_mutex_unlock (&g_mutex);
+		g_mutex_unlock (&g_mutex);
 		return;
 	}
 
@@ -62,5 +62,5 @@ void eas_logger (const gchar *log_domain,
 		fflush (stdout);
 	}
 
-	g_static_mutex_unlock (&g_mutex);
+	g_mutex_unlock (&g_mutex);
 }
