@@ -138,7 +138,7 @@ struct _EasNode {
 	EasConnection *cnc;
 };
 
-static GStaticMutex connection_list = G_STATIC_MUTEX_INIT;
+static GMutex connection_list;
 static GHashTable *g_open_connections = NULL;
 static GConfClient* g_gconf_client = NULL;
 static EasAccountList* g_account_list = NULL;
@@ -1838,7 +1838,7 @@ eas_connection_find (const gchar* accountId)
 		return NULL;
 	}
 
-	g_static_mutex_lock (&connection_list);
+	g_mutex_lock (&connection_list);
 	if (g_open_connections) {
 		gchar *hashkey = g_strdup_printf ("%s@%s@%s",
 						  eas_account_get_username (account),
@@ -1850,12 +1850,12 @@ eas_connection_find (const gchar* accountId)
 
 		if (EAS_IS_CONNECTION (cnc)) {
 			g_object_ref (cnc);
-			g_static_mutex_unlock (&connection_list);
+			g_mutex_unlock (&connection_list);
 			g_debug ("eas_connection_find (Found) --");
 			return cnc;
 		}
 	}
-	g_static_mutex_unlock (&connection_list);
+	g_mutex_unlock (&connection_list);
 
 	cnc = eas_connection_new (account, &error);
 	if (cnc) {
@@ -1899,7 +1899,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	}
 
 	g_debug ("Checking for open connection");
-	g_static_mutex_lock (&connection_list);
+	g_mutex_lock (&connection_list);
 	if (g_open_connections) {
 		hashkey = g_strdup_printf ("%s@%s@%s", eas_account_get_username (account), eas_account_get_uri (account), eas_account_get_device_id (account));
 		cnc = g_hash_table_lookup (g_open_connections, hashkey);
@@ -1907,7 +1907,7 @@ eas_connection_new (EasAccount* account, GError** error)
 
 		if (EAS_IS_CONNECTION (cnc)) {
 			g_object_ref (cnc);
-			g_static_mutex_unlock (&connection_list);
+			g_mutex_unlock (&connection_list);
 			return cnc;
 		}
 	}
@@ -1921,7 +1921,7 @@ eas_connection_new (EasAccount* account, GError** error)
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 			     _("A server url and username must be provided."));
-		g_static_mutex_unlock (&connection_list);
+		g_mutex_unlock (&connection_list);
 		return NULL;
 	}
 
@@ -1937,7 +1937,7 @@ eas_connection_new (EasAccount* account, GError** error)
 			     cachedir, strerror (errno));
 		g_free (cachedir);
 		g_object_unref (cnc);
-		g_static_mutex_unlock (&connection_list);
+		g_mutex_unlock (&connection_list);
 		return NULL;
 	}
 
@@ -1968,7 +1968,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	g_debug ("Adding to hashtable");
 	g_hash_table_insert (g_open_connections, hashkey, cnc);
 
-	g_static_mutex_unlock (&connection_list);
+	g_mutex_unlock (&connection_list);
 	g_debug ("eas_connection_new--");
 	return cnc;
 }
