@@ -26,7 +26,7 @@
 #define __EAS_ACCOUNT_LIST__
 
 
-#include <libedataserver/e-list.h>
+#include <libedataserver/libedataserver.h>
 
 #include "eas-account.h"
 #include <gconf/gconf-client.h>

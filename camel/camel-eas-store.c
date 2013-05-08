@@ -37,7 +37,7 @@
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
 
-#include <libedataserver/e-flag.h>
+#include <libedataserver/libedataserver.h>
 
 #include <eas-folder.h>
 #include <libeasmail.h>

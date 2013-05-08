@@ -55,7 +55,7 @@
 #include <glib-object.h>
 #include <libsoup/soup.h>
 #include <libxml/xmlreader.h> // xmlDoc
-#include <libedataserver/e-flag.h>
+#include <libedataserver/libedataserver.h>
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
 #include <string.h>

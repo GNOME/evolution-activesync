@@ -59,7 +59,7 @@
 #include <libsoup/soup.h>
 
 #include <wbxml/wbxml.h>
-#include <libedataserver/e-flag.h>
+#include <libedataserver/libedataserver.h>
 #include <libxml/xmlreader.h> // xmlDoc
 #include <time.h>
 #include <unistd.h>

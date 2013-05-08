@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 
-#include <libedataserver/e-account.h>
+#include <libedataserver/libedataserver.h>
 #include <libedataserver/eds-version.h>
 
 #include <string.h>

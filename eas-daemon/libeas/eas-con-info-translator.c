@@ -51,7 +51,7 @@
 
 #include "eas-con-info-translator.h"
 
-#include <libebook/e-vcard.h>
+#include <libebook/libebook.h>
 #include <string.h>
 
 // EAS string value definitions
