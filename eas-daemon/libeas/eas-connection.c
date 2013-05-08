@@ -91,8 +91,8 @@
 /* For the number of connections */
 #define EAS_CONNECTION_MAX_REQUESTS 1
 
-#define QUEUE_LOCK(x) (g_static_rec_mutex_lock(&(x)->priv->queue_lock))
-#define QUEUE_UNLOCK(x) (g_static_rec_mutex_unlock(&(x)->priv->queue_lock))
+#define QUEUE_LOCK(x) (g_rec_mutex_lock(&(x)->priv->queue_lock))
+#define QUEUE_UNLOCK(x) (g_rec_mutex_unlock(&(x)->priv->queue_lock))
 
 struct _EasConnectionPrivate {
 	SoupSession* soup_session;
@@ -117,7 +117,7 @@ struct _EasConnectionPrivate {
 	GSList *jobs;
 	GSList *provisioning_jobs;
 	GSList *active_job_queue;
-	GStaticRecMutex queue_lock;
+	GRecMutex queue_lock;
 	gboolean reprovisioning;
 };
 
@@ -232,10 +232,11 @@ eas_connection_init (EasConnection *self)
 
 	g_debug ("eas_connection_init++");
 
+	g_rec_mutex_init(&priv->queue_lock);
 	priv->soup_context = g_main_context_new ();
 	priv->soup_loop = g_main_loop_new (priv->soup_context, FALSE);
 
-	priv->soup_thread = g_thread_create (eas_soup_thread, priv, TRUE, NULL);
+	priv->soup_thread = g_thread_new ("eas_soup_thread", eas_soup_thread, priv);
 
 	/* create the SoupSession for this connection */
 	priv->soup_session =
