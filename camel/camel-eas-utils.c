@@ -37,7 +37,6 @@
 
 #include <eas-folder.h>
 #include "camel-eas-utils.h"
-#include "camel-eas-compat.h"
 
 CamelFolderInfo *
 camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
@@ -45,34 +44,11 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	CamelEasStoreSummary *eas_summary = store->summary;
 	CamelFolderInfo *fi;
 
-#if !EDS_CHECK_VERSION(3,1,0)	
-	gchar *url;
-
-	url = camel_url_to_string (camel_service_get_camel_url(CAMEL_SERVICE (store)),
-			(CAMEL_URL_HIDE_PASSWORD|
-			 CAMEL_URL_HIDE_PARAMS|
-			 CAMEL_URL_HIDE_AUTH) );
-
-	if ( url[strlen (url) - 1] != '/') {
-		gchar *temp_url;
-
-		temp_url = g_strconcat (url, "/", NULL);
-		g_free ((gchar *)url);
-		url = temp_url;
-	}
-#endif
-
 	fi = camel_folder_info_new ();
 	fi->full_name = camel_eas_store_summary_get_folder_full_name (eas_summary,
 								      fid, NULL);
-#if EDS_CHECK_VERSION(3,1,0)
 	fi->display_name = camel_eas_store_summary_get_folder_name (eas_summary,
 								    fid, NULL);
-#else
-	fi->name = camel_eas_store_summary_get_folder_name (eas_summary,
-							    fid, NULL);
-	fi->uri = g_strconcat (url, fi->full_name, NULL);
-#endif
 
 	switch (camel_eas_store_summary_get_folder_type (eas_summary, fid, NULL)) {
 	case EAS_FOLDER_TYPE_DEFAULT_INBOX:
@@ -90,9 +66,6 @@ camel_eas_utils_build_folder_info (CamelEasStore *store, const gchar *fid)
 	default:
 		;
 	}
-#if !EDS_CHECK_VERSION(3,1,0)
-	g_free (url);
-#endif
 
 	return fi;
 }
@@ -254,11 +227,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	CamelEasStore *eas_store;
 	GSList *l;
 	int count = 0;
-#if EDS_CHECK_VERSION(3,3,0)
 	GList *uids_deleted = NULL;
-#else
-	GSList *uids_deleted = NULL;
-#endif
 
 	ci = camel_folder_change_info_new ();
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
@@ -269,12 +238,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	for (l = items_deleted; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
 
-#if ! EDS_CHECK_VERSION(3,3,0)
-		camel_eas_summary_delete_id (folder->summary, item->server_id);
-		uids_deleted = g_slist_prepend (uids_deleted, item->server_id);
-#else
 		uids_deleted = g_list_prepend (uids_deleted, item->server_id);
-#endif
 		camel_folder_change_info_remove_uid (ci, item->server_id);
 		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
 		count++;
@@ -286,11 +250,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 
 	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
 	g_slist_free (items_deleted);
-#if EDS_CHECK_VERSION(3,3,0)
 	g_list_free (uids_deleted);
-#else
-	g_slist_free (uids_deleted);
-#endif
 
 	return count;
 }
@@ -303,13 +263,9 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
 	gchar *uid;
-#if EDS_CHECK_VERSION(3,3,0)
 	GList *uids_deleted = NULL;
 	GPtrArray *known_uids = NULL;
 	int i;
-#else
-	GSList *uids_deleted = NULL;
-#endif
 
 	if (!camel_folder_summary_count (folder->summary))
 		return;
@@ -320,7 +276,6 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	folder = (CamelFolder *) eas_folder;
 	full_name = camel_folder_get_full_name (folder);
 
-#if EDS_CHECK_VERSION(3,3,0)
 	known_uids = camel_folder_summary_get_array (folder->summary);
 	if (!known_uids)
 		return;
@@ -333,17 +288,6 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	}
 	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
 	g_list_free (uids_deleted);
-#else
-	while ( (uid = camel_folder_summary_uid_from_index (folder->summary, 0)) ) {
-		camel_eas_summary_delete_id (folder->summary, uid);
-		camel_folder_change_info_remove_uid (ci, uid);
-		uids_deleted = g_slist_prepend (uids_deleted, uid);
-		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
-	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
-	g_slist_foreach (uids_deleted, (GFunc) g_free, NULL);
-	g_slist_free (uids_deleted);
-#endif
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 

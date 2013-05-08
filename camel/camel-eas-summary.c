@@ -35,7 +35,6 @@
 
 #include "camel-eas-folder.h"
 #include "camel-eas-summary.h"
-#include "camel-eas-compat.h"
 
 #define CAMEL_EAS_SUMMARY_VERSION (1)
 
@@ -45,24 +44,9 @@
 #define d(x)
 
 /*Prototypes*/
-#if !EDS_CHECK_VERSION(3,3,90)
-static gint eas_summary_header_load (CamelFolderSummary *, FILE *);
-static gint eas_summary_header_save (CamelFolderSummary *, FILE *);
-
-static CamelMessageInfo *eas_message_info_migrate (CamelFolderSummary *s, FILE *in);
-
-static CamelMessageContentInfo * eas_content_info_migrate (CamelFolderSummary *s, FILE *in);
-#endif
-#if EDS_CHECK_VERSION(3,3,0)
 #define SUM_DB_RETTYPE gboolean
 #define SUM_DB_RET_OK TRUE
 #define SUM_DB_RET_ERR FALSE
-#else
-#define SUM_DB_RETTYPE gint
-#define SUM_DB_RET_OK 0
-#define SUM_DB_RET_ERR -1
-static gboolean eas_info_set_flags(CamelMessageInfo *info, guint32 flags, guint32 set);
-#endif
 static SUM_DB_RETTYPE summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir);
 static CamelFIRecord * summary_header_to_db (CamelFolderSummary *s, GError **error);
 static CamelMIRecord * message_info_to_db (CamelFolderSummary *s, CamelMessageInfo *info);
@@ -125,16 +109,6 @@ camel_eas_summary_class_init (CamelEasSummaryClass *class)
 	folder_summary_class->content_info_size = sizeof (CamelEasMessageContentInfo);
 	folder_summary_class->message_info_clone = eas_message_info_clone;
 	folder_summary_class->message_info_free = eas_message_info_free;
-#if !EDS_CHECK_VERSION(3,3,90)
-	folder_summary_class->summary_header_load = eas_summary_header_load;
-	folder_summary_class->summary_header_save = eas_summary_header_save;
-	folder_summary_class->message_info_migrate = eas_message_info_migrate;
-	folder_summary_class->content_info_migrate = eas_content_info_migrate;
-#endif
-#if ! EDS_CHECK_VERSION(3,3,0)
-	/* In EDS 3.3+ the parent class does everything we need */
-	folder_summary_class->info_set_flags = eas_info_set_flags;
-#endif
 	folder_summary_class->summary_header_to_db = summary_header_to_db;
 	folder_summary_class->summary_header_from_db = summary_header_from_db;
 	folder_summary_class->message_info_to_db = message_info_to_db;
@@ -146,12 +120,6 @@ camel_eas_summary_class_init (CamelEasSummaryClass *class)
 static void
 camel_eas_summary_init (CamelEasSummary *eas_summary)
 {
-#if ! EDS_CHECK_VERSION(3,3,0)
-	CamelFolderSummary *summary = CAMEL_FOLDER_SUMMARY (eas_summary);
-
-	/* Meta-summary - Overriding UID len */
-	summary->meta_summary->uid_len = 2048;
-#endif
 }
 
 /**
@@ -168,17 +136,9 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 {
 	CamelFolderSummary *summary;
 
-#if EDS_CHECK_VERSION(3,3,0)
 	summary = g_object_new (CAMEL_TYPE_EAS_SUMMARY,
 				"folder", folder, NULL);
-#else
-	summary = g_object_new (CAMEL_TYPE_EAS_SUMMARY, NULL);
-	summary->folder = folder;
-#endif
 	camel_folder_summary_set_build_content (summary, TRUE);
-#if !EDS_CHECK_VERSION(3,3,90)
-	camel_folder_summary_set_filename (summary, filename);
-#endif
 	camel_folder_summary_load_from_db (summary, NULL);
 
 	return summary;
@@ -207,24 +167,6 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 	return SUM_DB_RET_OK;
 }
 
-#if !EDS_CHECK_VERSION(3,3,90)
-static gint
-eas_summary_header_load (CamelFolderSummary *s, FILE *in)
-{
-	CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
-
-	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_load (s, in) == -1)
-		return -1;
-
-	if (camel_file_util_decode_fixed_int32(in, &gms->version) == -1)
-		return -1;
-
-	if (camel_file_util_decode_string (in, &gms->sync_state) == -1)
-		return -1;
-	return 0;
-}
-#endif
-
 static CamelFIRecord *
 summary_header_to_db (CamelFolderSummary *s, GError **error)
 {
@@ -240,20 +182,6 @@ summary_header_to_db (CamelFolderSummary *s, GError **error)
 	return fir;
 
 }
-
-#if !EDS_CHECK_VERSION(3,3,90)
-static gint
-eas_summary_header_save (CamelFolderSummary *s, FILE *out)
-{
-	CamelEasSummary *gms = CAMEL_EAS_SUMMARY(s);
-
-	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_save (s, out) == -1)
-		return -1;
-
-	camel_file_util_encode_fixed_int32(out, CAMEL_EAS_SUMMARY_VERSION);
-	return camel_file_util_encode_string (out, gms->sync_state);
-}
-#endif
 
 static CamelMessageInfo *
 message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
@@ -278,27 +206,6 @@ message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
 
 	return info;
 }
-
-#if !EDS_CHECK_VERSION(3,3,90)
-static CamelMessageInfo *
-eas_message_info_migrate (CamelFolderSummary *s, FILE *in)
-{
-	CamelMessageInfo *info;
-	CamelEasMessageInfo *eas_info;
-
-	info = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->message_info_migrate (s,in);
-	if (info) {
-		eas_info = (CamelEasMessageInfo*) info;
-		if (camel_file_util_decode_uint32 (in, &eas_info->server_flags) == -1)
-			goto error;
-	}
-
-	return info;
-error:
-	camel_message_info_free (info);
-	return NULL;
-}
-#endif
 
 static CamelMIRecord *
 message_info_to_db (CamelFolderSummary *s, CamelMessageInfo *info)
@@ -333,17 +240,6 @@ content_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
 		return camel_folder_summary_content_info_new (s);
 }
 
-#if !EDS_CHECK_VERSION(3,3,90)
-static CamelMessageContentInfo *
-eas_content_info_migrate (CamelFolderSummary *s, FILE *in)
-{
-	if (fgetc (in))
-		return CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->content_info_migrate (s, in);
-	else
-		return camel_folder_summary_content_info_new (s);
-}
-#endif
-
 static SUM_DB_RETTYPE
 content_info_to_db (CamelFolderSummary *s, CamelMessageContentInfo *info, CamelMIRecord *mir)
 {
@@ -356,72 +252,6 @@ content_info_to_db (CamelFolderSummary *s, CamelMessageContentInfo *info, CamelM
 		return SUM_DB_RET_OK;
 	}
 }
-
-#if ! EDS_CHECK_VERSION(3,3,0)
-static gboolean
-eas_info_set_flags (CamelMessageInfo *info, guint32 flags, guint32 set)
-{
-		guint32 old;
-		CamelMessageInfoBase *mi = (CamelMessageInfoBase *)info;
-		gint read = 0 , deleted = 0;
-
-		gint junk_flag = 0, junk_learn_flag = 0;
-
-		/* TODO: locking? */
-
-		if (flags & CAMEL_MESSAGE_SEEN && ((set & CAMEL_MESSAGE_SEEN) != (mi->flags & CAMEL_MESSAGE_SEEN)))
-		{ read = set & CAMEL_MESSAGE_SEEN ? 1 : -1; d(printf("Setting read as %d\n", set & CAMEL_MESSAGE_SEEN ? 1 : 0));}
-
-		if (flags & CAMEL_MESSAGE_DELETED && ((set & CAMEL_MESSAGE_DELETED) != (mi->flags & CAMEL_MESSAGE_DELETED)))
-		{ deleted = set & CAMEL_MESSAGE_DELETED ? 1 : -1; d(printf("Setting deleted as %d\n", set & CAMEL_MESSAGE_DELETED ? 1 : 0));}
-
-		old = mi->flags;
-		mi->flags = (old & ~flags) | (set & flags);
-
-		if (old != mi->flags) {
-				mi->flags |= CAMEL_MESSAGE_FOLDER_FLAGGED;
-				mi->dirty = TRUE;
-
-				if (((old & ~CAMEL_MESSAGE_SYSTEM_MASK) == (mi->flags & ~CAMEL_MESSAGE_SYSTEM_MASK)) )
-						return FALSE;
-
-				if (mi->summary) {
-						mi->summary->deleted_count += deleted;
-						mi->summary->unread_count -= read;
-						camel_folder_summary_touch(mi->summary);
-				}
-		}
-
-		junk_flag = ((flags & CAMEL_MESSAGE_JUNK) && (set & CAMEL_MESSAGE_JUNK));
-		junk_learn_flag = ((flags & CAMEL_MESSAGE_JUNK_LEARN) && (set & CAMEL_MESSAGE_JUNK_LEARN));
-
-		/* This is a hack, we are using CAMEL_MESSAGE_JUNK justo to hide the item
-		 * we make sure this doesn't have any side effects*/
-
-		if (junk_learn_flag && !junk_flag  && (old & CAMEL_GW_MESSAGE_JUNK)) {
-				/*
-				   This has ugly side-effects. Evo will never learn unjunk.
-				   We need to create one CAMEL_MESSAGE_HIDDEN flag which must be
-				   used for all hiding operations. We must also get rid of the seperate file
-				   that is maintained somewhere in evolution/mail/em-folder-browser.c for hidden messages
-				 */
-				mi->flags |= CAMEL_GW_MESSAGE_NOJUNK | CAMEL_MESSAGE_JUNK | CAMEL_MESSAGE_JUNK_LEARN;
-		} else if (junk_learn_flag && junk_flag && !(old & CAMEL_GW_MESSAGE_JUNK)) {
-				mi->flags |= CAMEL_GW_MESSAGE_JUNK | CAMEL_MESSAGE_JUNK | CAMEL_MESSAGE_JUNK_LEARN;
-		}
-
-		if (mi->summary && mi->summary->folder && mi->uid) {
-				CamelFolderChangeInfo *changes = camel_folder_change_info_new();
-
-				camel_folder_change_info_change_uid(changes, camel_message_info_uid(info));
-				camel_folder_changed (mi->summary->folder, changes);
-				camel_folder_change_info_free(changes);
-				camel_folder_summary_touch(mi->summary);
-		}
-
-		return TRUE;
-}
-#endif
 
 void
 camel_eas_summary_add_message	(CamelFolderSummary *summary,
@@ -466,91 +296,13 @@ camel_eas_summary_add_message_info	(CamelFolderSummary *summary,
 {
 	CamelMessageInfoBase *binfo = (CamelMessageInfoBase *) mi;
 	CamelEasMessageInfo *einfo = (CamelEasMessageInfo *) mi;
-#if ! EDS_CHECK_VERSION(3,3,0)
-#endif
 
 	binfo->flags |= server_flags;
 	einfo->server_flags = server_flags;
 
-#if ! EDS_CHECK_VERSION(3,3,0)
-{
-	gint unread=0, junk=0;
-	guint32 flags;
-	/* TODO update user flags */
-
-	/* update the summary count */
-	flags = binfo->flags;
-
-	if (!(flags & CAMEL_MESSAGE_SEEN))
-		unread = 1;
-
-	if (flags & CAMEL_MESSAGE_JUNK)
-		junk = 1;
-
-	if (summary) {
-		if (unread)
-			summary->unread_count += unread;
-		if (junk)
-			summary->junk_count += junk;
-		summary->visible_count++;
-		if (junk)
-			summary->visible_count -= junk;
-
-		summary->saved_count++;
-		camel_folder_summary_touch (summary);
-	}
-}
-#endif
-
 	binfo->flags &= ~CAMEL_MESSAGE_FOLDER_FLAGGED;
 	camel_folder_summary_add (summary, (CamelMessageInfo *)mi);
 }
-
-#if ! EDS_CHECK_VERSION(3,3,0)
-/* Caller should use camel_db_delete_uids to permanently delete the mi
-   from summary */
-void
-camel_eas_summary_delete_id	(CamelFolderSummary *summary,
-				 const gchar *uid)
-{
-	CamelMessageInfo *mi;
-
-	mi = camel_folder_summary_get (summary, uid);
-	if (mi) {
-		CamelMessageInfoBase *dinfo = (CamelMessageInfoBase *) mi;
-		gint unread=0, deleted=0, junk=0;
-		guint32 flags;
-
-		flags = dinfo->flags;
-		if (!(flags & CAMEL_MESSAGE_SEEN))
-			unread = 1;
-
-		if (flags & CAMEL_MESSAGE_DELETED)
-			deleted = 1;
-
-		if (flags & CAMEL_MESSAGE_JUNK)
-			junk = 1;
-
-		if (unread)
-			summary->unread_count--;
-
-		if (deleted)
-			summary->deleted_count--;
-		if (junk)
-			summary->junk_count--;
-
-		if (junk && !deleted)
-			summary->junk_not_deleted_count--;
-
-		if (!junk &&  !deleted)
-			summary->visible_count--;
-
-		summary->saved_count--;
-		camel_message_info_free (mi);
-	}
-	camel_folder_summary_remove_uid_fast (summary, uid);
-}
-#endif
 
 static gboolean
 eas_update_user_flags (CamelMessageInfo *info, CamelFlag *server_user_flags)
@@ -586,44 +338,8 @@ camel_eas_update_message_info_flags	(CamelFolderSummary *summary,
 		server_set = server_flags & ~einfo->server_flags;
 		server_cleared = einfo->server_flags & ~server_flags;
 
-#if ! EDS_CHECK_VERSION(3,3,0)
-{
-		gint read=0, deleted=0, junk=0;
-
-		if (server_set & CAMEL_MESSAGE_SEEN)
-			read = 1;
-		else if (server_cleared & CAMEL_MESSAGE_SEEN)
-			read = -1;
-
-		if (server_set & CAMEL_MESSAGE_DELETED)
-			deleted = 1;
-		else if (server_cleared & CAMEL_MESSAGE_DELETED)
-			deleted = -1;
-
-		if (server_set & CAMEL_MESSAGE_JUNK)
-			junk = 1;
-		else if (server_cleared & CAMEL_MESSAGE_JUNK)
-			junk = -1;
-
-		if (read) {
-			summary->unread_count -= read;
-		}
-		if (deleted)
-			summary->deleted_count += deleted;
-		if (junk)
-			summary->junk_count += junk;
-		if (junk && !deleted)
-			summary->junk_not_deleted_count += junk;
-		if (junk ||  deleted)
-			summary->visible_count -= junk ? junk : deleted;
-
-		einfo->info.flags = (einfo->info.flags | server_set) & ~server_cleared;
-		einfo->info.dirty = TRUE;
-}
-#else
 		camel_message_info_set_flags (info, server_set | server_cleared,
 					      (einfo->info.flags | server_set) & ~server_cleared);
-#endif
                 einfo->server_flags = server_flags;
 		if (info->summary)
 			camel_folder_summary_touch (info->summary);
@@ -644,14 +360,9 @@ eas_summary_clear	(CamelFolderSummary *summary,
 	CamelFolderChangeInfo *changes;
 	const gchar *uid;
 	gint i;
-#if EDS_CHECK_VERSION(3,3,0)
 	GPtrArray *known_uids;
-#else
-	gint count;
-#endif
 
 	changes = camel_folder_change_info_new ();
-#if EDS_CHECK_VERSION(3,3,0)
 	known_uids = camel_folder_summary_get_array (summary);
 	for (i = 0; i < known_uids->len; i++) {
 		uid = g_ptr_array_index (known_uids, i);
@@ -664,28 +375,11 @@ eas_summary_clear	(CamelFolderSummary *summary,
 	}
 
 	camel_folder_summary_clear (summary, NULL);
-#else
-	count = camel_folder_summary_count (summary);
-	for (i = 0; i < count; i++) {
-		CamelMessageInfo *info;
-		if (!(info = camel_folder_summary_index (summary, i)))
-			continue;
-
-		uid = camel_message_info_uid (info);
-		camel_folder_change_info_remove_uid (changes, uid);
-		camel_folder_summary_remove_uid (summary, uid);
-		camel_message_info_free(info);
-	}
-
-	camel_folder_summary_clear_db (summary);
-#endif
 	/*camel_folder_summary_save (summary);*/
 
 	if (camel_folder_change_info_changed (changes))
 		camel_folder_changed (camel_folder_summary_get_folder (summary), changes);
 	camel_folder_change_info_free (changes);
-#if EDS_CHECK_VERSION(3,3,0)
 	camel_folder_summary_free_array (known_uids);
-#endif
 }
 

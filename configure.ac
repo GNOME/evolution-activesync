@@ -64,18 +64,8 @@ PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
-
-if $PKG_CONFIG --atleast-version=3.0 libedataserver-1.2; then
-	EVO_PKG="-3.0"
-else
-	EVO_PKG=""
-fi
-
-if $PKG_CONFIG --atleast-version=3.3 libedataserver-1.2; then
-	CAMEL_PKG="camel-1.2"
-else
-	CAMEL_PKG="camel-provider-1.2"
-fi
+EVO_PKG="-3.0"
+CAMEL_PKG="camel-1.2"
 
 PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG})
 

@@ -31,20 +31,16 @@
 
 #include <glib/gi18n-lib.h>
 
-#include <camel-eas-compat.h>
-
 #include "camel-eas-store.h"
 #include "camel-eas-transport.h"
 
-#if EDS_CHECK_VERSION(3,3,90)
 #include "camel-eas-settings.h"
-#endif
 
 G_DEFINE_TYPE (CamelEasTransport, camel_eas_transport, CAMEL_TYPE_TRANSPORT)
 
 static gboolean
 eas_transport_connect_sync (CamelService *service,
-                            EVO3(GCancellable *cancellable,)
+                            GCancellable *cancellable,
 			    GError **error)
 {
 	return TRUE;
@@ -55,7 +51,6 @@ eas_transport_get_name (CamelService *service,
                               gboolean brief)
 {
 	const gchar *host;
-#if EDS_CHECK_VERSION(3,3,90)
 	CamelNetworkSettings *network_settings;
 	CamelSettings *settings;
 
@@ -64,9 +59,6 @@ eas_transport_get_name (CamelService *service,
 	network_settings = CAMEL_NETWORK_SETTINGS (settings);
 	host = camel_network_settings_get_host (network_settings);
 	g_object_unref (settings);
-#else
-	host = camel_service_get_camel_url (service)->host;
-#endif
 
 	if (brief)
 		return g_strdup_printf (
@@ -81,7 +73,7 @@ eas_send_to_sync (CamelTransport *transport,
 		  CamelMimeMessage *message,
 		  CamelAddress *from,
 		  CamelAddress *recipients,
-		  EVO3(GCancellable *cancellable,)
+		  GCancellable *cancellable,
 		  GError **error)
 {
 	gpointer progress_data;
@@ -94,20 +86,13 @@ eas_send_to_sync (CamelTransport *transport,
 	const gchar *msgid;
 	int fd;
 	gboolean res;
-#if EDS_CHECK_VERSION(3,3,90)
 	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_ref_settings (service));
-#endif	
 	
-	EVO3(progress_data = cancellable);
-	EVO2(progress_data = camel_operation_registered());
+	progress_data = cancellable;
 
-#if EDS_CHECK_VERSION(3,3,90)
 	account_uid = g_strdup(camel_eas_settings_get_account_uid ((CamelEasSettings *) settings));
 	g_object_unref(settings);
-#else
-	account_uid = camel_url_get_param (camel_service_get_camel_url(service),
-					   "account_uid");
-#endif
+
 	handler = eas_mail_handler_new (account_uid, error);
 	if (!handler)
 		return FALSE;
@@ -138,11 +123,11 @@ eas_send_to_sync (CamelTransport *transport,
 	camel_stream_filter_add (CAMEL_STREAM_FILTER (filtered), filter);
 	g_object_unref (filter);
 
-	EVO3_sync(camel_data_wrapper_write_to_stream)
+	camel_data_wrapper_write_to_stream_sync
 				(CAMEL_DATA_WRAPPER (message),
-				 filtered, EVO3(cancellable,) error);
-	camel_stream_flush (filtered, EVO3(cancellable,) error);
-	camel_stream_flush (mimefile, EVO3(cancellable,) error);
+				 filtered, cancellable, error);
+	camel_stream_flush (filtered, cancellable, error);
+	camel_stream_flush (mimefile, cancellable, error);
 
 	g_object_unref (mimefile);
 	g_object_unref (filtered);
@@ -164,14 +149,12 @@ camel_eas_transport_class_init (CamelEasTransportClass *class)
 	CamelTransportClass *transport_class;
 
 	service_class = CAMEL_SERVICE_CLASS (class);
-#if EDS_CHECK_VERSION(3,3,90)	
 	service_class->settings_type = CAMEL_TYPE_EAS_SETTINGS;
-#endif	
-	service_class->EVO3_sync(connect) = eas_transport_connect_sync;
+	service_class->connect_sync = eas_transport_connect_sync;
 	service_class->get_name = eas_transport_get_name;
 
 	transport_class = CAMEL_TRANSPORT_CLASS (class);
-	transport_class->EVO3_sync(send_to) = eas_send_to_sync;
+	transport_class->send_to_sync = eas_send_to_sync;
 }
 
 static void
