@@ -68,7 +68,7 @@
 struct _CamelEasStorePrivate {
 
 	time_t last_refresh_time;
-	GMutex *get_finfo_lock;
+	GMutex get_finfo_lock;
 	EasEmailHandler *handler;
 };
 
@@ -195,24 +195,11 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 	return TRUE;
 }
 
-static guint
-eas_hash_folder_name (gconstpointer key)
-{
-	return g_str_hash (key);
-}
-
-static gint
-eas_compare_folder_name (gconstpointer a, gconstpointer b)
-{
-	gconstpointer aname = a, bname = b;
-
-	return g_str_equal (aname, bname);
-}
-
 static gboolean
 eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError **error)
 {
 	EVO2(GCancellable *cancellable = NULL;)
+	CamelEasSettings *settings;
 	CamelEasStore *eas_store;
 	CamelEasStorePrivate *priv;
 	const gchar *account_uid;
@@ -223,38 +210,33 @@ eas_connect_sync (CamelService *service, EVO3(GCancellable *cancellable,) GError
 	if (camel_service_get_connection_status (service) == CAMEL_SERVICE_DISCONNECTED)
 		return FALSE;
 
-	camel_service_lock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
-
-	if (priv->handler) {
-		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
+	if (priv->handler)
 		return TRUE;
-	}
 
 #if !EDS_CHECK_VERSION (3,3,90)
 	account_uid = camel_url_get_param (camel_service_get_camel_url(service), "account_uid");
 #else
-	account_uid = camel_eas_settings_get_account_uid (CAMEL_EAS_SETTINGS (camel_service_get_settings (service)));
+	settings = CAMEL_EAS_SETTINGS (camel_service_ref_settings (service));
+
+	account_uid = camel_eas_settings_get_account_uid (settings);
+	g_object_unref(settings);
 #endif
 	if (!account_uid) {
 		g_set_error (
 			error, CAMEL_STORE_ERROR,
 			CAMEL_STORE_ERROR_INVALID,
 			_("EAS service has no account UID"));
-		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
 		return FALSE;
 	}
 
 	priv->handler = eas_mail_handler_new (account_uid, error);
 	if (!priv->handler) {
-		camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
-		EVO3_sync(camel_service_disconnect) (service, TRUE, NULL);
+		EVO3_sync(camel_service_disconnect) (service, TRUE, cancellable, NULL);
 		return FALSE;
 	}
 
 	camel_offline_store_set_online_sync (
 		CAMEL_OFFLINE_STORE (eas_store), TRUE, cancellable, NULL);
-
-	camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
 
 	return TRUE;
 }
@@ -269,13 +251,9 @@ eas_disconnect_sync (CamelService *service, gboolean clean, EVO3(GCancellable *c
 	if (!service_class->EVO3_sync(disconnect) (service, clean, EVO3(cancellable,) error))
 		return FALSE;
 
-	camel_service_lock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
-
 	/* TODO cancel all operations in the connection */
 	g_object_unref (eas_store->priv->handler);
 	eas_store->priv->handler = NULL;
-
-	camel_service_unlock (service, CAMEL_SERVICE_REC_CONNECT_LOCK);
 
 	return TRUE;
 }
@@ -420,10 +398,10 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 	eas_store = (CamelEasStore *) store;
 	priv = eas_store->priv;
 
-	g_mutex_lock (priv->get_finfo_lock);
+	g_mutex_lock (&priv->get_finfo_lock);
 	if (!(camel_offline_store_get_online (CAMEL_OFFLINE_STORE (store))
-	      && EVO3_sync(camel_service_connect) ((CamelService *)store, error))) {
-		g_mutex_unlock (priv->get_finfo_lock);
+	      && EVO3_sync(camel_service_connect) ((CamelService *)store, cancellable, error))) {
+		g_mutex_unlock (&priv->get_finfo_lock);
 		goto offline;
 	}
 
@@ -436,11 +414,11 @@ eas_get_folder_info_sync (CamelStore *store, const gchar *top, guint32 flags, EV
 		else
 			g_warning ("Unable to fetch the folder hierarchy.\n");
 
-		g_mutex_unlock (priv->get_finfo_lock);
+		g_mutex_unlock (&priv->get_finfo_lock);
 		return NULL;
 	}
 	eas_utils_sync_folders (eas_store, new_folders);
-	g_mutex_unlock (priv->get_finfo_lock);
+	g_mutex_unlock (&priv->get_finfo_lock);
 
 offline:
 	fi = folder_info_from_store_summary ( (CamelEasStore *) store, top, flags, error);
@@ -496,12 +474,13 @@ eas_get_name (CamelService *service, gboolean brief)
 		return g_strdup_printf(_("ActiveSync service for %s on %s"),
 				       url->user, url->host);
 #else
-	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_ref_settings (service));
 	const char *account_uid = camel_eas_settings_get_account_uid ((CamelEasSettings *) settings);
 	/* Account UID is nothing but the email or user@host */
 	char **strings;
 	char *ret;
 
+	g_object_unref(settings);
 	strings = g_strsplit (account_uid, "@", 0);
 	if (brief)
 		ret = g_strdup_printf(_("ActiveSync server %s"),
@@ -534,7 +513,8 @@ static gboolean
 eas_can_refresh_folder (CamelStore *store, CamelFolderInfo *info, GError **error)
 {
 #if EDS_CHECK_VERSION (3,3,90)	
-	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (CAMEL_SERVICE(store)));
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_ref_settings (CAMEL_SERVICE(store)));
+	gboolean ret;
 #endif	
 	/* Skip unselectable folders from automatic refresh */
 	if (info && (info->flags & CAMEL_FOLDER_NOSELECT) != 0) return FALSE;
@@ -545,12 +525,14 @@ eas_can_refresh_folder (CamelStore *store, CamelFolderInfo *info, GError **error
 		(camel_url_get_param (camel_service_get_camel_url(CAMEL_SERVICE(store)),
 				      "check_all") != NULL);
 #else
-	return CAMEL_STORE_CLASS(camel_eas_store_parent_class)->can_refresh_folder (store, info, error) || camel_eas_settings_get_check_all ((CamelEasSettings *)settings);
+	ret = CAMEL_STORE_CLASS(camel_eas_store_parent_class)->can_refresh_folder (store, info, error) || camel_eas_settings_get_check_all ((CamelEasSettings *)settings);
+	g_object_unref(settings);
+	return ret;
 #endif	
 }
 
 gboolean
-camel_eas_store_connected (CamelEasStore *eas_store, GError **error)
+camel_eas_store_connected (CamelEasStore *eas_store, GCancellable *cancellable, GError **error)
 {
 
 	if (!camel_offline_store_get_online (CAMEL_OFFLINE_STORE (eas_store))) {
@@ -561,7 +543,7 @@ camel_eas_store_connected (CamelEasStore *eas_store, GError **error)
 		return FALSE;
 	}
 
-	if (!EVO3_sync(camel_service_connect) ((CamelService *) eas_store, error))
+	if (!EVO3_sync(camel_service_connect) ((CamelService *) eas_store, cancellable, error))
 		return FALSE;
 
 	return TRUE;
@@ -597,7 +579,6 @@ eas_store_finalize (GObject *object)
 	eas_store = CAMEL_EAS_STORE (object);
 
 	g_free (eas_store->storage_path);
-	g_mutex_free (eas_store->priv->get_finfo_lock);
 
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (camel_eas_store_parent_class)->finalize (object);
@@ -630,8 +611,6 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	service_class->EVO3_sync(disconnect) = eas_disconnect_sync;
 
 	store_class = CAMEL_STORE_CLASS (class);
-	store_class->hash_folder_name = eas_hash_folder_name;
-	store_class->compare_folder_name = eas_compare_folder_name;
 	store_class->EVO3_sync(get_folder) = eas_get_folder_sync;
 	store_class->EVO3_sync(create_folder) = eas_create_folder_sync;
 	store_class->EVO3_sync(delete_folder) = eas_delete_folder_sync;
@@ -651,5 +630,5 @@ camel_eas_store_init (CamelEasStore *eas_store)
 
 	eas_store->priv->handler = NULL;
 	eas_store->priv->last_refresh_time = time (NULL) - (FINFO_REFRESH_INTERVAL + 10);
-	eas_store->priv->get_finfo_lock = g_mutex_new ();
+	g_mutex_init(&eas_store->priv->get_finfo_lock);
 }

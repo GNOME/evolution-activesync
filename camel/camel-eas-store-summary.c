@@ -29,8 +29,8 @@
 #include <string.h>
 #include "camel-eas-store-summary.h"
 
-#define S_LOCK(x) (g_static_rec_mutex_lock(&(x)->priv->s_lock))
-#define S_UNLOCK(x) (g_static_rec_mutex_unlock(&(x)->priv->s_lock))
+#define S_LOCK(x) (g_rec_mutex_lock(&(x)->priv->s_lock))
+#define S_UNLOCK(x) (g_rec_mutex_unlock(&(x)->priv->s_lock))
 
 #define STORE_GROUP_NAME "##storepriv"
 
@@ -43,7 +43,7 @@ struct _CamelEasStoreSummaryPrivate {
 	   So entries must always be removed from fname_id_hash *first*. */
 	GHashTable *id_fname_hash;
 	GHashTable *fname_id_hash;
-	GStaticRecMutex s_lock;
+	GRecMutex s_lock;
 };
 
 G_DEFINE_TYPE (CamelEasStoreSummary, camel_eas_store_summary, CAMEL_TYPE_OBJECT)
@@ -58,7 +58,6 @@ eas_store_summary_finalize (GObject *object)
 	g_free (priv->path);
 	g_hash_table_destroy (priv->fname_id_hash);
 	g_hash_table_destroy (priv->id_fname_hash);
-	g_static_rec_mutex_free (&priv->s_lock);
 
 	g_free (priv);
 
@@ -89,7 +88,7 @@ camel_eas_store_summary_init (CamelEasStoreSummary *eas_summary)
 	priv->id_fname_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 						     (GDestroyNotify) g_free,
 						     (GDestroyNotify) g_free);
-	g_static_rec_mutex_init (&priv->s_lock);
+	g_rec_mutex_init (&priv->s_lock);
 }
 
 static gchar *build_full_name (CamelEasStoreSummary *eas_summary, const gchar *fid)

@@ -48,7 +48,7 @@ camel_session_get_password_compat (CamelSession *session,
 #endif	
 }
 
-
+#if 0
 CamelService *
 camel_session_get_service_compat (CamelSession *session, const gchar *url, CamelProviderType type)
 {
@@ -63,7 +63,7 @@ camel_session_get_service_compat (CamelSession *session, const gchar *url, Camel
 	return service;
 #endif	
 }
-
+#endif
 #if ! EDS_CHECK_VERSION(3,1,0)
 
 CamelURL *

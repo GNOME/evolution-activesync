@@ -59,10 +59,11 @@ eas_transport_get_name (CamelService *service,
 	CamelNetworkSettings *network_settings;
 	CamelSettings *settings;
 
-	settings = camel_service_get_settings (service);
+	settings = camel_service_ref_settings (service);
 
 	network_settings = CAMEL_NETWORK_SETTINGS (settings);
 	host = camel_network_settings_get_host (network_settings);
+	g_object_unref (settings);
 #else
 	host = camel_service_get_camel_url (service)->host;
 #endif
@@ -94,7 +95,7 @@ eas_send_to_sync (CamelTransport *transport,
 	int fd;
 	gboolean res;
 #if EDS_CHECK_VERSION(3,3,90)
-	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_get_settings (service));
+	CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_ref_settings (service));
 #endif	
 	
 	EVO3(progress_data = cancellable);
@@ -102,6 +103,7 @@ eas_send_to_sync (CamelTransport *transport,
 
 #if EDS_CHECK_VERSION(3,3,90)
 	account_uid = g_strdup(camel_eas_settings_get_account_uid ((CamelEasSettings *) settings));
+	g_object_unref(settings);
 #else
 	account_uid = camel_url_get_param (camel_service_get_camel_url(service),
 					   "account_uid");

@@ -75,6 +75,7 @@ EasEmailHandler *
 		camel_eas_store_get_handler	(CamelEasStore *eas_store);
 
 gboolean	camel_eas_store_connected	(CamelEasStore *store,
+						 GCancellable *cancellable,
 						 GError **error);
 
 G_END_DECLS
