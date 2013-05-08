@@ -7,10 +7,12 @@ libeasaccount_la_CFLAGS = $(WARNING_FLAGS)
 
 libeasaccount_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
+		$(GCONF_CFLAGS) \
 		$(EDATASERVER_CFLAGS)
 
 libeasaccount_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
+		$(GCONF_LIBS) \
 		$(EDATASERVER_LIBS)
 
 

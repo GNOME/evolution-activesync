@@ -62,7 +62,7 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
-#PKG_CHECK_MODULES(GCONF, gconf-2.0)
+PKG_CHECK_MODULES(GCONF, gconf-2.0)
 
 
 if $PKG_CONFIG --atleast-version=3.0 libedataserver-1.2; then

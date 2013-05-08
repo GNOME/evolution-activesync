@@ -26,6 +26,7 @@ liborg_gnome_evolution_activesync_la_CPPFLAGS = \
 	$(EVOLUTION_SHELL_CFLAGS) \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LDAP_CFLAGS)		\
+	$(GCONF_CFLAGS)		\
 	$(SYNCEVOLUTION_DBUS_CFLAGS) \
 	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel -I$(top_srcdir)/libevoeas
 
@@ -44,6 +45,7 @@ liborg_gnome_evolution_activesync_la_LIBADD = \
 	$(EVOLUTION_SHELL_LIBS) \
 	$(EVOLUTION_MAIL_LIBS) \
 	$(LDAP_LIBS) \
+	$(GCONF_LIBS) \
 	$(SYNCEVOLUTION_DBUS_LIBS) \
 	$(DNS_LIBS)
 
