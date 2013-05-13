@@ -59,7 +59,12 @@
 #include <libsoup/soup.h>
 
 #include <wbxml/wbxml.h>
-#include <libedataserver/libedataserver.h>
+#include <libedataserver/eds-version.h>
+#if EDS_CHECK_VERSION(3,6,0)
+# include <libedataserver/libedataserver.h>
+#else
+# include <libedataserver/e-flag.h>
+#endif
 #include <libxml/xmlreader.h> // xmlDoc
 #include <time.h>
 #include <unistd.h>

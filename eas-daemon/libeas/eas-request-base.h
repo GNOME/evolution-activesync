@@ -55,7 +55,12 @@
 #include <glib-object.h>
 #include <libsoup/soup.h>
 #include <libxml/xmlreader.h> // xmlDoc
-#include <libedataserver/libedataserver.h>
+#include <libedataserver/eds-version.h>
+#if EDS_CHECK_VERSION(3,6,0)
+# include <libedataserver/libedataserver.h>
+#else
+# include <libedataserver/e-flag.h>
+#endif
 #include "eas-connection.h"
 #include <dbus/dbus-glib.h>
 #include <string.h>

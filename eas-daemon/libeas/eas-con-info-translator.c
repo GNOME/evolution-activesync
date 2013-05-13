@@ -51,7 +51,12 @@
 
 #include "eas-con-info-translator.h"
 
-#include <libebook/libebook.h>
+#include <libedataserver/eds-version.h>
+#if EDS_CHECK_VERSION(3,6,0)
+# include <libebook/libebook.h>
+#else
+# include <libebook/e-vcard.h>
+#endif
 #include <string.h>
 
 // EAS string value definitions

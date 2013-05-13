@@ -26,7 +26,12 @@
 #define __EAS_ACCOUNT_LIST__
 
 
-#include <libedataserver/libedataserver.h>
+#include <libedataserver/eds-version.h>
+#if EDS_CHECK_VERSION(3,6,0)
+# include <libedataserver/libedataserver.h>
+#else
+# include <libedataserver/e-list.h>
+#endif
 
 #include "eas-account.h"
 #include <gconf/gconf-client.h>
