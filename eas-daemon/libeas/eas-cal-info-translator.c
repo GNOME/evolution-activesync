@@ -59,7 +59,10 @@
 
 #include <wbxml/wbxml.h>
 
-// Values for converting icaldurationtype into a number of minutes
+// Values for converting icaldurationtype into a number of minutes.
+// Note that code using these values is almost certainly wrong.
+// Days involving daylight saving time changes will have 23 or 25
+// hours, etc.
 const gint SECONDS_PER_MINUTE          = 60;
 const gint MINUTES_PER_HOUR            = 60;
 const gint MINUTES_PER_DAY             = 60 * 24;
@@ -2527,8 +2530,10 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 		// (ie. just dates, with time set to midnight) and are 1 day apart
 		// (from [MS-ASCAL]: "An item marked as an all day event is understood to begin
 		// on midnight of the current day and to end on midnight of the next day.")
-		if (startTime.hour == 0 && startTime.minute == 0 && startTime.second == 0 && endTime.hour == 0 && endTime.minute == 0 && endTime.second == 0 &&
-		    (icaltime_as_timet (endTime) - icaltime_as_timet (startTime)) == (time_t) SECONDS_PER_DAY) {
+		// This description seems to limit AllDayEvent to events covering only one
+		// day. In practice, the end time may also be at midnight of any of the following
+		// days, to allow for multi-day all-day events.
+		if (startTime.hour == 0 && startTime.minute == 0 && startTime.second == 0 && endTime.hour == 0 && endTime.minute == 0 && endTime.second == 0) {
 			xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*) EAS_BOOLEAN_TRUE);
 		} else {
 			xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ALLDAYEVENT, (const xmlChar*) EAS_BOOLEAN_FALSE);
