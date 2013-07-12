@@ -59,7 +59,7 @@ msgstr "Volby"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr "Použít filtry n_a nové zprávy ve složce Příchozí na tomto serveru"
+msgstr "Použít filtry n_a nové zprávy ve složce Přijatá na tomto serveru"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -67,7 +67,7 @@ msgstr "Kontrolovat, zda nové zprávy ne_jsou nevyžádané"
 
 #: ../camel/camel-eas-provider.c:59
 msgid "Only check for Junk messages in the IN_BOX folder"
-msgstr "Kontrolovat nevyžádané zprávy pouze ve složce Příchozí"
+msgstr "Kontrolovat nevyžádané zprávy pouze ve složce Přijatá"
 
 #: ../camel/camel-eas-provider.c:61
 msgid "Automatically synchroni_ze account locally"
