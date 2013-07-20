@@ -810,6 +810,8 @@ eas_folder_finalize (GObject *object)
 	g_free (eas_folder->priv->server_id);
 	eas_folder->priv->server_id = NULL;
 
+	g_cond_clear(&eas_folder->priv->fetch_cond);
+
 	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (camel_eas_folder_parent_class)->finalize (object);
 
