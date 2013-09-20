@@ -6,39 +6,40 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-21 01:34+0100\n"
-"PO-Revision-Date: 2013-03-21 01:32+0100\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2013-07-20 22:21+0000\n"
+"PO-Revision-Date: 2013-09-20 12:44+0200\n"
 "Last-Translator: Gabor Kelemen <kelemeng at gnome dot hu>\n"
-"Language-Team: Hungarian <gnome-hu-list at gnome dot org>\n"
+"Language-Team: Hungarian <openscope at googlegroups dot com>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 
-#: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
+#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Nem lehet létrehozni az ideiglenes tároló útvonalát"
 
-#: ../camel/camel-eas-folder.c:224
+#: ../camel/camel-eas-folder.c:209
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Sikertelen az üzenetgyorsítótár-fájl áthelyezése"
 
-#: ../camel/camel-eas-folder.c:531
+#: ../camel/camel-eas-folder.c:509
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Nem sikerült betölteni %s összefoglalóját"
 
-#: ../camel/camel-eas-folder.c:756
+#: ../camel/camel-eas-folder.c:727
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
-msgstr ""
+msgstr "Az üzenet levéltárolóba írása nem lehetséges az ActiveSync-ben"
 
-#: ../camel/camel-eas-folder.c:772
+#: ../camel/camel-eas-folder.c:742
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "A levelek áthelyezése még nincs megvalósítva"
@@ -93,198 +94,197 @@ msgstr ""
 "Ez a beállítás egyszerű szöveges jelszó használatával létesít kapcsolatot az "
 "ActiveSync kiszolgálóval."
 
-#: ../camel/camel-eas-store.c:184
+#: ../camel/camel-eas-store.c:136
 #, c-format
 msgid "Session has no storage path"
 msgstr "A munkamenet nem rendelkezik tárolási útvonallal"
 
-#: ../camel/camel-eas-store.c:242
+#: ../camel/camel-eas-store.c:176
 #, c-format
 msgid "EAS service has no account UID"
-msgstr ""
+msgstr "Az EAS szolgáltatás nem rendelkezik fiók UID-vel"
 
-#: ../camel/camel-eas-store.c:339
+#: ../camel/camel-eas-store.c:264
 #, c-format
 msgid "No such folder: %s"
 msgstr "Nincs ilyen mappa: %s"
 
-#: ../camel/camel-eas-store.c:458
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Mappa létrehozása nem lehetséges ActiveSynckel"
 
-#: ../camel/camel-eas-store.c:469
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Mappa törlése nem lehetséges ActiveSynckel"
 
-#: ../camel/camel-eas-store.c:482
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Mappa átnevezése nem lehetséges ActiveSynckel"
 
-#: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
-#: ../camel/camel-eas-transport.c:72
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "%s ActiveSync kiszolgáló"
 
-#: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "ActiveSync szolgáltatás a következőnek: %s, ezen a címen: %s"
 
-#: ../camel/camel-eas-store.c:560
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "A művelet befejezéséhez hálózati kapcsolattal kell rendelkeznie"
 
-#: ../camel/camel-eas-transport.c:75
+#: ../camel/camel-eas-transport.c:68
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "ActiveSync levélküldés %s kiszolgálón keresztül"
 
-#: ../camel/camel-eas-transport.c:121
+#: ../camel/camel-eas-transport.c:108
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Az átmeneti fájl létrehozása meghiúsult az üzenet küldéséhez"
 
-#: ../camel/camel-eas-utils.c:611
+#: ../camel/camel-eas-utils.c:555
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "A CreateItem hívás nem adott vissza új üzenetazonosítót"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
+#: ../eas-daemon/libeas/eas-connection.c:486
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
-msgstr ""
+msgstr "Adja meg ActiveSync jelszavát ehhez: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1052
+#: ../eas-daemon/libeas/eas-connection.c:1058
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr ""
+msgstr "%d. hiba visszaadva a wbxml_conv_xml2wbxml_create-ből"
 
-#: ../eas-daemon/libeas/eas-connection.c:1082
+#: ../eas-daemon/libeas/eas-connection.c:1088
 #, c-format
 msgid "soup_message_new returned NULL"
-msgstr ""
+msgstr "A soup_message_new NULL értéket adott vissza"
 
-#: ../eas-daemon/libeas/eas-connection.c:1157
+#: ../eas-daemon/libeas/eas-connection.c:1163
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr ""
+msgstr "%d. hiba visszaadva a wbxml_conv_xml2wbxml_run-ból"
 
-#: ../eas-daemon/libeas/eas-connection.c:1287
-#: ../eas-daemon/libeas/eas-connection.c:1298
-#: ../eas-daemon/libeas/eas-connection.c:2616
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:2627
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "A HTTP kérés sikertelen: %d – %s."
 
-#: ../eas-daemon/libeas/eas-connection.c:1322
+#: ../eas-daemon/libeas/eas-connection.c:1328
 #, c-format
 msgid "HTTP response type was not WBXML"
-msgstr ""
+msgstr "A HTTP válasz típusa nem WBXML volt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1330
+#: ../eas-daemon/libeas/eas-connection.c:1336
 #, c-format
 msgid "HTTP response type was not MULTIPART"
-msgstr ""
+msgstr "A HTTP válasz típusa nem MULTIPART volt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1362
+#: ../eas-daemon/libeas/eas-connection.c:1368
 #, c-format
 msgid "wbxml is NULL!"
-msgstr ""
+msgstr "A wbxml NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1371
+#: ../eas-daemon/libeas/eas-connection.c:1377
 #, c-format
 msgid "wbxml_len is 0!"
-msgstr ""
+msgstr "A wbxml_len = 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1382
+#: ../eas-daemon/libeas/eas-connection.c:1388
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
-msgstr ""
+msgstr "Nem sikerült a WBXML -> XML átalakító létrehozása: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1401
+#: ../eas-daemon/libeas/eas-connection.c:1407
 #, c-format
 msgid "Error converting WBXML to XML: %s"
-msgstr ""
+msgstr "Hiba a WBXML XML-lé alakításakor: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1517
+#: ../eas-daemon/libeas/eas-connection.c:1523
 #, c-format
 msgid "Status code: %d - Response from server"
-msgstr ""
+msgstr "Állapotkód: %d – válasz a kiszolgálótól"
 
-#: ../eas-daemon/libeas/eas-connection.c:1532
+#: ../eas-daemon/libeas/eas-connection.c:1538
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Az automatikus felderítésre adott válasz XML feldolgozása sikertelen"
 
-#: ../eas-daemon/libeas/eas-connection.c:1541
+#: ../eas-daemon/libeas/eas-connection.c:1547
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Nem sikerült megtalálni az <Autodiscover> elemet"
 
-#: ../eas-daemon/libeas/eas-connection.c:1552
+#: ../eas-daemon/libeas/eas-connection.c:1558
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Nem sikerült megtalálni a <Response> elemet"
 
-#: ../eas-daemon/libeas/eas-connection.c:1563
+#: ../eas-daemon/libeas/eas-connection.c:1569
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Nem sikerült megtalálni az <Action> elemet"
 
-#: ../eas-daemon/libeas/eas-connection.c:1574
+#: ../eas-daemon/libeas/eas-connection.c:1580
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Nem sikerült megtalálni a <Settings> elemet"
 
-#: ../eas-daemon/libeas/eas-connection.c:1707
+#: ../eas-daemon/libeas/eas-connection.c:1718
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "Az e-mail kötelező és meg kell adni"
 
-#: ../eas-daemon/libeas/eas-connection.c:1717
-#, c-format
-msgid "Failed to extract domain from email address"
-msgstr ""
-
 #: ../eas-daemon/libeas/eas-connection.c:1728
 #, c-format
-msgid "Failed create temp account for autodiscover"
-msgstr ""
+msgid "Failed to extract domain from email address"
+msgstr "A tartomány kinyerése nem sikerült az e-mail címből"
 
-#: ../eas-daemon/libeas/eas-connection.c:1891
+#: ../eas-daemon/libeas/eas-connection.c:1739
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Az ideiglenes fiók létrehozása meghiúsult az automatikus felfedezéshez"
+
+#: ../eas-daemon/libeas/eas-connection.c:1902
 #, c-format
 msgid "An account must be provided."
-msgstr ""
+msgstr "Meg kell adni egy fiókot."
 
-#: ../eas-daemon/libeas/eas-connection.c:1917
+#: ../eas-daemon/libeas/eas-connection.c:1928
 #, c-format
 msgid "A server url and username must be provided."
-msgstr ""
+msgstr "Meg kell adni egy kiszolgáló URL-t és felhasználónevet."
 
-#: ../eas-daemon/libeas/eas-connection.c:1930
+#: ../eas-daemon/libeas/eas-connection.c:1941
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
-msgstr ""
+msgstr "Nem sikerült a mappa-gyorsítótárazási könyvtárat (%s) létrehozni: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2074
+#: ../eas-daemon/libeas/eas-connection.c:2085
 #, c-format
 msgid "request was cancelled by user"
-msgstr ""
+msgstr "a kérést a felhasználó megszakította"
 
-#: ../eas-daemon/libeas/eas-connection.c:2203
+#: ../eas-daemon/libeas/eas-connection.c:2214
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "A XML feldolgozása sikertelen: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2488
+#: ../eas-daemon/libeas/eas-connection.c:2499
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
-msgstr ""
+msgstr "%d azonosítójú kérés nincs a sorban, nem szakítható meg"
 
 #: ../eplugin/activesync-account-setup.c:367
 #: ../eplugin/activesync-account-setup.c:478
@@ -312,3 +312,4 @@ msgstr "Naptár"
 #: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
 msgid "ActiveSync plugin for Evolution."
 msgstr "ActiveSync bővítmény az Evolutionhöz."
+
