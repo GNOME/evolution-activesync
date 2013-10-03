@@ -1,0 +1,311 @@
+# This file is distributed under the same license as the evolution-activesync package.
+#
+# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2013-09-27 23:47+0000\n"
+"PO-Revision-Date: 2013-10-03 15:08+0300\n"
+"Last-Translator: Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>\n"
+"Language-Team: Latvian <lata-l10n@googlegroups.com>\n"
+"Language: lv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
+"2);\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Nevar izveidot kešatmiņas ceļu"
+
+#: ../camel/camel-eas-folder.c:209
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Neizdevās pārvietot vēstuļu kešatmiņas datni"
+
+#: ../camel/camel-eas-folder.c:509
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Nevarēja ielādēt %s kopsavilkumu"
+
+#: ../camel/camel-eas-folder.c:727
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "Ar ActiveSync nevar rakstīt vēstuli uz pasta krātuvi"
+
+#: ../camel/camel-eas-folder.c:742
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Vēstuļu pārvietošana vēl nav ieviesta"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Pārbauda jauno pastu"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "_Pārbaudīt visās mapēs, vai nav jaunu vēstuļu"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Opcijas"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "_Attiecināt filtrus uz jaunajām vēstulēm iesūtnē šajā serverī"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Pārbaudīt, vai jaunās vēstules nav _mēstules"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Pārbaudīt uz mēstulēm tikai iesūtnes mapē"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Automātiski sinhroni_zē kontu lokāli"
+
+#: ../camel/camel-eas-provider.c:69
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "Lai piekļūtu serveriem, izmantojot ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Parole"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Šī opcija savienos ar ActiveSync serveri, lietojot atklāta teksta paroli."
+
+#: ../camel/camel-eas-store.c:136
+#, c-format
+msgid "Session has no storage path"
+msgstr "Sesijai nav glabātuves ceļa"
+
+#: ../camel/camel-eas-store.c:176
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "EAS servisam nav konta UID"
+
+#: ../camel/camel-eas-store.c:264
+#, c-format
+msgid "No such folder: %s"
+msgstr "Nav tādas mapes — %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "Ar ActiveSync nevar izveidot mapi"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "Ar ActiveSync nevar dzēst mapi"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "Ar ActiveSync nevar pārsaukt mapi"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "ActiveSync serveris %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "%s ActiveSync serviss uz %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Jums ir jāstrādā tiešsaistē, lai izpildītu šo darbību"
+
+#: ../camel/camel-eas-transport.c:68
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "ActiveSync pasta nosūtīšana caur %s"
+
+#: ../camel/camel-eas-transport.c:108
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Neizdevās izveidot pagaidu datni vēstuļu sūtīšanai"
+
+#: ../camel/camel-eas-utils.c:555
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "CreateItem izsaukumam neizdevās atgriezt jaunās vēstules ID"
+
+#: ../eas-daemon/libeas/eas-connection.c:486
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Lūdzu, ievadiet savu %s ActiveSync paroli"
+
+#: ../eas-daemon/libeas/eas-connection.c:1058
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "kļūda %d atgriezta no wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1088
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new atgrieza NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1163
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "kļūda %d atgriezta no wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:2627
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "Neizdevās HTTP pieprasījums: %d — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1328
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "HTTP atbildes tips nav WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1336
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "HTTP atbildes tips nav MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1368
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml ir NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1377
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len ir 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1388
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Nevar izveidot pārveidotāju no WBXML uz XML — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1407
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Kļūda, pārveidojot WBXML uz XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1523
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Statusa kods: %d — atbilde no servera"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Neizdevās saprast automātiskās atklāšanas atbildes XML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1547
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Neizdevās atrast <Autodiscover> elementu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1558
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Neizdevās atrast <Response> elementu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1569
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Neizdevās atrast <Action> elementu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1580
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Neizdevās atrast <Settings> elementu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1718
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "E-pasts ir obligāts un tas ir jānorāda"
+
+#: ../eas-daemon/libeas/eas-connection.c:1728
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Neizdevās izvilkt domēna no e-pasta adreses"
+
+#: ../eas-daemon/libeas/eas-connection.c:1739
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Neizdevās izveidot autodiscover pagaidu kontu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1902
+#, c-format
+msgid "An account must be provided."
+msgstr "Jānorāda konts."
+
+#: ../eas-daemon/libeas/eas-connection.c:1928
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Jānorāda servera url un lietotājvārds."
+
+#: ../eas-daemon/libeas/eas-connection.c:1941
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Neizdevās izveidot mapes keša direktoriju %s — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2085
+#, c-format
+msgid "request was cancelled by user"
+msgstr "lietotājs atcēla pieprasījumu"
+
+#: ../eas-daemon/libeas/eas-connection.c:2214
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Neizdevās noparsēt XML — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2499
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "Pieprasījums ar id %d nav rindā, nevar atcelt"
+
+#: ../eplugin/activesync-account-setup.c:367
+#: ../eplugin/activesync-account-setup.c:478
+msgid "User_name:"
+msgstr "_Lietotājvārds:"
+
+#: ../eplugin/activesync-account-setup.c:385
+#: ../eplugin/activesync-account-setup.c:496
+msgid "_Server URL:"
+msgstr "_Servera URL:"
+
+#: ../eplugin/activesync-account-setup.c:392
+#: ../eplugin/activesync-account-setup.c:504
+msgid "_Auto Detect"
+msgstr "_Automātiski noteikt"
+
+#: ../eplugin/eas-account-listener.c:177
+msgid "Contacts"
+msgstr "Kontakti"
+
+#: ../eplugin/eas-account-listener.c:207
+msgid "Calendar"
+msgstr "Kalendārs"
+
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
+msgid "ActiveSync plugin for Evolution."
+msgstr "ActiveSync spraudnis Evolution lietotnei."
+
