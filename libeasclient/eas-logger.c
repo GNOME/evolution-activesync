@@ -26,6 +26,7 @@ void eas_logger (const gchar *log_domain,
 	}
 
 	if (log_level == G_LOG_LEVEL_ERROR) {
+		if (logfile) fclose (logfile);
 		g_log_default_handler (log_domain, log_level, message, user_data);
 		g_mutex_unlock (&g_mutex);
 		return;
