@@ -6,10 +6,10 @@
 
   <name xml:lang="en">evolution-activesync</name>
   <shortdesc xml:lang="en">ActiveSync client support for Evolution</shortdesc>
-  <homepage rdf:resource="http://projects.gnome.org/evolution" />
+  <homepage rdf:resource="https://wiki.gnome.org/Apps/Evolution" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/evolution-list" />
   <download-page rdf:resource="http://download.gnome.org/sources/evolution-activesync" />
-  <bug-database rdf:resource="http://bugzilla.gnome.org/browse.cgi?product=evolution-activesync" />
+  <bug-database rdf:resource="https://bugzilla.gnome.org/browse.cgi?product=evolution-activesync" />
   <category rdf:resource="http://api.gnome.org/doap-extensions#desktop" />
 
   <maintainer>
