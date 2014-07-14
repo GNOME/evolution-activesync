@@ -79,7 +79,9 @@ eas_test_handler_new (void)
     GError* error = NULL;
 	EasTestHandler *self = NULL;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
     dbus_g_thread_init();
 
 	g_debug ("eas_test_handler_new++");

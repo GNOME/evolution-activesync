@@ -170,7 +170,9 @@ int main (int argc, char** argv)
 	guint result;
 	GError* error = NULL;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 	dbus_g_thread_init();
 #if 0
 	g_log_set_handler (NULL,

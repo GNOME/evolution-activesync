@@ -278,7 +278,9 @@ Suite* eas_autodiscover_suite (void)
 {
     Suite* s = suite_create ("autodiscover");
 
+#if !GLIB_CHECK_VERSION(2,36,0)
     g_type_init();
+#endif
 
     /* tc_autodiscover test case */
     TCase *tc_autodiscover = tcase_create ("core");

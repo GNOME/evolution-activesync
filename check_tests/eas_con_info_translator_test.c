@@ -39,7 +39,9 @@ static void test_info_translator_parse_request(const char* vCardName,const char*
 	EasItemInfo* conInfo = NULL;
 	size_t readResult;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
  	g_type_init();
+#endif
 	conInfo = eas_item_info_new();
 	conInfo->server_id = serv;
 //endregion

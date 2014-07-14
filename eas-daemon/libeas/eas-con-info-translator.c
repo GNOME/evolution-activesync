@@ -1149,7 +1149,9 @@ eas_con_info_translator_parse_request (xmlDocPtr doc,
 
 	g_debug ("eas_con_info_translator_parse_request ++");
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 
 	vcard = e_vcard_new_from_string (contactInfo->data);
 	g_return_val_if_fail (vcard != NULL, FALSE);

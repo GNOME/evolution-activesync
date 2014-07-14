@@ -89,7 +89,9 @@ START_TEST (test_add_item_req_obj)
     // initise G type library to allow use of G type objects which provide
     // a higher level of programming syntax including the psuedo object
     // oriented approach supported by G types
-    g_type_init();
+#if !GLIB_CHECK_VERSION(2,36,0)
+	g_type_init();
+#endif
 
 	g_debug("gobject: EAS_TYPE_ADD_ITEM_REQ ++");
 	self_eas_add_item_req = g_object_new (EAS_TYPE_ADD_ITEM_REQ, NULL);

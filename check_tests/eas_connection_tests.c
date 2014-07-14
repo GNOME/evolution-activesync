@@ -45,7 +45,9 @@ Suite* eas_connection_suite (void)
 {
     Suite* s = suite_create ("connection");
 
+#if !GLIB_CHECK_VERSION(2,36,0)
     g_type_init();
+#endif
 
     /* tc_autodiscover test case */
     TCase *tc_connection = tcase_create ("core");

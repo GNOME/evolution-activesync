@@ -123,7 +123,9 @@ eas_sync_handler_new (const gchar* account_uid)
 	GError* error = NULL;
 	EasSyncHandler *object = NULL;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 
 	g_debug ("eas_sync_handler_new++ : account_uid[%s]",
 		 (account_uid ? account_uid : "NULL"));

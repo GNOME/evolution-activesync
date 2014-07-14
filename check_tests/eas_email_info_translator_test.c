@@ -42,7 +42,9 @@ static  void test_eas_email_info_translator_add(const char* Serializeddata,const
 	long size;
 	gchar *buf;
   //endregion
-g_type_init();
+#if !GLIB_CHECK_VERSION(2,36,0)
+	g_type_init();
+#endif
   // check the XML file, did the XML file exists
 	size = pathconf(".", _PC_PATH_MAX);
 	if ((buf = (char *)malloc((size_t)size)) != NULL)

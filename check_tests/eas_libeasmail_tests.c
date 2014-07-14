@@ -1426,7 +1426,9 @@ START_TEST (test_eas_mail_get_item_estimate)
 	guint estimate = 0;
 	progress_loop = g_main_loop_new (NULL, FALSE);
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();	// must call before calling g_cancellable_new
+#endif
 	g_thread_init (NULL);
 	
 	testGetMailHandler (&email_handler, accountuid);

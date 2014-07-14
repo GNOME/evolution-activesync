@@ -1708,7 +1708,9 @@ eas_connection_autodiscover (const gchar* email,
 
 	g_debug ("eas_connection_autodiscover++");
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 	dbus_g_thread_init();
 
 	if (!email) {
@@ -1820,7 +1822,9 @@ eas_connection_find (const gchar* accountId)
 	g_debug ("eas_connection_find++ : account_uid[%s]",
 		 (accountId ? accountId : "NULL"));
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 	dbus_g_thread_init();
 
 	if (!accountId) return NULL;
@@ -1890,7 +1894,9 @@ eas_connection_new (EasAccount* account, GError** error)
 
 	g_debug ("eas_connection_new++");
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 	dbus_g_thread_init();
 
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);

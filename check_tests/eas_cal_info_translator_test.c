@@ -42,7 +42,9 @@ static void test_eas_cal_info_translator_parse_request(const char* vCalendarName
 	gchar *buf;
 	gboolean parseResponse;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
+#endif
 
 	calInfo = eas_item_info_new();
 	calInfo->server_id = serv;
