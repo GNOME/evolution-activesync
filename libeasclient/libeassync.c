@@ -142,6 +142,9 @@ eas_sync_handler_new (const gchar* account_uid)
 	object->priv->account_uid = g_strdup (account_uid);
 
 	if (!eas_gdbus_client_init (&object->priv->eas_client, account_uid, &error)) {
+		g_critical ("D-Bus: %s", error ? error->message : "unknown error");
+		if (error)
+			g_error_free (error);
 		g_object_unref (object);
 		return NULL;
 	}
