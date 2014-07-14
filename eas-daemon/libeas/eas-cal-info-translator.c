@@ -2271,6 +2271,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 		xmlNodePtr attendees = NULL;
 		//xmlNodePtr icalExtns = NULL;
 		struct icaltimetype startTime, endTime;
+		icalproperty* prop;
 
 		// Should be set when iterating over properties, but better don't
 		// rely on it and initialize upfront before checking for "all day"
@@ -2278,7 +2279,6 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 		memset (&startTime, 0, sizeof (startTime));
 		memset (&endTime, 0, sizeof (endTime));
 
-		icalproperty* prop;
 		for (prop = icalcomponent_get_first_property (vevent, ICAL_ANY_PROPERTY);
 		     prop;
 		     prop = icalcomponent_get_next_property (vevent, ICAL_ANY_PROPERTY)) {
