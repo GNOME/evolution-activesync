@@ -69,15 +69,15 @@ CAMEL_PKG="camel-1.2"
 
 PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG})
 
-PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin${EVO_PKG})
+PKG_CHECK_MODULES(EVOLUTION_PLUGIN, evolution-plugin${EVO_PKG}, [have_e_plugin=yes], [have_eplugin=no])
 AC_SUBST(EVOLUTION_PLUGIN_CFLAGS)
 AC_SUBST(EVOLUTION_PLUGIN_LIBS)
 
-PKG_CHECK_MODULES(EVOLUTION_MAIL, evolution-mail${EVO_PKG})
+PKG_CHECK_MODULES(EVOLUTION_MAIL, evolution-mail${EVO_PKG}, [have_e_mail=yes], [have_e_mail=no])
 AC_SUBST(EVOLUTION_MAIL_CFLAGS)
 AC_SUBST(EVOLUTION_MAIL_LIBS)
 
-PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell${EVO_PKG})
+PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell${EVO_PKG}, [have_e_shell=yes], [have_e_shell=no])
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
 
@@ -89,18 +89,21 @@ PKG_CHECK_MODULES([MLITE],
 		  [have_mlite="no"
                    AC_MSG_NOTICE([MeeGo ActiveSync Settings UI will not be built])])
 
-
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir ${CAMEL_PKG}`
 AC_SUBST(camel_providerdir)
 
-plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin${EVO_PKG}`"
-AC_SUBST(plugindir)
+if test "$have_e_plugin" = "yes"; then
+   plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin${EVO_PKG}`"
+   AC_SUBST(plugindir)
 
-EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin`"
-AC_SUBST(EVOLUTION_PLUGIN_errordir)
+   EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin`"
+   AC_SUBST(EVOLUTION_PLUGIN_errordir)
+fi
 
-EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell`"
-AC_SUBST(EVOLUTION_imagesdir)
+if test "$have_e_shell" = "yes"; then
+   EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell`"
+   AC_SUBST(EVOLUTION_imagesdir)
+fi
 
 EVOLUTION_privlibdir=`$PKG_CONFIG --variable=privlibdir evolution-data-server-1.2`
 AC_SUBST(EVOLUTION_privlibdir)
@@ -136,7 +139,9 @@ AM_CONDITIONAL([ENABLE_CAMEL_BACKEND], [test "$enable_camel" = "yes"])
 AC_ARG_ENABLE(eplugin,
               AS_HELP_STRING([--disable-eplugin],
                              [Can be used to disable compiling the Evolution config plugin. Enabled by default.]),
-              [enable_eplugin="$enableval"], [enable_eplugin="yes"])
+              [enable_eplugin="$enableval"
+               test "$enable_eplugin" = "no" || test "$have_e_plugin" = "yes" || AC_MSG_ERROR([evolution-plugin${EVO_PKG} not available, cannot enable eplugin])],
+              [enable_eplugin="$have_e_plugin"])
 AM_CONDITIONAL([ENABLE_EPLUGIN], [test "$enable_eplugin" = "yes"])
 
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
