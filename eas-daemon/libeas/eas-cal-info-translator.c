@@ -726,7 +726,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 		{
 			// Calculate the timezone offsets. See _ical2eas_process_xstandard_xdaylight()
 			// comments for a full explanation of how EAS Bias relates to iCal UTC offsets
-			const gint32                standardUtcOffsetMins = -1 * timeZoneStruct.Bias;
+			const gint32                standardUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.StandardBias);
 			const gint32                daylightUtcOffsetMins = -1 * (timeZoneStruct.Bias + timeZoneStruct.DaylightBias);
 			icalcomponent*              xstandard             = NULL;
 			icalcomponent*              xdaylight             = NULL;
