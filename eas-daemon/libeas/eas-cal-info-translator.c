@@ -470,9 +470,16 @@ static gboolean _eas2ical_convert_datetime_property(icalproperty *prop,
 			// on 123together.com, but only for events created via ActiveSync,
 			// not for events created via OWA. If the check fails, then don't
 			// do the conversion to local time.
-			if (!isAllDayEvent ||
-			    (!localtt.hour && !localtt.minute && !localtt.second))
-				tt = localtt;
+			if (isAllDayEvent) {
+				if (localtt.hour || localtt.minute || localtt.second)
+					g_warning("All day event does not start/finish at local midnight: %s.  Reverting to EAS specified time: %s",
+						  icaltime_as_ical_string(localtt),
+						  icaltime_as_ical_string(tt));
+				else tt=localtt;
+			} else tt=localtt;
+		} else {
+			if (tt.hour || tt.minute || tt.second)
+				g_warning("All day event with no timezone does not start at UTC midnight: %s", icaltime_as_ical_string_r(tt));
 		}
 		if (isAllDayEvent)
 			tt.is_date = 1;
