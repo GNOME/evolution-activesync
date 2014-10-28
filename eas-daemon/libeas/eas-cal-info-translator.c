@@ -745,10 +745,6 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 				g_free (*tzid);
 				*tzid = g_strdup (ICAL_DEFAULT_TZID);
 			}
-			// if timezone id contains character UTC and Bias is 0, then don't add it to the ICAL
-			if((g_strrstr (*tzid, "UTC") != NULL) && standardUtcOffsetMins == 0) {
-				return NULL;
-			}
 			prop = icalproperty_new_tzid (*tzid);
 			icalcomponent_add_property (vtimezone, prop);
 
