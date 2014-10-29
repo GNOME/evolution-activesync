@@ -481,14 +481,15 @@ static gboolean _eas2ical_convert_datetime_property(icalproperty *prop,
 			if (tt.hour || tt.minute || tt.second)
 				g_warning("All day event with no timezone does not start at UTC midnight: %s", icaltime_as_ical_string_r(tt));
 		}
-		if (isAllDayEvent)
+		// If the sanity check (see above) failed, don't mark as a date
+		if (isAllDayEvent && !tt.hour && !tt.minute && !tt.second)
 			tt.is_date = 1;
 		set (prop, tt);
 
-		// All-day events can and should be defined in local time without time zone.
+		// Date-based events can and should be defined in local time without time zone.
 		// UTC time stamps don't need a TZID.
 		if (icaltz &&
-		    !isAllDayEvent &&
+		    !tt.is_date &&
 		    !icaltime_is_utc (tt)) {
 			const char *tzid = icaltimezone_get_tzid (icaltz);
 			if (tzid && strlen (tzid)) {
