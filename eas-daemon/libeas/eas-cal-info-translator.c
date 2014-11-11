@@ -479,7 +479,7 @@ static gboolean _eas2ical_convert_datetime_property(icalproperty *prop,
 			} else tt=localtt;
 		} else {
 			if (tt.hour || tt.minute || tt.second)
-				g_warning("All day event with no timezone does not start at UTC midnight: %s", icaltime_as_ical_string_r(tt));
+				g_warning("All day event with no timezone does not start at UTC midnight: %s", icaltime_as_ical_string(tt));
 		}
 		// If the sanity check (see above) failed, don't mark as a date
 		if (isAllDayEvent && !tt.hour && !tt.minute && !tt.second)
