@@ -90,7 +90,7 @@ eas_store_initable_init		(GInitable *initable,
 				 GError **error)
 {
 	CamelService *service = CAMEL_SERVICE (initable);
-	CamelSession *session = camel_service_get_session (service);
+	CamelSession *session = camel_service_ref_session (service);
 	gboolean ret;
 
 	/* Chain up to parent interface's init() method. */
@@ -100,6 +100,7 @@ eas_store_initable_init		(GInitable *initable,
 	ret = eas_store_construct (service, session, NULL,
 				   error);
 
+	g_object_unref(session);
 	/* Add transport here ? */
 
 	return ret;
@@ -523,7 +524,6 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	store_class->delete_folder_sync = eas_delete_folder_sync;
 	store_class->rename_folder_sync = eas_rename_folder_sync;
 	store_class->get_folder_info_sync = eas_get_folder_info_sync;
-	store_class->free_folder_info = camel_store_free_folder_info_full;
 
 	store_class->get_trash_folder_sync = eas_get_trash_folder_sync;
 	store_class->can_refresh_folder = eas_can_refresh_folder;

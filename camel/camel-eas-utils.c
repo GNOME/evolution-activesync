@@ -367,7 +367,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 
 			mi->info.dirty = TRUE;
 
-			camel_message_info_free (mi);
+			camel_message_info_unref (mi);
 		}
 
 		g_object_unref (item);
@@ -410,7 +410,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
 		if (mi) {
-			camel_message_info_free (mi);
+			camel_message_info_unref (mi);
 			g_object_unref (item);
 			continue;
 		}

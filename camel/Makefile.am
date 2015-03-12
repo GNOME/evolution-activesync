@@ -8,7 +8,6 @@ libcameleas_la_CPPFLAGS = \
 	$(CAMEL_CFLAGS)				\
 	$(LIBEDATASERVER_CFLAGS)		\
 	$(LIBECAL_CFLAGS)			\
-	$(EVOLUTION_PLUGIN_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)			\
 	$(SOUP_CFLAGS)                          \
 	$(LIBEBACKEND_CFLAGS)			\
@@ -44,7 +43,6 @@ libcameleas_la_LIBADD =					\
 	$(top_builddir)/libeasclient/libeasclient.la	\
 	$(top_builddir)/libevoeas/libevoeas.la		\
 	$(CAMEL_LIBS)                                   \
-	$(EVOLUTION_PLUGIN_LIBS)			\
 	$(LIBEDATASERVER_LIBS)				\
 	$(LIBEBACKEND_LIBS)				\
 	$(LIBECAL_LIBS)                                 \

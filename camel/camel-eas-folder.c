@@ -80,18 +80,22 @@ eas_get_filename (CamelFolder *folder, const gchar *uid, GError **error)
 static CamelMimeMessage *
 camel_eas_folder_get_message_from_cache (CamelEasFolder *eas_folder, const gchar *uid, GCancellable *cancellable, GError **error)
 {
-	CamelStream *stream;
+	CamelStream *stream = NULL;
+	GIOStream *base_stream;
 	CamelMimeMessage *msg;
 	CamelEasFolderPrivate *priv;
 
 	priv = eas_folder->priv;
 
 	g_rec_mutex_lock (&priv->cache_lock);
-	stream = camel_data_cache_get (eas_folder->cache, "cur", uid, error);
-	if (!stream) {
+	base_stream = camel_data_cache_get (eas_folder->cache, "cur", uid,
+					    error);
+	if (!base_stream) {
 		g_rec_mutex_unlock (&priv->cache_lock);
 		return NULL;
 	}
+	stream = camel_stream_new (base_stream);
+	g_object_unref (base_stream);
 
 	msg = camel_mime_message_new ();
 
@@ -362,10 +366,10 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 		GSList *l;
 		for (l = deleted_uids; l != NULL; l = g_slist_next (l)) {
 			gchar *uid = l->data;
-			camel_folder_summary_lock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
+			camel_folder_summary_lock (folder->summary);
 			camel_folder_change_info_remove_uid (changes, uid);
 			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->cache, "cache", uid, NULL);
-			camel_folder_summary_unlock (folder->summary, CAMEL_FOLDER_SUMMARY_SUMMARY_LOCK);
+			camel_folder_summary_unlock (folder->summary);
 		}
 		camel_folder_changed (folder, changes);
 		camel_folder_change_info_free (changes);
@@ -436,7 +440,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 			item_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {
 			deleted_uids = g_slist_prepend (deleted_uids, (gpointer) camel_pstring_strdup (uids->pdata [i]));
-			camel_message_info_free (mi);
+			camel_message_info_unref (mi);
 		}
 	}
 
@@ -452,7 +456,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 				mi->server_flags = mi->info.flags;
 				mi->info.dirty = TRUE;
 			}
-			camel_message_info_free (mi);
+			camel_message_info_unref (mi);
 		}
 		g_slist_free (changing_mis);
 		changing_mis = NULL;
@@ -781,7 +785,7 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 		if (eas_info && (eas_info->info.flags & CAMEL_MESSAGE_DELETED))
 			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
 
-		camel_message_info_free (info);
+		camel_message_info_unref (info);
 	}
 	camel_folder_summary_free_array (known_uids);
 

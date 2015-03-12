@@ -286,7 +286,7 @@ camel_eas_summary_add_message	(CamelFolderSummary *summary,
 	mi->info.uid = camel_pstring_strdup (uid);
 
 	camel_folder_summary_add (summary, (CamelMessageInfo *)mi);
-	camel_message_info_free (info);
+	camel_message_info_unref (info);
 }
 
 void
