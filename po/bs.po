@@ -1,0 +1,311 @@
+# Bosnian translation for bosnianuniversetranslation
+# Copyright (c) 2013 Rosetta Contributors and Canonical Ltd 2013
+# This file is distributed under the same license as the bosnianuniversetranslation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: bosnianuniversetranslation\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2015-02-27 05:23+0000\n"
+"PO-Revision-Date: 2015-02-05 01:19+0000\n"
+"Last-Translator: Ramiza Hošo <rhoso1@etf.unsa.ba>\n"
+"Language-Team: Bosnian <bs@li.org>\n"
+"Language: bs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Launchpad-Export-Date: 2015-02-05 06:58+0000\n"
+"X-Generator: Launchpad (build 17331)\n"
+
+#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Nemoguće napraviti putanju za keš"
+
+#: ../camel/camel-eas-folder.c:209
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Nije uspjelo pokretanje poruke keš dateoteke"
+
+#: ../camel/camel-eas-folder.c:509
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Nije moguće učitati pregled za %s"
+
+#: ../camel/camel-eas-folder.c:727
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "Pisanje poruke za mail radnju nije moguće u ActiveSync"
+
+#: ../camel/camel-eas-folder.c:742
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Pomjeranje poruka jos nije implementirano"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Provjeravanje za novom poštom"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "Pro_vjeri za nove poruke u svim fasciklama"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Opcije"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "_Primijeni filtere na nove poruke u Sandučetu na ovom serveru"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Provjeri da nema đ_ubreta među novim porukama"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Provjeri da nema đubreta samo u fascikli SAN_DUČE"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Automatski uskladi na_log lokalno"
+
+#: ../camel/camel-eas-provider.c:69
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "Za pristupanje serverima koristi ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Lozinka"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Ova opcija će se spojiti na ActiveSync server koristeći plaintext lozinku."
+
+#: ../camel/camel-eas-store.c:136
+#, c-format
+msgid "Session has no storage path"
+msgstr "Sesija nema put memorije"
+
+#: ../camel/camel-eas-store.c:176
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "EAS servis nema račun UID"
+
+#: ../camel/camel-eas-store.c:264
+#, c-format
+msgid "No such folder: %s"
+msgstr "Nema takve fascikle: %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "Kreiranje fascikle nije moguće sa ActiveSync"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "Brisanje fascikle nije moguće sa ActiveSync"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "Izmjena fascikle nije moguća sa ActiveSync"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "ActiveSync server %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "ActiveSync servis za %s na %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Morate biti online da biste završili ovu operaciju"
+
+#: ../camel/camel-eas-transport.c:68
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "ActiveSync pošta dostavljena putem %s"
+
+#: ../camel/camel-eas-transport.c:108
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Nije uspjelo stvaranje privremene datoteke za slanje poruke"
+
+#: ../camel/camel-eas-utils.c:555
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "CreateItem poziv nije uspio da vrati ID za novu poruku"
+
+#: ../eas-daemon/libeas/eas-connection.c:486
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Molimo unesite Vašu ActiveSync lozinku za %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1058
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "greška %d vratio iz wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1088
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "pojačati_poruka_novo vraćeno NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1163
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "greška %d vratio iz wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:2633
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "HTTP zahtjev  nije uspio %d - %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1328
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "HTTP tip odgovora nije bio WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1336
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "HTTP tip odgovora nije bio MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1368
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml je NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1377
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len je 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1388
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Nije uspjelo kreiranje WBXML na XML konvertora: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1407
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Greška pretvaranja WBXML u XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1523
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Status koda: %d - Odgovor od servera"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Nije uspjelo da se obradi samootkrivajući odgovor za XML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1547
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Nije uspio pronaći <Autodiscover> element"
+
+#: ../eas-daemon/libeas/eas-connection.c:1558
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Nije uspio pronaći <Response> element"
+
+#: ../eas-daemon/libeas/eas-connection.c:1569
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Nije uspio pronaći <Action> element"
+
+#: ../eas-daemon/libeas/eas-connection.c:1580
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Nije uspio pronaći <Settings> element"
+
+#: ../eas-daemon/libeas/eas-connection.c:1720
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "Pošta je obavezna i mora biti omogućena"
+
+#: ../eas-daemon/libeas/eas-connection.c:1730
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Nije uspjelo prebacivanje iz domena email adrese"
+
+#: ../eas-daemon/libeas/eas-connection.c:1741
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Nije uspjelo kreiranje temp računa za autodiscover"
+
+#: ../eas-daemon/libeas/eas-connection.c:1908
+#, c-format
+msgid "An account must be provided."
+msgstr "Račun mora biti omogućen."
+
+#: ../eas-daemon/libeas/eas-connection.c:1934
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Server url i korisničko ime mora biti omogućeno."
+
+#: ../eas-daemon/libeas/eas-connection.c:1947
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Nije uspjelo stvaranje fascikle keš direktorija %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2091
+#, c-format
+msgid "request was cancelled by user"
+msgstr "zahtjev je odbijen od korisnika"
+
+#: ../eas-daemon/libeas/eas-connection.c:2220
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Nije uspjela analiza XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2505
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "Zahtjev sa id %d nije u redu; ne mogu otkazati"
+
+#: ../eplugin/activesync-account-setup.c:367
+#: ../eplugin/activesync-account-setup.c:478
+msgid "User_name:"
+msgstr "_Korisničko ime:"
+
+#: ../eplugin/activesync-account-setup.c:385
+#: ../eplugin/activesync-account-setup.c:496
+msgid "_Server URL:"
+msgstr "_Server URL:"
+
+#: ../eplugin/activesync-account-setup.c:392
+#: ../eplugin/activesync-account-setup.c:504
+msgid "_Auto Detect"
+msgstr "_Auto Detekcija"
+
+#: ../eplugin/eas-account-listener.c:177
+msgid "Contacts"
+msgstr "Kontakti"
+
+#: ../eplugin/eas-account-listener.c:207
+msgid "Calendar"
+msgstr "Kalendar"
+
+#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
+msgid "ActiveSync plugin for Evolution."
+msgstr "ActiveSync dodatak za Evolution."
