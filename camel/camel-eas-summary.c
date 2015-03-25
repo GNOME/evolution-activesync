@@ -163,7 +163,6 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 	else
 		gms->sync_state = g_strndup ("0", 64);
 
-	printf ("sync_state was %s\n", gms->sync_state);
 	return SUM_DB_RET_OK;
 }
 
