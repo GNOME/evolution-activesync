@@ -685,8 +685,10 @@ eas_refresh_info_sync (CamelFolder *folder, GCancellable *cancellable, GError **
 		if (!res) {
 			if (!resynced && !progress_data.fetched &&
 			    g_error_matches (local_error, EAS_CONNECTION_ERROR,
-					     EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCKEY))
+					     EAS_CONNECTION_SYNC_ERROR_INVALIDSYNCKEY)) {
+				g_mutex_unlock (&priv->server_lock);
 				goto invsync;
+			}
 			g_propagate_error(error, local_error);
 		}
 
