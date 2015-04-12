@@ -73,7 +73,7 @@ setaccounts: clearkeys
 	            $(gconf_root)/$(email06)/password M0bica!
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email07)/serverUri https://cstylianou.com/Microsoft-Server-ActiveSync
-	gconftool-2 --set --type sting \
+	gconftool-2 --set --type string \
 				$(gconf_root)/$(email07)/username Salvatore
 	gconftool-2 --set --type string \
 	            $(gconf_root)/$(email07)/password M0bica!
