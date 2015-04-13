@@ -63,11 +63,4 @@
  */
 guint array_length (const gchar **array);
 
-/* Free a null terminated array of strings (including the strings pointed to)
- *
- * @param[in] array
- *      A null-terminated array of strings
- */
-void free_string_array (gchar **string_array);
-
 #endif  // _EAS_UTILS_H_

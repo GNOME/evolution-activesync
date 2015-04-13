@@ -121,7 +121,7 @@ eas_update_email_req_finalize (GObject *object)
 	g_free (priv->account_id);
 	g_free (priv->sync_key);
 	g_free (priv->folder_id);
-	free_string_array (priv->serialised_email_array);
+	g_strfreev (priv->serialised_email_array);
 
 	G_OBJECT_CLASS (eas_update_email_req_parent_class)->finalize (object);
 

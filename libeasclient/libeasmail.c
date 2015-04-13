@@ -346,23 +346,6 @@ cleanup:
 	return ret;
 }
 
-// TODO remove and use..._strfreev?
-static void
-free_string_array (gchar **array)
-{
-	guint i = 0;
-
-	if (array == NULL)
-		return;
-
-	while (array[i]) {
-		g_free (array[i]);
-		i++;
-	}
-	g_free (array);
-
-}
-
 gboolean eas_mail_handler_get_item_estimate (EasEmailHandler* self,
 					     const gchar *sync_key,
 					     const gchar *folder_id, // folder to sync
@@ -587,9 +570,9 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 	if (updatedSyncKey) {
 		g_free (updatedSyncKey);
 	}
-	free_string_array (created_emailinfo_array);
-	free_string_array (updated_emailinfo_array);
-	free_string_array (deleted_emailinfo_array);
+	g_strfreev (created_emailinfo_array);
+	g_strfreev (updated_emailinfo_array);
+	g_strfreev (deleted_emailinfo_array);
 
 	if (!ret) { // failed - cleanup lists
 		g_assert (error == NULL || *error != NULL);
@@ -1289,9 +1272,9 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 			}
 		}
 
-		free_string_array (created_emailinfo_array);
-		free_string_array (changed_emailinfo_array);
-		free_string_array (deleted_emailinfo_array);
+		g_strfreev (created_emailinfo_array);
+		g_strfreev (changed_emailinfo_array);
+		g_strfreev (deleted_emailinfo_array);
 
 		// free the delete_emails array
 		for (loop = 0; loop < delete_list_length; ++loop) {
