@@ -181,17 +181,6 @@ eas_sync_handler_get_folder_list (EasSyncHandler *self,
 	return ret;
 }
 
-static void
-free_string_array (gchar **array)
-{
-	guint i = 0;
-	while (array && array[i]) {
-		g_free (array[i]);
-		i++;
-	}
-	g_free (array);
-
-}
 #define eas_gdbus_sync_call(self, ...) eas_gdbus_call(&(self)->priv->eas_client, EAS_SERVICE_SYNC_OBJECT_PATH, EAS_SERVICE_SYNC_INTERFACE, __VA_ARGS__)
 
 gboolean eas_sync_handler_get_items (EasSyncHandler* self,
@@ -285,9 +274,9 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 
 	}
 
-	free_string_array (created_item_array);
-	free_string_array (updated_item_array);
-	free_string_array (deleted_item_array);
+	g_strfreev (created_item_array);
+	g_strfreev (updated_item_array);
+	g_strfreev (deleted_item_array);
 
 	if (!ret) { // failed - cleanup lists
 		if (*items_created) {
@@ -376,7 +365,7 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 		g_debug ("delete_items called successfully");
 	}
 
-	free_string_array (deleted_items_array);
+	g_strfreev (deleted_items_array);
 	g_debug ("eas_sync_handler_delete_items--");
 	return ret;
 }
@@ -429,7 +418,7 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 		g_debug ("update_calendar_items called successfully");
 	}
 
-	free_string_array (updated_item_array);
+	g_strfreev (updated_item_array);
 	g_debug ("eas_sync_handler_update_items--");
 	return ret;
 }
@@ -538,8 +527,8 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 		}
 	}
 
-	free_string_array (added_item_array);
-	free_string_array (created_item_array);
+	g_strfreev (added_item_array);
+	g_strfreev (created_item_array);
 	g_debug ("eas_sync_handler_add_items--");
 	return ret;
 }
