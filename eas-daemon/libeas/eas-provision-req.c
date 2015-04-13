@@ -231,7 +231,16 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 
 			g_debug ("eas_provision_req_MessageComplete - EasProvisionStep1");
 
-			msg = eas_provision_msg_new (); //TODO check return
+			msg = eas_provision_msg_new ();
+			if (!msg) {
+				g_set_error (&error,
+						EAS_CONNECTION_ERROR,
+						EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+						"Failed to create message for provision request");
+				ret = FALSE;
+				goto finish;
+			}
+			
 			eas_provision_msg_set_policy_status (msg, eas_provision_msg_get_policy_status (priv->msg));
 			eas_provision_msg_set_policy_key (msg, eas_provision_msg_get_policy_key (priv->msg));
 
@@ -256,7 +265,13 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 
 			list = eas_provision_msg_get_provision_list(priv->msg);
 			if(!eas_provision_list_serialise (list, &serialised_provision_list)){
-				// TODO: handle error
+				g_set_error (&error,
+						EAS_CONNECTION_ERROR,
+						EAS_CONNECTION_PROVISION_ERROR_GENERALSERVERERROR,
+						"Unable to serialize the provision list responded from server");
+				ret = FALSE;
+				g_free(serialised_provision_list);
+				goto finish;
 			}
 
 			dbus_g_method_return (eas_request_base_GetContext (parent),
