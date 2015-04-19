@@ -16,7 +16,8 @@ libcameleas_la_CPPFLAGS = \
 	-DG_LOG_DOMAIN=\"camel-eas-provider\"	\
 	-I$(top_srcdir)/camel			\
 	-I$(top_srcdir)/libeasclient		\
-	-I$(top_srcdir)/libevoeas
+	-I$(top_srcdir)/libevoeas		\
+	$(EVOLUTION_MAIL_CFLAGS)
 
 libcameleas_la_SOURCES = 			\
 	camel-eas-folder.c                	\
@@ -48,7 +49,8 @@ libcameleas_la_LIBADD =					\
 	$(LIBECAL_LIBS)                                 \
 	$(SOUP_LIBS)					\
 	$(DBUS_GLIB_LIBS)				\
-	$(E_DATA_SERVER_LIBS)
+	$(E_DATA_SERVER_LIBS)				\
+	$(EVOLUTION_MAIL_LIBS)
 
 EXTRA_DIST = libcameleas.urls
 
