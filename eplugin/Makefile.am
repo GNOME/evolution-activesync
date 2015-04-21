@@ -28,14 +28,16 @@ liborg_gnome_evolution_activesync_la_CPPFLAGS = \
 	$(LDAP_CFLAGS)		\
 	$(GCONF_CFLAGS)		\
 	$(SYNCEVOLUTION_DBUS_CFLAGS) \
-	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel -I$(top_srcdir)/libevoeas
+	-I$(top_srcdir)/libeasaccount/src -I$(top_srcdir)/libeasclient -I$(top_srcdir)/camel -I$(top_srcdir)/libevoeas \
+	$(NULL)
 
 
 
 liborg_gnome_evolution_activesync_la_SOURCES = 	\
 	activesync-account-setup.c	\
 	eas-account-listener.c	\
-	eas-account-listener.h
+	eas-account-listener.h  \
+	$(NULL)
 
 liborg_gnome_evolution_activesync_la_LIBADD = \
 	$(top_builddir)/libeasclient/libeasclient.la \
@@ -47,17 +49,20 @@ liborg_gnome_evolution_activesync_la_LIBADD = \
 	$(LDAP_LIBS) \
 	$(GCONF_LIBS) \
 	$(SYNCEVOLUTION_DBUS_LIBS) \
-	$(DNS_LIBS)
+	$(DNS_LIBS) \
+	$(NULL)
 
 liborg_gnome_evolution_activesync_la_LDFLAGS = \
-	-module -avoid-version $(NO_UNDEFINED)
+	-module -avoid-version $(NO_UNDEFINED) \
+	$(NULL)
 
 error_DATA = org-gnome-evolution-activesync.error
 errordir = $(EVOLUTION_PLUGIN_errordir)
 
 EXTRA_DIST = \
 	org-gnome-evolution-activesync.eplug.xml \
-	org-gnome-evolution-activesync.error.xml
+	org-gnome-evolution-activesync.error.xml \
+	$(NULL)
 
 BUILT_SOURCES = $(error_DATA) org-gnome-evolution-activesync.eplug 
 

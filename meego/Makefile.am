@@ -24,4 +24,5 @@ EXTRA_DIST = \
 	$(UIDIR)/*.desktop \
 	$(UIDIR)/*.pro \
 	$(UIDIR)/README \
-	$(UIDIR)/TODO
+	$(UIDIR)/TODO \
+	$(NULL)

@@ -9,7 +9,8 @@ libeastest_la_CPPFLAGS =			\
 		$(LIBXML_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
 		-DG_LOG_DOMAIN=\"libeastest\" \
-		-I$(top_srcdir)/eas-daemon/libeas
+		-I$(top_srcdir)/eas-daemon/libeas \
+		$(NULL)
 
 #TODO remove unnecessary libs	  
 libeastest_la_LDFLAGS =			\
@@ -17,11 +18,13 @@ libeastest_la_LDFLAGS =			\
 		$(EDATASERVER_LIBS)	\
 		$(DBUS_GLIB_LIBS)	\
 		$(LIBXML_LIBS)	\
-		$(SOUP_LIBS)
+		$(SOUP_LIBS)	\
+		$(NULL)
 
 libeastest_la_SOURCES = \
 	libeastest.h \
-	libeastest.c
+	libeastest.c \
+	$(NULL)
         
 interface_xml =  ../../eas-daemon/src/eas-test.xml
 
@@ -35,7 +38,8 @@ AM_CFLAGS += -g $(WARNING_FLAGS)
 
 libeastest_la_LIBADD = \
 	../../libeasclient/libeasclient.la \
-	$(top_builddir)/eas-daemon/libeas/libeas.la
+	$(top_builddir)/eas-daemon/libeas/libeas.la \
+	$(NULL)
 
 # Correctly clean the generated headers, but keep the xml description
 CLEANFILES = $(BUILT_SOURCES)

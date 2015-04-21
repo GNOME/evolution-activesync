@@ -4,11 +4,13 @@ lib_LTLIBRARIES =  libeasclient.la
 libeasclient_la_CPPFLAGS =		\
 		$(GLIB_CFLAGS)		\
 		$(LIBXML_CFLAGS)	\
-		-DG_LOG_DOMAIN=\"libeasclient\"
+		-DG_LOG_DOMAIN=\"libeasclient\" \
+		$(NULL)
 
 libeasclient_la_LDFLAGS =		\
 		$(GLIB_LIBS)		\
-		$(LIBXML_LIBS)
+		$(LIBXML_LIBS)		\
+		$(NULL)
 
 libeasclient_la_SOURCES =		\
 	eas-errors.c			\
@@ -32,13 +34,15 @@ libeasclient_la_SOURCES =		\
 	eas-logger.c			\
 	eas-logger.h			\
 	eas-dbus-client.c		\
-	eas-dbus-client.h
+	eas-dbus-client.h		\
+	$(NULL)
 
 libeasclientincludedir = $(privincludedir)/eas-client
 libeasclientinclude_HEADERS = eas-item-info.h eas-sync-errors.h libeassync.h \
 			eas-attachment.h eas-folder.h libeasmail.h \
 			eas-errors.h \
-			eas-email-info.h eas-mail-errors.h
+			eas-email-info.h eas-mail-errors.h \
+			$(NULL)
 
 
 AM_CFLAGS = $(INTI_CFLAGS)

@@ -5,12 +5,14 @@ check_eas_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(DBUS_GLIB_CFLAGS)	\
 		-I$(top_srcdir)/libeasmail/src/ \
-		$(EDATASERVER_CFLAGS)
+		$(EDATASERVER_CFLAGS)	\
+		$(NULL)
 
 check_eas_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(DBUS_GLIB_LIBS)	\
-		$(EDATASERVER_LIBS)
+		$(EDATASERVER_LIBS)	\
+		$(NULL)
 
 
 
@@ -28,7 +30,8 @@ check_eas_SOURCES = eas_daemon_tests.c \
 		    eas_con_info_translator_test.c \
                     eas_cal_info_translator_test.c \
                     eas_gobjects_unittests.c \
-		    eas_email_info_translator_test.c
+		    eas_email_info_translator_test.c \
+		    $(NULL)
 
 check_eas_CFLAGS = @CHECK_CFLAGS@ $(GLIB_CFLAGS) $(WARNING_FLAGS)
 
@@ -42,6 +45,7 @@ check_eas_LDADD = $(top_builddir)/libeasmail/src/libeasmail.la \
                   $(top_builddir)/eas-daemon/src/activesyncd-eas-mail.o \
                   $(top_builddir)/eas-daemon/src/activesyncd-eas-sync.o \
                   $(top_builddir)/eas-daemon/src/activesyncd-eas-test.o \
-                  @CHECK_LIBS@ $(GLIB_LIBS)
+                  @CHECK_LIBS@ $(GLIB_LIBS) \
+                  $(NULL)
 
 #eas_daemon_tests.c eas_daemon_tests.h 

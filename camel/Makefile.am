@@ -17,7 +17,8 @@ libcameleas_la_CPPFLAGS = \
 	-I$(top_srcdir)/camel			\
 	-I$(top_srcdir)/libeasclient		\
 	-I$(top_srcdir)/libevoeas		\
-	$(EVOLUTION_MAIL_CFLAGS)
+	$(EVOLUTION_MAIL_CFLAGS)		\
+	$(NULL)
 
 libcameleas_la_SOURCES = 			\
 	camel-eas-folder.c                	\
@@ -26,7 +27,8 @@ libcameleas_la_SOURCES = 			\
 	camel-eas-summary.c               	\
 	camel-eas-provider.c			\
 	camel-eas-utils.c			\
-	camel-eas-transport.c
+	camel-eas-transport.c			\
+	$(NULL)
 
 noinst_HEADERS =         			\
 	camel-eas-folder.h			\
@@ -35,7 +37,8 @@ noinst_HEADERS =         			\
 	camel-eas-store.h			\
 	camel-eas-summary.h			\
 	camel-eas-utils.h			\
-	camel-eas-transport.h
+	camel-eas-transport.h			\
+	$(NULL)
 
 
 libcameleas_la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED)
@@ -50,7 +53,8 @@ libcameleas_la_LIBADD =					\
 	$(SOUP_LIBS)					\
 	$(DBUS_GLIB_LIBS)				\
 	$(E_DATA_SERVER_LIBS)				\
-	$(EVOLUTION_MAIL_LIBS)
+	$(EVOLUTION_MAIL_LIBS)				\
+	$(NULL)
 
 EXTRA_DIST = libcameleas.urls
 

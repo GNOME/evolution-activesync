@@ -38,14 +38,16 @@ activesyncd_CPPFLAGS =			\
 		$(SOUP_CFLAGS)		\
 		-DG_LOG_DOMAIN=\"activesyncd\" \
 		-I$(top_srcdir)/eas-daemon/libeas \
-		-I$(top_srcdir)/libeasclient
+		-I$(top_srcdir)/libeasclient \
+		$(NULL)
 
 
 activesyncd_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS)	\
 		$(DBUS_GLIB_LIBS)	\
-		$(SOUP_LIBS)
+		$(SOUP_LIBS)		\
+		$(NULL)
 
 
 AM_CFLAGS = $(INTI_CFLAGS)
@@ -66,13 +68,15 @@ activesyncd_SOURCES =  activesyncd-common-defs.h \
 		      eas-marshal.h \
 		      eas-marshal.c \
 		      eas-interface-base.h \
-		      eas-interface-base.c		      
+		      eas-interface-base.c \
+		      $(NULL)		      
 
 activesyncd_LDADD = \
     ../libeas/libeas.la \
     ../../libeasclient/libeasclient.la \
     ../../libeastest/src/libeastest.la \
-    $(INTI_LIBS)
+    $(INTI_LIBS) \
+    $(NULL)
 
 CLEANFILES = $(BUILT_SOURCES) $(MARSHAL_GENERATED)
 EXTRA_DIST = eas-marshal.list eas-sync.xml eas-common.xml eas-mail.xml eas-test.xml

@@ -218,12 +218,10 @@ eas_send_to_sync (CamelTransport *transport,
 	g_object_unref (mimefile);
 	g_object_unref (filtered);
 
-	if (out_sent_message_saved) {
-		if (eas_transport_sent_folder_is_server_side (service, cancellable))
-			*out_sent_message_saved = FALSE;
-		else
+	if (eas_transport_sent_folder_is_server_side (service, cancellable)) {
+		if (out_sent_message_saved)
 			*out_sent_message_saved = TRUE;
-	} 
+	}
 
 	msgid = camel_mime_message_get_message_id (message);
 	res = eas_mail_handler_send_email(handler, msgid, fname,
