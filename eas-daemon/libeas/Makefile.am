@@ -18,7 +18,8 @@ libeas_la_CPPFLAGS =			\
 		$(GNOMEKEYRING_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeas\" \
 		-I$(top_srcdir)/libeasclient \
-		-DASKPASS=\"@ASKPASS@\"
+		-DASKPASS=\"@ASKPASS@\"	\
+		$(NULL)
 
 libeas_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
@@ -30,12 +31,14 @@ libeas_la_LDFLAGS =			\
 		$(LIBICAL_LIBS)     \
 		$(GCONF_LIBS) \
 		$(LIBEBOOK_LIBS)     \
-		$(GNOMEKEYRING_LIBS)
+		$(GNOMEKEYRING_LIBS)	\
+		$(NULL)
 
 
 # We need libeassync for eas_item_info_serialise()
 libeas_la_LIBADD = ../../libeasaccount/src/libeasaccount.la \
-		   ../../libeasclient/libeasclient.la
+		   ../../libeasclient/libeasclient.la \
+		   $(NULL)
 
 
 libeas_la_SOURCES =		\
@@ -102,6 +105,7 @@ libeas_la_SOURCES =		\
         eas-get-item-estimate-req.h \
         eas-get-item-estimate-req.c \
         eas-get-item-estimate-msg.h \
-        eas-get-item-estimate-msg.c                   
+        eas-get-item-estimate-msg.c \
+        $(NULL)
 
 

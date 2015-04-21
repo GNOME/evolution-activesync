@@ -6,12 +6,14 @@ bin_PROGRAMS = libeasaccount_test
 libeasaccount_test_CPPFLAGS =			\
 		$(GLIB_CFLAGS)			\
 		$(EDATASERVER_CFLAGS)	\
-		$(GCONF_CFLAGS)
+		$(GCONF_CFLAGS)	\
+		$(NULL)
 
 libeasaccount_test_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(EDATASERVER_LIBS) \
-		$(GCONF_LIBS)
+		$(GCONF_LIBS) \
+		$(NULL)
 
 AM_CFLAGS = $(INTI_CFLAGS)
 AM_CFLAGS += -g $(WARNING_FLAGS)

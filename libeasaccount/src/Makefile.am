@@ -8,16 +8,19 @@ libeasaccount_la_CFLAGS = $(WARNING_FLAGS)
 libeasaccount_la_CPPFLAGS =			\
 		$(GLIB_CFLAGS)		\
 		$(GCONF_CFLAGS) \
-		$(EDATASERVER_CFLAGS)
+		$(EDATASERVER_CFLAGS) \
+		$(NULL)
 
 libeasaccount_la_LDFLAGS =			\
 		$(GLIB_LIBS)		\
 		$(GCONF_LIBS) \
-		$(EDATASERVER_LIBS)
+		$(EDATASERVER_LIBS) \
+		$(NULL)
 
 
 libeasaccount_la_SOURCES =	eas-account.h eas-account.c \
-							eas-account-list.h eas-account-list.c
+				eas-account-list.h eas-account-list.c \
+				$(NULL)
 
 
 libeasaccountincludedir = $(privincludedir)/eas-account
