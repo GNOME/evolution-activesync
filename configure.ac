@@ -63,6 +63,7 @@ PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
 PKG_CHECK_MODULES(GCONF, gconf-2.0)
+PKG_CHECK_MODULES(LIBEMAIL_ENGINE, libemail-engine)
 
 EVO_PKG="-3.0"
 CAMEL_PKG="camel-1.2"
@@ -108,6 +109,11 @@ fi
 EVOLUTION_privlibdir=`$PKG_CONFIG --variable=privlibdir evolution-data-server-1.2`
 AC_SUBST(EVOLUTION_privlibdir)
 
+eds_moduledir=`$PKG_CONFIG --variable=moduledir libebackend-1.2`
+AC_SUBST(eds_moduledir)
+
+evo_moduledir=`$PKG_CONFIG --variable=moduledir evolution-shell-3.0`
+AC_SUBST(evo_moduledir)
 
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
@@ -154,6 +160,8 @@ AC_CONFIG_FILES([
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
     eplugin/Makefile
+    collection/Makefile
+    configuration/Makefile
     libeastest/src/Makefile
     libeasclient/Makefile
     libeasaccount/src/Makefile
