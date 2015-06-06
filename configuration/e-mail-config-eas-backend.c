@@ -208,7 +208,6 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 	CamelSettings *settings;
 	EMailConfigServicePage *page;
 	const gchar *email_address;
-	gchar **parts = NULL;
 	gchar *username;
 	gchar *hosturl;
 
@@ -228,26 +227,33 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 
 	email_address = e_mail_config_service_page_get_email_address (page);
 
-	if (email_address != NULL)
-		parts = g_strsplit (email_address, "@", 2);
-
-	if (parts != NULL && g_strv_length (parts) >= 2) {
+	if (email_address != NULL) {
 		CamelNetworkSettings *network_settings;
 		gchar *hosturl;
-
-		g_strstrip (parts[1]);  /* domain name */
-
-		hosturl = g_strdup_printf (
-			"https://%s/Microsoft-Server-ActiveSync", parts[1]);
+		GConfClient *client = gconf_client_get_default();
+		gchar *key;
+		
+		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
+		username = gconf_client_get_string (client, key, NULL);
+		g_free (key);
+		
+		if (username == NULL || *username == '\0') {
+			username = g_strdup (email_address);
+		}
+		
+		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
+		hosturl = gconf_client_get_string (client, key, NULL);
+		g_free (key);
 		
 		network_settings = CAMEL_NETWORK_SETTINGS (settings);
-		camel_network_settings_set_user (network_settings, email_address);
-		camel_network_settings_set_host (network_settings, hosturl);
+		camel_network_settings_set_user (network_settings, username);
+		if (hosturl && hosturl[0]) {
+			camel_network_settings_set_host (network_settings, hosturl);
+		}
 
+		g_free (username);
 		g_free (hosturl);
 	}
-
-	g_strfreev (parts);
 }
 
 static gboolean
