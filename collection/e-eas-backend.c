@@ -36,7 +36,7 @@ struct _EEasBackendPrivate {
 	GHashTable *folders;
 
 	gchar *sync_state;
-	GMutex *sync_state_lock;
+	GMutex sync_state_lock;
 };
 
 struct _SyncFoldersClosure {
@@ -74,7 +74,7 @@ eas_backend_finalize (GObject *object)
 	g_hash_table_destroy (priv->folders);
 
 	g_free (priv->sync_state);
-	g_mutex_free (priv->sync_state_lock);
+	g_mutex_clear (&priv->sync_state_lock);
 
 	/* Chain up to parent's finalize() method */
 	G_OBJECT_CLASS (e_eas_backend_parent_class)->finalize (object);
@@ -110,7 +110,7 @@ e_eas_backend_init (EEasBackend *backend)
 		(GDestroyNotify) g_free,
 		(GDestroyNotify) g_object_unref);
 
-	backend->priv->sync_state_lock = g_mutex_new ();
+	g_mutex_init (&backend->priv->sync_state_lock);
 }
 
 void

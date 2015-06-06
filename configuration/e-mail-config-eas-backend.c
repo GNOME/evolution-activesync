@@ -94,33 +94,35 @@ discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
 	page = e_mail_config_service_backend_get_page (backend);
 	email_address = e_mail_config_service_page_get_email_address (page);
 
-	handler = eas_mail_handler_new(email_address, &error);
-	if (error) {
-		g_warning ("Unable to create mailHandler. We don't suppport auto-discover: %s\n", error->message);
-		g_error_free (error);
-		gtk_widget_set_sensitive (button, FALSE);
-		return;
-	}
+	if (email_address != NULL) {
+		handler = eas_mail_handler_new(email_address, &error);
+		if (error) {
+			g_warning ("Unable to create mailHandler. We don't suppport auto-discover: %s\n", error->message);
+			g_error_free (error);
+			gtk_widget_set_sensitive (button, FALSE);
+			return;
+		}
 
-	username = g_strdup (gtk_entry_get_text(username_entry));
-	if (username == NULL || *username == '\0' || strcmp (username, email_address) == 0) {
+		username = g_strdup (gtk_entry_get_text((GtkEntry *)username_entry));
+		if (username == NULL || *username == '\0' || strcmp (username, email_address) == 0) {
+			g_free (username);
+			username = NULL;
+		}
+
+		eas_mail_handler_autodiscover(
+			handler,
+			email_address,
+			username,
+			&uri,
+			NULL,
+			&error);
+
+		if (!error && uri && uri[0])
+			gtk_entry_set_text ((GtkEntry *)host_entry, uri);
+
 		g_free (username);
-		username = NULL;
+		g_object_unref (handler);
 	}
-
-	eas_mail_handler_autodiscover(
-		handler,
-		email_address,
-		username,
-		&uri,
-		NULL,
-		&error);
-
-	if (!error && uri && uri[0])
-		gtk_entry_set_text ((GtkEntry *)host_entry, uri);
-
-	g_free (username);
-	g_object_unref (handler);
 }
 
 static void
@@ -158,13 +160,14 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	markup = g_markup_printf_escaped ("<b>%s</b>", text);
 	widget = gtk_label_new (markup);
 	gtk_label_set_use_markup (GTK_LABEL (widget), TRUE);
-	gtk_misc_set_alignment (GTK_MISC (widget), 0.0, 0.5);
+	gtk_widget_set_halign (widget, GTK_ALIGN_START);
+	gtk_widget_set_valign (widget, GTK_ALIGN_CENTER);
 	gtk_box_pack_start (GTK_BOX (parent), widget, FALSE, FALSE, 0);
 	gtk_widget_show (widget);
 	g_free (markup);
 
 	widget = gtk_grid_new ();
-	gtk_widget_set_margin_left (widget, 12);
+	gtk_widget_set_margin_start (widget, 12);
 	gtk_grid_set_row_spacing (GTK_GRID (widget), 6);
 	gtk_grid_set_column_spacing (GTK_GRID (widget), 6);
 	gtk_box_pack_start (GTK_BOX (parent), widget, FALSE, FALSE, 0);
@@ -173,7 +176,8 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	container = widget;
 
 	widget = gtk_label_new_with_mnemonic (_("User_name:"));
-	gtk_misc_set_alignment (GTK_MISC (widget), 1.0, 0.5);
+	gtk_widget_set_halign (widget, GTK_ALIGN_END);
+	gtk_widget_set_valign (widget, GTK_ALIGN_CENTER);
 	gtk_grid_attach (GTK_GRID (container), widget, 0, 0, 1, 1);
 	gtk_widget_show (widget);
 
@@ -187,7 +191,8 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	gtk_widget_show (widget);
 
 	widget = gtk_label_new_with_mnemonic (_("_Server URL:"));
-	gtk_misc_set_alignment (GTK_MISC (widget), 1.0, 0.5);
+	gtk_widget_set_halign (widget, GTK_ALIGN_END);
+	gtk_widget_set_valign (widget, GTK_ALIGN_CENTER);
 	gtk_grid_attach (GTK_GRID (container), widget, 0, 1, 1, 1);
 	gtk_widget_show (widget);
 
@@ -205,13 +210,14 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	widget = gtk_label_new (markup);
 	gtk_widget_set_margin_top (widget, 6);
 	gtk_label_set_use_markup (GTK_LABEL (widget), TRUE);
-	gtk_misc_set_alignment (GTK_MISC (widget), 0.0, 0.5);
+	gtk_widget_set_halign (widget, GTK_ALIGN_START);
+	gtk_widget_set_valign (widget, GTK_ALIGN_CENTER);
 	gtk_box_pack_start (GTK_BOX (parent), widget, FALSE, FALSE, 0);
 	gtk_widget_show (widget);
 	g_free (markup);
 
 	widget = e_mail_config_auth_check_new (backend);
-	gtk_widget_set_margin_left (widget, 12);
+	gtk_widget_set_margin_start (widget, 12);
 	gtk_box_pack_start (GTK_BOX (parent), widget, FALSE, FALSE, 0);
 	priv->auth_check = widget;  /* do not reference */
 	gtk_widget_show (widget);
@@ -317,7 +323,6 @@ mail_config_eas_backend_check_complete (EMailConfigServiceBackend *backend)
 	EMailConfigServicePage *page;
 	CamelSettings *settings;
 	CamelNetworkSettings *network_settings;
-	const gchar *email_address;
 	const gchar *username;
 	const gchar *hosturl;
 
@@ -334,8 +339,6 @@ mail_config_eas_backend_check_complete (EMailConfigServiceBackend *backend)
 	/* This needs to come _after_ the page type check so we don't
 	 * introduce a backend extension in the mail transport source. */
 	settings = e_mail_config_service_backend_get_settings (backend);
-
-	email_address = e_mail_config_service_page_get_email_address (page);
 
 	network_settings = CAMEL_NETWORK_SETTINGS (settings);
 	username = camel_network_settings_get_user (network_settings);
@@ -367,7 +370,7 @@ mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 	 * the backend is associated with.  This method only applies to
 	 * the Receiving Page. */
 	if (!E_IS_MAIL_CONFIG_RECEIVING_PAGE (page))
-		return TRUE;
+		return;
 
 	/* This needs to come _after_ the page type check so we don't
 	 * introduce a backend extension in the mail transport source. */
@@ -375,33 +378,35 @@ mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 
 	email_address = e_mail_config_service_page_get_email_address (page);
 
-	GConfClient *client = gconf_client_get_default ();
-	char *key;
-	
-	username = camel_network_settings_dup_user ((CamelNetworkSettings *)settings);
-	g_strstrip (username);
+	if (email_address != NULL) {
+		GConfClient *client = gconf_client_get_default ();
+		char *key;
 
-	if (username && username[0]) {
-		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
-		gconf_client_set_string (client, key, username, NULL);
-		g_free (key);
+		username = camel_network_settings_dup_user ((CamelNetworkSettings *)settings);
+		g_strstrip (username);
+
+		if (username && username[0]) {
+			key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
+			gconf_client_set_string (client, key, username, NULL);
+			g_free (key);
+		}
+
+		g_free(username);
+
+		hosturl = camel_network_settings_dup_host ((CamelNetworkSettings *)settings);
+		g_strstrip (hosturl);
+
+		if (hosturl && hosturl[0]) {
+			key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
+			gconf_client_set_string (client, key, hosturl, NULL);
+			g_free (key);
+
+			camel_eas_settings_set_account_uid ((CamelEasSettings *)settings, email_address);
+		}
+
+		g_free(hosturl);
+		g_object_unref (client);
 	}
-
-	g_free(username);
-	
-	hosturl = camel_network_settings_dup_host ((CamelEasSettings *)settings);
-	g_strstrip (hosturl);
-
-	if (hosturl && hosturl[0]) {
-		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
-		gconf_client_set_string (client, key, hosturl, NULL);
-		g_free (key);
-
-		camel_eas_settings_set_account_uid ((CamelEasSettings *)settings, email_address);
-	}
-
-	g_free(hosturl);
-	g_object_unref (client);
 }
 
 static void
