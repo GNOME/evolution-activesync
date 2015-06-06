@@ -4,7 +4,7 @@ evo_module_LTLIBRARIES = module-eas-mail-config.la
 
 module_eas_mail_config_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I$(top_srcdir) \
+	-I$(top_srcdir)/libeasclient \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LIBEDATASERVER_CFLAGS) \
 	$(LIBEBACKEND_CFLAGS) \
@@ -18,6 +18,7 @@ module_eas_mail_config_la_SOURCES = \
 	$(NULL)
 
 module_eas_mail_config_la_LIBADD = \
+	$(top_builddir)/libeasclient/libeasclient.la \
 	$(EVOLUTION_MAIL_LIBS) \
 	$(LIBEDATASERVER_LIBS) \
 	$(LIBEBACKEND_LIBS) \

@@ -28,6 +28,7 @@
 
 #include <camel/camel.h>
 #include <libebackend/libebackend.h>
+#include <libeasmail.h>
 
 #include <mail/e-mail-config-auth-check.h>
 #include <mail/e-mail-config-receiving-page.h>
@@ -42,6 +43,7 @@ struct _EMailConfigEasBackendPrivate {
 	GtkWidget *user_entry;		/* not referenced */
 	GtkWidget *host_entry;		/* not referenced */
 	GtkWidget *auth_check;		/* not referenced */
+	GtkWidget *autodiscover_button;
 };
 
 G_DEFINE_DYNAMIC_TYPE (
@@ -75,6 +77,50 @@ mail_config_eas_backend_new_collection (EMailConfigServiceBackend *backend)
 	e_source_backend_set_backend_name (extension, class->backend_name);
 
 	return source;
+}
+
+static void
+discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
+{
+	EasEmailHandler *handler;
+	GError *error = NULL;
+	EMailConfigServicePage *page;
+	const gchar * email_address;
+	gchar *uri = NULL;
+	gchar *username;
+	GtkWidget *username_entry = (GtkWidget *)g_object_get_data ((GObject *)button, "username-entry");
+	GtkWidget *host_entry = (GtkWidget *)g_object_get_data ((GObject *)button, "url-entry");
+
+	page = e_mail_config_service_backend_get_page (backend);
+	email_address = e_mail_config_service_page_get_email_address (page);
+
+	handler = eas_mail_handler_new(email_address, &error);
+	if (error) {
+		g_warning ("Unable to create mailHandler. We don't suppport auto-discover: %s\n", error->message);
+		g_error_free (error);
+		gtk_widget_set_sensitive (button, FALSE);
+		return;
+	}
+
+	username = g_strdup (gtk_entry_get_text(username_entry));
+	if (username == NULL || *username == '\0' || strcmp (username, email_address) == 0) {
+		g_free (username);
+		username = NULL;
+	}
+
+	eas_mail_handler_autodiscover(
+		handler,
+		email_address,
+		username,
+		&uri,
+		NULL,
+		&error);
+
+	if (!error && uri && uri[0])
+		gtk_entry_set_text ((GtkEntry *)host_entry, uri);
+
+	g_free (username);
+	g_object_unref (handler);
 }
 
 static void
@@ -140,7 +186,7 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	priv->user_entry = widget;  /* do not reference */
 	gtk_widget_show (widget);
 
-	widget = gtk_label_new_with_mnemonic (_("_Host URL:"));
+	widget = gtk_label_new_with_mnemonic (_("_Server URL:"));
 	gtk_misc_set_alignment (GTK_MISC (widget), 1.0, 0.5);
 	gtk_grid_attach (GTK_GRID (container), widget, 0, 1, 1, 1);
 	gtk_widget_show (widget);
@@ -169,6 +215,15 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	gtk_box_pack_start (GTK_BOX (parent), widget, FALSE, FALSE, 0);
 	priv->auth_check = widget;  /* do not reference */
 	gtk_widget_show (widget);
+
+	widget = gtk_button_new_with_mnemonic (_("_Auto Detect"));
+	gtk_grid_attach(GTK_GRID (container), widget, 2, 1, 1, 1);
+	priv->autodiscover_button = widget;
+	gtk_widget_show (widget);
+
+	g_object_set_data ((GObject *)widget, "username-entry", (gpointer)priv->user_entry);
+	g_object_set_data ((GObject *)widget, "url-entry", (gpointer)priv->host_entry);
+	g_signal_connect (widget, "clicked", G_CALLBACK(discover_server_url), backend);
 
 	g_object_bind_property (
 		settings, "user",
@@ -232,19 +287,19 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 		gchar *hosturl;
 		GConfClient *client = gconf_client_get_default();
 		gchar *key;
-		
+
 		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
 		username = gconf_client_get_string (client, key, NULL);
 		g_free (key);
-		
+
 		if (username == NULL || *username == '\0') {
 			username = g_strdup (email_address);
 		}
-		
+
 		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
 		hosturl = gconf_client_get_string (client, key, NULL);
 		g_free (key);
-		
+
 		network_settings = CAMEL_NETWORK_SETTINGS (settings);
 		camel_network_settings_set_user (network_settings, username);
 		if (hosturl && hosturl[0]) {
