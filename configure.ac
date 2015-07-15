@@ -70,7 +70,6 @@ CAMEL_PKG="camel-1.2"
 
 PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG})
 
-PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-plugin${EVO_PKG}, [have_e_plugin=yes], [have_eplugin=no])
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
 
@@ -142,14 +141,6 @@ AC_ARG_ENABLE(camel-backend,
               [enable_camel="$enableval"], [enable_camel="yes"])
 AM_CONDITIONAL([ENABLE_CAMEL_BACKEND], [test "$enable_camel" = "yes"])
 
-AC_ARG_ENABLE(eplugin,
-              AS_HELP_STRING([--disable-eplugin],
-                             [Can be used to disable compiling the Evolution config plugin. Enabled by default.]),
-              [enable_eplugin="$enableval"
-               test "$enable_eplugin" = "no" || test "$have_e_plugin" = "yes" || AC_MSG_ERROR([evolution-plugin${EVO_PKG} not available, cannot enable eplugin])],
-              [enable_eplugin="$have_e_plugin"])
-AM_CONDITIONAL([ENABLE_EPLUGIN], [test "$enable_eplugin" = "yes"])
-
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
@@ -159,7 +150,6 @@ AC_CONFIG_FILES([
     eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
-    eplugin/Makefile
     collection/Makefile
     configuration/Makefile
     libeastest/src/Makefile

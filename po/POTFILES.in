@@ -8,6 +8,3 @@ camel/camel-eas-transport.c
 camel/camel-eas-utils.c
 eas-daemon/libeas/eas-connection.c
 eas-daemon/libeas/eas-connection.c
-eplugin/activesync-account-setup.c
-eplugin/eas-account-listener.c
-eplugin/org-gnome-evolution-activesync.eplug.xml
