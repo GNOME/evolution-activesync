@@ -8,3 +8,4 @@ camel/camel-eas-transport.c
 camel/camel-eas-utils.c
 eas-daemon/libeas/eas-connection.c
 eas-daemon/libeas/eas-connection.c
+configuration/e-mail-config-eas-backend.c
