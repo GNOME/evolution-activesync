@@ -1,5 +1,6 @@
 /*
  * e-mail-config-eas-backend.c
+ * The configuration UI runs in Evolution.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +34,7 @@
 #include <mail/e-mail-config-auth-check.h>
 #include <mail/e-mail-config-receiving-page.h>
 
+/* To use camel_eas_settings_set_account_uid() */
 #include "libevoeas/camel-eas-settings.h"
 
 #define E_MAIL_CONFIG_EAS_BACKEND_GET_PRIVATE(obj) \
@@ -79,6 +81,7 @@ mail_config_eas_backend_new_collection (EMailConfigServiceBackend *backend)
 	return source;
 }
 
+/* Server URL auto discover button handler */
 static void
 discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
 {
@@ -109,6 +112,7 @@ discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
 			username = NULL;
 		}
 
+		/* Core server URL auto discover handler */
 		eas_mail_handler_autodiscover(
 			handler,
 			email_address,
@@ -125,6 +129,7 @@ discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
 	}
 }
 
+/* Construct the Receiving Email page. */
 static void
 mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
                                         GtkBox *parent)
@@ -156,6 +161,7 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	 * introduce a backend extension in the mail transport source. */
 	settings = e_mail_config_service_backend_get_settings (backend);
 
+	/* Add widget. */
 	text = _("Configuration");
 	markup = g_markup_printf_escaped ("<b>%s</b>", text);
 	widget = gtk_label_new (markup);
@@ -227,10 +233,12 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	priv->autodiscover_button = widget;
 	gtk_widget_show (widget);
 
+	/* Connect auto discover button to it's handler with information needed. */
 	g_object_set_data ((GObject *)widget, "username-entry", (gpointer)priv->user_entry);
 	g_object_set_data ((GObject *)widget, "url-entry", (gpointer)priv->host_entry);
 	g_signal_connect (widget, "clicked", G_CALLBACK(discover_server_url), backend);
 
+	/* Bind property in priv with widget to automatically read the input. */
 	g_object_bind_property (
 		settings, "user",
 		priv->user_entry, "text",
@@ -263,6 +271,8 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 		G_BINDING_SYNC_CREATE);
 }
 
+/* Setup default value in the Receiving page using the information Stored 
+ * in GConf. */
 static void
 mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 {
@@ -298,6 +308,7 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 		username = gconf_client_get_string (client, key, NULL);
 		g_free (key);
 
+		/* The default username is the same as the email address. */
 		if (username == NULL || *username == '\0') {
 			username = g_strdup (email_address);
 		}
@@ -317,6 +328,7 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 	}
 }
 
+/* Check whether the information is enough to complete current step. */
 static gboolean
 mail_config_eas_backend_check_complete (EMailConfigServiceBackend *backend)
 {
@@ -353,6 +365,7 @@ mail_config_eas_backend_check_complete (EMailConfigServiceBackend *backend)
 	return TRUE;
 }
 
+/* Save the filled information to GConf and move on. */
 static void
 mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 {

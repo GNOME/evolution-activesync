@@ -1,5 +1,8 @@
 /*
  * e-eas-backend.c
+ * The collection backend runs in the registry service. It's just a necessary
+ * procedure. You don't have to change it unless you really have things to do
+ * during the registry.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,8 +26,6 @@
 
 #include "e-eas-backend.h"
 
-#include <glib/gi18n-lib.h>
-
 #define E_EAS_BACKEND_GET_PRIVATE(obj) \
 	(G_TYPE_INSTANCE_GET_PRIVATE \
 	((obj), E_TYPE_EAS_BACKEND, EEasBackendPrivate))
@@ -34,9 +35,6 @@ typedef struct _SyncFoldersClosure SyncFoldersClosure;
 struct _EEasBackendPrivate {
 	/* Folder ID -> ESource */
 	GHashTable *folders;
-
-	gchar *sync_state;
-	GMutex sync_state_lock;
 };
 
 struct _SyncFoldersClosure {
@@ -73,10 +71,7 @@ eas_backend_finalize (GObject *object)
 	
 	g_hash_table_destroy (priv->folders);
 
-	g_free (priv->sync_state);
-	g_mutex_clear (&priv->sync_state_lock);
-
-	/* Chain up to parent's finalize() method */
+	/* Chain up to parent's finalize() method. */
 	G_OBJECT_CLASS (e_eas_backend_parent_class)->finalize (object);
 }
 
@@ -109,8 +104,6 @@ e_eas_backend_init (EEasBackend *backend)
 		(GEqualFunc) g_str_equal,
 		(GDestroyNotify) g_free,
 		(GDestroyNotify) g_object_unref);
-
-	g_mutex_init (&backend->priv->sync_state_lock);
 }
 
 void
