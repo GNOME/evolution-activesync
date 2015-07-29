@@ -62,7 +62,7 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
-PKG_CHECK_MODULES(GCONF, gconf-2.0)
+PKG_CHECK_MODULES(GIO, gio-2.0)
 PKG_CHECK_MODULES(LIBEMAIL_ENGINE, libemail-engine)
 
 EVO_PKG="-3.0"
@@ -120,6 +120,7 @@ AC_SUBST(ASKPASS)
 MEEGO_UI_DIR=meego/meego-ux-settings-activesync
 AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
+GLIB_GSETTINGS
 
 AC_ARG_ENABLE(qtconfig,
               AS_HELP_STRING([--disable-qtconfig],

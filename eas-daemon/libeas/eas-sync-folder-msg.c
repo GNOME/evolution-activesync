@@ -50,6 +50,8 @@
  *
  */
 
+#include <gio/gio.h>
+
 #include "eas-connection-errors.h"
 #include "eas-sync-folder-msg.h"
 #include <eas-folder.h>
@@ -199,12 +201,12 @@ eas_sync_folder_msg_parse_response (EasSyncFolderMsg* self, const xmlDoc *doc, G
 	EasError error_details;
 	EasAccount * acc = NULL;
 	EasAccountList *account_list = NULL;
-	GConfClient* client = NULL;
+	GSettings *g_gsetting = NULL;
 
-	client = gconf_client_get_default();
-	g_assert (client != NULL);
-	/* Get list of accounts from gconf repository */
-	account_list = eas_account_list_new (client);
+	g_gsetting = g_settings_new ("org.meego.activesyncd");
+	g_assert (g_gsetting != NULL);
+	/* Get list of accounts from GSettings repository */
+	account_list = eas_account_list_new (g_gsetting);
 	g_assert (account_list != NULL);
 
 	acc = eas_account_list_find (account_list, EAS_ACCOUNT_FIND_ACCOUNT_UID, priv->account_id);

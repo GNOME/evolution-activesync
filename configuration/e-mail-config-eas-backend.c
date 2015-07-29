@@ -25,7 +25,7 @@
 #include "e-mail-config-eas-backend.h"
 
 #include <glib/gi18n-lib.h>
-#include <gconf/gconf-client.h>
+#include <gio/gio.h>
 
 #include <camel/camel.h>
 #include <libebackend/libebackend.h>
@@ -272,7 +272,7 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 }
 
 /* Setup default value in the Receiving page using the information Stored 
- * in GConf. */
+ * in GSettings. */
 static void
 mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 {
@@ -300,22 +300,22 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 
 	if (email_address != NULL) {
 		CamelNetworkSettings *network_settings;
-		gchar *hosturl;
-		GConfClient *client = gconf_client_get_default();
-		gchar *key;
-
-		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
-		username = gconf_client_get_string (client, key, NULL);
-		g_free (key);
-
+		gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
+		
+		g_debug("Path is %s\n", account_address);
+		
+		GSettings *account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		
+		g_free (account_address);
+	
 		/* The default username is the same as the email address. */
+		username = g_settings_get_string (account, "username");
+
 		if (username == NULL || *username == '\0') {
 			username = g_strdup (email_address);
 		}
 
-		key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
-		hosturl = gconf_client_get_string (client, key, NULL);
-		g_free (key);
+		hosturl = g_settings_get_string (account, "serveruri");
 
 		network_settings = CAMEL_NETWORK_SETTINGS (settings);
 		camel_network_settings_set_user (network_settings, username);
@@ -325,6 +325,7 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 
 		g_free (username);
 		g_free (hosturl);
+		g_object_unref (account);
 	}
 }
 
@@ -365,7 +366,7 @@ mail_config_eas_backend_check_complete (EMailConfigServiceBackend *backend)
 	return TRUE;
 }
 
-/* Save the filled information to GConf and move on. */
+/* Save the filled information to GSettings and move on. */
 static void
 mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 {
@@ -392,16 +393,29 @@ mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 	email_address = e_mail_config_service_page_get_email_address (page);
 
 	if (email_address != NULL) {
-		GConfClient *client = gconf_client_get_default ();
-		char *key;
+		int i = 0;
+		GSettings *account_info = g_settings_new ("org.meego.activesyncd");
+		gchar **accounts = g_settings_get_strv(account_info, "accounts");
+		gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
+
+		g_debug("Path is %s\n", account_address);
+
+		GSettings *account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		
+		g_free (account_address);
 
 		username = camel_network_settings_dup_user ((CamelNetworkSettings *)settings);
 		g_strstrip (username);
 
 		if (username && username[0]) {
-			key = g_strdup_printf ("/apps/activesyncd/accounts/%s/username", email_address);
-			gconf_client_set_string (client, key, username, NULL);
-			g_free (key);
+			g_settings_set_string (account, "username", username);
+			if (!g_strv_contains((const gchar * const *)accounts, email_address)){
+				gchar **new_strv = g_malloc0(sizeof(gchar *) * (g_strv_length(accounts) + 2));
+				for (i = 0; i < g_strv_length(accounts); i++)
+					new_strv[i] = accounts[i];
+				new_strv[g_strv_length(accounts)] = strdup(email_address);
+				g_settings_set_strv(account_info, "accounts", (const gchar * const *)new_strv);
+			}
 		}
 
 		g_free(username);
@@ -410,15 +424,25 @@ mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 		g_strstrip (hosturl);
 
 		if (hosturl && hosturl[0]) {
-			key = g_strdup_printf ("/apps/activesyncd/accounts/%s/serverUri", email_address);
-			gconf_client_set_string (client, key, hosturl, NULL);
-			g_free (key);
+			g_settings_set_string (account, "serveruri", hosturl);	
+			if (!g_strv_contains((const gchar * const *)accounts, email_address)){
+				gchar **new_strv = g_malloc0(sizeof(gchar *) * (g_strv_length(accounts) + 2));
+				for (i = 0; i < g_strv_length(accounts); i++)
+					new_strv[i] = accounts[i];
+				new_strv[g_strv_length(accounts)] = strdup(email_address);
+				g_settings_set_strv(account_info, "accounts", (const gchar * const *)new_strv);
+			}
 
 			camel_eas_settings_set_account_uid ((CamelEasSettings *)settings, email_address);
 		}
 
+		g_debug("Sync now\n");
+
+		g_settings_sync();
+
 		g_free(hosturl);
-		g_object_unref (client);
+		g_object_unref (account_info);
+		g_object_unref (account);
 	}
 }
 

@@ -1,0 +1,13 @@
+<schemalist>
+	<schema id="org.meego.activesyncd" path="/org/meego/activesyncd/">
+		<key name='accounts' type='as'>
+			<default>[]</default>
+		</key>
+		<key name='device-type' type='s'>
+			<default>''</default>
+		</key>
+		<key name='device-id' type='s'>
+			<default>''</default>
+		</key>
+	</schema>
+</schemalist>
