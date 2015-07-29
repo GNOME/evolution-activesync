@@ -34,7 +34,7 @@ START_TEST (test_fetch_server_protocols)
 	ret = eas_connection_fetch_server_protocols (cnc, &error);	
 	mark_point();
 	
-	// TODO verify that the server protocol list is in GConf
+	// TODO verify that the server protocol list is in GSettings 
 	g_object_unref(cnc);
     mark_point ();
 }

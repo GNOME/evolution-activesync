@@ -20,9 +20,7 @@
  - Password handling: try gnome-keyring and fall back to spawning an
    external tool to ask for the password
 
- - Move settings to GConf instead of accounts.cfg
-
- - Store policy key in GConf and don't reprovision every time
+ - Store policy key in GSettings and don't reprovision every time
 
  - Use GString for serialising; don't precalculate size. See commit 474ceb9.
 
