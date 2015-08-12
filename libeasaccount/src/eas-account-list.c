@@ -30,7 +30,7 @@
 
 
 struct _EasAccountListPrivate {
-	GConfClient *gconf;
+	GSettings *setting;
 	guint notify_id;
 };
 
@@ -99,13 +99,9 @@ eas_account_list_dispose (GObject *object)
 {
 	EasAccountList *account_list = EAS_ACCOUNT_LIST (object);
 	g_debug("eas_account_list_dispose++");
-	if (account_list->priv->gconf) {
-		if (account_list->priv->notify_id) {
-			gconf_client_notify_remove (account_list->priv->gconf,
-						    account_list->priv->notify_id);
-		}
-		g_object_unref (account_list->priv->gconf);
-		account_list->priv->gconf = NULL;
+	if (account_list->priv->setting) {
+		g_object_unref (account_list->priv->setting);
+		account_list->priv->setting = NULL;
 	}
 	g_debug("eas_account_list_dispose--");
 	G_OBJECT_CLASS (eas_account_list_parent_class)->dispose (object);
@@ -121,133 +117,76 @@ eas_account_list_finalize (GObject *object)
 	G_OBJECT_CLASS (eas_account_list_parent_class)->finalize (object);
 }
 
-static gchar*
-get_key_absolute_path(const gchar *uid, const gchar *Key)
-{
-	int string_Key_len;
-	char* Key_path = NULL;
-	
-	string_Key_len = strlen(EAS_ACCOUNT_ROOT) + strlen("/") + strlen(uid) + strlen(Key) + 1;
-	
-	Key_path = g_malloc(string_Key_len);
-	if (Key_path)
-		g_snprintf(Key_path, (string_Key_len), "%s/%s%s%c", EAS_ACCOUNT_ROOT, uid, Key, '\0');
-
-	return Key_path;
-} 
-
 static void
-eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid_path, GSList *entry_list)
+eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid)
 {
-	const GConfValue* value = NULL;
-	const gchar* keyname = NULL;
-	gchar* uid = NULL;
-	gint last_token;
-	gchar **str_array = NULL; 
-	gchar* serveruri_Key_path = NULL;
-	gchar* username_Key_path = NULL;
-	gchar* policy_key_Key_path = NULL;
-	gchar* calendar_folder_Key_path = NULL;
-	gchar* contact_folder_Key_path = NULL;
-	gchar* password_Key_path = NULL;
-	gchar* protover_Key_path = NULL;
-	gchar* devover_Key_path = NULL;
-	gchar* servoprotovers_Key_path = NULL;
-	GSList *item = NULL;
+	gchar *key = NULL;
+	GVariant *value = NULL;
+	gchar **key_list;
+	int i = 0;
+	int len = 0;
 
+	g_debug("eas_account_list_set_account_info++");
+	
 	/* g_debug("eas_account_list_set_account_info++"); */
 	g_return_if_fail (acc_info != NULL);
-	g_return_if_fail (uid_path != NULL);
-	g_return_if_fail (entry_list != NULL);
 
-	/* strip the EAS_ACCOUNT_ROOT from the uid_path to get the uid only */
-	last_token = 4;
-	str_array = g_strsplit(uid_path, "/", -1);
-	uid = g_strdup(str_array[last_token]);
-	/* free the vector */
-	g_strfreev(str_array);
+	acc_info->uid = g_strdup(uid); // Ownership passed to the account into structure.
 
-	/* Concatenate "ROOT + UID + KEY" */
-	serveruri_Key_path       = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
-	username_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
-	policy_key_Key_path      = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-	contact_folder_Key_path  = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-	calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-	password_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
-	protover_Key_path        = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
-	devover_Key_path         = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-	servoprotovers_Key_path  = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS);
-	acc_info->uid = uid; // Ownership passed to the account into structure.
+	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
 
-	for (item = entry_list; item; item = item->next)
-	{
-		GConfEntry *entry = item->data;
+		g_debug("Path is %s\n", account_address);
+		
+	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 
-		keyname = gconf_entry_get_key(entry);
-		if (keyname == NULL) {
+	g_free (account_address);
+	account_address = NULL;
+
+	key_list = g_settings_list_keys (setting);
+	len = g_strv_length (key_list);
+
+	while (i < len) {
+		key = key_list[i];
+		if (key == NULL) {
 			/* g_debug("Couldn't get the key name - this could be a delete notification!");*/
 			continue;
 		}
 
-		value = gconf_entry_get_value(entry);
+		value = g_settings_get_value (setting, (const gchar *)key);
 		if (value == NULL) {
 			/*g_debug("Couldn't get the key value - this could be a delete notification!");*/
 			continue;
 		}
 
-		// gconf_value_to_string passes memory ownership to the account into structure.
-		if (strcmp(keyname, serveruri_Key_path) == 0) {
-			acc_info->serverUri = gconf_value_to_string(value);
-		} else if (strcmp(keyname, username_Key_path) == 0) {
-			acc_info->username = gconf_value_to_string(value); 
-		} else if (strcmp(keyname, policy_key_Key_path) == 0) {
-			acc_info->policy_key = gconf_value_to_string(value);
-		} else if (strcmp(keyname, calendar_folder_Key_path) == 0) {
-			acc_info->calendar_folder = gconf_value_to_string(value);
-		} else if (strcmp(keyname, contact_folder_Key_path) == 0) {
-			acc_info->contact_folder = gconf_value_to_string(value);
-		} else if (strcmp(keyname, password_Key_path) == 0) {
-			acc_info->password = gconf_value_to_string(value); 
-		} else if (strcmp(keyname, protover_Key_path) == 0) {
-			acc_info->protocol_version = gconf_value_get_int(value);
-		} else if (strcmp(keyname, devover_Key_path) == 0) {
-			acc_info->device_id = gconf_value_to_string(value);
-		} else if (strcmp(keyname, servoprotovers_Key_path) == 0) {
-			GSList *list;
-			//GConfValueType type;
-			gint prot;
-			guint i;
-
-			//type = value->type;
-			//g_assert(type == GCONF_VALUE_LIST);
-			list = gconf_value_get_list(value);
-			//type = gconf_value_get_list_type (value);
-			//g_assert(type == GCONF_VALUE_INT);
-			g_debug("list length = %d", g_slist_length(list));
-			//g_debug("type of elements in list: %d", type);
-			for (i = 0; i < g_slist_length(list); i++){	
-				prot = GPOINTER_TO_INT (g_slist_nth_data(list, i));
-				g_debug("prot = %d", prot);
-				// lrm TODO - copy the list to account info
-				//acc_info->server_protocols = g_slist_append(acc_info->server_protocols, g_slist_nth_data(list, i));
-			}
+		if (strcmp(key, EAS_ACCOUNT_KEY_SERVERURI) == 0) {
+			acc_info->serverUri = g_variant_dup_string (value, NULL);
+			g_debug("serverUri = %s", g_variant_dup_string (value, NULL));
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_USERNAME) == 0) {
+			acc_info->username = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_POLICY_KEY) == 0) {
+			acc_info->policy_key = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_CALENDAR_FOLDER) == 0) {
+			acc_info->calendar_folder = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_CONTACT_FOLDER) == 0) {
+			acc_info->contact_folder = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_PASSWORD) == 0) {
+			acc_info->password = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_PROTOCOL_VERSION) == 0) {
+			acc_info->protocol_version = g_variant_get_int32(value);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_DEVICE_ID) == 0) {
+			acc_info->device_id = g_variant_dup_string (value, NULL);
+		} else if (strcmp(key, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS) == 0) {
+			// TODO copy the list to account info
 		} else {
-			g_warning ("Unknown key: %s (value: [%s])\n", keyname, gconf_value_get_string (value));
+			g_warning ("Unknown key: %s (value: [%s])\n", key, g_variant_get_string (value, NULL));
 		}
+		i++;
 	}
 
-	g_free (serveruri_Key_path);        serveruri_Key_path       = NULL;
-	g_free (username_Key_path);         username_Key_path        = NULL;
-	g_free (policy_key_Key_path);       policy_key_Key_path      = NULL;
-	g_free (calendar_folder_Key_path);  calendar_folder_Key_path = NULL;
-	g_free (contact_folder_Key_path);   contact_folder_Key_path  = NULL;
-	g_free (password_Key_path);         password_Key_path        = NULL;
-	g_free (username_Key_path);         username_Key_path        = NULL;
-	g_free (protover_Key_path);         protover_Key_path        = NULL;
-	g_free (devover_Key_path);          devover_Key_path         = NULL;
-	g_free (servoprotovers_Key_path);   servoprotovers_Key_path  = NULL;
+	g_strfreev (key_list);
+	g_object_unref (setting);
 
-	/* g_debug("eas_account_list_set_account_info--"); */
+	g_debug("eas_account_list_set_account_info--");
 }
 
 #if 0
@@ -259,7 +198,7 @@ void dump_accounts(EasAccountList *account_list)
 	gint i=0;
 
 	num_of_accounts = e_list_length((EList*)account_list);		
-	g_debug(" There are %d accounts in GConf \n", num_of_accounts );
+	g_debug(" There are %d accounts in GSettings \n", num_of_accounts );
 	
 	if (!num_of_accounts)
 		return;
@@ -284,23 +223,42 @@ void dump_accounts(EasAccountList *account_list)
 }
 #endif
 
+static GSList *
+g_settings_get_all_accounts (GSettings *setting)
+{
+	gchar **accounts = g_settings_get_strv(setting, "accounts");
+	int len = g_strv_length (accounts);
+	GSList *list = NULL;
+	int i = 0;
+
+	while (i < len) {
+		list = g_slist_append (list, accounts[i]);
+		g_debug("account = %s", accounts[i]);
+		i++;
+	}
+
+	// Shouldn't use g_strfreev here
+	g_free (accounts);
+
+	return list;
+}
+
 static void
-gconf_accounts_changed (GConfClient *client, guint cnxn_id,
-			GConfEntry *entry, gpointer user_data)
+gsettings_accounts_changed (GSettings *setting, gchar *key, gpointer user_data)
 {
 	GSList *list = NULL, *l= NULL, *new_accounts = NULL;
 	EasAccount *account = NULL;
 	EList *old_accounts = NULL;
 	EIterator *iter = NULL;
 	gchar *uid = NULL;
-	GSList* gconf_entry_list = NULL;
+	//GSList* key_list = NULL;
 	GSList *account_uids_list = NULL;
 	EasAccountInfo* acc_info = NULL; 
 	EasAccountList *account_list = NULL;
 
 	account_list = user_data;
 	
-	g_debug("gconf_accounts_changed++");
+	g_debug("gsettings_accounts_changed++");
 	old_accounts = e_list_duplicate (E_LIST (account_list));
 
 	/*	
@@ -308,7 +266,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	these should be the account uids. Loop through these uids and populate
 	the account list.
 	*/
-	account_uids_list = gconf_client_all_dirs (client, EAS_ACCOUNT_ROOT, NULL);
+	account_uids_list = g_settings_get_all_accounts (setting);
 
 	for (l = account_uids_list; l; l = l->next) 
 	{
@@ -316,13 +274,18 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 		if (!uid)
 			continue;
 		/*
-		 Get the key/value for an account with a given uid from GConf,
+		 Get the key/value for an account with a given uid from GSettings,
 		 save it in EasAccountInfo and append it to the "list" object
 		*/
 		acc_info = g_new0 (EasAccountInfo, 1);
-		gconf_entry_list = gconf_client_all_entries(client, uid, NULL);
 
-		eas_account_list_set_account_info(acc_info, uid, gconf_entry_list);
+		g_debug("Enter");
+		g_debug("UID = %s\n", uid);
+
+		eas_account_list_set_account_info(acc_info, uid);
+
+
+		g_debug("Leave");
 
 #if 0
 		g_debug ("uid              = %s", acc_info->uid); 
@@ -336,16 +299,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 #endif
 
 		list = g_slist_append (list, acc_info);
-
-		// free gconf_entry_list
-		if (gconf_entry_list) 
-		{
-			g_slist_foreach (gconf_entry_list, (GFunc) gconf_entry_free, NULL);
-			g_slist_free (gconf_entry_list);
-			gconf_entry_list=NULL;
-		}
 	}
-
 
 	if (account_uids_list) {
 		g_slist_foreach (account_uids_list, (GFunc) g_free, NULL);
@@ -435,7 +389,7 @@ gconf_accounts_changed (GConfClient *client, guint cnxn_id,
 	
 	g_object_unref (iter);
 	g_object_unref (old_accounts);
-	g_debug("gconf_accounts_changed--");
+	g_debug("gsettings_accounts_changed--");
 }
 
 static gpointer
@@ -455,57 +409,49 @@ free_func (gpointer data, gpointer closure)
 
 /**
  * eas_account_list_new:
- * @client: a #GConfClient
+ * @setting: a #GSettings
  *
  * Reads the list of accounts from @client and listens for changes.
  * Will emit %account_added, %account_changed, and %account_removed
- * signals according to notifications from GConf.
+ * signals according to notifications from GSettings.
  *
  * You can modify the list using e_list_append(), e_list_remove(), and
  * e_iterator_delete(). After adding, removing, or changing accounts,
  * you must call eas_account_list_save() to push the changes back to
- * GConf.
+ * GSettings.
  *
  * Returns: the list of accounts
  **/
 EasAccountList *
-eas_account_list_new (GConfClient *gconf)
+eas_account_list_new (GSettings *setting)
 {
 	EasAccountList *account_list;
 	g_debug("eas_account_list_new++");
-	g_return_val_if_fail (GCONF_IS_CLIENT (gconf), NULL);
 
 	account_list = g_object_new (EAS_TYPE_ACCOUNT_LIST, NULL);
-	eas_account_list_construct (account_list, gconf);
+	eas_account_list_construct (account_list, setting);
 
 	g_debug("eas_account_list_new--");
 	return account_list;
 }
 
 void
-eas_account_list_construct (EasAccountList *account_list, GConfClient *gconf)
+eas_account_list_construct (EasAccountList *account_list, GSettings *setting)
 {
-	g_return_if_fail (GCONF_IS_CLIENT (gconf));
-
 	g_debug("eas_account_list_construct++");
 	
 	e_list_construct (E_LIST (account_list), copy_func, free_func, NULL);
-	account_list->priv->gconf = gconf;
-	g_object_ref (gconf);
+	account_list->priv->setting = setting;
+	g_object_ref (setting);
 
-	gconf_client_add_dir (account_list->priv->gconf,
-			     EAS_ACCOUNT_ROOT,
-			      GCONF_CLIENT_PRELOAD_RECURSIVE, NULL);
-	
-	account_list->priv->notify_id =
-		gconf_client_notify_add (account_list->priv->gconf,
-					 EAS_ACCOUNT_ROOT,
-					 gconf_accounts_changed, account_list,
-					 NULL, NULL);
+	g_signal_connect (setting,
+			"changed", 
+			G_CALLBACK (gsettings_accounts_changed), 
+			account_list);
 
-	gconf_accounts_changed (account_list->priv->gconf,
-				account_list->priv->notify_id,
-				NULL, account_list);
+	gsettings_accounts_changed (account_list->priv->setting,
+				"accounts",
+				account_list);
 
 	g_debug("eas_account_list_construct--");
 }
@@ -524,95 +470,52 @@ eas_account_list_save_account(EasAccountList *account_list,
 		return;
 	}
 
-	if (eas_account_get_uri(account)){
-		gchar* serveruri_Key_path = NULL;
-		serveruri_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
+	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+
+
+		g_debug("Path is %s\n", account_address);
 		
-		gconf_client_set_string (account_list->priv->gconf,
-								serveruri_Key_path,
-								eas_account_get_uri(account),
-								NULL);
-		g_free(serveruri_Key_path);
-		serveruri_Key_path = NULL;
+	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		
+	g_free (account_address);
+	account_address = NULL;
+
+	if (eas_account_get_uri(account)){
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_SERVERURI, eas_account_get_uri(account));
 	}
 
 	if (eas_account_get_username(account)){
-		gchar* username_Key_path = NULL;
-		username_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
-		
-		gconf_client_set_string (account_list->priv->gconf,
-						username_Key_path,
-						eas_account_get_username(account),
-						NULL);
-		g_free(username_Key_path);
-		username_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_USERNAME, eas_account_get_username(account));
 	}
 	
 	if (eas_account_get_policy_key(account)){
-		gchar* policy_key_Key_path = NULL;
-		policy_key_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-		gconf_client_set_string (account_list->priv->gconf,
-								policy_key_Key_path,
-								eas_account_get_policy_key(account),
-									NULL);
-		g_free(policy_key_Key_path);
-		policy_key_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_POLICY_KEY, eas_account_get_policy_key(account));
 	}
+
 	if (eas_account_get_contact_folder(account)){
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								eas_account_get_contact_folder(account),
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CONTACT_FOLDER, eas_account_get_contact_folder(account));
 	}
+
 	if (eas_account_get_calendar_folder(account)){
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								eas_account_get_calendar_folder(account),
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CALENDAR_FOLDER, eas_account_get_calendar_folder(account));
 	}
 
 	if (eas_account_get_password(account)){
-		gchar* password_Key_path = NULL;
-		password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
-
-		gconf_client_set_string (account_list->priv->gconf,
-						password_Key_path,
-						eas_account_get_password(account),
-						NULL);
-		g_free (password_Key_path);
-		password_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_PASSWORD, eas_account_get_password(account));
 	}
 
 	if (eas_account_get_protocol_version(account)){
-		gchar* protover_Key_path = NULL;
-		protover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
-
-		gconf_client_set_int (account_list->priv->gconf,
-				      protover_Key_path,
-				      eas_account_get_protocol_version(account),
-				      NULL);
-		g_free (protover_Key_path);
-		protover_Key_path = NULL;
+		g_settings_set_int (setting, EAS_ACCOUNT_KEY_PROTOCOL_VERSION, eas_account_get_protocol_version(account));
 	}
+
 	if (eas_account_get_device_id(account)){
-		gchar* devover_Key_path = NULL;
-		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-
-		gconf_client_set_string (account_list->priv->gconf,
-					  devover_Key_path,
-					  eas_account_get_device_id(account),
-					  NULL);
-		g_free (devover_Key_path);
-		devover_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_DEVICE_ID, eas_account_get_device_id(account));
 	}
+
+	g_debug("Sync now\n");
+
+	g_settings_sync ();
+	g_object_unref(setting);
 
 	g_debug("eas_account_list_save_account--");
 }
@@ -627,103 +530,51 @@ eas_account_list_save_account_from_info(EasAccountList *account_list,
 	
 	uid = acc_info->uid;
 
+	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+
+		g_debug("Path is %s\n", account_address);
+		
+	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		
+	g_free (account_address);
+	account_address = NULL;
+
 	if (acc_info->serverUri){
-		gchar* serveruri_Key_path = NULL;
-		serveruri_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
-		
-		gconf_client_set_string (account_list->priv->gconf,
-								serveruri_Key_path,
-								acc_info->serverUri,
-								NULL);
-		
-		g_free(serveruri_Key_path);
-		serveruri_Key_path = NULL;		
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_SERVERURI, acc_info->serverUri);
 	}
 
 	if (acc_info->username){
-		gchar* username_Key_path = NULL;
-		username_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
-		
-		gconf_client_set_string (account_list->priv->gconf,
-						username_Key_path,
-						acc_info->username,
-						NULL);
-		g_free(username_Key_path);
-		username_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_USERNAME, acc_info->username);
 	}
 
 	if (acc_info->policy_key){
-		gchar* policy_key_Key_path = NULL;
-		policy_key_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-		gconf_client_set_string (account_list->priv->gconf,
-								policy_key_Key_path,
-								acc_info->policy_key,
-									NULL);
-		g_free(policy_key_Key_path);
-		policy_key_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_POLICY_KEY, acc_info->policy_key);
 	}
 
 	if (acc_info->contact_folder){
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								acc_info->contact_folder,
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CONTACT_FOLDER, acc_info->contact_folder);
 	}
 
 	if (acc_info->calendar_folder){
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								acc_info->calendar_folder,
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CALENDAR_FOLDER, acc_info->calendar_folder);
 	}
 
 	if (acc_info->password){
-		gchar* password_Key_path = NULL;
-		password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
-
-		gconf_client_set_string (account_list->priv->gconf,
-						password_Key_path,
-						acc_info->password,
-						NULL);
-		g_free (password_Key_path);
-		password_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_PASSWORD, acc_info->password);
 	}
 
 	if (acc_info->protocol_version){
-		gchar* protover_Key_path = NULL;
-		protover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
-
-		gconf_client_set_int (account_list->priv->gconf,
-				      protover_Key_path,
-				      acc_info->protocol_version,
-				      NULL);
-		g_free (protover_Key_path);
-		protover_Key_path = NULL;
+		g_settings_set_int (setting, EAS_ACCOUNT_KEY_PROTOCOL_VERSION, acc_info->protocol_version);
 	}
 
 	if (acc_info->device_id){
-		gchar* devover_Key_path = NULL;
-		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-
-		gconf_client_set_string (account_list->priv->gconf,
-						devover_Key_path,
-						acc_info->device_id,
-						NULL);
-		g_free (devover_Key_path);
-		devover_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_DEVICE_ID, acc_info->device_id);
 	}
+
+	g_debug("Sync now\n");
+
+	g_settings_sync ();
+	g_object_unref(setting);
 	
 	
 	g_debug("eas_account_list_save_account--");
@@ -734,7 +585,7 @@ eas_account_list_save_account_from_info(EasAccountList *account_list,
  * eas_account_list_save:
  * @account_list: an #EasAccountList
  *
- * Saves @account_list to GConf. Signals will be emitted for changes.
+ * Saves @account_list to GSettings. Signals will be emitted for changes.
  **/
 
 void
@@ -776,8 +627,6 @@ eas_account_list_save_list (EasAccountList *account_list)
 		list = g_slist_remove (list, list->data);
 	}
 
-	gconf_client_suggest_sync (account_list->priv->gconf, NULL);
-
 	g_debug("eas_account_list_save--");
 }
 
@@ -793,133 +642,63 @@ eas_account_list_save_item(EasAccountList *account_list,
 
 	uid = eas_account_get_uid(account);
 	
+	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+
+		g_debug("Path is %s\n", account_address);
+		
+	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		
+	g_free (account_address);
+	account_address = NULL;
+
 	switch (type) {
 	case EAS_ACCOUNT_SERVER_URI:
 		{
-		gchar* serveruri_Key_path = NULL;
-		serveruri_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVERURI);
-		gconf_client_set_string (account_list->priv->gconf,
-								serveruri_Key_path,
-								eas_account_get_uri(account),
-								NULL);
-		
-		g_free(serveruri_Key_path);
-		serveruri_Key_path = NULL;		
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_SERVERURI, eas_account_get_uri(account));
 		}
 		break;
 	case EAS_ACCOUNT_USERNAME:
 		{
-		gchar* username_Key_path = NULL;
-		username_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_USERNAME);
-		gconf_client_set_string (account_list->priv->gconf,
-								username_Key_path,
-								eas_account_get_username(account),
-								NULL);
-		g_free(username_Key_path);
-		username_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_USERNAME, eas_account_get_username(account));
 		}
 		break;
 	case EAS_ACCOUNT_POLICY_KEY:
 		{
-		gchar* policy_key_Key_path = NULL;
-		policy_key_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_POLICY_KEY);
-		gconf_client_set_string (account_list->priv->gconf,
-								policy_key_Key_path,
-								eas_account_get_policy_key(account),
-									NULL);
-		g_free(policy_key_Key_path);
-		policy_key_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_POLICY_KEY, eas_account_get_policy_key(account));
 		}
 		break;
 	case EAS_ACCOUNT_CALENDAR_FOLDER:
 		{
-		gchar* calendar_folder_Key_path = NULL;
-		calendar_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CALENDAR_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								calendar_folder_Key_path,
-								eas_account_get_calendar_folder(account),
-									NULL);
-		g_free(calendar_folder_Key_path);
-		calendar_folder_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CALENDAR_FOLDER, eas_account_get_calendar_folder(account));
 		}
 		break;
 	case EAS_ACCOUNT_CONTACT_FOLDER:
 		{
-		gchar* contact_folder_Key_path = NULL;
-		contact_folder_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_CONTACT_FOLDER);
-		gconf_client_set_string (account_list->priv->gconf,
-								contact_folder_Key_path,
-								eas_account_get_contact_folder(account),
-									NULL);
-		g_free(contact_folder_Key_path);
-		contact_folder_Key_path = NULL;
-
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_CONTACT_FOLDER, eas_account_get_contact_folder(account));
 		}
 		break;
 	case EAS_ACCOUNT_PASSWORD:
 		{
-		gchar* password_Key_path = NULL;
-		password_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PASSWORD);
-		gconf_client_set_string (account_list->priv->gconf,
-								password_Key_path,
-								eas_account_get_password(account),
-								NULL);
-
-		g_free (password_Key_path);
-		password_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_PASSWORD, eas_account_get_password(account));
 		}
 		break;
 	case EAS_ACCOUNT_PROTOCOL_VERSION:
 		{
-		gchar* protover_Key_path = NULL;
-		protover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_PROTOCOL_VERSION);
-		gconf_client_set_int (account_list->priv->gconf,
-				      protover_Key_path,
-				      eas_account_get_protocol_version(account),
-				      NULL);
-		g_free(protover_Key_path);
-		protover_Key_path = NULL;
-
+		g_settings_set_int (setting, EAS_ACCOUNT_KEY_PROTOCOL_VERSION, eas_account_get_protocol_version(account));
 		}
 		break;
 	case EAS_ACCOUNT_DEVICE_ID:
 		{
-		gchar* devover_Key_path = NULL;
-		devover_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_DEVICE_ID);
-		gconf_client_set_string (account_list->priv->gconf,
-								devover_Key_path,
-								eas_account_get_device_id(account),
-								NULL);
-
-		g_free (devover_Key_path);
-		devover_Key_path = NULL;
+		g_settings_set_string (setting, EAS_ACCOUNT_KEY_DEVICE_ID, eas_account_get_device_id(account));
 		}
 		break;
 	case EAS_ACCOUNT_SERVER_PROTOCOLS:
 		{
-		gboolean ret;
-
-		gchar* server_protocols_Key_path = NULL;
-		g_debug("EAS_ACCOUNT_SERVER_PROTOCOLS");
-		server_protocols_Key_path = get_key_absolute_path(uid, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS);
-		ret = gconf_client_set_list (account_list->priv->gconf,
-								server_protocols_Key_path,
-								GCONF_VALUE_INT,
-								eas_account_get_server_protocols(account),
-								NULL);
-		if(!ret){
-			g_warning("Failed to set server protocol list");
-		}
-				
-		g_free (server_protocols_Key_path);
-		server_protocols_Key_path = NULL;			
+		//TODO set server protocols in setting 
 		}
 		break;
 	default:
-		g_warning("GConf item Type ( %d ) is not supported", type);
+		g_warning("GSettings item Type ( %d ) is not supported", type);
 		break;
 	}
 

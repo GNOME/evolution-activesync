@@ -13,7 +13,7 @@ libeas_la_CPPFLAGS =			\
 		$(SOUP_CFLAGS)		\
 		$(WBXML_CFLAGS)		\
 		$(LIBICAL_CFLAGS)	\
-		$(GCONF_CFLAGS)		\
+		$(GIO_CFLAGS)		\
 		$(LIBEBOOK_CFLAGS)	\
 		$(GNOMEKEYRING_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeas\" \
@@ -28,9 +28,9 @@ libeas_la_LDFLAGS =			\
 		$(LIBXML_LIBS)		\
 		$(SOUP_LIBS)		\
 		$(WBXML_LIBS)		\
-		$(LIBICAL_LIBS)     \
-		$(GCONF_LIBS) \
-		$(LIBEBOOK_LIBS)     \
+		$(LIBICAL_LIBS)    	\
+		$(GIO_LIBS)		\
+		$(LIBEBOOK_LIBS)	\
 		$(GNOMEKEYRING_LIBS)	\
 		$(NULL)
 

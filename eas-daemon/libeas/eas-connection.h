@@ -121,12 +121,13 @@ eas_connection_autodiscover (const gchar* email,
                              DBusGMethodInvocation* context);
 
 /**
- * Searches for an existing open connection for the GConf account details
+ * Searches for an existing open connection for the GSettings account details
  * identified by the accountId, or creates a new connection if the account
  * details are valid but no existing connection exists.
  *
  * @param[in] accountId
- *	  Unique account identifier that maps on to a set of GConf account details.
+ *	  Unique account identifier that maps on to a set of GSettings account
+ *  details.
  *
  * @return NULL or EasConnection GObject corresponding to the accountId.
  */
@@ -134,10 +135,10 @@ EasConnection* eas_connection_find (const gchar* accountId);
 
 /**
  * Create a new connection using the details supplied in the EasAccount object.
- * Note: The users details must be present in GConf.
+ * Note: The users details must be present in GSettings.
  *
  * @param[in] account
- *	  GObject containing the account details of a GConf account.
+ *	  GObject containing the account details of a GSettings account.
  * @param[out] error
  *	  GError may be NULL if the caller wishes to ignore error details, otherwise
  *	  will be populated with error details if the function returns NULL. Caller
@@ -260,7 +261,7 @@ gboolean eas_connection_cancel_request(EasConnection* self,
 
 /**
  * Get a list of activesync protocols supported by the exchange server
- * and store them in GConf
+ * and store them in GSettings 
  *
  * @param[in]   cnc
  *		instance of EasConnection

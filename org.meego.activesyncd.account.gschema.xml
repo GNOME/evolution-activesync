@@ -1,0 +1,31 @@
+<schemalist>
+	<schema id="org.meego.activesyncd.account">
+		<key name='username' type='s'>
+			<default>''</default>
+		</key>
+		<key name='serveruri' type='s'>
+			<default>''</default>
+		</key>
+		<key name='policy-key' type='s'>
+			<default>''</default>
+		</key>
+		<key name='calendar-folder' type='s'>
+			<default>''</default>
+		</key>
+		<key name='contact-folder' type='s'>
+			<default>''</default>
+		</key>
+		<key name='password' type='s'>
+			<default>''</default>
+		</key>
+		<key name='protocol-version' type='i'>
+			<default>0</default>
+		</key>
+		<key name='device-id' type='s'>
+			<default>''</default>
+		</key>
+		<key name='server-protocols' type='as'>
+			<default>[]</default>
+		</key>
+	</schema>
+</schemalist>

@@ -62,7 +62,7 @@ PKG_CHECK_MODULES(WBXML, libwbxml2 >= 0.11)
 PKG_CHECK_MODULES(LIBICAL, libical)
 PKG_CHECK_MODULES(LIBEBOOK, libebook-1.2)
 PKG_CHECK_MODULES(LIBEBACKEND, libebackend-1.2)
-PKG_CHECK_MODULES(GCONF, gconf-2.0)
+PKG_CHECK_MODULES(GIO, gio-2.0)
 PKG_CHECK_MODULES(LIBEMAIL_ENGINE, libemail-engine)
 
 EVO_PKG="-3.0"
@@ -70,7 +70,6 @@ CAMEL_PKG="camel-1.2"
 
 PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG})
 
-PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-plugin${EVO_PKG}, [have_e_plugin=yes], [have_eplugin=no])
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
 
@@ -121,6 +120,7 @@ AC_SUBST(ASKPASS)
 MEEGO_UI_DIR=meego/meego-ux-settings-activesync
 AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
+GLIB_GSETTINGS
 
 AC_ARG_ENABLE(qtconfig,
               AS_HELP_STRING([--disable-qtconfig],
@@ -142,14 +142,6 @@ AC_ARG_ENABLE(camel-backend,
               [enable_camel="$enableval"], [enable_camel="yes"])
 AM_CONDITIONAL([ENABLE_CAMEL_BACKEND], [test "$enable_camel" = "yes"])
 
-AC_ARG_ENABLE(eplugin,
-              AS_HELP_STRING([--disable-eplugin],
-                             [Can be used to disable compiling the Evolution config plugin. Enabled by default.]),
-              [enable_eplugin="$enableval"
-               test "$enable_eplugin" = "no" || test "$have_e_plugin" = "yes" || AC_MSG_ERROR([evolution-plugin${EVO_PKG} not available, cannot enable eplugin])],
-              [enable_eplugin="$have_e_plugin"])
-AM_CONDITIONAL([ENABLE_EPLUGIN], [test "$enable_eplugin" = "yes"])
-
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 AC_CONFIG_FILES([
@@ -159,7 +151,6 @@ AC_CONFIG_FILES([
     eas-daemon/data/org.meego.activesyncd.service
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
-    eplugin/Makefile
     collection/Makefile
     configuration/Makefile
     libeastest/src/Makefile
