@@ -1,5 +1,8 @@
 /*
  * e-eas-backend-factory.c
+ * The collection backend runs in the registry service. It's just a necessary
+ * procedure. You don't have to change it unless you really have things to do
+ * during the registry.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -70,6 +73,7 @@ eas_backend_factory_prepare_mail (ECollectionBackendFactory *factory,
 		mail_identity_source,
 		mail_transport_source);
 
+	/* Do our own job here. */
 	eas_backend_prepare_mail_account_source (mail_account_source);
 	eas_backend_prepare_mail_transport_source (mail_transport_source);
 }

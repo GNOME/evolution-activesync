@@ -12,8 +12,27 @@ read -r -p "Enter server URL: " SERVERURL
 # Should test the connectivity here.
 
 # Would be nice if it were like this...
-gconftool-2 --set --type=string /apps/activesyncd/accounts/$EMAILADDR/username "$ASUSERNAME"
-gconftool-2 --set --type=string /apps/activesyncd/accounts/$EMAILADDR/serverUri "$SERVERURL"
+# Not usable untill we can finish the account listener bug
+:||{
+match=0
+for account in `gsettings get org.meego.activesyncd accounts`
+do
+	account=${account%[\']*}
+	account=${account#*[\']}
+	if [ "$account" = "$EMAILADDR" ] 
+	then
+		match=1
+	fi	
+done
+
+if [ "$match" -eq "0" ]
+then
+	gsettings set org.meego.activesyncd accounts "`gsettings get org.meego.activesyncd accounts | sed s/]//`, '$EMAILADDR']"
+fi
+
+gsettings set org.meego.activesyncd.account:/org/meego/activesyncd/account/$EMAILADDR/ username "$ASUSERNAME"
+gsettings set org.meego.activesyncd.account:/org/meego/activesyncd/account/$EMAILADDR/ serveruri "$SERVERURL"
+}
 
 # Add Evolution account in /apps/evolution/mail/accounts with URL
 # eas:///account_uid=$EMAILADDR;check_all

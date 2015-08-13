@@ -34,18 +34,18 @@
 #endif
 
 #include "eas-account.h"
-#include <gconf/gconf-client.h>
+#include <gio/gio.h>
 
 #define EAS_ACCOUNT_ROOT			"/apps/activesyncd/accounts"
-#define EAS_ACCOUNT_KEY_SERVERURI	"/serverUri"
-#define EAS_ACCOUNT_KEY_USERNAME	"/username"
-#define EAS_ACCOUNT_KEY_POLICY_KEY	"/policy_key"
-#define EAS_ACCOUNT_KEY_CONTACT_FOLDER	"/contact_folder"
-#define EAS_ACCOUNT_KEY_CALENDAR_FOLDER	"/calendar_folder"
-#define EAS_ACCOUNT_KEY_PASSWORD	"/password"
-#define EAS_ACCOUNT_KEY_DEVICE_ID	"/device_id"
-#define EAS_ACCOUNT_KEY_PROTOCOL_VERSION "/protocol_version"
-#define EAS_ACCOUNT_KEY_SERVER_PROTOCOLS "/server_protocols"
+#define EAS_ACCOUNT_KEY_SERVERURI	"serveruri"
+#define EAS_ACCOUNT_KEY_USERNAME	"username"
+#define EAS_ACCOUNT_KEY_POLICY_KEY	"policy-key"
+#define EAS_ACCOUNT_KEY_CONTACT_FOLDER	"contact-folder"
+#define EAS_ACCOUNT_KEY_CALENDAR_FOLDER	"calendar-folder"
+#define EAS_ACCOUNT_KEY_PASSWORD	"password"
+#define EAS_ACCOUNT_KEY_DEVICE_ID	"device-id"
+#define EAS_ACCOUNT_KEY_PROTOCOL_VERSION "protocol-version"
+#define EAS_ACCOUNT_KEY_SERVER_PROTOCOLS "server-protocols"
 
 /* Standard GObject macros */
 #define EAS_TYPE_ACCOUNT_LIST \
@@ -107,9 +107,9 @@ struct _EasAccountListClass {
 };
 
 GType		eas_account_list_get_type		(void) G_GNUC_CONST;
-EasAccountList *	eas_account_list_new		(GConfClient *client);
+EasAccountList *	eas_account_list_new		(GSettings *setting);
 void		eas_account_list_construct	(EasAccountList *account_list,
-						 GConfClient *client);
+						 GSettings *setting);
 void		eas_account_list_save_list		(EasAccountList *account_list);
 
 void		eas_account_list_add		(EasAccountList *account_list,

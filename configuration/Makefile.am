@@ -8,7 +8,7 @@ module_eas_mail_config_la_CPPFLAGS = \
 	$(EVOLUTION_MAIL_CFLAGS) \
 	$(LIBEDATASERVER_CFLAGS) \
 	$(LIBEBACKEND_CFLAGS) \
-	$(GCONF_CFLAGS) \
+	$(GIO_CFLAGS) \
 	$(NULL)
 
 module_eas_mail_config_la_SOURCES = \
@@ -22,7 +22,7 @@ module_eas_mail_config_la_LIBADD = \
 	$(EVOLUTION_MAIL_LIBS) \
 	$(LIBEDATASERVER_LIBS) \
 	$(LIBEBACKEND_LIBS) \
-	$(GCONF_LIBS) \
+	$(GIO_LIBS) \
 	$(NULL)
 
 module_eas_mail_config_la_LDFLAGS = \

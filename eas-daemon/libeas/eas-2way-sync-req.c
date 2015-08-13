@@ -234,7 +234,7 @@ eas_2way_sync_req_Activate (Eas2WaySyncReq *self,
 
 	// if Folder Id is not set, then for contacts, we get a default,
 	// if the default has not been set yet, then call sync folder hierarchy,
-	// which will write them to gconf
+	// which will write them to GSettings 
 	if (priv->folderID == NULL) {
 		EasAccount *acc = eas_connection_get_account (eas_request_base_GetConnection (EAS_REQUEST_BASE (self)));
 
@@ -402,10 +402,10 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 		priv->state = Eas2WaySyncReqStep2;
 		if (!priv->folderID) {
 			if (priv->ItemType == EAS_ITEM_CALENDAR) {
-				// cannot get from gconf - as the update takes too long - get from sync msg response
+				// cannot get from GSettings - as the update takes too long - get from sync msg response
 				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_cal_folder (priv->syncFolderMsg));
 			} else {
-				// cannot get from gconf - as the update takes too long - get from sync msg response
+				// cannot get from GSettings - as the update takes too long - get from sync msg response
 				priv->folderID = g_strdup (eas_sync_folder_msg_get_def_con_folder (priv->syncFolderMsg));
 			}
 		}

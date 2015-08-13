@@ -1,5 +1,6 @@
 /*
  * module-eas-mail-config.c
+ * The modules loading work.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +28,7 @@
 void e_module_load (GTypeModule *type_module);
 void e_module_unload (GTypeModule *type_module);
 
+/* Load our modules here. */
 G_MODULE_EXPORT void
 e_module_load (GTypeModule *type_module)
 {

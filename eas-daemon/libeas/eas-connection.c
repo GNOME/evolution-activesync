@@ -70,6 +70,7 @@
 #include <unistd.h>
 #include <gnome-keyring.h>
 #include <glib/gi18n-lib.h>
+#include <gio/gio.h>
 
 #include <sys/stat.h>
 
@@ -145,7 +146,7 @@ struct _EasNode {
 
 static GMutex connection_list;
 static GHashTable *g_open_connections = NULL;
-static GConfClient* g_gconf_client = NULL;
+static GSettings *g_gsetting = NULL;
 static EasAccountList* g_account_list = NULL;
 static GSList* g_mock_response_list = NULL;
 static GArray *g_mock_status_codes = NULL;
@@ -174,46 +175,39 @@ static void
 eas_connection_accounts_init()
 {
 	g_debug ("eas_connection_accounts_init++");
-
-	if (!g_gconf_client) {
-		// At this point we don't have an account Id so just load the list of accounts
-		g_gconf_client = gconf_client_get_default();
-		if (g_gconf_client == NULL) {
-			g_critical ("Error Failed to create GConfClient");
+	if (!g_gsetting) {
+		g_gsetting = g_settings_new("org.meego.activesyncd");
+		if (g_gsetting == NULL) {
+			g_critical ("Error Failed to create GSettings");
 			return;
 		}
-		g_debug ("-->created gconf_client");
+		g_debug ("-->created gsetting");
 
-		g_account_list = eas_account_list_new (g_gconf_client);
+		g_account_list = eas_account_list_new (g_gsetting);
 		if (g_account_list == NULL) {
-			g_critical ("Error Failed to create account list ");
+			g_critical ("Error Failed to create account list");
 			return;
 		}
 		g_debug ("-->created account_list");
 
-		// Find the DeviceType and DeviceId from GConf, or create them
-		// if they don't already exist
-		device_type = gconf_client_get_string (g_gconf_client,
-						       "/apps/activesyncd/device_type",
-						       NULL);
-		if (!device_type) {
-			device_type = g_strdup ("MeeGo");
-			gconf_client_set_string (g_gconf_client,
-						 "/apps/activesyncd/device_type",
-						 device_type, NULL);
+		device_type = g_settings_get_string (g_gsetting, "device-type");
+		if (!device_type || !device_type[0]) {
+			device_type = strdup ("MeeGo");
+			g_settings_set_string (g_gsetting, "device-type", device_type);
 		}
 
-		device_id = gconf_client_get_string (g_gconf_client,
-						     "/apps/activesyncd/device_id",
-						     NULL);
-		if (!device_id) {
+		device_id = g_settings_get_string (g_gsetting, "device-id");
+		if (!device_id || !device_id[0]) {
 			device_id = g_strdup_printf ("%08x%08x%08x%08x",
 						     g_random_int(), g_random_int(),
 						     g_random_int(), g_random_int());
-			gconf_client_set_string (g_gconf_client,
-						 "/apps/activesyncd/device_id",
-						 device_id, NULL);
+			g_settings_set_string (g_gsetting, "device-id", device_id);
 		}
+
+		g_debug("Sync now\n");
+
+		g_settings_sync ();
+
 		g_debug ("device type %s, device id %s", device_type, device_id);
 	}
 	g_debug ("eas_connection_accounts_init--");
@@ -580,14 +574,17 @@ connection_authenticate (SoupSession *sess,
 
 	g_debug ("  eas_connection - connection_authenticate++");
 
-	// @@FIX ME - Temporary grab of password from GConf
+	// @@FIX ME - Temporary grab of password from GSettings 
 
 	password = eas_account_get_password (cnc->priv->account);
-	if (password) {
-		g_warning ("Found password in GConf, writing it to Gnome Keyring");
+
+	g_debug("Password = \'%s\'", password);
+
+	if (password && password[0]) {
+		g_warning ("Found password in GSettings, writing it to Gnome Keyring");
 
 		if (GNOME_KEYRING_RESULT_OK != writePasswordToKeyring (password, username, serverUri)) {
-			g_warning ("Failed to store GConf password in Gnome Keyring");
+			g_warning ("Failed to store GSettings password in Gnome Keyring");
 		}
 	}
 	
@@ -1061,7 +1058,7 @@ eas_connection_send_request (EasConnection* self,
 	}
 
 	fake_device_id = eas_account_get_device_id (priv->account);
-	if (fake_device_id) {
+	if (fake_device_id && fake_device_id[0]) {
 		g_debug ("using fake_device_id");
 		uri = g_strconcat (eas_account_get_uri (priv->account),
 				   "?Cmd=", cmd,
@@ -1080,6 +1077,8 @@ eas_connection_send_request (EasConnection* self,
 				   NULL);
 	}
 
+//TODO: Remove this g_debug
+	g_debug ("The uri of soup_message_new is %s.", uri);
 	msg = soup_message_new ("POST", uri);
 	g_free (uri);
 	if (!msg) {
@@ -2522,7 +2521,7 @@ handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	
 	g_debug("handle_options_response++");
 	
-	// parse response store the list in GConf (via EasAccount)
+	// parse response store the list in GSettings (via EasAccount)
 	if (HTTP_STATUS_OK != msg->status_code) {
 		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
 	}	
@@ -2532,7 +2531,7 @@ handle_options_response (SoupSession *session, SoupMessage *msg, gpointer data)
 
 	g_debug("server supports protocols %s", protocol_versions);
 
-	// write the list to GConf using new EasAccount API
+	// write the list to GSettings using new EasAccount API
 	eas_account_set_server_protocols(acc, protocol_versions);
 
 	eas_account_list_save_item (g_account_list,
@@ -2558,7 +2557,7 @@ options_connection_authenticate (SoupSession *sess,
 
 	g_debug ("options_connection_authenticate++");
 
-	// @@FIX ME - Temporary grab of password from GConf
+	// @@FIX ME - Temporary grab of password from GSettings
 	password = eas_account_get_password (cnc->priv->account);
 
 	soup_auth_authenticate (auth,
@@ -2579,7 +2578,7 @@ options_connection_authenticate (SoupSession *sess,
  the same thread that the gnome keyring stuff uses the idle loop of.
  
  use the HTTP OPTIONS command to ask server for a list of protocols
- store results in GConf 
+ store results in GSettings 
  */
 gboolean 
 eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
@@ -2625,7 +2624,7 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	g_debug("send options message");
 	soup_session_send_message(soup_session, msg);
 
-	// parse response store the list in GConf (via EasAccount)
+	// parse response store the list in GSettings (via EasAccount)
 	if (HTTP_STATUS_OK != msg->status_code) {
 		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
 		g_set_error (error,
@@ -2654,7 +2653,7 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 		proto_vers = g_slist_append(proto_vers, GINT_TO_POINTER (proto_ver_int));
 	}	
 
-	// write the list to GConf using new EasAccount API
+	// write the list to GSettings using new EasAccount API
 	eas_account_set_server_protocols(acc, proto_vers);
 
 	g_slist_free(proto_vers);

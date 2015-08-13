@@ -495,7 +495,7 @@ eas_mail_handler_autodiscover (EasEmailHandler *self,
  *                              the 2 tokens retrieved during a previous call to
  *                              eas_mail_handler_get_provision_list.
  *                              A side effect of this function is that the final
- *                              provisioning ID (PID) is written into GConf for the account.
+ *                              provisioning ID (PID) is written into Gsettings for the account.
  * return value:                TRUE if function success, FALSE if error
  * params:
  * EasEmailHandler* this (in):  	use value returned from eas_mail_hander_new()
