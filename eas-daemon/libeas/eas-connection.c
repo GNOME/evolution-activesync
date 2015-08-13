@@ -2194,6 +2194,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			if (xml)
 				xml = sanitize_utf8 (xml);
 
+			xml_len = strlen((char *)xml);
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
 			}
