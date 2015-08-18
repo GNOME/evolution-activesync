@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ActiveSync account management
  *
  * Copyright © 2011 Intel Corporation.
@@ -551,17 +551,27 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	if (!accountinfo->uid)
 		return FALSE;
 
-	eas_account_set_uid (account, accountinfo->uid);
-	eas_account_set_uri (account, accountinfo->serverUri);
-	eas_account_set_username (account, accountinfo->username);
-	eas_account_set_policy_key (account, accountinfo->policy_key);
-	eas_account_set_calendar_folder(account, accountinfo->calendar_folder);
-	eas_account_set_contact_folder(account, accountinfo->contact_folder);
-	eas_account_set_password (account, accountinfo->password);
-	eas_account_set_device_id (account, accountinfo->device_id);
+	/* GSettings will set void values to '', so we have to check. */
+	if (accountinfo->uid && accountinfo->uid[0])
+		eas_account_set_uid (account, accountinfo->uid);
+	if (accountinfo->serverUri && accountinfo->serverUri[0])
+		eas_account_set_uri (account, accountinfo->serverUri);
+	if (accountinfo->username && accountinfo->username[0])
+		eas_account_set_username (account, accountinfo->username);
+	if (accountinfo->policy_key && accountinfo->policy_key[0])
+		eas_account_set_policy_key (account, accountinfo->policy_key);
+	if (accountinfo->calendar_folder && accountinfo->calendar_folder[0])
+		eas_account_set_calendar_folder(account, accountinfo->calendar_folder);
+	if (accountinfo->contact_folder && accountinfo->contact_folder[0])
+		eas_account_set_contact_folder(account, accountinfo->contact_folder);
+	if (accountinfo->password && accountinfo->password[0])
+		eas_account_set_password (account, accountinfo->password);
+	if (accountinfo->device_id && accountinfo->device_id[0])
+		eas_account_set_device_id (account, accountinfo->device_id);
 	eas_account_set_protocol_version (account, accountinfo->protocol_version);
-	eas_account_set_server_protocols (account, accountinfo->server_protocols);
-	 g_debug("eas_account_set_from_info--");	
+	if (accountinfo->server_protocols && accountinfo->server_protocols[0])
+		eas_account_set_server_protocols (account, accountinfo->server_protocols);
+	g_debug("eas_account_set_from_info--");	
 	return TRUE;
 }
 
