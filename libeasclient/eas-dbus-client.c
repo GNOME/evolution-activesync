@@ -266,7 +266,7 @@ eas_gdbus_call (struct eas_gdbus_client *client, const gchar *object,
 	GVariant *v = NULL;
 	va_list ap;
 	gboolean success;
-	guint cancel_handler_id;
+	guint cancel_handler_id = 0;
 	guint32 serial = 0;
 
 	va_start (ap, error);
