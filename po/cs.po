@@ -1,16 +1,15 @@
 # Czech translation for evolution-activesync.
 # Copyright (C) 2013 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-#
-# Marek Černocký <marek@manet.cz>, 2013.
+# Marek Černocký <marek@manet.cz>, 2013, 2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2013-01-03 13:21+0000\n"
-"PO-Revision-Date: 2013-01-29 14:15+0100\n"
+"POT-Creation-Date: 2015-06-12 11:59+0000\n"
+"PO-Revision-Date: 2015-07-22 15:26+0200\n"
 "Last-Translator: Marek Černocký <marek@manet.cz>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -20,27 +19,27 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Gtranslator 2.91.6\n"
 
-#: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Nelze vytvořit cestu pro mezipaměť"
 
-#: ../camel/camel-eas-folder.c:224
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Selhal přesun souboru s mezipamětí zpráv"
 
-#: ../camel/camel-eas-folder.c:531
+#: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Nelze načíst souhrn pro složku %s"
 
-#: ../camel/camel-eas-folder.c:756
+#: ../camel/camel-eas-folder.c:733
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Zápis zprávy do úložiště zpráv není v ActiveSync možný"
 
-#: ../camel/camel-eas-folder.c:772
+#: ../camel/camel-eas-folder.c:748
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Přesun zpráv není zatím implementován"
@@ -93,213 +92,223 @@ msgstr ""
 "S toto volbou se k serveru ActiveSync připojí pomocí hesla v podobě prostého "
 "textu."
 
-#: ../camel/camel-eas-store.c:184
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "Sezení nemá cestu k úložišti"
 
-#: ../camel/camel-eas-store.c:242
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "Služba EAS nemá žádné UID účtu"
 
-#: ../camel/camel-eas-store.c:339
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "Taková složka neexistuje: %s"
 
-#: ../camel/camel-eas-store.c:458
+#: ../camel/camel-eas-store.c:370
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "S pomocí ActiveSync není možné vytvářet složky"
 
-#: ../camel/camel-eas-store.c:469
+#: ../camel/camel-eas-store.c:381
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "S pomocí ActiveSync není možné mazat složky"
 
-#: ../camel/camel-eas-store.c:482
+#: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "S pomocí ActiveSync není možné přejmenovávat složky"
 
-#: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
-#: ../camel/camel-eas-transport.c:72
+#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Server ActiveSync %s"
 
-#: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
+#: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Služba ActiveSync pro uživatele %s na %s"
 
-#: ../camel/camel-eas-store.c:560
+#: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Aby bylo možné operaci dokončit, musíte pracovat on-line"
 
-#: ../camel/camel-eas-transport.c:75
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "Doručování pošty pomocí ActiveSync přes %s"
 
-#: ../camel/camel-eas-transport.c:121
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Selhalo vytvoření dočasného souboru pro odesílanou zprávu"
 
-#: ../camel/camel-eas-utils.c:611
+#: ../camel/camel-eas-utils.c:555
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "Selhalo volání CreateItem za účelem vrácení ID pro novou zprávu"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
-#, c-format
-msgid "Please enter your ActiveSync password for %s"
-msgstr "Zadejte prosím své heslo ActiveSync pro %s"
+#: ../configuration/e-mail-config-eas-backend.c:159
+msgid "Configuration"
+msgstr "Nastavení"
 
-#: ../eas-daemon/libeas/eas-connection.c:1052
-#, c-format
-msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr "funkce wbxml_conv_xml2wbxml_create vrátila chybu %d"
-
-#: ../eas-daemon/libeas/eas-connection.c:1082
-#, c-format
-msgid "soup_message_new returned NULL"
-msgstr "funkce soup_message_new vrátila NULL"
-
-#: ../eas-daemon/libeas/eas-connection.c:1151
-#, c-format
-msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr "funkce from wbxml_conv_xml2wbxml_run vrátila chybu %d"
-
-#: ../eas-daemon/libeas/eas-connection.c:1281
-#: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:2610
-#, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Požadavek HTTP selhal: %d – %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1316
-#, c-format
-msgid "HTTP response type was not WBXML"
-msgstr "Typ odpovědi HTTP nebyl WBXML"
-
-#: ../eas-daemon/libeas/eas-connection.c:1324
-#, c-format
-msgid "HTTP response type was not MULTIPART"
-msgstr "Typ odpovědi HTTP nebyl MULTIPART"
-
-#: ../eas-daemon/libeas/eas-connection.c:1356
-#, c-format
-msgid "wbxml is NULL!"
-msgstr "wbxml je NULL!"
-
-#: ../eas-daemon/libeas/eas-connection.c:1365
-#, c-format
-msgid "wbxml_len is 0!"
-msgstr "wbxml_len je 0!"
-
-#: ../eas-daemon/libeas/eas-connection.c:1376
-#, c-format
-msgid "Failed to create WBXML to XML converter: %s"
-msgstr "Selhalo vytvoření převodníku WBXML do XML: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1395
-#, c-format
-msgid "Error converting WBXML to XML: %s"
-msgstr "Chyba při převodu WBXML do XML: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1511
-#, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Stavový kód: %d – Odpověď od serveru"
-
-#: ../eas-daemon/libeas/eas-connection.c:1526
-#, c-format
-msgid "Failed to parse autodiscover response XML"
-msgstr "Selhalo zpracování XML odpovědi automatického vyhledání"
-
-#: ../eas-daemon/libeas/eas-connection.c:1535
-#, c-format
-msgid "Failed to find <Autodiscover> element"
-msgstr "Selhalo vyhledání prvku <Autodiscover>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1546
-#, c-format
-msgid "Failed to find <Response> element"
-msgstr "Selhalo vyhledání prvku <Response>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1557
-#, c-format
-msgid "Failed to find <Action> element"
-msgstr "Selhalo vyhledání prvku <Action>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1568
-#, c-format
-msgid "Failed to find <Settings> element"
-msgstr "Selhalo vyhledání prvku <Settings>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1701
-#, c-format
-msgid "Email is mandatory and must be provided"
-msgstr "E-mail je povinný a musí být zadán"
-
-#: ../eas-daemon/libeas/eas-connection.c:1711
-#, c-format
-msgid "Failed to extract domain from email address"
-msgstr "Selhalo vytažení doménové části z e-mailové adresy"
-
-#: ../eas-daemon/libeas/eas-connection.c:1722
-#, c-format
-msgid "Failed create temp account for autodiscover"
-msgstr "Selhalo vytvoření dočasného účtu pro automatické vyhledání"
-
-#: ../eas-daemon/libeas/eas-connection.c:1885
-#, c-format
-msgid "An account must be provided."
-msgstr "Musí být zadán účet."
-
-#: ../eas-daemon/libeas/eas-connection.c:1911
-#, c-format
-msgid "A server url and username must be provided."
-msgstr "Musí být zadána adresa URL serveru a jméno uživatele."
-
-#: ../eas-daemon/libeas/eas-connection.c:1924
-#, c-format
-msgid "Failed to create folder cache directory %s: %s"
-msgstr "Selhalo vytvoření složky %s pro mezipaměť složek: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:2068
-#, c-format
-msgid "request was cancelled by user"
-msgstr "požadavek byl zrušen uživatelem"
-
-#: ../eas-daemon/libeas/eas-connection.c:2197
-#, c-format
-msgid "Failed to parse XML: %s"
-msgstr "Selhalo zpracování XML: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:2482
-#, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Požadavek s ID %d není ve frontě; nelze jej zrušit"
-
+#: ../configuration/e-mail-config-eas-backend.c:178
 #: ../eplugin/activesync-account-setup.c:367
 #: ../eplugin/activesync-account-setup.c:478
 msgid "User_name:"
 msgstr "Jmé_no uživatele:"
 
+#: ../configuration/e-mail-config-eas-backend.c:193
 #: ../eplugin/activesync-account-setup.c:385
 #: ../eplugin/activesync-account-setup.c:496
 msgid "_Server URL:"
 msgstr "Adresa URL _serveru:"
 
+#: ../configuration/e-mail-config-eas-backend.c:208
+msgid "Authentication"
+msgstr "Ověření totožnosti"
+
+#: ../configuration/e-mail-config-eas-backend.c:225
 #: ../eplugin/activesync-account-setup.c:392
 #: ../eplugin/activesync-account-setup.c:504
 msgid "_Auto Detect"
 msgstr "Zjistit _automaticky"
+
+#: ../eas-daemon/libeas/eas-connection.c:486
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Zadejte prosím své heslo ActiveSync pro %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1058
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "funkce wbxml_conv_xml2wbxml_create vrátila chybu %d"
+
+#: ../eas-daemon/libeas/eas-connection.c:1088
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "funkce soup_message_new vrátila NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1163
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "funkce from wbxml_conv_xml2wbxml_run vrátila chybu %d"
+
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:2633
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "Požadavek HTTP selhal: %d – %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1328
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "Typ odpovědi HTTP nebyl WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1336
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "Typ odpovědi HTTP nebyl MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1368
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml je NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1377
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len je 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1388
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Selhalo vytvoření převodníku WBXML do XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1407
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Chyba při převodu WBXML do XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1523
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Stavový kód: %d – Odpověď od serveru"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Selhalo zpracování XML odpovědi automatického vyhledání"
+
+#: ../eas-daemon/libeas/eas-connection.c:1547
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Selhalo vyhledání prvku <Autodiscover>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1558
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Selhalo vyhledání prvku <Response>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1569
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Selhalo vyhledání prvku <Action>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1580
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Selhalo vyhledání prvku <Settings>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1720
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "E-mail je povinný a musí být zadán"
+
+#: ../eas-daemon/libeas/eas-connection.c:1730
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Selhalo vytažení doménové části z e-mailové adresy"
+
+#: ../eas-daemon/libeas/eas-connection.c:1741
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Selhalo vytvoření dočasného účtu pro automatické vyhledání"
+
+#: ../eas-daemon/libeas/eas-connection.c:1908
+#, c-format
+msgid "An account must be provided."
+msgstr "Musí být zadán účet."
+
+#: ../eas-daemon/libeas/eas-connection.c:1934
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Musí být zadána adresa URL serveru a jméno uživatele."
+
+#: ../eas-daemon/libeas/eas-connection.c:1947
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Selhalo vytvoření složky %s pro mezipaměť složek: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2091
+#, c-format
+msgid "request was cancelled by user"
+msgstr "požadavek byl zrušen uživatelem"
+
+#: ../eas-daemon/libeas/eas-connection.c:2220
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Selhalo zpracování XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2505
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "Požadavek s ID %d není ve frontě; nelze jej zrušit"
 
 #: ../eplugin/eas-account-listener.c:177
 msgid "Contacts"

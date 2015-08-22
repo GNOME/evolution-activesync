@@ -2,15 +2,15 @@
 # Copyright (C) 2012 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# Daniel Mustieles <daniel.mustieles@gmail.com>, 2012.
 #
+# Daniel Mustieles <daniel.mustieles@gmail.com>, 2012, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2012-12-03 23:20+0000\n"
-"PO-Revision-Date: 2012-12-05 00:57+0100\n"
+"POT-Creation-Date: 2015-06-12 11:59+0000\n"
+"PO-Revision-Date: 2015-07-13 \n"
 "Last-Translator: Daniel Mustieles <daniel.mustieles@gmail.com>\n"
 "Language-Team: Español; Castellano <gnome-es-list@gnome.org>\n"
 "Language: es\n"
@@ -20,28 +20,28 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Gtranslator 2.91.5\n"
 
-#: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "No se pudo crear la ruta a la caché"
 
-#: ../camel/camel-eas-folder.c:224
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Falló al mover el archivo de caché"
 
-#: ../camel/camel-eas-folder.c:531
+#: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "No se pudo cargar el resumen de %s"
 
-#: ../camel/camel-eas-folder.c:756
+#: ../camel/camel-eas-folder.c:733
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr ""
 "No es posible escribir un mensaje en el almacén de correo en ActiveSync"
 
-#: ../camel/camel-eas-folder.c:772
+#: ../camel/camel-eas-folder.c:748
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Todavía no está implementada la funcionalidad de mover mensajes"
@@ -96,213 +96,223 @@ msgstr ""
 "Esta opción conectará con el servidor ActiveSync usando una contraseña de "
 "texto plano."
 
-#: ../camel/camel-eas-store.c:184
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "La sesión no tiene ruta de almacenamiento"
 
-#: ../camel/camel-eas-store.c:242
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "El servicio EAS no tiene UID de cuenta"
 
-#: ../camel/camel-eas-store.c:339
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "No existe la carpeta: %s"
 
-#: ../camel/camel-eas-store.c:458
+#: ../camel/camel-eas-store.c:370
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "No se pueden crear carpetas con ActiveSync"
 
-#: ../camel/camel-eas-store.c:469
+#: ../camel/camel-eas-store.c:381
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "No se pueden eliminar carpetas con ActiveSync"
 
-#: ../camel/camel-eas-store.c:482
+#: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "No se pueden renombrar carpetas con ActiveSync"
 
-#: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
-#: ../camel/camel-eas-transport.c:72
+#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Servidor ActiveSync %s"
 
-#: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
+#: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Servicio ActiveSync para %s en %s"
 
-#: ../camel/camel-eas-store.c:560
+#: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Para completar esta operación debe estar trabajando conectado a la red"
 
-#: ../camel/camel-eas-transport.c:75
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "Envío de correo ActiveSync vía %s"
 
-#: ../camel/camel-eas-transport.c:121
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Falló al crear el archivo temporal para enviar el mensaje"
 
-#: ../camel/camel-eas-utils.c:611
+#: ../camel/camel-eas-utils.c:555
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "Falló la llamada a CreateItem para devolver el ID de un mensaje nuevo"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
-#, c-format
-msgid "Please enter your ActiveSync password for %s"
-msgstr "Introduzca su contraseña de ActiveSync para %s"
+#: ../configuration/e-mail-config-eas-backend.c:159
+msgid "Configuration"
+msgstr "Configuración"
 
-#: ../eas-daemon/libeas/eas-connection.c:1052
-#, c-format
-msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_create"
-
-#: ../eas-daemon/libeas/eas-connection.c:1082
-#, c-format
-msgid "soup_message_new returned NULL"
-msgstr "soup_message_new devolvió NULL"
-
-#: ../eas-daemon/libeas/eas-connection.c:1151
-#, c-format
-msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_run"
-
-#: ../eas-daemon/libeas/eas-connection.c:1281
-#: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:2610
-#, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Falló la petición HTTP: %d - %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1316
-#, c-format
-msgid "HTTP response type was not WBXML"
-msgstr "La respuesta HTTP no era WBXML"
-
-#: ../eas-daemon/libeas/eas-connection.c:1324
-#, c-format
-msgid "HTTP response type was not MULTIPART"
-msgstr "LA respuesta HTTP no era MULTIPART"
-
-#: ../eas-daemon/libeas/eas-connection.c:1356
-#, c-format
-msgid "wbxml is NULL!"
-msgstr "wbxml es NULL"
-
-#: ../eas-daemon/libeas/eas-connection.c:1365
-#, c-format
-msgid "wbxml_len is 0!"
-msgstr "wbxml_len es 0"
-
-#: ../eas-daemon/libeas/eas-connection.c:1376
-#, c-format
-msgid "Failed to create WBXML to XML converter: %s"
-msgstr "Falló al crear el conversor de WBXML a XML: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1395
-#, c-format
-msgid "Error converting WBXML to XML: %s"
-msgstr "Error al convertir WBXML a XML: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:1511
-#, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Código de estado: %d: respuesta del servidor"
-
-#: ../eas-daemon/libeas/eas-connection.c:1526
-#, c-format
-msgid "Failed to parse autodiscover response XML"
-msgstr "Falló al analizar la respuesta XML de la autodetección"
-
-#: ../eas-daemon/libeas/eas-connection.c:1535
-#, c-format
-msgid "Failed to find <Autodiscover> element"
-msgstr "Falló al buscar el elemento <Autodiscover>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1546
-#, c-format
-msgid "Failed to find <Response> element"
-msgstr "Falló al buscar el elemento <Response>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1557
-#, c-format
-msgid "Failed to find <Action> element"
-msgstr "Falló al buscar el elemento <Action>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1568
-#, c-format
-msgid "Failed to find <Settings> element"
-msgstr "Falló al buscar el elemento <Settings>"
-
-#: ../eas-daemon/libeas/eas-connection.c:1701
-#, c-format
-msgid "Email is mandatory and must be provided"
-msgstr "El correo-e es obligatorio y se debe especificar"
-
-#: ../eas-daemon/libeas/eas-connection.c:1711
-#, c-format
-msgid "Failed to extract domain from email address"
-msgstr "Falló al extraer el dominio de la dirección de correo"
-
-#: ../eas-daemon/libeas/eas-connection.c:1722
-#, c-format
-msgid "Failed create temp account for autodiscover"
-msgstr "Falló al crear la cuenta temporal para la autodetección"
-
-#: ../eas-daemon/libeas/eas-connection.c:1885
-#, c-format
-msgid "An account must be provided."
-msgstr "De debe especificar una cuenta."
-
-#: ../eas-daemon/libeas/eas-connection.c:1911
-#, c-format
-msgid "A server url and username must be provided."
-msgstr "Se deben indicar el URL del servidor y el nombre de usuario"
-
-#: ../eas-daemon/libeas/eas-connection.c:1924
-#, c-format
-msgid "Failed to create folder cache directory %s: %s"
-msgstr "Falló al crear la carpeta de la caché del directorio %s: %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:2068
-#, c-format
-msgid "request was cancelled by user"
-msgstr "el usuario canceló la solicitud"
-
-#: ../eas-daemon/libeas/eas-connection.c:2197
-#, c-format
-msgid "Failed to parse XML: %s"
-msgstr "Falló al analizar el XML %s"
-
-#: ../eas-daemon/libeas/eas-connection.c:2482
-#, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "La solicitud con ID %d no está en la cola; no se puede cancelar"
-
+#: ../configuration/e-mail-config-eas-backend.c:178
 #: ../eplugin/activesync-account-setup.c:367
 #: ../eplugin/activesync-account-setup.c:478
 msgid "User_name:"
 msgstr "_Usuario:"
 
+#: ../configuration/e-mail-config-eas-backend.c:193
 #: ../eplugin/activesync-account-setup.c:385
 #: ../eplugin/activesync-account-setup.c:496
 msgid "_Server URL:"
 msgstr "URL del _servidor:"
 
+#: ../configuration/e-mail-config-eas-backend.c:208
+msgid "Authentication"
+msgstr "Autenticación"
+
+#: ../configuration/e-mail-config-eas-backend.c:225
 #: ../eplugin/activesync-account-setup.c:392
 #: ../eplugin/activesync-account-setup.c:504
 msgid "_Auto Detect"
 msgstr "_Autodetectar"
+
+#: ../eas-daemon/libeas/eas-connection.c:486
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Introduzca su contraseña de ActiveSync para %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1058
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1088
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new devolvió NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1163
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:2633
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "Falló la petición HTTP: %d - %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1328
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "La respuesta HTTP no era WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1336
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "LA respuesta HTTP no era MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1368
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml es NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1377
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len es 0"
+
+#: ../eas-daemon/libeas/eas-connection.c:1388
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Falló al crear el conversor de WBXML a XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1407
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Error al convertir WBXML a XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1523
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Código de estado: %d: respuesta del servidor"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Falló al analizar la respuesta XML de la autodetección"
+
+#: ../eas-daemon/libeas/eas-connection.c:1547
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Falló al buscar el elemento <Autodiscover>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1558
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Falló al buscar el elemento <Response>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1569
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Falló al buscar el elemento <Action>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1580
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Falló al buscar el elemento <Settings>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1720
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "El correo-e es obligatorio y se debe especificar"
+
+#: ../eas-daemon/libeas/eas-connection.c:1730
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Falló al extraer el dominio de la dirección de correo"
+
+#: ../eas-daemon/libeas/eas-connection.c:1741
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Falló al crear la cuenta temporal para la autodetección"
+
+#: ../eas-daemon/libeas/eas-connection.c:1908
+#, c-format
+msgid "An account must be provided."
+msgstr "De debe especificar una cuenta."
+
+#: ../eas-daemon/libeas/eas-connection.c:1934
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Se deben indicar el URL del servidor y el nombre de usuario"
+
+#: ../eas-daemon/libeas/eas-connection.c:1947
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Falló al crear la carpeta de la caché del directorio %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2091
+#, c-format
+msgid "request was cancelled by user"
+msgstr "el usuario canceló la solicitud"
+
+#: ../eas-daemon/libeas/eas-connection.c:2220
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Falló al analizar el XML %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2505
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "La solicitud con ID %d no está en la cola; no se puede cancelar"
 
 #: ../eplugin/eas-account-listener.c:177
 msgid "Contacts"

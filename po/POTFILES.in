@@ -6,6 +6,6 @@ camel/camel-eas-provider.c
 camel/camel-eas-store.c
 camel/camel-eas-transport.c
 camel/camel-eas-utils.c
-eas-daemon/libeas/eas-connection.c
+configuration/e-mail-config-eas-backend.c
 eas-daemon/libeas/eas-connection.c
 configuration/e-mail-config-eas-backend.c
