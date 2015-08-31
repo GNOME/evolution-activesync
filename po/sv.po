@@ -8,38 +8,38 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-"
 "activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2014-12-08 05:20+0000\n"
-"PO-Revision-Date: 2014-12-30 10:52+0100\n"
-"Last-Translator: Åke Engelbrektson <eson57@gmail.com>\n"
+"POT-Creation-Date: 2015-08-12 22:05+0000\n"
+"PO-Revision-Date: 2015-08-22 09:10+0100\n"
+"Last-Translator: Josef Andersson <josef.andersson@fripost.org>\n"
 "Language-Team: Swedish <gnome-se-list@gnome.org>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.7.1\n"
-"Language: sv\n"
+"X-Generator: Poedit 1.7.5\n"
 
-#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Kan inte skapa cache-sökväg"
 
-#: ../camel/camel-eas-folder.c:209
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Det gick inte att flytta cache-filen"
 
-#: ../camel/camel-eas-folder.c:509
+#: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Kunde inte läsa in sammanfattning för %s"
 
-#: ../camel/camel-eas-folder.c:727
+#: ../camel/camel-eas-folder.c:733
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr " Det är inte möjligt att skriva till e-postlagringen i ActiveSync"
 
-#: ../camel/camel-eas-folder.c:742
+#: ../camel/camel-eas-folder.c:748
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Funktionen att flytta meddelanden är ännu inte implementerad"
@@ -73,7 +73,6 @@ msgid "Automatically synchroni_ze account locally"
 msgstr "S_ynkronisera automatiskt kontot lokalt"
 
 #: ../camel/camel-eas-provider.c:69
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
@@ -90,57 +89,57 @@ msgid "This option will connect to the ActiveSync server using a plaintext passw
 msgstr ""
 "Detta alternativ ansluter till ActiveSync-servern med ett lösenord i klartext."
 
-#: ../camel/camel-eas-store.c:136
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "Sessionen har ingen lagringssökväg"
 
-#: ../camel/camel-eas-store.c:176
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "EAS-tjänsten har inget konto-UID"
 
-#: ../camel/camel-eas-store.c:264
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "Det finns ingen sådan mapp:  %s"
 
-#: ../camel/camel-eas-store.c:369
+#: ../camel/camel-eas-store.c:370
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Det är inte möjligt att skapa mappen med ActiveSync"
 
-#: ../camel/camel-eas-store.c:380
+#: ../camel/camel-eas-store.c:381
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Det är inte möjligt att ta bort mappen med ActiveSync"
 
-#: ../camel/camel-eas-store.c:393
+#: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Det är inte möjligt att byta namn på mappen med ActiveSync"
 
-#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
+#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync-server %s"
 
-#: ../camel/camel-eas-store.c:412
+#: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "ActiveSync-tjänst för %s på %s"
 
-#: ../camel/camel-eas-store.c:454
+#: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Du måste vara ansluten för att slutföra denna åtgärd"
 
-#: ../camel/camel-eas-transport.c:68
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "ActiveSync e-postleverans via %s"
 
-#: ../camel/camel-eas-transport.c:108
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Kunde inte skapa temporär fil för att skicka meddelandet"
@@ -150,161 +149,164 @@ msgstr "Kunde inte skapa temporär fil för att skicka meddelandet"
 msgid "CreateItem call failed to return ID for new message"
 msgstr "CreateItem-anrop kunde inte returnera ID för nytt meddelande"
 
-#: ../eas-daemon/libeas/eas-connection.c:486
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:165
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: ../configuration/e-mail-config-eas-backend.c:184
+msgid "User_name:"
+msgstr "Användar_namn:"
+
+#: ../configuration/e-mail-config-eas-backend.c:199
+msgid "_Server URL:"
+msgstr "_Server-URL:"
+
+#: ../configuration/e-mail-config-eas-backend.c:214
+msgid "Authentication"
+msgstr "Autentisering"
+
+#: ../configuration/e-mail-config-eas-backend.c:231
+msgid "_Auto Detect"
+msgstr "_Upptäck automatiskt"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Ange ditt ActiveSync-lösenord för %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1058
+#: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "Fel %d returnerades från wbxml_conv_xml2wbxml_create"
 
-#: ../eas-daemon/libeas/eas-connection.c:1088
+#: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new returnerade NULL"
 
-#: ../eas-daemon/libeas/eas-connection.c:1163
+#: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "Fel %d returnerades från wbxml_conv_xml2wbxml_run"
 
-#: ../eas-daemon/libeas/eas-connection.c:1293
-#: ../eas-daemon/libeas/eas-connection.c:1304
-#: ../eas-daemon/libeas/eas-connection.c:2633
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2632
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "HTTP-förfrågan misslyckades: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1328
+#: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "HTTP-svarstyp var inte WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1336
+#: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "HTTP-svarstyp var inte MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1368
+#: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml är NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1377
+#: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len är 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1388
+#: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Kunde inte skapa WBXML- till XML-konverterare: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1407
+#: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Fel vid konvertering av WBXML till XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1523
+#: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
 msgstr "Statuskod: %d - Serversvar"
 
-#: ../eas-daemon/libeas/eas-connection.c:1538
+#: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Kunde inte tolka automatisk upptäckt av svars-XML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1547
+#: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Kunde inte hitta <Autodiscover>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1558
+#: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Kunde inte hitta <Response>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1569
+#: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Kunde inte hitta <Action>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1580
+#: ../eas-daemon/libeas/eas-connection.c:1579
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Kunde inte hitta <Settings>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1720
+#: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "E-post är obligatoriskt och måste anges"
 
-#: ../eas-daemon/libeas/eas-connection.c:1730
+#: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Kunde inte extrahera domännamnet från e-postadressen"
 
-#: ../eas-daemon/libeas/eas-connection.c:1741
+#: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Kunde inte skapa temporärt konto för automatisk upptäckt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1908
+#: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
 msgstr "Ett konto måste anges."
 
-#: ../eas-daemon/libeas/eas-connection.c:1934
+#: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "En serveradress och användarnamn måste anges."
 
-#: ../eas-daemon/libeas/eas-connection.c:1947
+#: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Kunde inte skapa cache-mapp %s: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2091
+#: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "Förfrågan avbröts av användaren"
 
-#: ../eas-daemon/libeas/eas-connection.c:2220
+#: ../eas-daemon/libeas/eas-connection.c:2219
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Kunde inte tolka XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2505
+#: ../eas-daemon/libeas/eas-connection.c:2504
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Förfrågan med ID %d finns inte i kön. Kan inte avbryta"
 
-#: ../eplugin/activesync-account-setup.c:367
-#: ../eplugin/activesync-account-setup.c:478
-msgid "User_name:"
-msgstr "Användar_namn:"
+#~ msgid "Contacts"
+#~ msgstr "Kontakter"
 
-#: ../eplugin/activesync-account-setup.c:385
-#: ../eplugin/activesync-account-setup.c:496
-msgid "_Server URL:"
-msgstr "_Server-URL:"
+#~ msgid "Calendar"
+#~ msgstr "Kalender"
 
-#: ../eplugin/activesync-account-setup.c:392
-#: ../eplugin/activesync-account-setup.c:504
-msgid "_Auto Detect"
-msgstr "_Upptäck automatiskt"
-
-#: ../eplugin/eas-account-listener.c:177
-msgid "Contacts"
-msgstr "Kontakter"
-
-#: ../eplugin/eas-account-listener.c:207
-msgid "Calendar"
-msgstr "Kalender"
-
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-msgid "ActiveSync plugin for Evolution."
-msgstr "ActiveSync-instick för Evolution."
+#~ msgid "ActiveSync plugin for Evolution."
+#~ msgstr "ActiveSync-instick för Evolution."
