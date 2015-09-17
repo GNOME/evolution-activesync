@@ -569,7 +569,7 @@ eas_account_set_from_info(EasAccount *account, const EasAccountInfo* accountinfo
 	if (accountinfo->device_id && accountinfo->device_id[0])
 		eas_account_set_device_id (account, accountinfo->device_id);
 	eas_account_set_protocol_version (account, accountinfo->protocol_version);
-	if (accountinfo->server_protocols && accountinfo->server_protocols[0])
+	if (accountinfo->server_protocols && accountinfo->server_protocols)
 		eas_account_set_server_protocols (account, accountinfo->server_protocols);
 	g_debug("eas_account_set_from_info--");	
 	return TRUE;
