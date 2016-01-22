@@ -1,15 +1,15 @@
 # Lithuanian translation for evolution-activesync.
 # Copyright (C) 2013 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Aurimas Černius <aurisc4@gmail.com>, 2013, 2015.
+# Aurimas Černius <aurisc4@gmail.com>, 2013, 2015, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-08-12 22:05+0000\n"
-"PO-Revision-Date: 2015-09-09 16:59+0300\n"
+"POT-Creation-Date: 2016-01-08 05:57+0000\n"
+"PO-Revision-Date: 2016-01-22 22:00+0200\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
@@ -55,7 +55,7 @@ msgstr "_Tikrinti, ar yra naujų laiškų visuose aplankuose"
 
 #: ../camel/camel-eas-provider.c:53
 msgid "Options"
-msgstr "Parinktys"
+msgstr "Parametrai"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
@@ -89,7 +89,7 @@ msgstr "Slaptažodis"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Ši parinktis jungsis prie ActyveSync serverio naudojant grynojo teksto "
+"Šis parametras jungsis prie ActyveSync serverio naudojant grynojo teksto "
 "slaptažodį."
 
 #: ../camel/camel-eas-store.c:137
@@ -135,7 +135,7 @@ msgstr "%s ActiveSync tarnyba %s"
 #: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Turite būti prisijungęs šiam veiksmui užbaigti"
+msgstr "Turite būti prisijungę šiam veiksmui užbaigti"
 
 #: ../camel/camel-eas-transport.c:151
 #, c-format
@@ -195,7 +195,7 @@ msgstr "wbxml_conv_xml2wbxml_run grąžino klaidą %d"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2632
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "HTTP užklausa nepavyko: %d - %s"
@@ -295,12 +295,12 @@ msgstr "Nepavyko sukurti aplanko podėlio katalogo %s: %s"
 msgid "request was cancelled by user"
 msgstr "užklausa buvo naudotojo atšaukta"
 
-#: ../eas-daemon/libeas/eas-connection.c:2219
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Nepavyko perskaityti XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2504
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Užklausos su id %d nėra eilėje; negalima atšaukti"
