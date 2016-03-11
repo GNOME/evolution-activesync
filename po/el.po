@@ -3,45 +3,47 @@
 # This file is distributed under the same license as the evolution-activesync package.
 # Dimitris Spingos <dmtrs32@gmail.com>, 2013.
 # Dimitris Spingos (Δημήτρης Σπίγγος) <dmtrs32@gmail.com>, 2013.
+# Efstathios Iosifidis <iosifidis@opensuse.org>, 2016.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product"
-"=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2013-05-23 07:42+0000\n"
-"PO-Revision-Date: 2013-06-14 15:38+0300\n"
-"Last-Translator: Dimitris Spingos (Δημήτρης Σπίγγος) <dmtrs32@gmail.com>\n"
-"Language-Team: team@gnome.gr\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2016-03-10 17:59+0000\n"
+"PO-Revision-Date: 2016-03-11 15:50+0200\n"
+"Last-Translator: Efstathios Iosifidis <iosifidis@opensuse.org>\n"
+"Language-Team: Greek, Modern (1453-) <opensuse-translation-el@opensuse.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Virtaal 0.7.1\n"
+"X-Generator: Gtranslator 2.91.7\n"
 "X-Project-Style: gnome\n"
 
-#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Αδυναμία δημιουργίας διαδρομής κρυφής μνήμης"
 
-#: ../camel/camel-eas-folder.c:209
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Αποτυχία μετακίνησης μηνύματος αρχείου κρυφής μνήμης"
 
-#: ../camel/camel-eas-folder.c:509
+#: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Αδυναμία φόρτωσης της περίληψης για %s"
 
-#: ../camel/camel-eas-folder.c:727
+#: ../camel/camel-eas-folder.c:733
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr ""
 "Η εγγραφή μηνύματος στην αποθήκη μηνυμάτων δεν είναι δυνατή στο ActiveSync"
 
-#: ../camel/camel-eas-folder.c:742
+#: ../camel/camel-eas-folder.c:748
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Η μετακίνηση μηνυμάτων δεν έχει ακόμη υλοποιηθεί"
@@ -76,7 +78,6 @@ msgid "Automatically synchroni_ze account locally"
 msgstr "Αυτόματος συ_γχρονισμός του λογαριασμού τοπικά"
 
 #: ../camel/camel-eas-provider.c:69
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
@@ -95,58 +96,58 @@ msgstr ""
 "Με αυτήν την επιλογή θα γίνει σύνδεση στον εξυπηρετητή ActiveSync με χρήση "
 "κωδικού πρόσβασης απλού κειμένου."
 
-#: ../camel/camel-eas-store.c:136
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "Η συνεδρία δεν έχει διαδρομή αποθήκευσης"
 
-#: ../camel/camel-eas-store.c:176
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "Η υπηρεσία EAS δεν έχει λογαριασμό UID"
 
-#: ../camel/camel-eas-store.c:264
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "Δεν υπάρχει τέτοιος φάκελος %s"
 
-#: ../camel/camel-eas-store.c:369
+#: ../camel/camel-eas-store.c:370
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Η δημιουργία φακέλου δεν είναι δυνατή με το ActiveSync"
 
-#: ../camel/camel-eas-store.c:380
+#: ../camel/camel-eas-store.c:381
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Η διαγραφή φακέλου δεν είναι δυνατή με το ActiveSync"
 
-#: ../camel/camel-eas-store.c:393
+#: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Η μετονομασία φακέλου δεν είναι δυνατή με το ActiveSync"
 
-#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
+#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Διακομιστής ActiveSync %s"
 
-#: ../camel/camel-eas-store.c:412
+#: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Η υπηρεσία ActiveSync για %s στο %s"
 
-#: ../camel/camel-eas-store.c:454
+#: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr ""
 "Πρέπει να είστε συνδεμένοι στο δίκτυο για να ολοκληρωθεί αυτή η διαδικασία"
 
-#: ../camel/camel-eas-transport.c:68
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "Παράδοση μηνυμάτων ActiveSync μέσω %s"
 
-#: ../camel/camel-eas-transport.c:108
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Απέτυχε η δημιουργία προσωρινού αρχείου για αποστολή μηνύματος"
@@ -157,161 +158,164 @@ msgid "CreateItem call failed to return ID for new message"
 msgstr ""
 "Η κλήση CreateItem απέτυχε να επιστρέψει το αναγνωριστικό για νέο μήνυμα"
 
-#: ../eas-daemon/libeas/eas-connection.c:486
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:165
+msgid "Configuration"
+msgstr "Ρυθμίσεις"
+
+#: ../configuration/e-mail-config-eas-backend.c:184
+msgid "User_name:"
+msgstr "Ό_νομα χρήστη:"
+
+#: ../configuration/e-mail-config-eas-backend.c:199
+msgid "_Server URL:"
+msgstr "_Διακομιστής URL:"
+
+#: ../configuration/e-mail-config-eas-backend.c:214
+msgid "Authentication"
+msgstr "Πιστοποίηση"
+
+#: ../configuration/e-mail-config-eas-backend.c:231
+msgid "_Auto Detect"
+msgstr "Α_υτόματη ανίχνευση"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Παρακαλούμε εισάγετε τον κωδικό πρόσβασής σας ActiveSync για το %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1058
+#: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "επιστροφή σφάλματος %d από wbxml_conv_xml2wbxml_create"
 
-#: ../eas-daemon/libeas/eas-connection.c:1088
+#: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "το soup_message_new επέστρεψε NULL"
 
-#: ../eas-daemon/libeas/eas-connection.c:1163
+#: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "επιστροφή σφάλματος %d από wbxml_conv_xml2wbxml_run"
 
-#: ../eas-daemon/libeas/eas-connection.c:1293
-#: ../eas-daemon/libeas/eas-connection.c:1304
-#: ../eas-daemon/libeas/eas-connection.c:2627
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "Αποτυχία αιτήματος HTTP: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1328
+#: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "Ο τύπος απόκρισης HTTP δεν ήταν WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1336
+#: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "Ο τύπος απόκρισης HTTP δεν ήταν MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1368
+#: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "Το wbxml είναι NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1377
+#: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "Το wbxml_len είναι 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1388
+#: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Αποτυχία δημιουργίας WBXML σε μετατροπέα XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1407
+#: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Σφάλμα κατά τη μετατροπή WBXML σε XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1523
+#: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
 msgstr "Κώδικας κατάστασης: %d - Απόκριση από διακομιστή"
 
-#: ../eas-daemon/libeas/eas-connection.c:1538
+#: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Αποτυχία ανάλυσης απάντησης αυτόματης εύρεσης XML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1547
+#: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Αποτυχία εύρεσης στοιχείου <Autodiscover>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1558
+#: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Αποτυχία εύρεσης στοιχείου <Response>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1569
+#: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Αποτυχία εύρεσης στοιχείου <Action>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1580
+#: ../eas-daemon/libeas/eas-connection.c:1579
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Αποτυχία εύρεσης στοιχείου <Settings>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1718
+#: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "Η ηλ. διεύθυνση είναι υποχρεωτική και πρέπει να παρέχεται"
 
-#: ../eas-daemon/libeas/eas-connection.c:1728
+#: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Αποτυχία εξαγωγής τομέα από διεύθυνση αλληλογραφίας"
 
-#: ../eas-daemon/libeas/eas-connection.c:1739
+#: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Αποτυχία δημιουργίας προσωρινού λογαριασμού από αυτόματη ανακάλυψη"
 
-#: ../eas-daemon/libeas/eas-connection.c:1902
+#: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
 msgstr "Ένας λογαριασμός πρέπει να παρέχεται."
 
-#: ../eas-daemon/libeas/eas-connection.c:1928
+#: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Ένας διακομιστής url καθώς και όνομα χρήστη πρέπει να παρέχονται."
 
-#: ../eas-daemon/libeas/eas-connection.c:1941
+#: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Αποτυχία δημιουργίας φακέλου καταλόγου κρυφής μνήμης %s: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2085
+#: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "το αίτημα ακυρώθηκε από τον χρήστη"
 
-#: ../eas-daemon/libeas/eas-connection.c:2214
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Αποτυχία ανάλυσης XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2499
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Το αίτημα με αναγνωριστικό %d δεν είναι στην ουρά· αδύνατη η ακύρωση"
 
-#: ../eplugin/activesync-account-setup.c:367
-#: ../eplugin/activesync-account-setup.c:478
-msgid "User_name:"
-msgstr "Ό_νομα χρήστη:"
+#~ msgid "Contacts"
+#~ msgstr "Επαφές"
 
-#: ../eplugin/activesync-account-setup.c:385
-#: ../eplugin/activesync-account-setup.c:496
-msgid "_Server URL:"
-msgstr "_Διακομιστής URL:"
+#~ msgid "Calendar"
+#~ msgstr "Ημερολόγιο"
 
-#: ../eplugin/activesync-account-setup.c:392
-#: ../eplugin/activesync-account-setup.c:504
-msgid "_Auto Detect"
-msgstr "Α_υτόματη ανίχνευση"
-
-#: ../eplugin/eas-account-listener.c:177
-msgid "Contacts"
-msgstr "Επαφές"
-
-#: ../eplugin/eas-account-listener.c:207
-msgid "Calendar"
-msgstr "Ημερολόγιο"
-
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-msgid "ActiveSync plugin for Evolution."
-msgstr "Το πρόσθετο ActiveSync για το Evolution."
+#~ msgid "ActiveSync plugin for Evolution."
+#~ msgstr "Το πρόσθετο ActiveSync για το Evolution."
