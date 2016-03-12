@@ -2,47 +2,47 @@
 # Copyright (C) 2012 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
 #
-# Matej Urbančič <mateju@svn.gnome.org>, 2009 - 2012.
+# Matej Urbančič <mateju@svn.gnome.org>, 2009-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2012-12-12 07:36+0000\n"
-"PO-Revision-Date: 2013-03-11 18:01+0100\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-"
+"activesync&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2016-03-12 21:21+0100\n"
+"PO-Revision-Date: 2016-03-12 21:21+0100\n"
 "Last-Translator: Matej Urbančič <mateju@svn.gnome.org>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl_SI\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n%100==4 ? 3 : 0);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
+"%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.5.4\n"
-"X-Poedit-Language: Slovenian\n"
-"X-Poedit-Country: SLOVENIA\n"
+"X-Generator: Poedit 1.8.4\n"
 
-#: ../camel/camel-eas-folder.c:188 ../camel/camel-eas-folder.c:214
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Ni mogoče ustvariti poti predpomnilnika"
 
-#: ../camel/camel-eas-folder.c:224
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Ni mogoče premakniti predpomnilniške datoteke sporočil"
 
-#: ../camel/camel-eas-folder.c:531
+#: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Ni mogoče naložiti povzetka za %s"
 
-#: ../camel/camel-eas-folder.c:756
+#: ../camel/camel-eas-folder.c:733
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Pisanje sporočila v shrambo pošte v načinu ActiveSync ni mogoče"
 
-#: ../camel/camel-eas-folder.c:772
+#: ../camel/camel-eas-folder.c:748
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Možnost premikanja sporoči še ni podprta."
@@ -65,18 +65,17 @@ msgstr "Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežn
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
-msgstr "Med novimi sporočili preveri za _neželena"
+msgstr "Med novimi sporočili preveri za _vsiljena"
 
 #: ../camel/camel-eas-provider.c:59
 msgid "Only check for Junk messages in the IN_BOX folder"
-msgstr "Neželena sporočila preveri le v mapi _dohodnih sporočil"
+msgstr "Vsiljena sporočila preveri le v mapi _dohodnih sporočil"
 
 #: ../camel/camel-eas-provider.c:61
 msgid "Automatically synchroni_ze account locally"
 msgstr "Samodejno _uskladi krajevni račun"
 
 #: ../camel/camel-eas-provider.c:69
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
@@ -90,224 +89,228 @@ msgstr "Geslo"
 
 #: ../camel/camel-eas-provider.c:89
 msgid "This option will connect to the ActiveSync server using a plaintext password."
-msgstr "Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim geslom."
+msgstr ""
+"Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim geslom."
 
-#: ../camel/camel-eas-store.c:184
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "Seja nima določene poti shrambe"
 
-#: ../camel/camel-eas-store.c:242
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "Storitev EAS nima določenega UID računa."
 
-#: ../camel/camel-eas-store.c:339
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "Ni takšne mape: %s"
 
-#: ../camel/camel-eas-store.c:458
+#: ../camel/camel-eas-store.c:370
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Ustvarjanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:469
+#: ../camel/camel-eas-store.c:381
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Brisanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:482
+#: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Preimenovanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:493 ../camel/camel-eas-store.c:507
-#: ../camel/camel-eas-transport.c:72
+#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Strežnik ActiveSync %s"
 
-#: ../camel/camel-eas-store.c:496 ../camel/camel-eas-store.c:510
+#: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Storitev ActiveSync za %s na %s"
 
-#: ../camel/camel-eas-store.c:560
+#: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Za dokončanje tega opravila mora biti vzpostavljena omrežna povezava"
 
-#: ../camel/camel-eas-transport.c:75
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "Dostava pošte z ActiveSync preko %s"
 
-#: ../camel/camel-eas-transport.c:121
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Ustvarjanje začasne datoteke za pošiljanje sporočil je spodletelo."
 
-#: ../camel/camel-eas-utils.c:611
+#: ../camel/camel-eas-utils.c:555
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
-msgstr "Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega sporočila"
+msgstr ""
+"Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega sporočila"
+
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:165
+msgid "Configuration"
+msgstr "Nastavitve"
+
+#: ../configuration/e-mail-config-eas-backend.c:184
+msgid "User_name:"
+msgstr "Uporab_niško ime:"
+
+#: ../configuration/e-mail-config-eas-backend.c:199
+msgid "_Server URL:"
+msgstr "Naslov _URL strežnika:"
+
+#: ../configuration/e-mail-config-eas-backend.c:214
+msgid "Authentication"
+msgstr "Overitev"
+
+#: ../configuration/e-mail-config-eas-backend.c:231
+msgid "_Auto Detect"
+msgstr "_Samodejno zaznaj"
 
 #: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Vnesite geslo za nov račun ActiveSync %s."
 
-#: ../eas-daemon/libeas/eas-connection.c:1052
+#: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "predmet wbxml_conv_xml2wbxml_create je vrnil napako %d"
 
-#: ../eas-daemon/libeas/eas-connection.c:1082
+#: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "predmet soup_message_new je vrnil prazno vrednost"
 
-#: ../eas-daemon/libeas/eas-connection.c:1151
+#: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "predmet wbxml_conv_xml2wbxml_run je vrnil napako %d"
 
-#: ../eas-daemon/libeas/eas-connection.c:1281
 #: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:2610
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "Zahteva HTTP je spodletela: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1316
+#: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "Vrsta odziva HTTP ni WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1324
+#: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "Vrsta odziva HTTP ni MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1356
+#: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml je prazna vrednost!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1365
+#: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len je dolžine 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1376
+#: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Ustvarjanje pretvornika WBXML v XML je spodletelo: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1395
+#: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Napaka med pretvarjanjem WBXML v XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1511
+#: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
 msgstr "Koda stamka: %d - Odziv strežnika"
 
-#: ../eas-daemon/libeas/eas-connection.c:1526
+#: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Razčlenjevanje samodejnega odgovora XML je spodletelo"
 
-#: ../eas-daemon/libeas/eas-connection.c:1535
+#: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Iskanje predmeta <samodejnega zaznavanja> je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1546
+#: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Iskanje predmeta <odziva> je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1557
+#: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Iskanje predmeta <dejanja> je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1568
+#: ../eas-daemon/libeas/eas-connection.c:1579
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Iskanje predmeta <nastavitev> je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1701
+#: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "Podatek o elektronskem naslovu je obvezen in ga je treba vpisati."
 
-#: ../eas-daemon/libeas/eas-connection.c:1711
+#: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Razčlenitev domene iz elektronskega naslova je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1722
+#: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Ustvarjanje začasnega računa za samodejno odkrivanje je spodletelo."
 
-#: ../eas-daemon/libeas/eas-connection.c:1885
+#: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
 msgstr "Račun mora biti podan."
 
-#: ../eas-daemon/libeas/eas-connection.c:1911
+#: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Naslov URL strežnika in uporabniško ime morata biti podana."
 
-#: ../eas-daemon/libeas/eas-connection.c:1924
+#: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Poskus ustvarjanja mape predpomnilnika %s je spodletel: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2068
+#: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "zahtevo je prekinil uporabnik."
 
-#: ../eas-daemon/libeas/eas-connection.c:2197
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Razčlenjevanje datoteke XML je spodletelo: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2482
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Zahteve z id %d ni v vrsti; opravila zato ni mogoče preklicati"
 
-#: ../eplugin/activesync-account-setup.c:367
-#: ../eplugin/activesync-account-setup.c:478
-msgid "User_name:"
-msgstr "Uporab_niško ime:"
+#~ msgid "Contacts"
+#~ msgstr "Stiki"
 
-#: ../eplugin/activesync-account-setup.c:385
-#: ../eplugin/activesync-account-setup.c:496
-msgid "_Server URL:"
-msgstr "Naslov _URL strežnika:"
+#~ msgid "Calendar"
+#~ msgstr "Koledar"
 
-#: ../eplugin/activesync-account-setup.c:392
-#: ../eplugin/activesync-account-setup.c:504
-msgid "_Auto Detect"
-msgstr "_Samodejno zaznaj"
-
-#: ../eplugin/eas-account-listener.c:177
-msgid "Contacts"
-msgstr "Stiki"
-
-#: ../eplugin/eas-account-listener.c:207
-msgid "Calendar"
-msgstr "Koledar"
-
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-msgid "ActiveSync plugin for Evolution."
-msgstr "Vstavek ActiveSync za program Evolution."
+#~ msgid "ActiveSync plugin for Evolution."
+#~ msgstr "Vstavek ActiveSync za program Evolution."
