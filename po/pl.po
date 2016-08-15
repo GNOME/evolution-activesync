@@ -1,27 +1,23 @@
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Aviary.pl
-# Jeśli masz jakiekolwiek uwagi odnoszące się do tłumaczenia lub chcesz
-# pomóc w jego rozwijaniu i pielęgnowaniu, napisz do nas:
-# gnomepl@aviary.pl
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Piotr Drąg <piotrdrag@gmail.com>, 2012-2015.
-# Aviary.pl <gnomepl@aviary.pl>, 2012-2015.
+# Polish translation for evolution-activesync.
+# Copyright © 2012-2016 the evolution-activesync authors.
+# This file is distributed under the same license as the evolution-activesync package.
+# Piotr Drąg <piotrdrag@gmail.com>, 2012-2016.
+# Aviary.pl <community-poland@mozilla.org>, 2012-2016.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-31 01:52+0200\n"
-"PO-Revision-Date: 2015-08-31 01:54+0200\n"
+"POT-Creation-Date: 2016-08-15 13:29+0200\n"
+"PO-Revision-Date: 2016-08-15 13:30+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
-"Language-Team: Polish <gnomepl@aviary.pl>\n"
+"Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Poedit-Language: Polish\n"
-"X-Poedit-Country: Poland\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -42,7 +38,7 @@ msgstr "Nie można wczytać zestawienia dla %s"
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr ""
-"Zapisanie wiadomości do przechowalni poczty nie jest możliwe w ActiveSync"
+"Zapisanie wiadomości do przechowalni poczty nie jest możliwe w ActiveSync"
 
 #: ../camel/camel-eas-folder.c:748
 #, c-format
@@ -64,7 +60,7 @@ msgstr "Opcje"
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr ""
-"_Zastosowanie filtrów na nowych wiadomościach w Nadchodzących na tym serwerze"
+"_Zastosowanie filtrów na nowych wiadomościach w Nadchodzących na tym serwerze"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -72,7 +68,7 @@ msgstr "Sp_rawdzanie nowych wiadomości pod kątem niechcianych wiadomości"
 
 #: ../camel/camel-eas-provider.c:59
 msgid "Only check for Junk messages in the IN_BOX folder"
-msgstr "Sprawdzanie niechcianych wiadomości tylko w katalogu _Odebrane"
+msgstr "Sprawdzanie niechcianych wiadomości tylko w katalogu _Odebrane"
 
 #: ../camel/camel-eas-provider.c:61
 msgid "Automatically synchroni_ze account locally"
@@ -94,7 +90,7 @@ msgstr "Hasło"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Ta opcja spowoduje połączenie z serwerem ActiveSync używając hasła "
+"Ta opcja spowoduje połączenie z serwerem ActiveSync używając hasła "
 "tekstowego."
 
 #: ../camel/camel-eas-store.c:137
@@ -140,7 +136,7 @@ msgstr "Usługa ActiveSync dla %s na %s"
 #: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Należy pracować w trybie online, aby ukończyć to działanie"
+msgstr "Należy pracować w trybie online, aby ukończyć to działanie"
 
 #: ../camel/camel-eas-transport.c:151
 #, c-format
@@ -188,7 +184,7 @@ msgstr "Proszę podać hasło ActiveSync dla %s"
 #: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr "błąd %d zwrócony z wbxml_conv_xml2wbxml_create"
+msgstr "błąd %d zwrócony z wbxml_conv_xml2wbxml_create"
 
 #: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
@@ -198,7 +194,7 @@ msgstr "soup_message_new zwróciło NULL"
 #: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr "błąd %d zwrócony z wbxml_conv_xml2wbxml_run"
+msgstr "błąd %d zwrócony z wbxml_conv_xml2wbxml_run"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
@@ -276,7 +272,7 @@ msgstr "Należy podać adres e-mail"
 #: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
-msgstr "Wydobycie domeny z adresu e-mail się nie powiodło"
+msgstr "Wydobycie domeny z adresu e-mail się nie powiodło"
 
 #: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
@@ -292,7 +288,7 @@ msgstr "Należy podać konto."
 #: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
-msgstr "Należy podać adres URL serwera i nazwę użytkownika."
+msgstr "Należy podać adres URL serwera i nazwę użytkownika."
 
 #: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
@@ -312,4 +308,4 @@ msgstr "Przetworzenie XML się nie powiodło: %s"
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
-msgstr "Żądanie o identyfikatorze %d nie jest w kolejce, nie można anulować"
+msgstr "Żądanie o identyfikatorze %d nie jest w kolejce, nie można anulować"
