@@ -10,7 +10,7 @@ if ENABLE_QT_CONFIG_TOOL
 endif
 
 if ENABLE_CAMEL_BACKEND
-  CAMEL_DIRS = libevoeas camel
+  CAMEL_DIRS = libevoeas camel collection configuration
 endif
 
 gsettings_SCHEMAS = org.meego.activesyncd.gschema.xml org.meego.activesyncd.account.gschema.xml
@@ -20,7 +20,7 @@ gsettings_SCHEMAS = org.meego.activesyncd.gschema.xml org.meego.activesyncd.acco
 # full set of directories for "make dist"
 DIST_SUBDIRS = . libeasaccount/src libeasclient libeasaccount/tests eas-daemon check_tests libevoeas camel meego QtActivesyncdConfig po collection configuration
 # subset of that list for "make && make install"
-SUBDIRS = . libeasaccount/src libeasclient eas-daemon check_tests $(CAMEL_DIRS) $(MEEGO_DIR) $(QTCONFIG_DIR) po collection configuration
+SUBDIRS = . libeasaccount/src libeasclient eas-daemon check_tests $(CAMEL_DIRS) $(MEEGO_DIR) $(QTCONFIG_DIR) po
 
 dist_noinst_DATA = $(gsettings_SCHEMAS)
 
