@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-15 13:29+0200\n"
-"PO-Revision-Date: 2016-08-15 13:30+0200\n"
+"POT-Creation-Date: 2016-09-08 02:48+0200\n"
+"PO-Revision-Date: 2016-09-08 02:49+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -80,7 +80,7 @@ msgstr "ActiveSync"
 
 #: ../camel/camel-eas-provider.c:71
 msgid "For accessing servers using ActiveSync"
-msgstr "Dostęp do serwerów używając protokołu ActiveSync"
+msgstr "Dostęp do serwerów za pomocą protokołu ActiveSync"
 
 #: ../camel/camel-eas-provider.c:87
 msgid "Password"
@@ -90,7 +90,7 @@ msgstr "Hasło"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Ta opcja spowoduje połączenie z serwerem ActiveSync używając hasła "
+"Ta opcja spowoduje połączenie z serwerem ActiveSync za pomocą hasła "
 "tekstowego."
 
 #: ../camel/camel-eas-store.c:137
@@ -101,7 +101,7 @@ msgstr "Sesja nie powiada ścieżki do pamięci masowej"
 #: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
-msgstr "Usługa EAS nie posiada UID konta"
+msgstr "Usługa EAS nie ma UID konta"
 
 #: ../camel/camel-eas-store.c:265
 #, c-format
@@ -146,7 +146,7 @@ msgstr "Dostarczanie poczty ActiveSync przez %s"
 #: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
-msgstr "Utworzenie pliku tymczasowego, aby wysłać wiadomość się nie powiodło"
+msgstr "Nie można utworzyć pliku tymczasowego, aby wysłać wiadomość"
 
 #: ../camel/camel-eas-utils.c:555
 #, c-format
