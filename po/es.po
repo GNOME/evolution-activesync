@@ -2,14 +2,14 @@
 # Copyright (C) 2012 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 # Daniel Mustieles <daniel.mustieles@gmail.com>, 2012, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-06-12 11:59+0000\n"
+"POT-Creation-Date: 2015-08-12 22:05+0000\n"
 "PO-Revision-Date: 2015-07-13 \n"
 "Last-Translator: Daniel Mustieles <daniel.mustieles@gmail.com>\n"
 "Language-Team: Español; Castellano <gnome-es-list@gnome.org>\n"
@@ -77,7 +77,6 @@ msgid "Automatically synchroni_ze account locally"
 msgstr "Automatically synchroni_ze account locally"
 
 #: ../camel/camel-eas-provider.c:69
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
@@ -156,172 +155,164 @@ msgstr "Falló al crear el archivo temporal para enviar el mensaje"
 msgid "CreateItem call failed to return ID for new message"
 msgstr "Falló la llamada a CreateItem para devolver el ID de un mensaje nuevo"
 
-#: ../configuration/e-mail-config-eas-backend.c:159
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:165
 msgid "Configuration"
 msgstr "Configuración"
 
-#: ../configuration/e-mail-config-eas-backend.c:178
-#: ../eplugin/activesync-account-setup.c:367
-#: ../eplugin/activesync-account-setup.c:478
+#: ../configuration/e-mail-config-eas-backend.c:184
 msgid "User_name:"
 msgstr "_Usuario:"
 
-#: ../configuration/e-mail-config-eas-backend.c:193
-#: ../eplugin/activesync-account-setup.c:385
-#: ../eplugin/activesync-account-setup.c:496
+#: ../configuration/e-mail-config-eas-backend.c:199
 msgid "_Server URL:"
 msgstr "URL del _servidor:"
 
-#: ../configuration/e-mail-config-eas-backend.c:208
+#: ../configuration/e-mail-config-eas-backend.c:214
 msgid "Authentication"
 msgstr "Autenticación"
 
-#: ../configuration/e-mail-config-eas-backend.c:225
-#: ../eplugin/activesync-account-setup.c:392
-#: ../eplugin/activesync-account-setup.c:504
+#: ../configuration/e-mail-config-eas-backend.c:231
 msgid "_Auto Detect"
 msgstr "_Autodetectar"
 
-#: ../eas-daemon/libeas/eas-connection.c:486
+#: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Introduzca su contraseña de ActiveSync para %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1058
+#: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_create"
 
-#: ../eas-daemon/libeas/eas-connection.c:1088
+#: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new devolvió NULL"
 
-#: ../eas-daemon/libeas/eas-connection.c:1163
+#: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "error %d devuelto desde wbxml_conv_xml2wbxml_run"
 
-#: ../eas-daemon/libeas/eas-connection.c:1293
-#: ../eas-daemon/libeas/eas-connection.c:1304
-#: ../eas-daemon/libeas/eas-connection.c:2633
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2632
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "Falló la petición HTTP: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1328
+#: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "La respuesta HTTP no era WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1336
+#: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "LA respuesta HTTP no era MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1368
+#: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml es NULL"
 
-#: ../eas-daemon/libeas/eas-connection.c:1377
+#: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len es 0"
 
-#: ../eas-daemon/libeas/eas-connection.c:1388
+#: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Falló al crear el conversor de WBXML a XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1407
+#: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Error al convertir WBXML a XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1523
+#: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
 msgstr "Código de estado: %d: respuesta del servidor"
 
-#: ../eas-daemon/libeas/eas-connection.c:1538
+#: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Falló al analizar la respuesta XML de la autodetección"
 
-#: ../eas-daemon/libeas/eas-connection.c:1547
+#: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Falló al buscar el elemento <Autodiscover>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1558
+#: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Falló al buscar el elemento <Response>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1569
+#: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Falló al buscar el elemento <Action>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1580
+#: ../eas-daemon/libeas/eas-connection.c:1579
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Falló al buscar el elemento <Settings>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1720
+#: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "El correo-e es obligatorio y se debe especificar"
 
-#: ../eas-daemon/libeas/eas-connection.c:1730
+#: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Falló al extraer el dominio de la dirección de correo"
 
-#: ../eas-daemon/libeas/eas-connection.c:1741
+#: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Falló al crear la cuenta temporal para la autodetección"
 
-#: ../eas-daemon/libeas/eas-connection.c:1908
+#: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
 msgstr "De debe especificar una cuenta."
 
-#: ../eas-daemon/libeas/eas-connection.c:1934
+#: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Se deben indicar el URL del servidor y el nombre de usuario"
 
-#: ../eas-daemon/libeas/eas-connection.c:1947
+#: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Falló al crear la carpeta de la caché del directorio %s: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2091
+#: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "el usuario canceló la solicitud"
 
-#: ../eas-daemon/libeas/eas-connection.c:2220
+#: ../eas-daemon/libeas/eas-connection.c:2219
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Falló al analizar el XML %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2505
+#: ../eas-daemon/libeas/eas-connection.c:2504
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "La solicitud con ID %d no está en la cola; no se puede cancelar"
 
-#: ../eplugin/eas-account-listener.c:177
-msgid "Contacts"
-msgstr "Contactos"
+#~ msgid "Contacts"
+#~ msgstr "Contactos"
 
-#: ../eplugin/eas-account-listener.c:207
-msgid "Calendar"
-msgstr "Calendario"
+#~ msgid "Calendar"
+#~ msgstr "Calendario"
 
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-msgid "ActiveSync plugin for Evolution."
-msgstr "Complemento ActiveSync para Evolution."
+#~ msgid "ActiveSync plugin for Evolution."
+#~ msgstr "Complemento ActiveSync para Evolution."
