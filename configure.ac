@@ -123,9 +123,9 @@ AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 GLIB_GSETTINGS
 
 AC_ARG_ENABLE(qtconfig,
-              AS_HELP_STRING([--disable-qtconfig],
-                             [Can be used to disable compiling the Qt configuration UI. Enabled by default.]),
-              [enable_qtconfig="$enableval"], [enable_qtconfig="yes"])
+              AS_HELP_STRING([--enable-qtconfig],
+                             [Compile the (obsolete) Qt configuration UI]),
+              [enable_qtconfig="$enableval"], [enable_qtconfig="no"])
 
 if test "$enable_qtconfig" = "yes"; then
    AT_WITH_QT(,no_keywords,,[have_qt=no],[have_qt=yes])
