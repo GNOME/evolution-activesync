@@ -19,6 +19,7 @@ module_eas_mail_config_la_SOURCES = \
 
 module_eas_mail_config_la_LIBADD = \
 	$(top_builddir)/libeasclient/libeasclient.la \
+	$(top_builddir)/libevoeas/libevoeas.la \
 	$(EVOLUTION_MAIL_LIBS) \
 	$(LIBEDATASERVER_LIBS) \
 	$(LIBEBACKEND_LIBS) \

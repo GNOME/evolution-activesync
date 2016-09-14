@@ -410,11 +410,11 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
  more:
 	for ( ; success && i < uids->len && item_list_len < 25; i++) {
 		guint32 flags_changed;
-		CamelEasMessageInfo *mi = (void *)camel_folder_summary_get (folder->summary, uids->pdata[i]);
+		CamelMessageInfo *mi = camel_folder_summary_get (folder->summary, uids->pdata[i]);
 		if (!mi)
 			continue;
 
-		flags_changed = mi->server_flags ^ mi->info.flags;
+		flags_changed = camel_eas_message_info_get_server_flags (CAMEL_EAS_MESSAGE_INFO (mi)) ^ camel_message_info_get_flags (mi);
 
 		/* Exchange doesn't seem to have a sane representation
 		   for most flags — not even replied/forwarded. */
@@ -423,13 +423,13 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 			item->server_id = g_strdup (uids->pdata[i]);
 			if (flags_changed & CAMEL_MESSAGE_SEEN) {
 				item->flags |= EAS_VALID_READ;
-				if (mi->info.flags & CAMEL_MESSAGE_SEEN)
+				if (camel_message_info_get_flags (mi) & CAMEL_MESSAGE_SEEN)
 					item->flags |= EAS_EMAIL_READ;
 			}
 #if 0 /* ActiveSync doesn't let you update this */
 			if (flags_changed & CAMEL_MESSAGE_FLAGGED) {
 				item->flags |= EAS_VALID_IMPORTANCE;
-				if (mi->info.flags & CAMEL_MESSAGE_FLAGGED)
+				if (camel_message_info_get_flags (mi) & CAMEL_MESSAGE_FLAGGED)
 					item->importance = EAS_IMPORTANCE_HIGH;
 				else
 					item->importance = EAS_IMPORTANCE_LOW;
@@ -440,7 +440,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 			item_list_len++;
 		} else if (flags_changed & CAMEL_MESSAGE_DELETED) {
 			deleted_uids = g_slist_prepend (deleted_uids, (gpointer) camel_pstring_strdup (uids->pdata [i]));
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 		}
 	}
 
@@ -451,12 +451,12 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 							 ((CamelEasSummary *) folder->summary)->sync_state,
 							 priv->server_id, item_list, NULL, error);
 		for (l = changing_mis; l; l = l->next) {
-			CamelEasMessageInfo *mi = l->data;
+			CamelMessageInfo *mi = l->data;
 			if (success) {
-				mi->server_flags = mi->info.flags;
-				mi->info.dirty = TRUE;
+				camel_eas_message_info_set_server_flags (CAMEL_EAS_MESSAGE_INFO (mi), camel_message_info_get_flags (mi));
+
 			}
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 		}
 		g_slist_free (changing_mis);
 		changing_mis = NULL;
@@ -753,7 +753,6 @@ static gboolean
 eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error)
 {
 	CamelEasStore *eas_store;
-	CamelEasMessageInfo *eas_info;
 	CamelMessageInfo *info;
 	CamelStore *parent_store;
 	GSList *deleted_items = NULL;
@@ -783,11 +782,10 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 
 		info = camel_folder_summary_get (folder->summary, uid);
 
-		eas_info = (CamelEasMessageInfo *) info;
-		if (eas_info && (eas_info->info.flags & CAMEL_MESSAGE_DELETED))
+		if (info && (camel_message_info_get_flags (info) & CAMEL_MESSAGE_DELETED))
 			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
 
-		camel_message_info_unref (info);
+		g_clear_object (&info);
 	}
 	camel_folder_summary_free_array (known_uids);
 

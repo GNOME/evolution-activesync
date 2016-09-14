@@ -22,6 +22,7 @@ libcameleas_la_CPPFLAGS = \
 
 libcameleas_la_SOURCES = 			\
 	camel-eas-folder.c                	\
+	camel-eas-message-info.c               	\
 	camel-eas-store-summary.c              	\
 	camel-eas-store.c                 	\
 	camel-eas-summary.c               	\
@@ -32,6 +33,7 @@ libcameleas_la_SOURCES = 			\
 
 noinst_HEADERS =         			\
 	camel-eas-folder.h			\
+	camel-eas-message-info.h		\
 	camel-eas-private.h			\
 	camel-eas-store-summary.h              	\
 	camel-eas-store.h			\

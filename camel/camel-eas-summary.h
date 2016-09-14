@@ -27,7 +27,7 @@
 #define CAMEL_GW_SUMMARY_H
 
 #include <camel/camel.h>
-#include <libedataserver/eds-version.h>
+#include "camel-eas-message-info.h"
 
 /* Standard GObject macros */
 #define CAMEL_TYPE_EAS_SUMMARY \
@@ -52,26 +52,6 @@ G_BEGIN_DECLS
 
 typedef struct _CamelEasSummary CamelEasSummary;
 typedef struct _CamelEasSummaryClass CamelEasSummaryClass;
-typedef struct _CamelEasMessageInfo CamelEasMessageInfo;
-typedef struct _CamelEasMessageContentInfo CamelEasMessageContentInfo;
-
-/* extra summary flags*/
-enum {
-	CAMEL_GW_MESSAGE_JUNK = 1<<17,
-	CAMEL_GW_MESSAGE_NOJUNK = 1<<18
-};
-
-struct _CamelEasMessageInfo {
-	CamelMessageInfoBase info;
-
-	guint32 server_flags;
-	gint32 item_type;
-	gchar *change_key;
-} ;
-
-struct _CamelEasMessageContentInfo {
-	CamelMessageContentInfo info;
-} ;
 
 struct _CamelEasSummary {
 	CamelFolderSummary parent;
@@ -94,7 +74,7 @@ gboolean
 					(CamelFolderSummary *summary,
 					 CamelMessageInfo *info,
 					 guint32 server_flags,
-					 CamelFlag *server_user_flags);
+					 const CamelNamedFlags *server_user_flags);
 void	camel_eas_summary_add_message	(CamelFolderSummary *summary,
 					 const gchar *uid,
 					 CamelMimeMessage *message);

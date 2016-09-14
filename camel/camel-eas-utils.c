@@ -343,11 +343,11 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 
 	for (l = items_updated; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
-		CamelEasMessageInfo *mi;
+		CamelMessageInfo *mi;
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder->summary, item->server_id);
 		if (mi) {
-			gint flags = mi->info.flags;
+			gint flags = camel_message_info_get_flags (mi);
 
 			if (item->flags & EAS_VALID_READ) {
 				if (item->flags & EAS_EMAIL_READ)
@@ -361,13 +361,10 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 				else
 					flags &= ~CAMEL_MESSAGE_FLAGGED;
 			}
-			if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *)mi,
-								 flags, NULL))
-				camel_folder_change_info_change_uid (ci, mi->info.uid);
+			if (camel_eas_update_message_info_flags (folder->summary, mi, flags, NULL))
+				camel_folder_change_info_change_uid (ci, camel_message_info_get_uid (mi));
 
-			mi->info.dirty = TRUE;
-
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 		}
 
 		g_object_unref (item);
@@ -399,7 +396,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
 		struct _camel_header_raw *camel_headers = NULL;
-		CamelEasMessageInfo *mi;
+		CamelMessageInfo *mi;
 		int flags = 0;
 		GSList *hl;
 
@@ -408,9 +405,9 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder->summary, item->server_id);
 		if (mi) {
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 			g_object_unref (item);
 			continue;
 		}
@@ -421,18 +418,15 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
 		}
 
-		mi = (CamelEasMessageInfo *)camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
-		if (mi->info.content == NULL) {
-			//mi->info.content = camel_folder_summary_content_info_new_from_header (folder->summary, camel_headers);
-			mi->info.content = camel_folder_summary_content_info_new (folder->summary);
-			mi->info.content->type = camel_content_type_new ("multipart", "mixed");
-		}
+		mi = camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
 
 		camel_header_raw_clear (&camel_headers);
 
-		mi->info.uid = camel_pstring_strdup (item->server_id);
-		mi->info.size = item->estimated_size;
-		mi->info.date_received = item->date_received;
+		camel_message_info_set_abort_notifications (mi, TRUE);
+
+		camel_message_info_set_uid (mi, item->server_id);
+		camel_message_info_set_size (mi, item->estimated_size);
+		camel_message_info_set_date_received (mi, item->date_received);
 
 		if (item->attachments)
 			flags |= CAMEL_MESSAGE_ATTACHMENTS;
@@ -446,11 +440,12 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		if (item->importance == EAS_IMPORTANCE_HIGH)
 			flags |= CAMEL_MESSAGE_FLAGGED;
 
-		camel_eas_summary_add_message_info (folder->summary, flags,
-						    (CamelMessageInfo *) mi);
+		camel_message_info_set_abort_notifications (mi, FALSE);
+		camel_eas_summary_add_message_info (folder->summary, flags, mi);
 		camel_folder_change_info_add_uid (ci, item->server_id);
 		camel_folder_change_info_recent_uid (ci, item->server_id);
 
+		g_clear_object (&mi);
 		g_object_unref (item);
 
 		count++;
