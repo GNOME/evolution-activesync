@@ -17,3 +17,4 @@ autoheader
 automake -a -c -Wno-portability
 autoconf
 
+test -n "$NOCONFIGURE" || ./configure --enable-maintainer-mode "$@"
