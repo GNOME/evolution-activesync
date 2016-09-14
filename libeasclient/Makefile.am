@@ -2,13 +2,13 @@
 lib_LTLIBRARIES =  libeasclient.la
 
 libeasclient_la_CPPFLAGS =		\
-		$(GLIB_CFLAGS)		\
+		$(GIO_CFLAGS)		\
 		$(LIBXML_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeasclient\" \
 		$(NULL)
 
 libeasclient_la_LDFLAGS =		\
-		$(GLIB_LIBS)		\
+		$(GIO_LIBS)		\
 		$(LIBXML_LIBS)		\
 		$(NULL)
 
