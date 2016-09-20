@@ -2190,10 +2190,10 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			   Anything we get here is going to be passed out to dbus in a string
 			   type, and dbus would end up silently calling exit() if we pass it
 			   non-UTF8 anyway */
-			if (xml)
+			if (xml) {
 				xml = sanitize_utf8 (xml);
-
-			xml_len = strlen((char *)xml);
+				xml_len = strlen((char *)xml);
+			}
 			if (getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1)) {
 				write_response_to_file (xml, xml_len);
 			}
