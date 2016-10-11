@@ -22,6 +22,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "e-mail-config-eas-backend.h"
 
 #include <glib/gi18n-lib.h>
