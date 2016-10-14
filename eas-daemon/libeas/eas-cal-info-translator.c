@@ -51,11 +51,7 @@
 
 #include "eas-cal-info-translator.h"
 
-#include <libical/icalparser.h>
-#include <libical/icalcomponent.h>
-#include <libical/icaltypes.h>
-#include <libical/icalduration.h>
-#include <libical/icaltimezone.h>
+#include <libical/ical.h>
 
 #include <wbxml/wbxml.h>
 
