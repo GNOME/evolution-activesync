@@ -126,7 +126,7 @@ eas_store_construct	(CamelService *service, CamelSession *session,
 
 	/* Disable virtual trash and junk folders. Exchange has real
 	   folders for that */
-	((CamelStore *)eas_store)->flags &= ~(CAMEL_STORE_VTRASH|CAMEL_STORE_VJUNK);
+	camel_store_set_flags (CAMEL_STORE (eas_store), camel_store_get_flags (CAMEL_STORE (eas_store)) & ~(CAMEL_STORE_VTRASH | CAMEL_STORE_VJUNK));
 
 	/*storage path*/
 	session_storage_path = g_strdup (camel_service_get_user_data_dir (service));

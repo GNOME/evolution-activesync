@@ -243,7 +243,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
 		count++;
 	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
 
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
@@ -286,7 +286,7 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 		uids_deleted = g_list_prepend (uids_deleted, uid);
 		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
 	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
 	g_list_free (uids_deleted);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
