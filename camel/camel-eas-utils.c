@@ -259,6 +259,7 @@ void
 camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 {
 	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
+	CamelFolderSummary *folder_summary;
 	const gchar *full_name;
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
@@ -267,7 +268,9 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	GPtrArray *known_uids = NULL;
 	int i;
 
-	if (!camel_folder_summary_count (folder->summary))
+	folder_summary = camel_folder_get_folder_summary (folder);
+
+	if (!camel_folder_summary_count (folder_summary))
 		return;
 
 	ci = camel_folder_change_info_new ();
@@ -276,7 +279,7 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	folder = (CamelFolder *) eas_folder;
 	full_name = camel_folder_get_full_name (folder);
 
-	known_uids = camel_folder_summary_get_array (folder->summary);
+	known_uids = camel_folder_summary_get_array (folder_summary);
 	if (!known_uids)
 		return;
 	for (i = 0; i < known_uids->len; i++) {
@@ -335,17 +338,19 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
+	CamelFolderSummary *folder_summary;
 	GSList *l;
 	int count = 0;
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
+	folder_summary = camel_folder_get_folder_summary (folder);
 
 	for (l = items_updated; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
 		CamelMessageInfo *mi;
 
-		mi = camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder_summary, item->server_id);
 		if (mi) {
 			gint flags = camel_message_info_get_flags (mi);
 
@@ -361,7 +366,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 				else
 					flags &= ~CAMEL_MESSAGE_FLAGGED;
 			}
-			if (camel_eas_update_message_info_flags (folder->summary, mi, flags, NULL))
+			if (camel_eas_update_message_info_flags (folder_summary, mi, flags, NULL))
 				camel_folder_change_info_change_uid (ci, camel_message_info_get_uid (mi));
 
 			g_clear_object (&mi);
@@ -371,7 +376,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_summary_save_to_db (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
@@ -384,6 +389,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
+	CamelFolderSummary *folder_summary;
 	GSList *l;
 	int count = 0;
 
@@ -392,6 +398,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
+	folder_summary = camel_folder_get_folder_summary (folder);
 
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
@@ -405,7 +412,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
 
-		mi = camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder_summary, item->server_id);
 		if (mi) {
 			g_clear_object (&mi);
 			g_object_unref (item);
@@ -418,7 +425,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
 		}
 
-		mi = camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
+		mi = camel_folder_summary_info_new_from_header (folder_summary, camel_headers);
 
 		camel_header_raw_clear (&camel_headers);
 
@@ -441,7 +448,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			flags |= CAMEL_MESSAGE_FLAGGED;
 
 		camel_message_info_set_abort_notifications (mi, FALSE);
-		camel_eas_summary_add_message_info (folder->summary, flags, mi);
+		camel_eas_summary_add_message_info (folder_summary, flags, mi);
 		camel_folder_change_info_add_uid (ci, item->server_id);
 		camel_folder_change_info_recent_uid (ci, item->server_id);
 
@@ -451,7 +458,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_summary_save_to_db (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_created);

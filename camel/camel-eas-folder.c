@@ -246,6 +246,17 @@ exit:
 	return message;
 }
 
+static guint32
+eas_folder_get_permanent_flags (CamelFolder *folder)
+{
+	return CAMEL_MESSAGE_ANSWERED |
+		CAMEL_MESSAGE_DELETED |
+		CAMEL_MESSAGE_DRAFT |
+		CAMEL_MESSAGE_FLAGGED |
+		CAMEL_MESSAGE_SEEN |
+		CAMEL_MESSAGE_FORWARDED;
+}
+
 /* Get the message from cache if available otherwise get it from server */
 static CamelMimeMessage *
 eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, GCancellable *cancellable, GError **error )
@@ -349,16 +360,18 @@ static gboolean
 eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge, GCancellable *cancellable, GError **error)
 {
 	CamelEasStore *eas_store;
+	CamelFolderSummary *folder_summary;
 	EasEmailHandler *handler;
 	gboolean success;
         CamelEasFolderPrivate *priv = CAMEL_EAS_FOLDER(folder)->priv;
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+	folder_summary = camel_folder_get_folder_summary (folder);
         handler = camel_eas_store_get_handler (eas_store);
 
 	g_mutex_lock (&priv->server_lock);
 	success = eas_mail_handler_delete_email (handler,
-						 ((CamelEasSummary *) folder->summary)->sync_state,
+						 ((CamelEasSummary *) folder_summary)->sync_state,
 						 priv->server_id, deleted_uids, NULL, error);
 	g_mutex_unlock (&priv->server_lock);
 	if (success) {
@@ -366,10 +379,10 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 		GSList *l;
 		for (l = deleted_uids; l != NULL; l = g_slist_next (l)) {
 			gchar *uid = l->data;
-			camel_folder_summary_lock (folder->summary);
+			camel_folder_summary_lock (folder_summary);
 			camel_folder_change_info_remove_uid (changes, uid);
 			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->cache, "cache", uid, NULL);
-			camel_folder_summary_unlock (folder->summary);
+			camel_folder_summary_unlock (folder_summary);
 		}
 		camel_folder_changed (folder, changes);
 		camel_folder_change_info_free (changes);
@@ -385,6 +398,7 @@ static gboolean
 eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cancellable, GError **error)
 {
 	CamelEasStore *eas_store;
+	CamelFolderSummary *folder_summary;
 	EasEmailHandler *handler;
 	GPtrArray *uids;
 	GSList *item_list = NULL, *deleted_uids = NULL;
@@ -395,12 +409,13 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 	int i;
 
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store (folder);
+	folder_summary = camel_folder_get_folder_summary (folder);
         handler = camel_eas_store_get_handler (eas_store);
 
 	if (!camel_eas_store_connected (eas_store, cancellable, error))
 		return FALSE;
 
-	uids = camel_folder_summary_get_changed (folder->summary);
+	uids = camel_folder_summary_get_changed (folder_summary);
 	if (!uids->len) {
 		camel_folder_free_uids (folder, uids);
 		return TRUE;
@@ -410,7 +425,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
  more:
 	for ( ; success && i < uids->len && item_list_len < 25; i++) {
 		guint32 flags_changed;
-		CamelMessageInfo *mi = camel_folder_summary_get (folder->summary, uids->pdata[i]);
+		CamelMessageInfo *mi = camel_folder_summary_get (folder_summary, uids->pdata[i]);
 		if (!mi)
 			continue;
 
@@ -448,7 +463,7 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 	if (item_list_len) {
 		g_mutex_lock (&priv->server_lock);
 		success = eas_mail_handler_update_email (handler,
-							 ((CamelEasSummary *) folder->summary)->sync_state,
+							 ((CamelEasSummary *) folder_summary)->sync_state,
 							 priv->server_id, item_list, NULL, error);
 		for (l = changing_mis; l; l = l->next) {
 			CamelMessageInfo *mi = l->data;
@@ -485,6 +500,7 @@ CamelFolder *
 camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, gchar *folder_id, GCancellable *cancellable, GError **error)
 {
         CamelFolder *folder;
+	CamelFolderSummary *folder_summary;
         CamelEasFolder *eas_folder;
         gchar *summary_file, *state_file;
         const gchar *short_name;
@@ -503,16 +519,18 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
         eas_folder = CAMEL_EAS_FOLDER(folder);
 
         summary_file = g_build_filename (folder_dir, "summary", NULL);
-        folder->summary = camel_eas_summary_new (folder, summary_file);
-        g_free(summary_file);
+        folder_summary = camel_eas_summary_new (folder, summary_file);
+        g_free (summary_file);
 
-        if (!folder->summary) {
-                g_object_unref (CAMEL_OBJECT (folder));
+        if (!folder_summary) {
+                g_object_unref (folder);
                 g_set_error (
                         error, CAMEL_ERROR, CAMEL_ERROR_GENERIC,
                         _("Could not load summary for %s"), folder_name);
                 return NULL;
         }
+
+	camel_folder_take_folder_summary (folder, folder_summary);
 
         /* set/load persistent state */
         state_file = g_build_filename (folder_dir, "cmeta", NULL);
@@ -530,7 +548,7 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
 		CamelStoreSettings *settings = CAMEL_STORE_SETTINGS (camel_service_ref_settings (CAMEL_SERVICE (store)));
 
                 if (camel_store_settings_get_filter_inbox (settings))
-                        folder->folder_flags |= CAMEL_FOLDER_FILTER_RECENT;
+                        camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_FILTER_RECENT);
 		g_object_unref(settings);
         }
 
@@ -610,7 +628,7 @@ eas_refresh_info_sync (CamelFolder *folder, GCancellable *cancellable, GError **
 
         handler = camel_eas_store_get_handler (eas_store);
 
-        sync_state = ((CamelEasSummary *) folder->summary)->sync_state;
+        sync_state = ((CamelEasSummary *) camel_folder_get_folder_summary (folder))->sync_state;
 
 	progress_data.operation = cancellable;
 	progress_data.estimate = 0;
@@ -710,7 +728,7 @@ eas_refresh_info_sync (CamelFolder *folder, GCancellable *cancellable, GError **
 		if (items_updated)
 			progress_data.fetched += camel_eas_utils_sync_updated_items (eas_folder, items_updated);
 
-                camel_folder_summary_save_to_db (folder->summary, NULL);
+                camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
 
         } while (more_available);
 
@@ -755,24 +773,26 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 	CamelEasStore *eas_store;
 	CamelMessageInfo *info;
 	CamelStore *parent_store;
+	CamelFolderSummary *folder_summary;
 	GSList *deleted_items = NULL;
 	gboolean expunge = FALSE;
 	gint i;
 	GPtrArray *known_uids;
 
 	parent_store = camel_folder_get_parent_store (folder);
+	folder_summary = camel_folder_get_folder_summary (folder);
 	eas_store = CAMEL_EAS_STORE (parent_store);
 
 	if (!camel_eas_store_connected (eas_store, cancellable, error))
 		return FALSE;
 
 	/* On Deleted Items folder, actually delete. On others, move to Deleted Items */
-	if (folder->folder_flags & CAMEL_FOLDER_IS_TRASH)
+	if (camel_folder_get_flags (folder) & CAMEL_FOLDER_IS_TRASH)
 		expunge = TRUE;
 
 	/* Collect UIDs of deleted messages. */
-	camel_folder_summary_prepare_fetch_all (folder->summary, NULL);
-	known_uids = camel_folder_summary_get_array (folder->summary);
+	camel_folder_summary_prepare_fetch_all (folder_summary, NULL);
+	known_uids = camel_folder_summary_get_array (folder_summary);
 	if (!known_uids)
 		return TRUE;
 
@@ -780,7 +800,7 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 	for (i = 0; i < known_uids->len; i++) {
 		const gchar *uid = g_ptr_array_index (known_uids, i);
 
-		info = camel_folder_summary_get (folder->summary, uid);
+		info = camel_folder_summary_get (folder_summary, uid);
 
 		if (info && (camel_message_info_get_flags (info) & CAMEL_MESSAGE_DELETED))
 			deleted_items = g_slist_prepend (deleted_items, (gpointer) camel_pstring_strdup (uid));
@@ -875,6 +895,7 @@ camel_eas_folder_class_init (CamelEasFolderClass *class)
 	object_class->constructed = eas_folder_constructed;
 
 	folder_class = CAMEL_FOLDER_CLASS (class);
+	folder_class->get_permanent_flags = eas_folder_get_permanent_flags;
 	folder_class->get_message_sync = eas_folder_get_message_sync;
 	folder_class->search_by_expression = eas_folder_search_by_expression;
 	folder_class->count_by_expression = eas_folder_count_by_expression;
@@ -896,11 +917,7 @@ camel_eas_folder_init (CamelEasFolder *eas_folder)
 
 	eas_folder->priv = CAMEL_EAS_FOLDER_GET_PRIVATE (eas_folder);
 
-	folder->permanent_flags = CAMEL_MESSAGE_ANSWERED | CAMEL_MESSAGE_DELETED |
-		CAMEL_MESSAGE_DRAFT | CAMEL_MESSAGE_FLAGGED | CAMEL_MESSAGE_SEEN |
-		CAMEL_MESSAGE_FORWARDED;
-
-	folder->folder_flags = CAMEL_FOLDER_HAS_SUMMARY_CAPABILITY;
+	camel_folder_set_flags (folder, CAMEL_FOLDER_HAS_SUMMARY_CAPABILITY);
 
 	g_mutex_init(&eas_folder->priv->search_lock);
 	g_mutex_init(&eas_folder->priv->state_lock);
