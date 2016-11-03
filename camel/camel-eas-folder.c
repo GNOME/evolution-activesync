@@ -728,7 +728,7 @@ eas_refresh_info_sync (CamelFolder *folder, GCancellable *cancellable, GError **
 		if (items_updated)
 			progress_data.fetched += camel_eas_utils_sync_updated_items (eas_folder, items_updated);
 
-                camel_folder_summary_save_to_db (camel_folder_get_folder_summary (folder), NULL);
+                camel_folder_summary_save (camel_folder_get_folder_summary (folder), NULL);
 
         } while (more_available);
 

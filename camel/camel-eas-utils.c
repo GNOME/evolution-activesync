@@ -376,7 +376,7 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder_summary, NULL);
+	camel_folder_summary_save (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
@@ -458,7 +458,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder_summary, NULL);
+	camel_folder_summary_save (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_created);

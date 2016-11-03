@@ -47,8 +47,8 @@
 #define SUM_DB_RETTYPE gboolean
 #define SUM_DB_RET_OK TRUE
 #define SUM_DB_RET_ERR FALSE
-static SUM_DB_RETTYPE summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir);
-static CamelFIRecord * summary_header_to_db (CamelFolderSummary *s, GError **error);
+static SUM_DB_RETTYPE summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir);
+static CamelFIRecord *summary_header_save (CamelFolderSummary *s, GError **error);
 
 /*End of Prototypes*/
 
@@ -76,8 +76,8 @@ camel_eas_summary_class_init (CamelEasSummaryClass *class)
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
 	folder_summary_class->message_info_type = CAMEL_TYPE_EAS_MESSAGE_INFO;
-	folder_summary_class->summary_header_to_db = summary_header_to_db;
-	folder_summary_class->summary_header_from_db = summary_header_from_db;
+	folder_summary_class->summary_header_save = summary_header_save;
+	folder_summary_class->summary_header_load = summary_header_load;
 }
 
 static void
@@ -102,18 +102,18 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 	summary = g_object_new (CAMEL_TYPE_EAS_SUMMARY,
 				"folder", folder, NULL);
 
-	camel_folder_summary_load_from_db (summary, NULL);
+	camel_folder_summary_load (summary, NULL);
 
 	return summary;
 }
 
 static SUM_DB_RETTYPE
-summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
+summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir)
 {
 	CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
 	gchar *part;
 
-	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_from_db (s, mir) == SUM_DB_RET_ERR)
+	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_load (s, mir) == SUM_DB_RET_ERR)
 		return SUM_DB_RET_ERR;
 
 	part = mir->bdata;
@@ -130,12 +130,12 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 }
 
 static CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *s, GError **error)
+summary_header_save (CamelFolderSummary *s, GError **error)
 {
 	CamelEasSummary *ims = CAMEL_EAS_SUMMARY(s);
 	struct _CamelFIRecord *fir;
 
-	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_to_db (s, error);
+	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_save (s, error);
 	if (!fir)
 		return NULL;
 

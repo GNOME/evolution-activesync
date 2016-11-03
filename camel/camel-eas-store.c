@@ -303,8 +303,7 @@ folder_info_from_store_summary (CamelEasStore *store, const gchar *top, guint32 
 			continue;
 
 		fi = camel_eas_utils_build_folder_info (store, l->data);
-		if (!camel_folder_summary_header_load_from_db (s, CAMEL_STORE (store),
-							       fi->full_name, NULL)) {
+		if (!camel_folder_summary_header_load (s, CAMEL_STORE (store), fi->full_name, NULL)) {
 			fi->unread = camel_folder_summary_get_unread_count (s);
 			fi->total = camel_folder_summary_get_saved_count (s);
 		}
