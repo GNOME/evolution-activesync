@@ -402,7 +402,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
-		struct _camel_header_raw *camel_headers = NULL;
+		CamelNameValueArray *camel_headers;
 		CamelMessageInfo *mi;
 		int flags = 0;
 		GSList *hl;
@@ -419,15 +419,16 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 			continue;
 		}
 
+		camel_headers = camel_name_value_array_new ();
 		for (hl = item->headers; hl; hl = g_slist_next(hl)) {
 			EasEmailHeader *hdr = hl->data;
 
-			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
+			camel_name_value_array_append (camel_headers, hdr->name, hdr->value);
 		}
 
-		mi = camel_folder_summary_info_new_from_header (folder_summary, camel_headers);
+		mi = camel_folder_summary_info_new_from_headers (folder_summary, camel_headers);
 
-		camel_header_raw_clear (&camel_headers);
+		camel_name_value_array_free (camel_headers);
 
 		camel_message_info_set_abort_notifications (mi, TRUE);
 
