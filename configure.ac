@@ -69,7 +69,7 @@ PKG_CHECK_MODULES(LIBEMAIL_ENGINE, libemail-engine, [have_libemail_engine="yes"]
 EVO_PKG="-3.0"
 CAMEL_PKG="camel-1.2"
 
-PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG} >= 3.23.2)
+PKG_CHECK_MODULES(CAMEL, ${CAMEL_PKG} >= 3.23.2, [have_camel=yes], [have_camel=no])
 
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
@@ -142,8 +142,8 @@ AC_ARG_ENABLE(camel-backend,
                              [Can be used to disable compiling the libcamel email backend. Enabled by default.]),
               [enable_camel="$enableval"], [enable_camel="yes"])
 AM_CONDITIONAL([ENABLE_CAMEL_BACKEND], [test "$enable_camel" = "yes"])
-if test "$enable_camel" = "yes" && test "$have_libemail_engine" != "yes"; then
-    AC_MSG_ERROR(["libemail-engine.pc is required for the camel backend; use --disable-camel-backend when EDS is too old or install a more recent EDS"])
+if test "$enable_camel" = "yes" && (test "$have_libemail_engine" != "yes" || test "$have_camel" != "yes"); then
+    AC_MSG_ERROR(["libemail-engine.pc and recent enough camel-1.2.pc are required for the camel backend; use --disable-camel-backend when EDS is too old or install a more recent EDS"])
 fi
 
 AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
