@@ -243,7 +243,7 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
 		count++;
 	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
 
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
@@ -259,6 +259,7 @@ void
 camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 {
 	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
+	CamelFolderSummary *folder_summary;
 	const gchar *full_name;
 	CamelFolderChangeInfo *ci;
 	CamelEasStore *eas_store;
@@ -267,7 +268,9 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	GPtrArray *known_uids = NULL;
 	int i;
 
-	if (!camel_folder_summary_count (folder->summary))
+	folder_summary = camel_folder_get_folder_summary (folder);
+
+	if (!camel_folder_summary_count (folder_summary))
 		return;
 
 	ci = camel_folder_change_info_new ();
@@ -276,7 +279,7 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 	folder = (CamelFolder *) eas_folder;
 	full_name = camel_folder_get_full_name (folder);
 
-	known_uids = camel_folder_summary_get_array (folder->summary);
+	known_uids = camel_folder_summary_get_array (folder_summary);
 	if (!known_uids)
 		return;
 	for (i = 0; i < known_uids->len; i++) {
@@ -286,7 +289,7 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 		uids_deleted = g_list_prepend (uids_deleted, uid);
 		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
 	}
-	camel_db_delete_uids (((CamelStore *)eas_store)->cdb_w, full_name, uids_deleted, NULL);
+	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
 	g_list_free (uids_deleted);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
@@ -335,19 +338,21 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
+	CamelFolderSummary *folder_summary;
 	GSList *l;
 	int count = 0;
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
+	folder_summary = camel_folder_get_folder_summary (folder);
 
 	for (l = items_updated; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
-		CamelEasMessageInfo *mi;
+		CamelMessageInfo *mi;
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder_summary, item->server_id);
 		if (mi) {
-			gint flags = mi->info.flags;
+			gint flags = camel_message_info_get_flags (mi);
 
 			if (item->flags & EAS_VALID_READ) {
 				if (item->flags & EAS_EMAIL_READ)
@@ -361,20 +366,17 @@ camel_eas_utils_sync_updated_items (CamelEasFolder *eas_folder, GSList *items_up
 				else
 					flags &= ~CAMEL_MESSAGE_FLAGGED;
 			}
-			if (camel_eas_update_message_info_flags (folder->summary, (CamelMessageInfo *)mi,
-								 flags, NULL))
-				camel_folder_change_info_change_uid (ci, mi->info.uid);
+			if (camel_eas_update_message_info_flags (folder_summary, mi, flags, NULL))
+				camel_folder_change_info_change_uid (ci, camel_message_info_get_uid (mi));
 
-			mi->info.dirty = TRUE;
-
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 		}
 
 		g_object_unref (item);
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_summary_save (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_updated);
@@ -387,6 +389,7 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 {
 	CamelFolder *folder;
 	CamelFolderChangeInfo *ci;
+	CamelFolderSummary *folder_summary;
 	GSList *l;
 	int count = 0;
 
@@ -395,11 +398,12 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 	ci = camel_folder_change_info_new ();
 	folder = (CamelFolder *) eas_folder;
+	folder_summary = camel_folder_get_folder_summary (folder);
 
 	for (l = items_created; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
-		struct _camel_header_raw *camel_headers = NULL;
-		CamelEasMessageInfo *mi;
+		CamelNameValueArray *camel_headers;
+		CamelMessageInfo *mi;
 		int flags = 0;
 		GSList *hl;
 
@@ -408,31 +412,29 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 
 		printf("Got item with Server ID %s, flags %u\n", item->server_id, item->flags);
 
-		mi = (CamelEasMessageInfo *) camel_folder_summary_get (folder->summary, item->server_id);
+		mi = camel_folder_summary_get (folder_summary, item->server_id);
 		if (mi) {
-			camel_message_info_unref (mi);
+			g_clear_object (&mi);
 			g_object_unref (item);
 			continue;
 		}
 
+		camel_headers = camel_name_value_array_new ();
 		for (hl = item->headers; hl; hl = g_slist_next(hl)) {
 			EasEmailHeader *hdr = hl->data;
 
-			camel_header_raw_append (&camel_headers, hdr->name, hdr->value, 0);
+			camel_name_value_array_append (camel_headers, hdr->name, hdr->value);
 		}
 
-		mi = (CamelEasMessageInfo *)camel_folder_summary_info_new_from_header (folder->summary, camel_headers);
-		if (mi->info.content == NULL) {
-			//mi->info.content = camel_folder_summary_content_info_new_from_header (folder->summary, camel_headers);
-			mi->info.content = camel_folder_summary_content_info_new (folder->summary);
-			mi->info.content->type = camel_content_type_new ("multipart", "mixed");
-		}
+		mi = camel_folder_summary_info_new_from_headers (folder_summary, camel_headers);
 
-		camel_header_raw_clear (&camel_headers);
+		camel_name_value_array_free (camel_headers);
 
-		mi->info.uid = camel_pstring_strdup (item->server_id);
-		mi->info.size = item->estimated_size;
-		mi->info.date_received = item->date_received;
+		camel_message_info_set_abort_notifications (mi, TRUE);
+
+		camel_message_info_set_uid (mi, item->server_id);
+		camel_message_info_set_size (mi, item->estimated_size);
+		camel_message_info_set_date_received (mi, item->date_received);
 
 		if (item->attachments)
 			flags |= CAMEL_MESSAGE_ATTACHMENTS;
@@ -446,17 +448,18 @@ camel_eas_utils_sync_created_items (CamelEasFolder *eas_folder, GSList *items_cr
 		if (item->importance == EAS_IMPORTANCE_HIGH)
 			flags |= CAMEL_MESSAGE_FLAGGED;
 
-		camel_eas_summary_add_message_info (folder->summary, flags,
-						    (CamelMessageInfo *) mi);
+		camel_message_info_set_abort_notifications (mi, FALSE);
+		camel_eas_summary_add_message_info (folder_summary, flags, mi);
 		camel_folder_change_info_add_uid (ci, item->server_id);
 		camel_folder_change_info_recent_uid (ci, item->server_id);
 
+		g_clear_object (&mi);
 		g_object_unref (item);
 
 		count++;
 	}
 
-	camel_folder_summary_save_to_db (folder->summary, NULL);
+	camel_folder_summary_save (folder_summary, NULL);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 	g_slist_free (items_created);

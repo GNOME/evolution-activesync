@@ -47,42 +47,12 @@
 #define SUM_DB_RETTYPE gboolean
 #define SUM_DB_RET_OK TRUE
 #define SUM_DB_RET_ERR FALSE
-static SUM_DB_RETTYPE summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir);
-static CamelFIRecord * summary_header_to_db (CamelFolderSummary *s, GError **error);
-static CamelMIRecord * message_info_to_db (CamelFolderSummary *s, CamelMessageInfo *info);
-static CamelMessageInfo * message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir);
-static SUM_DB_RETTYPE content_info_to_db (CamelFolderSummary *s, CamelMessageContentInfo *info, CamelMIRecord *mir);
-static CamelMessageContentInfo * content_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir);
+static SUM_DB_RETTYPE summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir);
+static CamelFIRecord *summary_header_save (CamelFolderSummary *s, GError **error);
 
 /*End of Prototypes*/
 
 G_DEFINE_TYPE (CamelEasSummary, camel_eas_summary, CAMEL_TYPE_FOLDER_SUMMARY)
-
-static CamelMessageInfo *
-eas_message_info_clone(CamelFolderSummary *s, const CamelMessageInfo *mi)
-{
-	CamelEasMessageInfo *to;
-	const CamelEasMessageInfo *from = (const CamelEasMessageInfo *)mi;
-
-	to = (CamelEasMessageInfo *)CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->message_info_clone(s, mi);
-	to->server_flags = from->server_flags;
-	to->item_type = from->item_type;
-	to->change_key = g_strdup (from->change_key);
-
-	/* FIXME: parent clone should do this */
-	to->info.content = camel_folder_summary_content_info_new(s);
-
-	return (CamelMessageInfo *)to;
-}
-
-static void
-eas_message_info_free (CamelFolderSummary *s, CamelMessageInfo *mi)
-{
-	CamelEasMessageInfo *emi = (void *)mi;
-
-	g_free (emi->change_key);
-	CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->message_info_free (s, mi);
-}
 
 static void
 eas_summary_finalize (GObject *object)
@@ -105,16 +75,9 @@ camel_eas_summary_class_init (CamelEasSummaryClass *class)
 	object_class->finalize = eas_summary_finalize;
 
 	folder_summary_class = CAMEL_FOLDER_SUMMARY_CLASS (class);
-	folder_summary_class->message_info_size = sizeof (CamelEasMessageInfo);
-	folder_summary_class->content_info_size = sizeof (CamelEasMessageContentInfo);
-	folder_summary_class->message_info_clone = eas_message_info_clone;
-	folder_summary_class->message_info_free = eas_message_info_free;
-	folder_summary_class->summary_header_to_db = summary_header_to_db;
-	folder_summary_class->summary_header_from_db = summary_header_from_db;
-	folder_summary_class->message_info_to_db = message_info_to_db;
-	folder_summary_class->message_info_from_db = message_info_from_db;
-	folder_summary_class->content_info_to_db = content_info_to_db;
-	folder_summary_class->content_info_from_db = content_info_from_db;
+	folder_summary_class->message_info_type = CAMEL_TYPE_EAS_MESSAGE_INFO;
+	folder_summary_class->summary_header_save = summary_header_save;
+	folder_summary_class->summary_header_load = summary_header_load;
 }
 
 static void
@@ -138,19 +101,19 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 
 	summary = g_object_new (CAMEL_TYPE_EAS_SUMMARY,
 				"folder", folder, NULL);
-	camel_folder_summary_set_build_content (summary, TRUE);
-	camel_folder_summary_load_from_db (summary, NULL);
+
+	camel_folder_summary_load (summary, NULL);
 
 	return summary;
 }
 
 static SUM_DB_RETTYPE
-summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
+summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir)
 {
 	CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
 	gchar *part;
 
-	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_from_db (s, mir) == SUM_DB_RET_ERR)
+	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_load (s, mir) == SUM_DB_RET_ERR)
 		return SUM_DB_RET_ERR;
 
 	part = mir->bdata;
@@ -167,12 +130,12 @@ summary_header_from_db (CamelFolderSummary *s, CamelFIRecord *mir)
 }
 
 static CamelFIRecord *
-summary_header_to_db (CamelFolderSummary *s, GError **error)
+summary_header_save (CamelFolderSummary *s, GError **error)
 {
 	CamelEasSummary *ims = CAMEL_EAS_SUMMARY(s);
 	struct _CamelFIRecord *fir;
 
-	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_to_db (s, error);
+	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_save (s, error);
 	if (!fir)
 		return NULL;
 
@@ -182,110 +145,31 @@ summary_header_to_db (CamelFolderSummary *s, GError **error)
 
 }
 
-static CamelMessageInfo *
-message_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
-{
-	CamelMessageInfo *info;
-	CamelEasMessageInfo *iinfo;
-
-	info = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->message_info_from_db (s, mir);
-	if (info) {
-		gchar *part = mir->bdata;
-		gchar **values;
-
-		iinfo = (CamelEasMessageInfo *)info;
-		values = g_strsplit (part, " ", -1);
-
-		iinfo->server_flags = g_ascii_strtoll (values [0], NULL, 10);
-		iinfo->item_type = g_ascii_strtoll (values [1], NULL, 10);
-		iinfo->change_key = g_strdup (values [2]);
-
-		g_strfreev (values);
-	}
-
-	return info;
-}
-
-static CamelMIRecord *
-message_info_to_db (CamelFolderSummary *s, CamelMessageInfo *info)
-{
-	CamelEasMessageInfo *iinfo = (CamelEasMessageInfo *)info;
-	struct _CamelMIRecord *mir;
-
-	mir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->message_info_to_db (s, info);
-	if (mir)
-		mir->bdata = g_strdup_printf ("%u %d %s", iinfo->server_flags, iinfo->item_type, iinfo->change_key);
-
-	return mir;
-}
-
-static CamelMessageContentInfo *
-content_info_from_db (CamelFolderSummary *s, CamelMIRecord *mir)
-{
-	gchar *part = mir->cinfo;
-	guint32 type=0;
-
-	if (part) {
-		if (*part == ' ')
-			part++;
-		if (part) {
-			EXTRACT_FIRST_DIGIT (type);
-		}
-	}
-	mir->cinfo = part;
-	if (type)
-		return CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->content_info_from_db (s, mir);
-	else
-		return camel_folder_summary_content_info_new (s);
-}
-
-static SUM_DB_RETTYPE
-content_info_to_db (CamelFolderSummary *s, CamelMessageContentInfo *info, CamelMIRecord *mir)
-{
-
-	if (info->type) {
-		mir->cinfo = g_strdup ("1");
-		return CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->content_info_to_db (s, info, mir);
-	} else {
-		mir->cinfo = g_strdup ("0");
-		return SUM_DB_RET_OK;
-	}
-}
-
 void
 camel_eas_summary_add_message	(CamelFolderSummary *summary,
 				 const gchar *uid,
 				 CamelMimeMessage *message)
 {
-	CamelEasMessageInfo *mi;
+	CamelMessageInfo *mi;
 	CamelMessageInfo *info;
-	const CamelFlag *flag;
-	const CamelTag *tag;
 
 	info = camel_folder_summary_get (summary, uid);
 
 	/* Create summary entry */
-	mi = (CamelEasMessageInfo *)camel_folder_summary_info_new_from_message (summary, message, NULL);
+	mi = camel_folder_summary_info_new_from_message (summary, message);
+
+	camel_message_info_set_abort_notifications (mi, TRUE);
 
 	/* Copy flags 'n' tags */
-	mi->info.flags = camel_message_info_flags(info);
+	camel_message_info_set_flags (mi, ~0, camel_message_info_get_flags (info));
+	camel_message_info_take_user_flags (mi, camel_message_info_dup_user_flags (info));
+	camel_message_info_take_user_tags (mi, camel_message_info_dup_user_tags (info));
+	camel_message_info_set_size (mi, camel_message_info_get_size (info));
+	camel_message_info_set_uid (mi, uid);
 
-	flag = camel_message_info_user_flags(info);
-	while (flag) {
-		camel_message_info_set_user_flag((CamelMessageInfo *)mi, flag->name, TRUE);
-		flag = flag->next;
-	}
-	tag = camel_message_info_user_tags(info);
-	while (tag) {
-		camel_message_info_set_user_tag((CamelMessageInfo *)mi, tag->name, tag->value);
-		tag = tag->next;
-	}
-
-	mi->info.size = camel_message_info_size(info);
-	mi->info.uid = camel_pstring_strdup (uid);
-
-	camel_folder_summary_add (summary, (CamelMessageInfo *)mi);
-	camel_message_info_unref (info);
+	camel_message_info_set_abort_notifications (mi, FALSE);
+	camel_folder_summary_add (summary, mi, FALSE);
+	g_clear_object (&info);
 }
 
 void
@@ -293,31 +177,28 @@ camel_eas_summary_add_message_info	(CamelFolderSummary *summary,
 					 guint32 server_flags,
 					 CamelMessageInfo *mi)
 {
-	CamelMessageInfoBase *binfo = (CamelMessageInfoBase *) mi;
-	CamelEasMessageInfo *einfo = (CamelEasMessageInfo *) mi;
+	camel_message_info_set_flags (mi, server_flags, server_flags);
+	camel_eas_message_info_set_server_flags (CAMEL_EAS_MESSAGE_INFO (mi), server_flags);
+	camel_message_info_set_folder_flagged (mi, FALSE);
 
-	binfo->flags |= server_flags;
-	einfo->server_flags = server_flags;
-
-	binfo->flags &= ~CAMEL_MESSAGE_FOLDER_FLAGGED;
-	camel_folder_summary_add (summary, (CamelMessageInfo *)mi);
+	camel_folder_summary_add (summary, mi, FALSE);
 }
 
 static gboolean
-eas_update_user_flags (CamelMessageInfo *info, CamelFlag *server_user_flags)
+eas_update_user_flags (CamelMessageInfo *info,
+		       const CamelNamedFlags *server_user_flags)
 {
 	gboolean changed = FALSE;
-	CamelMessageInfoBase *binfo = (CamelMessageInfoBase *) info;
 	gboolean set_cal = FALSE;
 
-	if (camel_flag_get (&binfo->user_flags, "$has_cal"))
+	if (camel_message_info_get_user_flag (info, "$has_cal"))
 		set_cal = TRUE;
 
-	changed = camel_flag_list_copy (&binfo->user_flags, &server_user_flags);
+	changed = camel_message_info_take_user_flags (info, camel_named_flags_copy (server_user_flags));
 
 	/* reset the calendar flag if it was set in messageinfo before */
 	if (set_cal)
-		camel_flag_set (&binfo->user_flags, "$has_cal", TRUE);
+		camel_message_info_set_user_flag (info, "$has_cal", TRUE);
 
 	return changed;
 }
@@ -326,22 +207,21 @@ gboolean
 camel_eas_update_message_info_flags	(CamelFolderSummary *summary,
 					 CamelMessageInfo *info,
 					 guint32 server_flags,
-					 CamelFlag *server_user_flags)
+					 const CamelNamedFlags *server_user_flags)
 {
 	CamelEasMessageInfo *einfo = (CamelEasMessageInfo *) info;
 	gboolean changed = FALSE;
 
-	if (server_flags != einfo->server_flags) {
-		guint32 server_set, server_cleared;
+	if (server_flags != camel_eas_message_info_get_server_flags (einfo)) {
+		guint32 server_set, server_cleared, has_stored;
 
-		server_set = server_flags & ~einfo->server_flags;
-		server_cleared = einfo->server_flags & ~server_flags;
+		has_stored = camel_eas_message_info_get_server_flags (einfo);
+		server_set = server_flags & ~has_stored;
+		server_cleared = has_stored & ~server_flags;
 
 		camel_message_info_set_flags (info, server_set | server_cleared,
-					      (einfo->info.flags | server_set) & ~server_cleared);
-                einfo->server_flags = server_flags;
-		if (info->summary)
-			camel_folder_summary_touch (info->summary);
+					      (camel_message_info_get_flags (info) | server_set) & ~server_cleared);
+                camel_eas_message_info_set_server_flags (einfo, server_flags);
 		changed = TRUE;
 	}
 
@@ -381,4 +261,3 @@ eas_summary_clear	(CamelFolderSummary *summary,
 	camel_folder_change_info_free (changes);
 	camel_folder_summary_free_array (known_uids);
 }
-
