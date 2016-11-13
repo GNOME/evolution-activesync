@@ -1289,7 +1289,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_REPROVISION,
-			     _("HTTP request failed: %d - %s"),
+			     _("HTTP request failed: %d — %s"),
 			     msg->status_code, msg->reason_phrase);
 		return VALID_12_1_REPROVISION;
 	}
@@ -1300,7 +1300,7 @@ isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     _("HTTP request failed: %d - %s"),
+			     _("HTTP request failed: %d — %s"),
 			     msg->status_code, msg->reason_phrase);
 		return INVALID;
 	}
@@ -1519,7 +1519,7 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     _("Status code: %d - Response from server"),
+			     _("Status code: %d — Response from server"),
 			     status);
 		goto failed;
 	}
@@ -2502,7 +2502,7 @@ eas_connection_cancel_request(EasConnection* cnc,
 		ret = FALSE;
 		g_set_error (error, EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_BADARG,
-			     _("Request with id %d not in queue; can't cancel"),
+			     _("Request with id %d not in queue; can’t cancel"),
 			     request_id);
 	}
 	QUEUE_UNLOCK (cnc);
@@ -2630,7 +2630,7 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
-			     _("HTTP request failed: %d - %s"),
+			     _("HTTP request failed: %d — %s"),
 			     msg->status_code, msg->reason_phrase);
 		ret = FALSE;
 		goto cleanup;
