@@ -3,7 +3,7 @@ AM_MAINTAINER_MODE([enable])
 AC_PREREQ([2.59])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.10 no-define dist-xz no-dist-gzip])
+AM_INIT_AUTOMAKE([1.10 no-define dist-xz no-dist-gzip tar-pax])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Checks for libraries.
