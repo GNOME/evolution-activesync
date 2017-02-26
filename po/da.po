@@ -31,7 +31,7 @@ msgstr "Kunne ikke flytte mellemlagerfilen for beskeder"
 #: ../camel/camel-eas-folder.c:513
 #, c-format
 msgid "Could not load summary for %s"
-msgstr "Kunne ikke indl??se referat for %s"
+msgstr "Kunne ikke indlæse referat for %s"
 
 #: ../camel/camel-eas-folder.c:733
 #, c-format
@@ -57,7 +57,7 @@ msgstr "Indstillinger"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr "_Anvend filtre p?? nye beskeder i Indboks p?? denne server"
+msgstr "_Anvend filtre på nye beskeder i Indboks på denne server"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -103,7 +103,7 @@ msgstr "EAS-tjeneste har ingen konto-UID"
 #: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
-msgstr "Ingen s??dan mappe: %s"
+msgstr "Ingen sådan mappe: %s"
 
 #: ../camel/camel-eas-store.c:370
 #, c-format
@@ -118,7 +118,7 @@ msgstr "Slet mappe er ikke muligt med ActiveSync"
 #: ../camel/camel-eas-store.c:394
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
-msgstr "Omd??b mappe er ikke muligt med ActiveSync"
+msgstr "Omdøb mappe er ikke muligt med ActiveSync"
 
 #: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
 #, c-format
@@ -128,12 +128,12 @@ msgstr "ActiveSync-server %s"
 #: ../camel/camel-eas-store.c:413
 #, c-format
 msgid "ActiveSync service for %s on %s"
-msgstr "ActiveSync-tjeneste for %s p?? %s"
+msgstr "ActiveSync-tjeneste for %s på %s"
 
 #: ../camel/camel-eas-store.c:455
 #, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Du skal arbejde p?? nettet for at fuldf??re denne handling"
+msgstr "Du skal arbejde på nettet for at fuldføre denne handling"
 
 #: ../camel/camel-eas-transport.c:151
 #, c-format
@@ -196,7 +196,7 @@ msgstr "fejl %d returneret fra wbxml_conv_xml2wbxml_run"
 #: ../eas-daemon/libeas/eas-connection.c:2632
 #, c-format
 msgid "HTTP request failed: %d - %s"
-msgstr "HTTP-foresp??rgsel mislykkedes: %d - %s"
+msgstr "HTTP-forespørgsel mislykkedes: %d - %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -266,7 +266,7 @@ msgstr "E-post er obligatorisk og skal angives"
 #: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
-msgstr "Kunne ikke udtr??kke dom??me fra e-post-adresse"
+msgstr "Kunne ikke udtrække domæme fra e-post-adresse"
 
 #: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
@@ -301,7 +301,7 @@ msgstr "Kunne ikke fortolke XML: %s"
 #: ../eas-daemon/libeas/eas-connection.c:2504
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
-msgstr "Foresp??rgsel uden id %d er ikke i k??en; kan ikke afbryde"
+msgstr "Forespørgsel uden id %d er ikke i køen; kan ikke afbryde"
 
 #~ msgid "Contacts"
 #~ msgstr "Kontakter"
