@@ -1,44 +1,44 @@
 # Indonesian translation for evolution-activesync.
 # Copyright (C) 2014 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Andika Triwidada <andika@gmail.com>, 2014.
+# Andika Triwidada <andika@gmail.com>, 2014, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2014-10-06 16:31+0000\n"
-"PO-Revision-Date: 2014-10-16 15:03+0700\n"
+"Report-Msgid-Bugs-To: https://bugzilla.gnome.org/enter_bug.cgi?"
+"product=evolution-activesync&keywords=I18N+L10N&component=evolution-plugin\n"
+"POT-Creation-Date: 2017-02-26 23:02+0000\n"
+"PO-Revision-Date: 2017-03-20 00:40+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 1.8.12\n"
 
-#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Tak dapat membuat path singgahan"
 
-#: ../camel/camel-eas-folder.c:209
+#: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Gagal memindah berkas singgahan pesan"
 
-#: ../camel/camel-eas-folder.c:509
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Tak dapat memuat ringkasan bagi %s"
 
-#: ../camel/camel-eas-folder.c:727
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Menulis pesan ke penyimpanan surat tak mungkin dalam ActiveSync"
 
-#: ../camel/camel-eas-folder.c:742
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Memindah pesan belum diimplementasi"
@@ -72,7 +72,6 @@ msgid "Automatically synchroni_ze account locally"
 msgstr "_Secara otomatis menyelaraskan akun secara lokal"
 
 #: ../camel/camel-eas-provider.c:69
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:1
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
@@ -90,17 +89,17 @@ msgid ""
 msgstr ""
 "Opsi ini akan menyambung ke server ActiveSync memakai suatu sandi teks polos."
 
-#: ../camel/camel-eas-store.c:136
+#: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
 msgstr "Sesi tak punya path penyimpanan"
 
-#: ../camel/camel-eas-store.c:176
+#: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "Layanan EAS tak punya UID akun"
 
-#: ../camel/camel-eas-store.c:264
+#: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
 msgstr "Tak ada folder itu: %s"
@@ -120,7 +119,7 @@ msgstr "Menghapus folder tak mungkin dengan ActiveSync"
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Mengubah nama folder tak mungkin dengan ActiveSync"
 
-#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:65
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Server ActiveSync %s"
@@ -135,139 +134,160 @@ msgstr "Layanan ActiveSync bagi %s pada %s"
 msgid "You must be working online to complete this operation"
 msgstr "Anda mesti bekerja daring untuk melengkapi operasi ini"
 
-#: ../camel/camel-eas-transport.c:68
+#: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
 msgstr "Pengiriman surat ActiveSync melalui %s"
 
-#: ../camel/camel-eas-transport.c:108
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "Gagal membuat berkas temporer untuk mengirim pesan"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "Pemanggilan CreateItem gagal untuk mengembalikan ID bagi pesan baru"
 
-#: ../eas-daemon/libeas/eas-connection.c:486
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:169
+msgid "Configuration"
+msgstr "Konfigurasi"
+
+#: ../configuration/e-mail-config-eas-backend.c:188
+msgid "User_name:"
+msgstr "Nama pengguna:"
+
+#: ../configuration/e-mail-config-eas-backend.c:203
+msgid "_Server URL:"
+msgstr "URL _Server:"
+
+#: ../configuration/e-mail-config-eas-backend.c:218
+msgid "Authentication"
+msgstr "Otentikasi"
+
+#: ../configuration/e-mail-config-eas-backend.c:235
+msgid "_Auto Detect"
+msgstr "Deteksi Otom_atis"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Harap masukkan sandi ActiveSync Anda bagi %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1058
+#: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "galat %d dikembalikan dari wbxml_conv_xml2wbxml_create"
 
-#: ../eas-daemon/libeas/eas-connection.c:1088
+#: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new mengembalikan NULL"
 
-#: ../eas-daemon/libeas/eas-connection.c:1163
+#: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "galat %d dikembalikan dari wbxml_conv_xml2wbxml_run"
 
-#: ../eas-daemon/libeas/eas-connection.c:1293
-#: ../eas-daemon/libeas/eas-connection.c:1304
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "Permintaan HTTP gagal: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1328
+#: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "Tipe respons HTTP bukan WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1336
+#: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "Tipe respons HTTP bukan MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1368
+#: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1377
+#: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1388
+#: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Gagal membuat konvertor WBXML ke XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1407
+#: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Galat saat mengonversi WBXML ke XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1523
+#: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
 msgstr "Kode status: %d - Respons dari server"
 
-#: ../eas-daemon/libeas/eas-connection.c:1538
+#: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Gagal mengurai XML respons autodiscover"
 
-#: ../eas-daemon/libeas/eas-connection.c:1547
+#: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Gagal menemukan elemen <Autodiscover>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1558
+#: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Gagal menemukan elemen <Response>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1569
+#: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Gagal menemukan elemen <Action>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1580
+#: ../eas-daemon/libeas/eas-connection.c:1579
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Gagal menemukan elemen <Settings>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1720
+#: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "Surel wajib dan mesti disediakan"
 
-#: ../eas-daemon/libeas/eas-connection.c:1730
+#: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Gagal mengekstrak domain dari alamat surel"
 
-#: ../eas-daemon/libeas/eas-connection.c:1741
+#: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Gagal membuat akun sementara bagi autodiscover"
 
-#: ../eas-daemon/libeas/eas-connection.c:1908
+#: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
 msgstr "Suatu akun mesti disediakan."
 
-#: ../eas-daemon/libeas/eas-connection.c:1934
+#: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Sebuah nama pengguna dan url server mesti disediakan."
 
-#: ../eas-daemon/libeas/eas-connection.c:1947
+#: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Gagal membuat direktori singgahan folder %s: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2091
+#: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "permintaan dibatalkan oleh pengguna"
@@ -281,30 +301,3 @@ msgstr "Gagal mengurai XML: %s"
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "Permintaan dengan id %d tidak dalam antrian; tak dapat membatalkan"
-
-#: ../eplugin/activesync-account-setup.c:367
-#: ../eplugin/activesync-account-setup.c:478
-msgid "User_name:"
-msgstr "Nama pengguna:"
-
-#: ../eplugin/activesync-account-setup.c:385
-#: ../eplugin/activesync-account-setup.c:496
-msgid "_Server URL:"
-msgstr "URL _Server:"
-
-#: ../eplugin/activesync-account-setup.c:392
-#: ../eplugin/activesync-account-setup.c:504
-msgid "_Auto Detect"
-msgstr "Deteksi Otom_atis"
-
-#: ../eplugin/eas-account-listener.c:177
-msgid "Contacts"
-msgstr "Kontak"
-
-#: ../eplugin/eas-account-listener.c:207
-msgid "Calendar"
-msgstr "Kalender"
-
-#: ../eplugin/org-gnome-evolution-activesync.eplug.xml.h:2
-msgid "ActiveSync plugin for Evolution."
-msgstr "Plugin ActiveSync bagi Evolution."
