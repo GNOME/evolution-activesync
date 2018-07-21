@@ -1,0 +1,308 @@
+# Catalan translation for evolution-activesync.
+# Copyright (C) 2018 evolution-activesync's COPYRIGHT HOLDER
+# This file is distributed under the same license as the evolution-activesync package.
+#
+# Carles Ferrando Garcia <carles.ferrando@gmail.com>, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-activesync master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issu"
+"es\n"
+"POT-Creation-Date: 2018-06-10 16:03+0000\n"
+"PO-Revision-Date: 2018-07-21 10:05+0100\n"
+"Last-Translator: Carles Ferrando Garcia <carles.ferrando@gmail.com>\n"
+"Language-Team: Catalan <info@softcatala.org>\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 2.0\n"
+
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#, c-format
+msgid "Unable to create cache path"
+msgstr "No és pot crear el camí a la memòria cau"
+
+#: ../camel/camel-eas-folder.c:213
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Error en moure el fitxer de la memòria cau del missatge"
+
+#: ../camel/camel-eas-folder.c:529
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "No es pot carregar el resum per a %s"
+
+#: ../camel/camel-eas-folder.c:751
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "No és possible escriure missatges al magatzem de correus en ActiveSync"
+
+#: ../camel/camel-eas-folder.c:766
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "No està implementat encara moure missatges"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "S'està comprovant si hi ha correu nou"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "_Comprova si hi ha missatges nous a totes les carpetes"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Opcions"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr ""
+"_Aplica el filtres als missatges nous a la safata d'entrada en aquest servidor"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Comprova als missatges nous continguts _escombraires"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Sols comprova missatges brossa a la safata d'_ENTRADA"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Sincronit_za de forma automàtica el compte local"
+
+#: ../camel/camel-eas-provider.c:69
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "Per accedir a servidors que usin ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Contrasenya"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Aquesta opció connectarà el servidor d'ActiveSync usant una contrasenya en"
+" text pla."
+
+#: ../camel/camel-eas-store.c:137
+#, c-format
+msgid "Session has no storage path"
+msgstr "La sessió no té una ruta d'emmagatzematge"
+
+#: ../camel/camel-eas-store.c:177
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "El servei EAS no té compte UID"
+
+#: ../camel/camel-eas-store.c:265
+#, c-format
+msgid "No such folder: %s"
+msgstr "No existeix la carpeta: %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "No es possible crear la carpeta amb ActiveSync"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "No es possible suprimir la carpeta amb ActiveSync"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "No es possible canviar el nom a la carpeta amb ActiveSync"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "Servidor ActiveSync %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "Servidor ActiveSync per %s en %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Heu de treballar en línia per completar aquesta operació"
+
+#: ../camel/camel-eas-transport.c:151
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "Lliurament de correu de ActiveSync mitjançant %s"
+
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Error en crear el fitxer temporal per enviar el missatge"
+
+#: ../camel/camel-eas-utils.c:558
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "Ha fallat la crida CreateItem per retornar la ID per a un missatge nou"
+
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:169
+msgid "Configuration"
+msgstr "Configuració"
+
+#: ../configuration/e-mail-config-eas-backend.c:188
+msgid "User_name:"
+msgstr "_Nom d'usuari:"
+
+#: ../configuration/e-mail-config-eas-backend.c:203
+msgid "_Server URL:"
+msgstr "_URL del servidor:"
+
+#: ../configuration/e-mail-config-eas-backend.c:218
+msgid "Authentication"
+msgstr "Autenticació"
+
+#: ../configuration/e-mail-config-eas-backend.c:235
+msgid "_Auto Detect"
+msgstr "_Autodetecta"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Entreu la contrasenya d'ActiveSync per %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1055
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "Un error ha retornat %d de wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1087
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new  ha retornat NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1162
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "Un error ha retornat %d de wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2633
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "La petició HTTP ha fallat: %d - %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1327
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "El tipus de resposta HTTP no ha estat WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1335
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "El tipus de resposta HTTP no ha estat MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1367
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml és NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1376
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len és 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1387
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Errada en crear WBXML per al convertidor XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1406
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Errada en convertir WBXML a XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1522
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Codi d'estat: resposta del servidor - %d"
+
+#: ../eas-daemon/libeas/eas-connection.c:1537
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Errada en analitzar XML de la resposta autodescobreix"
+
+#: ../eas-daemon/libeas/eas-connection.c:1546
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Errada en cercar l'element <Autodiscover>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1557
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Errada en cercar l'element <Response>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1568
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Errada en cercar l'element <Action>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1579
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Errada en cercar l'element <Settings>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1719
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "El correu electrònic és obligatori i cal proporcionar-lo"
+
+#: ../eas-daemon/libeas/eas-connection.c:1729
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Errada en extraure el domini de l'adreça de correu"
+
+#: ../eas-daemon/libeas/eas-connection.c:1740
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Errada en crear compte temporal per autodescobreix"
+
+#: ../eas-daemon/libeas/eas-connection.c:1907
+#, c-format
+msgid "An account must be provided."
+msgstr "Cal proporcionar un compte"
+
+#: ../eas-daemon/libeas/eas-connection.c:1933
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Cal proporcionar URL i «nom d'usuari»."
+
+#: ../eas-daemon/libeas/eas-connection.c:1946
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Errada en crear el directori de la memòria cau de la carpeta %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2090
+#, c-format
+msgid "request was cancelled by user"
+msgstr "la petició ha estat cancel·lada per l'usuari"
+
+#: ../eas-daemon/libeas/eas-connection.c:2220
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Errada en analitzar XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2505
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr "La petició amb id %d no és a la cua, no és pot cancel·lar"
+
+
