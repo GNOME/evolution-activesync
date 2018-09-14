@@ -22,7 +22,7 @@ msgstr ""
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
 msgid "Unable to create cache path"
-msgstr "No és pot crear el camí a la memòria cau"
+msgstr "No es pot crear el camí a la memòria cau"
 
 #: ../camel/camel-eas-folder.c:213
 #, c-format
@@ -95,7 +95,7 @@ msgstr ""
 #: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
-msgstr "La sessió no té una ruta d'emmagatzematge"
+msgstr "La sessió no té un camí d'emmagatzematge"
 
 #: ../camel/camel-eas-store.c:177
 #, c-format
@@ -110,17 +110,17 @@ msgstr "No existeix la carpeta: %s"
 #: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
-msgstr "No es possible crear la carpeta amb ActiveSync"
+msgstr "No és possible crear la carpeta amb ActiveSync"
 
 #: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
-msgstr "No es possible suprimir la carpeta amb ActiveSync"
+msgstr "No és possible suprimir la carpeta amb ActiveSync"
 
 #: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
-msgstr "No es possible canviar el nom a la carpeta amb ActiveSync"
+msgstr "No és possible canviar el nom a la carpeta amb ActiveSync"
 
 #: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
@@ -140,7 +140,7 @@ msgstr "Heu de treballar en línia per completar aquesta operació"
 #: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
-msgstr "Lliurament de correu de ActiveSync mitjançant %s"
+msgstr "Lliurament de correu d'ActiveSync mitjançant %s"
 
 #: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
@@ -176,7 +176,7 @@ msgstr "_Autodetecta"
 #: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
-msgstr "Entreu la contrasenya d'ActiveSync per %s"
+msgstr "Introduïu la contrasenya d'ActiveSync per %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
@@ -278,7 +278,7 @@ msgstr "Errada en crear compte temporal per autodescobreix"
 #: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
 msgid "An account must be provided."
-msgstr "Cal proporcionar un compte"
+msgstr "Cal proporcionar un compte."
 
 #: ../eas-daemon/libeas/eas-connection.c:1933
 #, c-format
@@ -303,6 +303,6 @@ msgstr "Errada en analitzar XML: %s"
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
-msgstr "La petició amb id %d no és a la cua, no és pot cancel·lar"
+msgstr "La petició amb id %d no és a la cua, no es pot cancel·lar"
 
 
