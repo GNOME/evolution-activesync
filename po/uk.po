@@ -1,0 +1,309 @@
+# Ukrainian translation for evolution-activesync.
+# Copyright (C) 2013 evolution-activesync's COPYRIGHT HOLDER
+# This file is distributed under the same license as the evolution-activesync package.
+#
+# Koljan1970 <Stuartlittle1970@gmail.com>, 2013.
+# Yuri Chornoivan <yurchor@ukr.net>, 2020.
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-activesync master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issu"
+"es\n"
+"POT-Creation-Date: 2018-06-10 16:03+0000\n"
+"PO-Revision-Date: 2020-03-18 10:44+0200\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<"
+"=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 20.03.70\n"
+
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Не вдалося створити шлях для кешу"
+
+#: ../camel/camel-eas-folder.c:213
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Не вдалося перемістити кеш-файл повідомлень"
+
+#: ../camel/camel-eas-folder.c:529
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Не вдалося завантажити резюме для %s"
+
+#: ../camel/camel-eas-folder.c:751
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "Запис повідомлення у поштове сховище у ActiveSync неможливий"
+
+#: ../camel/camel-eas-folder.c:766
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Переміщення повідомлень ще не реалізовано"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Перевірка на вміст нової пошти"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "П_еревірити на появу нових повідомлень у всіх теках"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Параметри"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "З_астосовувати фільтри до нових вхідних повідомлень на цьому сервері"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Пе_ревірити нові повідомлення на спам"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Перевіряти наявність небажаних повідомлень лише у теці «В_хідні»"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Автоматична синхронізація локальних облікових записів"
+
+#: ../camel/camel-eas-provider.c:69
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "Доступ до серверів за допомогою ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Пароль"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Цей параметр використовується для з'єднання із сервером ActiveSync за"
+" допомогою текстового паролю."
+
+#: ../camel/camel-eas-store.c:137
+#, c-format
+msgid "Session has no storage path"
+msgstr "У сеансу немає шляху для зберігання даних"
+
+#: ../camel/camel-eas-store.c:177
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "Служба EAS не має UID облікового запису"
+
+#: ../camel/camel-eas-store.c:265
+#, c-format
+msgid "No such folder: %s"
+msgstr "Немає такої теки: %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "За допомогою ActiveSync не можна створювати теки"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "За допомогою ActiveSync не можна вилучати теки"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "За допомогою ActiveSync не можна змінювати назви тек"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "Сервер ActiveSync %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "Служба ActiveSync %s на %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Потрібно бути в мережі, щоб завершити цю операцію"
+
+#: ../camel/camel-eas-transport.c:151
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "Доставлення пошти ActiveSync за допомогою %s"
+
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Не вдалося створити тимчасовий файл для надсилання повідомлень"
+
+#: ../camel/camel-eas-utils.c:558
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "Виклик CreateItem не повернув ідентифікатора нового повідомлення"
+
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:169
+msgid "Configuration"
+msgstr "Налаштування"
+
+#: ../configuration/e-mail-config-eas-backend.c:188
+msgid "User_name:"
+msgstr "_Користувач:"
+
+#: ../configuration/e-mail-config-eas-backend.c:203
+msgid "_Server URL:"
+msgstr "_Адреса сервера:"
+
+#: ../configuration/e-mail-config-eas-backend.c:218
+msgid "Authentication"
+msgstr "Розпізнавання"
+
+#: ../configuration/e-mail-config-eas-backend.c:235
+msgid "_Auto Detect"
+msgstr "_Автовизначення"
+
+#: ../eas-daemon/libeas/eas-connection.c:480
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Будь ласка, введіть пароль ActiveSync до %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1055
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr ""
+"wbxml_conv_xml2wbxml_create повернуто повідомлення про помилку з кодом %d"
+
+#: ../eas-daemon/libeas/eas-connection.c:1087
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new повернуто NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1162
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "wbxml_conv_xml2wbxml_run повернуто повідомлення про помилку з кодом %d"
+
+#: ../eas-daemon/libeas/eas-connection.c:1292
+#: ../eas-daemon/libeas/eas-connection.c:1303
+#: ../eas-daemon/libeas/eas-connection.c:2633
+#, c-format
+msgid "HTTP request failed: %d - %s"
+msgstr "Помилка запиту HTTP: %d - %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1327
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "Тип відповіді HTTP не збігається із WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1335
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "Тип відповіді HTTP не збігається із MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1367
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml рівний NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1376
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len рівний 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1387
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Не вдалося створити засіб перетворення WBXML на XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1406
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Помилка під час перетворення WBXML на XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1522
+#, c-format
+msgid "Status code: %d - Response from server"
+msgstr "Код стану: %d - відповідь від сервера"
+
+#: ../eas-daemon/libeas/eas-connection.c:1537
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Не вдалося обробити відповідь XML autodiscover"
+
+#: ../eas-daemon/libeas/eas-connection.c:1546
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Не вдалося знайти елемент <Autodiscover>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1557
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Не вдалося знайти елемент <Response>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1568
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Не вдалося знайти елемент <Action>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1579
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Не вдалося знайти елемент <Settings>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1719
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "Електронна пошта є обов'язковою — вам слід її надати"
+
+#: ../eas-daemon/libeas/eas-connection.c:1729
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Не вдалося видобути запис домену з адреси електронної пошти"
+
+#: ../eas-daemon/libeas/eas-connection.c:1740
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Не вдалося створити тимчасовий обліковий запис для автовизначення"
+
+#: ../eas-daemon/libeas/eas-connection.c:1907
+#, c-format
+msgid "An account must be provided."
+msgstr "Слід вказати обліковий запис."
+
+#: ../eas-daemon/libeas/eas-connection.c:1933
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Слід вказати адресу сервера та ім'я користувача."
+
+#: ../eas-daemon/libeas/eas-connection.c:1946
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Не вдалося створити кеш-каталог для тек %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2090
+#, c-format
+msgid "request was cancelled by user"
+msgstr "Запит відхилено користувачем"
+
+#: ../eas-daemon/libeas/eas-connection.c:2220
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Не вдалося обробити XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2505
+#, c-format
+msgid "Request with id %d not in queue; can't cancel"
+msgstr ""
+"У черзі обробки немає запиту із ідентифікатором %d — скасовування неможливе"
