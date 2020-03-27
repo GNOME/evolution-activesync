@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
 "POT-Creation-Date: 2020-03-18 08:48+0000\n"
-"PO-Revision-Date: 2020-03-27 22:18+0100\n"
+"PO-Revision-Date: 2020-03-27 22:22+0100\n"
 "Language-Team: Croatian <hr@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,7 @@ msgstr "Mogućnosti"
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr ""
-"_Primijeni filtre na nove poruke za pristiglu pošti sa ovog poslužitelja"
+"_Primijeni filtre na nove poruke za pristiglu poštu sa ovog poslužitelja"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
