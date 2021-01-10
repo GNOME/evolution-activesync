@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issu"
-"es\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
 "POT-Creation-Date: 2018-06-10 16:03+0000\n"
 "PO-Revision-Date: 2018-07-21 10:05+0100\n"
 "Last-Translator: Carles Ferrando Garcia <carles.ferrando@gmail.com>\n"
@@ -59,7 +59,8 @@ msgstr "Opcions"
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr ""
-"_Aplica el filtres als missatges nous a la safata d'entrada en aquest servidor"
+"_Aplica el filtres als missatges nous a la safata d'entrada en aquest "
+"servidor"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -79,7 +80,7 @@ msgstr "ActiveSync"
 
 #: ../camel/camel-eas-provider.c:71
 msgid "For accessing servers using ActiveSync"
-msgstr "Per accedir a servidors que usin ActiveSync"
+msgstr "Per a accedir a servidors que usin ActiveSync"
 
 #: ../camel/camel-eas-provider.c:87
 msgid "Password"
@@ -89,8 +90,8 @@ msgstr "Contrasenya"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Aquesta opció connectarà el servidor d'ActiveSync usant una contrasenya en"
-" text pla."
+"Aquesta opció connectarà el servidor d'ActiveSync usant una contrasenya en "
+"text pla."
 
 #: ../camel/camel-eas-store.c:137
 #, c-format
@@ -135,7 +136,7 @@ msgstr "Servidor ActiveSync per %s en %s"
 #: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Heu de treballar en línia per completar aquesta operació"
+msgstr "Heu de treballar en línia per a completar aquesta operació"
 
 #: ../camel/camel-eas-transport.c:151
 #, c-format
@@ -145,12 +146,13 @@ msgstr "Lliurament de correu d'ActiveSync mitjançant %s"
 #: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
-msgstr "Error en crear el fitxer temporal per enviar el missatge"
+msgstr "Error en crear el fitxer temporal per a enviar el missatge"
 
 #: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
-msgstr "Ha fallat la crida CreateItem per retornar la ID per a un missatge nou"
+msgstr ""
+"Ha fallat la crida CreateItem per a retornar la ID per a un missatge nou"
 
 #. Add widget.
 #: ../configuration/e-mail-config-eas-backend.c:169
@@ -304,5 +306,3 @@ msgstr "Errada en analitzar XML: %s"
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "La petició amb id %d no és a la cua, no es pot cancel·lar"
-
-
