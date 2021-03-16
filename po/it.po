@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2021-01-10 20:03+0000\n"
-"PO-Revision-Date: 2021-03-02 14:50+0100\n"
+"POT-Creation-Date: 2021-03-15 08:16+0000\n"
+"PO-Revision-Date: 2021-03-16 15:44+0100\n"
 "Last-Translator: Gianvito Cavasoli <gianvito@gmx.it>\n"
 "Language-Team: Italian <gnome-it-list@gnome.org>\n"
 "Language: it\n"
@@ -205,7 +205,7 @@ msgstr "Errore %d restituito da wbxml_conv_xml2wbxml_run"
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
-msgstr "Richiesta HTTP non riuscita_ %d - %s"
+msgstr "Richiesta HTTP non riuscita: %d - %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -230,7 +230,7 @@ msgstr "wbxml_len è 0."
 #: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
-msgstr "Creazione del convertire da WBXML a XML non riuscita: %s"
+msgstr "Creazione del convertitore da WBXML a XML non riuscita: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
