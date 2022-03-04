@@ -2,22 +2,23 @@
 #
 # Necdet Yücel <necdetyucel@gmail.com>, 2015.
 # Muhammet Kara <muhammetk@gmail.com>, 2015.
+# Emin Tufan Çetin <etcetin@gmail.com>, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-08-12 22:05+0000\n"
-"PO-Revision-Date: 2015-12-31 22:44+0200\n"
-"Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2020-07-07 15:08+0000\n"
+"PO-Revision-Date: 2022-03-05 01:07+0300\n"
+"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Gtranslator 2.91.7\n"
+"X-Generator: Poedit 2.4.3\n"
 "X-POOTLE-MTIME: 1423951165.000000\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
@@ -30,28 +31,28 @@ msgstr "Önbellek yolu oluşturulamadı"
 msgid "Failed to move message cache file"
 msgstr "İleti önbellek dosyası taşıma başarısız oldu"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "%s için özet yüklenemedi"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
-msgstr "ActiveSync'de olmayan posta deposuna ileti yazma"
+msgstr "ActiveSync'de posta deposuna ileti yazılamaz"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
-msgstr "İleti taşıma henüz yapılamadı"
+msgstr "İleti taşıma henüz gerçeklenmedi"
 
 #: ../camel/camel-eas-provider.c:48
 msgid "Checking for new mail"
-msgstr "Yeni posta için kontrol ediliyor"
+msgstr "Yeni posta için denetleniyor"
 
 #: ../camel/camel-eas-provider.c:50
 msgid "C_heck for new messages in all folders"
-msgstr "B_ütün klasörlerde yeni iletileri kontrol et"
+msgstr "Tüm klasörlerde yeni iletileri _denetle"
 
 #: ../camel/camel-eas-provider.c:53
 msgid "Options"
@@ -59,19 +60,19 @@ msgstr "Seçenekler"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr "_Bu sunucudaki Gelen Kutusu içindeki yeni iletilere filtre uygula"
+msgstr "Bu sunucudaki Gelen Kutusu içindeki yeni iletilere filtre _uygula"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
-msgstr "G_ereksiz içerikler için yeni iletileri kontrol et"
+msgstr "_Gereksiz içeriği için yeni iletileri denetle"
 
 #: ../camel/camel-eas-provider.c:59
 msgid "Only check for Junk messages in the IN_BOX folder"
-msgstr "Gereksiz iletileri sadece GE_LEN KUTUSU klasörü için kontrol et"
+msgstr "Yalnızca GELEN _KUTUSU klasöründeki Gereksiz iletileri denetle"
 
 #: ../camel/camel-eas-provider.c:61
 msgid "Automatically synchroni_ze account locally"
-msgstr "Hesabı yerel olarak otomatik bir şekilde eş_zamanlandır"
+msgstr "Hesabı yerel olarak _kendiliğinden eşzamanla"
 
 #: ../camel/camel-eas-provider.c:69
 msgid "ActiveSync"
@@ -94,7 +95,7 @@ msgstr ""
 #: ../camel/camel-eas-store.c:137
 #, c-format
 msgid "Session has no storage path"
-msgstr "Oturum hiç bir depolama yoluna sahip değil"
+msgstr "Oturumun depolama yolu yok"
 
 #: ../camel/camel-eas-store.c:177
 #, c-format
@@ -104,73 +105,73 @@ msgstr "EAS servisinin Kullanıcı Kimliği hesabı yok"
 #: ../camel/camel-eas-store.c:265
 #, c-format
 msgid "No such folder: %s"
-msgstr "Böyle bir klasör yok: %s"
+msgstr "Şu klasör yok: %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
-msgstr "ActiveSync ile klasör oluşturulması mümkün değil"
+msgstr "ActiveSync ile klasör oluşturulamaz"
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
-msgstr "ActiveSync ile mümkün olmayan klasörü sil"
+msgstr "ActiveSync ile klasör silinemez"
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
-msgstr "ActiveSync ile klasörün adını değiştirmek mümkün değil"
+msgstr "ActiveSync ile klasör yeniden adlandırılamaz"
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync sunucusu %s"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
-msgstr "%s üzerinde %s için ActiveSync servisi"
+msgstr "%2$s üzerinde %1$s için ActiveSync servisi"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
-msgstr "Bu işlemi tamamlamak için çevrimiçi çalışmanız gerekiyor"
+msgstr "Bu işlemi tamamlamak için çevrim içi çalışmalısınız"
 
 #: ../camel/camel-eas-transport.c:151
 #, c-format
 msgid "ActiveSync mail delivery via %s"
-msgstr "%s yolu ile ActiveSync posta teslimi"
+msgstr "%s aracılığıyla ActiveSync posta teslimi"
 
 #: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
 msgstr "İleti göndermek için geçici dosya oluşturulamadı"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
-msgstr "CreateItem çağrısı yeni ileti için Kimlik dönemedi"
+msgstr "CreateItem çağrısı, yeni ileti için Kimlik dönemedi"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Yapılandırma"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
-msgstr "Kullanıcı_adı:"
+msgstr "Kullanıcı _Adı:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "_Sunucu Adresi:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Kimlik Doğrulama"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
-msgstr "_Otomatik Algıla"
+msgstr "_Kendiliğinden Algıla"
 
 #: ../eas-daemon/libeas/eas-connection.c:480
 #, c-format
@@ -180,21 +181,21 @@ msgstr "Lütfen %s için ActiveSync parolanızı girin"
 #: ../eas-daemon/libeas/eas-connection.c:1055
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
-msgstr "wbxml_conv_xml2wbxml_create %d hatasını döndü"
+msgstr "wbxml_conv_xml2wbxml_create %d hatasını döndürdü"
 
 #: ../eas-daemon/libeas/eas-connection.c:1087
 #, c-format
 msgid "soup_message_new returned NULL"
-msgstr "soup_message_new boş değer döndü"
+msgstr "soup_message_new NULL döndürdü"
 
 #: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr "wbxml_conv_xml2wbxml_run %d hatasını döndü"
+msgstr "wbxml_conv_xml2wbxml_run %d hatasını döndürdü"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2632
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
 msgid "HTTP request failed: %d - %s"
 msgstr "HTTP isteği başarısız oldu: %d - %s"
@@ -202,17 +203,17 @@ msgstr "HTTP isteği başarısız oldu: %d - %s"
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
 msgid "HTTP response type was not WBXML"
-msgstr "HTTP cevap türü WBXML değildi"
+msgstr "HTTP yanıt türü WBXML değildi"
 
 #: ../eas-daemon/libeas/eas-connection.c:1335
 #, c-format
 msgid "HTTP response type was not MULTIPART"
-msgstr "HTTP cevap türü MULTIPART değildi"
+msgstr "HTTP yanıt türü MULTIPART değildi"
 
 #: ../eas-daemon/libeas/eas-connection.c:1367
 #, c-format
 msgid "wbxml is NULL!"
-msgstr "wbxml BOŞ!"
+msgstr "wbxml NULL!"
 
 #: ../eas-daemon/libeas/eas-connection.c:1376
 #, c-format
@@ -222,22 +223,22 @@ msgstr "wbxml_len 0!"
 #: ../eas-daemon/libeas/eas-connection.c:1387
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
-msgstr "WBXML'i XML'e dönüştürücü oluşturulamadı: %s"
+msgstr "WBXML'den XML'e dönüştürücü oluşturulamadı: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1406
 #, c-format
 msgid "Error converting WBXML to XML: %s"
-msgstr "WBXML'i XML'e dönüştürmede hata: %s"
+msgstr "WBXML'den XML'e dönüştürmede hata: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
 msgid "Status code: %d - Response from server"
-msgstr "Durum kodu: %d - Sunucudan gelen cevap"
+msgstr "Durum kodu: %d - Sunucudan gelen yanıt"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
 msgid "Failed to parse autodiscover response XML"
-msgstr "XML autodiscover cevabı ayrıştırılamadı"
+msgstr "Kendiliğinden keşif yanıtı XML'i ayrıştırılamadı"
 
 #: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
@@ -262,17 +263,17 @@ msgstr "<Settings> ögesi bulunamadı"
 #: ../eas-daemon/libeas/eas-connection.c:1719
 #, c-format
 msgid "Email is mandatory and must be provided"
-msgstr "Eposta zorunlu alandır ve girilmelidir"
+msgstr "E-posta zorunlu alandır ve girilmelidir"
 
 #: ../eas-daemon/libeas/eas-connection.c:1729
 #, c-format
 msgid "Failed to extract domain from email address"
-msgstr "Eposta adresinden alan çıkarılamadı"
+msgstr "E-posta adresinden alan çıkarılamadı"
 
 #: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
-msgstr "Otomatik keşif için geçici hesap oluşturulamadı"
+msgstr "Kendiliğinden keşif için geçici hesap oluşturulamadı"
 
 #: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
@@ -292,14 +293,14 @@ msgstr "Klasör önbellek dizini %s oluşturulamadı: %s"
 #: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
-msgstr "istek kullanıcı tarafından iptal edildi"
+msgstr "istek kullanıcıca iptal edildi"
 
-#: ../eas-daemon/libeas/eas-connection.c:2219
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "XML ayrıştırılamadı: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2504
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
 msgid "Request with id %d not in queue; can't cancel"
 msgstr "%d numaralı istek kuyrukta değil; iptal edilemez"
