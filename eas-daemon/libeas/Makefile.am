@@ -15,7 +15,7 @@ libeas_la_CPPFLAGS =			\
 		$(LIBICAL_CFLAGS)	\
 		$(GIO_CFLAGS)		\
 		$(LIBEBOOK_CFLAGS)	\
-		$(GNOMEKEYRING_CFLAGS)	\
+		$(LIBSECRET_CFLAGS)	\
 		-DG_LOG_DOMAIN=\"libeas\" \
 		-I$(top_srcdir)/libeasclient \
 		-DASKPASS=\"@ASKPASS@\"	\
@@ -31,7 +31,7 @@ libeas_la_LDFLAGS =			\
 		$(LIBICAL_LIBS)    	\
 		$(GIO_LIBS)		\
 		$(LIBEBOOK_LIBS)	\
-		$(GNOMEKEYRING_LIBS)	\
+		$(LIBSECRET_LIBS)	\
 		$(NULL)
 
 

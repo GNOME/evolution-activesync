@@ -54,7 +54,7 @@ AC_PROG_LIBTOOL
 privincludedir='${includedir}'/eas-daemon
 AC_SUBST(privincludedir)
 
-PKG_CHECK_MODULES(GNOMEKEYRING, gnome-keyring-1)
+PKG_CHECK_MODULES(LIBSECRET, libsecret-1)
 PKG_CHECK_MODULES(EDATASERVER, libedataserver-1.2)
 PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
 PKG_CHECK_MODULES(LIBXML, libxml-2.0)

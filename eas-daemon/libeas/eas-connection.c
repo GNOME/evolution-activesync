@@ -68,7 +68,7 @@
 #include <libxml/xmlreader.h> // xmlDoc
 #include <time.h>
 #include <unistd.h>
-#include <gnome-keyring.h>
+#include <libsecret/secret.h>
 #include <glib/gi18n-lib.h>
 #include <gio/gio.h>
 
@@ -129,13 +129,27 @@ struct _EasConnectionPrivate {
 
 #define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
 
-typedef struct _EasGnomeKeyringResponse {
-	GnomeKeyringResult result;
+#define KEYRING_ITEM_ATTRIBUTE_USER	"eas-user"
+#define KEYRING_ITEM_ATTRIBUTE_SERVER	"eas-server"
+
+static SecretSchema password_schema = {
+	"org.gnome.Evolution.ActiveSync",
+	SECRET_SCHEMA_DONT_MATCH_NAME,
+	{
+		{ KEYRING_ITEM_ATTRIBUTE_USER, SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ KEYRING_ITEM_ATTRIBUTE_SERVER, SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ NULL, 0 }
+	}
+};
+
+typedef struct _EasLibsecretResponse {
+	gboolean success;
+	guint error_code; /* from SECRET_ERROR domain */
 	gchar* password;
 	EFlag *semaphore;
 	const gchar* username;
 	const gchar* serverUri;
-} EasGnomeKeyringResponse;
+} EasLibsecretResponse;
 
 typedef struct _EasNode EasNode;
 
@@ -374,25 +388,31 @@ eas_connection_class_init (EasConnectionClass *klass)
 }
 
 static void
-storePasswordCallback (GnomeKeyringResult result, gpointer data)
+storePasswordCallback (GObject *source_object,
+		       GAsyncResult *result,
+		       gpointer user_data)
 {
-	EasGnomeKeyringResponse *response = data;
+	EasLibsecretResponse *response = user_data;
+	GError *local_error = NULL;
 
 	g_assert (response);
 
-	g_debug ("storePasswordCallback++ [%d]", response->result);
+	g_debug ("storePasswordCallback++");
 
 	g_assert (response->semaphore);
 
-	response->result = result;
+	response->success = secret_password_store_finish (result, &local_error);
+	response->error_code = (local_error && local_error->domain == SECRET_ERROR) ? local_error->code : ~0;
 	e_flag_set (response->semaphore);
-	g_debug ("storePasswordCallback--");
+	g_debug ("storePasswordCallback--%s%s", local_error ? " Failed: " : "", local_error ? local_error->message : "");
+
+	g_clear_error (&local_error);
 }
 
 static gboolean
 mainloop_password_store (gpointer data)
 {
-	EasGnomeKeyringResponse *response = data;
+	EasLibsecretResponse *response = data;
 	gchar * description = g_strdup_printf ("ActiveSync Server Password for %s@%s",
 					       response->username,
 					       response->serverUri);
@@ -401,16 +421,16 @@ mainloop_password_store (gpointer data)
 
 	g_assert (response->password);
 
-	gnome_keyring_store_password (GNOME_KEYRING_NETWORK_PASSWORD,
-				      NULL,
-				      description,
-				      response->password,
-				      storePasswordCallback,
-				      response,
-				      NULL,
-				      "user", response->username,
-				      "server", response->serverUri,
-				      NULL);
+	secret_password_store (&password_schema,
+			       SECRET_COLLECTION_DEFAULT,
+			       description,
+			       response->password,
+			       NULL,
+			       storePasswordCallback,
+			       response,
+			       KEYRING_ITEM_ATTRIBUTE_USER, response->username,
+			       KEYRING_ITEM_ATTRIBUTE_SERVER, response->serverUri,
+			       NULL);
 	g_free (description);
 
 	g_debug ("mainloop_password_store--");
@@ -418,11 +438,11 @@ mainloop_password_store (gpointer data)
 }
 
 // nb: can't be called from the main thread or will hang
-static GnomeKeyringResult
+static gboolean
 writePasswordToKeyring (const gchar *password, const gchar* username, const gchar* serverUri)
 {
-	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
-	EasGnomeKeyringResponse *response = g_malloc0 (sizeof (EasGnomeKeyringResponse));
+	gboolean success = FALSE;
+	EasLibsecretResponse *response = g_malloc0 (sizeof (EasLibsecretResponse));
 	GSource *source = NULL;
 
 	g_debug ("writePasswordToKeyring++");
@@ -441,28 +461,34 @@ writePasswordToKeyring (const gchar *password, const gchar* username, const gcha
 	e_flag_wait (response->semaphore);
 	e_flag_free (response->semaphore);
 
-	result = response->result;
+	success = response->success;
 	g_free (response);
 
 	g_debug ("writePasswordToKeyring--");
-	return result;
+	return success;
 }
 
 static void
-getPasswordCallback (GnomeKeyringResult result, const char* password, gpointer data)
+getPasswordCallback (GObject *source_object,
+		     GAsyncResult *result,
+		     gpointer user_data)
 {
-	EasGnomeKeyringResponse *response = data;
+	EasLibsecretResponse *response = user_data;
+	GError *local_error = NULL;
 
 	g_debug ("getPasswordCallback++");
 
 	g_assert (response);
 	g_assert (response->semaphore);
 
-	response->result = result;
-	response->password = g_strdup (password);
+	response->password = secret_password_lookup_finish (result, &local_error);
+	response->success = local_error == NULL && response->password != NULL;
+	response->error_code = (local_error && local_error->domain == SECRET_ERROR) ? local_error->code : SECRET_ERROR_NO_SUCH_OBJECT;
 	e_flag_set (response->semaphore);
 
-	g_debug ("getPasswordCallback--");
+	g_debug ("getPasswordCallback--%s%s", local_error ? " Failed: " : "", local_error ? local_error->message : "");
+
+	g_clear_error (&local_error);
 }
 
 static gboolean
@@ -471,7 +497,7 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	gchar *argv[3];
 	gchar * password = NULL;
 	GError * error = NULL;
-	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	gboolean success;
 	gint exit_status = 0;
 
 	g_debug ("fetch_and_store_password++");
@@ -494,7 +520,7 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	}
 
 	g_strchomp (password);
-	result = writePasswordToKeyring (password, username, serverUri);
+	success = writePasswordToKeyring (password, username, serverUri);
 
 	memset (password, 0, strlen (password));
 	g_free (password);
@@ -503,36 +529,37 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	g_free (argv[1]);
 
 	g_debug ("fetch_and_store_password--");
-	return (result == GNOME_KEYRING_RESULT_OK);
+	return success;
 }
 
 static gboolean
 mainloop_password_fetch (gpointer data)
 {
-	EasGnomeKeyringResponse *response = data;
+	EasLibsecretResponse *response = data;
 
 	g_debug ("mainloop_password_fetch++");
 
 
-	gnome_keyring_find_password (GNOME_KEYRING_NETWORK_PASSWORD,
-				     getPasswordCallback,
-				     response,
-				     NULL,
-				     "user", response->username,
-				     "server", response->serverUri,
-				     NULL);
+	secret_password_lookup (&password_schema,
+				NULL,
+				getPasswordCallback,
+				response,
+				KEYRING_ITEM_ATTRIBUTE_USER, response->username,
+				KEYRING_ITEM_ATTRIBUTE_SERVER, response->serverUri,
+				NULL);
 
 	g_debug ("mainloop_password_fetch--");
 
 	return FALSE;
 }
 
-static GnomeKeyringResult
-getPasswordFromKeyring (const gchar* username, const gchar* serverUri, char** password)
+/* error_code is from SECRET_ERROR domain */
+static gboolean
+getPasswordFromKeyring (const gchar* username, const gchar* serverUri, char** password, guint *out_error_code)
 {
-	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	gboolean success;
 	EFlag *semaphore = NULL;
-	EasGnomeKeyringResponse *response = g_malloc0 (sizeof (EasGnomeKeyringResponse));
+	EasLibsecretResponse *response = g_malloc0 (sizeof (EasLibsecretResponse));
 	GSource *source = NULL;
 
 	g_debug ("getPasswordFromKeyring++");
@@ -550,12 +577,13 @@ getPasswordFromKeyring (const gchar* username, const gchar* serverUri, char** pa
 
 	e_flag_wait (response->semaphore);
 	e_flag_free (response->semaphore);
-	result = response->result;
+	success = response->success;
+	*out_error_code = response->error_code;
 	*password = response->password;
 	g_free (response);
 
 	g_debug ("getPasswordFromKeyring--");
-	return result;
+	return success;
 }
 
 static void
@@ -569,7 +597,7 @@ connection_authenticate (SoupSession *sess,
 	const gchar * username = eas_account_get_username (cnc->priv->account);
 	const gchar * serverUri = eas_account_get_uri (cnc->priv->account);
 	const gchar * account_id = eas_account_get_uid (cnc->priv->account);
-	GnomeKeyringResult result = GNOME_KEYRING_RESULT_DENIED;
+	guint error_code = ~0;
 	gchar* password = NULL;
 
 	g_debug ("  eas_connection - connection_authenticate++");
@@ -581,41 +609,41 @@ connection_authenticate (SoupSession *sess,
 	g_debug("Password = \'%s\'", password);
 
 	if (password && password[0]) {
-		g_warning ("Found password in GSettings, writing it to Gnome Keyring");
+		g_warning ("Found password in GSettings, writing it to libsecret");
 
-		if (GNOME_KEYRING_RESULT_OK != writePasswordToKeyring (password, username, serverUri)) {
-			g_warning ("Failed to store GSettings password in Gnome Keyring");
+		if (!writePasswordToKeyring (password, username, serverUri)) {
+			g_warning ("Failed to store GSettings password in libsecret");
 		}
 	}
 	
 	password = NULL;
 
-	result = getPasswordFromKeyring (username, serverUri, &password);
+	if (!getPasswordFromKeyring (username, serverUri, &password, &error_code)) {
+		if (error_code == SECRET_ERROR_NO_SUCH_OBJECT) {
+			g_warning ("Failed to find password in libsecret");
 
-	if (GNOME_KEYRING_RESULT_NO_MATCH == result) {
-		g_warning ("Failed to find password in Gnome Keyring");
+			if (fetch_and_store_password (account_id, username, serverUri)) {
+				if (getPasswordFromKeyring (username, serverUri, &password, &error_code)) {
+					g_debug ("First authentication attempt with newly set password");
+					cnc->priv->retrying_asked = FALSE;
+					soup_auth_authenticate (auth,
+								username,
+								password);
+				} else {
+					g_critical ("Failed to fetch and store password to libsecret [%d]", error_code);
+				}
 
-		if (fetch_and_store_password (account_id, username, serverUri)) {
-			if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password)) {
-				g_debug ("First authentication attempt with newly set password");
-				cnc->priv->retrying_asked = FALSE;
-				soup_auth_authenticate (auth,
-							username,
-							password);
-			} else {
-				g_critical ("Failed to fetch and store password to gnome keyring [%d]", result);
+				if (password) {
+					memset (password, 0 , strlen (password));
+					g_free (password);
+					password = NULL;
+				}
 			}
-
-			if (password) {
-				memset (password, 0 , strlen (password));
-				g_free (password);
-				password = NULL;
-			}
+		} else {
+			g_warning ("libsecret failed to find password [%d]", error_code);
 		}
-	} else if (result != GNOME_KEYRING_RESULT_OK) {
-		g_warning ("GnomeKeyring failed to find password [%d]", result);
 	} else {
-		g_debug ("Found password in Gnome Keyring");
+		g_debug ("Found password in libsecret");
 		if (!retrying) {
 			g_debug ("First authentication attempt");
 
@@ -640,13 +668,13 @@ connection_authenticate (SoupSession *sess,
 			}
 
 			if (fetch_and_store_password (account_id, username, serverUri)) {
-				if (GNOME_KEYRING_RESULT_OK == getPasswordFromKeyring (username, serverUri, &password)) {
+				if (getPasswordFromKeyring (username, serverUri, &password, &error_code)) {
 					g_debug ("Second authentication with newly set password");
 					soup_auth_authenticate (auth,
 								username,
 								password);
 				} else {
-					g_critical ("Failed to store password to gnome keyring [%d]", result);
+					g_critical ("Failed to store password to libsecret [%d]", error_code);
 				}
 
 				if (password) {
@@ -2569,13 +2597,13 @@ options_connection_authenticate (SoupSession *sess,
 /* 
  TODO - this isn't the right way to do this:
  currently uses a temporary authenticate callback 
- to avoid using the asynchronous gnome keyring functions
+ to avoid using the asynchronous libsecret functions
  It will be necessary to add an equivalent function to the client libraries 
 	 rather than providing this 'shortcut' straight to easconnection. 
  
  If we connect to the authenticate signal, then connection_authenticate will
  hang since soup_session_send_message is being called from (and blocking) 
- the same thread that the gnome keyring stuff uses the idle loop of.
+ the same thread that the libsecret stuff uses the idle loop of.
  
  use the HTTP OPTIONS command to ask server for a list of protocols
  store results in GSettings 
