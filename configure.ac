@@ -97,12 +97,12 @@ if test "$have_e_plugin" = "yes"; then
    plugindir="`$PKG_CONFIG --variable=plugindir evolution-plugin${EVO_PKG}`"
    AC_SUBST(plugindir)
 
-   EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin`"
+   EVOLUTION_PLUGIN_errordir="`$PKG_CONFIG --variable=errordir evolution-plugin${EVO_PKG}`"
    AC_SUBST(EVOLUTION_PLUGIN_errordir)
 fi
 
 if test "$have_e_shell" = "yes"; then
-   EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell`"
+   EVOLUTION_imagesdir="`$PKG_CONFIG --variable=imagesdir evolution-shell${EVO_PKG}`"
    AC_SUBST(EVOLUTION_imagesdir)
 fi
 
@@ -112,7 +112,7 @@ AC_SUBST(EVOLUTION_privlibdir)
 eds_moduledir=`$PKG_CONFIG --variable=moduledir libebackend-1.2`
 AC_SUBST(eds_moduledir)
 
-evo_moduledir=`$PKG_CONFIG --variable=moduledir evolution-shell-3.0`
+evo_moduledir=`$PKG_CONFIG --variable=moduledir evolution-shell${EVO_PKG}`
 AC_SUBST(evo_moduledir)
 
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
