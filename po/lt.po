@@ -1,24 +1,24 @@
 # Lithuanian translation for evolution-activesync.
 # Copyright (C) 2013 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Aurimas Černius <aurisc4@gmail.com>, 2013, 2015, 2016.
+# Aurimas Černius <aurisc4@gmail.com>, 2013-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2016-01-08 05:57+0000\n"
-"PO-Revision-Date: 2016-01-22 22:00+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-02-27 22:18+0200\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
-"%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Gtranslator 2.91.7\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"(n%100<10 || n%100>=20) ? 1 : 2)\n"
+"X-Generator: Gtranslator 42.0\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -30,17 +30,17 @@ msgstr "Nepavyksta sukurti podėlio kelio"
 msgid "Failed to move message cache file"
 msgstr "Nepavyko perkelti laiško podėlio failo"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Nepavyksta įkelti %s santraukos"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "ActiveSync nepalaiko laiško rašymo į pašto saugyklą"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Laiškų perkėlimas dar nerealizuotas"
@@ -107,32 +107,32 @@ msgstr "EAS tarnyba neturi paskyros UID"
 msgid "No such folder: %s"
 msgstr "Nėra tokio aplanko: %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Su ActiveSync neįmanoma sukurti aplanko"
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Su ActiveSync neįmanoma ištrinti aplanko"
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Su ActiveSync neįmanoma pervadinti aplanko"
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync serveris %s"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "%s ActiveSync tarnyba %s"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Turite būti prisijungę šiam veiksmui užbaigti"
@@ -147,29 +147,29 @@ msgstr "ActiveSync pašto pristatymas per %s"
 msgid "Failed to create temporary file for sending message"
 msgstr "Nepavyko sukurti laikinojo failo laiško siuntimui"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "CreateItem iškvietimas negrąžino naujo laiško ID"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Konfigūracija"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
 msgstr "_Naudotojo vardas:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "_Serverio URL:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Tapatybės patvirtinimas"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
 msgstr "_Automatiškai aptikti"
 
@@ -197,8 +197,8 @@ msgstr "wbxml_conv_xml2wbxml_run grąžino klaidą %d"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "HTTP užklausa nepavyko: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP užklausa nepavyko: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -232,8 +232,8 @@ msgstr "Klaida konvertuojant WBXML į XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Būsenos kodas: %d - atsakas iš serverio"
+msgid "Status code: %d — Response from server"
+msgstr "Būsenos kodas: %d — atsakas iš serverio"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -302,8 +302,8 @@ msgstr "Nepavyko perskaityti XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Užklausos su id %d nėra eilėje; negalima atšaukti"
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Užklausos su id %d nėra eilėje; negalima atsisakyti"
 
 #~ msgid "Contacts"
 #~ msgstr "Kontaktai"
