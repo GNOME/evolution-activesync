@@ -1,15 +1,15 @@
 # Georgian translation for evolution-activesync.
-# Copyright (C) 2022 evolution-activesync's COPYRIGHT HOLDER
+# Copyright (C) 2023 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2022.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2022-03-04 22:08+0000\n"
-"PO-Revision-Date: 2022-12-03 18:04+0100\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-02-27 20:34+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <ka@li.org>\n"
 "Language: ka\n"
@@ -193,7 +193,7 @@ msgstr "შეცდომა %d wbxml_conv_xml2wbxml_run-დან"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
+msgid "HTTP request failed: %d — %s"
 msgstr "HTTP მოთხოვნის შეცდომა: %d - %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
@@ -228,7 +228,7 @@ msgstr "WBXML -ის XML-ად გარდაქმნის შეცდო�
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
+msgid "Status code: %d — Response from server"
 msgstr "სტატუსის კოდი: %d - სერვერის პასუხი"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
@@ -298,5 +298,5 @@ msgstr "XML-ის დამუშავების შეცდომა: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "მოთხოვნა ID-ით %d რიგში არაა და ვერ გავაუქმებ"
