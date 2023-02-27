@@ -3,23 +3,23 @@
 # This file is distributed under the same license as the evolution-activesync package.
 #
 # Koljan1970 <Stuartlittle1970@gmail.com>, 2013.
-# Yuri Chornoivan <yurchor@ukr.net>, 2020.
+# Yuri Chornoivan <yurchor@ukr.net>, 2020, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issu"
-"es\n"
-"POT-Creation-Date: 2018-06-10 16:03+0000\n"
-"PO-Revision-Date: 2020-03-18 10:44+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/iss"
+"ues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-02-27 17:50+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<"
-"=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 20.03.70\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 20.12.0\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -90,8 +90,8 @@ msgstr "Пароль"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Цей параметр використовується для з'єднання із сервером ActiveSync за"
-" допомогою текстового паролю."
+"Цей параметр використовується для з'єднання із сервером ActiveSync за "
+"допомогою текстового паролю."
 
 #: ../camel/camel-eas-store.c:137
 #, c-format
@@ -193,14 +193,16 @@ msgstr "soup_message_new повернуто NULL"
 #: ../eas-daemon/libeas/eas-connection.c:1162
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
-msgstr "wbxml_conv_xml2wbxml_run повернуто повідомлення про помилку з кодом %d"
+msgstr ""
+"wbxml_conv_xml2wbxml_run повернуто повідомлення про помилку з кодом %d"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Помилка запиту HTTP: %d - %s"
+#| msgid "HTTP request failed: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "Помилка запиту HTTP: %d – %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -234,8 +236,9 @@ msgstr "Помилка під час перетворення WBXML на XML: %s
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Код стану: %d - відповідь від сервера"
+#| msgid "Status code: %d - Response from server"
+msgid "Status code: %d — Response from server"
+msgstr "Код стану: %d – відповідь від сервера"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -304,6 +307,7 @@ msgstr "Не вдалося обробити XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+#| msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr ""
 "У черзі обробки немає запиту із ідентифікатором %d — скасовування неможливе"
