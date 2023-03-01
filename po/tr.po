@@ -9,16 +9,16 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2020-07-07 15:08+0000\n"
-"PO-Revision-Date: 2022-03-05 01:07+0300\n"
-"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
+"POT-Creation-Date: 2022-12-03 17:05+0000\n"
+"PO-Revision-Date: 2023-02-23 05:30+0300\n"
+"Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.1.1\n"
 "X-POOTLE-MTIME: 1423951165.000000\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
@@ -29,7 +29,7 @@ msgstr "Önbellek yolu oluşturulamadı"
 #: ../camel/camel-eas-folder.c:213
 #, c-format
 msgid "Failed to move message cache file"
-msgstr "İleti önbellek dosyası taşıma başarısız oldu"
+msgstr "İleti önbellek dosyası taşınamadı"
 
 #: ../camel/camel-eas-folder.c:529
 #, c-format
