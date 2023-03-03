@@ -3,22 +3,23 @@
 # This file is distributed under the same license as the evolution-activesync package.
 # Christian Kirbach <Christian.Kirbach@gmail.com>, 2013.
 # Mario Blättermann <mario.blaettermann@gmail.com>, 2013, 2015.
+# Jürgen Benvenuti <gastornis@posteo.org>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-"
-"activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-08-12 22:05+0000\n"
-"PO-Revision-Date: 2015-12-30 13:03+0100\n"
-"Last-Translator: Mario Blättermann <mario.blaettermann@gmail.com>\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-03-02 23:28+0100\n"
+"Last-Translator: Jürgen Benvenuti <gastornis@posteo.org>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.5\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -30,19 +31,19 @@ msgstr "Cache-Pfad konnte nicht angelegt werden"
 msgid "Failed to move message cache file"
 msgstr "Nachrichten-Zwischenspeicherdatei konnte nicht verschoben werden"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Zusammenfassung für %s konnte nicht geladen werden"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr ""
-"Schreiben von Nachrichten in den Nachrichtenspeicher ist nicht mit ActiveSync "
-"möglich"
+"Schreiben von Nachrichten in den Nachrichtenspeicher ist nicht mit "
+"ActiveSync möglich"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Verschieben von Nachrichten ist noch nicht implementiert"
@@ -88,10 +89,11 @@ msgid "Password"
 msgstr "Passwort"
 
 #: ../camel/camel-eas-provider.c:89
-msgid "This option will connect to the ActiveSync server using a plaintext password."
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Dies stellt unter Verwendung eines unverschlüsselten Passworts eine Verbindung mit "
-"dem ActiveSync-Server her."
+"Dies stellt unter Verwendung eines unverschlüsselten Passworts eine "
+"Verbindung mit dem ActiveSync-Server her."
 
 #: ../camel/camel-eas-store.c:137
 #, c-format
@@ -108,32 +110,32 @@ msgstr "EAS-Dienst hat keine Konto-UID"
 msgid "No such folder: %s"
 msgstr "Ordner existiert nicht: %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Erstellen eines Ordners ist nicht mit ActiveSync möglich"
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Löschen eines Ordners ist nicht mit ActiveSync möglich"
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Umbenennen eines Ordners ist nicht mit ActiveSync möglich"
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync-Server %s"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "ActiveSync-Dienst für %s auf %s"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Sie müssen online arbeiten, um diesen Vorgang abzuschließen"
@@ -146,32 +148,34 @@ msgstr "ActiveSync-E-Mail-Auslieferung über %s"
 #: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
 #, c-format
 msgid "Failed to create temporary file for sending message"
-msgstr "Erstellen einer temporären Datei zum Verschicken einer Nachricht schlug fehl"
+msgstr ""
+"Erstellen einer temporären Datei zum Verschicken einer Nachricht schlug fehl"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr ""
-"CreateItem-Aufruf versagte, eine Kennung für eine neue Nachricht zurückzugeben"
+"CreateItem-Aufruf versagte, eine Kennung für eine neue Nachricht "
+"zurückzugeben"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Konfiguration"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
 msgstr "Benutzer_name:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "_Server-Adresse:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Legitimation"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
 msgstr "_Automatisch erkennen"
 
@@ -197,10 +201,10 @@ msgstr "Fehler %d zurückgegeben von wbxml_conv_xml2wbxml_run"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2632
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "HTTP-Anfrage schlug fehl: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP-Anfrage schlug fehl: %d – %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -234,8 +238,8 @@ msgstr "Fehler bei der Konvertierung von WBXML nach XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Status-Code: %d - Antwort vom Server"
+msgid "Status code: %d — Response from server"
+msgstr "Status-Code: %d – Antwort vom Server"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -245,12 +249,12 @@ msgstr "XML-Code der Autodiscover-Anwort konnte nicht verarbeitet werden"
 #: ../eas-daemon/libeas/eas-connection.c:1546
 #, c-format
 msgid "Failed to find <Autodiscover> element"
-msgstr "Autodiscover-Element konnte nicht gefunden werden"
+msgstr "<Autodiscover>-Element konnte nicht gefunden werden"
 
 #: ../eas-daemon/libeas/eas-connection.c:1557
 #, c-format
 msgid "Failed to find <Response> element"
-msgstr "Response-Element konnte nicht gefunden werden"
+msgstr "<Response>-Element konnte nicht gefunden werden"
 
 #: ../eas-daemon/libeas/eas-connection.c:1568
 #, c-format
@@ -275,7 +279,8 @@ msgstr "Ermitteln der Domäne aus der E-Mail-Adresse schlug fehl"
 #: ../eas-daemon/libeas/eas-connection.c:1740
 #, c-format
 msgid "Failed create temp account for autodiscover"
-msgstr "Erstellen eines temporären Kontos zur automatischen Erkennung schlug fehl"
+msgstr ""
+"Erstellen eines temporären Kontos zur automatischen Erkennung schlug fehl"
 
 #: ../eas-daemon/libeas/eas-connection.c:1907
 #, c-format
@@ -290,24 +295,25 @@ msgstr "Eine Server-Adresse und ein Benutzername müssen angegeben werden."
 #: ../eas-daemon/libeas/eas-connection.c:1946
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
-msgstr "Erstellen des Ordner-Zwischenspeicher-Verzeichnisses %s schlug fehl: %s"
+msgstr ""
+"Erstellen des Ordner-Zwischenspeicher-Verzeichnisses %s schlug fehl: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2090
 #, c-format
 msgid "request was cancelled by user"
 msgstr "Anfrage wurde vom Benutzer abgebrochen"
 
-#: ../eas-daemon/libeas/eas-connection.c:2219
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Verarbeiten des XML schlug fehl: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2504
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr ""
-"Anfrage mit Kennung %d ist nicht in der Warteschlange. Sie kann nicht abgebrochen "
-"werden."
+"Anfrage mit Kennung %d ist nicht in der Warteschlange. Sie kann nicht "
+"abgebrochen werden."
 
 #~ msgid "Contacts"
 #~ msgstr "Kontakte"
