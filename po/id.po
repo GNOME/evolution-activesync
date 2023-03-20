@@ -1,22 +1,22 @@
 # Indonesian translation for evolution-activesync.
 # Copyright (C) 2014 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Andika Triwidada <andika@gmail.com>, 2014, 2017.
+# Andika Triwidada <andika@gmail.com>, 2014, 2017, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: https://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=evolution-plugin\n"
-"POT-Creation-Date: 2017-02-26 23:02+0000\n"
-"PO-Revision-Date: 2017-03-20 00:40+0700\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-03-20 12:11+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -194,8 +194,8 @@ msgstr "galat %d dikembalikan dari wbxml_conv_xml2wbxml_run"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Permintaan HTTP gagal: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "Permintaan HTTP gagal: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -229,8 +229,8 @@ msgstr "Galat saat mengonversi WBXML ke XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Kode status: %d - Respons dari server"
+msgid "Status code: %d — Response from server"
+msgstr "Kode status: %d — Respons dari server"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -299,5 +299,5 @@ msgstr "Gagal mengurai XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Permintaan dengan id %d tidak dalam antrian; tak dapat membatalkan"
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Permintaan dengan id %d tidak dalam antrean; tak dapat membatalkan"
