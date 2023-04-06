@@ -1,14 +1,14 @@
 # Basque translation for evolution-activesync.
 # Copyright (C) 2019 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Asier Sarasua Garmendia <asier.sarasua@gmail.com>, 2019.
+# Asier Sarasua Garmendia <asiersarasua@ni.eus>, 2019, 2023.
 #
 msgid ""
 msgstr "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issues\n"
-"POT-Creation-Date: 2019-09-04 20:37+0000\n"
-"PO-Revision-Date: 2019-10-01 10:00+0100\n"
-"Last-Translator: Asier Sarasua Garmendia <asier.sarasua@gmail.com>\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-04-01 10:00+0100\n"
+"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <librezale@librezale.eus>\n"
 "Language: eu\n"
 "MIME-Version: 1.0\n"
@@ -190,8 +190,8 @@ msgstr "%d errorea itzuli da wbxml_conv_xml2wbxml_run erabiltzean"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Huts egin du HTTP eskariak: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "Huts egin du HTTP eskariak: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -225,8 +225,8 @@ msgstr "Errorea WBXML formatutik XML formatura bihurtzean: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Egoera-kodea: %d - Zerbitzariaren erantzuna"
+msgid "Status code: %d — Response from server"
+msgstr "Egoera-kodea: %d — Zerbitzariaren erantzuna"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -295,5 +295,5 @@ msgstr "Huts egin du XML analizatzeak: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "%d IDa duen eskaria ez dago ilaran; ezin da bertan behera utzi"
