@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2023-03-01 22:07+0000\n"
-"PO-Revision-Date: 2023-03-26 01:44+0300\n"
+"POT-Creation-Date: 2023-03-27 12:23+0000\n"
+"PO-Revision-Date: 2023-05-12 14:21+0300\n"
 "Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.2.2\n"
 "X-POOTLE-MTIME: 1423951165.000000\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
@@ -100,7 +100,7 @@ msgstr "Oturumun depolama yolu yok"
 #: ../camel/camel-eas-store.c:177
 #, c-format
 msgid "EAS service has no account UID"
-msgstr "EAS servisinin Kullanıcı Kimliği hesabı yok"
+msgstr "EAS hizmetinin Kullanıcı Kimliği hesabı yok"
 
 #: ../camel/camel-eas-store.c:265
 #, c-format
@@ -130,7 +130,7 @@ msgstr "ActiveSync sunucusu %s"
 #: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
-msgstr "%2$s üzerinde %1$s için ActiveSync servisi"
+msgstr "%2$s üzerinde %1$s için ActiveSync hizmeti"
 
 #: ../camel/camel-eas-store.c:454
 #, c-format
@@ -304,12 +304,3 @@ msgstr "XML ayrıştırılamadı: %s"
 #, c-format
 msgid "Request with id %d not in queue; can’t cancel"
 msgstr "%d numaralı istek kuyrukta değil; iptal edilemez"
-
-#~ msgid "Contacts"
-#~ msgstr "Kişiler"
-
-#~ msgid "Calendar"
-#~ msgstr "Takvim"
-
-#~ msgid "ActiveSync plugin for Evolution."
-#~ msgstr "Evolution için ActiveSync eklentisi."
