@@ -7,17 +7,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: https://bugzilla.gnome.org/enter_bug.cgi?"
-"product=evolution-activesync&keywords=I18N+L10N&component=evolution-plugin\n"
-"POT-Creation-Date: 2017-02-26 23:02+0000\n"
-"PO-Revision-Date: 2016-02-03 21:58-0500\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-08-09 15:22-0400\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.6\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -194,8 +194,8 @@ msgstr "wbxml_conv_xml2wbxml_run 返回了错误 %d"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "HTTP请求失败：%d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP请求失败：%d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -230,8 +230,8 @@ msgstr "将 WBXML 转换为 XML 时失败：%s"
 # “是彭……服务器说的。”
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "状态码：%d - 服务器的回应"
+msgid "Status code: %d — Response from server"
+msgstr "状态码：%d — 服务器的回应"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -300,7 +300,7 @@ msgstr "解析 XML 失败：%s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "带有 id %d 的请求不在队列中；无法取消"
 
 #~ msgid "Contacts"
