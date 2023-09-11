@@ -7,11 +7,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolution-"
-"activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2016-03-12 21:21+0100\n"
-"PO-Revision-Date: 2016-03-12 21:21+0100\n"
-"Last-Translator: Matej Urbančič <mateju@svn.gnome.org>\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-09-11 19:04+0200\n"
+"Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
 "%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 2.2.1\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -32,17 +32,17 @@ msgstr "Ni mogoče ustvariti poti predpomnilnika"
 msgid "Failed to move message cache file"
 msgstr "Ni mogoče premakniti predpomnilniške datoteke sporočil"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Ni mogoče naložiti povzetka za %s"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Pisanje sporočila v shrambo pošte v načinu ActiveSync ni mogoče"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Možnost premikanja sporoči še ni podprta."
@@ -61,7 +61,8 @@ msgstr "Možnosti"
 
 #: ../camel/camel-eas-provider.c:55
 msgid "_Apply filters to new messages in Inbox on this server"
-msgstr "Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežnika"
+msgstr ""
+"Uvelj_avi filtre na novih sporočilih v mapi dohodne pošta tega strežnika"
 
 #: ../camel/camel-eas-provider.c:57
 msgid "Check new messages for J_unk contents"
@@ -88,9 +89,11 @@ msgid "Password"
 msgstr "Geslo"
 
 #: ../camel/camel-eas-provider.c:89
-msgid "This option will connect to the ActiveSync server using a plaintext password."
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim geslom."
+"Možnost omogoča vzpostavitev povezave s strežnikom ActiveSync z nešifriranim "
+"geslom."
 
 #: ../camel/camel-eas-store.c:137
 #, c-format
@@ -107,32 +110,32 @@ msgstr "Storitev EAS nima določenega UID računa."
 msgid "No such folder: %s"
 msgstr "Ni takšne mape: %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Ustvarjanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Brisanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Preimenovanje mape z ActiveSync ni podprto."
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Strežnik ActiveSync %s"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Storitev ActiveSync za %s na %s"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Za dokončanje tega opravila mora biti vzpostavljena omrežna povezava"
@@ -147,30 +150,31 @@ msgstr "Dostava pošte z ActiveSync preko %s"
 msgid "Failed to create temporary file for sending message"
 msgstr "Ustvarjanje začasne datoteke za pošiljanje sporočil je spodletelo."
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr ""
-"Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega sporočila"
+"Klic predmeta CreateItem je spodletel pri iskanju vrednosti ID novega "
+"sporočila"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Nastavitve"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
 msgstr "Uporab_niško ime:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "Naslov _URL strežnika:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Overitev"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
 msgstr "_Samodejno zaznaj"
 
@@ -198,8 +202,8 @@ msgstr "predmet wbxml_conv_xml2wbxml_run je vrnil napako %d"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Zahteva HTTP je spodletela: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "Zahteva HTTP je spodletela: %d – %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -233,8 +237,8 @@ msgstr "Napaka med pretvarjanjem WBXML v XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Koda stamka: %d - Odziv strežnika"
+msgid "Status code: %d — Response from server"
+msgstr "Koda stanja: %d – Odziv strežnika"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -303,14 +307,5 @@ msgstr "Razčlenjevanje datoteke XML je spodletelo: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "Zahteve z id %d ni v vrsti; opravila zato ni mogoče preklicati"
-
-#~ msgid "Contacts"
-#~ msgstr "Stiki"
-
-#~ msgid "Calendar"
-#~ msgstr "Koledar"
-
-#~ msgid "ActiveSync plugin for Evolution."
-#~ msgstr "Vstavek ActiveSync za program Evolution."
