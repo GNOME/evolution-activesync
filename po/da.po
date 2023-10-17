@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2018-06-10 16:03+0000\n"
-"PO-Revision-Date: 2019-08-29 00:00+0100\n"
-"Last-Translator: scootergrisen\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-10-09 16:43+0200\n"
+"Last-Translator: Alan Mortensen <alanmortensen.am@gmail.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -195,8 +196,8 @@ msgstr "fejl %d returneret fra wbxml_conv_xml2wbxml_run"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "HTTP-forespørgsel mislykkedes: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP-forespørgsel mislykkedes: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -230,8 +231,8 @@ msgstr "Fejl under konvertering af WBXML til XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Statuskode: %d - svar fra server"
+msgid "Status code: %d — Response from server"
+msgstr "Statuskode: %d — svar fra server"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -300,8 +301,8 @@ msgstr "Kunne ikke fortolke XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Forespørgsel uden id %d er ikke i køen; kan ikke afbryde"
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Forespørgsel med id %d er ikke i køen; kan ikke afbryde"
 
 #~ msgid "Contacts"
 #~ msgstr "Kontakter"
