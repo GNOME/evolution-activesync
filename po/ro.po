@@ -8,8 +8,10 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues\n"
-"POT-Creation-Date: 2020-03-27 21:23+0000\n"
-"PO-Revision-Date: 2020-07-07 18:08+0300\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2023-10-12 13:23+0300\n"
+"Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
+"gmail [dot] com>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -17,8 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
-"Last-Translator: Florentina Mușat <florentina.musat.28@gmail.com>\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 3.4\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -197,8 +198,8 @@ msgstr "eroarea %d întoarsă de la wbxml_conv_xml2wbxml_run"
 #: ../eas-daemon/libeas/eas-connection.c:1303
 #: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "Cererea HTTP a eșuat: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "Cererea HTTP a eșuat: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
 #, c-format
@@ -232,8 +233,8 @@ msgstr "Eroare la convertirea WBXML la XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Cod de stare: %d - Răspuns de la server"
+msgid "Status code: %d — Response from server"
+msgstr "Cod de stare: %d — Răspuns de la server"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
 #, c-format
@@ -302,5 +303,5 @@ msgstr "Nu s-a putut parsa XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "Cererea cu id-ul %d nu este în coadă; nu se poate anula"
