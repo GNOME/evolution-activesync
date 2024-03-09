@@ -1,22 +1,22 @@
 # This file is distributed under the same license as the evolution-activesync package.
 #
-# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2013, 2016.
+# SPDX-FileCopyrightText: 2013, 2016, 2024 Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=evolutio"
-"n-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-08-12 22:05+0000\n"
-"PO-Revision-Date: 2016-03-05 17:06+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/issu"
+"es\n"
+"POT-Creation-Date: 2023-02-27 13:53+0000\n"
+"PO-Revision-Date: 2024-03-09 16:09+0200\n"
 "Last-Translator: Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>\n"
 "Language-Team: Latvian <lata-l10n@googlegroups.com>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
-"2);\n"
-"X-Generator: Lokalize 2.0\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 :"
+" 2);\n"
+"X-Generator: Lokalize 23.08.1\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -28,17 +28,17 @@ msgstr "Nevar izveidot kešatmiņas ceļu"
 msgid "Failed to move message cache file"
 msgstr "Neizdevās pārvietot vēstuļu kešatmiņas datni"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Nevarēja ielādēt %s kopsavilkumu"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Ar ActiveSync nevar rakstīt vēstuli uz pasta krātuvi"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Vēstuļu pārvietošana vēl nav ieviesta"
@@ -104,32 +104,32 @@ msgstr "EAS servisam nav konta UID"
 msgid "No such folder: %s"
 msgstr "Nav tādas mapes — %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Ar ActiveSync nevar izveidot mapi"
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Ar ActiveSync nevar dzēst mapi"
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Ar ActiveSync nevar pārsaukt mapi"
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync serveris %s"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "%s ActiveSync serviss uz %s"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Jums ir jāstrādā tiešsaistē, lai izpildītu šo darbību"
@@ -144,29 +144,29 @@ msgstr "ActiveSync pasta nosūtīšana caur %s"
 msgid "Failed to create temporary file for sending message"
 msgstr "Neizdevās izveidot pagaidu datni vēstuļu sūtīšanai"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "CreateItem izsaukumam neizdevās atgriezt jaunās vēstules ID"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Konfigurācija"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
 msgstr "_Lietotājvārds:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "_Servera URL:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Autentifikācija"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
 msgstr "_Automātiski noteikt"
 
@@ -192,9 +192,10 @@ msgstr "kļūda %d atgriezta no wbxml_conv_xml2wbxml_run"
 
 #: ../eas-daemon/libeas/eas-connection.c:1292
 #: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2632
+#: ../eas-daemon/libeas/eas-connection.c:2633
 #, c-format
-msgid "HTTP request failed: %d - %s"
+#| msgid "HTTP request failed: %d - %s"
+msgid "HTTP request failed: %d — %s"
 msgstr "Neizdevās HTTP pieprasījums: %d — %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1327
@@ -229,7 +230,8 @@ msgstr "Kļūda, pārveidojot WBXML uz XML: %s"
 
 #: ../eas-daemon/libeas/eas-connection.c:1522
 #, c-format
-msgid "Status code: %d - Response from server"
+#| msgid "Status code: %d - Response from server"
+msgid "Status code: %d — Response from server"
 msgstr "Statusa kods: %d — atbilde no servera"
 
 #: ../eas-daemon/libeas/eas-connection.c:1537
@@ -292,12 +294,14 @@ msgstr "Neizdevās izveidot mapes keša direktoriju %s — %s"
 msgid "request was cancelled by user"
 msgstr "lietotājs atcēla pieprasījumu"
 
-#: ../eas-daemon/libeas/eas-connection.c:2219
+#: ../eas-daemon/libeas/eas-connection.c:2220
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Neizdevās noparsēt XML — %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2504
+#: ../eas-daemon/libeas/eas-connection.c:2505
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
+#| msgid "Request with id %d not in queue; can't cancel"
+msgid "Request with id %d not in queue; can’t cancel"
 msgstr "Pieprasījums ar id %d nav rindā, nevar atcelt"
+
