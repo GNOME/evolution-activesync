@@ -1,23 +1,24 @@
 # Serbian translation for evolution-activesync.
 # Copyright (C) 2012 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Miroslav Nikolić <miroslavnikolic@rocketmail.com>, 2012, 2015.
+# Miroslav Nikolić <miroslavnikolic@rocketmail.com>, 2012-2024.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
-"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product"
-"=evolution-activesync&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2015-08-12 22:05+0000\n"
-"PO-Revision-Date: 2015-12-30 08:54+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues/\n"
+"POT-Creation-Date: 2024-09-01 16:32+0000\n"
+"PO-Revision-Date: 2024-11-16 17:32+0100\n"
 "Last-Translator: Miroslav Nikolić <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <gnom@prevod.org>\n"
-"Language: sr@latin\n"
+"Language: sr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Virtaal 0.7.1\n"
+"X-Generator: Gtranslator 46.1\n"
 "X-Project-Style: gnome\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
@@ -30,17 +31,17 @@ msgstr "Ne mogu da napravim putanju ostave"
 msgid "Failed to move message cache file"
 msgstr "Nisam uspeo da premestim datoteku ostave poruke"
 
-#: ../camel/camel-eas-folder.c:513
+#: ../camel/camel-eas-folder.c:529
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "Ne mogu da učitam pregled za %s"
 
-#: ../camel/camel-eas-folder.c:733
+#: ../camel/camel-eas-folder.c:751
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "Pisanje poruke u smeštaj pošte nije moguć u Radnom usaglašavanju"
 
-#: ../camel/camel-eas-folder.c:748
+#: ../camel/camel-eas-folder.c:766
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Premeštanje poruka još uvek nije primenjeno"
@@ -107,32 +108,32 @@ msgstr "Usluga ERU nema JIB naloga"
 msgid "No such folder: %s"
 msgstr "Nema takve fascikle: %s"
 
-#: ../camel/camel-eas-store.c:370
+#: ../camel/camel-eas-store.c:369
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "Stvaranje fascikle nije moguće sa Radnim usaglašavanjem"
 
-#: ../camel/camel-eas-store.c:381
+#: ../camel/camel-eas-store.c:380
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "Brisanje fascikle nije moguće sa Radnim usaglašavanjem"
 
-#: ../camel/camel-eas-store.c:394
+#: ../camel/camel-eas-store.c:393
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "Preimenovanje fascikle nije moguće sa Radnim usaglašavanjem"
 
-#: ../camel/camel-eas-store.c:410 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "Server Radnog usaglašavanja „%s“"
 
-#: ../camel/camel-eas-store.c:413
+#: ../camel/camel-eas-store.c:412
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "Usluga Radnog usaglašavanja za „%s“ na „%s“"
 
-#: ../camel/camel-eas-store.c:455
+#: ../camel/camel-eas-store.c:454
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Morate da budete na mreži da biste završili ovu operaciju"
@@ -147,163 +148,164 @@ msgstr "Isporuka pošte Radnog usaglašavanja putem „%s“"
 msgid "Failed to create temporary file for sending message"
 msgstr "Nisam uspeo da napravim privremenu datoteku za slanje poruke"
 
-#: ../camel/camel-eas-utils.c:555
+#: ../camel/camel-eas-utils.c:558
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "Poziv „Napravi stavku“ nije uspeo da vrati IB za novu poruku"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:165
+#: ../configuration/e-mail-config-eas-backend.c:169
 msgid "Configuration"
 msgstr "Podešavanja"
 
-#: ../configuration/e-mail-config-eas-backend.c:184
+#: ../configuration/e-mail-config-eas-backend.c:188
 msgid "User_name:"
 msgstr "Korisničko _ime:"
 
-#: ../configuration/e-mail-config-eas-backend.c:199
+#: ../configuration/e-mail-config-eas-backend.c:203
 msgid "_Server URL:"
 msgstr "_Adresa servera:"
 
-#: ../configuration/e-mail-config-eas-backend.c:214
+#: ../configuration/e-mail-config-eas-backend.c:218
 msgid "Authentication"
 msgstr "Potvrđivanje identiteta"
 
-#: ../configuration/e-mail-config-eas-backend.c:231
+#: ../configuration/e-mail-config-eas-backend.c:235
 msgid "_Auto Detect"
 msgstr "_Sam otkrij"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
+#: ../eas-daemon/libeas/eas-connection.c:506
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Molim unesite vašu lozinku Radnog usaglašavanja za „%s“"
 
-#: ../eas-daemon/libeas/eas-connection.c:1055
+#: ../eas-daemon/libeas/eas-connection.c:1083
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "greška „%d“ je vraćena sa „vbhml_pretv_hml2vbhml_napravi“"
 
-#: ../eas-daemon/libeas/eas-connection.c:1087
+#: ../eas-daemon/libeas/eas-connection.c:1115
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "„nova_soup_poruka“ je vratilo NIŠTA"
 
-#: ../eas-daemon/libeas/eas-connection.c:1162
+#: ../eas-daemon/libeas/eas-connection.c:1190
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "greška „%d“ je vraćena sa „vbhml_pretv_hml2vbhml_pokreni“"
 
-#: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2632
+#: ../eas-daemon/libeas/eas-connection.c:1320
+#: ../eas-daemon/libeas/eas-connection.c:1331
+#: ../eas-daemon/libeas/eas-connection.c:2661
 #, c-format
-msgid "HTTP request failed: %d - %s"
+msgid "HTTP request failed: %d — %s"
 msgstr "Nije uspeo HTTP zahtev: %d — %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1327
+#: ../eas-daemon/libeas/eas-connection.c:1355
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "Vrsta HTTP odgovora nije bila VBIksML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1335
+#: ../eas-daemon/libeas/eas-connection.c:1363
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "Vrsta HTTP odgovora nije bila VIŠEDELOVA"
 
-#: ../eas-daemon/libeas/eas-connection.c:1367
+#: ../eas-daemon/libeas/eas-connection.c:1395
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "vbhml je NIŠTA!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1376
+#: ../eas-daemon/libeas/eas-connection.c:1404
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "vbhml_len je 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1387
+#: ../eas-daemon/libeas/eas-connection.c:1415
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Nisam uspeo da napravim VBIksML u IksML pretvarač: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1406
+#: ../eas-daemon/libeas/eas-connection.c:1434
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Greška pretvaranja VBIksML-a u IksML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1522
+#: ../eas-daemon/libeas/eas-connection.c:1550
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Kod stanja: %d — Odgovor sa servera"
+msgid "Status code: %d — Response from server"
+msgstr "Kod stanja: %d — odgovor sa servera"
 
-#: ../eas-daemon/libeas/eas-connection.c:1537
+#: ../eas-daemon/libeas/eas-connection.c:1565
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Nisam uspeo da obradim samootkrivajući odgovor IksML-a"
 
-#: ../eas-daemon/libeas/eas-connection.c:1546
+#: ../eas-daemon/libeas/eas-connection.c:1574
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Nisam uspeo da pronađem element <Samootkrivanje>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1557
+#: ../eas-daemon/libeas/eas-connection.c:1585
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Nisam uspeo da pronađem element <Odgovor>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1568
+#: ../eas-daemon/libeas/eas-connection.c:1596
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Nisam uspeo da pronađem element <Radnja>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1579
+#: ../eas-daemon/libeas/eas-connection.c:1607
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Nisam uspeo da pronađem element <Podešavanja>"
 
-#: ../eas-daemon/libeas/eas-connection.c:1719
+#: ../eas-daemon/libeas/eas-connection.c:1747
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "El. pošta je obavezna i mora biti dostavljena"
 
-#: ../eas-daemon/libeas/eas-connection.c:1729
+#: ../eas-daemon/libeas/eas-connection.c:1757
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Nisam uspeo da izvučem domen iz adrese el. pošte"
 
-#: ../eas-daemon/libeas/eas-connection.c:1740
+#: ../eas-daemon/libeas/eas-connection.c:1768
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Nisam uspeo da napravim privremeni nalog za samootkrivanje"
 
-#: ../eas-daemon/libeas/eas-connection.c:1907
+#: ../eas-daemon/libeas/eas-connection.c:1935
 #, c-format
 msgid "An account must be provided."
 msgstr "Nalog mora biti dostavljen."
 
-#: ../eas-daemon/libeas/eas-connection.c:1933
+#: ../eas-daemon/libeas/eas-connection.c:1961
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Adresa servera i korisničko ime moraju biti dostavljeni."
 
-#: ../eas-daemon/libeas/eas-connection.c:1946
+#: ../eas-daemon/libeas/eas-connection.c:1974
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Nisam uspeo da napravim direktorijum ostave fascikle %s: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2090
+#: ../eas-daemon/libeas/eas-connection.c:2118
 #, c-format
 msgid "request was cancelled by user"
 msgstr "korisnik je otkazao zahtev"
 
-#: ../eas-daemon/libeas/eas-connection.c:2219
+#: ../eas-daemon/libeas/eas-connection.c:2248
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Nisam uspeo da obradim IksML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2504
+#: ../eas-daemon/libeas/eas-connection.c:2533
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Zahtev sa ib-om %d nije na čekanju; ne mogu da otkažem"
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr ""
+"Zahtev sa identifikacionim brojem %d nije na čekanju; ne mogu da otkažem"
 
 #~ msgid "Contacts"
 #~ msgstr "Kontakti"
