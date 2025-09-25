@@ -1,0 +1,307 @@
+# Bulgarian translation for evolution-activesync.
+# Copyright (C) 2024 evolution-activesync's COPYRIGHT HOLDER
+# This file is distributed under the same license as the evolution-activesync package.
+# twlvnn kraftwerk <kraft_werk@tutanota.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-activesync master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues/\n"
+"POT-Creation-Date: 2024-10-13 22:46+0000\n"
+"PO-Revision-Date: 2024-11-02 17:06+0100\n"
+"Last-Translator: twlvnn kraftwerk <kraft_werk@tutanota.com>\n"
+"Language-Team: Bulgarian <dict-notifications@fsa-bg.org>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Gtranslator 47.0\n"
+
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Местоположението за кеша не може да бъде създадено"
+
+#: ../camel/camel-eas-folder.c:213
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Преместването на кеш файла за писма е неуспешно"
+
+#: ../camel/camel-eas-folder.c:529
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Зареждането на обобщението за %s е неуспешно"
+
+#: ../camel/camel-eas-folder.c:751
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr ""
+"Записването на писмото в хранилището на писма не е възможно в ActiveSync"
+
+#: ../camel/camel-eas-folder.c:766
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Преместването на писма все още не е разработено"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Проверяване за нови писма"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "Про_веряване за нови писма във всички папки"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Опции"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "_Прилагане на филтри за нови писма във входящата поща на този сървър"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Проверяване на писмата за _спам"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Проверяване за спам писма само във входящата поща"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "_Автоматично локално синхронизиране на регистрацията"
+
+#: ../camel/camel-eas-provider.c:69
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "За достъп до сървъри чрез ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Парола"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Тази опция ще се свърже със ActiveSync сървъра, като използва парола с "
+"обикновен текст."
+
+#: ../camel/camel-eas-store.c:137
+#, c-format
+msgid "Session has no storage path"
+msgstr "Сесията няма местоположение за съхранение"
+
+#: ../camel/camel-eas-store.c:177
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "Услугата EAS няма уникален идентификатор на регистрацията"
+
+#: ../camel/camel-eas-store.c:265
+#, c-format
+msgid "No such folder: %s"
+msgstr "Няма такава папка: %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "Създаването на папка с ActiveSync не е възможно"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "Изтриването на папка с ActiveSync не е възможно"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "Преименуването на папка с ActiveSync не е възможно"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "ActiveSync сървър %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "ActiveSync услуга за %s на %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Трябва да сте в режим „Включен“, за да се извърши избраната операция"
+
+#: ../camel/camel-eas-transport.c:151
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "Изпращане на поща с ActiveSync чрез %s"
+
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Временен файл за изпращане на писмо не може да бъде създаден"
+
+#: ../camel/camel-eas-utils.c:558
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "CreateItem не успя да върне идентификатор за ново писмо"
+
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:169
+msgid "Configuration"
+msgstr "Настройка"
+
+#: ../configuration/e-mail-config-eas-backend.c:188
+msgid "User_name:"
+msgstr "Потребителско _име:"
+
+#: ../configuration/e-mail-config-eas-backend.c:203
+msgid "_Server URL:"
+msgstr "_Адрес на сървъра:"
+
+#: ../configuration/e-mail-config-eas-backend.c:218
+msgid "Authentication"
+msgstr "Удостоверяване"
+
+#: ../configuration/e-mail-config-eas-backend.c:235
+msgid "_Auto Detect"
+msgstr "_Автоматично откриване"
+
+#: ../eas-daemon/libeas/eas-connection.c:506
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Въведете паролата си за ActiveSync за %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1083
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "грешката %d е върната от wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1115
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new върна NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1190
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "грешката %d е върната от wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1320
+#: ../eas-daemon/libeas/eas-connection.c:1331
+#: ../eas-daemon/libeas/eas-connection.c:2661
+#, c-format
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP заявката е неуспешна: %d — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1355
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "Видът на HTTP отговора не беше WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1363
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "Видът на HTTP отговора не беше MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1395
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml е NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1404
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len е 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1415
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Създаването на WBXML към XML преобразувател е неуспешно: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1434
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Грешка при преобразуването на WBXML в XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1550
+#, c-format
+msgid "Status code: %d — Response from server"
+msgstr "Код на състояние: %d — отговор от сървъра"
+
+#: ../eas-daemon/libeas/eas-connection.c:1565
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Анализирането на XML отговора за автоматично откриване е неуспешно"
+
+#: ../eas-daemon/libeas/eas-connection.c:1574
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Елементът <Autodiscover> не може да бъде намерен"
+
+#: ../eas-daemon/libeas/eas-connection.c:1585
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Елементът <Response> не може да бъде намерен"
+
+#: ../eas-daemon/libeas/eas-connection.c:1596
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Елементът <Action> не може да бъде намерен"
+
+#: ../eas-daemon/libeas/eas-connection.c:1607
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Елементът <Settings> не може да бъде намерен"
+
+#: ../eas-daemon/libeas/eas-connection.c:1747
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "Е-пощата е задължителна и трябва да бъде предоставен"
+
+#: ../eas-daemon/libeas/eas-connection.c:1757
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Извличането на домейна от е-пощата не неуспешно"
+
+#: ../eas-daemon/libeas/eas-connection.c:1768
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr ""
+"Създаването на временна регистрация за автоматично откриване е неуспешно"
+
+#: ../eas-daemon/libeas/eas-connection.c:1935
+#, c-format
+msgid "An account must be provided."
+msgstr "Трябва да бъде предоставена регистрация."
+
+#: ../eas-daemon/libeas/eas-connection.c:1961
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Трябва да бъдат предоставени адрес и потребителско име на сървъра."
+
+#: ../eas-daemon/libeas/eas-connection.c:1974
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Създаването на папка за кеш на папки е неуспешно %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2118
+#, c-format
+msgid "request was cancelled by user"
+msgstr "заявката е отменена от потребителя"
+
+#: ../eas-daemon/libeas/eas-connection.c:2248
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Неуспешно анализиране на XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2533
+#, c-format
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Заявка с идентификатор %d не е в опашката; не може да бъде отменено"
