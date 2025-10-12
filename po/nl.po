@@ -1,23 +1,24 @@
 # Dutch translation for evolution-activesync.
 # Copyright (C) 2019 evolution-activesync's COPYRIGHT HOLDER
 # This file is distributed under the same license as the evolution-activesync package.
-# Nathan Follens <nthn@unseen.is>, 2019.
+# Nathan Follens <nfollens@gnome.org>, 2019, 2025.
+# Dick Groskamp <dikgro@yahoo.co.uk>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
-"issues\n"
-"POT-Creation-Date: 2018-12-16 00:45+0000\n"
-"PO-Revision-Date: 2019-01-20 09:58+0100\n"
-"Language-Team: Dutch <gnome-nl-list@gnome.org>\n"
+"issues/\n"
+"POT-Creation-Date: 2025-03-10 13:29+0000\n"
+"PO-Revision-Date: 2025-10-12 19:36+0200\n"
+"Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
+"Language-Team: GNOME-NL https://matrix.to/#/#nl:gnome.org\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"Last-Translator: Nathan Follens <nthn@unseen.is>\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 3.6\n"
 
 #: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
 #, c-format
@@ -89,8 +90,8 @@ msgstr "Wachtwoord"
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr ""
-"Deze optie zal verbinding maken met de ActiveSync-server met een "
-"onversleuteld wachtwoord."
+"Deze optie zal verbinding maken met de ActiveSync-server met een niet "
+"versleuteld wachtwoord."
 
 #: ../camel/camel-eas-store.c:137
 #, c-format
@@ -173,134 +174,134 @@ msgstr "Aanmeldingscontrole"
 msgid "_Auto Detect"
 msgstr "_Autodetectie"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
+#: ../eas-daemon/libeas/eas-connection.c:506
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "Voer uw ActiveSync-wachtwoord voor %s in"
 
-#: ../eas-daemon/libeas/eas-connection.c:1055
+#: ../eas-daemon/libeas/eas-connection.c:1083
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "fout %d verkregen van wbxml_conv_xml2wbxml_create"
 
-#: ../eas-daemon/libeas/eas-connection.c:1087
+#: ../eas-daemon/libeas/eas-connection.c:1115
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new gaf NULL weer"
 
-#: ../eas-daemon/libeas/eas-connection.c:1162
+#: ../eas-daemon/libeas/eas-connection.c:1190
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "fout %d verkregen van wbxml_conv_xml2wbxml_run"
 
-#: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2633
+#: ../eas-daemon/libeas/eas-connection.c:1320
+#: ../eas-daemon/libeas/eas-connection.c:1331
+#: ../eas-daemon/libeas/eas-connection.c:2661
 #, c-format
-msgid "HTTP request failed: %d - %s"
-msgstr "HTTP-verzoek mislukt: %d - %s"
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP-verzoek mislukt: %d — %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1327
+#: ../eas-daemon/libeas/eas-connection.c:1355
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "HTTP-reactietype was niet WBXML"
 
-#: ../eas-daemon/libeas/eas-connection.c:1335
+#: ../eas-daemon/libeas/eas-connection.c:1363
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "HTTP-reactietype was niet MULTIPART"
 
-#: ../eas-daemon/libeas/eas-connection.c:1367
+#: ../eas-daemon/libeas/eas-connection.c:1395
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml is NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1376
+#: ../eas-daemon/libeas/eas-connection.c:1404
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len is 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1387
+#: ../eas-daemon/libeas/eas-connection.c:1415
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "Aanmaken van WBXML- naar XML-converteerder mislukt: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1406
+#: ../eas-daemon/libeas/eas-connection.c:1434
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "Fout bij converteren van WBXML naar XML: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1522
+#: ../eas-daemon/libeas/eas-connection.c:1550
 #, c-format
-msgid "Status code: %d - Response from server"
-msgstr "Statuscode: %d - reactie van server"
+msgid "Status code: %d — Response from server"
+msgstr "Statuscode: %d — reactie van server"
 
-#: ../eas-daemon/libeas/eas-connection.c:1537
+#: ../eas-daemon/libeas/eas-connection.c:1565
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Ontleden van autodiscover-respons-XML is mislukt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1546
+#: ../eas-daemon/libeas/eas-connection.c:1574
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "Kon <Autodiscover>-element niet vinden"
 
-#: ../eas-daemon/libeas/eas-connection.c:1557
+#: ../eas-daemon/libeas/eas-connection.c:1585
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "Kon <Response>-element niet vinden"
 
-#: ../eas-daemon/libeas/eas-connection.c:1568
+#: ../eas-daemon/libeas/eas-connection.c:1596
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "Kon <Action>-element niet vinden"
 
-#: ../eas-daemon/libeas/eas-connection.c:1579
+#: ../eas-daemon/libeas/eas-connection.c:1607
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "Kon <Settings>-element niet vinden"
 
-#: ../eas-daemon/libeas/eas-connection.c:1719
+#: ../eas-daemon/libeas/eas-connection.c:1747
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "E-mailadres is verplicht en moet opgegeven worden"
 
-#: ../eas-daemon/libeas/eas-connection.c:1729
+#: ../eas-daemon/libeas/eas-connection.c:1757
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Domein afleiden uit e-mailadres mislukt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1740
+#: ../eas-daemon/libeas/eas-connection.c:1768
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Aanmaken van tijdelijke account voor autodiscover mislukt"
 
-#: ../eas-daemon/libeas/eas-connection.c:1907
+#: ../eas-daemon/libeas/eas-connection.c:1935
 #, c-format
 msgid "An account must be provided."
 msgstr "Er moet een account opgegeven worden."
 
-#: ../eas-daemon/libeas/eas-connection.c:1933
+#: ../eas-daemon/libeas/eas-connection.c:1961
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Er moeten een server-URL en -gebruikersnaam opgegeven worden."
 
-#: ../eas-daemon/libeas/eas-connection.c:1946
+#: ../eas-daemon/libeas/eas-connection.c:1974
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "Aanmaken van mapcachemap %s mislukt: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2090
+#: ../eas-daemon/libeas/eas-connection.c:2118
 #, c-format
 msgid "request was cancelled by user"
 msgstr "verzoek geannuleerd door gebruiker"
 
-#: ../eas-daemon/libeas/eas-connection.c:2220
+#: ../eas-daemon/libeas/eas-connection.c:2248
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "Ontleden van XML mislukt: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2505
+#: ../eas-daemon/libeas/eas-connection.c:2533
 #, c-format
-msgid "Request with id %d not in queue; can't cancel"
-msgstr "Verzoek met id %d niet in wachtrij; kan niet annuleren"
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Verzoek met ID %d niet in wachtrij; kan niet annuleren"
