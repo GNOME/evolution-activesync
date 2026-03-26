@@ -1,0 +1,304 @@
+# Esperanto translation for evolution-activesync.
+# Copyright (C) 2026 evolution-activesync's COPYRIGHT HOLDER
+# This file is distributed under the same license as the evolution-activesync package.
+# Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: evolution-activesync master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
+"issues/\n"
+"POT-Creation-Date: 2026-03-10 13:20+0000\n"
+"PO-Revision-Date: 2026-03-26 08:24+0100\n"
+"Last-Translator: Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>\n"
+"Language-Team: Esperanto <gnome-eo-list@gnome.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 49.0\n"
+
+#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#, c-format
+msgid "Unable to create cache path"
+msgstr "Ne eblas krei kaŝmemoran vojon"
+
+#: ../camel/camel-eas-folder.c:213
+#, c-format
+msgid "Failed to move message cache file"
+msgstr "Malsukcesis movi mesaĝan kaŝmemoron"
+
+#: ../camel/camel-eas-folder.c:529
+#, c-format
+msgid "Could not load summary for %s"
+msgstr "Ne eblis ŝargi resumon por %s"
+
+#: ../camel/camel-eas-folder.c:751
+#, c-format
+msgid "Writing message to mail store not possible in ActiveSync"
+msgstr "Skribi mesaĝon al poŝtostoro ne eblas en ActiveSync"
+
+#: ../camel/camel-eas-folder.c:766
+#, c-format
+msgid "Moving messages not yet implemented"
+msgstr "Movi mesaĝojn ankoraŭ ne efektivigita"
+
+#: ../camel/camel-eas-provider.c:48
+msgid "Checking for new mail"
+msgstr "Kontrolante por nova poŝto"
+
+#: ../camel/camel-eas-provider.c:50
+msgid "C_heck for new messages in all folders"
+msgstr "K_ontroli novajn mesaĝojn en ĉiuj dosierujoj"
+
+#: ../camel/camel-eas-provider.c:53
+msgid "Options"
+msgstr "Ebloj"
+
+#: ../camel/camel-eas-provider.c:55
+msgid "_Apply filters to new messages in Inbox on this server"
+msgstr "_Apliki filtrilojn al novaj mesaĝoj en la Enirkesto de ĉi tiu servilo"
+
+#: ../camel/camel-eas-provider.c:57
+msgid "Check new messages for J_unk contents"
+msgstr "Kontroli novajn mesaĝojn por R_ubaĵa enhavo"
+
+#: ../camel/camel-eas-provider.c:59
+msgid "Only check for Junk messages in the IN_BOX folder"
+msgstr "Nur kontroli rubaĵajn mesaĝojn en la EN_KESTA dosierujo"
+
+#: ../camel/camel-eas-provider.c:61
+msgid "Automatically synchroni_ze account locally"
+msgstr "Aŭtomate sinkroni_gi konton loke"
+
+#: ../camel/camel-eas-provider.c:69
+msgid "ActiveSync"
+msgstr "ActiveSync"
+
+#: ../camel/camel-eas-provider.c:71
+msgid "For accessing servers using ActiveSync"
+msgstr "Por aliri servilojn per ActiveSync"
+
+#: ../camel/camel-eas-provider.c:87
+msgid "Password"
+msgstr "Pasvorto"
+
+#: ../camel/camel-eas-provider.c:89
+msgid ""
+"This option will connect to the ActiveSync server using a plaintext password."
+msgstr ""
+"Ĉi tiu opcio konektos al la ActiveSync-servilo per klarteksta pasvorto."
+
+#: ../camel/camel-eas-store.c:137
+#, c-format
+msgid "Session has no storage path"
+msgstr "Sesio havas neniun storaĝovojon"
+
+#: ../camel/camel-eas-store.c:177
+#, c-format
+msgid "EAS service has no account UID"
+msgstr "EAS-servo havas neniun konto-UID"
+
+#: ../camel/camel-eas-store.c:265
+#, c-format
+msgid "No such folder: %s"
+msgstr "Ne ekzistas tia dosierujo: %s"
+
+#: ../camel/camel-eas-store.c:369
+#, c-format
+msgid "Create folder not possible with ActiveSync"
+msgstr "Krei dosierujon ne eblas per ActiveSync"
+
+#: ../camel/camel-eas-store.c:380
+#, c-format
+msgid "Delete folder not possible with ActiveSync"
+msgstr "Forigi dosierujon ne eblas per ActiveSync"
+
+#: ../camel/camel-eas-store.c:393
+#, c-format
+msgid "Rename folder not possible with ActiveSync"
+msgstr "Alinomi dosierujon ne eblas per ActiveSync"
+
+#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#, c-format
+msgid "ActiveSync server %s"
+msgstr "ActiveSync-servilo %s"
+
+#: ../camel/camel-eas-store.c:412
+#, c-format
+msgid "ActiveSync service for %s on %s"
+msgstr "ActiveSync-servo por %s sur %s"
+
+#: ../camel/camel-eas-store.c:454
+#, c-format
+msgid "You must be working online to complete this operation"
+msgstr "Vi devas labori interrete por plenumi ĉi tiun operacion"
+
+#: ../camel/camel-eas-transport.c:151
+#, c-format
+msgid "ActiveSync mail delivery via %s"
+msgstr "ActiveSync-poŝta liverado per %s"
+
+#: ../camel/camel-eas-transport.c:194 ../camel/camel-eas-transport.c:275
+#, c-format
+msgid "Failed to create temporary file for sending message"
+msgstr "Malsukcesis krei provizoran dosieron por sendi mesaĝon"
+
+#: ../camel/camel-eas-utils.c:558
+#, c-format
+msgid "CreateItem call failed to return ID for new message"
+msgstr "CreateItem-voko malsukcesis redoni ID por nova mesaĝo"
+
+#. Add widget.
+#: ../configuration/e-mail-config-eas-backend.c:169
+msgid "Configuration"
+msgstr "Agordado"
+
+#: ../configuration/e-mail-config-eas-backend.c:188
+msgid "User_name:"
+msgstr "Uz_antonomo:"
+
+#: ../configuration/e-mail-config-eas-backend.c:203
+msgid "_Server URL:"
+msgstr "_Servila URL:"
+
+#: ../configuration/e-mail-config-eas-backend.c:218
+msgid "Authentication"
+msgstr "Aŭtentikigo"
+
+#: ../configuration/e-mail-config-eas-backend.c:235
+msgid "_Auto Detect"
+msgstr "_Aŭtomata Detekto"
+
+#: ../eas-daemon/libeas/eas-connection.c:506
+#, c-format
+msgid "Please enter your ActiveSync password for %s"
+msgstr "Bonvolu entajpi vian ActiveSync-pasvorton por %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1083
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_create"
+msgstr "eraro %d redonita el wbxml_conv_xml2wbxml_create"
+
+#: ../eas-daemon/libeas/eas-connection.c:1115
+#, c-format
+msgid "soup_message_new returned NULL"
+msgstr "soup_message_new redonita NULL"
+
+#: ../eas-daemon/libeas/eas-connection.c:1190
+#, c-format
+msgid "error %d returned from wbxml_conv_xml2wbxml_run"
+msgstr "eraro %d redonita el wbxml_conv_xml2wbxml_run"
+
+#: ../eas-daemon/libeas/eas-connection.c:1320
+#: ../eas-daemon/libeas/eas-connection.c:1331
+#: ../eas-daemon/libeas/eas-connection.c:2661
+#, c-format
+msgid "HTTP request failed: %d — %s"
+msgstr "HTTP-peto malsukcesis: %d — %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1355
+#, c-format
+msgid "HTTP response type was not WBXML"
+msgstr "HTTP-responda tipo ne estis WBXML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1363
+#, c-format
+msgid "HTTP response type was not MULTIPART"
+msgstr "HTTP-responda tipo ne estis MULTIPART"
+
+#: ../eas-daemon/libeas/eas-connection.c:1395
+#, c-format
+msgid "wbxml is NULL!"
+msgstr "wbxml estas NULL!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1404
+#, c-format
+msgid "wbxml_len is 0!"
+msgstr "wbxml_len estas 0!"
+
+#: ../eas-daemon/libeas/eas-connection.c:1415
+#, c-format
+msgid "Failed to create WBXML to XML converter: %s"
+msgstr "Malsukcesis krei WBXML-al-XML-konvertilon: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1434
+#, c-format
+msgid "Error converting WBXML to XML: %s"
+msgstr "Eraro konvertante WBXML al XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:1550
+#, c-format
+msgid "Status code: %d — Response from server"
+msgstr "Stata kodo: %d — Respondo de servilo"
+
+#: ../eas-daemon/libeas/eas-connection.c:1565
+#, c-format
+msgid "Failed to parse autodiscover response XML"
+msgstr "Malsukcesis analizi la aŭtomalkovan respondan XML"
+
+#: ../eas-daemon/libeas/eas-connection.c:1574
+#, c-format
+msgid "Failed to find <Autodiscover> element"
+msgstr "Malsukcesis trovi elementon <Autodiscover>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1585
+#, c-format
+msgid "Failed to find <Response> element"
+msgstr "Malsukcesis trovi elementon <Response>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1596
+#, c-format
+msgid "Failed to find <Action> element"
+msgstr "Malsukcesis trovi elementon <Action>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1607
+#, c-format
+msgid "Failed to find <Settings> element"
+msgstr "Malsukcesis trovi elementon <Settings>"
+
+#: ../eas-daemon/libeas/eas-connection.c:1747
+#, c-format
+msgid "Email is mandatory and must be provided"
+msgstr "Retpoŝtadreso estas deviga kaj devas esti provizita"
+
+#: ../eas-daemon/libeas/eas-connection.c:1757
+#, c-format
+msgid "Failed to extract domain from email address"
+msgstr "Malsukcesis eltiri domajnon el retpoŝtadreso"
+
+#: ../eas-daemon/libeas/eas-connection.c:1768
+#, c-format
+msgid "Failed create temp account for autodiscover"
+msgstr "Malsukcesis krei provizoran konton por aŭtomalkovo"
+
+#: ../eas-daemon/libeas/eas-connection.c:1935
+#, c-format
+msgid "An account must be provided."
+msgstr "Konto devas esti provizita."
+
+#: ../eas-daemon/libeas/eas-connection.c:1961
+#, c-format
+msgid "A server url and username must be provided."
+msgstr "Servila URL kaj uzantonomo devas esti provizitaj."
+
+#: ../eas-daemon/libeas/eas-connection.c:1974
+#, c-format
+msgid "Failed to create folder cache directory %s: %s"
+msgstr "Malsukcesis krei kaŝmemoran dosierujon %s: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2118
+#, c-format
+msgid "request was cancelled by user"
+msgstr "peto estis nuligita de uzanto"
+
+#: ../eas-daemon/libeas/eas-connection.c:2248
+#, c-format
+msgid "Failed to parse XML: %s"
+msgstr "Malsukcesis analizi XML: %s"
+
+#: ../eas-daemon/libeas/eas-connection.c:2533
+#, c-format
+msgid "Request with id %d not in queue; can’t cancel"
+msgstr "Peto kun id %d ne estas en la vicaro; ne eblas nuligi"
