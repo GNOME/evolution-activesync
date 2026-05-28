@@ -503,6 +503,47 @@
 		},
 
 		{
+			"name": "libwbxml2",
+			"buildsystem": "cmake-ninja",
+			"builddir": true,
+			"cleanup": [
+				"/bin",
+				"/lib/cmake",
+				"/share"
+			],
+			"config-opts": [
+				"-DENABLE_UNIT_TESTS=OFF"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://github.com/libwbxml/libwbxml.git",
+					"branch": "master"
+				}
+			]
+		},
+
+		{
+			"name": "check",
+			"buildsystem": "cmake-ninja",
+			"cleanup": [
+				"/bin",
+				"/lib/cmake",
+				"/share"
+			],
+			"config-opts": [
+				"-DBUILD_TESTING=OFF"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://github.com/libcheck/check.git",
+					"branch": "master"
+				}
+			]
+		},
+
+		{
 			"name": "evolution-activesync",
 			"buildsystem": "cmake-ninja",
 			"builddir": true,

@@ -115,7 +115,7 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
 				       GSList *add_items,
 				       GSList *delete_items,
 				       GSList *change_items,
-				       DBusGMethodInvocation *context);
+				       GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

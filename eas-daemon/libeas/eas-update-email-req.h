@@ -102,7 +102,7 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id,
 					     const gchar *sync_key,
 					     const gchar *folder_id,
 					     const gchar **serialised_email_array,
-					     DBusGMethodInvocation *context);
+					     GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

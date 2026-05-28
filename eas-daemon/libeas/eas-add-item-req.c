@@ -153,7 +153,7 @@ eas_add_item_req_new (const gchar* account_id,
 		      const gchar *folder_id,
 		      const EasItemType item_type,
 		      GSList* serialised_calendar,
-		      DBusGMethodInvocation *context)
+		      GDBusMethodInvocation *context)
 {
 	EasAddItemReq* self = g_object_new (EAS_TYPE_ADD_ITEM_REQ, NULL);
 	EasAddItemReqPrivate *priv = self->priv;
@@ -251,12 +251,13 @@ eas_add_item_req_MessageComplete (EasAddItemReq *self,
 finish:
 
 	if (local_error) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), local_error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), local_error);
 		g_error_free (local_error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      eas_sync_msg_get_syncKey (priv->sync_msg),
-				      ret_added_items_array);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(s^as)",
+								      eas_sync_msg_get_syncKey (priv->sync_msg),
+								      ret_added_items_array));
 		if (ret_added_items_array) {
 			gint index = 0;
 

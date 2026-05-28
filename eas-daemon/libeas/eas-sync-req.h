@@ -103,7 +103,7 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 			      const gchar* accountID,
 			      const gchar* folderId,
 			      EasItemType type,
-			      DBusGMethodInvocation *context);
+			      GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

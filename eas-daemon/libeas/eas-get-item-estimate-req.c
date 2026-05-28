@@ -141,7 +141,7 @@ eas_get_item_estimate_req_class_init (EasGetItemEstimateReqClass *klass)
 
 EasGetItemEstimateReq *eas_get_item_estimate_req_new (const gchar *sync_key,
 						      const gchar *folder_id,
-						      DBusGMethodInvocation *context)
+						      GDBusMethodInvocation *context)
 {
 	EasGetItemEstimateReq* self = g_object_new (EAS_TYPE_GET_ITEM_ESTIMATE_REQ, NULL);
 	EasGetItemEstimateReqPrivate *priv = self->priv;
@@ -232,10 +232,11 @@ eas_get_item_estimate_req_MessageComplete (EasGetItemEstimateReq *self, xmlDoc* 
 finish:
 	xmlFreeDoc (doc);
 	if (!ret) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent), ret_estimate);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(u)", ret_estimate));
 	}
 
 	g_debug ("eas_get_item_estimate_req_MessageComplete--");

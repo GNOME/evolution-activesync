@@ -99,7 +99,7 @@ EasGetEmailAttachmentReq*
 eas_get_email_attachment_req_new (const gchar* account_uid,
 				  const gchar *file_reference,
 				  const gchar *mime_directory,
-				  DBusGMethodInvocation *context);
+				  GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

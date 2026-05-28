@@ -102,7 +102,7 @@ EasDeleteReq *eas_delete_req_new (const gchar* accountId,
 				  const gchar *folderId,
 				  GSList *server_ids_array,
 				  const EasItemType itemType,
-				  DBusGMethodInvocation *context);
+				  GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

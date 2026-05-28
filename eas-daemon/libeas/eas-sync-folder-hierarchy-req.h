@@ -105,7 +105,7 @@ void eas_sync_folder_hierarchy_req_set_results_fn (EasSyncFolderHierarchyReq *re
  */
 EasSyncFolderHierarchyReq* eas_sync_folder_hierarchy_req_new (const gchar* syncKey,
 							      const gchar* accountId,
-							      DBusGMethodInvocation* context);
+							      GDBusMethodInvocation* context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

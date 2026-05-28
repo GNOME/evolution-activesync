@@ -101,7 +101,7 @@ EasAddItemReq *eas_add_item_req_new (const gchar* account_id,
 				     const gchar *folder_id,
 				     const EasItemType item_type,
 				     GSList *serialised_calendar,
-				     DBusGMethodInvocation *context);
+				     GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

@@ -1,21 +1,31 @@
-# Generate D-Bus server stubs
-find_program(DBUS_BINDING_TOOL dbus-binding-tool REQUIRED)
+# Generate GDBus skeleton/proxy code from introspection XML
+set(GENERATED_GDBUS_SYNC
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-sync.c
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-sync.h
+)
+gdbus_codegen(eas-sync.xml org.meego.activesyncd.Eas EasGDBus
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-sync GENERATED_GDBUS_SYNC)
 
-foreach(_stub sync common mail test)
-	add_custom_command(
-		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/eas-${_stub}-stub.h
-		COMMAND ${DBUS_BINDING_TOOL}
-			--prefix=eas_${_stub}
-			--mode=glib-server
-			${CMAKE_CURRENT_SOURCE_DIR}/eas-${_stub}.xml
-			> ${CMAKE_CURRENT_BINARY_DIR}/eas-${_stub}-stub.h
-		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/eas-${_stub}.xml
-		VERBATIM
-	)
-endforeach()
+set(GENERATED_GDBUS_MAIL
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-mail.c
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-mail.h
+)
+gdbus_codegen(eas-mail.xml org.meego.activesyncd.Eas EasGDBus
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-mail GENERATED_GDBUS_MAIL)
 
-# Generate marshal files
-glib_genmarshal(eas-marshal eas_marshal eas-marshal.list)
+set(GENERATED_GDBUS_COMMON
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-common.c
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-common.h
+)
+gdbus_codegen(eas-common.xml org.meego.activesyncd.Eas EasGDBus
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-common GENERATED_GDBUS_COMMON)
+
+set(GENERATED_GDBUS_TEST
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-test.c
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-test.h
+)
+gdbus_codegen(eas-test.xml org.meego.activesyncd.Eas EasGDBus
+	${CMAKE_CURRENT_BINARY_DIR}/eas-gdbus-test GENERATED_GDBUS_TEST)
 
 set(SOURCES
 	activesyncd-common-defs.h
@@ -30,12 +40,10 @@ set(SOURCES
 	eas-sync.h
 	eas-test.c
 	eas-test.h
-	${CMAKE_CURRENT_BINARY_DIR}/eas-marshal.c
-	${CMAKE_CURRENT_BINARY_DIR}/eas-marshal.h
-	${CMAKE_CURRENT_BINARY_DIR}/eas-sync-stub.h
-	${CMAKE_CURRENT_BINARY_DIR}/eas-common-stub.h
-	${CMAKE_CURRENT_BINARY_DIR}/eas-mail-stub.h
-	${CMAKE_CURRENT_BINARY_DIR}/eas-test-stub.h
+	${GENERATED_GDBUS_SYNC}
+	${GENERATED_GDBUS_MAIL}
+	${GENERATED_GDBUS_COMMON}
+	${GENERATED_GDBUS_TEST}
 )
 
 add_executable(activesyncd ${SOURCES})
@@ -47,8 +55,8 @@ target_compile_definitions(activesyncd PRIVATE
 
 target_compile_options(activesyncd PRIVATE
 	${GLIB_CFLAGS}
+	${GIO_CFLAGS}
 	${EDATASERVER_CFLAGS}
-	${DBUS_GLIB_CFLAGS}
 	${SOUP_CFLAGS}
 )
 
@@ -59,8 +67,8 @@ target_include_directories(activesyncd PRIVATE
 	${CMAKE_SOURCE_DIR}/eas-daemon/libeas
 	${CMAKE_SOURCE_DIR}/libeasclient
 	${GLIB_INCLUDE_DIRS}
+	${GIO_INCLUDE_DIRS}
 	${EDATASERVER_INCLUDE_DIRS}
-	${DBUS_GLIB_INCLUDE_DIRS}
 	${SOUP_INCLUDE_DIRS}
 )
 
@@ -69,8 +77,8 @@ target_link_libraries(activesyncd
 	easclient
 	easaccount
 	${GLIB_LDFLAGS}
+	${GIO_LDFLAGS}
 	${EDATASERVER_LDFLAGS}
-	${DBUS_GLIB_LDFLAGS}
 	${SOUP_LDFLAGS}
 )
 

@@ -51,10 +51,9 @@
 
 //system include
 #include <glib.h>
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <libsoup/soup.h>
 #include <signal.h>
 
 //user include
@@ -157,29 +156,54 @@ void signalHandler (int sig)
 /*
   activesyncd entry point
 */
+static EasSync *g_eas_sync = NULL;
+static EasCommon *g_eas_common = NULL;
+static EasMail *g_eas_mail = NULL;
+static EasTest *g_eas_test = NULL;
+
+static void
+on_bus_acquired (GDBusConnection *connection, const gchar *name G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
+{
+	GError *error = NULL;
+
+	g_debug ("Bus acquired, exporting objects");
+
+	if (!g_dbus_interface_skeleton_export (eas_sync_get_skeleton (g_eas_sync),
+					       connection, EAS_SERVICE_SYNC_OBJECT_PATH, &error) ||
+	    !g_dbus_interface_skeleton_export (eas_common_get_skeleton (g_eas_common),
+					       connection, EAS_SERVICE_COMMON_OBJECT_PATH, &error) ||
+	    !g_dbus_interface_skeleton_export (eas_mail_get_skeleton (g_eas_mail),
+					       connection, EAS_SERVICE_MAIL_OBJECT_PATH, &error) ||
+	    !g_dbus_interface_skeleton_export (eas_test_get_skeleton (g_eas_test),
+					       connection, EAS_SERVICE_TEST_OBJECT_PATH, &error)) {
+		g_critical ("Failed to export D-Bus objects: %s", error->message);
+		g_clear_error (&error);
+		if (g_mainloop)
+			g_main_loop_quit (g_mainloop);
+	}
+}
+
+static void
+on_name_acquired (GDBusConnection *connection G_GNUC_UNUSED, const gchar *name, gpointer user_data G_GNUC_UNUSED)
+{
+	g_debug ("Acquired D-Bus name: %s", name);
+	g_debug ("Ready to serve requests");
+}
+
+static void
+on_name_lost (GDBusConnection *connection G_GNUC_UNUSED, const gchar *name, gpointer user_data G_GNUC_UNUSED)
+{
+	g_warning ("Lost D-Bus name: %s", name);
+	if (g_mainloop)
+		g_main_loop_quit (g_mainloop);
+}
+
 int main (int argc, char** argv)
 {
-	DBusGConnection* bus = NULL;
-	DBusGProxy* busProxy = NULL;
-	EasSync* EasSyncObj = NULL;
-	EasCommon* EasCommonObj = NULL;
-	EasMail*EasMailObj = NULL;
-	EasTest* EasTestObj = NULL;
 	GMainLoop* loop = NULL;
-
-	guint result;
+	guint owner_id;
 	GError* error = NULL;
 
-#if !GLIB_CHECK_VERSION(2,36,0)
-	g_type_init();
-#endif
-	dbus_g_thread_init();
-#if 0
-	g_log_set_handler (NULL,
-			   G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
-			   eas_logger,
-			   NULL);
-#endif
 	g_log_set_default_handler (eas_logger, NULL);
 
 	signal (SIGABRT, &signalHandler);
@@ -192,162 +216,53 @@ int main (int argc, char** argv)
 		exit (EXIT_FAILURE);
 	}
 
-	// Give signalHandler() access to the main loop.
 	g_mainloop = loop;
 
-	//Creating all the GObjects
 	g_debug ("activesyncd Daemon Started");
 
-	g_debug ("Creating eas_sync  gobject.");
-	EasSyncObj = eas_sync_new();
-	if (EasSyncObj == NULL) {
-		g_debug ("Error: Failed to create calendar  instance");
-		g_main_loop_quit (loop);
+	g_eas_sync = eas_sync_new ();
+	g_eas_common = g_object_new (EAS_TYPE_COMMON, NULL);
+	g_eas_mail = eas_mail_new ();
+	g_eas_test = eas_test_new ();
+
+	if (!g_eas_sync || !g_eas_common || !g_eas_mail || !g_eas_test) {
+		g_critical ("Failed to create service objects");
 		exit (EXIT_FAILURE);
 	}
 
-	g_debug ("Creating common  gobject.");
-	EasCommonObj = g_object_new (EAS_TYPE_COMMON , NULL);
-	if (EasCommonObj == NULL) {
-		g_debug ("Error: Failed to create common  instance");
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	g_debug ("Creating mail  gobject.");
-	EasMailObj = eas_mail_new ();
-	if (EasMailObj == NULL) {
-		g_debug ("Error: Failed to create common  instance");
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	EasTestObj = eas_test_new ();
-	if (NULL == EasTestObj) {
-		g_debug ("Failed to make EasTest instance");
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	g_debug ("Connecting to the session DBus");
-	bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
-	if (error != NULL) {
-		g_debug ("Error: Connecting to the session DBus (%s)", error->message);
-		g_clear_error (&error);
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	g_debug ("Registering the well-known name (%s)", EAS_SERVICE_NAME);
-	busProxy = dbus_g_proxy_new_for_name (bus,
-					      DBUS_SERVICE_DBUS,
-					      DBUS_PATH_DBUS,
-					      DBUS_INTERFACE_DBUS);
-	if (busProxy == NULL) {
-		g_debug ("Error: Failed to get a proxy for D-Bus");
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	dbus_g_proxy_set_default_timeout (busProxy, 1000000);
-
-	/* register the well-known name.*/
-	g_debug ("D-Bus RequestName RPC ");
-	if (!dbus_g_proxy_call (busProxy,
-				"RequestName",
-				&error,
-				G_TYPE_STRING,
-				EAS_SERVICE_NAME,
-				G_TYPE_UINT,
-				0,
-				G_TYPE_INVALID,
-				G_TYPE_UINT,
-				&result,
-				G_TYPE_INVALID)) {
-		g_debug ("Error: D-Bus RequestName RPC failed (%s)", error->message);
-		g_clear_error (&error);
-		g_main_loop_quit (loop);
-		exit (EXIT_FAILURE);
-	}
-
-	g_debug ("RequestName returned %d", result);
-	if (result != 1) {
-		g_debug ("Error: Failed to get the primary well-known name");
-		exit (EXIT_FAILURE);
-	}
-	
-	//  Registering  sync Gobject
-	dbus_g_connection_register_g_object (bus,
-					     EAS_SERVICE_SYNC_OBJECT_PATH,
-					     G_OBJECT (EasSyncObj));
-
-	//  Registering  common Gobject
-	dbus_g_connection_register_g_object (bus,
-					     EAS_SERVICE_COMMON_OBJECT_PATH,
-					     G_OBJECT (EasCommonObj));
-
-	//  Registering  mail Gobject
-	dbus_g_connection_register_g_object (bus,
-					     EAS_SERVICE_MAIL_OBJECT_PATH,
-					     G_OBJECT (EasMailObj));
-
-	dbus_g_connection_register_g_object (bus,
-					     EAS_SERVICE_TEST_OBJECT_PATH,
-					     G_OBJECT (EasTestObj));
-
-	g_debug ("Ready to serve requests");
+	owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
+				   EAS_SERVICE_NAME,
+				   G_BUS_NAME_OWNER_FLAGS_NONE,
+				   on_bus_acquired,
+				   on_name_acquired,
+				   on_name_lost,
+				   NULL, NULL);
 
 #ifndef DISABLE_EAS_DAEMON
-	if (daemon (0, 0) != 0) {
+	if (daemon (0, 0) != 0)
 		g_debug ("Failed to daemonize");
-	}
 #else
 	g_debug ("Not daemonizing (built with DISABLE_EAS_DAEMON)");
 #endif
 
 	g_main_loop_run (loop);
 
-	// Clean up
 	g_debug ("Main Cleanup");
 	g_mainloop = NULL;
+
+	g_bus_unown_name (owner_id);
+
+	g_dbus_interface_skeleton_unexport (eas_sync_get_skeleton (g_eas_sync));
+	g_dbus_interface_skeleton_unexport (eas_common_get_skeleton (g_eas_common));
+	g_dbus_interface_skeleton_unexport (eas_mail_get_skeleton (g_eas_mail));
+	g_dbus_interface_skeleton_unexport (eas_test_get_skeleton (g_eas_test));
+
+	g_clear_object (&g_eas_sync);
+	g_clear_object (&g_eas_common);
+	g_clear_object (&g_eas_mail);
+	g_clear_object (&g_eas_test);
+
 	g_main_loop_unref (loop);
-
-	// clean up dbus and all its objects
-	if (EasSyncObj) {
-		g_debug ("Unregister and unref EasSyncObj");
-		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasSyncObj));
-		g_object_unref(EasSyncObj);
-	}
-	
-	if (EasCommonObj) {
-		g_debug ("Unregister and unref EasCommonObj");
-		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasCommonObj));
-		g_object_unref(EasCommonObj);
-	}
-
-	if (EasMailObj) {
-		g_debug ("Unregister and unref EasMailObj");
-		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasMailObj));
-		g_object_unref(EasMailObj);
-	}
-
-	if (EasTestObj) {
-		g_debug ("Unregister and unref EasTestObj");
-		dbus_g_connection_unregister_g_object (bus, G_OBJECT (EasTestObj));
-		g_object_unref(EasTestObj);
-	}
-	
-	if (busProxy) {
-		g_debug ("Unref busProxy");
-		g_object_unref(busProxy);
-	}
-
-	if(bus)
-	{
-		g_debug ("Flush and unref DBusConnection bus");
-		dbus_g_connection_flush (bus);
-		dbus_g_connection_unref(bus);
-	}
 
 	g_debug ("Exiting main()");
 	return 0;

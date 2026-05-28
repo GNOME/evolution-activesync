@@ -818,12 +818,8 @@ static void emit_signal (gsize chunk_size, EasRequestBase *request)
 
 			g_debug ("emit signal with percent: %d * 100 / %d = %d", so_far, total, percent);
 
-			//emit signal
-			g_signal_emit (dbus_interface,
-				       dbus_interface_klass->signal_id,
-				       0,
-				       request_id,
-				       percent);
+			if (dbus_interface_klass->emit_progress)
+				dbus_interface_klass->emit_progress (dbus_interface, request_id, percent);
 		}
 	}
 }
@@ -1492,7 +1488,7 @@ typedef struct {
 	GSimpleAsyncResult *simple;
 	SoupMessage *msgs[2];
 	GCancellable *cancellables[2];
-	DBusGMethodInvocation* context;
+	GDBusMethodInvocation* context;
 	EasAccount* account;
 } EasAutoDiscoverData;
 
@@ -1656,9 +1652,13 @@ autodiscover_simple_cb (GObject *cnc, GAsyncResult *res, gpointer data)
 		url = g_simple_async_result_get_op_res_gpointer (simple);
 	}
 
-	// Url ownership transferred to dbus
-	dbus_g_method_return( adData->context,
-			url);
+	if (error) {
+		g_dbus_method_invocation_return_gerror (adData->context, error);
+		g_error_free (error);
+	} else {
+		g_dbus_method_invocation_return_value (adData->context,
+						       g_variant_new ("(s)", url ? url : ""));
+	}
 	g_object_unref (G_OBJECT (adData->cnc));
 	g_object_unref (G_OBJECT (adData->account));
 	g_free (adData);
@@ -1739,7 +1739,7 @@ autodiscover_send_cb (GObject *source, GAsyncResult *result, gpointer data)
 void
 eas_connection_autodiscover (const gchar* email,
 			     const gchar* username,
-                             DBusGMethodInvocation* context)
+                             GDBusMethodInvocation* context)
 {
 	GError *error = NULL;
 	gchar* domain = NULL;
@@ -1757,14 +1757,14 @@ eas_connection_autodiscover (const gchar* email,
 #if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
 #endif
-	dbus_g_thread_init();
+
 
 	if (!email) {
 		g_set_error (&error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("Email is mandatory and must be provided"));
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		return;
 	}
 
@@ -1774,7 +1774,7 @@ eas_connection_autodiscover (const gchar* email,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("Failed to extract domain from email address"));
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		return;
 	}
 	++domain; // Advance past the '@'
@@ -1785,7 +1785,7 @@ eas_connection_autodiscover (const gchar* email,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
 			     _("Failed create temp account for autodiscover"));
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		return;
 	}
 #if 0
@@ -1807,7 +1807,7 @@ eas_connection_autodiscover (const gchar* email,
 	cnc = eas_connection_new (account, &error);
 
 	if (!cnc) {
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_object_unref (account);
 		return;
 	}
@@ -1879,7 +1879,7 @@ eas_connection_find (const gchar* accountId)
 #if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
 #endif
-	dbus_g_thread_init();
+
 
 	if (!accountId) return NULL;
 
@@ -1951,7 +1951,7 @@ eas_connection_new (EasAccount* account, GError** error)
 #if !GLIB_CHECK_VERSION(2,36,0)
 	g_type_init();
 #endif
-	dbus_g_thread_init();
+
 
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 

@@ -151,7 +151,7 @@ EasUpdateItemReq *eas_update_item_req_new (const gchar* account_id,
 					   const EasItemType item_type,
 					   const gchar *folder_id,
 					   GSList* serialised_calendar,
-					   DBusGMethodInvocation *context)
+					   GDBusMethodInvocation *context)
 {
 	EasUpdateItemReq* self = g_object_new (EAS_TYPE_UPDATE_ITEM_REQ, NULL);
 	EasUpdateItemReqPrivate *priv = self->priv;
@@ -249,11 +249,11 @@ gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 
 finish:
 	if (local_error) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), local_error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), local_error);
 		g_error_free (local_error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      eas_sync_msg_get_syncKey (priv->sync_msg));
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(s)", eas_sync_msg_get_syncKey (priv->sync_msg)));
 	}
 	// We must always free doc and release the semaphore
 	xmlFreeDoc (doc);

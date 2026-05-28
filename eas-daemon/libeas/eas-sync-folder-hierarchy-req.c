@@ -150,7 +150,7 @@ eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 }
 
 EasSyncFolderHierarchyReq*
-eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId, DBusGMethodInvocation* context)
+eas_sync_folder_hierarchy_req_new (const gchar* syncKey, const gchar* accountId, GDBusMethodInvocation* context)
 {
 	EasSyncFolderHierarchyReq* self = g_object_new (EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, NULL);
 	EasSyncFolderHierarchyReqPrivate *priv = self->priv;
@@ -223,7 +223,7 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 				      GSList *added_folders, GSList *updated_folders,
 				      GSList *deleted_folders, GError *error)
 {
-	DBusGMethodInvocation *context = self;
+	GDBusMethodInvocation *context = self;
 	gchar** ret_created_folders_array = NULL;
 	gchar** ret_updated_folders_array = NULL;
 	gchar** ret_deleted_folders_array = NULL;
@@ -234,13 +234,14 @@ eas_sync_folder_hierarchy_req_return (void *self, const gchar *ret_sync_key,
 	    build_serialised_folder_array (&ret_created_folders_array, added_folders, &error) &&
 	    build_serialised_folder_array (&ret_updated_folders_array, updated_folders, &error) &&
 	    build_serialised_folder_array (&ret_deleted_folders_array, deleted_folders, &error)) {
-		dbus_g_method_return (context,
-				      ret_sync_key,
-				      ret_created_folders_array,
-				      ret_deleted_folders_array,
-				      ret_updated_folders_array);
+		g_dbus_method_invocation_return_value (context,
+						       g_variant_new ("(s^as^as^as)",
+								      ret_sync_key,
+								      ret_created_folders_array,
+								      ret_deleted_folders_array,
+								      ret_updated_folders_array));
 	} else {
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 

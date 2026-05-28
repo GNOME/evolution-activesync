@@ -206,7 +206,7 @@ EasDeleteReq *eas_delete_req_new (const gchar* accountId,
 				  const gchar *folderId,
 				  GSList *server_ids_array,
 				  EasItemType itemType,
-				  DBusGMethodInvocation *context)
+				  GDBusMethodInvocation *context)
 {
 	EasDeleteReq* self = g_object_new (EAS_TYPE_DELETE_REQ, NULL);
 	EasDeleteReqPrivate *priv = self->priv;
@@ -256,13 +256,11 @@ gboolean eas_delete_req_MessageComplete (EasDeleteReq *self, xmlDoc* doc, GError
 
 finish:
 	if (!ret) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
-		//TODO: make sure this stuff is ok to go over dbus.
-
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      ret_sync_key);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(s)", ret_sync_key));
 	}
 	xmlFreeDoc (doc);
 	g_free (ret_sync_key);

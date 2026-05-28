@@ -186,7 +186,7 @@ Eas2WaySyncReq *eas_2way_sync_req_new (const gchar* syncKey,
 				       GSList *serialised_add_items,		// serialised list of items. // full transfer
 				       GSList *delete_ids,				// list of ids. full transfer
 				       GSList *serialised_change_items,   // serialised list of items. // full transfer
-				       DBusGMethodInvocation *context)
+				       GDBusMethodInvocation *context)
 {
 	Eas2WaySyncReq* self = g_object_new (EAS_TYPE_2WAY_SYNC_REQ, NULL);
 	Eas2WaySyncReqPrivate *priv = self->priv;
@@ -547,15 +547,17 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 		}
 		}
 		// TODO add support for responses to add/delete/change
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      ret_sync_key,
-				      ret_more_available,
-				      ret_added_item_array,
-				      ret_deleted_item_array,
-				      ret_changed_item_array,
-				      NULL,						// add response (not supported yet)
-				      NULL,						// delete response (not supported yet)
-				      NULL);				   // TODO update response (not supported yet)
+		{
+			const gchar *empty[] = { NULL };
+			g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+							       g_variant_new ("(sb^as^as^as^as^as^as)",
+									      ret_sync_key,
+									      ret_more_available,
+									      ret_added_item_array,
+									      ret_deleted_item_array,
+									      ret_changed_item_array,
+									      empty, empty, empty));
+		}
 
 
 	}
@@ -566,7 +568,7 @@ finish:
 	if (!ret) {
 		g_debug ("returning error %s", error->message);
 		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 		error = NULL;
 

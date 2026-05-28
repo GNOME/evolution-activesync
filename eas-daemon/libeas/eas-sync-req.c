@@ -161,7 +161,7 @@ EasSyncReq *eas_sync_req_new (const gchar* syncKey,
 			      const gchar* accountID,
 			      const gchar* folderId,
 			      EasItemType type,
-			      DBusGMethodInvocation *context)
+			      GDBusMethodInvocation *context)
 {
 	EasSyncReq* self = g_object_new (EAS_TYPE_SYNC_REQ, NULL);
 	EasSyncReqPrivate *priv = self->priv;
@@ -593,12 +593,13 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			goto finish;
 		}
 		}
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      ret_sync_key,
-				      ret_more_available,
-				      ret_added_item_array,
-				      ret_deleted_item_array,
-				      ret_changed_item_array);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(sb^as^as^as)",
+								      ret_sync_key,
+								      ret_more_available,
+								      ret_added_item_array,
+								      ret_deleted_item_array,
+								      ret_changed_item_array));
 
 	}
 	break;
@@ -608,7 +609,7 @@ finish:
 	if (!ret) {
 		g_debug ("returning error %s", error->message);
 		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 		error = NULL;
 

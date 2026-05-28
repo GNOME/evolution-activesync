@@ -149,7 +149,7 @@ EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id,
 					     const gchar *sync_key,
 					     const gchar *folder_id,
 					     const gchar **serialised_email_array,
-					     DBusGMethodInvocation *context)
+					     GDBusMethodInvocation *context)
 {
 	EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
 	EasUpdateEmailReqPrivate *priv = self->priv;
@@ -284,12 +284,13 @@ eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GErr
 finish:
 	xmlFreeDoc (doc);
 	if (!ret) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      eas_sync_msg_get_syncKey (priv->sync_msg),
-				      ret_failed_updates_array);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(s^as)",
+								      eas_sync_msg_get_syncKey (priv->sync_msg),
+								      ret_failed_updates_array));
 	}
 
 	g_strfreev (ret_failed_updates_array);

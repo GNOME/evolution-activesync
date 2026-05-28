@@ -52,7 +52,7 @@
 #ifndef _EAS_COMMON_H_
 #define _EAS_COMMON_H_
 
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 #include <glib-object.h>
 #include "../libeas/eas-request-base.h"
 #include "eas-interface-base.h"
@@ -68,6 +68,7 @@ G_BEGIN_DECLS
 
 typedef struct _EasCommonClass EasCommonClass;
 typedef struct _EasCommon EasCommon;
+typedef struct _EasCommonPrivate EasCommonPrivate;
 
 struct _EasCommonClass {
 	EasInterfaceBaseClass parent_class;
@@ -75,9 +76,11 @@ struct _EasCommonClass {
 
 struct _EasCommon {
 	EasInterfaceBase parent_instance;
+	EasCommonPrivate *priv;
 };
 
 GType eas_common_get_type (void) G_GNUC_CONST;
+GDBusInterfaceSkeleton *eas_common_get_skeleton (EasCommon *self);
 
 /* TODO:Insert your Common Interface APIS here*/
 gboolean eas_common_start_sync (EasCommon* obj, gint valueIn, GError** error) ;
@@ -99,7 +102,7 @@ gboolean eas_common_sync_folder_items (EasCommon* self,
 				       const gchar** delete_items,
 				       const gchar** change_items,
 				       guint request_id,
-				       DBusGMethodInvocation* context);
+				       GDBusMethodInvocation* context);
 
 /*
 	cancel a request
@@ -107,32 +110,32 @@ gboolean eas_common_sync_folder_items (EasCommon* self,
 gboolean eas_common_cancel_request (EasCommon* self,
 				    const gchar* account_uid,
 				    guint request_id,
-				    DBusGMethodInvocation* context);
+				    GDBusMethodInvocation* context);
 
 
 gboolean
 eas_common_get_folders (EasCommon* self,
 			const gchar* account_uid,
 			gboolean refresh,
-			DBusGMethodInvocation* context);
+			GDBusMethodInvocation* context);
 
 gboolean
 eas_common_get_provision_list (EasCommon* self,
 			const gchar* account_uid,
-			DBusGMethodInvocation* context);
+			GDBusMethodInvocation* context);
 
 gboolean
 eas_common_accept_provision_list (EasCommon* self,
 			const gchar* account_uid,
 			const gchar* tid,
 			const gchar* tid_status,
-			DBusGMethodInvocation* context);
+			GDBusMethodInvocation* context);
 
 gboolean
 eas_common_autodiscover (EasCommon* self,
 			const gchar* email,
             const gchar* username,
-			DBusGMethodInvocation* context);
+			GDBusMethodInvocation* context);
 
 G_END_DECLS
 

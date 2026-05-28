@@ -138,7 +138,7 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 
 EasSendEmailReq *
 eas_send_email_req_new (const gchar* account_id,
-			DBusGMethodInvocation *context,
+			GDBusMethodInvocation *context,
 			const gchar* client_id,
 			const gchar* mime_file)
 {
@@ -291,10 +291,10 @@ finish:
 	if (!ret) {
 		g_assert (error != NULL);
 		g_debug ("Error: %d %s", error->code, error->message);
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent));
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent), NULL);
 	}
 
 	g_debug ("eas_send_email_req_MessageComplete--");

@@ -35,15 +35,10 @@ eas_gdbus_client_init (struct eas_gdbus_client *client, const gchar *account_uid
 		return FALSE;
 
 	client->account_uid = g_strdup (account_uid);
-#if GLIB_CHECK_VERSION (2,31,0)
-	client->progress_lock = &client->_mutex;
+	client->progress_lock = &client->mutex;
 	g_mutex_init (client->progress_lock);
-	client->progress_cond = &client->_cond;
+	client->progress_cond = &client->cond;
 	g_cond_init (client->progress_cond);
-#else
-	client->progress_lock = g_mutex_new ();
-	client->progress_cond = g_cond_new ();
-#endif
 	client->progress_fns_table = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	return TRUE;
 }
@@ -57,20 +52,12 @@ eas_gdbus_client_destroy (struct eas_gdbus_client *client)
 	}
 
 	if (client->progress_lock) {
-#if GLIB_CHECK_VERSION (2,31,0)
 		g_mutex_clear (client->progress_lock);
-#else
-		g_mutex_free (client->progress_lock);
-#endif
 		client->progress_lock = NULL;
 	}
 
 	if (client->progress_cond) {
-#if GLIB_CHECK_VERSION (2,31,0)
 		g_cond_clear (client->progress_cond);
-#else
-		g_cond_free (client->progress_cond);
-#endif
 		client->progress_cond = NULL;
 	}
 

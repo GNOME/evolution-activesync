@@ -53,7 +53,7 @@
 #define _EAS_INTERFACE_BASE_H_
 
 #include <glib-object.h>
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -70,7 +70,8 @@ typedef struct _EasInterfaceBasePrivate EasInterfaceBasePrivate;
 
 struct _EasInterfaceBaseClass {
 	GObjectClass parent_class;
-	guint signal_id;	// signal we emit
+	guint signal_id;	// signal we emit (kept for legacy compat)
+	void (*emit_progress) (EasInterfaceBase *self, guint request_id, guint percent);
 };
 
 struct _EasInterfaceBase {

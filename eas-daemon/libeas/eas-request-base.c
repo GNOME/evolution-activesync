@@ -56,7 +56,7 @@ struct _EasRequestBasePrivate {
 	struct _EasConnection* connection;
 	SoupMessage *soup_message;
 	EFlag *flag;
-	DBusGMethodInvocation *context;
+	GDBusMethodInvocation *context;
 	EasInterfaceBase *dbus_interface;
 	gboolean outgoing_progress;		// whether the progress updates are for outgoing/incoming data
 	gchar *request_owner;			// dbus sender of message
@@ -433,7 +433,7 @@ eas_request_base_SetFlag (EasRequestBase* self, EFlag* flag)
 	g_debug ("eas_request_base_SetFlag--");
 }
 
-DBusGMethodInvocation*
+GDBusMethodInvocation*
 eas_request_base_GetContext (EasRequestBase* self)
 {
 	EasRequestBasePrivate *priv = self->priv;
@@ -442,7 +442,7 @@ eas_request_base_GetContext (EasRequestBase* self)
 }
 
 void
-eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context)
+eas_request_base_SetContext (EasRequestBase* self, GDBusMethodInvocation* context)
 {
 	EasRequestBasePrivate *priv = self->priv;
 	g_debug ("eas_request_base_SetContext++");

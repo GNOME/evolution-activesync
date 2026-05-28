@@ -51,7 +51,7 @@
 
 #ifndef _EAS_MAIL_H_
 #define _EAS_MAIL_H_
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 #include <glib-object.h>
 #include "../libeas/eas-connection.h"
 #include "eas-interface-base.h"
@@ -67,6 +67,7 @@ G_BEGIN_DECLS
 
 typedef struct _EasMailClass EasMailClass;
 typedef struct _EasMail EasMail;
+typedef struct _EasMailPrivate EasMailPrivate;
 
 
 struct _EasMailClass {
@@ -75,16 +76,17 @@ struct _EasMailClass {
 
 struct _EasMail {
 	EasInterfaceBase parent_instance;
-
+	EasMailPrivate *priv;
 };
 
 
 GType eas_mail_get_type (void) G_GNUC_CONST;
+GDBusInterfaceSkeleton *eas_mail_get_skeleton (EasMail *self);
 
 /* TODO:Insert your Mail Interface APIS here*/
 //START - Test interfaces
 gboolean eas_mail_start_sync (EasMail* self, gint valueIn, GError** error);
-void eas_mail_test_001 (EasMail* self, DBusGMethodInvocation* context);
+void eas_mail_test_001 (EasMail* self, GDBusMethodInvocation* context);
 //END - Test interfaces
 
 
@@ -101,7 +103,7 @@ gboolean eas_mail_get_item_estimate (EasMail* self,
 				     const gchar *account_uid,
 				     const gchar *sync_key,
 				     const gchar *collection_id,
-				     DBusGMethodInvocation* context);
+				     GDBusMethodInvocation* context);
 
 /*
 	synchronize an email folder. Gets email headers only, not bodies
@@ -110,7 +112,7 @@ gboolean eas_mail_sync_folder_email (EasMail* easMailObj,
 				     const gchar* account_uid,
 				     const gchar* sync_key,
 				     const gchar *collection_id,
-				     DBusGMethodInvocation* context);
+				     GDBusMethodInvocation* context);
 /*
     delete an email
 */
@@ -119,7 +121,7 @@ gboolean eas_mail_delete_email (EasMail* easMailObj,
 				const gchar *sync_key,
 				const gchar *folder_id,
 				const gchar **server_ids_array,
-				DBusGMethodInvocation* context);
+				GDBusMethodInvocation* context);
 /*
 	fetch an email body
 */
@@ -130,7 +132,7 @@ eas_mail_fetch_email_body (EasMail* self,
 			   const gchar *server_id,
 			   const gchar *mime_directory,
 			   guint request_id,
-			   DBusGMethodInvocation* context);
+			   GDBusMethodInvocation* context);
 
 /*
 	fetch an email attachment
@@ -141,7 +143,7 @@ eas_mail_fetch_attachment (EasMail* self,
 			   const gchar *file_reference,
 			   const gchar *mime_directory,
 			   guint request_id,
-			   DBusGMethodInvocation* context);
+			   GDBusMethodInvocation* context);
 
 
 /*
@@ -152,7 +154,7 @@ gboolean eas_mail_send_email (EasMail* self,
 			      const gchar* clientid,
 			      const gchar *mime_file,
 			      guint request_id,
-			      DBusGMethodInvocation* context);
+			      GDBusMethodInvocation* context);
 
 /*
 	update an email
@@ -162,7 +164,7 @@ gboolean eas_mail_update_emails (EasMail *self,
 				 const gchar *sync_key,
 				 const gchar *folder_id,
 				 const gchar **serialised_email_array,
-				 DBusGMethodInvocation* context);
+				 GDBusMethodInvocation* context);
 
 /*
 	move an email
@@ -172,7 +174,7 @@ gboolean eas_mail_move_emails_to_folder (EasMail* easMailObj,
 					 const gchar** server_ids_array,
 					 const gchar *src_folder_id,
 					 const gchar *dest_folder_id,
-					 DBusGMethodInvocation* context);
+					 GDBusMethodInvocation* context);
 
 /*
     watch folders for updates
@@ -181,7 +183,7 @@ gboolean eas_mail_watch_email_folders (EasMail* easMailObj,
 				       const gchar* account_uid,
 				       const gchar * heartbeat,
 				       const gchar **folder_array,
-				       DBusGMethodInvocation* context);
+				       GDBusMethodInvocation* context);
 
 G_END_DECLS
 

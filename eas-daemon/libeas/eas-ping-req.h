@@ -89,7 +89,7 @@ struct _EasPingReq {
 GType eas_ping_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, DBusGMethodInvocation *context);
+EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, GDBusMethodInvocation *context);
 
 // start async request
 gboolean eas_ping_req_Activate (EasPingReq *self, GError** error);

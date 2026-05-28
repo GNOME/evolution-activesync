@@ -108,7 +108,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
 			    const gchar *server_id,
 			    const gchar *mime_directory,
 			    const EasItemType item_type,
-			    DBusGMethodInvocation* context);
+			    GDBusMethodInvocation* context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

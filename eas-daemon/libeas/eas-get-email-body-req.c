@@ -169,7 +169,7 @@ eas_get_email_body_req_new (const gchar* account_uid,
 			    const gchar *server_id,
 			    const gchar *mime_directory,
 			    const EasItemType item_type,
-			    DBusGMethodInvocation* context)
+			    GDBusMethodInvocation* context)
 {
 	EasGetEmailBodyReq* req = NULL;
 	EasGetEmailBodyReqPrivate *priv = NULL;
@@ -275,11 +275,11 @@ finish:
 	if (!ret) {
 		g_assert (error != NULL);
 		g_warning ("eas_mail_fetch_email_body - failed to get data from message");
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
 		g_debug ("eas_mail_fetch_email_body - return for dbus");
-		dbus_g_method_return (eas_request_base_GetContext (parent), item);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent), g_variant_new ("(s)", item));
 	}
 
 	g_debug ("eas_get_email_body_req_MessageComplete--");

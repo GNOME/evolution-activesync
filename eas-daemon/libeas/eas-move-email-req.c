@@ -144,7 +144,7 @@ eas_move_email_req_class_init (EasMoveEmailReqClass *klass)
 }
 
 EasMoveEmailReq *
-eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context)
+eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, GDBusMethodInvocation *context)
 {
 	EasMoveEmailReq *self = g_object_new (EAS_TYPE_MOVE_EMAIL_REQ, NULL);
 	EasMoveEmailReqPrivate* priv = self->priv;
@@ -297,10 +297,11 @@ finish:
 	xmlFreeDoc (doc);
 	// send dbus response
 	if (!ret) {
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	} else {
-		dbus_g_method_return (eas_request_base_GetContext (parent), ret_updated_ids_array);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(^as)", ret_updated_ids_array));
 	}
 	g_strfreev (ret_updated_ids_array);
 

@@ -105,7 +105,7 @@ EasUpdateItemReq *eas_update_item_req_new (const gchar* account_id,
 					   const EasItemType item_type,
 					   const gchar *folder_id,
 					   GSList *serialised_calendar,
-					   DBusGMethodInvocation *context);
+					   GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

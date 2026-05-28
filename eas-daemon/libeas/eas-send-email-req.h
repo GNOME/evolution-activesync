@@ -98,7 +98,7 @@ GType eas_send_email_req_get_type (void) G_GNUC_CONST;
  */
 EasSendEmailReq *
 eas_send_email_req_new (const gchar* account_id,
-			DBusGMethodInvocation *context,
+			GDBusMethodInvocation *context,
 			const gchar* client_id,
 			const gchar* mime_file);
 

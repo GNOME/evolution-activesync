@@ -53,7 +53,7 @@
 #define _EAS_SYNC_H_
 
 #include <glib-object.h>
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 #include "../libeas/eas-connection.h"
 
 G_BEGIN_DECLS
@@ -82,6 +82,7 @@ struct _EasSync {
 GType eas_sync_get_type (void) G_GNUC_CONST;
 
 EasSync* eas_sync_new (void);
+GDBusInterfaceSkeleton *eas_sync_get_skeleton (EasSync *self);
 
 EasConnection*  eas_sync_get_eas_connection (EasSync* self);
 void eas_sync_set_eas_connection (EasSync* self, EasConnection* easConnObj);
@@ -92,7 +93,7 @@ void eas_sync_get_latest_items (EasSync* self,
 				guint64 type,
 				const gchar* folder_id,
 				const gchar* sync_key,
-				DBusGMethodInvocation* context);
+				GDBusMethodInvocation* context);
 
 gboolean eas_sync_delete_items (EasSync* self,
 				const gchar* account_uid,
@@ -100,7 +101,7 @@ gboolean eas_sync_delete_items (EasSync* self,
 				const gchar* folder_id,
 				const gchar* sync_key,
 				const gchar** deleted_items_array,
-				DBusGMethodInvocation* context);
+				GDBusMethodInvocation* context);
 
 gboolean eas_sync_update_items (EasSync* self,
 				const gchar* account_uid,
@@ -108,7 +109,7 @@ gboolean eas_sync_update_items (EasSync* self,
 				const gchar* folder_id,
 				const gchar* sync_key,
 				const gchar **items,
-				DBusGMethodInvocation* context);
+				GDBusMethodInvocation* context);
 
 gboolean eas_sync_add_items (EasSync* self,
 			     const gchar* account_uid,
@@ -116,7 +117,7 @@ gboolean eas_sync_add_items (EasSync* self,
 			     const gchar* folder_id,
 			     const gchar* sync_key,
 			     const gchar **items,
-			     DBusGMethodInvocation* context);
+			     GDBusMethodInvocation* context);
 
 gboolean
 eas_sync_fetch_item (EasSync* self,
@@ -124,7 +125,7 @@ eas_sync_fetch_item (EasSync* self,
 		     const gchar* collection_id,
 		     const gchar *server_id,
 		     const guint64 type,
-		     DBusGMethodInvocation* context);
+		     GDBusMethodInvocation* context);
 
 G_END_DECLS
 

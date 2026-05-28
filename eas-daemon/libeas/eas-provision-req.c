@@ -127,7 +127,7 @@ EasProvisionReq*
 eas_provision_req_new (gboolean internal,
                        const gchar* policy_status, 
                        const gchar* policy_key, 
-                       DBusGMethodInvocation *context)
+                       GDBusMethodInvocation *context)
 {
 	EasProvisionReq* self = g_object_new (EAS_TYPE_PROVISION_REQ, NULL);
 	EasProvisionReqPrivate *priv = EAS_PROVISION_REQ_PRIVATE (self);
@@ -274,10 +274,11 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 				goto finish;
 			}
 
-			dbus_g_method_return (eas_request_base_GetContext (parent),
-				eas_provision_msg_get_policy_key (priv->msg),
-				eas_provision_msg_get_policy_status (priv->msg),
-				serialised_provision_list);
+			g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+							       g_variant_new ("(sss)",
+									      eas_provision_msg_get_policy_key (priv->msg),
+									      eas_provision_msg_get_policy_status (priv->msg),
+									      serialised_provision_list));
 
 			g_free(serialised_provision_list);
 		}
@@ -292,7 +293,7 @@ eas_provision_req_MessageComplete (EasProvisionReq* self, xmlDoc *doc, GError* e
 					       eas_provision_msg_get_policy_key (priv->msg));
 
 		if(!priv->internal){
-			dbus_g_method_return (eas_request_base_GetContext (parent));
+			g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent), NULL);
 			cleanup = TRUE;
 		}
 		else{
@@ -310,7 +311,7 @@ finish:
 	xmlFreeDoc (doc);
 	if (!ret && !priv->internal) {
 		g_assert (error != NULL);
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	}
 

@@ -96,7 +96,7 @@ GType eas_get_item_estimate_req_get_type (void) G_GNUC_CONST;
  */
 EasGetItemEstimateReq *eas_get_item_estimate_req_new (const gchar *sync_key,
 						      const gchar *folder_id,
-						      DBusGMethodInvocation *context);
+						      GDBusMethodInvocation *context);
 
 /**
  * Builds the messages required for the request and sends the request to the server.

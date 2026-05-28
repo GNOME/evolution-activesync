@@ -83,7 +83,7 @@ struct _EasMoveEmailReq {
 GType eas_move_email_req_get_type (void) G_GNUC_CONST;
 
 // C'tor
-EasMoveEmailReq *eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, DBusGMethodInvocation *context);
+EasMoveEmailReq *eas_move_email_req_new (const gchar* account_id, const GSList* server_ids_list, const gchar* src_folder_id, const gchar* dest_folder_id, GDBusMethodInvocation *context);
 
 // start async request
 gboolean eas_move_email_req_Activate (EasMoveEmailReq *self, GError** error);

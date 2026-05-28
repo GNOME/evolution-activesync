@@ -51,30 +51,149 @@
 
 #include <string.h>
 #include "eas-common.h"
-#include "eas-common-stub.h"
+#include "eas-gdbus-common.h"
 #include "../libeas/eas-connection-errors.h"
 #include "activesyncd-common-defs.h"
 #include "eas-connection.h"
 #include "eas-2way-sync-req.h"
 #include "eas-sync-folder-hierarchy-req.h"
-#include "eas-marshal.h"
 #include "eas-provision-req.h"
 
 G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
 
+#define EAS_COMMON_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_COMMON, EasCommonPrivate))
+
+struct _EasCommonPrivate {
+	EasGDBusCommonSkeleton *skeleton;
+};
+
+static void
+eas_common_emit_progress (EasInterfaceBase *base, guint request_id, guint percent)
+{
+	EasCommon *self = EAS_COMMON (base);
+	eas_gdbus_common_emit_mail_operation_progress (EAS_GDBUS_COMMON (self->priv->skeleton),
+						       request_id, percent);
+}
+
+/* handle-* signal callbacks - forward to implementation methods */
+
+static gboolean
+on_handle_start_sync (EasGDBusCommon *obj, GDBusMethodInvocation *invocation,
+		      gint new_value, EasCommon *self)
+{
+	GError *error = NULL;
+	eas_common_start_sync (self, new_value, &error);
+	if (error) {
+		g_dbus_method_invocation_return_gerror (invocation, error);
+		g_error_free (error);
+	} else {
+		eas_gdbus_common_complete_start_sync (obj, invocation);
+	}
+	return TRUE;
+}
+
+static gboolean
+on_handle_get_protocol_version (EasGDBusCommon *obj, GDBusMethodInvocation *invocation,
+				const gchar *account_uid, EasCommon *self)
+{
+	GError *error = NULL;
+	gchar *version = NULL;
+	eas_common_get_protocol_version (self, account_uid, &version, &error);
+	if (error) {
+		g_dbus_method_invocation_return_gerror (invocation, error);
+		g_error_free (error);
+	} else {
+		eas_gdbus_common_complete_get_protocol_version (obj, invocation, version);
+		g_free (version);
+	}
+	return TRUE;
+}
+
+static gboolean
+on_handle_sync_folder_items (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			     const gchar *account_uid, guint item_type,
+			     const gchar *sync_key_in, const gchar *folder_id, guint filter_type,
+			     const gchar *const *add_items, const gchar *const *delete_items,
+			     const gchar *const *change_items, guint request_id, EasCommon *self)
+{
+	return eas_common_sync_folder_items (self, account_uid, item_type, sync_key_in, folder_id,
+					     filter_type, add_items, delete_items, change_items,
+					     request_id, invocation);
+}
+
+static gboolean
+on_handle_get_folders (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+		       const gchar *account_uid, gboolean update, EasCommon *self)
+{
+	return eas_common_get_folders (self, account_uid, update, invocation);
+}
+
+static gboolean
+on_handle_cancel_request (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			  const gchar *account_uid, guint request_id, EasCommon *self)
+{
+	return eas_common_cancel_request (self, account_uid, request_id, invocation);
+}
+
+static gboolean
+on_handle_get_provision_list (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			      const gchar *account_uid, EasCommon *self)
+{
+	return eas_common_get_provision_list (self, account_uid, invocation);
+}
+
+static gboolean
+on_handle_accept_provision_list (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+				 const gchar *account_uid, const gchar *tid,
+				 const gchar *tid_status, EasCommon *self)
+{
+	return eas_common_accept_provision_list (self, account_uid, tid, tid_status, invocation);
+}
+
+static gboolean
+on_handle_autodiscover (EasGDBusCommon *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			const gchar *email, const gchar *username, EasCommon *self)
+{
+	return eas_common_autodiscover (self, email, username, invocation);
+}
 
 static void
 eas_common_init (EasCommon *object)
 {
-	/* TODO: Add initialization code here */
+	EasCommonPrivate *priv;
+	object->priv = priv = EAS_COMMON_PRIVATE (object);
 
+	priv->skeleton = eas_gdbus_common_skeleton_new ();
+
+	g_signal_connect (priv->skeleton, "handle-start-sync",
+			  G_CALLBACK (on_handle_start_sync), object);
+	g_signal_connect (priv->skeleton, "handle-get-protocol-version",
+			  G_CALLBACK (on_handle_get_protocol_version), object);
+	g_signal_connect (priv->skeleton, "handle-sync-folder-items",
+			  G_CALLBACK (on_handle_sync_folder_items), object);
+	g_signal_connect (priv->skeleton, "handle-get-folders",
+			  G_CALLBACK (on_handle_get_folders), object);
+	g_signal_connect (priv->skeleton, "handle-cancel-request",
+			  G_CALLBACK (on_handle_cancel_request), object);
+	g_signal_connect (priv->skeleton, "handle-get-provision-list",
+			  G_CALLBACK (on_handle_get_provision_list), object);
+	g_signal_connect (priv->skeleton, "handle-accept-provision-list",
+			  G_CALLBACK (on_handle_accept_provision_list), object);
+	g_signal_connect (priv->skeleton, "handle-autodiscover",
+			  G_CALLBACK (on_handle_autodiscover), object);
+}
+
+static void
+eas_common_dispose (GObject *object)
+{
+	EasCommon *self = EAS_COMMON (object);
+	g_clear_object (&self->priv->skeleton);
+	G_OBJECT_CLASS (eas_common_parent_class)->dispose (object);
 }
 
 static void
 eas_common_finalize (GObject *object)
 {
-	/* TODO: Add deinitalization code here */
-
 	G_OBJECT_CLASS (eas_common_parent_class)->finalize (object);
 }
 
@@ -84,28 +203,17 @@ eas_common_class_init (EasCommonClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasInterfaceBaseClass *base_class = EAS_INTERFACE_BASE_CLASS (klass);
 
+	g_type_class_add_private (klass, sizeof (EasCommonPrivate));
+
+	object_class->dispose = eas_common_dispose;
 	object_class->finalize = eas_common_finalize;
+	base_class->emit_progress = eas_common_emit_progress;
+}
 
-	// create the progress signal we emit
-	base_class->signal_id = g_signal_new (EAS_MAIL_SIGNAL_PROGRESS,				// name of the signal
-					      G_OBJECT_CLASS_TYPE (klass),  										// type this signal pertains to
-					      G_SIGNAL_RUN_LAST,														// flags used to specify a signal's behaviour
-					      0,																		// class offset
-					      NULL,																	// accumulator
-					      NULL,																	// user data for accumulator
-					      eas_marshal_VOID__UINT_UINT,	// Function to marshal the signal data into the parameters of the signal call
-					      G_TYPE_NONE,															// handler return type
-					      2,																		// Number of parameter GTypes to follow
-					      // GTypes of the parameters
-					      G_TYPE_UINT,
-					      G_TYPE_UINT);
-
-	/* Binding to GLib/D-Bus" */
-	dbus_g_object_type_install_info (EAS_TYPE_COMMON,
-					 &dbus_glib_eas_common_object_info);
-	dbus_g_error_domain_register (EAS_CONNECTION_ERROR,
-				      "org.meego.activesyncd",
-				      EAS_TYPE_CONNECTION_ERROR);
+GDBusInterfaceSkeleton *
+eas_common_get_skeleton (EasCommon *self)
+{
+	return G_DBUS_INTERFACE_SKELETON (self->priv->skeleton);
 }
 
 gboolean
@@ -148,7 +256,7 @@ eas_common_sync_folder_items (EasCommon* self,
 			      const gchar** delete_items_array,// array of serialised items/ids to delete
 			      const gchar** change_items_array,// array of serialised items to change
 			      guint request_id,
-			      DBusGMethodInvocation* context)
+			      GDBusMethodInvocation* context)
 {
 	gboolean ret = TRUE;
 	EasConnection *connection;
@@ -234,7 +342,7 @@ finish:
 	if (!ret) {
 		g_debug ("returning error %s", error->message);
 		g_assert (error != NULL);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 
@@ -247,7 +355,7 @@ gboolean
 eas_common_cancel_request (EasCommon* self,
 			   const gchar* account_uid,
 			   guint request_id,
-			   DBusGMethodInvocation* context)
+			   GDBusMethodInvocation* context)
 {
 	gboolean ret = TRUE;
 	EasConnection *connection;
@@ -271,12 +379,12 @@ eas_common_cancel_request (EasCommon* self,
 	if(!ret)
 	{
 		g_debug("eas_common_cancel_request returning error %s", error->message);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 	else
 	{
-		dbus_g_method_return(context);
+		g_dbus_method_invocation_return_value (context, NULL);
 	}
 		
 finish:	
@@ -286,7 +394,7 @@ finish:
 }
 
 struct folder_state {
-	DBusGMethodInvocation *context;
+	GDBusMethodInvocation *context;
 	EasConnection *cnc;
 };
 
@@ -300,11 +408,12 @@ eas_common_update_folders (void *self, const gchar *ret_sync_key,
 	eas_connection_update_folders (state->cnc, ret_sync_key, added_folders,
 				       updated_folders, deleted_folders, error);
 	if (error)
-		dbus_g_method_return_error (state->context, error);
+		g_dbus_method_invocation_return_gerror(state->context, error);
 	else {
 		gchar **folders = eas_connection_get_folders (state->cnc);
 
-		dbus_g_method_return (state->context, folders);
+		g_dbus_method_invocation_return_value (state->context,
+						       g_variant_new ("(^as)", folders));
 		g_strfreev (folders);
 	}
 	g_free (state);
@@ -314,7 +423,7 @@ gboolean
 eas_common_get_folders (EasCommon* self,
 			const gchar* account_uid,
 			gboolean refresh,
-			DBusGMethodInvocation* context)
+			GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
 	GError *error = NULL;
@@ -332,7 +441,7 @@ eas_common_get_folders (EasCommon* self,
 			     "Failed to find account [%s]",
 			     account_uid);
 	err:
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -364,7 +473,8 @@ eas_common_get_folders (EasCommon* self,
 	} else {
 		gchar **folders = eas_connection_get_folders (connection);
 
-		dbus_g_method_return (context, folders);
+		g_dbus_method_invocation_return_value (context,
+						       g_variant_new ("(^as)", folders));
 		g_strfreev (folders);
 	}
 
@@ -377,7 +487,7 @@ eas_common_get_folders (EasCommon* self,
 gboolean
 eas_common_get_provision_list (EasCommon* self,
 			const gchar* account_uid,
-			DBusGMethodInvocation* context)
+			GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
 	GError *error = NULL;
@@ -393,7 +503,7 @@ eas_common_get_provision_list (EasCommon* self,
 			     "Failed to find account [%s]",
 			     account_uid);
 
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -412,7 +522,7 @@ gboolean
 eas_common_autodiscover (EasCommon* self,
 			const gchar* email,
             const gchar* username,
-			DBusGMethodInvocation* context)
+			GDBusMethodInvocation* context)
 {
 	eas_connection_autodiscover (email, username, context);
 	return TRUE;
@@ -423,7 +533,7 @@ eas_common_accept_provision_list (EasCommon* self,
 			const gchar* account_uid,
 			const gchar* tid,
 			const gchar* tid_status,
-			DBusGMethodInvocation* context)
+			GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
 	GError *error = NULL;
@@ -439,7 +549,7 @@ eas_common_accept_provision_list (EasCommon* self,
 			     "Failed to find account [%s]",
 			     account_uid);
 
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}

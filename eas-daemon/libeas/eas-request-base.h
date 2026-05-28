@@ -62,7 +62,7 @@
 # include <libedataserver/e-flag.h>
 #endif
 #include "eas-connection.h"
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 #include <string.h>
 #include "../src/eas-interface-base.h"
 #include "../src/eas-mail.h"
@@ -344,7 +344,7 @@ void eas_request_base_SetSoupMessage (EasRequestBase* self, SoupMessage *soup_me
  *
  * @return The DBus context token currently set for this instance.
  */
-DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
+GDBusMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
 
 /**
  * Setter for DBus context token.
@@ -354,7 +354,7 @@ DBusGMethodInvocation *eas_request_base_GetContext (EasRequestBase* self);
  * @param[in] context
  *      The DBus context token to be set.
  */
-void eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* context);
+void eas_request_base_SetContext (EasRequestBase* self, GDBusMethodInvocation* context);
 
 /**
  * Function hook invoked during the "got_chunk" signal from libsoup.

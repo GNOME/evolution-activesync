@@ -50,7 +50,7 @@
  */
 
 #include "eas-sync.h"
-#include "eas-sync-stub.h"
+#include "eas-gdbus-sync.h"
 #include "eas-sync-req.h"
 #include "eas-delete-req.h"
 #include "eas-update-item-req.h"
@@ -69,7 +69,49 @@ G_DEFINE_TYPE (EasSync, eas_sync, G_TYPE_OBJECT);
 
 struct _EasSyncPrivate {
 	EasConnection* connection;
+	EasGDBusSyncSkeleton *skeleton;
 };
+
+static gboolean
+on_handle_get_latest_items (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			    const gchar *account_uid, guint64 type,
+			    const gchar *folder_id, const gchar *sync_key, EasSync *self)
+{
+	eas_sync_get_latest_items (self, account_uid, type, folder_id, sync_key, invocation);
+	return TRUE;
+}
+
+static gboolean
+on_handle_add_items (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+		     const gchar *account_uid, guint64 type, const gchar *folder_id,
+		     const gchar *sync_key, const gchar *const *add_items_array, EasSync *self)
+{
+	return eas_sync_add_items (self, account_uid, type, folder_id, sync_key, add_items_array, invocation);
+}
+
+static gboolean
+on_handle_update_items (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			const gchar *account_uid, guint64 type, const gchar *folder_id,
+			const gchar *sync_key, const gchar *const *updated_items_array, EasSync *self)
+{
+	return eas_sync_update_items (self, account_uid, type, folder_id, sync_key, updated_items_array, invocation);
+}
+
+static gboolean
+on_handle_delete_items (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			const gchar *account_uid, guint64 type, const gchar *folder_id,
+			const gchar *sync_key, const gchar *const *deleted_items_array, EasSync *self)
+{
+	return eas_sync_delete_items (self, account_uid, type, folder_id, sync_key, deleted_items_array, invocation);
+}
+
+static gboolean
+on_handle_fetch_item (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+		      const gchar *account_uid, const gchar *collection_id,
+		      const gchar *server_id, guint64 type, EasSync *self)
+{
+	return eas_sync_fetch_item (self, account_uid, collection_id, server_id, type, invocation);
+}
 
 static void
 eas_sync_init (EasSync *object)
@@ -78,7 +120,27 @@ eas_sync_init (EasSync *object)
 	g_debug ("++ eas_sync_init()");
 	object->priv = priv = EAS_SYNC_PRIVATE (object);
 	priv->connection = NULL;
+
+	priv->skeleton = eas_gdbus_sync_skeleton_new ();
+	g_signal_connect (priv->skeleton, "handle-get-latest-items",
+			  G_CALLBACK (on_handle_get_latest_items), object);
+	g_signal_connect (priv->skeleton, "handle-add-items",
+			  G_CALLBACK (on_handle_add_items), object);
+	g_signal_connect (priv->skeleton, "handle-update-items",
+			  G_CALLBACK (on_handle_update_items), object);
+	g_signal_connect (priv->skeleton, "handle-delete-items",
+			  G_CALLBACK (on_handle_delete_items), object);
+	g_signal_connect (priv->skeleton, "handle-fetch-item",
+			  G_CALLBACK (on_handle_fetch_item), object);
 	g_debug ("-- eas_sync_init()");
+}
+
+static void
+eas_sync_dispose (GObject *object)
+{
+	EasSync *self = EAS_SYNC (object);
+	g_clear_object (&self->priv->skeleton);
+	G_OBJECT_CLASS (eas_sync_parent_class)->dispose (object);
 }
 
 static void
@@ -94,13 +156,16 @@ eas_sync_class_init (EasSyncClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
+	object_class->dispose = eas_sync_dispose;
 	object_class->finalize = eas_sync_finalize;
 
 	g_type_class_add_private (klass, sizeof (EasSyncPrivate));
+}
 
-	/* Binding to GLib/D-Bus" */
-	dbus_g_object_type_install_info (EAS_TYPE_SYNC,
-					 &dbus_glib_eas_sync_object_info);
+GDBusInterfaceSkeleton *
+eas_sync_get_skeleton (EasSync *self)
+{
+	return G_DBUS_INTERFACE_SKELETON (self->priv->skeleton);
 }
 
 EasSync* eas_sync_new (void)
@@ -179,7 +244,7 @@ eas_sync_get_latest_items (EasSync* self,
 			   guint64 type,
 			   const gchar* folder_id,
 			   const gchar* sync_key,
-			   DBusGMethodInvocation* context)
+			   GDBusMethodInvocation* context)
 {
 	GError *error = NULL;
 	// Create the request
@@ -194,7 +259,7 @@ eas_sync_get_latest_items (EasSync* self,
 			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
 			     "Failed to find account [%s]",
 			     account_uid);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return;
 	}
@@ -216,7 +281,7 @@ eas_sync_get_latest_items (EasSync* self,
 	// Return the error or the requested data to the calendar client
 	if (error) {
 		g_debug (">> Daemon : Error ");
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 
@@ -230,7 +295,7 @@ eas_sync_delete_items (EasSync* self,
 		       const gchar* folder_id,
 		       const gchar* sync_key,
 		       const gchar** deleted_items_array,
-		       DBusGMethodInvocation* context)
+		       GDBusMethodInvocation* context)
 {
 	GError *error = NULL;
 	EasDeleteReq *req = NULL;
@@ -247,7 +312,7 @@ eas_sync_delete_items (EasSync* self,
 			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
 			     "Failed to find account [%s]",
 			     account_uid);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -267,7 +332,7 @@ eas_sync_delete_items (EasSync* self,
 
 
 	if (error) {
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 	g_debug ("eas_sync_delete_items--");
@@ -281,7 +346,7 @@ eas_sync_update_items (EasSync* self,
 		       const gchar* folder_id,
 		       const gchar* sync_key,
 		       const gchar **calendar_items,
-		       DBusGMethodInvocation* context)
+		       GDBusMethodInvocation* context)
 {
 	GError* error = NULL;
 	GSList *items = NULL;
@@ -296,7 +361,7 @@ eas_sync_update_items (EasSync* self,
 			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
 			     "Failed to find account [%s]",
 			     account_uid);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -306,7 +371,7 @@ eas_sync_update_items (EasSync* self,
 	case EAS_ITEM_CONTACT: {
 		build_calendar_list (calendar_items, &items, &error);
 		if (error) {
-			dbus_g_method_return_error (context, error);
+			g_dbus_method_invocation_return_gerror(context, error);
 			g_error_free (error);
 			return FALSE;
 		}
@@ -317,7 +382,7 @@ eas_sync_update_items (EasSync* self,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTSUPPORTED,
 			     "Unknown type");
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 		}
@@ -332,7 +397,7 @@ eas_sync_update_items (EasSync* self,
 	eas_update_item_req_Activate (req, &error);
 
 	if (error) {
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -348,7 +413,7 @@ eas_sync_add_items (EasSync* self,
 		    const gchar* folder_id,
 		    const gchar* sync_key,
 		    const gchar **calendar_items,
-		    DBusGMethodInvocation* context)
+		    GDBusMethodInvocation* context)
 {
 	GError* error = NULL;
 	GSList *items = NULL;
@@ -363,7 +428,7 @@ eas_sync_add_items (EasSync* self,
 			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
 			     "Failed to find account [%s]",
 			     account_uid);
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 	}
@@ -373,7 +438,7 @@ eas_sync_add_items (EasSync* self,
 	case EAS_ITEM_CONTACT: {
 		build_calendar_list (calendar_items, &items, &error);
 		if (error) {
-			dbus_g_method_return_error (context, error);
+			g_dbus_method_invocation_return_gerror(context, error);
 			g_error_free (error);
 			return FALSE;
 		}
@@ -384,7 +449,7 @@ eas_sync_add_items (EasSync* self,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_NOTSUPPORTED,
 			     "Unknown type");
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 		return FALSE;
 		}
@@ -401,7 +466,7 @@ eas_sync_add_items (EasSync* self,
 
 	// Check for error
 	if (error) {
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 
@@ -415,7 +480,7 @@ eas_sync_fetch_item (EasSync* self,
 		     const gchar* collection_id,
 		     const gchar *server_id,
 		     const guint64 type,
-		     DBusGMethodInvocation* context)
+		     GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
 	gboolean ret;
@@ -452,7 +517,7 @@ finish:
 	if (!ret) {
 		g_assert (error != NULL);
 		g_warning ("eas_mail_fetch_email_body - failed to get data from message");
-		dbus_g_method_return_error (context, error);
+		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
 	}
 

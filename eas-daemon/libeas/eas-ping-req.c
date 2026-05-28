@@ -137,7 +137,7 @@ eas_ping_req_class_init (EasPingReqClass *klass)
 	g_debug ("eas_ping_req_class_init--");
 }
 
-EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, DBusGMethodInvocation *context)
+EasPingReq *eas_ping_req_new (const gchar* account_id, const gchar *heartbeat, const GSList* folder_list, GDBusMethodInvocation *context)
 {
 	EasPingReq* self = g_object_new (EAS_TYPE_PING_REQ, NULL);
 	EasPingReqPrivate *priv = self->priv;
@@ -261,8 +261,8 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 		for (; loop < list_length; ++loop) {
 			ret_changed_folders_array[loop] = g_slist_nth_data (folder_array, loop); // No transfer
 		}
-		dbus_g_method_return (eas_request_base_GetContext (parent),
-				      ret_changed_folders_array);
+		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
+						       g_variant_new ("(^as)", ret_changed_folders_array));
 
 		g_free (ret_changed_folders_array);
 		ret_changed_folders_array = NULL;
@@ -281,7 +281,7 @@ finish:
 	xmlFreeDoc (doc);
 	if (!ret) {
 		g_debug ("eas_ping_req_Return Error");
-		dbus_g_method_return_error (eas_request_base_GetContext (parent), error);
+		g_dbus_method_invocation_return_gerror(eas_request_base_GetContext (parent), error);
 		g_error_free (error);
 	}
 
