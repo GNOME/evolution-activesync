@@ -17,6 +17,16 @@ and contacts synchronisation with Microsoft Exchange servers via the
 
 3. **camel/** — A Camel (Evolution) email back end. Licensed under LGPLv2.1+.
 
+## Supported ActiveSync versions
+
+| Version | Status |
+|---------|--------|
+| 12.0 | Supported |
+| 12.1 | Supported (default) |
+| 14.0 | Supported (experimental, enable with `-DACTIVESYNC_14` at compile time) |
+
+The protocol version is negotiated automatically with the server via the HTTP `OPTIONS` command. The default is **12.1**. Version 14.0 support can be enabled at compile time by defining `ACTIVESYNC_14` in `eas-daemon/libeas/eas-connection.c`.
+
 ## Dependencies
 
 - GLib 2.68+

@@ -64,7 +64,7 @@ G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
 #define EAS_COMMON_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_COMMON, EasCommonPrivate))
 
 struct _EasCommonPrivate {
-	EasGDBusCommonSkeleton *skeleton;
+	EasGDBusCommon *skeleton;
 };
 
 static void

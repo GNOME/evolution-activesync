@@ -46,7 +46,7 @@ struct _CamelEasStoreSummaryPrivate {
 	GRecMutex s_lock;
 };
 
-G_DEFINE_TYPE (CamelEasStoreSummary, camel_eas_store_summary, CAMEL_TYPE_OBJECT)
+G_DEFINE_TYPE (CamelEasStoreSummary, camel_eas_store_summary, G_TYPE_OBJECT)
 
 static void
 eas_store_summary_finalize (GObject *object)

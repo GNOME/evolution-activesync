@@ -9,7 +9,7 @@ G_DEFINE_TYPE (EasTest, eas_test, G_TYPE_OBJECT);
 #define EAS_TEST_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_TEST, EasTestPrivate))
 
 struct _EasTestPrivate {
-	EasGDBusTestSkeleton *skeleton;
+	EasGDBusTest *skeleton;
 };
 
 static gboolean

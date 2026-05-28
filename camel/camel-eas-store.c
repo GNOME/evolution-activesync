@@ -56,9 +56,6 @@
 #define d(x) x
 #define CURSOR_ITEM_LIMIT 100
 
-#define CAMEL_EAS_STORE_GET_PRIVATE(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE \
-	((obj), CAMEL_TYPE_EAS_STORE, CamelEasStorePrivate))
 
 #define FINFO_REFRESH_INTERVAL 60
 
@@ -81,6 +78,7 @@ static GInitableIface *parent_initable_interface;
 
 G_DEFINE_TYPE_WITH_CODE (CamelEasStore, camel_eas_store,
 			 CAMEL_TYPE_OFFLINE_STORE,
+			 G_ADD_PRIVATE (CamelEasStore)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
 						camel_eas_store_initable_init))
 
@@ -503,8 +501,6 @@ camel_eas_store_class_init (CamelEasStoreClass *class)
 	CamelServiceClass *service_class;
 	CamelStoreClass *store_class;
 
-	g_type_class_add_private (class, sizeof (CamelEasStorePrivate));
-
 	object_class = G_OBJECT_CLASS (class);
 	object_class->dispose = eas_store_dispose;
 	object_class->finalize = eas_store_finalize;
@@ -532,7 +528,7 @@ static void
 camel_eas_store_init (CamelEasStore *eas_store)
 {
 	eas_store->priv =
-		CAMEL_EAS_STORE_GET_PRIVATE (eas_store);
+		camel_eas_store_get_instance_private (eas_store);
 
 	eas_store->priv->handler = NULL;
 	eas_store->priv->last_refresh_time = time (NULL) - (FINFO_REFRESH_INTERVAL + 10);

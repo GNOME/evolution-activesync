@@ -39,7 +39,7 @@ enum {
 	PROP_CHANGE_KEY,
 };
 
-G_DEFINE_TYPE (CamelEasMessageInfo, camel_eas_message_info, CAMEL_TYPE_MESSAGE_INFO_BASE)
+G_DEFINE_TYPE_WITH_PRIVATE (CamelEasMessageInfo, camel_eas_message_info, CAMEL_TYPE_MESSAGE_INFO_BASE)
 
 static CamelMessageInfo *
 eas_message_info_clone (const CamelMessageInfo *mi,
@@ -69,7 +69,7 @@ eas_message_info_clone (const CamelMessageInfo *mi,
 
 static gboolean
 eas_message_info_load (CamelMessageInfo *mi,
-		       const CamelMIRecord *record,
+		       const CamelStoreDBMessageRecord *record,
 		       /* const */ gchar **bdata_ptr)
 {
 	CamelEasMessageInfo *emi;
@@ -103,7 +103,7 @@ eas_message_info_load (CamelMessageInfo *mi,
 
 static gboolean
 eas_message_info_save (const CamelMessageInfo *mi,
-		       CamelMIRecord *record,
+		       CamelStoreDBMessageRecord *record,
 		       GString *bdata_str)
 {
 	CamelEasMessageInfo *emi;
@@ -195,8 +195,6 @@ camel_eas_message_info_class_init (CamelEasMessageInfoClass *class)
 	CamelMessageInfoClass *mi_class;
 	GObjectClass *object_class;
 
-	g_type_class_add_private (class, sizeof (CamelEasMessageInfoPrivate));
-
 	mi_class = CAMEL_MESSAGE_INFO_CLASS (class);
 	mi_class->clone = eas_message_info_clone;
 	mi_class->load = eas_message_info_load;
@@ -262,7 +260,7 @@ camel_eas_message_info_class_init (CamelEasMessageInfoClass *class)
 static void
 camel_eas_message_info_init (CamelEasMessageInfo *emi)
 {
-	emi->priv = G_TYPE_INSTANCE_GET_PRIVATE (emi, CAMEL_TYPE_EAS_MESSAGE_INFO, CamelEasMessageInfoPrivate);
+	emi->priv = camel_eas_message_info_get_instance_private (emi);
 }
 
 guint32

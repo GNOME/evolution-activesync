@@ -1,156 +1,112 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 
 #include <glib.h>
-#include <dbus/dbus-glib.h>
+#include <gio/gio.h>
 
 #include "libeastest.h"
 #include "../../eas-daemon/src/activesyncd-common-defs.h"
+#include "../../eas-daemon/src/eas-gdbus-test.h"
 #include "../../libeasclient/eas-logger.h"
-
-#define EAS_TEST_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_TEST_HANDLER, EasTestHandlerPrivate))
-
-G_DEFINE_TYPE (EasTestHandler, eas_test_handler, G_TYPE_OBJECT);
 
 struct _EasTestHandlerPrivate
 {
-    DBusGConnection* bus;
-    DBusGProxy *remoteEas;
-    GMainLoop* main_loop;
+	EasGDBusTest *proxy;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasTestHandler, eas_test_handler, G_TYPE_OBJECT)
 
 static void
 eas_test_handler_init (EasTestHandler *object)
 {
-    EasTestHandlerPrivate *priv = NULL;
-    object->priv = priv = EAS_TEST_HANDLER_PRIVATE (object);
-
-	priv->bus = NULL;
-	priv->remoteEas = NULL;
-	priv->main_loop = NULL;
+	object->priv = eas_test_handler_get_instance_private (object);
+	object->priv->proxy = NULL;
 }
 
 static void
 eas_test_handler_dispose (GObject *object)
 {
-	EasTestHandler *self = (EasTestHandler *)object;
-	EasTestHandlerPrivate *priv = self->priv;
-	
-	g_debug("eas_test_handler_dispose++");
-	
-	if (priv->main_loop)
-	{
-		g_main_loop_quit (priv->main_loop);
-		g_main_loop_unref (priv->main_loop);
-		priv->main_loop = NULL;
-	}
-	if (priv->bus)
-	{
-		dbus_g_connection_unref (priv->bus);
-		priv->bus = NULL;
-	}
-	
+	EasTestHandler *self = (EasTestHandler *) object;
+
+	g_debug ("eas_test_handler_dispose++");
+	g_clear_object (&self->priv->proxy);
 	G_OBJECT_CLASS (eas_test_handler_parent_class)->dispose (object);
-	g_debug("eas_test_handler_dispose--");
+	g_debug ("eas_test_handler_dispose--");
 }
 
 static void
 eas_test_handler_finalize (GObject *object)
 {
-	g_debug("eas_test_handler_finalize++");
+	g_debug ("eas_test_handler_finalize++");
 	G_OBJECT_CLASS (eas_test_handler_parent_class)->finalize (object);
-	g_debug("eas_test_handler_finalize--");
+	g_debug ("eas_test_handler_finalize--");
 }
 
 static void
 eas_test_handler_class_init (EasTestHandlerClass *klass)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-    g_type_class_add_private (klass, sizeof (EasTestHandlerPrivate));
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = eas_test_handler_finalize;
 	object_class->dispose = eas_test_handler_dispose;
 }
 
-
-EasTestHandler*
+EasTestHandler *
 eas_test_handler_new (void)
 {
-    GError* error = NULL;
+	GError *error = NULL;
 	EasTestHandler *self = NULL;
-
-#if !GLIB_CHECK_VERSION(2,36,0)
-	g_type_init();
-#endif
-    dbus_g_thread_init();
+	EasGDBusTest *proxy = NULL;
 
 	g_debug ("eas_test_handler_new++");
 
+	proxy = eas_gdbus_test_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+						       G_DBUS_PROXY_FLAGS_NONE,
+						       EAS_SERVICE_NAME,
+						       EAS_SERVICE_TEST_OBJECT_PATH,
+						       NULL, &error);
+	if (!proxy) {
+		g_warning ("Failed to create EasTest proxy: %s",
+			   error ? error->message : "unknown error");
+		g_clear_error (&error);
+		return NULL;
+	}
+
+	g_dbus_proxy_set_default_timeout (G_DBUS_PROXY (proxy), 1000000);
+
 	self = g_object_new (EAS_TYPE_TEST_HANDLER, NULL);
-	if (!self) return NULL;
-
-	self->priv->main_loop = g_main_loop_new (NULL, TRUE);
-	if (!self->priv->main_loop)
-	{
-		g_object_unref (self);
-		return NULL;
-	}
-
-    g_debug ("Connecting to Session D-Bus.");
-	self->priv->bus = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
-	if (!self->priv->bus)
-	{
-		g_object_unref (self); // This should clean up all member data
-		return NULL;
-	}
-
-	g_debug ("Creating a GLib proxy object for Eas.");
-    self->priv->remoteEas =  dbus_g_proxy_new_for_name (self->priv->bus,
-                                                        EAS_SERVICE_NAME,
-                                                        EAS_SERVICE_TEST_OBJECT_PATH,
-                                                        EAS_SERVICE_TEST_INTERFACE);
-	if (!self->priv->remoteEas)
-	{
-		g_object_unref (self); // This should clean up all member data
-		return NULL;
-	}
-
-	dbus_g_proxy_set_default_timeout (self->priv->remoteEas, 1000000);
+	self->priv->proxy = proxy;
 
 	g_debug ("eas_test_handler_new--");
 	return self;
 }
 
 void
-eas_test_handler_add_mock_responses (EasTestHandler* self, 
-                                     const gchar** mock_responses_array,
-                                     GArray *status_codes)
+eas_test_handler_add_mock_responses (EasTestHandler *self,
+				     const gchar **mock_responses_array,
+				     GArray *status_codes)
 {
 	GError *error = NULL;
-	gboolean success = FALSE;
-	DBusGProxy *proxy = self->priv->remoteEas;
+	GVariantBuilder builder;
+	guint i;
 
-	g_debug("eas_test_handler_add_mock_responses++");
-	
-    // call DBus API
-	g_debug("Call DBus proxy");
-    success = dbus_g_proxy_call (proxy, "add_mock_responses",
-                                 &error,
-                                 G_TYPE_STRV, mock_responses_array,
-                                 DBUS_TYPE_G_UINT_ARRAY, status_codes,
-                                 G_TYPE_INVALID);
+	g_debug ("eas_test_handler_add_mock_responses++");
 
-	g_debug("Check DBus Success");
-	if (!success)
-	{
-        if (error)
-        {
-            g_warning ("[%s][%d][%s]",
-                       g_quark_to_string (error->domain),
-                       error->code,
-                       error->message);
-        }
-        g_warning ("DBus dbus_g_proxy_call failed");
+	g_variant_builder_init (&builder, G_VARIANT_TYPE ("au"));
+	if (status_codes) {
+		for (i = 0; i < status_codes->len; i++)
+			g_variant_builder_add (&builder, "u", g_array_index (status_codes, guint, i));
 	}
-	g_debug("eas_test_handler_add_mock_responses--");
+
+	eas_gdbus_test_call_add_mock_responses_sync (self->priv->proxy,
+						     mock_responses_array,
+						     g_variant_builder_end (&builder),
+						     G_DBUS_CALL_FLAGS_NONE,
+						     -1,
+						     NULL, &error);
+	if (error) {
+		g_warning ("add_mock_responses failed: %s", error->message);
+		g_error_free (error);
+	}
+
+	g_debug ("eas_test_handler_add_mock_responses--");
 }

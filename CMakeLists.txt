@@ -84,6 +84,9 @@ set(privlibdir "${LIB_INSTALL_DIR}/${PROJECT_NAME}")
 set(privlibexecdir "${LIBEXEC_INSTALL_DIR}/${PROJECT_NAME}")
 
 set(CMAKE_INSTALL_RPATH "${privlibdir}")
+if(ENABLE_CAMEL_BACKEND)
+	list(APPEND CMAKE_INSTALL_RPATH "${EVOLUTION_privlibdir}")
+endif(ENABLE_CAMEL_BACKEND)
 
 add_printable_variable_path(WITH_DBUS_SERVICE_DIR "Set directory for D-Bus service files" "${SHARE_INSTALL_PREFIX}/dbus-1/services")
 

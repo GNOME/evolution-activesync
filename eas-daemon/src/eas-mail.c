@@ -71,7 +71,7 @@ G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
 #define EAS_MAIL_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
 
 struct _EasMailPrivate {
-	EasGDBusMailSkeleton *skeleton;
+	EasGDBusMail *skeleton;
 };
 
 static void

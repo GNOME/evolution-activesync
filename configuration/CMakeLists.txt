@@ -16,6 +16,7 @@ target_compile_options(module-eas-mail-config PRIVATE
 target_include_directories(module-eas-mail-config PRIVATE
 	${CMAKE_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_SOURCE_DIR}
 	${CMAKE_SOURCE_DIR}/libeasclient
 	${GIO_INCLUDE_DIRS}
 	${EVOLUTION_MAIL_INCLUDE_DIRS}

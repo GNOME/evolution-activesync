@@ -36,10 +36,8 @@
 #include "camel-eas-store.h"
 #include "camel-eas-transport.h"
 
-static void add_hash (guint *hash, gchar *s);
-static guint eas_url_hash (gconstpointer key);
+
 static gint check_equal (gchar *s1, gchar *s2);
-static gint eas_url_equal (gconstpointer a, gconstpointer b);
 
 static CamelProviderConfEntry eas_conf_entries[] = {
 	/* override the labels/defaults of the standard settings */
@@ -96,8 +94,6 @@ CamelServiceAuthType camel_eas_password_authtype = {
 void
 camel_provider_module_init(void)
 {
-	eas_provider.url_hash = eas_url_hash;
-	eas_provider.url_equal = eas_url_equal;
 	eas_provider.authtypes = g_list_prepend (eas_provider.authtypes, &camel_eas_password_authtype);
 	eas_provider.translation_domain = GETTEXT_PACKAGE;
 
@@ -107,49 +103,3 @@ camel_provider_module_init(void)
 	camel_provider_register (&eas_provider);
 }
 
-static void
-add_hash (guint *hash, gchar *s)
-{
-	if (s)
-		*hash ^= g_str_hash(s);
-}
-
-static guint
-eas_url_hash (gconstpointer key)
-{
-	const CamelURL *u = (CamelURL *)key;
-	guint hash = 0;
-
-	add_hash (&hash, u->user);
-	add_hash (&hash, u->host);
-	hash ^= u->port;
-
-	return hash;
-}
-
-static gint
-check_equal (gchar *s1, gchar *s2)
-{
-	if (s1 == NULL) {
-		if (s2 == NULL)
-			return TRUE;
-		else
-			return FALSE;
-	}
-
-	if (s2 == NULL)
-		return FALSE;
-
-	return strcmp (s1, s2) == 0;
-}
-
-static gint
-eas_url_equal (gconstpointer a, gconstpointer b)
-{
-	const CamelURL *u1 = a, *u2 = b;
-
-	return check_equal (u1->protocol, u2->protocol)
-		&& check_equal (u1->user, u2->user)
-		&& check_equal (u1->host, u2->host)
-		&& u1->port == u2->port;
-}

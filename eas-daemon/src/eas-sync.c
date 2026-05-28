@@ -69,7 +69,7 @@ G_DEFINE_TYPE (EasSync, eas_sync, G_TYPE_OBJECT);
 
 struct _EasSyncPrivate {
 	EasConnection* connection;
-	EasGDBusSyncSkeleton *skeleton;
+	EasGDBusSync *skeleton;
 };
 
 static gboolean

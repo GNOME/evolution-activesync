@@ -47,8 +47,8 @@
 #define SUM_DB_RETTYPE gboolean
 #define SUM_DB_RET_OK TRUE
 #define SUM_DB_RET_ERR FALSE
-static SUM_DB_RETTYPE summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir);
-static CamelFIRecord *summary_header_save (CamelFolderSummary *s, GError **error);
+static gboolean summary_header_load (CamelFolderSummary *s, CamelStoreDBFolderRecord *record);
+static gboolean summary_header_save (CamelFolderSummary *s, CamelStoreDBFolderRecord *inout_record, GError **error);
 
 /*End of Prototypes*/
 
@@ -107,16 +107,16 @@ camel_eas_summary_new (struct _CamelFolder *folder, const gchar *filename)
 	return summary;
 }
 
-static SUM_DB_RETTYPE
-summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir)
+static gboolean
+summary_header_load (CamelFolderSummary *s, CamelStoreDBFolderRecord *record)
 {
 	CamelEasSummary *gms = CAMEL_EAS_SUMMARY (s);
 	gchar *part;
 
-	if (CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_load (s, mir) == SUM_DB_RET_ERR)
-		return SUM_DB_RET_ERR;
+	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_load (s, record))
+		return FALSE;
 
-	part = mir->bdata;
+	part = record->bdata;
 
 	if (part)
 		EXTRACT_FIRST_DIGIT(gms->version);
@@ -126,23 +126,21 @@ summary_header_load (CamelFolderSummary *s, CamelFIRecord *mir)
 	else
 		gms->sync_state = g_strndup ("0", 64);
 
-	return SUM_DB_RET_OK;
+	return TRUE;
 }
 
-static CamelFIRecord *
-summary_header_save (CamelFolderSummary *s, GError **error)
+static gboolean
+summary_header_save (CamelFolderSummary *s, CamelStoreDBFolderRecord *inout_record, GError **error)
 {
-	CamelEasSummary *ims = CAMEL_EAS_SUMMARY(s);
-	struct _CamelFIRecord *fir;
+	CamelEasSummary *ims = CAMEL_EAS_SUMMARY (s);
 
-	fir = CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_save (s, error);
-	if (!fir)
-		return NULL;
+	if (!CAMEL_FOLDER_SUMMARY_CLASS (camel_eas_summary_parent_class)->summary_header_save (s, inout_record, error))
+		return FALSE;
 
-	fir->bdata = g_strdup_printf ("%d %s", CAMEL_EAS_SUMMARY_VERSION, ims->sync_state);
+	g_free (inout_record->bdata);
+	inout_record->bdata = g_strdup_printf ("%d %s", CAMEL_EAS_SUMMARY_VERSION, ims->sync_state);
 
-	return fir;
-
+	return TRUE;
 }
 
 void
@@ -237,27 +235,23 @@ eas_summary_clear	(CamelFolderSummary *summary,
 			 gboolean uncache)
 {
 	CamelFolderChangeInfo *changes;
-	const gchar *uid;
-	gint i;
-	GPtrArray *known_uids;
+	GHashTable *hash;
+	GHashTableIter iter;
+	gpointer key;
 
 	changes = camel_folder_change_info_new ();
-	known_uids = camel_folder_summary_get_array (summary);
-	for (i = 0; i < known_uids->len; i++) {
-		uid = g_ptr_array_index (known_uids, i);
-
-		if (!uid)
-			continue;
-
+	hash = camel_folder_summary_get_hash (summary);
+	g_hash_table_iter_init (&iter, hash);
+	while (g_hash_table_iter_next (&iter, &key, NULL)) {
+		const gchar *uid = key;
 		camel_folder_change_info_remove_uid (changes, uid);
 		camel_folder_summary_remove_uid (summary, uid);
 	}
+	g_hash_table_unref (hash);
 
 	camel_folder_summary_clear (summary, NULL);
-	/*camel_folder_summary_save (summary);*/
 
 	if (camel_folder_change_info_changed (changes))
 		camel_folder_changed (camel_folder_summary_get_folder (summary), changes);
 	camel_folder_change_info_free (changes);
-	camel_folder_summary_free_array (known_uids);
 }

@@ -38,7 +38,6 @@
 #include <glib/gstdio.h>
 #include <gio/gio.h>
 
-#include <dbus/dbus-glib.h>
 
 #include <libeasmail.h>
 #include "camel-eas-folder.h"
@@ -47,13 +46,10 @@
 #include "camel-eas-summary.h"
 #include "camel-eas-utils.h"
 
-#define CAMEL_EAS_FOLDER_GET_PRIVATE(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE \
-	((obj), CAMEL_TYPE_EAS_FOLDER, CamelEasFolderPrivate))
 
 struct _CamelEasFolderPrivate {
 	gchar *server_id;
-	GMutex search_lock;	/* for locking the search object */
+	CamelDataCache *cache;
 	GRecMutex cache_lock;	/* for locking the cache object */
 
 	/* For syncronizing refresh_info/sync_changes */
@@ -67,14 +63,14 @@ struct _CamelEasFolderPrivate {
 
 #define d(x)
 
-G_DEFINE_TYPE (CamelEasFolder, camel_eas_folder, CAMEL_TYPE_OFFLINE_FOLDER)
+G_DEFINE_TYPE_WITH_PRIVATE (CamelEasFolder, camel_eas_folder, CAMEL_TYPE_OFFLINE_FOLDER)
 
 static gchar *
 eas_get_filename (CamelFolder *folder, const gchar *uid, GError **error)
 {
 	CamelEasFolder *eas_folder = CAMEL_EAS_FOLDER(folder);
 
-	return camel_data_cache_get_filename (eas_folder->cache, "cache", uid);
+	return camel_data_cache_get_filename (eas_folder->priv->cache, "cache", uid);
 }
 
 static CamelMimeMessage *
@@ -88,7 +84,7 @@ camel_eas_folder_get_message_from_cache (CamelEasFolder *eas_folder, const gchar
 	priv = eas_folder->priv;
 
 	g_rec_mutex_lock (&priv->cache_lock);
-	base_stream = camel_data_cache_get (eas_folder->cache, "cur", uid,
+	base_stream = camel_data_cache_get (eas_folder->priv->cache, "cur", uid,
 					    error);
 	if (!base_stream) {
 		g_rec_mutex_unlock (&priv->cache_lock);
@@ -168,7 +164,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 
 	handler = camel_eas_store_get_handler (eas_store);
 
-	mime_dir = g_build_filename (camel_data_cache_get_path (eas_folder->cache),
+	mime_dir = g_build_filename (camel_data_cache_get_path (eas_folder->priv->cache),
 				     "mimecontent", NULL);
 
 	if (g_access (mime_dir, F_OK) == -1 &&
@@ -193,7 +189,7 @@ camel_eas_folder_get_message (CamelFolder *folder, const gchar *uid,
 	   streaming hack in ESoapMessage */
 	mime_content = g_build_filename (mime_dir, uid, NULL);
 	g_free (mime_dir);
-	cache_file = camel_data_cache_get_filename  (eas_folder->cache, "cur",
+	cache_file = camel_data_cache_get_filename  (eas_folder->priv->cache, "cur",
 						     uid);
 	temp = g_strrstr (cache_file, "/");
 	dir = g_strndup (cache_file, temp - cache_file);
@@ -270,89 +266,6 @@ eas_folder_get_message_sync (CamelFolder *folder, const gchar *uid, GCancellable
 	return message;
 }
 
-static GPtrArray *
-eas_folder_search_by_expression (CamelFolder *folder, const gchar *expression, GCancellable *cancellable, GError **error)
-{
-	CamelEasFolder *eas_folder;
-	CamelEasFolderPrivate *priv;
-	GPtrArray *matches;
-
-	eas_folder = CAMEL_EAS_FOLDER (folder);
-	priv = eas_folder->priv;
-
-	g_mutex_lock (&priv->search_lock);
-
-	camel_folder_search_set_folder (eas_folder->search, folder);
-	matches = camel_folder_search_search (eas_folder->search, expression, NULL, cancellable, error);
-
-	g_mutex_unlock (&priv->search_lock);
-
-	return matches;
-}
-
-static guint32
-eas_folder_count_by_expression (CamelFolder *folder, const gchar *expression, GCancellable *cancellable, GError **error)
-{
-	CamelEasFolder *eas_folder;
-	CamelEasFolderPrivate *priv;
-	guint32 matches;
-
-	eas_folder = CAMEL_EAS_FOLDER (folder);
-	priv = eas_folder->priv;
-
-	g_mutex_lock (&priv->search_lock);
-
-	camel_folder_search_set_folder (eas_folder->search, folder);
-	matches = camel_folder_search_count (eas_folder->search, expression, cancellable, error);
-
-	g_mutex_unlock (&priv->search_lock);
-
-	return matches;
-}
-
-static GPtrArray *
-eas_folder_search_by_uids(CamelFolder *folder, const gchar *expression, GPtrArray *uids, 
-			  GCancellable *cancellable, GError **error)
-{
-	CamelEasFolder *eas_folder;
-	CamelEasFolderPrivate *priv;
-	GPtrArray *matches;
-
-	eas_folder = CAMEL_EAS_FOLDER (folder);
-	priv = eas_folder->priv;
-
-	if (uids->len == 0)
-		return g_ptr_array_new ();
-
-	g_mutex_lock (&priv->search_lock);
-
-	camel_folder_search_set_folder (eas_folder->search, folder);
-	matches = camel_folder_search_search (eas_folder->search, expression, uids, cancellable, error);
-
-	g_mutex_unlock (&priv->search_lock);
-
-	return matches;
-}
-
-static void
-eas_folder_search_free (CamelFolder *folder, GPtrArray *uids)
-{
-	CamelEasFolder *eas_folder;
-	CamelEasFolderPrivate *priv;
-
-	eas_folder = CAMEL_EAS_FOLDER (folder);
-	priv = eas_folder->priv;
-
-	g_return_if_fail (eas_folder->search);
-
-	g_mutex_lock (&priv->search_lock);
-
-	camel_folder_search_free_result (eas_folder->search, uids);
-
-	g_mutex_unlock (&priv->search_lock);
-
-	return;
-}
 
 /********************* folder functions*************************/
 
@@ -381,7 +294,7 @@ eas_delete_messages (CamelFolder *folder, GSList *deleted_uids, gboolean expunge
 			gchar *uid = l->data;
 			camel_folder_summary_lock (folder_summary);
 			camel_folder_change_info_remove_uid (changes, uid);
-			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->cache, "cache", uid, NULL);
+			camel_data_cache_remove (CAMEL_EAS_FOLDER (folder)->priv->cache, "cache", uid, NULL);
 			camel_folder_summary_unlock (folder_summary);
 		}
 		camel_folder_changed (folder, changes);
@@ -415,9 +328,9 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 	if (!camel_eas_store_connected (eas_store, cancellable, error))
 		return FALSE;
 
-	uids = camel_folder_summary_get_changed (folder_summary);
-	if (!uids->len) {
-		camel_folder_free_uids (folder, uids);
+	uids = camel_folder_summary_dup_changed (folder_summary);
+	if (!uids || !uids->len) {
+		g_clear_pointer (&uids, g_ptr_array_unref);
 		return TRUE;
 	}
 
@@ -490,11 +403,17 @@ eas_synchronize_sync (CamelFolder *folder, gboolean expunge, GCancellable *cance
 	if (deleted_uids)
 		success = eas_delete_messages (folder, deleted_uids, FALSE, cancellable, error);
 
-	camel_folder_free_uids (folder, uids);
+	g_ptr_array_unref (uids);
 
 	return success;
 }
 
+
+CamelDataCache *
+camel_eas_folder_get_cache (CamelEasFolder *folder)
+{
+	return folder->priv->cache;
+}
 
 CamelFolder *
 camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *folder_dir, gchar *folder_id, GCancellable *cancellable, GError **error)
@@ -534,12 +453,11 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
 
         /* set/load persistent state */
         state_file = g_build_filename (folder_dir, "cmeta", NULL);
-        camel_object_set_state_filename (CAMEL_OBJECT (folder), state_file);
-        camel_object_state_read (CAMEL_OBJECT (folder));
-        g_free(state_file);
+        camel_folder_take_state_filename (folder, state_file);
+        camel_folder_load_state (folder);
 
-        eas_folder->cache = camel_data_cache_new (folder_dir, error);
-        if (!eas_folder->cache) {
+        eas_folder->priv->cache = camel_data_cache_new (folder_dir, error);
+        if (!eas_folder->priv->cache) {
                 g_object_unref (folder);
                 return NULL;
         }
@@ -550,12 +468,6 @@ camel_eas_folder_new (CamelStore *store, const gchar *folder_name, const gchar *
                 if (camel_store_settings_get_filter_inbox (settings))
                         camel_folder_set_flags (folder, camel_folder_get_flags (folder) | CAMEL_FOLDER_FILTER_RECENT);
 		g_object_unref(settings);
-        }
-
-        eas_folder->search = camel_folder_search_new ();
-        if (!eas_folder->search) {
-                g_object_unref (folder);
-                return NULL;
         }
 
 	eas_folder->priv->server_id = g_strdup (folder_id);
@@ -792,7 +704,7 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 
 	/* Collect UIDs of deleted messages. */
 	camel_folder_summary_prepare_fetch_all (folder_summary, NULL);
-	known_uids = camel_folder_summary_get_array (folder_summary);
+	known_uids = camel_folder_summary_dup_uids (folder_summary);
 	if (!known_uids)
 		return TRUE;
 
@@ -807,7 +719,7 @@ eas_expunge_sync (CamelFolder *folder, GCancellable *cancellable, GError **error
 
 		g_clear_object (&info);
 	}
-	camel_folder_summary_free_array (known_uids);
+	g_ptr_array_unref (known_uids);
 
 	if (deleted_items)
 		return eas_delete_messages (folder, deleted_items, expunge, cancellable, error);
@@ -846,14 +758,9 @@ eas_folder_dispose (GObject *object)
 {
 	CamelEasFolder *eas_folder = CAMEL_EAS_FOLDER (object);
 
-	if (eas_folder->cache != NULL) {
-		g_object_unref (eas_folder->cache);
-		eas_folder->cache = NULL;
-	}
-
-	if (eas_folder->search != NULL) {
-		g_object_unref (eas_folder->search);
-		eas_folder->search = NULL;
+	if (eas_folder->priv->cache != NULL) {
+		g_object_unref (eas_folder->priv->cache);
+		eas_folder->priv->cache = NULL;
 	}
 
 	/* Chain up to parent's dispose() method. */
@@ -887,7 +794,6 @@ camel_eas_folder_class_init (CamelEasFolderClass *class)
 	GObjectClass *object_class;
 	CamelFolderClass *folder_class;
 
-	g_type_class_add_private (class, sizeof (CamelEasFolderPrivate));
 
 	object_class = G_OBJECT_CLASS (class);
 	object_class->dispose = eas_folder_dispose;
@@ -897,11 +803,7 @@ camel_eas_folder_class_init (CamelEasFolderClass *class)
 	folder_class = CAMEL_FOLDER_CLASS (class);
 	folder_class->get_permanent_flags = eas_folder_get_permanent_flags;
 	folder_class->get_message_sync = eas_folder_get_message_sync;
-	folder_class->search_by_expression = eas_folder_search_by_expression;
-	folder_class->count_by_expression = eas_folder_count_by_expression;
 	folder_class->cmp_uids = eas_cmp_uids;
-	folder_class->search_by_uids = eas_folder_search_by_uids;
-	folder_class->search_free = eas_folder_search_free;
 	folder_class->append_message_sync = eas_append_message_sync;
 	folder_class->refresh_info_sync = eas_refresh_info_sync;
 	folder_class->synchronize_sync = eas_synchronize_sync;
@@ -915,11 +817,10 @@ camel_eas_folder_init (CamelEasFolder *eas_folder)
 {
 	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
 
-	eas_folder->priv = CAMEL_EAS_FOLDER_GET_PRIVATE (eas_folder);
+	eas_folder->priv = camel_eas_folder_get_instance_private (eas_folder);
 
 	camel_folder_set_flags (folder, CAMEL_FOLDER_HAS_SUMMARY_CAPABILITY);
 
-	g_mutex_init(&eas_folder->priv->search_lock);
 	g_mutex_init(&eas_folder->priv->state_lock);
 	g_mutex_init(&eas_folder->priv->server_lock);
 	g_rec_mutex_init(&eas_folder->priv->cache_lock);

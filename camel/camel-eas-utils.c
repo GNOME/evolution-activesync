@@ -227,30 +227,27 @@ camel_eas_utils_sync_deleted_items (CamelEasFolder *eas_folder, GSList *items_de
 	CamelEasStore *eas_store;
 	GSList *l;
 	int count = 0;
-	GList *uids_deleted = NULL;
 
 	ci = camel_folder_change_info_new ();
 	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
 
 	folder = (CamelFolder *) eas_folder;
-	full_name = camel_folder_get_full_name (folder);
 
 	for (l = items_deleted; l != NULL; l = g_slist_next (l)) {
 		EasEmailInfo *item = l->data;
+		CamelFolderSummary *summary = camel_folder_get_folder_summary (folder);
 
-		uids_deleted = g_list_prepend (uids_deleted, item->server_id);
 		camel_folder_change_info_remove_uid (ci, item->server_id);
-		camel_data_cache_remove (eas_folder->cache, "cur", item->server_id, NULL);
+		camel_data_cache_remove (camel_eas_folder_get_cache (eas_folder), "cur", item->server_id, NULL);
+		camel_folder_summary_remove_uid (summary, item->server_id);
 		count++;
 	}
-	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
 
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 
 	g_slist_foreach (items_deleted, (GFunc) g_object_unref, NULL);
 	g_slist_free (items_deleted);
-	g_list_free (uids_deleted);
 
 	return count;
 }
@@ -260,11 +257,8 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 {
 	CamelFolder *folder = CAMEL_FOLDER (eas_folder);
 	CamelFolderSummary *folder_summary;
-	const gchar *full_name;
 	CamelFolderChangeInfo *ci;
-	CamelEasStore *eas_store;
 	gchar *uid;
-	GList *uids_deleted = NULL;
 	GPtrArray *known_uids = NULL;
 	int i;
 
@@ -274,23 +268,18 @@ camel_eas_utils_clear_folder (CamelEasFolder *eas_folder)
 		return;
 
 	ci = camel_folder_change_info_new ();
-	eas_store = (CamelEasStore *) camel_folder_get_parent_store ((CamelFolder *) eas_folder);
 
-	folder = (CamelFolder *) eas_folder;
-	full_name = camel_folder_get_full_name (folder);
-
-	known_uids = camel_folder_summary_get_array (folder_summary);
+	known_uids = camel_folder_summary_dup_uids (folder_summary);
 	if (!known_uids)
 		return;
 	for (i = 0; i < known_uids->len; i++) {
 		uid = g_ptr_array_index (known_uids, i);
 
 		camel_folder_change_info_remove_uid (ci, uid);
-		uids_deleted = g_list_prepend (uids_deleted, uid);
-		camel_data_cache_remove (eas_folder->cache, "cur", uid, NULL);
+		camel_data_cache_remove (camel_eas_folder_get_cache (eas_folder), "cur", uid, NULL);
+		camel_folder_summary_remove_uid (folder_summary, uid);
 	}
-	camel_db_delete_uids (camel_store_get_db (CAMEL_STORE (eas_store)), full_name, uids_deleted, NULL);
-	g_list_free (uids_deleted);
+	g_ptr_array_unref (known_uids);
 	camel_folder_changed ((CamelFolder *) eas_folder, ci);
 	camel_folder_change_info_free (ci);
 

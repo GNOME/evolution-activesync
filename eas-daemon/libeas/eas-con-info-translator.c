@@ -640,7 +640,7 @@ gchar* eas_con_info_translator_parse_response (xmlNodePtr node,
 	
 	conInfo = eas_item_info_new();
 	conInfo->server_id = (gchar*) server_id;
-	conInfo->data = e_vcard_to_string (vcard, EVC_FORMAT_VCARD_30); // no need to duplicate, e_vcard allocates memory
+	conInfo->data = e_vcard_to_string (vcard); // no need to duplicate, e_vcard allocates memory
 	g_object_unref (G_OBJECT (vcard));
 	if (!eas_item_info_serialise (conInfo, &result)) {
 		// TODO: log error
