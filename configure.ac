@@ -82,13 +82,6 @@ PKG_CHECK_MODULES(EVOLUTION_SHELL, evolution-shell${EVO_PKG}, [have_e_shell=yes]
 AC_SUBST(EVOLUTION_SHELL_CFLAGS)
 AC_SUBST(EVOLUTION_SHELL_LIBS)
 
-# Check for the MeeGo "mlite" library.  If it exists, enable the MeeGo
-# ActiveSync UI.
-PKG_CHECK_MODULES([MLITE],
-                  [mlite],
-		  [have_mlite="yes"],
-		  [have_mlite="no"
-                   AC_MSG_NOTICE([MeeGo ActiveSync Settings UI will not be built])])
 
 camel_providerdir=`$PKG_CONFIG --variable=camel_providerdir ${CAMEL_PKG}`
 AC_SUBST(camel_providerdir)
@@ -118,8 +111,6 @@ AC_SUBST(evo_moduledir)
 AC_PATH_PROGS(ASKPASS, [ssh-askpass gnome-ssh-askpass], [ssh-askpass], [path = $PATH:/usr/libexec:/usr/libexec/ssh:/usr/libexec/openssh:$libexecdir:$libexecdir/ssh:$libexecdir/openssh])
 AC_SUBST(ASKPASS)
 
-MEEGO_UI_DIR=meego/meego-ux-settings-activesync
-AM_CONDITIONAL([ENABLE_MEEGO_UI],[test "$have_mlite" = yes])
 
 GLIB_GSETTINGS
 
@@ -152,7 +143,7 @@ AC_CONFIG_FILES([
     Makefile
     eas-daemon/Makefile
     eas-daemon/data/Makefile
-    eas-daemon/data/org.meego.activesyncd.service
+
     eas-daemon/libeas/Makefile
     eas-daemon/src/Makefile
     collection/Makefile
@@ -164,13 +155,12 @@ AC_CONFIG_FILES([
     check_tests/Makefile
     camel/Makefile
     libevoeas/Makefile
-    meego/Makefile
+
     QtActivesyncdConfig/Makefile
     po/Makefile.in
     libeasaccount.pc
     libeasclient.pc
     ])
 
-AC_CONFIG_COMMANDS_POST([test "$have_mlite" = "yes" && pushd ${srcdir}/${MEEGO_UI_DIR} && qmake && popd])
 
 AC_OUTPUT
