@@ -1,0 +1,523 @@
+{
+	"app-id": "org.gnome.Evolution.Devel",
+	"runtime": "org.gnome.Platform",
+	"runtime-version": "master",
+	"sdk": "org.gnome.Sdk",
+	"command": "evolution",
+	"rename-icon": "evolution",
+	"copy-icon": true,
+	"branch": "master",
+	"desktop-file-name-suffix": " (Nightly)",
+	"tags": [ "devel" ],
+	"build-options" : {
+		"env": { "ACLOCAL_PATH": "/usr/share/gettext/m4/" }
+	},
+	"cleanup": [
+		"*.la",
+		"*.a"
+	],
+	"finish-args": [
+		"--share=ipc",
+		"--share=network",
+		"--socket=fallback-x11",
+		"--socket=wayland",
+		"--socket=pulseaudio",
+		"--socket=pcsc",
+		"--device=dri",
+		"--filesystem=~/.gnupg:rw",
+		"--filesystem=xdg-config/gnupg:rw",
+		"--filesystem=~/.pki:rw",
+		"--filesystem=xdg-config/pki:rw",
+		"--filesystem=xdg-run/gvfsd:rw",
+		"--filesystem=/run/.heim_org.h5l.kcm-socket",
+		"--metadata=X-DConf=migrate-path=/org/gnome/evolution/",
+		"--talk-name=org.freedesktop.Notifications",
+		"--talk-name=org.freedesktop.secrets",
+		"--talk-name=org.gnome.keyring.SystemPrompter",
+		"--talk-name=org.gnome.OnlineAccounts"
+	],
+	"add-extensions": {
+		"org.gnome.Evolution.Extension": {
+			"directory": "evolution/extensions",
+			"add-ld-path": "lib",
+			"merge-dirs": "lib;share",
+			"subdirectories": true,
+			"no-autodownload": true,
+			"autodelete": true
+		}
+	},
+	"modules": [
+		{
+			"name": "libcanberra",
+			"config-opts": [
+				"--disable-gtk",
+				"--disable-oss",
+				"--enable-alsa",
+				"--enable-gtk3",
+				"--enable-null",
+				"--without-systemdsystemunitdir",
+				"--with-builtin=dso",
+				"--disable-gtk-doc",
+				"--disable-gtk-doc-html"
+			],
+			"cleanup": [
+				"/bin",
+				"/share/gtk-doc",
+				"/share/gdm",
+				"/share/gnome",
+				"/share/vala"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "http://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
+					"sha256": "c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72"
+				},
+				{
+					"type": "script",
+					"dest-filename": "libcanberra-x11-check.patch",
+					"commands": [
+						"From c0620e432650e81062c1967cc669829dbd29b310 Mon Sep 17 00:00:00 2001",
+						"Subject: gtk: Don't assume all GdkDisplays are GdkX11Displays: broadway/wayland",
+						"",
+						"diff --git a/src/canberra-gtk-module.c b/src/canberra-gtk-module.c",
+						"index 67791f0..c1532ab 100644",
+						"--- a/src/canberra-gtk-module.c",
+						"+++ b/src/canberra-gtk-module.c",
+						"@@ -307,6 +307,11 @@ static gint window_get_desktop(GdkDisplay *d, GdkWindow *w) {",
+						"         guchar *data = NULL;",
+						"         gint ret = -1;",
+						" ",
+						"+#ifdef GDK_IS_X11_DISPLAY",
+						"+        if (!GDK_IS_X11_DISPLAY(d))",
+						"+                return 0;",
+						"+#endif",
+						"+",
+						"         if (XGetWindowProperty(GDK_DISPLAY_XDISPLAY(d), GDK_WINDOW_XID(w),",
+						"                                gdk_x11_get_xatom_by_name_for_display(d, \"_NET_WM_DESKTOP\"),",
+						"                                0, G_MAXLONG, False, XA_CARDINAL, &type_return,",
+						"@@ -335,6 +340,11 @@ static gint display_get_desktop(GdkDisplay *d) {",
+						"         guchar *data = NULL;",
+						"         gint ret = -1;",
+						" ",
+						"+#ifdef GDK_IS_X11_DISPLAY",
+						"+        if (!GDK_IS_X11_DISPLAY(d))",
+						"+                return 0;",
+						"+#endif",
+						"+",
+						"         if (XGetWindowProperty(GDK_DISPLAY_XDISPLAY(d), DefaultRootWindow(GDK_DISPLAY_XDISPLAY(d)),",
+						"                                gdk_x11_get_xatom_by_name_for_display(d, \"_NET_CURRENT_DESKTOP\"),",
+						"                                0, G_MAXLONG, False, XA_CARDINAL, &type_return,",
+						"@@ -365,6 +375,11 @@ static gboolean window_is_xembed(GdkDisplay *d, GdkWindow *w) {",
+						"         gboolean ret = FALSE;",
+						"         Atom xembed;",
+						" ",
+						"+#ifdef GDK_IS_X11_DISPLAY",
+						"+        if (!GDK_IS_X11_DISPLAY(d))",
+						"+                return FALSE;",
+						"+#endif",
+						"+",
+						"         /* Gnome Panel applets are XEMBED windows. We need to make sure we",
+						"          * ignore them */",
+						" ",
+						"diff --git a/src/canberra-gtk.c b/src/canberra-gtk.c",
+						"index 34446f5..08cb668 100644",
+						"--- a/src/canberra-gtk.c",
+						"+++ b/src/canberra-gtk.c",
+						"@@ -185,6 +185,11 @@ static gint window_get_desktop(GdkDisplay *d, GdkWindow *w) {",
+						"         guchar *data = NULL;",
+						"         gint ret = -1;",
+						" ",
+						"+#ifdef GDK_IS_X11_DISPLAY",
+						"+        if (!GDK_IS_X11_DISPLAY(d))",
+						"+                return 0;",
+						"+#endif",
+						"+",
+						"         if (XGetWindowProperty(GDK_DISPLAY_XDISPLAY(d), GDK_WINDOW_XID(w),",
+						"                                gdk_x11_get_xatom_by_name_for_display(d, \"_NET_WM_DESKTOP\"),",
+						"                                0, G_MAXLONG, False, XA_CARDINAL, &type_return,",
+						""
+					]
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"patch -p1 <libcanberra-x11-check.patch"
+					]
+				}
+			]
+		},
+
+		{
+			"name": "libical",
+			"cleanup": [
+				"/lib/cmake",
+				"/libexec/libical"
+			],
+			"buildsystem": "cmake-ninja",
+			"config-opts": [
+				"-DCMAKE_INSTALL_LIBDIR:PATH=/app/lib",
+				"-DBUILD_SHARED_LIBS:BOOL=ON",
+				"-DGOBJECT_INTROSPECTION:BOOL=ON",
+				"-DICAL_BUILD_DOCS:BOOL=OFF",
+				"-DICAL_GLIB_VAPI:BOOL=ON",
+				"-DICAL_GLIB:BOOL=ON"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://github.com/libical/libical.git",
+					"branch": "3.0"
+				}
+			]
+		},
+
+		{
+			"name": "liboauth",
+			"config-opts": [ "--enable-nss" ],
+			"cleanup": [ "/share/man" ],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://downloads.sourceforge.net/project/liboauth/liboauth-1.0.3.tar.gz",
+					"sha256": "0df60157b052f0e774ade8a8bac59d6e8d4b464058cc55f9208d72e41156811f"
+				}
+			]
+		},
+
+		{
+			"name": "librest",
+			"buildsystem": "meson",
+			"config-opts": [
+				"-Dexamples=false",
+				"-Dgtk_doc=false",
+				"-Dtests=false"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/librest.git",
+					"branch": "master"
+				}
+			]
+		},
+
+		{
+			"name": "gnome-online-accounts",
+			"buildsystem": "meson",
+			"config-opts": [
+				"-Dvapi=false",
+				"-Dgoabackend=false",
+				"-Dintrospection=false"
+			],
+			"cleanup": [
+				"/bin"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/gnome-online-accounts.git",
+					"branch": "master"
+				}
+			]
+		},
+
+		{
+			"name": "geocode-glib",
+			"buildsystem": "meson",
+			"config-opts": [
+				"-Denable-installed-tests=false",
+				"-Denable-introspection=false",
+				"-Denable-gtk-doc=false",
+				"-Dsoup2=false"
+			],
+			"cleanup": [
+				"/share/gtk-doc"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://download.gnome.org/sources/geocode-glib/3.26/geocode-glib-3.26.4.tar.xz",
+					"sha256": "2d9a6826d158470449a173871221596da0f83ebdcff98b90c7049089056a37aa"
+				}
+			]
+		},
+
+		{
+			"name": "gweather-locations",
+			"buildsystem": "meson",
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/gweather-locations.git",
+					"branch": "main"
+				}
+			]
+		},
+
+		{
+			"name": "libgweather4",
+			"buildsystem": "meson",
+			"config-opts": [
+				"-Denable_vala=false",
+				"-Dgtk_doc=false",
+				"-Dintrospection=false",
+				"-Dtests=false"
+			],
+			"cleanup": [
+				"/lib/girepository-1.0",
+				"/share/gtk-doc",
+				"/share/gir-1.0"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/libgweather.git",
+					"branch": "main"
+				}
+			]
+		},
+
+		{
+			"name": "openldap",
+			"rm-configure": true,
+			"cleanup": [
+				"/bin",
+				"/etc",
+				"/share/man"
+			],
+			"config-opts": [
+				"--disable-backends",
+				"--disable-overlays",
+				"--disable-slapd",
+				"--disable-debug",
+				"--enable-dynamic",
+				"--without-threads",
+				"--with-tls=gnutls"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.8.tgz",
+					"sha256": "48969323e94e3be3b03c6a132942dcba7ef8d545f2ad35401709019f696c3c4e"
+				},
+
+				{
+					"type": "script",
+					"dest-filename": "autogen.sh",
+					"commands": [
+						"AUTOMAKE=\"/bin/true\" autoreconf -vfi"
+					]
+				}
+			]
+		},
+
+		{
+			"name": "intltool",
+			"cleanup": [ "*" ],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz",
+					"sha256": "67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd"
+				}
+			]
+		},
+
+		{
+			"name": "gspell",
+			"config-opts": [
+				"--disable-gtk-doc",
+				"--disable-introspection",
+				"--disable-vala"
+			],
+			"cleanup": [
+				"/bin",
+				"/share/gtk-doc"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://download.gnome.org/sources/gspell/1.12/gspell-1.12.2.tar.xz",
+					"sha256": "b4e993bd827e4ceb6a770b1b5e8950fce3be9c8b2b0cbeb22fdf992808dd2139"
+				}
+			]
+		},
+
+		{
+			"name": "libassuan",
+			"config-opts": [
+				"--disable-doc"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://gnupg.org/ftp/gcrypt/libassuan/libassuan-2.5.5.tar.bz2",
+					"sha256": "8e8c2fcc982f9ca67dcbb1d95e2dc746b1739a4668bc20b3a3c5be632edb34e4"
+				}
+			]
+		},
+
+		{
+			"name": "pinentry",
+			"config-opts": [
+				"--enable-pinentry-gnome3",
+				"--disable-ncurses",
+				"--disable-fallback-curses",
+				"--disable-pinentry-curses",
+				"--disable-pinentry-emacs",
+				"--disable-inside-emacs",
+				"--disable-pinentry-efl",
+				"--disable-pinentry-gtk2",
+				"--disable-pinentry-qt",
+				"--disable-pinentry-qt4",
+				"--disable-pinentry-qt5",
+				"--disable-pinentry-tty",
+				"--disable-pinentry-tqt",
+				"--disable-pinentry-fltk",
+				"--disable-doc",
+				"--with-libassuan-prefix=/app"
+			],
+			"cleanup": [ "/share/info" ],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://www.gnupg.org/ftp/gcrypt/pinentry/pinentry-1.3.0.tar.bz2",
+					"sha256": "9b3cd5226e7597f2fded399a3bc659923351536559e9db0826981bca316494de"
+				}
+			]
+		},
+
+		{
+			"name": "bogofilter",
+			"buildsystem": "simple",
+			"build-commands": [
+				"cd ./bogofilter/ && echo \"# Skip for Flatpak build\" > doc/Makefile.am && autoreconf -fi && ./configure --prefix=/app --disable-rpath --with-database=sqlite3 && make && make install"
+			],
+			"cleanup": [ "/etc" ],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://git.code.sf.net/p/bogofilter/git",
+					"branch": "main"
+				}
+			]
+		},
+
+		{
+			"name": "cmark",
+			"buildsystem": "cmake-ninja",
+			"builddir": true,
+			"cleanup": [
+				"/bin",
+				"/lib/cmake",
+				"/share"
+			],
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://github.com/commonmark/cmark/archive/refs/tags/0.31.0.tar.gz",
+					"sha256": "bbcb8f8c03b5af33fcfcf11a74e9499f20a9043200b8552f78a6e8ba76e04d11"
+				}
+			]
+		},
+
+		{
+			"name": "evolution-data-server",
+			"buildsystem": "cmake-ninja",
+			"cleanup": [
+				"/etc/xdg",
+				"/share/GConf"
+			],
+			"config-opts": [
+				"-DDBUS_SERVICES_PREFIX=org.gnome.Evolution.Devel",
+				"-DEXTENSIONS_DIR=/app/evolution/extensions",
+				"-DENABLE_FILE_LOCKING=fcntl",
+				"-DENABLE_DOT_LOCKING=OFF",
+				"-DENABLE_GTK=ON",
+				"-DENABLE_GTK4=OFF",
+				"-DENABLE_GOA=ON",
+				"-DENABLE_EXAMPLES=OFF",
+				"-DENABLE_INTROSPECTION=OFF",
+				"-DENABLE_VALA_BINDINGS=OFF",
+				"-DENABLE_INSTALLED_TESTS=OFF",
+				"-DENABLE_GTK_DOC=OFF",
+				"-DWITH_LIBDB=OFF",
+				"-DWITH_PRIVATE_DOCS=OFF",
+				"-DWITH_PHONENUMBER=OFF",
+				"-DWITH_SYSTEMDUSERUNITDIR=OFF"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/evolution-data-server.git",
+					"branch": "master"
+				}
+			]
+		},
+
+		{
+			"name": "evolution",
+			"buildsystem": "cmake-ninja",
+			"build-options" : {
+				"cflags": "-DTEMP_HOME=1 -Wno-deprecated-declarations"
+			},
+			"config-opts": [
+				"-DOVERRIDE_APPLICATION_ID=org.gnome.Evolution.Devel",
+				"-DENABLE_AUTOAR=OFF",
+				"-DENABLE_CONTACT_MAPS=OFF",
+				"-DENABLE_GNOME_DESKTOP=OFF",
+				"-DENABLE_GTK_DOC=ON",
+				"-DENABLE_INSTALLED_TESTS=OFF",
+				"-DENABLE_PST_IMPORT=OFF",
+				"-DENABLE_TEXT_HIGHLIGHT=OFF",
+				"-DENABLE_YTNEF=OFF",
+				"-DWITH_BOGOFILTER=/app/bin/bogofilter",
+				"-DWITH_GLADE_CATALOG=OFF",
+				"-DWITH_HELP=ON"
+			],
+			"cleanup": [
+				"/etc/xdg",
+				"/share/GConf",
+				"/share/man"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/evolution.git",
+					"branch": "master"
+				},
+				{
+					"type": "shell",
+					"commands": [
+						"cp config.h.in config.h.in.orig",
+						"cat config.h.in.orig | sed -e \"s|\\@VERSION_SUBSTRING\\@| \\(flatpak git$(git log --pretty=format:%h --max-count=1)\\)|\" >config.h.in",
+						"cp data/org.gnome.Evolution.metainfo.xml.in.in data/org.gnome.Evolution.metainfo.xml.in.in.orig",
+						"cat data/org.gnome.Evolution.metainfo.xml.in.in.orig | sed -e \"s|\\@APPDATA_RELEASES\\@|APPDATA_RELEASES|\" >data/org.gnome.Evolution.metainfo.xml.in.in"
+					]
+				}
+			],
+			"post-install": [
+				"mv /app/share/applications/org.gnome.Evolution.desktop /app/share/applications/org.gnome.Evolution.Devel.desktop"
+			]
+		},
+
+		{
+			"name": "evolution-activesync",
+			"buildsystem": "cmake-ninja",
+			"builddir": true,
+			"cleanup": [
+				"/bin",
+				"/lib/cmake",
+				"/share"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": "https://gitlab.gnome.org/GNOME/evolution-activesync.git",
+					"branch": "master"
+				}
+			]
+		}
+	]
+}
