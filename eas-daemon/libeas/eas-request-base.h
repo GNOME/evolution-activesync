@@ -83,7 +83,7 @@ typedef struct _EasRequestBasePrivate EasRequestBasePrivate;
 
 
 typedef gboolean (*EasRequestBaseMessageCompleteFp) (EasRequestBase *self, xmlDoc* doc, GError* error_in);
-typedef void (*EasRequestBaseGotChunkFp) (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
+typedef void (*EasRequestBaseGotChunkFp) (EasRequestBase *self, SoupMessage *msg, GBytes *chunk);
 
 struct _EasRequestBaseClass {
 	GObjectClass parent_class;
@@ -366,7 +366,7 @@ void eas_request_base_SetContext (EasRequestBase* self, DBusGMethodInvocation* c
  * @param[in] chunk
  *      The chunk of data from the server.
  */
-void eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
+void eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, GBytes *chunk);
 
 /**
  * Function hook invoked during the "got_chunk" signal from libsoup.

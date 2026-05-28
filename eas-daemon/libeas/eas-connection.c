@@ -156,6 +156,9 @@ typedef struct _EasNode EasNode;
 struct _EasNode {
 	EasRequestBase *request;
 	EasConnection *cnc;
+	GCancellable *cancellable;
+	GBytes *response_bytes;
+	guint mock_status;
 };
 
 static GMutex connection_list;
@@ -252,14 +255,9 @@ eas_connection_init (EasConnection *self)
 	priv->soup_thread = g_thread_new ("eas_soup_thread", eas_soup_thread, priv);
 
 	/* create the SoupSession for this connection */
-	priv->soup_session =
-		soup_session_async_new_with_options (SOUP_SESSION_USE_NTLM,
-						     TRUE,
-						     SOUP_SESSION_ASYNC_CONTEXT,
-						     priv->soup_context,
-						     SOUP_SESSION_TIMEOUT,
-						     120,
-						     NULL);
+	priv->soup_session = soup_session_new ();
+	soup_session_add_feature_by_type (priv->soup_session, SOUP_TYPE_AUTH_NTLM);
+	soup_session_set_timeout (priv->soup_session, 120);
 
 	g_signal_connect (priv->soup_session,
 			  "authenticate",
@@ -268,7 +266,7 @@ eas_connection_init (EasConnection *self)
 
 	if (getenv ("EAS_SOUP_LOGGER") && (atoi (g_getenv ("EAS_SOUP_LOGGER")) >= 1)) {
 		SoupLogger *logger;
-		logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS, -1);
+		logger = soup_logger_new (SOUP_LOGGER_LOG_HEADERS);
 		soup_logger_set_printer (logger, eas_soup_logger_printer, NULL, NULL);
 		soup_session_add_feature (priv->soup_session, SOUP_SESSION_FEATURE (logger));
 	}
@@ -766,12 +764,12 @@ call_handle_server_response (gpointer data)
 static gboolean
 call_soup_session_cancel_message (gpointer data)
 {
-	EasRequestBase *req = EAS_REQUEST_BASE (data);
-	SoupMessage *msg = eas_request_base_GetSoupMessage (req);	
-	EasConnection *cnc = eas_request_base_GetConnection(req);
+	EasNode *node = (EasNode *) data;
+	EasRequestBase *req = node->request;
 
 	g_debug("cancelling soup request for request with id %d", eas_request_base_GetRequestId(req));
-	soup_session_cancel_message(cnc->priv->soup_session, msg, SOUP_STATUS_CANCELLED);
+	if (node->cancellable)
+		g_cancellable_cancel (node->cancellable);
 
 	return FALSE;   // don't put back on main loop
 }
@@ -798,7 +796,7 @@ eas_queue_soup_message (gpointer _request)
 emits a signal (if the dbus interface object has been set)
 
 */
-static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
+static void emit_signal (gsize chunk_size, EasRequestBase *request)
 {
 	guint request_id = eas_request_base_GetRequestId (request);
 	EasInterfaceBase* dbus_interface;
@@ -811,7 +809,7 @@ static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
 
 		total = eas_request_base_GetDataSize (request);
 
-		eas_request_base_UpdateDataLengthSoFar (request, chunk->length);
+		eas_request_base_UpdateDataLengthSoFar (request, chunk_size);
 		so_far = eas_request_base_GetDataLengthSoFar (request);
 
 		// TODO what should we send if percentage not possible?
@@ -830,23 +828,24 @@ static void emit_signal (SoupBuffer *chunk, EasRequestBase *request)
 	}
 }
 
-static void soap_got_chunk (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
+static void soap_got_chunk (SoupMessage *msg, GBytes *chunk, gpointer data)
 {
 	EasRequestBase *request	 = (EasRequestBase *) data;
 	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection (request);
+	gsize chunk_size = g_bytes_get_size (chunk);
 
 	g_debug ("soap_got_chunk");
 
-	if (msg->status_code != 200)
+	if (soup_message_get_status (msg) != 200)
 		return;
 
 	if (!outgoing_progress) { // want incoming progress updates
-		emit_signal (chunk, request);
+		emit_signal (chunk_size, request);
 	}
 
 	eas_request_base_GotChunk (request, msg, chunk);
 
-	g_debug ("Received %zd bytes for request %p", chunk->length, request);
+	g_debug ("Received %zd bytes for request %p", chunk_size, request);
 }
 
 static void soap_got_headers (SoupMessage *msg, gpointer data)
@@ -856,7 +855,7 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection (request);
 
 	g_debug ("soap_got_headers");
-	size_hdr = soup_message_headers_get_one (msg->response_headers,
+	size_hdr = soup_message_headers_get_one (soup_message_get_response_headers (msg),
 						 "Content-Length");
 	if (size_hdr) {
 		gsize size = strtoull (size_hdr, NULL, 10);
@@ -885,18 +884,18 @@ static void soap_got_headers (SoupMessage *msg, gpointer data)
 
 
 static void
-soap_wrote_body_data (SoupMessage *msg, SoupBuffer *chunk, gpointer data)
+soap_wrote_body_data (SoupMessage *msg, guint chunk_size, gpointer data)
 {
 	struct _EasRequestBase *request = data;
 	gboolean outgoing_progress = eas_request_base_GetRequestProgressDirection (request);
 
-	g_debug ("soap_wrote_body_data %zu", chunk->length);
+	g_debug ("soap_wrote_body_data %u", chunk_size);
 
 	if (outgoing_progress) {
-		emit_signal (chunk, request);
+		emit_signal (chunk_size, request);
 	}
 
-	g_debug ("Wrote %zd bytes for request %p", chunk->length, request);
+	g_debug ("Wrote %u bytes for request %p", chunk_size, request);
 }
 
 static void soap_wrote_headers (SoupMessage *msg, gpointer data)
@@ -908,7 +907,7 @@ static void soap_wrote_headers (SoupMessage *msg, gpointer data)
 	g_debug ("soap_wrote_headers");
 
 	if (outgoing_progress) {
-		size_hdr = soup_message_headers_get_one (msg->request_headers,
+		size_hdr = soup_message_headers_get_one (soup_message_get_request_headers (msg),
 							 "Content-Length");
 		if (size_hdr) {
 			gsize size = strtoull (size_hdr, NULL, 10);
@@ -930,6 +929,23 @@ static void soap_wrote_headers (SoupMessage *msg, gpointer data)
 
 
 
+static void
+handle_send_and_read_cb (GObject *source, GAsyncResult *result, gpointer data)
+{
+	EasNode *node = (EasNode *) data;
+	SoupSession *session = SOUP_SESSION (source);
+	SoupMessage *msg = eas_request_base_GetSoupMessage (node->request);
+	GError *error = NULL;
+
+	node->response_bytes = soup_session_send_and_read_finish (session, result, &error);
+	if (error) {
+		g_debug ("send_and_read error: %s", error->message);
+		g_clear_error (&error);
+	}
+
+	handle_server_response (session, msg, node);
+}
+
 static gboolean
 eas_next_request (gpointer _cnc)
 {
@@ -948,24 +964,13 @@ eas_next_request (gpointer _cnc)
 	}else{
 		l = cnc->priv->jobs;
 	}
-	
+
 	if (!l || g_slist_length (cnc->priv->active_job_queue) >= EAS_CONNECTION_MAX_REQUESTS) {
 		QUEUE_UNLOCK (cnc);
 		return FALSE;
 	}
 
 	node = (EasNode *) l->data;
-
-#if 0
-	if (g_getenv ("EAS_DEBUG") && (atoi (g_getenv ("EAS_DEBUG")) >= 1)) {
-		soup_buffer_free (soup_message_body_flatten (SOUP_MESSAGE (eas_request_base_GetSoupMessage (node->request))->request_body));
-		/* print request's body */
-		printf ("\n The request headers");
-		fputc ('\n', stdout);
-		fputs (SOUP_MESSAGE (eas_request_base_GetSoupMessage (node->request))->request_body->data, stdout);
-		fputc ('\n', stdout);
-	}
-#endif
 
 	/* Remove the node from the job queue */
 	if(using_provisioning_queue){
@@ -979,10 +984,13 @@ eas_next_request (gpointer _cnc)
 	cnc->priv->active_job_queue = g_slist_append (cnc->priv->active_job_queue, node);
 	g_debug ("eas_next_request: active_job++  listlength=%d", g_slist_length (cnc->priv->active_job_queue));
 
-	soup_session_queue_message (cnc->priv->soup_session,
-				    SOUP_MESSAGE (eas_request_base_GetSoupMessage (node->request)),
-				    handle_server_response,
-				    node);
+	node->cancellable = g_cancellable_new ();
+	soup_session_send_and_read_async (cnc->priv->soup_session,
+	                                  SOUP_MESSAGE (eas_request_base_GetSoupMessage (node->request)),
+	                                  G_PRIORITY_DEFAULT,
+	                                  node->cancellable,
+	                                  handle_send_and_read_cb,
+	                                  node);
 	QUEUE_UNLOCK (cnc);
 	g_debug ("eas_next_request--");
 	return FALSE;
@@ -1073,6 +1081,7 @@ eas_connection_send_request (EasConnection* self,
 	const gchar *policy_key;
 	gchar *fake_device_id = NULL;
 	EasNode *node = NULL;
+	GBytes *body_bytes = NULL;
 
 	g_debug ("eas_connection_send_request++");
 
@@ -1117,37 +1126,34 @@ eas_connection_send_request (EasConnection* self,
 		goto finish;
 	}
 
-	soup_message_headers_append (msg->request_headers,
+	soup_message_headers_append (soup_message_get_request_headers (msg),
 				     "MS-ASProtocolVersion",
 				     priv->proto_str);
 
 	if (eas_request_base_UseMultipart (request)) {
-		soup_message_headers_append (msg->request_headers,
+		soup_message_headers_append (soup_message_get_request_headers (msg),
 					     "MS-ASAcceptMultipart",
 					     "T");
-		// Instruct libsoup not to accumulate response data per 'got_chunk' 
-		// into a buffer in the body.
-		soup_message_body_set_accumulate (msg->response_body, FALSE);
 	}
 
-	soup_message_headers_append (msg->request_headers,
+	soup_message_headers_append (soup_message_get_request_headers (msg),
 				     "User-Agent",
 				     "libeas");
 
-	if (0 == g_strcmp0 (cmd, "Provision")) 
+	if (0 == g_strcmp0 (cmd, "Provision"))
 	{
 		EasProvisionReq *prov_req = EAS_PROVISION_REQ (request);
 		policy_key = eas_provision_req_GetTid (prov_req);
 		if (!policy_key)
 		{
-			soup_message_headers_append (msg->request_headers,
-						     "X-MS-PolicyKey", 
+			soup_message_headers_append (soup_message_get_request_headers (msg),
+						     "X-MS-PolicyKey",
 						     "0");
 		}
 		else
 		{
-			soup_message_headers_append (msg->request_headers,
-						     "X-MS-PolicyKey", 
+			soup_message_headers_append (soup_message_get_request_headers (msg),
+						     "X-MS-PolicyKey",
 						     policy_key);
 		}
 	}
@@ -1156,18 +1162,18 @@ eas_connection_send_request (EasConnection* self,
 		/* If policy key is set from provisioning add it, otherwise skip */
 		if ( (policy_key = eas_account_get_policy_key (priv->account)) )
 		{
-			soup_message_headers_append (msg->request_headers,
-						     "X-MS-PolicyKey", 
+			soup_message_headers_append (soup_message_get_request_headers (msg),
+						     "X-MS-PolicyKey",
 						     policy_key);
 		}
 		else
 		{
-			soup_message_headers_append (msg->request_headers,
-						     "X-MS-PolicyKey", 
+			soup_message_headers_append (soup_message_get_request_headers (msg),
+						     "X-MS-PolicyKey",
 						     "0");
 		}
 	}
-	
+
 //in activesync 12.1, SendMail uses mime, not wbxml in the body
 	if (priv->protocol_version >= 140 || g_strcmp0 (cmd, "SendMail")) {
 		// Convert doc into a flat xml string
@@ -1192,49 +1198,31 @@ eas_connection_send_request (EasConnection* self,
 			goto finish;
 		}
 
-		soup_message_headers_set_content_length (msg->request_headers, wbxml_len);
-
-		soup_message_set_request (msg,
-					  "application/vnd.ms-sync.wbxml",
-					  SOUP_MEMORY_COPY,
-					  (gchar*) wbxml,
-					  wbxml_len);
+		body_bytes = g_bytes_new (wbxml, wbxml_len);
+		soup_message_set_request_body_from_bytes (msg, "application/vnd.ms-sync.wbxml", body_bytes);
+		g_bytes_unref (body_bytes);
 	} else {
 		//Activesync 12.1 implementation for SendMail Command
-		soup_message_headers_set_content_length (msg->request_headers, strlen ( (gchar*) doc));
-
-		soup_message_set_request (msg,
-					  "message/rfc822",
-					  SOUP_MEMORY_COPY,
-					  (gchar*) doc,
-					  strlen ( (gchar*) doc));
-
+		body_bytes = g_bytes_new (doc, strlen ((gchar*) doc));
+		soup_message_set_request_body_from_bytes (msg, "message/rfc822", body_bytes);
+		g_bytes_unref (body_bytes);
 	}
 
-	if (g_mock_response_list) {
-		// TODO fake complete response (wrong content type etc), not just status codes
-		const gchar *response_body = "mock response body";
-
-		soup_message_set_response (msg, "application/vnd.ms-sync.wbxml",
-					   SOUP_MEMORY_COPY,
-					   response_body,
-					   strlen (response_body));
-		// fake the status code in the soupmessage response
-		if (g_mock_status_codes) {
-			guint status_code = g_array_index (g_mock_status_codes, guint, 0);
-			g_array_remove_index (g_mock_status_codes, 0);
-			soup_message_set_status (msg, status_code);
-		} else {
-			soup_message_set_status (msg, SOUP_STATUS_OK);
-		}
-	}
 	eas_request_base_SetSoupMessage (request, msg);
 
 	if (g_mock_response_list) {	// call handle_server_response directly from soup thread
+		const gchar *mock_body = "mock response body";
 		g_debug ("put call_handle_server_response on soup loop");
 		node = eas_node_new ();
 		node->request = request;
 		node->cnc = self;
+		node->response_bytes = g_bytes_new (mock_body, strlen (mock_body));
+		if (g_mock_status_codes) {
+			node->mock_status = g_array_index (g_mock_status_codes, guint, 0);
+			g_array_remove_index (g_mock_status_codes, 0);
+		} else {
+			node->mock_status = SOUP_STATUS_OK;
+		}
 		g_idle_add (call_handle_server_response, node);
 		
 	} else {	// send request via libsoup
@@ -1242,13 +1230,6 @@ eas_connection_send_request (EasConnection* self,
 		g_signal_connect (msg, "got-headers", G_CALLBACK (soap_got_headers), request);
 		g_signal_connect (msg, "wrote-body-data", G_CALLBACK (soap_wrote_body_data), request);
 		g_signal_connect (msg, "wrote-headers", G_CALLBACK (soap_wrote_headers), request);
-#if 0
-		// We have to call soup_session_queue_message() from the soup thread,
-		// or libsoup screws up (https://bugzilla.gnome.org/642573)
-		source = g_idle_source_new ();
-		g_source_set_callback (source, eas_queue_soup_message, request, NULL);
-		g_source_attach (source, priv->soup_context);
-#endif
 
 		/*Adding request to the queue*/
 		node = eas_node_new ();
@@ -1305,47 +1286,44 @@ typedef enum {
 
 
 static RequestValidity
-isResponseValid (SoupMessage *msg, gboolean multipart, GError **error)
+isResponseValid (SoupMessage *msg, guint status_code, const gchar *reason_phrase, gboolean multipart, GBytes *response_bytes, GError **error)
 {
 	const gchar *content_type = NULL;
 
 	g_debug ("eas_connection - isResponseValid++");
 
-
-	if (HTTP_STATUS_PROVISION == msg->status_code) {
+	if (HTTP_STATUS_PROVISION == status_code) {
 		g_warning ("Server instructed 12.1 style re-provision");
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_REPROVISION,
 			     _("HTTP request failed: %d — %s"),
-			     msg->status_code, msg->reason_phrase);
+			     status_code, reason_phrase);
 		return VALID_12_1_REPROVISION;
 	}
 
 
-	if (HTTP_STATUS_OK != msg->status_code) {
-		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+	if (HTTP_STATUS_OK != status_code) {
+		g_critical ("Failed with status [%d] : %s", status_code, (reason_phrase ? reason_phrase : "-"));
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("HTTP request failed: %d — %s"),
-			     msg->status_code, msg->reason_phrase);
+			     status_code, reason_phrase);
 		return INVALID;
 	}
 
-
-	if (FALSE == soup_message_body_get_accumulate (msg->response_body))
-	{
+	if (multipart) {
 		g_debug ("Body collected in GotChunk");
 		return VALID_NON_EMPTY;
 	}
-	
-	if (!msg->response_body->length) {
+
+	if (!response_bytes || !g_bytes_get_size (response_bytes)) {
 		g_debug ("Empty Content");
 		return VALID_EMPTY;
 	}
 
-	content_type = soup_message_headers_get_one (msg->response_headers, "Content-Type");
+	content_type = soup_message_headers_get_one (soup_message_get_response_headers (msg), "Content-Type");
 
 	if (!multipart && (0 != g_strcmp0 ("application/vnd.ms-sync.wbxml", content_type))) {
 		g_warning ("  Failed: Content-Type did not match WBXML");
@@ -1513,20 +1491,23 @@ typedef struct {
 	EasConnection *cnc;
 	GSimpleAsyncResult *simple;
 	SoupMessage *msgs[2];
+	GCancellable *cancellables[2];
 	DBusGMethodInvocation* context;
 	EasAccount* account;
 } EasAutoDiscoverData;
 
 static void
-autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
+autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, GBytes *bytes, gpointer data)
 {
 	GError *error = NULL;
 	EasAutoDiscoverData *adData = data;
-	guint status = msg->status_code;
+	guint status = soup_message_get_status (msg);
 	xmlDoc *doc = NULL;
 	xmlNode *node = NULL;
 	gchar *serverUrl = NULL;
 	gint idx = 0;
+	gsize body_len = 0;
+	const guchar *body_data = NULL;
 
 	g_debug ("autodiscover_soup_cb++");
 
@@ -1552,11 +1533,21 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 		goto failed;
 	}
 
-	doc = xmlReadMemory (msg->response_body->data,
-			     msg->response_body->length,
+	if (!bytes) {
+		g_set_error (&error,
+			     EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_FAILED,
+			     _("Empty autodiscover response"));
+		goto failed;
+	}
+
+	body_data = g_bytes_get_data (bytes, &body_len);
+	doc = xmlReadMemory ((const char *) body_data,
+			     body_len,
 			     "autodiscover.xml",
 			     NULL,
 			     XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+
 
 	if (!doc) {
 		g_set_error (&error,
@@ -1616,11 +1607,11 @@ autodiscover_soup_cb (SoupSession *session, SoupMessage *msg, gpointer data)
 
 	for (idx = 0; idx < 2; ++idx) {
 		if (adData->msgs[idx]) {
-			SoupMessage *m = adData->msgs[idx];
 			adData->msgs[idx] = NULL;
-			soup_session_cancel_message (adData->cnc->priv->soup_session,
-						     m,
-						     SOUP_STATUS_CANCELLED);
+			if (adData->cancellables[idx]) {
+				g_cancellable_cancel (adData->cancellables[idx]);
+				g_clear_object (&adData->cancellables[idx]);
+			}
 			g_debug ("Autodiscover success - Cancelling outstanding msg[%d]", idx);
 		}
 	}
@@ -1680,24 +1671,22 @@ static SoupMessage *
 autodiscover_as_soup_msg (gchar *url, xmlOutputBuffer *buf)
 {
 	SoupMessage *msg = NULL;
+	GBytes *body_bytes;
 
 	g_debug ("autodiscover_as_soup_msg++");
 
 	msg = soup_message_new ("POST", url);
 
-	soup_message_headers_append (msg->request_headers,
+	soup_message_headers_append (soup_message_get_request_headers (msg),
 				     "User-Agent", "libeas");
 
-	soup_message_set_request (msg,
-				  "text/xml",
-				  SOUP_MEMORY_COPY,
 #ifdef LIBXML2_NEW_BUFFER
-				  (gchar *) xmlOutputBufferGetContent(buf),
-				  xmlOutputBufferGetSize(buf));
+	body_bytes = g_bytes_new (xmlOutputBufferGetContent (buf), xmlOutputBufferGetSize (buf));
 #else
-				  (gchar*) buf->buffer->content,
-				  buf->buffer->use);
+	body_bytes = g_bytes_new (buf->buffer->content, buf->buffer->use);
 #endif
+	soup_message_set_request_body_from_bytes (msg, "text/xml", body_bytes);
+	g_bytes_unref (body_bytes);
 
 	g_debug ("autodiscover_as_soup_msg--");
 	return msg;
@@ -1719,6 +1708,34 @@ autodiscover_as_soup_msg (gchar *url, xmlOutputBuffer *buf)
  * @param[in] username
  *	  Exchange Server username in the format DOMAIN\username
  */
+typedef struct {
+	EasAutoDiscoverData *adData;
+	gint idx;
+} EasAutoDiscoverSendData;
+
+static void
+autodiscover_send_cb (GObject *source, GAsyncResult *result, gpointer data)
+{
+	EasAutoDiscoverSendData *sendData = data;
+	EasAutoDiscoverData *adData = sendData->adData;
+	gint idx = sendData->idx;
+	SoupSession *session = SOUP_SESSION (source);
+	GError *error = NULL;
+	GBytes *bytes;
+
+	g_free (sendData);
+
+	bytes = soup_session_send_and_read_finish (session, result, &error);
+	if (error) {
+		g_clear_error (&error);
+	}
+
+	g_clear_object (&adData->cancellables[idx]);
+
+	autodiscover_soup_cb (session, adData->msgs[idx], bytes, adData);
+	if (bytes) g_bytes_unref (bytes);
+}
+
 void
 eas_connection_autodiscover (const gchar* email,
 			     const gchar* username,
@@ -1732,6 +1749,8 @@ eas_connection_autodiscover (const gchar* email,
 	gchar* url = NULL;
 	EasAutoDiscoverData *autoDiscData = NULL;
 	EasAccount *account = NULL;
+	EasAutoDiscoverSendData *sd0 = NULL;
+	EasAutoDiscoverSendData *sd1 = NULL;
 
 	g_debug ("eas_connection_autodiscover++");
 
@@ -1820,15 +1839,23 @@ eas_connection_autodiscover (const gchar* email,
 	autoDiscData->msgs[1] = autodiscover_as_soup_msg (url, txBuf);
 	g_free (url);
 
-	soup_session_queue_message (cnc->priv->soup_session,
-				    autoDiscData->msgs[0],
-				    autodiscover_soup_cb,
-				    autoDiscData);
+	autoDiscData->cancellables[0] = g_cancellable_new ();
+	autoDiscData->cancellables[1] = g_cancellable_new ();
 
-	soup_session_queue_message (cnc->priv->soup_session,
-				    autoDiscData->msgs[1],
-				    autodiscover_soup_cb,
-				    autoDiscData);
+	sd0 = g_new0 (EasAutoDiscoverSendData, 1);
+	sd1 = g_new0 (EasAutoDiscoverSendData, 1);
+	sd0->adData = autoDiscData; sd0->idx = 0;
+	sd1->adData = autoDiscData; sd1->idx = 1;
+	soup_session_send_and_read_async (cnc->priv->soup_session,
+	                                  autoDiscData->msgs[0],
+	                                  G_PRIORITY_DEFAULT,
+	                                  autoDiscData->cancellables[0],
+	                                  autodiscover_send_cb, sd0);
+	soup_session_send_and_read_async (cnc->priv->soup_session,
+	                                  autoDiscData->msgs[1],
+	                                  G_PRIORITY_DEFAULT,
+	                                  autoDiscData->cancellables[1],
+	                                  autodiscover_send_cb, sd1);
 
 	g_object_unref (cnc); // GSimpleAsyncResult holds this now
 	xmlOutputBufferClose (txBuf);
@@ -2103,6 +2130,10 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	GError *error = NULL;
 	RequestValidity validity = FALSE;
 	gboolean cleanupRequest = FALSE;
+	gsize body_len = 0;
+	const guchar *body_data = NULL;
+	guint status_code;
+	const gchar *reason_phrase;
 	gboolean isProvisioningRequired = FALSE;
 
 	eas_active_job_dequeue(node->cnc, node);
@@ -2120,7 +2151,9 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	    goto complete_request;
 	}
 	
-	validity = isResponseValid (msg, eas_request_base_UseMultipart (req),  &error);
+	status_code = node->mock_status ? node->mock_status : soup_message_get_status (msg);
+	reason_phrase = node->mock_status ? NULL : soup_message_get_reason_phrase (msg);
+	validity = isResponseValid (msg, status_code, reason_phrase, eas_request_base_UseMultipart (req), node->response_bytes, &error);
 
 	//if we get a reprovision error set flag - and move request to provisioning queue
 	if (VALID_12_1_REPROVISION == validity) {
@@ -2131,21 +2164,26 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		self->priv->provisioning_jobs = g_slist_append(self->priv->provisioning_jobs, (gpointer *)node);
         }
 
-	if (INVALID == validity || VALID_12_1_REPROVISION == validity ) 
+	if (INVALID == validity || VALID_12_1_REPROVISION == validity )
 	{
 		g_assert (error != NULL);
 		if (INVALID == validity &&
 		    getenv ("EAS_CAPTURE_RESPONSE") && (atoi (g_getenv ("EAS_CAPTURE_RESPONSE")) >= 1))
-
 		{
-			write_response_to_file ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
+			if (node->response_bytes) {
+				body_data = g_bytes_get_data (node->response_bytes, &body_len);
+				write_response_to_file ((WB_UTINY*) body_data, body_len);
+			}
 		}
 		goto complete_request;
 	}
 
-	if (!g_mock_response_list && getenv ("EAS_DEBUG") && atoi (g_getenv ("EAS_DEBUG")) >= 5) 
+	if (!g_mock_response_list && getenv ("EAS_DEBUG") && atoi (g_getenv ("EAS_DEBUG")) >= 5)
 	{
-		dump_wbxml_response ( (WB_UTINY*) msg->response_body->data, msg->response_body->length);
+		if (node->response_bytes) {
+			body_data = g_bytes_get_data (node->response_bytes, &body_len);
+			dump_wbxml_response ((WB_UTINY*) body_data, body_len);
+		}
 	}
 
 	if (VALID_NON_EMPTY == validity) {
@@ -2188,20 +2226,22 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 			g_free (fullPath);
 
 			g_object_unref (msg);
+			g_clear_pointer (&node->response_bytes, g_bytes_unref);
 			g_free(node);
 		} else {
 			WB_UTINY* wbxml = NULL;
 			WB_ULONG wbxml_length = 0;
-			
+
 			if ( (wbxml = (WB_UTINY *)eas_request_base_GetWbxmlFromChunking (req)) )
 			{
 				wbxml_length = eas_request_base_GetWbxmlFromChunkingSize (req);
 				dump_wbxml_response (wbxml, wbxml_length);
 			}
-			else
+			else if (node->response_bytes)
 			{
-				wbxml = (WB_UTINY *) msg->response_body->data;
-				wbxml_length = msg->response_body->length;
+				body_data = g_bytes_get_data (node->response_bytes, &body_len);
+				wbxml = (WB_UTINY *) body_data;
+				wbxml_length = body_len;
 			}
 			
 			if (!wbxml2xml ( wbxml ,
@@ -2285,6 +2325,9 @@ complete_request:
 	g_slist_foreach (priv->multipart_strings_list, (GFunc) g_free, NULL);
 	g_slist_free (priv->multipart_strings_list);
 	priv->multipart_strings_list = NULL;
+
+	g_clear_pointer (&node->response_bytes, g_bytes_unref);
+	g_clear_object (&node->cancellable);
 
 	g_debug ("Queued mock responses [%u]", g_slist_length (g_mock_response_list));
 
@@ -2518,8 +2561,8 @@ eas_connection_cancel_request(EasConnection* cnc,
 				// call_soup_session_cancel_message(request);
 				source = g_idle_source_new ();
 				g_source_set_priority(source, G_PRIORITY_HIGH);
-				g_source_set_callback (source, call_soup_session_cancel_message, request, NULL);
-				g_source_attach (source, priv->soup_context);	
+				g_source_set_callback (source, call_soup_session_cancel_message, node, NULL);
+				g_source_attach (source, priv->soup_context);
 				break;  // out of for loop
 			}
 		}
@@ -2623,49 +2666,53 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	gdouble proto_ver;      // eg 12.1
 	gint proto_ver_int;     // eg 120
 	gchar *endptr;
+	GBytes *response = NULL;
+	guint status;
+	const gchar *reason;
 	
-	// need our own synchronous session so we can use the sync soup call
-	soup_session = soup_session_sync_new_with_options (SOUP_SESSION_USE_NTLM,
-						     TRUE,
-						     SOUP_SESSION_TIMEOUT,
-						     120,
-						     NULL);	
+	// need our own session so we can use a synchronous call
+	soup_session = soup_session_new ();
+	soup_session_add_feature_by_type (soup_session, SOUP_TYPE_AUTH_NTLM);
+	soup_session_set_timeout (soup_session, 120);
 
 	// since we've created a new soup session, we'll need to authenticate
 	g_signal_connect (soup_session,
 			  "authenticate",
 			  G_CALLBACK (options_connection_authenticate),
-			  cnc);	
-	
+			  cnc);
+
 	msg = soup_message_new("OPTIONS", eas_account_get_uri(acc));
 
-	soup_message_headers_append (msg->request_headers,
+	soup_message_headers_append (soup_message_get_request_headers (msg),
 				     "MS-ASProtocolVersion",
 				     priv->proto_str);
-	soup_message_headers_append (msg->request_headers,
+	soup_message_headers_append (soup_message_get_request_headers (msg),
 				     "User-Agent",
 				     "libeas");
-	
-	// use the sync version of soup request and parse msg on completion
+
+	// use the synchronous soup call and parse msg on completion
 	// rather than go via handle_server_response which requires setting up
 	// eas request and message objects
 	g_debug("send options message");
-	soup_session_send_message(soup_session, msg);
+	response = soup_session_send_and_read (soup_session, msg, NULL, NULL);
+	if (response) g_bytes_unref (response);
 
 	// parse response store the list in GSettings (via EasAccount)
-	if (HTTP_STATUS_OK != msg->status_code) {
-		g_critical ("Failed with status [%d] : %s", msg->status_code, (msg->reason_phrase ? msg->reason_phrase : "-"));
+	status = soup_message_get_status (msg);
+	reason = soup_message_get_reason_phrase (msg);
+	if (HTTP_STATUS_OK != status) {
+		g_critical ("Failed with status [%d] : %s", status, (reason ? reason : "-"));
 		g_set_error (error,
 			     EAS_CONNECTION_ERROR,
 			     EAS_CONNECTION_ERROR_FAILED,
 			     _("HTTP request failed: %d — %s"),
-			     msg->status_code, msg->reason_phrase);
+			     status, reason);
 		ret = FALSE;
 		goto cleanup;
-	}	
+	}
 
 	// get supported protocols
-	protocol_versions = soup_message_headers_get_one(msg->response_headers, "MS-ASProtocolVersions");
+	protocol_versions = soup_message_headers_get_one(soup_message_get_response_headers (msg), "MS-ASProtocolVersions");
 
 	g_debug("server supports protocols %s", protocol_versions);
 
@@ -2715,12 +2762,12 @@ void update_policy_key(gpointer job, gpointer policy_key)
 {
 	EasNode *node = (EasNode*) job;
 	SoupMessage* msg = eas_request_base_GetSoupMessage (node->request);
-	SoupMessageHeaders *headers = msg->request_headers;
+	SoupMessageHeaders *headers = soup_message_get_request_headers (msg);
 
 	soup_message_headers_remove(headers, "X-MS-PolicyKey");
 
 	soup_message_headers_append (headers,
-				     "X-MS-PolicyKey", 
+				     "X-MS-PolicyKey",
 				     policy_key);
 }
 

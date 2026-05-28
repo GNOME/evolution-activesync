@@ -73,7 +73,7 @@ struct _EasRequestBasePrivate {
 
 G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
 
-void _eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, SoupBuffer *chunk);
+void _eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, GBytes *chunk);
 
 guchar* 
 eas_request_base_GetWbxmlFromChunking (EasRequestBase *self)
@@ -185,17 +185,17 @@ eas_request_base_GetRequestType (EasRequestBase* self)
 }
 
 void
-_eas_request_base_GotChunk (EasRequestBase *self, 
-                            SoupMessage *msg, 
-                            SoupBuffer *chunk)
+_eas_request_base_GotChunk (EasRequestBase *self,
+                            SoupMessage *msg,
+                            GBytes *chunk)
 {
 	g_debug ("_eas_request_base_GotChunk+-");
 }
 
 void
-eas_request_base_GotChunk (EasRequestBase *self, 
-                           SoupMessage *msg, 
-                           SoupBuffer *chunk)
+eas_request_base_GotChunk (EasRequestBase *self,
+                           SoupMessage *msg,
+                           GBytes *chunk)
 {
 	g_debug ("eas_request_base_GotChunk+-");
 	EAS_REQUEST_BASE_GET_CLASS (self)->do_GotChunk (self, msg, chunk);

@@ -148,9 +148,9 @@ eas_get_email_body_req_MessageComplete (EasGetEmailBodyReq* self,
 					GError* error);
 
 void
-eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, 
-                                 SoupMessage *msg, 
-                                 SoupBuffer *chunk);
+eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self,
+                                 SoupMessage *msg,
+                                 GBytes *chunk);
 
 
 G_END_DECLS

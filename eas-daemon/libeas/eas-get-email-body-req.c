@@ -288,16 +288,20 @@ finish:
 }
 
 void
-eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, SoupBuffer *chunk)
+eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, GBytes *chunk)
 {
 	EasGetEmailBodyReqPrivate *priv = EAS_GET_EMAIL_BODY_REQ_PRIVATE (self);
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 	gboolean chunkAccumulated = FALSE;
+	gsize chunk_size;
+	const guchar *chunk_data;
 
 	g_debug ("eas_get_email_body_req_GotChunk++");
-	
+
+	chunk_data = g_bytes_get_data (chunk, &chunk_size);
+
 	// If we are a multipart message ie we're an email being received
-	if (eas_request_base_UseMultipart (parent) && chunk->length > 0)
+	if (eas_request_base_UseMultipart (parent) && chunk_size > 0)
 	{
 		g_debug ("  GotChunk - Dealing with multipart response");
 		if (!priv->gotMetadata)
@@ -305,12 +309,12 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 			guint offset = priv->accBufSize;
 
 			g_debug ("  GotChunk - Accumulating Metadata");
-			
-			priv->accBufSize += chunk->length;
-			priv->accumulationBuffer = g_realloc (priv->accumulationBuffer, 
+
+			priv->accBufSize += chunk_size;
+			priv->accumulationBuffer = g_realloc (priv->accumulationBuffer,
 			                                      priv->accBufSize);
 
-			memcpy ( (priv->accumulationBuffer + offset), chunk->data, chunk->length);
+			memcpy ( (priv->accumulationBuffer + offset), chunk_data, chunk_size);
 
 			chunkAccumulated = TRUE;
 
@@ -328,9 +332,9 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 			{
 				gint i = 0;
 				gsize excess = 0;
-				
+
 				g_debug ("  GotChunk - All Metadata accumulated");
-				
+
 				for (; i < priv->numParts; ++i)
 				{
 					EasMultipartTuple* item = g_new (EasMultipartTuple, 1);
@@ -355,14 +359,14 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 				excess = priv->accBufSize - (4 + priv->numParts * 8);
 
 				g_debug ("  GotChunk - Size of excess after Metadata = [%zu]", excess);
-				
+
 				// We have more than just the meta data buffered
 				if (excess > 0)
 				{
 					guchar *tmp = g_malloc0 (excess);
 
 					g_debug ("  GotChunk - Adjust buffer to just hold excess");
-					
+
 					memcpy (tmp, (priv->accumulationBuffer + (4 + priv->numParts * 8)), excess);
 					g_free (priv->accumulationBuffer);
 					priv->accumulationBuffer = tmp;
@@ -384,28 +388,28 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 			if (!eas_request_base_GetWbxmlFromChunking (parent))
 			{
 				EasMultipartTuple* item = g_slist_nth_data (priv->parts, 0);
-				
+
 				g_debug ("  GotChunk - WBXML Part of message has not been accumulated");
-				
+
 				if (!chunkAccumulated)
 				{
 					guint offset = priv->accBufSize;
 
 					g_debug ("  GotChunk - WBXML extends after initial chunk, need to extend accumulation buffer");
 
-					priv->accBufSize += chunk->length;
-					priv->accumulationBuffer = g_realloc (priv->accumulationBuffer, 
+					priv->accBufSize += chunk_size;
+					priv->accumulationBuffer = g_realloc (priv->accumulationBuffer,
 							                      priv->accBufSize);
 
-					memcpy ( (priv->accumulationBuffer + offset), chunk->data, chunk->length);
+					memcpy ( (priv->accumulationBuffer + offset), chunk_data, chunk_size);
 
 					chunkAccumulated = TRUE;
 				}
-				
+
 				if (priv->accBufSize >= item->itemsize)
 				{
 					gsize excess = 0;
-					
+
 					g_debug ("  GotChunk - All of WBXML is now held in the accumulation buffer");
 					eas_request_base_SetWbxmlFromChunking (parent, priv->accumulationBuffer, item->itemsize);
 
@@ -437,7 +441,7 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 				{
 					g_debug ("  GotChunk - Write any data held in the accumulation buffer to file and then clear the buffer");
 					eas_get_email_msg_write_chunk_to_file(priv->emailBodyMsg,
-					                                      priv->accumulationBuffer, 
+					                                      priv->accumulationBuffer,
 							                      priv->accBufSize);
 
 					g_free (priv->accumulationBuffer);
@@ -448,8 +452,8 @@ eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, Sou
 				{
 					g_debug ("  GotChunk - MIME Data, Don't accumulate, write straight to file");
 					eas_get_email_msg_write_chunk_to_file(priv->emailBodyMsg,
-					                                      (const guchar *)chunk->data, 
-							                      chunk->length);
+					                                      chunk_data,
+							                      chunk_size);
 				}
 			}
 		}
