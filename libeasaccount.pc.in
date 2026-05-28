@@ -1,15 +1,14 @@
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-libdir=@libdir@
-includedir=@includedir@
-datarootdir=@datarootdir@
-datadir=@datadir@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@LIB_INSTALL_DIR@
+includedir=@INCLUDE_INSTALL_DIR@
+datarootdir=@SHARE_INSTALL_PREFIX@
+datadir=@SHARE_INSTALL_PREFIX@
 
 privincludedir=@privincludedir@
 
 Name: libeasaccount
 Description: Client library for configuring ActiveSync dæmon accounts
-Version: @VERSION@
+Version: @PROJECT_VERSION@
 Requires.private: glib-2.0 libedataserver-1.2
 Libs: -L${libdir} -leasaccount
 Cflags: -I${privincludedir}/eas-account

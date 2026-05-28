@@ -1,0 +1,118 @@
+set(SOURCES
+	eas-2way-sync-req.c
+	eas-2way-sync-req.h
+	eas-add-item-req.c
+	eas-add-item-req.h
+	eas-cal-info-translator.c
+	eas-cal-info-translator.h
+	eas-con-info-translator.c
+	eas-con-info-translator.h
+	eas-connection.c
+	eas-connection.h
+	eas-connection-errors.c
+	eas-connection-errors.h
+	eas-delete-req.c
+	eas-delete-req.h
+	eas-email-info-translator.c
+	eas-email-info-translator.h
+	eas-get-email-attachment-msg.c
+	eas-get-email-attachment-msg.h
+	eas-get-email-attachment-req.c
+	eas-get-email-attachment-req.h
+	eas-get-email-body-msg.c
+	eas-get-email-body-msg.h
+	eas-get-email-body-req.c
+	eas-get-email-body-req.h
+	eas-get-item-estimate-msg.c
+	eas-get-item-estimate-msg.h
+	eas-get-item-estimate-req.c
+	eas-get-item-estimate-req.h
+	eas-move-email-msg.c
+	eas-move-email-msg.h
+	eas-move-email-req.c
+	eas-move-email-req.h
+	eas-msg-base.c
+	eas-msg-base.h
+	eas-ping-msg.c
+	eas-ping-msg.h
+	eas-ping-req.c
+	eas-ping-req.h
+	eas-provision-msg.c
+	eas-provision-msg.h
+	eas-provision-req.c
+	eas-provision-req.h
+	eas-request-base.c
+	eas-request-base.h
+	eas-send-email-msg.c
+	eas-send-email-msg.h
+	eas-send-email-req.c
+	eas-send-email-req.h
+	eas-sync-folder-hierarchy-req.c
+	eas-sync-folder-hierarchy-req.h
+	eas-sync-folder-msg.c
+	eas-sync-folder-msg.h
+	eas-sync-msg.c
+	eas-sync-msg.h
+	eas-sync-req.c
+	eas-sync-req.h
+	eas-update-email-req.c
+	eas-update-email-req.h
+	eas-update-item-req.c
+	eas-update-item-req.h
+	eas-utils.c
+	eas-utils.h
+	serialise_utils.c
+	serialise_utils.h
+)
+
+add_library(eas STATIC ${SOURCES})
+
+target_compile_definitions(eas PRIVATE
+	-DG_LOG_DOMAIN=\"libeas\"
+	-DASKPASS=\"${ASKPASS}\"
+)
+
+target_compile_options(eas PUBLIC
+	${GLIB_CFLAGS}
+	${GIO_CFLAGS}
+	${EDATASERVER_CFLAGS}
+	${DBUS_GLIB_CFLAGS}
+	${LIBXML_CFLAGS}
+	${SOUP_CFLAGS}
+	${WBXML_CFLAGS}
+	${LIBICAL_CFLAGS}
+	${LIBEBOOK_CFLAGS}
+	${LIBSECRET_CFLAGS}
+)
+
+target_include_directories(eas PUBLIC
+	${CMAKE_BINARY_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_SOURCE_DIR}/libeasclient
+	${CMAKE_SOURCE_DIR}/libeasaccount/src
+	${GLIB_INCLUDE_DIRS}
+	${GIO_INCLUDE_DIRS}
+	${EDATASERVER_INCLUDE_DIRS}
+	${DBUS_GLIB_INCLUDE_DIRS}
+	${LIBXML_INCLUDE_DIRS}
+	${SOUP_INCLUDE_DIRS}
+	${WBXML_INCLUDE_DIRS}
+	${LIBICAL_INCLUDE_DIRS}
+	${LIBEBOOK_INCLUDE_DIRS}
+	${LIBSECRET_INCLUDE_DIRS}
+)
+
+target_link_libraries(eas
+	easaccount
+	easclient
+	${GLIB_LDFLAGS}
+	${GIO_LDFLAGS}
+	${EDATASERVER_LDFLAGS}
+	${DBUS_GLIB_LDFLAGS}
+	${LIBXML_LDFLAGS}
+	${SOUP_LDFLAGS}
+	${WBXML_LDFLAGS}
+	${LIBICAL_LDFLAGS}
+	${LIBEBOOK_LDFLAGS}
+	${LIBSECRET_LDFLAGS}
+)

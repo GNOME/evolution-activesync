@@ -1,59 +1,25 @@
 # Specific files to ignore
-Makefile
-Makefile.in
-config.h
-config.h.in
-config.log
-config.status
-configure
-autom4te.cache
-check_tests/check_eas
-check_tests/eas-daemon_test.log
-check_tests/eas-daemon_test.xml
-.deps
-.libs
-libtool
-stamp-h1
-eas-daemon/src/activesyncd
-eas-daemon/tests/activesyncd-test-001
-eas-daemon/data/org.meego.activesyncd.service
-libeasmail/tests/libeasmail_test
-libeasaccount/tests/libeasaccount_test
 TODO.tasks
 TODO.list
-libeascal/aclocal.m4
-eas-daemon/src/eas-marshal.c
-eas-daemon/src/eas-marshal.h
-libeasmail/src/eas-marshal.c
-libeasmail/src/eas-marshal.h
-po/POTFILES
-po/stamp-it
+
+# CMake build directories
+build/
+_build*/
+
+# Generated files
+eas-daemon/data/org.meego.activesyncd.service
+po/*.gmo
 
 # Folders to ignore
-config/*
-m4/*
 .anjuta/*
-eas-daemon/config/*
-eas-daemon/m4/*
-libeasmail/config/*
-libeasmail/m4/*
-libeascal/m4/*
-aclocal.m4
-QtActivesyncdConfig-build-desktop/
 
-# File paterns to ignore
+# File patterns to ignore
 *.o
-*.lo
-*.la
-*stub.h
 *.anjuta*
 *.*~
 *.orig
 *.bak
 *.pro.user
-*.in
-*.pc
-po/*.gmo
 
 
 
