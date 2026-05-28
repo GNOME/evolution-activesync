@@ -114,19 +114,6 @@ AC_SUBST(ASKPASS)
 
 GLIB_GSETTINGS
 
-AC_ARG_ENABLE(qtconfig,
-              AS_HELP_STRING([--enable-qtconfig],
-                             [Compile the (obsolete) Qt configuration UI]),
-              [enable_qtconfig="$enableval"], [enable_qtconfig="no"])
-
-if test "$enable_qtconfig" = "yes"; then
-   AT_WITH_QT(,no_keywords,,[have_qt=no],[have_qt=yes])
-   if (test "$have_qt" = "no"); then
-      AC_MSG_NOTICE([Qt build environment not found; will not build QtActiveSyncdConfig tool])
-      enable_qtconfig=no
-   fi
-fi
-AM_CONDITIONAL([ENABLE_QT_CONFIG_TOOL],[test "$enable_qtconfig" = "yes"])
 
 AC_ARG_ENABLE(camel-backend,
               AS_HELP_STRING([--disable-camel-backend],
@@ -156,7 +143,7 @@ AC_CONFIG_FILES([
     camel/Makefile
     libevoeas/Makefile
 
-    QtActivesyncdConfig/Makefile
+
     po/Makefile.in
     libeasaccount.pc
     libeasclient.pc
