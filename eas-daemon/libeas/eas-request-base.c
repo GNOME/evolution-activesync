@@ -69,29 +69,32 @@ struct _EasRequestBasePrivate {
 	gsize wbxml_length;
 };
 
-#define EAS_REQUEST_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_REQUEST_BASE, EasRequestBasePrivate))
 
-G_DEFINE_TYPE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (EasRequestBase, eas_request_base, G_TYPE_OBJECT);
 
 void _eas_request_base_GotChunk (EasRequestBase *self, SoupMessage *msg, GBytes *chunk);
 
 guchar* 
 eas_request_base_GetWbxmlFromChunking (EasRequestBase *self)
 {
-	return EAS_REQUEST_BASE_PRIVATE (self)->wbxml;
+	EasRequestBasePrivate *priv = eas_request_base_get_instance_private (self);
+
+	return priv->wbxml;
 }
 
 gsize 
 eas_request_base_GetWbxmlFromChunkingSize (EasRequestBase *self)
 {
-	return EAS_REQUEST_BASE_PRIVATE (self)->wbxml_length;
+	EasRequestBasePrivate *priv = eas_request_base_get_instance_private (self);
+
+	return priv->wbxml_length;
 }
 
 
 void 
 eas_request_base_SetWbxmlFromChunking (EasRequestBase *self, guchar* wbxml, gsize wbxml_length)
 {
-	EasRequestBasePrivate *priv = EAS_REQUEST_BASE_PRIVATE (self);
+	EasRequestBasePrivate *priv = eas_request_base_get_instance_private(self);
 
 	g_free (priv->wbxml);
 	priv->wbxml_length = 0;
@@ -109,7 +112,7 @@ eas_request_base_init (EasRequestBase *object)
 {
 	EasRequestBasePrivate *priv;
 
-	object->priv = priv = EAS_REQUEST_BASE_PRIVATE (object);
+	object->priv = priv = eas_request_base_get_instance_private(object);
 
 	g_debug ("eas_request_base_init++");
 
@@ -150,7 +153,7 @@ eas_request_base_dispose (GObject *object)
 static void
 eas_request_base_finalize (GObject *object)
 {
-	EasRequestBasePrivate *priv = EAS_REQUEST_BASE_PRIVATE (object);
+	EasRequestBasePrivate *priv = eas_request_base_get_instance_private(EAS_REQUEST_BASE (object));
 	
 	g_debug ("eas_request_base_finalize++");
 	g_free (priv->wbxml);
@@ -165,8 +168,6 @@ eas_request_base_class_init (EasRequestBaseClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_request_base_class_init++");
-	g_type_class_add_private (klass, sizeof (EasRequestBasePrivate));
-
 	object_class->finalize = eas_request_base_finalize;
 	object_class->dispose = eas_request_base_dispose;
 

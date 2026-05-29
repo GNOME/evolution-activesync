@@ -61,10 +61,9 @@ struct _EasPingMsgPrivate {
 	EasPingReqState state;
 };
 
-#define EAS_PING_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_PING_MSG, EasPingMsgPrivate))
 
 
-G_DEFINE_TYPE (EasPingMsg, eas_ping_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasPingMsg, eas_ping_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_ping_msg_init (EasPingMsg *object)
@@ -72,7 +71,7 @@ eas_ping_msg_init (EasPingMsg *object)
 	EasPingMsgPrivate *priv;
 	g_debug ("eas_ping_msg_init++");
 
-	object->priv = priv = EAS_PING_MSG_PRIVATE (object);
+	object->priv = priv = eas_ping_msg_get_instance_private(object);
 
 	g_debug ("eas_ping_msg_init--");
 }
@@ -87,8 +86,6 @@ static void
 eas_ping_msg_class_init (EasPingMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (EasPingMsgPrivate));
 
 	object_class->finalize = eas_ping_msg_finalize;
 }

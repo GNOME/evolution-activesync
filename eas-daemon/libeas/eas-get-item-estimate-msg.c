@@ -57,16 +57,14 @@
 #include <wbxml/wbxml.h>
 #include <glib.h>
 
-G_DEFINE_TYPE (EasGetItemEstimateMsg, eas_get_item_estimate_msg, EAS_TYPE_MSG_BASE);
-
-#define EAS_GET_ITEM_ESTIMATE_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_ITEM_ESTIMATE_MSG, EasGetItemEstimateMsgPrivate))
-
 struct _EasGetItemEstimateMsgPrivate {
 	gchar* folder_id;
 	gchar* sync_key;
 	guint estimate;
 	EasConnection *connection;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetItemEstimateMsg, eas_get_item_estimate_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_get_item_estimate_msg_init (EasGetItemEstimateMsg *object)
@@ -76,7 +74,7 @@ eas_get_item_estimate_msg_init (EasGetItemEstimateMsg *object)
 	/* initialization code: */
 	g_debug ("eas_get_item_estimate_msg_init++");
 
-	object->priv = priv = EAS_GET_ITEM_ESTIMATE_MSG_PRIVATE (object);
+	object->priv = priv = eas_get_item_estimate_msg_get_instance_private(object);
 
 	priv->sync_key = NULL;
 	priv->folder_id = NULL;
@@ -114,8 +112,6 @@ static void
 eas_get_item_estimate_msg_class_init (EasGetItemEstimateMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (EasGetItemEstimateMsgPrivate));
 
 	object_class->finalize = eas_get_item_estimate_msg_finalize;
 	object_class->dispose = eas_get_item_estimate_msg_dispose;

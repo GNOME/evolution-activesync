@@ -125,19 +125,19 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid)
 	gchar **key_list;
 	int i = 0;
 	int len = 0;
+	gchar *account_address;
+	GSettings *setting;
 
 	g_debug("eas_account_list_set_account_info++");
-	
-	/* g_debug("eas_account_list_set_account_info++"); */
+
 	g_return_if_fail (acc_info != NULL);
 
 	acc_info->uid = g_strdup(uid); // Ownership passed to the account into structure.
 
-	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+	account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
 
-		g_debug("Path is %s\n", account_address);
-		
-	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+	g_debug("Path is %s\n", account_address);
+	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 
 	g_free (account_address);
 	account_address = NULL;
@@ -244,7 +244,7 @@ g_settings_get_all_accounts (GSettings *setting)
 }
 
 static void
-gsettings_accounts_changed (GSettings *setting, gchar *key, gpointer user_data)
+gsettings_accounts_changed (GSettings *setting, const gchar *key, gpointer user_data)
 {
 	GSList *list = NULL, *l= NULL, *new_accounts = NULL;
 	EasAccount *account = NULL;
@@ -460,22 +460,22 @@ void
 eas_account_list_save_account(EasAccountList *account_list,
 						EasAccount *account)
 {
-	gchar* uid =NULL;
-	
+	gchar* uid = NULL;
+	gchar *account_address;
+	GSettings *setting;
+
 	g_debug("eas_account_list_save_account++");
 
 	uid = eas_account_get_uid(account);
-	if(!uid){
+	if (!uid) {
 		g_warning("account must have a uid");
 		return;
 	}
 
-	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+	account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
 
-
-		g_debug("Path is %s\n", account_address);
-		
-	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+	g_debug("Path is %s\n", account_address);
+	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
 	g_free (account_address);
 	account_address = NULL;
@@ -524,17 +524,19 @@ static void
 eas_account_list_save_account_from_info(EasAccountList *account_list,
 						EasAccountInfo *acc_info)
 {
-	gchar* uid =NULL;
+	gchar* uid = NULL;
+	gchar *account_address;
+	GSettings *setting;
 
 	g_debug("eas_account_list_save_account++");
-	
+
 	uid = acc_info->uid;
 
-	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+	account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
 
-		g_debug("Path is %s\n", account_address);
-		
-	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+	g_debug("Path is %s\n", account_address);
+
+	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
 	g_free (account_address);
 	account_address = NULL;
@@ -634,19 +636,21 @@ void
 eas_account_list_save_item(EasAccountList *account_list,
 						EasAccount *account, eas_account_item_t type)
 {
-	gchar* uid =NULL;
+	gchar* uid = NULL;
+	gchar *account_address;
+	GSettings *setting;
 
 	g_debug("eas_account_list_save_item++");
 	/* pre-condition: account must have a uid */
 	g_return_if_fail (eas_account_get_uid(account) != NULL);
 
 	uid = eas_account_get_uid(account);
-	
-	gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
 
-		g_debug("Path is %s\n", account_address);
-		
-	GSettings *setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+	account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", uid);
+
+	g_debug("Path is %s\n", account_address);
+
+	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
 	g_free (account_address);
 	account_address = NULL;

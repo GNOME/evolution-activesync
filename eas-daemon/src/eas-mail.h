@@ -120,7 +120,7 @@ gboolean eas_mail_delete_email (EasMail* easMailObj,
 				const gchar* account_uid,
 				const gchar *sync_key,
 				const gchar *folder_id,
-				const gchar **server_ids_array,
+				const gchar * const *server_ids_array,
 				GDBusMethodInvocation* context);
 /*
 	fetch an email body
@@ -163,7 +163,7 @@ gboolean eas_mail_update_emails (EasMail *self,
 				 const gchar* account_uid,
 				 const gchar *sync_key,
 				 const gchar *folder_id,
-				 const gchar **serialised_email_array,
+				 const gchar * const *serialised_email_array,
 				 GDBusMethodInvocation* context);
 
 /*
@@ -171,7 +171,7 @@ gboolean eas_mail_update_emails (EasMail *self,
  */
 gboolean eas_mail_move_emails_to_folder (EasMail* easMailObj,
 					 const gchar* account_uid,
-					 const gchar** server_ids_array,
+					 const gchar * const * server_ids_array,
 					 const gchar *src_folder_id,
 					 const gchar *dest_folder_id,
 					 GDBusMethodInvocation* context);
@@ -182,7 +182,7 @@ gboolean eas_mail_move_emails_to_folder (EasMail* easMailObj,
 gboolean eas_mail_watch_email_folders (EasMail* easMailObj,
 				       const gchar* account_uid,
 				       const gchar * heartbeat,
-				       const gchar **folder_array,
+				       const gchar * const *folder_array,
 				       GDBusMethodInvocation* context);
 
 G_END_DECLS

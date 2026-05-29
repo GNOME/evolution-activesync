@@ -72,10 +72,9 @@ struct _EasSyncMsgPrivate {
 	EasItemType ItemType;
 };
 
-#define EAS_SYNC_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_MSG, EasSyncMsgPrivate))
 
 
-G_DEFINE_TYPE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasSyncMsg, eas_sync_msg, EAS_TYPE_MSG_BASE);
 
 //static void eas_sync_parse_item_add(EasSyncMsg *self, xmlNode *node, GError** error);
 
@@ -85,7 +84,7 @@ eas_sync_msg_init (EasSyncMsg *object)
 	EasSyncMsgPrivate *priv;
 	g_debug ("eas_sync_msg_init++");
 
-	object->priv = priv = EAS_SYNC_MSG_PRIVATE (object);
+	object->priv = priv = eas_sync_msg_get_instance_private(object);
 
 	priv->more_available = FALSE;
 	priv->sync_key_in = NULL;
@@ -130,8 +129,6 @@ static void
 eas_sync_msg_class_init (EasSyncMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (EasSyncMsgPrivate));
 
 	object_class->finalize = eas_sync_msg_finalize;
 }
@@ -252,7 +249,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 				}
 				break;
 				case EAS_ITEM_CALENDAR: {
-					xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
+					xmlNode *add_node = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
 					xmlNewNs (node, (xmlChar *) "Calendar:", (xmlChar *) "calendar");
 					if (iterator->data) {
 						//TODO: call translator to get client ID and  encoded application data
@@ -261,8 +258,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 						EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
 
 						// create the server_id node
-						xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
-						app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
+						xmlNewChild (add_node, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
+						app_data = xmlNewChild (add_node, NULL, (xmlChar *) "ApplicationData", NULL);
 						// translator deals with app data
 						eas_cal_info_translator_parse_request (doc, app_data, cal_info);
 						// TODO error handling and freeing
@@ -270,7 +267,7 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 				}
 				break;
 				case EAS_ITEM_CONTACT: {
-					xmlNode *added = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
+					xmlNode *add_node = xmlNewChild (command, NULL, (xmlChar *) "Add", NULL);
 					xmlNewNs (node, (xmlChar *) "Contacts2:", (xmlChar *) "contacts2");
 					if (iterator->data) {
 						//TODO: call translator to get client ID and  encoded application data
@@ -279,8 +276,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 						EasItemInfo *cal_info = (EasItemInfo*) iterator->data;
 
 						// create the server_id node
-						xmlNewChild (added, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
-						app_data = xmlNewChild (added, NULL, (xmlChar *) "ApplicationData", NULL);
+						xmlNewChild (add_node, NULL, (xmlChar *) "ClientId", (xmlChar*) cal_info->client_id);
+						app_data = xmlNewChild (add_node, NULL, (xmlChar *) "ApplicationData", NULL);
 						// translator deals with app data
 						eas_con_info_translator_parse_request (doc, app_data, cal_info);
 						// TODO error handling and freeing

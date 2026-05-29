@@ -55,11 +55,6 @@
 #include "../../libeasaccount/src/eas-account-list.h"
 #include <string.h>
 
-
-G_DEFINE_TYPE (EasUpdateItemReq, eas_update_item_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_UPDATE_ITEM_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_UPDATE_ITEM_REQ, EasUpdateItemReqPrivate))
-
 struct _EasUpdateItemReqPrivate {
 	EasSyncMsg* sync_msg;
 	gchar* account_id;
@@ -69,6 +64,8 @@ struct _EasUpdateItemReqPrivate {
 	GSList *serialised_calendar;
 };
 
+G_DEFINE_TYPE_WITH_PRIVATE (EasUpdateItemReq, eas_update_item_req, EAS_TYPE_REQUEST_BASE);
+
 static void
 eas_update_item_req_init (EasUpdateItemReq *object)
 {
@@ -76,7 +73,7 @@ eas_update_item_req_init (EasUpdateItemReq *object)
 	EasUpdateItemReqPrivate *priv;
 	g_debug ("eas_update_item_req_init++");
 
-	object->priv = priv = EAS_UPDATE_ITEM_REQ_PRIVATE (object);
+	object->priv = priv = eas_update_item_req_get_instance_private(object);
 
 	priv->sync_msg = NULL;
 	priv->account_id = NULL;
@@ -137,14 +134,11 @@ eas_update_item_req_class_init (EasUpdateItemReqClass *klass)
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_update_item_req_MessageComplete;
 
-	g_type_class_add_private (klass, sizeof (EasUpdateItemReqPrivate));
-
 	object_class->finalize = eas_update_item_req_finalize;
 	object_class->dispose = eas_update_item_req_dispose;
 
 	g_debug ("eas_update_item_req_class_init--");
 }
-
 
 EasUpdateItemReq *eas_update_item_req_new (const gchar* account_id,
 					   const gchar *sync_key,
@@ -227,7 +221,6 @@ eas_update_item_req_Activate (EasUpdateItemReq *self, GError **error)
 	return success;
 }
 
-
 gboolean eas_update_item_req_MessageComplete (EasUpdateItemReq *self,
 					      xmlDoc* doc,
 					      GError* error)
@@ -261,5 +254,4 @@ finish:
 	g_debug ("eas_update_item_req_MessageComplete--");
 	return TRUE;
 }
-
 

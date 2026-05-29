@@ -61,6 +61,6 @@
  *      A null-terminated array
  * @return Number of items in the array
  */
-guint array_length (const gchar **array);
+guint array_length (const gchar * const *array);
 
 #endif  // _EAS_UTILS_H_

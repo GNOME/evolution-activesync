@@ -50,21 +50,18 @@
  *
  */
 
-
 #include "eas-utils.h"
 #include "eas-get-item-estimate-msg.h"
 #include "eas-get-item-estimate-req.h"
 #include "serialise_utils.h"
-
-G_DEFINE_TYPE (EasGetItemEstimateReq, eas_get_item_estimate_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_GET_ITEM_ESTIMATE_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_ITEM_ESTIMATE_REQ, EasGetItemEstimateReqPrivate))
 
 struct _EasGetItemEstimateReqPrivate {
 	EasGetItemEstimateMsg* get_item_estimate_msg;
 	gchar* sync_key;
 	gchar* folder_id;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetItemEstimateReq, eas_get_item_estimate_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_get_item_estimate_req_init (EasGetItemEstimateReq *object)
@@ -74,7 +71,7 @@ eas_get_item_estimate_req_init (EasGetItemEstimateReq *object)
 
 	g_debug ("eas_get_item_estimate_req_init++");
 
-	object->priv = priv = EAS_GET_ITEM_ESTIMATE_REQ_PRIVATE (object);
+	object->priv = priv = eas_get_item_estimate_req_get_instance_private(object);
 
 	priv->get_item_estimate_msg = NULL;
 	priv->sync_key = NULL;
@@ -130,14 +127,11 @@ eas_get_item_estimate_req_class_init (EasGetItemEstimateReqClass *klass)
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_get_item_estimate_req_MessageComplete;
 
-	g_type_class_add_private (klass, sizeof (EasGetItemEstimateReqPrivate));
-
 	object_class->finalize = eas_get_item_estimate_req_finalize;
 	object_class->dispose = eas_get_item_estimate_req_dispose;
 
 	g_debug ("eas_get_item_estimate_req_class_init--");
 }
-
 
 EasGetItemEstimateReq *eas_get_item_estimate_req_new (const gchar *sync_key,
 						      const gchar *folder_id,
@@ -202,7 +196,6 @@ finish:
 	return ret;
 }
 
-
 gboolean
 eas_get_item_estimate_req_MessageComplete (EasGetItemEstimateReq *self, xmlDoc* doc, GError* error_in)
 {
@@ -242,6 +235,4 @@ finish:
 	g_debug ("eas_get_item_estimate_req_MessageComplete--");
 	return TRUE;
 }
-
-
 

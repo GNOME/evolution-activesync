@@ -53,7 +53,7 @@
 #include "eas-utils.h"
 
 // gets the number of items in a null terminated array (of strings)
-guint array_length (const gchar **array)
+guint array_length (const gchar * const *array)
 {
 	guint i = 0;
 

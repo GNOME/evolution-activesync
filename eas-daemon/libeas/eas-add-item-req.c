@@ -56,10 +56,6 @@
 #include "../../libeasaccount/src/eas-account-list.h"
 #include <string.h>
 
-G_DEFINE_TYPE (EasAddItemReq, eas_add_item_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_ADD_ITEM_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ADD_ITEM_REQ, EasAddItemReqPrivate))
-
 struct _EasAddItemReqPrivate {
 	EasSyncMsg* sync_msg;
 	gchar* account_id;
@@ -69,6 +65,8 @@ struct _EasAddItemReqPrivate {
 	GSList *serialised_calendar;
 };
 
+G_DEFINE_TYPE_WITH_PRIVATE (EasAddItemReq, eas_add_item_req, EAS_TYPE_REQUEST_BASE);
+
 static void
 eas_add_item_req_init (EasAddItemReq *object)
 {
@@ -76,7 +74,7 @@ eas_add_item_req_init (EasAddItemReq *object)
 	EasAddItemReqPrivate *priv;
 	g_debug ("eas_add_item_req_init++");
 
-	object->priv = priv = EAS_ADD_ITEM_REQ_PRIVATE (object);
+	object->priv = priv = eas_add_item_req_get_instance_private(object);
 
 	priv->sync_msg = NULL;
 	priv->account_id = NULL;
@@ -136,8 +134,6 @@ eas_add_item_req_class_init (EasAddItemReqClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasAddItemReqPrivate));
-
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_add_item_req_MessageComplete;
 
 	object_class->finalize = eas_add_item_req_finalize;
@@ -145,7 +141,6 @@ eas_add_item_req_class_init (EasAddItemReqClass *klass)
 
 	g_debug ("eas_add_item_req_class_init--");
 }
-
 
 EasAddItemReq *
 eas_add_item_req_new (const gchar* account_id,
@@ -220,7 +215,6 @@ eas_add_item_req_Activate (EasAddItemReq *self, GError **error)
 	g_debug ("eas_add_item_req_Activate--");
 	return success;
 }
-
 
 gboolean
 eas_add_item_req_MessageComplete (EasAddItemReq *self,

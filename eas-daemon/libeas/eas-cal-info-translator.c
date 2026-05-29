@@ -249,8 +249,6 @@ _eas2cal_get_datetime (const icalcomponent *comp, const icalproperty *prop) {
     return ret;
 }
 
-/** missing in libical header files?! */
-extern icalcomponent *icalproperty_get_parent (const icalproperty *prop);
 
 /**
  * In contrast to icalproperty_get_recurrenceid(), this function sets the
@@ -701,15 +699,21 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 	// TODO Check decode of timezone for endianess problems
 
 	if (timeZoneRawBytesSize == sizeof (EasTimeZone)) {
+		guint16 standardName[32];
+		guint16 daylightName[32];
+
 		memcpy (&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
 		g_free (timeZoneRawBytes);
 		timeZoneRawBytes = NULL;
 
+		memcpy (standardName, timeZoneStruct.StandardName, sizeof (standardName));
+		memcpy (daylightName, timeZoneStruct.DaylightName, sizeof (daylightName));
+
 		{
-			char *standard = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.StandardName,
-							   (sizeof (timeZoneStruct.StandardName) / sizeof (guint16)), NULL, NULL, NULL);
-			char *daylight = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.DaylightName,
-							   (sizeof (timeZoneStruct.DaylightName) / sizeof (guint16)), NULL, NULL, NULL);
+			char *standard = g_utf16_to_utf8 ( (const gunichar2*) standardName,
+							   G_N_ELEMENTS (standardName), NULL, NULL, NULL);
+			char *daylight = g_utf16_to_utf8 ( (const gunichar2*) daylightName,
+							   G_N_ELEMENTS (daylightName), NULL, NULL, NULL);
 			g_debug ("process timezone %s => bias %d, standard bias %d, daylight bias %d, standard '%s', daylight '%s'",
 				 timeZoneBase64Buffer,
 				 timeZoneStruct.Bias,
@@ -740,8 +744,8 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 			// (Doesn't matter if it's not an exact description: this field is only used internally
 			// during iCalendar encoding/decoding)
 			// Note: using tzid here rather than value, as we need it elsewhere in this function
-			*tzid = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.StandardName,
-						  (sizeof (timeZoneStruct.StandardName) / sizeof (guint16)), NULL, NULL, NULL);
+			*tzid = g_utf16_to_utf8 ( (const gunichar2*) standardName,
+						  G_N_ELEMENTS (standardName), NULL, NULL, NULL);
 			// If no StandardName was supplied, we can just use a temporary name instead.
 			// No need to support more than one: the EAS calendar will only have one Timezone
 			// element. And no need to localise, as it's only used internally.
@@ -792,7 +796,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 			prop = icalproperty_new_tzoffsetto (standardUtcOffsetMins * SECONDS_PER_MINUTE);
 			icalcomponent_add_property (xstandard, prop);
 
-			value = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.StandardName, (sizeof (timeZoneStruct.StandardName) / sizeof (guint16)), NULL, NULL, NULL);
+			value = g_utf16_to_utf8 ( (const gunichar2*) standardName, G_N_ELEMENTS (standardName), NULL, NULL, NULL);
 			if (value) {
 				if (strlen (value)) {
 					prop = icalproperty_new_tzname (value);
@@ -848,7 +852,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 				prop = icalproperty_new_tzoffsetto (daylightUtcOffsetMins * SECONDS_PER_MINUTE);
 				icalcomponent_add_property (xdaylight, prop);
 
-				value = g_utf16_to_utf8 ( (const gunichar2*) timeZoneStruct.DaylightName, (sizeof (timeZoneStruct.DaylightName) / sizeof (guint16)), NULL, NULL, NULL);
+				value = g_utf16_to_utf8 ( (const gunichar2*) daylightName, G_N_ELEMENTS (daylightName), NULL, NULL, NULL);
 				if (value) {
 					if (strlen (value)) {
 						prop = icalproperty_new_tzname (value);
@@ -1364,13 +1368,13 @@ static gboolean _eas2ical_add_exception_events (icalcomponent* vcalendar,
 			// Categories
 			if ( (value = (gchar*) g_hash_table_lookup (exceptionProperties, EAS_ELEMENT_CATEGORIES)) != NULL) {
 				GString* category = g_string_new ("");
-				int index, categoriesLength;
-				for (index = 0, categoriesLength = strlen (value); index < categoriesLength; index++) {
-					if (value[index] == '/' && index + 1 != categoriesLength && value[index + 1] == ',') {
+				int cat_index, categoriesLength;
+				for (cat_index = 0, categoriesLength = strlen (value); cat_index < categoriesLength; cat_index++) {
+					if (value[cat_index] == '/' && cat_index + 1 != categoriesLength && value[cat_index + 1] == ',') {
 						// ignore
-					} else if (value[index] == ',' && index != 0 && value[index - 1] == '/')
+					} else if (value[cat_index] == ',' && cat_index != 0 && value[cat_index - 1] == '/')
 						category = g_string_append_c (category, ',');
-					else if (value[index] == ',' && index != 0 && value[index - 1] != '/') {
+					else if (value[cat_index] == ',' && cat_index != 0 && value[cat_index - 1] != '/') {
 
 
 						prop = icalproperty_new_categories (category->str);
@@ -1379,7 +1383,7 @@ static gboolean _eas2ical_add_exception_events (icalcomponent* vcalendar,
 						category = g_string_new ("");
 
 					} else
-						category = g_string_append_c (category, index[value]);
+						category = g_string_append_c (category, cat_index[value]);
 
 				}
 
@@ -2435,7 +2439,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				const gchar* start = NULL;
 				gchar *modified = NULL;
 
-				xmlNodePtr exception = NULL;
+				xmlNodePtr exception_node = NULL;
 
 				// Create the <Exceptions> container element if not already present
 				if (exceptions == NULL) {
@@ -2443,7 +2447,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				}
 
 				// Now create the <Exception> element
-				exception = xmlNewChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+				exception_node = xmlNewChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
 
 				start = icalproperty_get_value_as_string (prop);
 				if (strlen (start) <= 9) {
@@ -2464,7 +2468,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 						modified = g_strdup (start);
 					}
 				}
-				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
+				xmlNewTextChild (exception_node, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
 				g_free (modified);
 			}
 			break;
@@ -2477,7 +2481,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				struct icaltimetype tt;
 				char *modified = NULL;
 
-				xmlNodePtr exception = NULL;
+				xmlNodePtr exception_node = NULL;
 
 				// Create the <Exceptions> container element if not already present
 				if (exceptions == NULL) {
@@ -2485,13 +2489,13 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				}
 
 				// Now create the <Exception> element
-				exception = xmlNewChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
-				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DELETED, (const xmlChar*) EAS_BOOLEAN_TRUE);
+				exception_node = xmlNewChild (exceptions, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTION, NULL);
+				xmlNewTextChild (exception_node, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DELETED, (const xmlChar*) EAS_BOOLEAN_TRUE);
 
 				tt = icalproperty_get_exdate (prop);
 				// TODO: handle VALUE=DATE for events which are not all-day events
 				modified = _ical2eas_convert_icaltime_to_utcstr (tt, icaltz);
-				xmlNewTextChild (exception, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
+				xmlNewTextChild (exception_node, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_EXCEPTIONSTARTTIME, (const xmlChar*) modified);
 				free (modified);
 			}
 			break;
@@ -3117,7 +3121,7 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			struct icalrecurrencetype recur;
 			int i;
 			icalproperty *rid;
-			icalparameter *tzid;
+			icalparameter *tzid_param;
 
 			vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
 			if (!vevent)
@@ -3138,15 +3142,15 @@ gboolean eas_cal_info_translator_parse_request (xmlDocPtr doc, xmlNodePtr appDat
 			   start time must come the oldest one */
 			vevent = icalcomponent_get_first_component (ical, ICAL_VEVENT_COMPONENT);
 			rid = icalcomponent_get_first_property (vevent, ICAL_RECURRENCEID_PROPERTY);
-			tzid = icalproperty_get_first_parameter (rid, ICAL_TZID_PARAMETER);
+			tzid_param = icalproperty_get_first_parameter (rid, ICAL_TZID_PARAMETER);
 
 			vevent =
 				icalcomponent_vanew (ICAL_VEVENT_COMPONENT,
 						     icalproperty_vanew_dtstart (recurrenceTimes[0],
-										 tzid ? icalparameter_new_clone (tzid) : (void *)0,
+										 tzid_param ? icalparameter_new_clone (tzid_param) : (void *)0,
 										 (void *)0),
 						     icalproperty_vanew_dtend (recurrenceTimes[0],
-									       tzid ? icalparameter_new_clone (tzid) : (void *)0,
+									       tzid_param ? icalparameter_new_clone (tzid_param) : (void *)0,
 									       (void *)0),
 						     icalproperty_new_uid (icalcomponent_get_uid (vevent)),
 						     icalproperty_new_summary (ACTIVESYNCD_PSEUDO_EVENT),

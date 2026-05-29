@@ -54,10 +54,6 @@
 #include "eas-ping-req.h"
 #include "eas-connection-errors.h"
 
-G_DEFINE_TYPE (EasPingReq, eas_ping_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_PING_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_PING_REQ, EasPingReqPrivate))
-
 struct _EasPingReqPrivate {
 	EasPingMsg* ping_msg;
 	gchar* account_id;
@@ -65,6 +61,8 @@ struct _EasPingReqPrivate {
 	GSList* folder_array;
 	EasPingReqState state;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasPingReq, eas_ping_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_ping_req_init (EasPingReq *object)
@@ -74,7 +72,7 @@ eas_ping_req_init (EasPingReq *object)
 
 	g_debug ("eas_ping_req_init++");
 
-	object->priv = priv = EAS_PING_REQ_PRIVATE (object);
+	object->priv = priv = eas_ping_req_get_instance_private(object);
 
 	priv->ping_msg = NULL;
 	priv->account_id = NULL;
@@ -128,7 +126,6 @@ eas_ping_req_class_init (EasPingReqClass *klass)
 
 	g_debug ("eas_ping_req_class_init++");
 
-	g_type_class_add_private (klass, sizeof (EasPingReqPrivate));
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_ping_req_MessageComplete;
 
 	object_class->finalize = eas_ping_req_finalize;
@@ -204,7 +201,6 @@ finish:
 	g_debug ("eas_ping_req_Activate--");
 	return ret;
 }
-
 
 gboolean
 eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
@@ -288,6 +284,4 @@ finish:
 	g_debug ("eas_ping_req_MessageComplete--");
 	return finished;
 }
-
-
 

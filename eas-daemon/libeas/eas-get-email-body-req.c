@@ -69,21 +69,20 @@ struct _EasGetEmailBodyReqPrivate {
 	GSList *parts;
 };
 
-#define EAS_GET_EMAIL_BODY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_REQ, EasGetEmailBodyReqPrivate))
 
 typedef struct _EasMultipartTuple {
 	guint32 startPos;
 	guint32 itemsize;
 } EasMultipartTuple;
 
-G_DEFINE_TYPE (EasGetEmailBodyReq, eas_get_email_body_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetEmailBodyReq, eas_get_email_body_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_get_email_body_req_init (EasGetEmailBodyReq *object)
 {
 	EasGetEmailBodyReqPrivate* priv;
 	g_debug ("eas_get_email_body_req_init++");
-	object->priv = priv = EAS_GET_EMAIL_BODY_REQ_PRIVATE (object);
+	object->priv = priv = eas_get_email_body_req_get_instance_private(object);
 
 	eas_request_base_SetRequestType (&object->parent_instance,
 					 EAS_REQ_GET_EMAIL_BODY);
@@ -151,8 +150,6 @@ eas_get_email_body_req_class_init (EasGetEmailBodyReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	g_debug ("eas_get_email_body_req_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasGetEmailBodyReqPrivate));
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_get_email_body_req_MessageComplete;
 	base_class->do_GotChunk = (EasRequestBaseGotChunkFp) eas_get_email_body_req_GotChunk;
@@ -290,7 +287,7 @@ finish:
 void
 eas_get_email_body_req_GotChunk (EasGetEmailBodyReq* self, SoupMessage *msg, GBytes *chunk)
 {
-	EasGetEmailBodyReqPrivate *priv = EAS_GET_EMAIL_BODY_REQ_PRIVATE (self);
+	EasGetEmailBodyReqPrivate *priv = eas_get_email_body_req_get_instance_private(self);
 	EasRequestBase *parent = EAS_REQUEST_BASE (&self->parent_instance);
 	gboolean chunkAccumulated = FALSE;
 	gsize chunk_size;

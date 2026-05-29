@@ -56,16 +56,15 @@ struct _EasInterfaceBasePrivate {
 	guint signal_id;
 };
 
-#define EAS_INTERFACE_BASE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_INTERFACE_BASE, EasInterfaceBasePrivate))
 
-G_DEFINE_TYPE (EasInterfaceBase, eas_interface_base, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (EasInterfaceBase, eas_interface_base, G_TYPE_OBJECT);
 
 static void
 eas_interface_base_init (EasInterfaceBase *object)
 {
 	EasInterfaceBasePrivate *priv;
 
-	object->priv = priv = EAS_INTERFACE_BASE_PRIVATE (object);
+	object->priv = priv = eas_interface_base_get_instance_private(object);
 
 	g_debug ("eas_interface_base_init++");
 
@@ -99,8 +98,6 @@ eas_interface_base_class_init (EasInterfaceBaseClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_interface_base_class_init++");
-	g_type_class_add_private (klass, sizeof (EasInterfaceBasePrivate));
-
 	object_class->finalize = eas_interface_base_finalize;
 	object_class->dispose = eas_interface_base_dispose;
 

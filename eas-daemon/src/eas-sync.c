@@ -62,15 +62,12 @@
 #include "../libeas/eas-connection.h"
 #include "eas-mail.h"
 
-G_DEFINE_TYPE (EasSync, eas_sync, G_TYPE_OBJECT);
-
-#define EAS_SYNC_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC, EasSyncPrivate))
-
-
 struct _EasSyncPrivate {
 	EasConnection* connection;
 	EasGDBusSync *skeleton;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasSync, eas_sync, G_TYPE_OBJECT);
 
 static gboolean
 on_handle_get_latest_items (EasGDBusSync *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
@@ -118,7 +115,7 @@ eas_sync_init (EasSync *object)
 {
 	EasSyncPrivate *priv = NULL;
 	g_debug ("++ eas_sync_init()");
-	object->priv = priv = EAS_SYNC_PRIVATE (object);
+	object->priv = priv = eas_sync_get_instance_private(object);
 	priv->connection = NULL;
 
 	priv->skeleton = eas_gdbus_sync_skeleton_new ();
@@ -159,7 +156,6 @@ eas_sync_class_init (EasSyncClass *klass)
 	object_class->dispose = eas_sync_dispose;
 	object_class->finalize = eas_sync_finalize;
 
-	g_type_class_add_private (klass, sizeof (EasSyncPrivate));
 }
 
 GDBusInterfaceSkeleton *
@@ -175,7 +171,6 @@ EasSync* eas_sync_new (void)
 	return easCal;
 }
 
-
 EasConnection*
 eas_sync_get_eas_connection (EasSync* self)
 {
@@ -190,7 +185,7 @@ eas_sync_get_eas_connection (EasSync* self)
  creates a list of EasItemInfo objects
 */
 static gboolean
-build_calendar_list (const gchar **serialised_cal_array, GSList **cal_list, GError **error)
+build_calendar_list (const gchar * const *serialised_cal_array, GSList **cal_list, GError **error)
 {
 	gboolean ret = TRUE;
 	guint i = 0;
@@ -237,7 +232,6 @@ cleanup:
 	return ret;
 }
 
-
 void
 eas_sync_get_latest_items (EasSync* self,
 			   const gchar* account_uid,
@@ -264,7 +258,6 @@ eas_sync_get_latest_items (EasSync* self,
 		return;
 	}
 
-
 	g_debug ("eas_sync_get_latest_calendar_items++");
 	syncReqObj = eas_sync_req_new (sync_key, account_uid, folder_id, type, context);
 
@@ -276,7 +269,6 @@ eas_sync_get_latest_items (EasSync* self,
 	eas_sync_req_Activate (syncReqObj, &error);
 
 	g_debug ("eas_sync_get_latest_items  - activate req");
-
 
 	// Return the error or the requested data to the calendar client
 	if (error) {
@@ -294,7 +286,7 @@ eas_sync_delete_items (EasSync* self,
 		       const guint64 type,
 		       const gchar* folder_id,
 		       const gchar* sync_key,
-		       const gchar** deleted_items_array,
+		       const gchar * const * deleted_items_array,
 		       GDBusMethodInvocation* context)
 {
 	GError *error = NULL;
@@ -330,7 +322,6 @@ eas_sync_delete_items (EasSync* self,
 	// Start the request
 	eas_delete_req_Activate (req, &error);
 
-
 	if (error) {
 		g_dbus_method_invocation_return_gerror(context, error);
 		g_error_free (error);
@@ -345,7 +336,7 @@ eas_sync_update_items (EasSync* self,
 		       guint64 type,
 		       const gchar* folder_id,
 		       const gchar* sync_key,
-		       const gchar **calendar_items,
+		       const gchar * const *calendar_items,
 		       GDBusMethodInvocation* context)
 {
 	GError* error = NULL;
@@ -412,7 +403,7 @@ eas_sync_add_items (EasSync* self,
 		    guint64 type,
 		    const gchar* folder_id,
 		    const gchar* sync_key,
-		    const gchar **calendar_items,
+		    const gchar * const *calendar_items,
 		    GDBusMethodInvocation* context)
 {
 	GError* error = NULL;
@@ -511,7 +502,6 @@ eas_sync_fetch_item (EasSync* self,
 	eas_request_base_SetConnection (&req->parent_instance, connection);
 
 	ret = eas_get_email_body_req_Activate (req, &error);
-
 
 finish:
 	if (!ret) {

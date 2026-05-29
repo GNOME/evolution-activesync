@@ -127,7 +127,6 @@ struct _EasConnectionPrivate {
 	gboolean reprovisioning;
 };
 
-#define EAS_CONNECTION_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_CONNECTION, EasConnectionPrivate))
 
 #define KEYRING_ITEM_ATTRIBUTE_USER	"eas-user"
 #define KEYRING_ITEM_ATTRIBUTE_SERVER	"eas-server"
@@ -183,7 +182,7 @@ static gboolean mainloop_password_fetch (gpointer data);
 static gboolean mainloop_password_store (gpointer data);
 
 
-G_DEFINE_TYPE (EasConnection, eas_connection, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (EasConnection, eas_connection, G_TYPE_OBJECT);
 
 #define HTTP_STATUS_OK (200)
 #define HTTP_STATUS_PROVISION (449)
@@ -244,7 +243,7 @@ static void
 eas_connection_init (EasConnection *self)
 {
 	EasConnectionPrivate *priv;
-	self->priv = priv = EAS_CONNECTION_PRIVATE (self);
+	self->priv = priv = eas_connection_get_instance_private(self);
 
 	g_debug ("eas_connection_init++");
 
@@ -374,8 +373,6 @@ eas_connection_class_init (EasConnectionClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	g_debug ("eas_connection_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasConnectionPrivate));
 
 	object_class->dispose = eas_connection_dispose;
 	object_class->finalize = eas_connection_finalize;
@@ -1065,7 +1062,7 @@ eas_connection_send_request (EasConnection* self,
 			     GError** error)
 {
 	gboolean ret = TRUE;
-	EasConnectionPrivate *priv = EAS_CONNECTION_PRIVATE (self);
+	EasConnectionPrivate *priv = eas_connection_get_instance_private(self);
 	SoupMessage *msg = NULL;
 	gchar* uri = NULL;
 	WB_UTINY *wbxml = NULL;
@@ -2123,7 +2120,7 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 	EasNode *node = (EasNode *)data;
 	EasRequestBase *req = EAS_REQUEST_BASE (node->request);
 	EasConnection *self = EAS_CONNECTION (node->cnc);
-	EasConnectionPrivate *priv = EAS_CONNECTION_PRIVATE (self);
+	EasConnectionPrivate *priv = eas_connection_get_instance_private(self);
 	xmlDoc *doc = NULL;
 	WB_UTINY *xml = NULL;
 	WB_ULONG xml_len = 0;
@@ -2277,11 +2274,11 @@ handle_server_response (SoupSession *session, SoupMessage *msg, gpointer data)
 		}
 
 		if (doc) {
-			xmlNode* node = xmlDocGetRootElement (doc);
+			xmlNode* xml_root = xmlDocGetRootElement (doc);
 			g_debug ("handle_server_response - doc created - parse for status");
-			parse_for_status (node, &isStatusError); // TODO Also catch provisioning for 14.0
+			parse_for_status (xml_root, &isStatusError); // TODO Also catch provisioning for 14.0
 		} else {
-			xmlError *xmlerr = xmlGetLastError ();
+			const xmlError *xmlerr = xmlGetLastError ();
 			g_set_error (&error,
 				     EAS_CONNECTION_ERROR,
 				     EAS_CONNECTION_ERROR_XMLTOOLARGETODOM,
@@ -2370,7 +2367,7 @@ write_response_to_file (const WB_UTINY* xml, WB_ULONG xml_len)
 }
 
 void
-eas_connection_add_mock_responses (const gchar** response_file_list, const GArray *mock_soup_status_codes)
+eas_connection_add_mock_responses (const gchar * const * response_file_list, const GArray *mock_soup_status_codes)
 {
 	const gchar* filename = NULL;
 	guint index = 0;
@@ -2516,9 +2513,9 @@ eas_connection_cancel_request(EasConnection* cnc,
 		if(eas_request_base_GetRequestId(request) == request_id)
 		{
 			GSource *source = NULL;
-			EasNode* node = eas_node_new ();
-			node->request = request;
-			node->cnc = cnc;			
+			EasNode* cancel_node = eas_node_new ();
+			cancel_node->request = request;
+			cancel_node->cnc = cnc;			
 			
 			g_debug("found the request in the jobs queue");
 			found = TRUE;
@@ -2529,9 +2526,9 @@ eas_connection_cancel_request(EasConnection* cnc,
 			// remove it from the queue, 
 			priv->jobs = g_slist_remove (priv->jobs, (gconstpointer *) node);
 			
-			// call handle_server_response from soup thread 
+			// call handle_server_response from soup thread
 			source = g_idle_source_new ();
-			g_source_set_callback (source, call_handle_server_response, node, NULL);
+			g_source_set_callback (source, call_handle_server_response, cancel_node, NULL);
 			g_source_attach (source, priv->soup_context);			
 
 			break; // out of for loop

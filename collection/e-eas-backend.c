@@ -26,9 +26,6 @@
 
 #include "e-eas-backend.h"
 
-#define E_EAS_BACKEND_GET_PRIVATE(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE \
-	((obj), E_TYPE_EAS_BACKEND, EEasBackendPrivate))
 
 typedef struct _SyncFoldersClosure SyncFoldersClosure;
 
@@ -44,17 +41,19 @@ struct _SyncFoldersClosure {
 	GSList *folders_updated;
 };
 
-G_DEFINE_DYNAMIC_TYPE (
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (
 	EEasBackend,
 	e_eas_backend,
-	E_TYPE_COLLECTION_BACKEND)
+	E_TYPE_COLLECTION_BACKEND,
+	0,
+	G_ADD_PRIVATE_DYNAMIC (EEasBackend))
 
 static void
 eas_backend_dispose (GObject *object)
 {
 	EEasBackendPrivate *priv;
 
-	priv = E_EAS_BACKEND_GET_PRIVATE (object);
+	priv = e_eas_backend_get_instance_private(E_EAS_BACKEND (object));
 
 	g_hash_table_remove_all (priv->folders);
 
@@ -67,7 +66,7 @@ eas_backend_finalize (GObject *object)
 {
 	EEasBackendPrivate *priv;
 
-	priv = E_EAS_BACKEND_GET_PRIVATE (object);
+	priv = e_eas_backend_get_instance_private(E_EAS_BACKEND (object));
 	
 	g_hash_table_destroy (priv->folders);
 
@@ -80,8 +79,6 @@ e_eas_backend_class_init (EEasBackendClass *class)
 {
 	GObjectClass *object_class;
 	ECollectionBackendClass *backend_class;
-
-	g_type_class_add_private (class, sizeof (EEasBackendPrivate));
 
 	object_class = G_OBJECT_CLASS (class);
 	object_class->dispose = eas_backend_dispose;
@@ -97,7 +94,7 @@ e_eas_backend_class_finalize (EEasBackendClass *class)
 static void
 e_eas_backend_init (EEasBackend *backend)
 {
-	backend->priv = E_EAS_BACKEND_GET_PRIVATE (backend);
+	backend->priv = e_eas_backend_get_instance_private(backend);
 
 	backend->priv->folders = g_hash_table_new_full (
 		(GHashFunc) g_str_hash,

@@ -58,15 +58,10 @@
 #include <string.h>
 #include "../../libeasaccount/src/eas-account-list.h"
 
-G_DEFINE_TYPE (Eas2WaySyncReq, eas_2way_sync_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_2WAY_SYNC_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_2WAY_SYNC_REQ, Eas2WaySyncReqPrivate))
-
 typedef enum {
 	Eas2WaySyncReqStep1 = 0,
 	Eas2WaySyncReqStep2
 } Eas2WaySyncReqState;
-
 
 struct _Eas2WaySyncReqPrivate {
 	EasSyncMsg* syncMsg;
@@ -82,14 +77,14 @@ struct _Eas2WaySyncReqPrivate {
 	GSList *serialised_change_items;// list of serialised items to change
 };
 
-
+G_DEFINE_TYPE_WITH_PRIVATE (Eas2WaySyncReq, eas_2way_sync_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_2way_sync_req_init (Eas2WaySyncReq *object)
 {
 	Eas2WaySyncReqPrivate *priv;
 
-	object->priv = priv = EAS_2WAY_SYNC_REQ_PRIVATE (object);
+	object->priv = priv = eas_2way_sync_req_get_instance_private(object);
 
 	g_debug ("eas_2way_sync_req_init++");
 	priv->syncMsg = NULL;
@@ -157,7 +152,6 @@ eas_2way_sync_req_finalize (GObject *object)
 	}
 	g_slist_free (priv->serialised_change_items);
 
-
 	G_OBJECT_CLASS (eas_2way_sync_req_parent_class)->finalize (object);
 
 	g_debug ("eas_2way_sync_req_finalize--");
@@ -171,8 +165,6 @@ eas_2way_sync_req_class_init (Eas2WaySyncReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_2way_sync_req_MessageComplete;
-
-	g_type_class_add_private (klass, sizeof (Eas2WaySyncReqPrivate));
 
 	object_class->dispose = eas_2way_sync_req_dispose;
 	object_class->finalize = eas_2way_sync_req_finalize;
@@ -558,7 +550,6 @@ eas_2way_sync_req_MessageComplete (Eas2WaySyncReq *self, xmlDoc* doc, GError* er
 									      ret_changed_item_array,
 									      empty, empty, empty));
 		}
-
 
 	}
 	break;

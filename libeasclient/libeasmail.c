@@ -39,9 +39,14 @@
 #include "eas-logger.h"
 #include "eas-dbus-client.h"
 
-G_DEFINE_TYPE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
+struct _EasEmailHandlerPrivate {
+	struct eas_gdbus_client eas_client;
 
-#define EAS_EMAIL_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_EMAIL_HANDLER, EasEmailHandlerPrivate))
+	guint mail_signal;
+	guint common_signal;
+};
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasEmailHandler, eas_mail_handler, G_TYPE_OBJECT);
 
 GQuark
 eas_mail_error_quark (void)
@@ -58,12 +63,6 @@ eas_mail_error_quark (void)
 
 const gchar *updated_id_separator = ",";
 	
-struct _EasEmailHandlerPrivate {
-	struct eas_gdbus_client eas_client;
-
-	guint mail_signal;
-	guint common_signal;
-};
 
 // TODO - how much verification of args should happen??
 
@@ -74,7 +73,7 @@ eas_mail_handler_init (EasEmailHandler *cnc)
 	g_debug ("eas_mail_handler_init++");
 
 	/* allocate internal structure */
-	cnc->priv = priv = EAS_EMAIL_HANDLER_PRIVATE (cnc);
+	cnc->priv = priv = eas_mail_handler_get_instance_private(cnc);
 
 	memset (&priv->eas_client, 0, sizeof (priv->eas_client));
 	g_debug ("eas_mail_handler_init--");
@@ -90,7 +89,6 @@ eas_mail_handler_dispose (GObject *object)
 #endif
 	G_OBJECT_CLASS (eas_mail_handler_parent_class)->dispose (object);
 }
-
 
 static void
 eas_mail_handler_finalize (GObject *object)
@@ -116,8 +114,6 @@ eas_mail_handler_class_init (EasEmailHandlerClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_mail_handler_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasEmailHandlerPrivate));
 
 	object_class->finalize = eas_mail_handler_finalize;
 	object_class->dispose = eas_mail_handler_dispose;
@@ -387,7 +383,6 @@ eas_mail_handler_get_folder_list (EasEmailHandler *self,
 	return ret;
 }
 
-
 gboolean
 eas_mail_handler_get_provision_list (EasEmailHandler *self,
 				     gchar** tid,
@@ -473,7 +468,6 @@ eas_mail_handler_autodiscover (EasEmailHandler *self,
 	return ret;
 }
 
-
 gboolean
 eas_mail_handler_accept_provision_list (EasEmailHandler *self,
 					const gchar* tid,
@@ -499,7 +493,6 @@ eas_mail_handler_accept_provision_list (EasEmailHandler *self,
 	g_debug ("%s--", __func__);
 	return ret;
 }
-
 
 /* sync emails in a specified folder (no bodies retrieved).
 Returns lists of EasEmailInfos.
@@ -593,7 +586,6 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 	return ret;
 }
 
-
 // get the entire email body for listed email
 // email body will be written to a file with the emailid as its name
 gboolean
@@ -629,7 +621,6 @@ out:
 	return ret;
 }
 
-
 gboolean
 eas_mail_handler_fetch_email_attachment (EasEmailHandler* self,
 					 const gchar *file_reference,
@@ -662,7 +653,6 @@ out:
 
 	return ret;
 }
-
 
 // Delete specified emails from a single folder
 gboolean
@@ -739,7 +729,6 @@ finish:
 	g_debug ("eas_mail_handler_delete_emails--");
 	return ret;
 }
-
 
 /*
 'push' email updates to server
@@ -855,7 +844,6 @@ cleanup:
 
 	return ret;
 }
-
 
 gboolean
 eas_mail_handler_send_email (EasEmailHandler* self,
@@ -1101,7 +1089,6 @@ gboolean eas_mail_handler_watch_email_folders (EasEmailHandler* self,
 		folder_array[loop] = g_strdup (g_slist_nth_data ( (GSList*) folder_ids, loop));
 		g_debug ("Folder Id: [%s]", folder_array[loop]);
 	}
-
 
 	g_debug ("eas_mail_handler_watch_email_folders1");
 	message = g_dbus_message_new_method_call (EAS_SERVICE_NAME,

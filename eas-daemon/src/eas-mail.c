@@ -66,13 +66,11 @@
 #include "activesyncd-common-defs.h"
 #include "eas-get-item-estimate-req.h"
 
-G_DEFINE_TYPE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
-
-#define EAS_MAIL_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MAIL, EasMailPrivate))
-
 struct _EasMailPrivate {
 	EasGDBusMail *skeleton;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasMail, eas_mail, EAS_TYPE_INTERFACE_BASE);
 
 static void
 eas_mail_emit_progress (EasInterfaceBase *base, guint request_id, guint percent)
@@ -165,7 +163,7 @@ eas_mail_init (EasMail *object)
 {
 	EasMailPrivate *priv;
 	g_debug ("eas_mail_init++");
-	object->priv = priv = EAS_MAIL_PRIVATE (object);
+	object->priv = priv = eas_mail_get_instance_private(object);
 
 	priv->skeleton = eas_gdbus_mail_skeleton_new ();
 
@@ -210,7 +208,6 @@ eas_mail_class_init (EasMailClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasInterfaceBaseClass* base_class = EAS_INTERFACE_BASE_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasMailPrivate));
 	object_class->dispose = eas_mail_dispose;
 	object_class->finalize = eas_mail_finalize;
 	base_class->emit_progress = eas_mail_emit_progress;
@@ -333,7 +330,6 @@ eas_mail_sync_folder_email (EasMail* self,
 	ret = eas_sync_req_Activate (req,
 				     &error);
 
-
 finish:
 
 	if (!ret) {
@@ -351,7 +347,7 @@ eas_mail_delete_email (EasMail *easMailObj,
 		       const gchar* account_uid,
 		       const gchar *sync_key,
 		       const gchar *folder_id,
-		       const gchar **server_ids_array,
+		       const gchar * const *server_ids_array,
 		       GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
@@ -405,7 +401,7 @@ eas_mail_update_emails (EasMail *self,
 			const gchar* account_uid,
 			const gchar *sync_key,
 			const gchar *folder_id,
-			const gchar **serialised_email_array,
+			const gchar * const *serialised_email_array,
 			GDBusMethodInvocation* context)
 {
 	EasConnection *connection;
@@ -511,7 +507,6 @@ eas_mail_fetch_email_body (EasMail* self,
 
 	ret = eas_get_email_body_req_Activate (req, &error);
 
-
 finish:
 	if (!ret) {
 		g_assert (error != NULL);
@@ -565,7 +560,6 @@ eas_mail_fetch_attachment (EasMail* self,
 
 	ret = eas_get_email_attachment_req_Activate (req, &error);
 
-
 	if (!ret) {
 		g_assert (error != NULL);
 		g_warning ("eas_mail_fetch_attachment - failed to get data from message");
@@ -576,7 +570,6 @@ eas_mail_fetch_attachment (EasMail* self,
 	g_debug ("eas_mail_fetch_attachment--");
 	return TRUE;
 }
-
 
 gboolean
 eas_mail_send_email (EasMail* easMailObj,
@@ -617,7 +610,6 @@ eas_mail_send_email (EasMail* easMailObj,
 	// Activate Request
 	ret = eas_send_email_req_Activate (req, &error);
 
-
 finish:
 	if (!ret) {
 		g_assert (error != NULL);
@@ -628,11 +620,10 @@ finish:
 	return ret;
 }
 
-
 gboolean
 eas_mail_move_emails_to_folder (EasMail* easMailObj,
 				const gchar* account_uid,
-				const gchar** server_ids_array,
+				const gchar * const * server_ids_array,
 				const gchar *src_folder_id,
 				const gchar *dest_folder_id,
 				GDBusMethodInvocation* context)
@@ -683,7 +674,6 @@ eas_mail_move_emails_to_folder (EasMail* easMailObj,
 		goto finish;
 	}
 
-
 finish:
 	if (!ret) {
 		g_debug ("returning error to caller");
@@ -700,7 +690,7 @@ gboolean
 eas_mail_watch_email_folders (EasMail* easMailObj,
 			      const gchar* account_uid,
 			      const gchar* heartbeat,
-			      const gchar **folder_array,
+			      const gchar * const *folder_array,
 			      GDBusMethodInvocation* context)
 {
 	EasConnection *connection;

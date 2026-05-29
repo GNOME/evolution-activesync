@@ -100,7 +100,7 @@ gboolean eas_sync_delete_items (EasSync* self,
 				const guint64 type,
 				const gchar* folder_id,
 				const gchar* sync_key,
-				const gchar** deleted_items_array,
+				const gchar * const * deleted_items_array,
 				GDBusMethodInvocation* context);
 
 gboolean eas_sync_update_items (EasSync* self,
@@ -108,7 +108,7 @@ gboolean eas_sync_update_items (EasSync* self,
 				guint64 type,
 				const gchar* folder_id,
 				const gchar* sync_key,
-				const gchar **items,
+				const gchar * const *items,
 				GDBusMethodInvocation* context);
 
 gboolean eas_sync_add_items (EasSync* self,
@@ -116,7 +116,7 @@ gboolean eas_sync_add_items (EasSync* self,
 			     guint64 type,
 			     const gchar* folder_id,
 			     const gchar* sync_key,
-			     const gchar **items,
+			     const gchar * const *items,
 			     GDBusMethodInvocation* context);
 
 gboolean

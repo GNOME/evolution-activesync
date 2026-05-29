@@ -4,13 +4,11 @@
 #include "eas-gdbus-test.h"
 #include "eas-connection.h"
 
-G_DEFINE_TYPE (EasTest, eas_test, G_TYPE_OBJECT);
-
-#define EAS_TEST_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_TEST, EasTestPrivate))
-
 struct _EasTestPrivate {
 	EasGDBusTest *skeleton;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasTest, eas_test, G_TYPE_OBJECT);
 
 static gboolean
 on_handle_add_mock_responses (EasGDBusTest *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
@@ -43,7 +41,7 @@ eas_test_init (EasTest *object)
 {
 	EasTestPrivate *priv;
 	g_debug ("eas_test_init+-");
-	object->priv = priv = EAS_TEST_PRIVATE (object);
+	object->priv = priv = eas_test_get_instance_private(object);
 
 	priv->skeleton = eas_gdbus_test_skeleton_new ();
 	g_signal_connect (priv->skeleton, "handle-add-mock-responses",
@@ -71,7 +69,6 @@ eas_test_class_init (EasTestClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasTestPrivate));
 	object_class->dispose = eas_test_dispose;
 	object_class->finalize = eas_test_finalize;
 }
@@ -94,7 +91,7 @@ eas_test_get_skeleton (EasTest *self)
 
 void
 eas_test_add_mock_responses (EasTest* self,
-			     const gchar** mock_responses_array,
+			     const gchar * const * mock_responses_array,
 			     const GArray *mock_status_codes,
 			     GDBusMethodInvocation* context)
 {

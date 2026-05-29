@@ -18,9 +18,6 @@
 
 #include "camel-eas-settings.h"
 
-#define CAMEL_EAS_SETTINGS_GET_PRIVATE(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE \
-	((obj), CAMEL_TYPE_EAS_SETTINGS, CamelEasSettingsPrivate))
 
 struct _CamelEasSettingsPrivate {
 	gboolean check_all;	
@@ -46,6 +43,7 @@ G_DEFINE_TYPE_WITH_CODE (
 	CamelEasSettings,
 	camel_eas_settings,
 	CAMEL_TYPE_OFFLINE_SETTINGS,
+	G_ADD_PRIVATE (CamelEasSettings)
 	G_IMPLEMENT_INTERFACE (
 		CAMEL_TYPE_NETWORK_SETTINGS, NULL))
 
@@ -194,7 +192,7 @@ eas_settings_finalize (GObject *object)
 {
 	CamelEasSettingsPrivate *priv;
 
-	priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (object);
+	priv = camel_eas_settings_get_instance_private(CAMEL_EAS_SETTINGS (object));
 
 	g_free (priv->account_uid);
 
@@ -206,8 +204,6 @@ static void
 camel_eas_settings_class_init (CamelEasSettingsClass *class)
 {
 	GObjectClass *object_class;
-
-	g_type_class_add_private (class, sizeof (CamelEasSettingsPrivate));
 
 	object_class = G_OBJECT_CLASS (class);
 	object_class->set_property = eas_settings_set_property;
@@ -293,7 +289,7 @@ camel_eas_settings_class_init (CamelEasSettingsClass *class)
 static void
 camel_eas_settings_init (CamelEasSettings *settings)
 {
-	settings->priv = CAMEL_EAS_SETTINGS_GET_PRIVATE (settings);
+	settings->priv = camel_eas_settings_get_instance_private(settings);
 }
 
 

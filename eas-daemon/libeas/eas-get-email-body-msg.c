@@ -64,11 +64,10 @@ struct _EasGetEmailBodyMsgPrivate {
 	gchar* fullFilePath;
 };
 
-#define EAS_GET_EMAIL_BODY_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_BODY_MSG, EasGetEmailBodyMsgPrivate))
 
 
 
-G_DEFINE_TYPE (EasGetEmailBodyMsg, eas_get_email_body_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetEmailBodyMsg, eas_get_email_body_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_get_email_body_msg_init (EasGetEmailBodyMsg *object)
@@ -76,7 +75,7 @@ eas_get_email_body_msg_init (EasGetEmailBodyMsg *object)
 	EasGetEmailBodyMsgPrivate* priv;
 	g_debug ("eas_get_email_body_msg_init++");
 
-	object->priv = priv = EAS_GET_EMAIL_BODY_MSG_PRIVATE (object);
+	object->priv = priv = eas_get_email_body_msg_get_instance_private(object);
 
 	priv->serverUid = NULL;
 	priv->collectionId = NULL;
@@ -110,8 +109,6 @@ eas_get_email_body_msg_class_init (EasGetEmailBodyMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	g_debug ("eas_get_email_body_msg_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasGetEmailBodyMsgPrivate));
 
 	object_class->finalize = eas_get_email_body_msg_finalize;
 	g_debug ("eas_get_email_body_msg_class_init--");
@@ -394,7 +391,7 @@ eas_get_email_msg_write_chunk_to_file (EasGetEmailBodyMsg* self,const guchar* ch
 {
 	gboolean success = TRUE;
 	FILE *hBody = NULL;
-	EasGetEmailBodyMsgPrivate *priv = EAS_GET_EMAIL_BODY_MSG_PRIVATE (self);
+	EasGetEmailBodyMsgPrivate *priv = eas_get_email_body_msg_get_instance_private(self);
 
 	g_message ("Attempting to write email chunk to file [%s]", priv->fullFilePath);
 	

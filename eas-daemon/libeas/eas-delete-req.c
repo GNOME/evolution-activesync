@@ -64,16 +64,15 @@ struct _EasDeleteReqPrivate {
 	EasItemType itemType;
 };
 
-#define EAS_DELETE_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_DELETE_REQ, EasDeleteReqPrivate))
 
-G_DEFINE_TYPE (EasDeleteReq, eas_delete_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasDeleteReq, eas_delete_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_delete_req_init (EasDeleteReq *object)
 {
 	EasDeleteReqPrivate *priv;
 
-	object->priv = priv = EAS_DELETE_REQ_PRIVATE (object);
+	object->priv = priv = eas_delete_req_get_instance_private(object);
 
 	g_debug ("eas_delete_req_init++");
 	priv->accountID = NULL;
@@ -125,8 +124,6 @@ eas_delete_req_class_init (EasDeleteReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	g_debug ("eas_delete_req_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasDeleteReqPrivate));
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_delete_req_MessageComplete;
 

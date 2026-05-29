@@ -68,11 +68,10 @@ struct _EasSyncFolderMsgPrivate {
 	gchar* def_con_folder;
 };
 
-#define EAS_SYNC_FOLDER_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_MSG, EasSyncFolderMsgPrivate))
 
 
 
-G_DEFINE_TYPE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasSyncFolderMsg, eas_sync_folder_msg, EAS_TYPE_MSG_BASE);
 
 static void eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *node, const gchar* topNodeName, EasAccount *acc, EasAccountList *account_list);
 static void eas_sync_folder_msg_parse_fs_delete (EasSyncFolderMsg *self, xmlNode *node);
@@ -84,7 +83,7 @@ eas_sync_folder_msg_init (EasSyncFolderMsg *object)
 	EasSyncFolderMsgPrivate *priv;
 	g_debug ("eas_sync_folder_msg_init++");
 
-	object->priv = priv = EAS_SYNC_FOLDER_MSG_PRIVATE (object);
+	object->priv = priv = eas_sync_folder_msg_get_instance_private(object);
 
 	priv->sync_key = NULL;
 	priv->account_id = NULL;
@@ -143,8 +142,6 @@ eas_sync_folder_msg_class_init (EasSyncFolderMsgClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_sync_folder_msg_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasSyncFolderMsgPrivate));
 
 	object_class->finalize = eas_sync_folder_msg_finalize;
 	object_class->dispose = eas_sync_folder_msg_dispose;

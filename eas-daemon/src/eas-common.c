@@ -59,13 +59,11 @@
 #include "eas-sync-folder-hierarchy-req.h"
 #include "eas-provision-req.h"
 
-G_DEFINE_TYPE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
-
-#define EAS_COMMON_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_COMMON, EasCommonPrivate))
-
 struct _EasCommonPrivate {
 	EasGDBusCommon *skeleton;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasCommon, eas_common, EAS_TYPE_INTERFACE_BASE);
 
 static void
 eas_common_emit_progress (EasInterfaceBase *base, guint request_id, guint percent)
@@ -161,7 +159,7 @@ static void
 eas_common_init (EasCommon *object)
 {
 	EasCommonPrivate *priv;
-	object->priv = priv = EAS_COMMON_PRIVATE (object);
+	object->priv = priv = eas_common_get_instance_private(object);
 
 	priv->skeleton = eas_gdbus_common_skeleton_new ();
 
@@ -203,8 +201,6 @@ eas_common_class_init (EasCommonClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 	EasInterfaceBaseClass *base_class = EAS_INTERFACE_BASE_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasCommonPrivate));
-
 	object_class->dispose = eas_common_dispose;
 	object_class->finalize = eas_common_finalize;
 	base_class->emit_progress = eas_common_emit_progress;
@@ -244,7 +240,6 @@ eas_common_get_protocol_version (EasCommon *obj,
 	return TRUE;
 }
 
-
 gboolean
 eas_common_sync_folder_items (EasCommon* self,
 			      const gchar* account_uid,
@@ -252,9 +247,9 @@ eas_common_sync_folder_items (EasCommon* self,
 			      const gchar* sync_key,
 			      const gchar* folder_id,
 			      guint filter_type,
-			      const gchar** add_items_array,	// array of serialised items to add
-			      const gchar** delete_items_array,// array of serialised items/ids to delete
-			      const gchar** change_items_array,// array of serialised items to change
+			      const gchar * const * add_items_array,	// array of serialised items to add
+			      const gchar * const * delete_items_array,// array of serialised items/ids to delete
+			      const gchar * const * change_items_array,// array of serialised items to change
 			      guint request_id,
 			      GDBusMethodInvocation* context)
 {

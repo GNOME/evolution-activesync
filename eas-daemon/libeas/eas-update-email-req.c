@@ -50,15 +50,10 @@
  *
  */
 
-
 #include "eas-utils.h"
 #include "eas-sync-msg.h"
 #include "eas-update-email-req.h"
 #include "serialise_utils.h"
-
-G_DEFINE_TYPE (EasUpdateEmailReq, eas_update_email_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_UPDATE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_UPDATE_EMAIL_REQ, EasUpdateEmailReqPrivate))
 
 struct _EasUpdateEmailReqPrivate {
 	EasSyncMsg* sync_msg;
@@ -68,6 +63,8 @@ struct _EasUpdateEmailReqPrivate {
 	gchar** serialised_email_array;
 };
 
+G_DEFINE_TYPE_WITH_PRIVATE (EasUpdateEmailReq, eas_update_email_req, EAS_TYPE_REQUEST_BASE);
+
 static void
 eas_update_email_req_init (EasUpdateEmailReq *object)
 {
@@ -76,7 +73,7 @@ eas_update_email_req_init (EasUpdateEmailReq *object)
 
 	g_debug ("eas_update_email_req_init++");
 
-	object->priv = priv = EAS_UPDATE_EMAIL_REQ_PRIVATE (object);
+	object->priv = priv = eas_update_email_req_get_instance_private(object);
 
 	priv->sync_msg = NULL;
 	priv->account_id = NULL;
@@ -136,8 +133,6 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_update_email_req_MessageComplete;
 
-	g_type_class_add_private (klass, sizeof (EasUpdateEmailReqPrivate));
-
 	object_class->finalize = eas_update_email_req_finalize;
 	object_class->dispose = eas_update_email_req_dispose;
 
@@ -148,7 +143,7 @@ eas_update_email_req_class_init (EasUpdateEmailReqClass *klass)
 EasUpdateEmailReq *eas_update_email_req_new (const gchar* account_id,
 					     const gchar *sync_key,
 					     const gchar *folder_id,
-					     const gchar **serialised_email_array,
+					     const gchar * const *serialised_email_array,
 					     GDBusMethodInvocation *context)
 {
 	EasUpdateEmailReq* self = g_object_new (EAS_TYPE_UPDATE_EMAIL_REQ, NULL);
@@ -248,7 +243,6 @@ finish:
 	return ret;
 }
 
-
 gboolean
 eas_update_email_req_MessageComplete (EasUpdateEmailReq *self, xmlDoc* doc, GError* error_in)
 {
@@ -299,6 +293,4 @@ finish:
 	g_debug ("eas_update_email_req_MessageComplete--");
 	return TRUE;
 }
-
-
 

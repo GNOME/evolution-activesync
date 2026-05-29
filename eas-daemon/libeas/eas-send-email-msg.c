@@ -55,15 +55,13 @@
 #include <wbxml/wbxml.h>
 #include <glib.h>
 
-G_DEFINE_TYPE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
-
-#define EAS_SEND_EMAIL_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_MSG, EasSendEmailMsgPrivate))
-
 struct _EasSendEmailMsgPrivate {
 	gchar* account_id;
 	gchar* client_id;
 	gchar* mime_string;
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_send_email_msg_init (EasSendEmailMsg *object)
@@ -73,7 +71,7 @@ eas_send_email_msg_init (EasSendEmailMsg *object)
 	/* initialization code: */
 	g_debug ("eas_send_email_msg_init++");
 
-	object->priv = priv = EAS_SEND_EMAIL_MSG_PRIVATE (object);
+	object->priv = priv = eas_send_email_msg_get_instance_private(object);
 
 	priv->account_id = NULL;
 	priv->client_id = NULL;
@@ -102,8 +100,6 @@ static void
 eas_send_email_msg_class_init (EasSendEmailMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (EasSendEmailMsgPrivate));
 
 	object_class->finalize = eas_send_email_msg_finalize;
 }

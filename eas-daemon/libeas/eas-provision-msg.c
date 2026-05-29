@@ -61,11 +61,10 @@ struct _EasProvisionMsgPrivate {
 	EasProvisionList* provision_list;
 };
 
-#define EAS_PROVISION_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_PROVISION_MSG, EasProvisionMsgPrivate))
 
 
 
-G_DEFINE_TYPE (EasProvisionMsg, eas_provision_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasProvisionMsg, eas_provision_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_provision_msg_init (EasProvisionMsg *object)
@@ -73,7 +72,7 @@ eas_provision_msg_init (EasProvisionMsg *object)
 	EasProvisionMsgPrivate *priv;
 	g_debug ("eas_provision_msg_init++");
 
-	object->priv = priv = EAS_PROVISION_MSG_PRIVATE (object);
+	object->priv = priv = eas_provision_msg_get_instance_private(object);
 
 	priv->policy_key = NULL;
 	priv->policy_status = NULL;
@@ -103,8 +102,6 @@ eas_provision_msg_class_init (EasProvisionMsgClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_provision_msg_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasProvisionMsgPrivate));
 
 	object_class->finalize = eas_provision_msg_finalize;
 
@@ -296,91 +293,91 @@ eas_provision_msg_parse_response (EasProvisionMsg* self, xmlDoc* doc, GError** e
 									g_debug("Parsing <EasProvisionDoc> node...");
 									/* FINALLY! We've made it to the provisioning requirements */ 
 									for (node5 = node4->children; node5; node5 = node5->next) {
-										const char* name = (char*)node5->name;
+										const char* node5_name = (char*)node5->name;
 										if (node5->type != XML_ELEMENT_NODE)
 											continue;
 
 										g_debug("Parsing provision list nodes...");
 						
-										if (!g_strcmp0(name, "DevicePasswordEnabled")) {
+										if (!g_strcmp0(node5_name, "DevicePasswordEnabled")) {
 											priv->provision_list->DevicePasswordEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AlphanumericDevicePasswordRequired")) {
+										else if (!g_strcmp0(node5_name, "AlphanumericDevicePasswordRequired")) {
 											priv->provision_list->AlphaNumericDevicePasswordRequired = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "PasswordRecoveryEnabled")) {
+										else if (!g_strcmp0(node5_name, "PasswordRecoveryEnabled")) {
 											priv->provision_list->PasswordRecoveryEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "RequiresStorageCardEncryption")) {
+										else if (!g_strcmp0(node5_name, "RequiresStorageCardEncryption")) {
 											priv->provision_list->RequireStorageCardEncryption = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AttachmentsEnabled")) {
+										else if (!g_strcmp0(node5_name, "AttachmentsEnabled")) {
 											priv->provision_list->AttachmentsEnabled = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MinDevicePasswordLength")) {
+										else if (!g_strcmp0(node5_name, "MinDevicePasswordLength")) {
 											priv->provision_list->MinDevicePasswordLength = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MaxInactivityTimeDeviceLock")) {
+										else if (!g_strcmp0(node5_name, "MaxInactivityTimeDeviceLock")) {
 											priv->provision_list->MaxInactivityTimeDeviceLock = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MaxDevicePasswordFailedAttempts")) {
+										else if (!g_strcmp0(node5_name, "MaxDevicePasswordFailedAttempts")) {
 											priv->provision_list->MaxDevicePasswordFailedAttempts = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MaxAttachmentSize")) {
+										else if (!g_strcmp0(node5_name, "MaxAttachmentSize")) {
 											priv->provision_list->MaxAttachmentSize = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowSimpleDevicePassword")) {
+										else if (!g_strcmp0(node5_name, "AllowSimpleDevicePassword")) {
 											priv->provision_list->AllowSimpleDevicePassword = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "DevicePasswordExpiration")) {
+										else if (!g_strcmp0(node5_name, "DevicePasswordExpiration")) {
 											priv->provision_list->DevicePasswordExpiration = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "DevicePasswordHistory")) {
+										else if (!g_strcmp0(node5_name, "DevicePasswordHistory")) {
 											priv->provision_list->DevicePasswordHistory = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowStorageCard")) {
+										else if (!g_strcmp0(node5_name, "AllowStorageCard")) {
 											priv->provision_list->AllowStorageCard = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowCamera")) {
+										else if (!g_strcmp0(node5_name, "AllowCamera")) {
 											priv->provision_list->AllowCamera = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "RequireDeviceEncryption")) {
+										else if (!g_strcmp0(node5_name, "RequireDeviceEncryption")) {
 											priv->provision_list->RequireDeviceEncryption = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowUnsignedApplications")) {
+										else if (!g_strcmp0(node5_name, "AllowUnsignedApplications")) {
 											priv->provision_list->AllowUnsignedApplications = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowUnsignedInstallationPackages")) {
+										else if (!g_strcmp0(node5_name, "AllowUnsignedInstallationPackages")) {
 											priv->provision_list->AllowUnsignedInstallationPackages = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MinDevicePasswordComplexCharacters")) {
+										else if (!g_strcmp0(node5_name, "MinDevicePasswordComplexCharacters")) {
 											priv->provision_list->MinDevicePasswordComplexCharacters = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowWifi")) {
+										else if (!g_strcmp0(node5_name, "AllowWifi")) {
 											priv->provision_list->AllowWifi = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowTextMessaging")) {
+										else if (!g_strcmp0(node5_name, "AllowTextMessaging")) {
 											priv->provision_list->AllowTextMessaging = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowPOPIMAPEmail")) {
+										else if (!g_strcmp0(node5_name, "AllowPOPIMAPEmail")) {
 											priv->provision_list->AllowPOPIMAPEmail = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowBluetooth")) {
+										else if (!g_strcmp0(node5_name, "AllowBluetooth")) {
 											priv->provision_list->AllowBluetooth = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowIrDA")) {
+										else if (!g_strcmp0(node5_name, "AllowIrDA")) {
 											priv->provision_list->AllowIrDA = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "RequireManualSyncWhenRoaming")) {
+										else if (!g_strcmp0(node5_name, "RequireManualSyncWhenRoaming")) {
 											priv->provision_list->RequireManualSyncWhenRoaming = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowDesktopSync")) {
+										else if (!g_strcmp0(node5_name, "AllowDesktopSync")) {
 											priv->provision_list->AllowDesktopSync = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "MaxCalendarAgeFilter")) {
+										else if (!g_strcmp0(node5_name, "MaxCalendarAgeFilter")) {
 											priv->provision_list->MaxCalendarAgeFilter = (gchar*)xmlNodeGetContent(node5);
 										}
-										else if (!g_strcmp0(name, "AllowHTMLEmail")) {
+										else if (!g_strcmp0(node5_name, "AllowHTMLEmail")) {
 											priv->provision_list->AllowHTMLEmail = (gchar*)xmlNodeGetContent(node5);
 										}
 										else if (!g_strcmp0(name, "MaxEmailAgeFilter")) {

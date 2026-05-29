@@ -60,11 +60,10 @@ struct _EasGetEmailAttachmentMsgPrivate {
 	gchar* directoryPath;
 };
 
-#define EAS_GET_EMAIL_ATTACHMENT_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_ATTACHMENT_MSG, EasGetEmailAttachmentMsgPrivate))
 
 
 
-G_DEFINE_TYPE (EasGetEmailAttachmentMsg, eas_get_email_attachment_msg, EAS_TYPE_MSG_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetEmailAttachmentMsg, eas_get_email_attachment_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_get_email_attachment_msg_init (EasGetEmailAttachmentMsg *object)
@@ -72,7 +71,7 @@ eas_get_email_attachment_msg_init (EasGetEmailAttachmentMsg *object)
 	EasGetEmailAttachmentMsgPrivate* priv = NULL;
 	g_debug ("eas_get_email_attachment_msg_init++");
 
-	object->priv = priv = EAS_GET_EMAIL_ATTACHMENT_MSG_PRIVATE (object);
+	object->priv = priv = eas_get_email_attachment_msg_get_instance_private(object);
 
 	priv->fileReference = NULL;
 	priv->directoryPath = NULL;
@@ -100,8 +99,6 @@ eas_get_email_attachment_msg_class_init (EasGetEmailAttachmentMsgClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_get_email_attachment_msg_class_init++");
-	g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentMsgPrivate));
-
 	object_class->finalize = eas_get_email_attachment_msg_finalize;
 	g_debug ("eas_get_email_attachment_msg_class_init++");
 }

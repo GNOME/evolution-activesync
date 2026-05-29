@@ -65,11 +65,10 @@ struct _EasSyncFolderHierarchyReqPrivate {
 	void *results_fn_data;
 };
 
-#define EAS_SYNC_FOLDER_HIERARCHY_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_FOLDER_HIERARCHY_REQ, EasSyncFolderHierarchyReqPrivate))
 
 
 
-G_DEFINE_TYPE (EasSyncFolderHierarchyReq, eas_sync_folder_hierarchy_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasSyncFolderHierarchyReq, eas_sync_folder_hierarchy_req, EAS_TYPE_REQUEST_BASE);
 
 
 static void
@@ -82,7 +81,7 @@ eas_sync_folder_hierarchy_req_init (EasSyncFolderHierarchyReq *object)
 {
 	EasSyncFolderHierarchyReqPrivate *priv;
 
-	object->priv = priv = EAS_SYNC_FOLDER_HIERARCHY_REQ_PRIVATE (object);
+	object->priv = priv = eas_sync_folder_hierarchy_req_get_instance_private(object);
 
 	g_debug ("eas_sync_folder_hierarchy_req_init++");
 	priv->syncFolderMsg = NULL;
@@ -138,8 +137,6 @@ eas_sync_folder_hierarchy_req_class_init (EasSyncFolderHierarchyReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	g_debug ("eas_sync_folder_hierarchy_req_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasSyncFolderHierarchyReqPrivate));
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_sync_folder_hierarchy_req_MessageComplete;
 

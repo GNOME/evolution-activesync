@@ -56,12 +56,6 @@
 #include "eas-move-email-req.h"
 #include "eas-move-email-msg.h"
 
-
-
-G_DEFINE_TYPE (EasMoveEmailReq, eas_move_email_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_MOVE_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MOVE_EMAIL_REQ, EasMoveEmailReqPrivate))
-
 struct _EasMoveEmailReqPrivate {
 	EasMoveEmailMsg *move_email_msg;
 	gchar* account_id;
@@ -70,6 +64,8 @@ struct _EasMoveEmailReqPrivate {
 	gchar* dest_folder_id;
 };
 
+G_DEFINE_TYPE_WITH_PRIVATE (EasMoveEmailReq, eas_move_email_req, EAS_TYPE_REQUEST_BASE);
+
 static void
 eas_move_email_req_init (EasMoveEmailReq *object)
 {
@@ -77,7 +73,7 @@ eas_move_email_req_init (EasMoveEmailReq *object)
 	EasMoveEmailReqPrivate *priv;
 	g_debug ("eas_move_email_req_init++");
 
-	object->priv = priv = EAS_MOVE_EMAIL_REQ_PRIVATE (object);
+	object->priv = priv = eas_move_email_req_get_instance_private(object);
 
 	priv->account_id = NULL;
 	priv->move_email_msg = NULL;
@@ -132,8 +128,6 @@ eas_move_email_req_class_init (EasMoveEmailReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	g_debug ("eas_move_email_req_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasMoveEmailReqPrivate));
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_move_email_req_MessageComplete;
 

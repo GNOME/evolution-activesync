@@ -203,7 +203,7 @@ gboolean eas_connection_send_request (EasConnection* self,
  *	  An array of guints.
  *
  */
-void eas_connection_add_mock_responses (const gchar** response_file_list, const GArray *mock_status_codes);
+void eas_connection_add_mock_responses (const gchar * const * response_file_list, const GArray *mock_status_codes);
 
 
 /**

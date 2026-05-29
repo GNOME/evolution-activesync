@@ -98,9 +98,9 @@ gboolean eas_common_sync_folder_items (EasCommon* self,
 				       const gchar* sync_key,
 				       const gchar* folder_id,
 				       guint filter_type,
-				       const gchar** add_items,
-				       const gchar** delete_items,
-				       const gchar** change_items,
+				       const gchar * const * add_items,
+				       const gchar * const * delete_items,
+				       const gchar * const * change_items,
 				       guint request_id,
 				       GDBusMethodInvocation* context);
 

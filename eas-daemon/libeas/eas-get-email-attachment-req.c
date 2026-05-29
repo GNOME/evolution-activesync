@@ -62,18 +62,17 @@ struct _EasGetEmailAttachmentReqPrivate {
 	gchar *mimeDirectory;
 };
 
-#define EAS_GET_EMAIL_ATTACHMENT_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_GET_EMAIL_ATTACHMENT_REQ, EasGetEmailAttachmentReqPrivate))
 
 
 
-G_DEFINE_TYPE (EasGetEmailAttachmentReq, eas_get_email_attachment_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasGetEmailAttachmentReq, eas_get_email_attachment_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_get_email_attachment_req_init (EasGetEmailAttachmentReq *object)
 {
 	EasGetEmailAttachmentReqPrivate* priv;
 	g_debug ("eas_get_email_attachment_req_init++");
-	object->priv = priv = EAS_GET_EMAIL_ATTACHMENT_REQ_PRIVATE (object);
+	object->priv = priv = eas_get_email_attachment_req_get_instance_private(object);
 
 	eas_request_base_SetRequestType (&object->parent_instance,
 					 EAS_REQ_GET_EMAIL_ATTACHMENT);
@@ -125,8 +124,6 @@ eas_get_email_attachment_req_class_init (EasGetEmailAttachmentReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	g_debug ("eas_get_email_attachment_req_class_init++");
-	g_type_class_add_private (klass, sizeof (EasGetEmailAttachmentReqPrivate));
-
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_get_email_attachment_req_MessageComplete;
 
 	object_class->finalize = eas_get_email_attachment_req_finalize;

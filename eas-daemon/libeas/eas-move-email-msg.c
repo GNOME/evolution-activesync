@@ -57,10 +57,6 @@
 #include <wbxml/wbxml.h>
 #include <glib.h>
 
-G_DEFINE_TYPE (EasMoveEmailMsg, eas_move_email_msg, EAS_TYPE_MSG_BASE);
-
-#define EAS_MOVE_EMAIL_MSG_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_MOVE_EMAIL_MSG, EasMoveEmailMsgPrivate))
-
 struct _EasMoveEmailMsgPrivate {
 	gchar* account_id;
 	GSList* server_ids_list;
@@ -68,6 +64,8 @@ struct _EasMoveEmailMsgPrivate {
 	gchar* dest_folder_id;
 	GSList *updated_ids_list;   // list of EasIdUpdate
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasMoveEmailMsg, eas_move_email_msg, EAS_TYPE_MSG_BASE);
 
 static void
 eas_move_email_msg_init (EasMoveEmailMsg *object)
@@ -77,7 +75,7 @@ eas_move_email_msg_init (EasMoveEmailMsg *object)
 	/* initialization code: */
 	g_debug ("eas_move_email_msg_init++");
 
-	object->priv = priv = EAS_MOVE_EMAIL_MSG_PRIVATE (object);
+	object->priv = priv = eas_move_email_msg_get_instance_private(object);
 
 	priv->account_id = NULL;
 	priv->server_ids_list = NULL;
@@ -119,8 +117,6 @@ static void
 eas_move_email_msg_class_init (EasMoveEmailMsgClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (EasMoveEmailMsgPrivate));
 
 	object_class->finalize = eas_move_email_msg_finalize;
 	object_class->dispose = eas_move_email_msg_dispose;
@@ -168,7 +164,6 @@ eas_move_email_msg_build_message (EasMoveEmailMsg* self)
 			    (xmlChar*) "ActiveSync",
 			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
 			    (xmlChar*) "http://www.microsoft.com/");
-
 
 	// no namespaces required?
 	xmlNewNs (root, (xmlChar *) "Move:", NULL);

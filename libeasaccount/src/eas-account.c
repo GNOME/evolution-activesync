@@ -35,11 +35,9 @@ static guint signals[LAST_SIGNAL];
 
 static void eas_account_finalize (GObject *);
 
-G_DEFINE_TYPE (EasAccount, eas_account, G_TYPE_OBJECT)
-
 struct	_EasAccountPrivate
 {
-	 gchar* uid; 
+	 gchar* uid;
 	 gchar* serverUri;
 	 gchar* username;
 	 gchar* policy_key;
@@ -47,11 +45,12 @@ struct	_EasAccountPrivate
 	 gchar* contact_folder;
 	 gchar* password;
 	 gchar* device_id;
-     int protocol_version;	
+     int protocol_version;
 	 GSList* server_protocols;	// list of protocols supported by server, eg 120, 121, 140, 141
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (EasAccount, eas_account, G_TYPE_OBJECT)
 	
-#define EAS_ACCOUNT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_ACCOUNT, EasAccountPrivate))
 
 static void
 eas_account_class_init (EasAccountClass *account_class)
@@ -61,8 +60,6 @@ eas_account_class_init (EasAccountClass *account_class)
 	/* virtual method override */
 	object_class->finalize = eas_account_finalize;
 
-	g_type_class_add_private (account_class, sizeof (EasAccountPrivate));
-	
 	signals[CHANGED] =
 		g_signal_new("changed",
 			     G_OBJECT_CLASS_TYPE (object_class),
@@ -79,7 +76,7 @@ eas_account_init (EasAccount *account)
 {
 	EasAccountPrivate *priv = NULL;
 	g_debug("eas_account_init++");
-	account->priv = priv = EAS_ACCOUNT_PRIVATE(account);
+	account->priv = priv = eas_account_get_instance_private(account);
 
 	priv->uid = NULL;
 	priv->serverUri = NULL;

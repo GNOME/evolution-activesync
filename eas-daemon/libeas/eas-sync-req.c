@@ -58,16 +58,11 @@
 #include <string.h>
 #include "../../libeasaccount/src/eas-account-list.h"
 
-G_DEFINE_TYPE (EasSyncReq, eas_sync_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_SYNC_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_REQ, EasSyncReqPrivate))
-
 typedef enum {
 	EasSyncReqStep1 = 0,
 	EasSyncReqStep2,
 	EasSyncReqStep3
 } EasSyncReqState;
-
 
 struct _EasSyncReqPrivate {
 	EasSyncMsg* syncMsg;
@@ -79,14 +74,14 @@ struct _EasSyncReqPrivate {
 	EasItemType ItemType;
 };
 
-
+G_DEFINE_TYPE_WITH_PRIVATE (EasSyncReq, eas_sync_req, EAS_TYPE_REQUEST_BASE);
 
 static void
 eas_sync_req_init (EasSyncReq *object)
 {
 	EasSyncReqPrivate *priv;
 
-	object->priv = priv = EAS_SYNC_REQ_PRIVATE (object);
+	object->priv = priv = eas_sync_req_get_instance_private(object);
 
 	g_debug ("eas_sync_req_init++");
 	priv->syncMsg = NULL;
@@ -150,8 +145,6 @@ eas_sync_req_class_init (EasSyncReqClass *klass)
 	EasRequestBaseClass *base_class = EAS_REQUEST_BASE_CLASS (klass);
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_sync_req_MessageComplete;
-
-	g_type_class_add_private (klass, sizeof (EasSyncReqPrivate));
 
 	object_class->dispose = eas_sync_req_dispose;
 	object_class->finalize = eas_sync_req_finalize;
@@ -359,7 +352,6 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		goto finish;
 	}
 
-
 	switch (priv->state) {
 	default: {
 		ret = FALSE;
@@ -372,7 +364,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 		GSList* added_folders = NULL;
 		GSList* updated_folders  = NULL;
 		GSList* deleted_folders  = NULL;
-		const gchar *ret_sync_key = NULL;
+		const gchar *folder_sync_key = NULL;
 
 		ret = eas_sync_folder_msg_parse_response (priv->syncFolderMsg, doc, &error);
 
@@ -382,14 +374,14 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 			goto finish;
 		}
 		//save the Folder Sync info for future Folder syncs
-		ret_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
+		folder_sync_key = eas_sync_folder_msg_get_syncKey (priv->syncFolderMsg); // no transfer
 
 		added_folders   = eas_sync_folder_msg_get_added_folders (priv->syncFolderMsg);
 		updated_folders = eas_sync_folder_msg_get_updated_folders (priv->syncFolderMsg);
 		deleted_folders = eas_sync_folder_msg_get_deleted_folders (priv->syncFolderMsg);
 
 		eas_connection_update_folders(eas_request_base_GetConnection (EAS_REQUEST_BASE (self)), 
-		                              ret_sync_key, added_folders,
+		                              folder_sync_key, added_folders,
 					      updated_folders, deleted_folders, error);
 
 		// ensure that we have priv->folderID for eas_sync_msg_new()

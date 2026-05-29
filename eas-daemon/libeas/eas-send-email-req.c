@@ -55,12 +55,6 @@
 #include "eas-send-email-req.h"
 #include "eas-send-email-msg.h"
 
-
-
-G_DEFINE_TYPE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
-
-#define EAS_SEND_EMAIL_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SEND_EMAIL_REQ, EasSendEmailReqPrivate))
-
 struct _EasSendEmailReqPrivate {
 	EasSendEmailMsg *send_email_msg;
 	gchar* account_id;
@@ -68,13 +62,15 @@ struct _EasSendEmailReqPrivate {
 	gchar* mime_file;
 };
 
+G_DEFINE_TYPE_WITH_PRIVATE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
+
 static void
 eas_send_email_req_init (EasSendEmailReq *object)
 {
 	EasSendEmailReqPrivate *priv;
 	g_debug ("eas_send_email_req_init++");
 
-	object->priv = priv = EAS_SEND_EMAIL_REQ_PRIVATE (object);
+	object->priv = priv = eas_send_email_req_get_instance_private(object);
 
 	priv->account_id = NULL;
 	priv->send_email_msg = NULL;
@@ -127,8 +123,6 @@ eas_send_email_req_class_init (EasSendEmailReqClass *klass)
 	g_debug ("eas_send_email_req_class_init++");
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_send_email_req_MessageComplete;
-
-	g_type_class_add_private (klass, sizeof (EasSendEmailReqPrivate));
 
 	object_class->finalize = eas_send_email_req_finalize;
 	object_class->dispose = eas_send_email_req_dispose;
@@ -262,7 +256,6 @@ finish:
 	g_debug ("eas_send_email_req_Activate--");
 	return ret;
 }
-
 
 gboolean
 eas_send_email_req_MessageComplete (EasSendEmailReq *self, xmlDoc* doc, GError* error_in)

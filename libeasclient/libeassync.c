@@ -39,9 +39,12 @@
 #include "eas-logger.h"
 #include "eas-dbus-client.h"
 
-G_DEFINE_TYPE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
+struct _EasSyncHandlerPrivate {
+	struct eas_gdbus_client eas_client;
+	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
+};
 
-#define EAS_SYNC_HANDLER_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_SYNC_HANDLER, EasSyncHandlerPrivate))
+G_DEFINE_TYPE_WITH_PRIVATE (EasSyncHandler, eas_sync_handler, G_TYPE_OBJECT);
 
 GQuark
 eas_sync_error_quark (void)
@@ -56,12 +59,6 @@ eas_sync_error_quark (void)
 	return quark;
 }
 
-
-struct _EasSyncHandlerPrivate {
-	struct eas_gdbus_client eas_client;
-	gchar* account_uid;     // TODO - is it appropriate to have a dbus proxy per account if we have multiple accounts making requests at same time?
-};
-
 static gboolean
 build_serialised_calendar_info_array (gchar ***serialised_cal_info_array, const GSList *cal_list, gboolean add_client_ids, GError **error);
 
@@ -74,7 +71,7 @@ eas_sync_handler_init (EasSyncHandler *cnc)
 	g_debug ("eas_sync_handler_init++");
 
 	/* allocate internal structure */
-	cnc->priv = priv = EAS_SYNC_HANDLER_PRIVATE (cnc);
+	cnc->priv = priv = eas_sync_handler_get_instance_private(cnc);
 
 	memset (&priv->eas_client, 0, sizeof (priv->eas_client));
 	cnc->priv = priv;
@@ -109,8 +106,6 @@ eas_sync_handler_class_init (EasSyncHandlerClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	g_debug ("eas_sync_handler_class_init++");
-
-	g_type_class_add_private (klass, sizeof (EasSyncHandlerPrivate));
 
 	object_class->finalize = eas_sync_handler_finalize;
 	object_class->dispose = eas_sync_handler_dispose;
@@ -199,7 +194,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 	gchar **deleted_item_array = NULL;
 	gchar **updated_item_array = NULL;
 
-
 	g_debug ("eas_sync_handler_get_calendar_items++ ");
 
 	if (self == NULL) {
@@ -220,7 +214,6 @@ gboolean eas_sync_handler_get_items (EasSyncHandler* self,
 		g_debug ("updating sync key to 0");
 		sync_key_in = "0";
 	}
-
 
 	g_debug ("sync_key_in = %s", sync_key_in);
 	g_debug ("eas_sync_handler_get_latest_items - dbus proxy ok");
@@ -344,7 +337,6 @@ eas_sync_handler_delete_items (EasSyncHandler* self,
 		g_debug ("Deleted Id: [%s]", deleted_items_array[loop]);
 	}
 
-
 	g_debug ("eas_sync_handler_delete_items - dbus proxy ok");
 
 	// call DBus API
@@ -394,7 +386,6 @@ eas_sync_handler_update_items (EasSyncHandler* self,
 			     ("update_items requires a valid sync key"));
 		return FALSE;
 	}
-
 
 	g_debug ("eas_sync_handler_update_items - dbus proxy ok");
 
@@ -485,7 +476,6 @@ eas_sync_handler_add_items (EasSyncHandler* self,
 		return FALSE;
 	}
 
-
 	build_serialised_calendar_info_array (&added_item_array, items_added, TRUE, error);
 
 	// call DBus API
@@ -550,8 +540,6 @@ eas_sync_handler_fetch_item (EasSyncHandler* self,
 	g_assert (server_id);
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-
 
 	ret = eas_gdbus_sync_call (self, "fetch_item",
 				   NULL, NULL, /* progress */

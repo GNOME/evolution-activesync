@@ -41,9 +41,6 @@
 /* To use camel_eas_settings_set_account_uid() */
 #include "libevoeas/camel-eas-settings.h"
 
-#define E_MAIL_CONFIG_EAS_BACKEND_GET_PRIVATE(obj) \
-	(G_TYPE_INSTANCE_GET_PRIVATE \
-	((obj), E_TYPE_MAIL_CONFIG_EAS_BACKEND, EMailConfigEasBackendPrivate))
 
 struct _EMailConfigEasBackendPrivate {
 	GtkWidget *user_entry;		/* not referenced */
@@ -52,10 +49,12 @@ struct _EMailConfigEasBackendPrivate {
 	GtkWidget *autodiscover_button;
 };
 
-G_DEFINE_DYNAMIC_TYPE (
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (
 	EMailConfigEasBackend,
 	e_mail_config_eas_backend,
-	E_TYPE_MAIL_CONFIG_SERVICE_BACKEND)
+	E_TYPE_MAIL_CONFIG_SERVICE_BACKEND,
+	0,
+	G_ADD_PRIVATE_DYNAMIC (EMailConfigEasBackend))
 
 static ESource *
 mail_config_eas_backend_new_collection (EMailConfigServiceBackend *backend)
@@ -150,7 +149,7 @@ mail_config_eas_backend_insert_widgets (EMailConfigServiceBackend *backend,
 	const gchar *text;
 	gchar *markup;
 
-	priv = E_MAIL_CONFIG_EAS_BACKEND_GET_PRIVATE (backend);
+	priv = e_mail_config_eas_backend_get_instance_private(E_MAIL_CONFIG_EAS_BACKEND (backend));
 	page = e_mail_config_service_backend_get_page (backend);
 
 	/* This backend serves double duty.  One instance holds the
@@ -304,11 +303,14 @@ mail_config_eas_backend_setup_defaults (EMailConfigServiceBackend *backend)
 
 	if (email_address != NULL) {
 		CamelNetworkSettings *network_settings;
-		gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
-		
+		gchar *account_address;
+		GSettings *account;
+
+		account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
+
 		g_debug("Path is %s\n", account_address);
-		
-		GSettings *account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+
+		account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
 		g_free (account_address);
 	
@@ -400,11 +402,14 @@ mail_config_eas_backend_commit_changes (EMailConfigServiceBackend *backend)
 		int i = 0;
 		GSettings *account_info = g_settings_new ("org.meego.activesyncd");
 		gchar **accounts = g_settings_get_strv(account_info, "accounts");
-		gchar *account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
+		gchar *account_address;
+		GSettings *account;
+
+		account_address = g_strdup_printf ("/org/meego/activesyncd/account/%s/", email_address);
 
 		g_debug("Path is %s\n", account_address);
 
-		GSettings *account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
+		account = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
 		g_free (account_address);
 
@@ -455,9 +460,6 @@ e_mail_config_eas_backend_class_init (EMailConfigEasBackendClass *class)
 {
 	EMailConfigServiceBackendClass *backend_class;
 
-	g_type_class_add_private (
-		class, sizeof (EMailConfigEasBackendPrivate));
-
 	backend_class = E_MAIL_CONFIG_SERVICE_BACKEND_CLASS (class);
 	backend_class->backend_name = "eas";
 	backend_class->new_collection = mail_config_eas_backend_new_collection;
@@ -475,7 +477,7 @@ e_mail_config_eas_backend_class_finalize (EMailConfigEasBackendClass *class)
 static void
 e_mail_config_eas_backend_init (EMailConfigEasBackend *backend)
 {
-	backend->priv = E_MAIL_CONFIG_EAS_BACKEND_GET_PRIVATE (backend);
+	backend->priv = e_mail_config_eas_backend_get_instance_private(E_MAIL_CONFIG_EAS_BACKEND (backend));
 }
 
 void

@@ -67,11 +67,10 @@ struct _EasProvisionReqPrivate {
 
 };
 
-#define EAS_PROVISION_REQ_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), EAS_TYPE_PROVISION_REQ, EasProvisionReqPrivate))
 
 
 
-G_DEFINE_TYPE (EasProvisionReq, eas_provision_req, EAS_TYPE_REQUEST_BASE);
+G_DEFINE_TYPE_WITH_PRIVATE (EasProvisionReq, eas_provision_req, EAS_TYPE_REQUEST_BASE);
 
 
 static void
@@ -79,7 +78,7 @@ eas_provision_req_init (EasProvisionReq *object)
 {
 	EasProvisionReqPrivate *priv;
 
-	object->priv = priv = EAS_PROVISION_REQ_PRIVATE (object);
+	object->priv = priv = eas_provision_req_get_instance_private(object);
 
 	priv->msg = NULL;
 	priv->state = EasProvisionStep1;
@@ -116,8 +115,6 @@ eas_provision_req_class_init (EasProvisionReqClass *klass)
 
 	base_class->do_MessageComplete = (EasRequestBaseMessageCompleteFp) eas_provision_req_MessageComplete;
 
-	g_type_class_add_private (klass, sizeof (EasProvisionReqPrivate));
-
 	object_class->finalize = eas_provision_req_finalize;
 	object_class->dispose = eas_provision_req_dispose;
 }
@@ -130,7 +127,7 @@ eas_provision_req_new (gboolean internal,
                        GDBusMethodInvocation *context)
 {
 	EasProvisionReq* self = g_object_new (EAS_TYPE_PROVISION_REQ, NULL);
-	EasProvisionReqPrivate *priv = EAS_PROVISION_REQ_PRIVATE (self);
+	EasProvisionReqPrivate *priv = eas_provision_req_get_instance_private(self);
 
 	if (self) 
 	{
