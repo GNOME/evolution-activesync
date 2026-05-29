@@ -80,8 +80,6 @@ struct _EasGetEmailBodyReq {
 	EasGetEmailBodyReqPrivate* priv;
 };
 
-void eas_get_email_body_req_set_response_size (EasGetEmailBodyReq* self, guint size);
-
 GType eas_get_email_body_req_get_type (void) G_GNUC_CONST;
 
 /**

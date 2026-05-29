@@ -436,7 +436,7 @@ create_node_from_categorylist (xmlNode *app_data, const GSList* categories)
 
 // translate the other way: take the emailinfo object and populate the ApplicationData node
 gboolean
-eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNode *app_data, const EasEmailInfo *email_info)
+eas_email_info_translator_build_update_request (const xmlDocPtr doc, xmlNodePtr app_data, const EasEmailInfo *email_info)
 {
 	gboolean ret = TRUE;
 	g_debug ("eas_email_info_translator_build_update_request++");

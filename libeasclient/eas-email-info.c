@@ -160,8 +160,7 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 			ret = FALSE;
 		} else {
 			g_string_append (ser, temp);
-			g_free (temp);
-			temp = NULL;
+			g_clear_pointer (&temp, g_free);
 			g_string_append (ser, sep);
 		}
 	}

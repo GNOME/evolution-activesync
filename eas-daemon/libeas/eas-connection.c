@@ -512,8 +512,7 @@ fetch_and_store_password (const gchar *account_id, const gchar *username, const 
 	success = writePasswordToKeyring (password, username, serverUri);
 
 	memset (password, 0, strlen (password));
-	g_free (password);
-	password = NULL;
+	g_clear_pointer (&password, g_free);
 
 	g_free (argv[1]);
 
@@ -624,8 +623,7 @@ connection_authenticate (SoupSession *sess,
 
 				if (password) {
 					memset (password, 0 , strlen (password));
-					g_free (password);
-					password = NULL;
+					g_clear_pointer (&password, g_free);
 				}
 			}
 		} else {
@@ -643,8 +641,7 @@ connection_authenticate (SoupSession *sess,
 						password);
 			if (password) {
 				memset (password, 0 , strlen (password));
-				g_free (password);
-				password = NULL;
+				g_clear_pointer (&password, g_free);
 			}
 		} else if (!cnc->priv->retrying_asked) {
 			g_debug ("Second authentication attempt - original password was incorrect");
@@ -652,8 +649,7 @@ connection_authenticate (SoupSession *sess,
 
 			if (password) {
 				memset (password, 0 , strlen (password));
-				g_free (password);
-				password = NULL;
+				g_clear_pointer (&password, g_free);
 			}
 
 			if (fetch_and_store_password (account_id, username, serverUri)) {
@@ -668,8 +664,7 @@ connection_authenticate (SoupSession *sess,
 
 				if (password) {
 					memset (password, 0 , strlen (password));
-					g_free (password);
-					password = NULL;
+					g_clear_pointer (&password, g_free);
 				}
 			}
 		} else {
@@ -1051,7 +1046,7 @@ gboolean
 eas_connection_send_request (EasConnection* self,
 			     const gchar* cmd,
 			     xmlDoc* doc,
-			     EasRequestBase *request,
+			     struct _EasRequestBase *request,
                              gboolean highpriority,
 			     GError** error)
 {
@@ -1210,7 +1205,7 @@ eas_connection_send_request (EasConnection* self,
 		} else {
 			node->mock_status = SOUP_STATUS_OK;
 		}
-		g_idle_add (call_handle_server_response, node);
+		(void) g_idle_add (call_handle_server_response, node);
 		
 	} else {	// send request via libsoup
 		g_signal_connect (msg, "got-chunk", G_CALLBACK (soap_got_chunk), request);
@@ -1423,7 +1418,7 @@ dump_wbxml_response (const WB_UTINY *wbxml, const WB_LONG wbxml_len)
 		wbxml2xml (wbxml, wbxml_len, &xml, &xml_len, NULL);
 		tmp = g_strndup ( (gchar*) xml, xml_len);
 		g_debug ("\n=== dump start: xml_len [%d] ===\n%s=== dump end ===", xml_len, tmp);
-		if (tmp) g_free (tmp);
+		g_free (tmp);
 		if (xml) free (xml);
 	} else {
 		g_warning ("No WBXML to decode");
@@ -1717,9 +1712,7 @@ autodiscover_send_cb (GObject *source, GAsyncResult *result, gpointer data)
 	g_free (sendData);
 
 	bytes = soup_session_send_and_read_finish (session, result, &error);
-	if (error) {
-		g_clear_error (&error);
-	}
+	g_clear_error (&error);
 
 	g_clear_object (&adData->cancellables[idx]);
 

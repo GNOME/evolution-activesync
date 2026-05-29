@@ -437,8 +437,7 @@ START_TEST (test_eas_sync_handler_delete_cal)
 
 		g_free(folder_sync_key_in);
 		folder_sync_key_in = g_strdup(folder_sync_key_out);
-		g_free(folder_sync_key_out);
-		folder_sync_key_out = NULL;
+		g_clear_pointer (&folder_sync_key_out, g_free);
         // delete the first calendar item in the folder
         rtn = eas_sync_handler_delete_items (sync_handler, folder_sync_key_in,(gchar**) &folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToDel, &error);
         if (error)
@@ -525,8 +524,7 @@ START_TEST (test_eas_sync_handler_update_cal)
         calitemToUpdate = g_slist_append (calitemToUpdate, updatedcalitem);
 		g_free(folder_sync_key_in);
 		folder_sync_key_in = g_strdup(folder_sync_key_out);
-		g_free(folder_sync_key_out);
-		folder_sync_key_out = NULL;
+		g_clear_pointer (&folder_sync_key_out, g_free);
         // update the first calendar item in the folder
         rtn = eas_sync_handler_update_items (sync_handler, folder_sync_key_in, (gchar**)folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
         if (error)
@@ -612,8 +610,7 @@ GSList *calitemToUpdate = NULL;
 
 	g_free(folder_sync_key_in);
 	folder_sync_key_in = g_strdup(folder_sync_key_out);
-	g_free(folder_sync_key_out);
-	folder_sync_key_out = NULL;
+	g_clear_pointer (&folder_sync_key_out, g_free);
 
     rtn = eas_sync_handler_add_items (sync_handler, folder_sync_key_in, (gchar**)&folder_sync_key_out, EAS_ITEM_CALENDAR, "1", calitemToUpdate, &error);
     if (error)

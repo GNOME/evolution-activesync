@@ -85,8 +85,6 @@ EasSync* eas_sync_new (void);
 GDBusInterfaceSkeleton *eas_sync_get_skeleton (EasSync *self);
 
 EasConnection*  eas_sync_get_eas_connection (EasSync* self);
-void eas_sync_set_eas_connection (EasSync* self, EasConnection* easConnObj);
-
 
 void eas_sync_get_latest_items (EasSync* self,
 				const gchar* account_uid,

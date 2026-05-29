@@ -520,8 +520,7 @@ eas_sync_req_MessageComplete (EasSyncReq *self, xmlDoc* doc, GError* error_in)
 
 				/* If errors happen here, let the first error show */
 				priv->syncFolderMsg = eas_sync_folder_msg_new (syncKey, priv->accountID);
-				g_free (syncKey);
-				syncKey = NULL;
+				g_clear_pointer (&syncKey, g_free);
 				if (!priv->syncFolderMsg)
 					goto finish;
 

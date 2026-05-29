@@ -333,8 +333,7 @@ START_TEST (test_eas_sync_handler_add_con)
 
 	g_free(folder_sync_key_in);
 	folder_sync_key_in = g_strdup(folder_sync_key_out);
-	g_free(folder_sync_key_out);
-	folder_sync_key_out = NULL;
+	g_clear_pointer (&folder_sync_key_out, g_free);
 
     rtn = eas_sync_handler_add_items (sync_handler,
                                       folder_sync_key_in,
@@ -494,8 +493,7 @@ START_TEST (test_eas_sync_handler_delete_all_created_con)
 
 	}
 
-	if(folder_sync_key_out)
-		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+	g_free(folder_sync_key_out); folder_sync_key_out = NULL;
 
 	// free contacts item objects list
 	g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);
@@ -580,8 +578,7 @@ START_TEST (test_eas_sync_handler_update_con)
 		g_slist_free (conItemToUpdate); conItemToUpdate = NULL;
 	}
 
-	if(folder_sync_key_out)
-		g_free(folder_sync_key_out); folder_sync_key_out = NULL;
+	g_free(folder_sync_key_out); folder_sync_key_out = NULL;
 
 	// free contacts item objects list
 	g_slist_foreach (contactitems_created, (GFunc) g_object_unref, NULL);

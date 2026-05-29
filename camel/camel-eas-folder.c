@@ -236,8 +236,7 @@ exit:
 	if (tmp_stream)
 		g_object_unref (tmp_stream);
 
-	if (mime_fname_new)
-		g_free (mime_fname_new);
+	g_free (mime_fname_new);
 
 	return message;
 }

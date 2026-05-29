@@ -113,17 +113,6 @@ EasInterfaceType eas_interface_base_GetInterfaceType (EasInterfaceBase* self);
  */
 void eas_interface_base_SetInterfaceType (EasInterfaceBase* self, EasInterfaceType type);
 
-/**
- * Getter for signal id.
- *
- * @param[in] self
- *      GObject Instance.
- *
- * @return id of signal emitted by interface
- */
-guint eas_interface_base_GetSignalId (EasInterfaceBase* self);
-
-
 G_END_DECLS
 
 #endif /* _EAS_INTERFACE_BASE_H_ */

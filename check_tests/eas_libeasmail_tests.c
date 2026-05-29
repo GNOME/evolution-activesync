@@ -254,7 +254,7 @@ static void testSendEmail (EasEmailHandler *email_handler,
 		send_params->progress_data = NULL;
 		send_params->error = error;		
 
-		g_idle_add(spawn_send_email_thread, send_params);	// spawns a new thread to make the sync call
+		(void) g_idle_add(spawn_send_email_thread, send_params);	// spawns a new thread to make the sync call
 
 		mark_point();
 
@@ -2464,8 +2464,7 @@ Suite* eas_libeasmail_suite (void)
 	// and doesn't currently delete them afterwards (TODO)
 	// tcase_add_test(tc_libeasmail, test_eas_mail_cancel_sync);
 	
-    g_free(g_inbox_id);
-    g_inbox_id = NULL;
+    g_clear_pointer (&g_inbox_id, g_free);
 
     return s;
 }

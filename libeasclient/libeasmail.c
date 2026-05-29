@@ -560,9 +560,7 @@ eas_mail_handler_sync_folder_email_info (EasEmailHandler* self,
 		}
 	}
 
-	if (updatedSyncKey) {
-		g_free (updatedSyncKey);
-	}
+	g_free (updatedSyncKey);
 	g_strfreev (created_emailinfo_array);
 	g_strfreev (updated_emailinfo_array);
 	g_strfreev (deleted_emailinfo_array);
@@ -707,8 +705,7 @@ eas_mail_handler_delete_email (EasEmailHandler* self,
 		g_free (deleted_items_array[loop]);
 		deleted_items_array[loop] = NULL;
 	}
-	g_free (deleted_items_array);
-	deleted_items_array = NULL;
+	g_clear_pointer (&deleted_items_array, g_free);
 
 finish:
 	if (ret) {
@@ -722,9 +719,7 @@ finish:
 		g_assert (error == NULL || *error != NULL);
 	}
 
-	if (ret_sync_key) {
-		g_free (ret_sync_key);
-	}
+	g_free (ret_sync_key);
 
 	g_debug ("eas_mail_handler_delete_emails--");
 	return ret;
@@ -937,8 +932,7 @@ eas_mail_handler_move_to_folder (EasEmailHandler* self,
 		g_free (server_ids_array[i]);
 		server_ids_array[i] = NULL;
 	}
-	g_free (server_ids_array);
-	server_ids_array = NULL;
+	g_clear_pointer (&server_ids_array, g_free);
 
 	if (ret) {
 		ret = build_easidupdates_list ( (const gchar**) updated_ids_array, updated_ids_list, error);	//why does this require a cast?
@@ -1268,8 +1262,7 @@ eas_mail_handler_sync_folder_email (EasEmailHandler* self,
 			g_free (delete_emails_array[loop]);
 			delete_emails_array[loop] = NULL;
 		}
-		g_free (delete_emails_array);
-		delete_emails_array = NULL;
+		g_clear_pointer (&delete_emails_array, g_free);
 		// free ret_failed_updates_array
 		for (i = 0; ret_failed_changes_array[i] != NULL; i++) {
 			g_free (ret_failed_changes_array[i]);

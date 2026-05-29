@@ -260,8 +260,7 @@ eas_ping_req_MessageComplete (EasPingReq *self, xmlDoc* doc, GError* error_in)
 		g_dbus_method_invocation_return_value (eas_request_base_GetContext (parent),
 						       g_variant_new ("(^as)", ret_changed_folders_array));
 
-		g_free (ret_changed_folders_array);
-		ret_changed_folders_array = NULL;
+		g_clear_pointer (&ret_changed_folders_array, g_free);
 
 		finished = TRUE;
 		ret = TRUE;

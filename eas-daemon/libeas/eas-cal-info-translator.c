@@ -704,8 +704,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 		guint16 daylightName[32];
 
 		memcpy (&timeZoneStruct, timeZoneRawBytes, timeZoneRawBytesSize);
-		g_free (timeZoneRawBytes);
-		timeZoneRawBytes = NULL;
+		g_clear_pointer (&timeZoneRawBytes, g_free);
 
 		memcpy (standardName, timeZoneStruct.StandardName, sizeof (standardName));
 		memcpy (daylightName, timeZoneStruct.DaylightName, sizeof (daylightName));
@@ -803,8 +802,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 					prop = icalproperty_new_tzname (value);
 					icalcomponent_add_property (xstandard, prop);
 				}
-				g_free (value);
-				value = NULL;
+				g_clear_pointer (&value, g_free);
 			}
 
 			// And now add the STANDARD component to the VTIMEZONE
@@ -859,8 +857,7 @@ static icaltimezone* _eas2ical_process_timezone (xmlNodePtr n, icalcomponent* vt
 						prop = icalproperty_new_tzname (value);
 						icalcomponent_add_property (xdaylight, prop);
 					}
-					g_free (value);
-					value = NULL;
+					g_clear_pointer (&value, g_free);
 				}
 
 				// And now add the DAYLIGHT component to the VTIMEZONE
@@ -1856,8 +1853,7 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 				icalproperty_set_x_name (prop, propertyName);
 				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
 				icalcomponent_add_property (vevent, prop);
-				g_free (propertyName);
-				propertyName = NULL;
+				g_clear_pointer (&propertyName, g_free);
 			}
 
 			if (value) xmlFree (value);
@@ -2046,8 +2042,7 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 		}
 		xmlValue = g_strdup_printf ("%d", rrule.count);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_OCCURRENCES, (const xmlChar*) xmlValue);
-		g_free (xmlValue);
-		xmlValue = NULL;
+		g_clear_pointer (&xmlValue, g_free);
 	} else if (!icaltime_is_null_time (rrule.until)) {
 		/* Exchange seems to have exclusive end date, while iCalendar is inclusive. Add one second. */
 		struct icaltimetype until = rrule.until;
@@ -2070,8 +2065,7 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 		if (rrule.interval > 1) {
 			xmlValue = g_strdup_printf ("%d", rrule.interval);
 			xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_INTERVAL, (const xmlChar*) xmlValue);
-			g_free (xmlValue);
-			xmlValue = NULL;
+			g_clear_pointer (&xmlValue, g_free);
 		}
 	}
 
@@ -2140,8 +2134,7 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 		//g_debug("RECURRENCE: DayOfWeek value = %d (0x%08X)", dayOfWeek, dayOfWeek);
 		xmlValue = g_strdup_printf ("%d", dayOfWeek);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DAYOFWEEK, (const xmlChar*) xmlValue);
-		g_free (xmlValue);
-		xmlValue = NULL;
+		g_clear_pointer (&xmlValue, g_free);
 	}
 	if (weekOfMonth) {
 		// Set the Type value to 3 ("Recurs monthly on the nth day")
@@ -2149,15 +2142,13 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 
 		xmlValue = g_strdup_printf ("%d", weekOfMonth);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_WEEKOFMONTH, (const xmlChar*) xmlValue);
-		g_free (xmlValue);
-		xmlValue = NULL;
+		g_clear_pointer (&xmlValue, g_free);
 	}
 
 	// And now we can add the Type element too
 	xmlValue = g_strdup_printf ("%d", recurType);
 	xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_TYPE, (const xmlChar*) xmlValue);
-	g_free (xmlValue);
-	xmlValue = NULL;
+	g_clear_pointer (&xmlValue, g_free);
 
 	//
 	// WKST
@@ -2195,8 +2186,7 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 	if (monthOfYear > 0) {
 		xmlValue = g_strdup_printf ("%d", monthOfYear);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_MONTHOFYEAR, (const xmlChar*) xmlValue);
-		g_free (xmlValue);
-		xmlValue = NULL;
+		g_clear_pointer (&xmlValue, g_free);
 	}
 
 	//
@@ -2223,8 +2213,7 @@ static void _ical2eas_process_rrule (icalproperty* prop, xmlNodePtr appData, str
 	if (dayOfMonth > 0) {
 		xmlValue = g_strdup_printf ("%d", dayOfMonth);
 		xmlNewTextChild (recurNode, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_DAYOFMONTH, (const xmlChar*) xmlValue);
-		g_free (xmlValue);
-		xmlValue = NULL;
+		g_clear_pointer (&xmlValue, g_free);
 	}
 
 

@@ -111,8 +111,7 @@ discover_server_url (GtkWidget *button, EMailConfigServiceBackend *backend)
 
 		username = g_strdup (gtk_entry_get_text((GtkEntry *)username_entry));
 		if (username == NULL || *username == '\0' || strcmp (username, email_address) == 0) {
-			g_free (username);
-			username = NULL;
+			g_clear_pointer (&username, g_free);
 		}
 
 		/* Core server URL auto discover handler */

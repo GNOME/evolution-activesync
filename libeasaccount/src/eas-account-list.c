@@ -139,8 +139,7 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid)
 	g_debug("Path is %s\n", account_address);
 	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 
-	g_free (account_address);
-	account_address = NULL;
+	g_clear_pointer (&account_address, g_free);
 
 	key_list = g_settings_list_keys (setting);
 	len = g_strv_length (key_list);
@@ -486,8 +485,7 @@ eas_account_list_save_account(EasAccountList *account_list,
 	g_debug("Path is %s\n", account_address);
 	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
-	g_free (account_address);
-	account_address = NULL;
+	g_clear_pointer (&account_address, g_free);
 
 	if (eas_account_get_uri(account)){
 		g_settings_set_string (setting, EAS_ACCOUNT_KEY_SERVERURI, eas_account_get_uri(account));
@@ -547,8 +545,7 @@ eas_account_list_save_account_from_info(EasAccountList *account_list,
 
 	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
-	g_free (account_address);
-	account_address = NULL;
+	g_clear_pointer (&account_address, g_free);
 
 	if (acc_info->serverUri){
 		g_settings_set_string (setting, EAS_ACCOUNT_KEY_SERVERURI, acc_info->serverUri);
@@ -661,8 +658,7 @@ eas_account_list_save_item(EasAccountList *account_list,
 
 	setting = g_settings_new_with_path ("org.meego.activesyncd.account", account_address);
 		
-	g_free (account_address);
-	account_address = NULL;
+	g_clear_pointer (&account_address, g_free);
 
 	switch (type) {
 	case EAS_ACCOUNT_SERVER_URI:

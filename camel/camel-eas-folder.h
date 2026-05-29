@@ -69,7 +69,6 @@ GType camel_eas_folder_get_type (void);
 /* implemented */
 CamelFolder *    camel_eas_folder_new       (CamelStore *store, const gchar *folder_dir, const gchar *folder_name, gchar *folder_id, GCancellable *cancellable, GError **error);
 CamelDataCache * camel_eas_folder_get_cache (CamelEasFolder *folder);
-void             eas_update_summary         (CamelFolder *folder, GList *item_list, GCancellable *cancellable, GError **error);
 
 G_END_DECLS
 

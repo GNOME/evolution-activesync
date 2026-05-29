@@ -83,18 +83,7 @@ struct _EasMail {
 GType eas_mail_get_type (void) G_GNUC_CONST;
 GDBusInterfaceSkeleton *eas_mail_get_skeleton (EasMail *self);
 
-/* TODO:Insert your Mail Interface APIS here*/
-//START - Test interfaces
-gboolean eas_mail_start_sync (EasMail* self, gint valueIn, GError** error);
-void eas_mail_test_001 (EasMail* self, GDBusMethodInvocation* context);
-//END - Test interfaces
-
-
 EasMail* eas_mail_new (void);
-
-#if 0
-void eas_mail_set_eas_connection (EasMail* self, EasConnection* easConnObj);
-#endif
 
 /*
 	get an estimate of the number of emails to be synchronised

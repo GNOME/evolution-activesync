@@ -261,8 +261,7 @@ finish:
 				++ index;
 			}
 
-			g_free (ret_added_items_array);
-			ret_added_items_array = NULL;
+			g_clear_pointer (&ret_added_items_array, g_free);
 		}
 	}
 	// We always need to free 'doc' and release the semaphore.

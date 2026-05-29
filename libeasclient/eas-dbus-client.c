@@ -194,8 +194,7 @@ eas_gdbus_call_finish (struct eas_gdbus_client *client, GAsyncResult *result,
 	}
 
  out:
-	if (out_params_type != out_params)
-		g_free (out_params_type);
+	g_free (out_params_type);
 
 	g_object_unref (reply);
 	return success;
