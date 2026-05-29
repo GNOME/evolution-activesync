@@ -41,6 +41,7 @@ eas_folder_init (EasFolder *object)
 	object->parent_id = NULL;
 	object->folder_id = NULL;
 	object->display_name = NULL;
+	object->supported_as_child = FALSE;
 }
 
 static void
@@ -81,18 +82,18 @@ eas_folder_serialise (EasFolder* folder, gchar **result)
 {
 	gboolean ret = TRUE;
 	gchar type[4] = "";
-	gchar *strings[5] = {folder->parent_id, folder->folder_id, folder->display_name, type, 0};
+	const gchar *supported_as_child_str;
+	gchar *strings[6] = {folder->parent_id, folder->folder_id, folder->display_name, type, NULL, NULL};
 
 	g_assert (result);
 	g_assert (*result == NULL);
 
-	// Bad assert?
-	//  g_assert(folder->type < EAS_FOLDER_TYPE_MAX);
-
 	if (folder->type) {
-		//itoa not standard/supported on linux?
 		snprintf (type, sizeof (type) / sizeof (type[0]), "%d", folder->type);
 	}
+
+	supported_as_child_str = folder->supported_as_child ? "1" : "0";
+	strings[4] = (gchar *) supported_as_child_str;
 
 	*result = g_strjoinv (folder_separator, strings);
 
@@ -114,7 +115,7 @@ eas_folder_deserialise (EasFolder* folder, const gchar *data)
 	g_assert (data);
 
 	strv = g_strsplit (data, folder_separator, 0);
-	if (!strv || g_strv_length (strv) != 4) {
+	if (!strv || g_strv_length (strv) < 4) {
 		g_warning ("Received invalid eas_folder: '%s'", data);
 		g_strfreev (strv);
 		return FALSE;
@@ -124,10 +125,13 @@ eas_folder_deserialise (EasFolder* folder, const gchar *data)
 	folder->folder_id = strv[1];
 	folder->display_name = strv[2];
 	folder->type = atoi (strv[3]);
-
-	/* We don't use g_strfreev() because we actually stole most of the
-	   strings. So free the type string and the array, but not the rest. */
 	g_free (strv[3]);
+
+	if (strv[4]) {
+		folder->supported_as_child = atoi (strv[4]) != 0;
+		g_free (strv[4]);
+	}
+
 	g_free (strv);
 	return TRUE;
 }

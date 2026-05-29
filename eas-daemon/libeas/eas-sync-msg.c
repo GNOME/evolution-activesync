@@ -161,7 +161,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 		 *child = NULL,
 		  *collection = NULL,
 		   *options = NULL,
-		    *body_pref = NULL;
+		    *body_pref = NULL,
+		     *body_part_pref = NULL;
 	gchar filter[2] = "0";
 	GSList * iterator;
 
@@ -215,10 +216,17 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 			xmlNewChild (options, NULL, (xmlChar *) "MIMETruncation", (xmlChar*) "4"); // Fetch first 10KiB to get all the mail headers
 			if (protover >= 141)
 				xmlNewChild (options, NULL, (xmlChar *) "ConversationMode", (xmlChar*) "1");
+			if (protover >= 160)
+				xmlNewChild (options, NULL, (xmlChar *) "MaxItems", (xmlChar*) "100");
 
 			body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
 			xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4"); // Plain text 1, HTML 2, MIME 4
 			xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:TruncationSize", (xmlChar*) "200000");
+			if (protover >= 160) {
+				body_part_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPartPreference", NULL);
+				xmlNewChild (body_part_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "2"); // HTML preview
+				xmlNewChild (body_part_pref, NULL, (xmlChar *) "airsyncbase:PreviewSize", (xmlChar*) "255");
+			}
 		} else if (priv->ItemType == EAS_ITEM_CALENDAR || priv->ItemType == EAS_ITEM_CONTACT) {
 			g_assert ( (filter_type == 0) || (4 <= filter_type && filter_type <= 7)); // TODO verify that we enforce this at the public api
 			snprintf (filter, sizeof (filter) / sizeof (filter[0]), "%d", filter_type);

@@ -100,6 +100,7 @@ const guint DAY_OF_WEEK_LAST_OF_MONTH  = 0x0000007F; // 127
 #define EAS_ELEMENT_STARTTIME                 "StartTime"
 #define EAS_ELEMENT_UID                       "UID"
 #define EAS_ELEMENT_MEETINGSTATUS             "MeetingStatus"
+#define EAS_ELEMENT_MEETINGMESSAGETYPE        "MeetingMessageType"
 #define EAS_ELEMENT_ATTENDEES                 "Attendees"
 #define EAS_ELEMENT_ATTENDEE                  "Attendee"
 #define EAS_ELEMENT_ATTENDEE_EMAIL            "Attendee_Email"

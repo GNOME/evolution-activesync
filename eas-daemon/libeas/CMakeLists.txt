@@ -55,6 +55,10 @@ set(SOURCES
 	eas-smart-forward-msg.h
 	eas-smart-forward-req.c
 	eas-smart-forward-req.h
+	eas-find-msg.c
+	eas-find-msg.h
+	eas-find-req.c
+	eas-find-req.h
 	eas-sync-folder-hierarchy-req.c
 	eas-sync-folder-hierarchy-req.h
 	eas-sync-folder-msg.c

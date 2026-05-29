@@ -225,6 +225,22 @@ eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server
 				xmlNodeContent = NULL;
 			}
 
+			// BodyPart with Preview (AirSyncBase, 16.0)
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "BodyPart")) {
+				xmlNode *bp;
+				for (bp = n->children; bp; bp = bp->next) {
+					if (bp->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) bp->name, "Preview")) {
+						email_info->preview = (gchar *) xmlNodeGetContent (bp);
+						break;
+					}
+				}
+			}
+
+			// IsDraft (Email2, 16.0)
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "IsDraft")) {
+				email_info->is_draft = g_strcmp0 ( (char *) xmlNodeContent, "0") != 0;
+			}
+
 			// RightsManagementLicense (RightsManagement namespace, 14.1)
 			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "RightsManagementLicense")) {
 				xmlNode *rm;

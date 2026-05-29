@@ -86,7 +86,7 @@
 #include <eas-folder.h>
 #include <errno.h>
 
-#define AS_DEFAULT_PROTOCOL 141
+#define AS_DEFAULT_PROTOCOL 160
 
 /* For the number of connections */
 #define EAS_CONNECTION_MAX_REQUESTS 1
@@ -2651,8 +2651,21 @@ options_connection_authenticate (SoupSession *sess,
  the same thread that the libsecret stuff uses the idle loop of.
  
  use the HTTP OPTIONS command to ask server for a list of protocols
- store results in GSettings 
+ store results in GSettings
  */
+static gint
+select_best_protocol_version (GSList *versions, gint max_version)
+{
+	gint best = 0;
+	GSList *l;
+	for (l = versions; l; l = l->next) {
+		gint v = GPOINTER_TO_INT (l->data);
+		if (v <= max_version && v > best)
+			best = v;
+	}
+	return best;
+}
+
 gboolean 
 eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 {
@@ -2662,11 +2675,12 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	EasAccount *acc = priv->account;
 	const gchar *protocol_versions = NULL;
 	SoupSession* soup_session;
-	GSList *proto_vers = NULL;     // list of protocol versions supported by server (eg 120, 121, 140)
-	gchar **strv = NULL;    // array of protocol versions supported by server (eg "12.0", "12.1")
+	GSList *proto_vers = NULL;
+	gchar **strv = NULL;
 	guint len, i;
-	gdouble proto_ver;      // eg 12.1
-	gint proto_ver_int;     // eg 120
+	gdouble proto_ver;
+	gint proto_ver_int;
+	gint best;
 	gchar *endptr;
 	GBytes *response = NULL;
 	guint status;
@@ -2733,25 +2747,16 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	// write the list to GSettings using new EasAccount API
 	eas_account_set_server_protocols(acc, proto_vers);
 
-	// Select the highest server-supported version up to our maximum (141)
-	{
-		gint best = 0;
-		GSList *l;
-		for (l = proto_vers; l; l = l->next) {
-			gint v = GPOINTER_TO_INT (l->data);
-			if (v <= AS_DEFAULT_PROTOCOL && v > best)
-				best = v;
-		}
-		if (best) {
-			eas_account_set_protocol_version (acc, best);
-			eas_account_list_save_item (g_account_list, priv->account,
-						    EAS_ACCOUNT_PROTOCOL_VERSION);
-			priv->protocol_version = best;
-			g_free (priv->proto_str);
-			priv->proto_str = g_strdup_printf ("%d.%d",
-							    best / 10, best % 10);
-			g_debug ("negotiated protocol version = %s", priv->proto_str);
-		}
+	// Select the highest server-supported version up to our maximum
+	best = select_best_protocol_version (proto_vers, AS_DEFAULT_PROTOCOL);
+	if (best) {
+		eas_account_set_protocol_version (acc, best);
+		eas_account_list_save_item (g_account_list, priv->account,
+					    EAS_ACCOUNT_PROTOCOL_VERSION);
+		priv->protocol_version = best;
+		g_free (priv->proto_str);
+		priv->proto_str = g_strdup_printf ("%d.%d", best / 10, best % 10);
+		g_debug ("negotiated protocol version = %s", priv->proto_str);
 	}
 
 	g_slist_free(proto_vers);

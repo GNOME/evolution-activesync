@@ -156,6 +156,23 @@ gboolean eas_mail_send_email (EasMail* self,
 			      guint request_id,
 			      GDBusMethodInvocation* context);
 
+gboolean eas_mail_send_draft_email (EasMail *self,
+				    const gchar *account_uid,
+				    const gchar *clientid,
+				    const gchar *draft_collection_id,
+				    const gchar *draft_server_id,
+				    guint request_id,
+				    GDBusMethodInvocation *context);
+
+gboolean eas_mail_find_in_folder (EasMail *self,
+				  const gchar *account_uid,
+				  const gchar *folder_id,
+				  const gchar *query,
+				  guint range_start,
+				  guint range_end,
+				  guint request_id,
+				  GDBusMethodInvocation *context);
+
 gboolean eas_mail_smart_reply_email (EasMail *self,
 				     const gchar *account_uid,
 				     const gchar *clientid,

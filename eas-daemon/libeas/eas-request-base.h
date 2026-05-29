@@ -116,6 +116,7 @@ typedef enum {
 	EAS_REQ_GET_ITEM_ESTIMATE,
 	EAS_REQ_SMART_REPLY,
 	EAS_REQ_SMART_FORWARD,
+	EAS_REQ_FIND,
 	// Add other requests here
 
 	EAS_REQ_LAST

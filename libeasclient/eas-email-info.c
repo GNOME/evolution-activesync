@@ -52,6 +52,8 @@ eas_email_info_init (EasEmailInfo *object)
 	object->irm_content_expiry_date = NULL;
 	object->irm_content_owner = NULL;
 	object->irm_remove_rights = FALSE;
+	object->preview = NULL;
+	object->is_draft = FALSE;
 	g_debug ("eas_email_info_init--");
 }
 
@@ -77,6 +79,7 @@ eas_email_info_finalize (GObject *object)
 	g_free (self->irm_template_id);
 	g_free (self->irm_content_expiry_date);
 	g_free (self->irm_content_owner);
+	g_free (self->preview);
 
 	g_slist_foreach (self->headers, (GFunc) eas_email_free_header, NULL);
 	g_slist_free (self->headers);
@@ -186,11 +189,16 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 				self->conversation_index ? : "");
 
 	// IRM (14.1)
-	g_string_append_printf (ser, "%s\n%s\n%s\n%d",
+	g_string_append_printf (ser, "%s\n%s\n%s\n%d\n",
 				self->irm_template_id ? : "",
 				self->irm_content_expiry_date ? : "",
 				self->irm_content_owner ? : "",
 				self->irm_remove_rights ? 1 : 0);
+
+	// preview and draft flag (16.0)
+	g_string_append_printf (ser, "%s\n%d",
+				self->preview ? : "",
+				self->is_draft ? 1 : 0);
 
 	if (ret) {
 		*result = ser->str;
@@ -371,6 +379,17 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	}
 	if (strv[idx]) {
 		self->irm_remove_rights = atoi (strv[idx]) != 0;
+		g_free (strv[idx++]);
+	}
+
+	// preview and draft flag (16.0) — optional
+	if (strv[idx] && *strv[idx]) {
+		self->preview = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+	if (strv[idx]) {
+		self->is_draft = atoi (strv[idx]) != 0;
 		g_free (strv[idx++]);
 	}
 

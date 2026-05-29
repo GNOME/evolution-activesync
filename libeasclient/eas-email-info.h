@@ -84,6 +84,8 @@ struct _EasEmailInfo {
 	gchar* irm_content_expiry_date;
 	gchar* irm_content_owner;
 	gboolean irm_remove_rights;
+	gchar* preview;
+	gboolean is_draft;
 };
 
 GType eas_email_info_get_type (void) G_GNUC_CONST;

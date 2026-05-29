@@ -75,6 +75,7 @@ struct _EasFolder {
 	gchar *folder_id;		// from AS server. string up to 64 characters
 	gchar *display_name;
 	guint  type;            // eg EAS_FOLDER_TYPE_DEFAULT_INBOX
+	gboolean supported_as_child; // 16.0: folder can have child folders
 
 };
 

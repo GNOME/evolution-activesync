@@ -64,6 +64,28 @@
 	  <arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
+<!-- search for emails in a folder (Find command, 16.0+) -->
+    <method name="find_in_folder">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="s" name="folder_id" direction="in"/>
+      <arg type="s" name="query" direction="in"/>
+      <arg type="u" name="range_start" direction="in"/>
+      <arg type="u" name="range_end" direction="in"/>
+      <arg type="u" name="request_id" direction="in"/>
+      <arg type="as" name="results" direction="out"/>
+    </method>
+
+<!-- send a server-side draft email by reference (16.0+) -->
+    <method name="send_draft_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="s" name="clientid" direction="in"/>
+      <arg type="s" name="draft_collection_id" direction="in"/>
+      <arg type="s" name="draft_server_id" direction="in"/>
+      <arg type="u" name="request_id" direction="in"/>
+    </method>
+
 <!-- server-side reply to an existing email (SmartReply, 14.0+) -->
     <method name="smart_reply_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>

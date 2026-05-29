@@ -61,6 +61,7 @@
 #include "eas-send-email-req.h"
 #include "eas-smart-reply-req.h"
 #include "eas-smart-forward-req.h"
+#include "eas-find-req.h"
 #include "eas-update-email-req.h"
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-req.h"
@@ -125,6 +126,27 @@ on_handle_send_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *in
 		      const gchar *mime_file, guint request_id, EasMail *self)
 {
 	return eas_mail_send_email (self, account_uid, clientid, mime_file, request_id, invocation);
+}
+
+static gboolean
+on_handle_send_draft_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			    const gchar *account_uid, const gchar *clientid,
+			    const gchar *draft_collection_id, const gchar *draft_server_id,
+			    guint request_id, EasMail *self)
+{
+	return eas_mail_send_draft_email (self, account_uid, clientid,
+					  draft_collection_id, draft_server_id,
+					  request_id, invocation);
+}
+
+static gboolean
+on_handle_find_in_folder (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			  const gchar *account_uid, const gchar *folder_id,
+			  const gchar *query, guint range_start, guint range_end,
+			  guint request_id, EasMail *self)
+{
+	return eas_mail_find_in_folder (self, account_uid, folder_id, query,
+					range_start, range_end, request_id, invocation);
 }
 
 static gboolean
@@ -201,6 +223,10 @@ eas_mail_init (EasMail *object)
 			  G_CALLBACK (on_handle_fetch_attachment), object);
 	g_signal_connect (priv->skeleton, "handle-send-email",
 			  G_CALLBACK (on_handle_send_email), object);
+	g_signal_connect (priv->skeleton, "handle-send-draft-email",
+			  G_CALLBACK (on_handle_send_draft_email), object);
+	g_signal_connect (priv->skeleton, "handle-find-in-folder",
+			  G_CALLBACK (on_handle_find_in_folder), object);
 	g_signal_connect (priv->skeleton, "handle-smart-reply-email",
 			  G_CALLBACK (on_handle_smart_reply_email), object);
 	g_signal_connect (priv->skeleton, "handle-smart-forward-email",
@@ -645,6 +671,86 @@ finish:
 		g_error_free (error);
 	}
 	g_debug ("eas_mail_send_email--");
+	return ret;
+}
+
+gboolean
+eas_mail_send_draft_email (EasMail *easMailObj,
+			   const gchar *account_uid,
+			   const gchar *clientid,
+			   const gchar *draft_collection_id,
+			   const gchar *draft_server_id,
+			   guint request_id,
+			   GDBusMethodInvocation *context)
+{
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasSendEmailReq *req = NULL;
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]", account_uid);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_send_email_req_new_draft (account_uid, context, clientid,
+					    draft_collection_id, draft_server_id);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
+	set_request_owner_id (&req->parent_instance, request_id, context);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);
+
+	ret = eas_send_email_req_Activate (req, &error);
+	if (!ret) {
+		g_assert (error != NULL);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+	}
+	return ret;
+}
+
+gboolean
+eas_mail_find_in_folder (EasMail *easMailObj,
+			 const gchar *account_uid,
+			 const gchar *folder_id,
+			 const gchar *query,
+			 guint range_start,
+			 guint range_end,
+			 guint request_id,
+			 GDBusMethodInvocation *context)
+{
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasFindReq *req = NULL;
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]", account_uid);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_find_req_new (account_uid, context, folder_id, query, range_start, range_end);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
+	set_request_owner_id (&req->parent_instance, request_id, context);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);
+
+	ret = eas_find_req_Activate (req, &error);
+	if (!ret) {
+		g_assert (error != NULL);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+	}
 	return ret;
 }
 

@@ -328,7 +328,8 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 		gchar *serverId = NULL,
 		       *parentId = NULL,
 			*displayName = NULL,
-			 *type = NULL;
+			 *type = NULL,
+			  *supportedAsChild = NULL;
 
 		for (n = n->children; n; n = n->next) {
 			if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "ServerId")) {
@@ -347,6 +348,10 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 				type = (gchar *) xmlNodeGetContent (n);
 				continue;
 			}
+			if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "SupportedAsChild")) {
+				supportedAsChild = (gchar *) xmlNodeGetContent (n);
+				continue;
+			}
 		}
 
 		if (serverId && parentId && displayName && type) {
@@ -359,6 +364,7 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 			f->folder_id = g_strdup (serverId);
 			f->display_name = g_strdup (displayName);
 			f->type = atoi (type);
+			f->supported_as_child = supportedAsChild && g_strcmp0 (supportedAsChild, "0") != 0;
 			g_debug ("analyzing folder info: name '%s', folder '%s', type %u",
 				 f->display_name, f->folder_id, f->type);
 			g_debug ("calendar folder '%s', contact folder '%s'",
@@ -399,6 +405,7 @@ eas_sync_folder_msg_parse_fs_add_or_update (EasSyncFolderMsg *self, xmlNode *nod
 		xmlFree (serverId);
 		xmlFree (displayName);
 		xmlFree (type);
+		xmlFree (supportedAsChild);
 	}
 }
 

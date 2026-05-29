@@ -59,6 +59,8 @@ struct _EasSendEmailMsgPrivate {
 	gchar* account_id;
 	gchar* client_id;
 	gchar* mime_string;
+	gchar* draft_collection_id;
+	gchar* draft_server_id;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (EasSendEmailMsg, eas_send_email_msg, EAS_TYPE_MSG_BASE);
@@ -76,6 +78,8 @@ eas_send_email_msg_init (EasSendEmailMsg *object)
 	priv->account_id = NULL;
 	priv->client_id = NULL;
 	priv->mime_string = NULL;
+	priv->draft_collection_id = NULL;
+	priv->draft_server_id = NULL;
 
 	g_debug ("eas_send_email_msg_init--");
 }
@@ -91,6 +95,8 @@ eas_send_email_msg_finalize (GObject *object)
 	g_free (priv->mime_string);
 	g_free (priv->client_id);
 	g_free (priv->account_id);
+	g_free (priv->draft_collection_id);
+	g_free (priv->draft_server_id);
 
 	G_OBJECT_CLASS (eas_send_email_msg_parent_class)->finalize (object);
 	g_debug ("eas_send_email_msg_finalize--");
@@ -123,12 +129,26 @@ eas_send_email_msg_new (const char* account_id, const gchar* client_id, gchar* m
 	return msg;
 }
 
+EasSendEmailMsg*
+eas_send_email_msg_new_draft (const gchar* account_id, const gchar* client_id,
+			      const gchar* draft_collection_id, const gchar* draft_server_id)
+{
+	EasSendEmailMsg* msg = g_object_new (EAS_TYPE_SEND_EMAIL_MSG, NULL);
+	EasSendEmailMsgPrivate *priv = msg->priv;
+	priv->client_id = g_strdup (client_id);
+	priv->account_id = g_strdup (account_id);
+	priv->draft_collection_id = g_strdup (draft_collection_id);
+	priv->draft_server_id = g_strdup (draft_server_id);
+	return msg;
+}
+
 xmlDoc*
 eas_send_email_msg_build_message (EasSendEmailMsg* self)
 {
 	EasSendEmailMsgPrivate *priv = self->priv;
 	xmlDoc  *doc   = NULL;
 	xmlNode *root  = NULL;
+	xmlNode *source = NULL;
 	gchar* base64data = NULL;
 
 	doc = xmlNewDoc ( (xmlChar *) "1.0");
@@ -140,7 +160,6 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 			    (xmlChar*) "-//MICROSOFT//DTD ActiveSync//EN",
 			    (xmlChar*) "http://www.microsoft.com/");
 
-	// no namespaces required?
 	xmlNewNs (root, (xmlChar *) "ComposeMail:", NULL);
 
 	xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
@@ -148,7 +167,11 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 	if (priv->account_id && *priv->account_id)
 		xmlNewChild (root, NULL, (xmlChar *) "AccountId", (xmlChar*) priv->account_id);
 
-	if (priv->mime_string)
+	if (priv->draft_server_id) {
+		source = xmlNewChild (root, NULL, (xmlChar *) "Source", NULL);
+		xmlNewChild (source, NULL, (xmlChar *) "CollectionId", (xmlChar *) priv->draft_collection_id);
+		xmlNewChild (source, NULL, (xmlChar *) "LongId", (xmlChar *) priv->draft_server_id);
+	} else if (priv->mime_string)
 	{
 		base64data = g_base64_encode ( (const guchar *) priv->mime_string, strlen (priv->mime_string));
 

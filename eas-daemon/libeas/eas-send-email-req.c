@@ -60,6 +60,8 @@ struct _EasSendEmailReqPrivate {
 	gchar* account_id;
 	gchar* client_id;
 	gchar* mime_file;
+	gchar* draft_collection_id;
+	gchar* draft_server_id;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (EasSendEmailReq, eas_send_email_req, EAS_TYPE_REQUEST_BASE);
@@ -76,6 +78,8 @@ eas_send_email_req_init (EasSendEmailReq *object)
 	priv->send_email_msg = NULL;
 	priv->mime_file = NULL;
 	priv->client_id = NULL;
+	priv->draft_collection_id = NULL;
+	priv->draft_server_id = NULL;
 
 	eas_request_base_SetRequestType (&object->parent_instance,
 					 EAS_REQ_SEND_EMAIL);
@@ -109,6 +113,8 @@ eas_send_email_req_finalize (GObject *object)
 	g_free (priv->mime_file);
 	g_free (priv->client_id);
 	g_free (priv->account_id);
+	g_free (priv->draft_collection_id);
+	g_free (priv->draft_server_id);
 
 	G_OBJECT_CLASS (eas_send_email_req_parent_class)->finalize (object);
 	g_debug ("eas_send_email_req_finalize--");
@@ -152,6 +158,25 @@ eas_send_email_req_new (const gchar* account_id,
 	return self;
 }
 
+EasSendEmailReq *
+eas_send_email_req_new_draft (const gchar* account_id,
+			      GDBusMethodInvocation *context,
+			      const gchar* client_id,
+			      const gchar* draft_collection_id,
+			      const gchar* draft_server_id)
+{
+	EasSendEmailReq *self = g_object_new (EAS_TYPE_SEND_EMAIL_REQ, NULL);
+	EasSendEmailReqPrivate* priv = self->priv;
+
+	eas_request_base_SetContext (&self->parent_instance, context);
+	priv->account_id = g_strdup (account_id);
+	priv->client_id = g_strdup (client_id);
+	priv->draft_collection_id = g_strdup (draft_collection_id);
+	priv->draft_server_id = g_strdup (draft_server_id);
+
+	return self;
+}
+
 // uses the message object to build xml and sends it to the connection object
 gboolean
 eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
@@ -169,6 +194,22 @@ eas_send_email_req_Activate (EasSendEmailReq *self, GError** error)
 	g_debug ("eas_send_email_req_Activate++");
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	// Draft-by-reference path (16.0+): no MIME file, reference a server-side draft
+	if (priv->draft_server_id) {
+		priv->send_email_msg = eas_send_email_msg_new_draft (priv->account_id, priv->client_id,
+								     priv->draft_collection_id,
+								     priv->draft_server_id);
+		doc = eas_send_email_msg_build_message (priv->send_email_msg);
+		if (!doc) {
+			g_set_error (error, EAS_CONNECTION_ERROR,
+				     EAS_CONNECTION_ERROR_NOTENOUGHMEMORY,
+				     ("out of memory"));
+			return FALSE;
+		}
+		ret = eas_request_base_SendRequest (parent, "SendMail", doc, FALSE, error);
+		goto finish;
+	}
 
 	// open file containing mime data to be sent:
 	file = fopen (priv->mime_file, "r"); // mime file can be read as text (attachments will be base 64 encoded)

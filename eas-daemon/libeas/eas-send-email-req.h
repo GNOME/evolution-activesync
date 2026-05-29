@@ -102,6 +102,13 @@ eas_send_email_req_new (const gchar* account_id,
 			const gchar* client_id,
 			const gchar* mime_file);
 
+EasSendEmailReq *
+eas_send_email_req_new_draft (const gchar* account_id,
+			      GDBusMethodInvocation *context,
+			      const gchar* client_id,
+			      const gchar* draft_collection_id,
+			      const gchar* draft_server_id);
+
 /**
  * Builds the messages required for the request and sends the request to the server.
  *
