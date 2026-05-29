@@ -1699,20 +1699,20 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 			}
 
 			//
-			// OnlineMeetingConfLink / OnlineMeetingExternalLink (16.1)
+			// OnlineMeetingConfLink / OnlineMeetingExternalLink (RFC 7986 CONFERENCE, 16.1)
 			//
 			else if (g_strcmp0 (name, EAS_ELEMENT_ONLINEMEETINGCONFLINK) == 0) {
 				value = (gchar*) xmlNodeGetContent (n);
-				prop = icalproperty_new (ICAL_X_PROPERTY);
-				icalproperty_set_x_name (prop, "X-MICROSOFT-ONLINEMEETINGCONFLINK");
-				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
+				prop = icalproperty_new_conference (value);
+				icalproperty_add_parameter (prop, icalparameter_new_feature (ICAL_FEATURE_MODERATOR));
+				icalproperty_add_parameter (prop, icalparameter_new_label ("conf-link"));
 				icalcomponent_add_property (vevent, prop);
 			}
 			else if (g_strcmp0 (name, EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK) == 0) {
 				value = (gchar*) xmlNodeGetContent (n);
-				prop = icalproperty_new (ICAL_X_PROPERTY);
-				icalproperty_set_x_name (prop, "X-MICROSOFT-ONLINEMEETINGEXTERNALLINK");
-				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
+				prop = icalproperty_new_conference (value);
+				icalproperty_add_parameter (prop, icalparameter_new_feature (ICAL_FEATURE_PHONE));
+				icalproperty_add_parameter (prop, icalparameter_new_label ("ext-link"));
 				icalcomponent_add_property (vevent, prop);
 			}
 
@@ -2462,6 +2462,18 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			case ICAL_GEO_PROPERTY:
 				break;
 
+			// CONFERENCE (RFC 7986) — maps back to OnlineMeeting* EAS elements via LABEL
+			case ICAL_CONFERENCE_PROPERTY: {
+				icalparameter *label_param = icalproperty_get_first_parameter (prop, ICAL_LABEL_PARAMETER);
+				const char *label = label_param ? icalparameter_get_label (label_param) : NULL;
+				const char *uri = icalproperty_get_conference (prop);
+				if (!g_strcmp0 (label, "conf-link"))
+					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGCONFLINK, (const xmlChar*) uri);
+				else if (!g_strcmp0 (label, "ext-link"))
+					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK, (const xmlChar*) uri);
+			}
+			break;
+
 				// UID
 			case ICAL_UID_PROPERTY:
 				if (!exception)
@@ -2626,16 +2638,9 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			}
 			break;
 
-			case ICAL_X_PROPERTY: {
-				const char *x_name = icalproperty_get_x_name (prop);
-				const char *x_val = icalproperty_get_value_as_string (prop);
-				if (!g_strcmp0 (x_name, "X-MICROSOFT-ONLINEMEETINGCONFLINK"))
-					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGCONFLINK, (const xmlChar*) x_val);
-				else if (!g_strcmp0 (x_name, "X-MICROSOFT-ONLINEMEETINGEXTERNALLINK"))
-					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK, (const xmlChar*) x_val);
+			case ICAL_X_PROPERTY:
 				// X-MEEGO-ACTIVESYNCD-LOCATION-* properties are written inside ICAL_LOCATION_PROPERTY
-			}
-			break;
+				break;
 
 			default: {
 				// Any other unmapped properties get stored as extension elements under the
