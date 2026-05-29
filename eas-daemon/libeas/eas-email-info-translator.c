@@ -231,7 +231,8 @@ eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server
 				for (bp = n->children; bp; bp = bp->next) {
 					if (bp->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) bp->name, "Preview")) {
 						email_info->preview = (gchar *) xmlNodeGetContent (bp);
-						break;
+					} else if (bp->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) bp->name, "SubType")) {
+						email_info->body_part_subtype = (gchar *) xmlNodeGetContent (bp);
 					}
 				}
 			}

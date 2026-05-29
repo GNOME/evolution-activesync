@@ -86,6 +86,7 @@ struct _EasEmailInfo {
 	gboolean irm_remove_rights;
 	gchar* preview;
 	gboolean is_draft;
+	gchar* body_part_subtype;
 };
 
 GType eas_email_info_get_type (void) G_GNUC_CONST;

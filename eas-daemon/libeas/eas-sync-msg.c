@@ -226,6 +226,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 				body_part_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPartPreference", NULL);
 				xmlNewChild (body_part_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "2"); // HTML preview
 				xmlNewChild (body_part_pref, NULL, (xmlChar *) "airsyncbase:PreviewSize", (xmlChar*) "255");
+				if (protover >= 161)
+					xmlNewChild (body_part_pref, NULL, (xmlChar *) "airsyncbase:SubType", (xmlChar*) "2");
 			}
 		} else if (priv->ItemType == EAS_ITEM_CALENDAR || priv->ItemType == EAS_ITEM_CONTACT) {
 			g_assert ( (filter_type == 0) || (4 <= filter_type && filter_type <= 7)); // TODO verify that we enforce this at the public api

@@ -54,6 +54,7 @@ eas_email_info_init (EasEmailInfo *object)
 	object->irm_remove_rights = FALSE;
 	object->preview = NULL;
 	object->is_draft = FALSE;
+	object->body_part_subtype = NULL;
 	g_debug ("eas_email_info_init--");
 }
 
@@ -80,6 +81,7 @@ eas_email_info_finalize (GObject *object)
 	g_free (self->irm_content_expiry_date);
 	g_free (self->irm_content_owner);
 	g_free (self->preview);
+	g_free (self->body_part_subtype);
 
 	g_slist_foreach (self->headers, (GFunc) eas_email_free_header, NULL);
 	g_slist_free (self->headers);
@@ -195,10 +197,11 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 				self->irm_content_owner ? : "",
 				self->irm_remove_rights ? 1 : 0);
 
-	// preview and draft flag (16.0)
-	g_string_append_printf (ser, "%s\n%d",
+	// preview, draft flag, and body part subtype (16.0/16.1)
+	g_string_append_printf (ser, "%s\n%d\n%s",
 				self->preview ? : "",
-				self->is_draft ? 1 : 0);
+				self->is_draft ? 1 : 0,
+				self->body_part_subtype ? : "");
 
 	if (ret) {
 		*result = ser->str;
@@ -390,6 +393,11 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	}
 	if (strv[idx]) {
 		self->is_draft = atoi (strv[idx]) != 0;
+		g_free (strv[idx++]);
+	}
+	if (strv[idx] && *strv[idx]) {
+		self->body_part_subtype = strv[idx++];
+	} else if (strv[idx]) {
 		g_free (strv[idx++]);
 	}
 

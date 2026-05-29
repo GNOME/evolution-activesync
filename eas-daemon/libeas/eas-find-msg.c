@@ -135,6 +135,8 @@ eas_find_msg_parse_response (EasFindMsg *self,
 				gchar *server_id = NULL;
 				gchar *collection_id = NULL;
 				gchar *class_name = NULL;
+				gchar *weighted_rank = NULL;
+				gchar *conversation_id = NULL;
 				gchar *entry = NULL;
 
 				if (result_node->type != XML_ELEMENT_NODE)
@@ -154,18 +156,28 @@ eas_find_msg_parse_response (EasFindMsg *self,
 					} else if (!g_strcmp0 ((char *) n->name, "Class")) {
 						g_free (class_name);
 						class_name = (gchar *) xmlNodeGetContent (n);
+					} else if (!g_strcmp0 ((char *) n->name, "WeightedRank")) {
+						g_free (weighted_rank);
+						weighted_rank = (gchar *) xmlNodeGetContent (n);
+					} else if (!g_strcmp0 ((char *) n->name, "ConversationId")) {
+						g_free (conversation_id);
+						conversation_id = (gchar *) xmlNodeGetContent (n);
 					}
 				}
 
-				entry = g_strdup_printf ("%s|%s|%s",
+				entry = g_strdup_printf ("%s|%s|%s|%s|%s",
 							 server_id ? : "",
 							 collection_id ? : "",
-							 class_name ? : "");
+							 class_name ? : "",
+							 weighted_rank ? : "",
+							 conversation_id ? : "");
 				*results = g_slist_append (*results, entry);
 
 				g_free (server_id);
 				g_free (collection_id);
 				g_free (class_name);
+				g_free (weighted_rank);
+				g_free (conversation_id);
 			}
 		}
 	}

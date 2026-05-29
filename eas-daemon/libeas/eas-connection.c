@@ -86,7 +86,7 @@
 #include <eas-folder.h>
 #include <errno.h>
 
-#define AS_DEFAULT_PROTOCOL 160
+#define AS_DEFAULT_PROTOCOL 161
 
 /* For the number of connections */
 #define EAS_CONNECTION_MAX_REQUESTS 1

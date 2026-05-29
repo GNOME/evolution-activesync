@@ -1640,11 +1640,62 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 			}
 
 			//
-			// Location
+			// Location (simple string pre-16.1; structured with child elements in 16.1)
 			//
 			else if (g_strcmp0 (name, EAS_ELEMENT_LOCATION) == 0) {
+				xmlNode *loc_child = n->children;
+				gboolean has_element_children = FALSE;
+				xmlNode *check = NULL;
+				for (check = loc_child; check; check = check->next) {
+					if (check->type == XML_ELEMENT_NODE) {
+						has_element_children = TRUE;
+						break;
+					}
+				}
+				if (has_element_children) {
+					for (loc_child = n->children; loc_child; loc_child = loc_child->next) {
+						gchar *loc_prop_name = NULL;
+						if (loc_child->type != XML_ELEMENT_NODE)
+							continue;
+						if (!g_strcmp0 ( (char *) loc_child->name, "DisplayName")) {
+							value = (gchar*) xmlNodeGetContent (loc_child);
+							prop = icalproperty_new_location (value);
+							icalcomponent_add_property (vevent, prop);
+						} else {
+							loc_prop_name = g_strconcat ("X-MEEGO-ACTIVESYNCD-LOCATION-",
+										     loc_child->name, NULL);
+							value = (gchar*) xmlNodeGetContent (loc_child);
+							prop = icalproperty_new (ICAL_X_PROPERTY);
+							icalproperty_set_x_name (prop, loc_prop_name);
+							icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
+							icalcomponent_add_property (vevent, prop);
+							g_free (loc_prop_name);
+						}
+						if (value) xmlFree (value);
+						value = NULL;
+					}
+				} else {
+					value = (gchar*) xmlNodeGetContent (n);
+					prop = icalproperty_new_location (value);
+					icalcomponent_add_property (vevent, prop);
+				}
+			}
+
+			//
+			// OnlineMeetingConfLink / OnlineMeetingExternalLink (16.1)
+			//
+			else if (g_strcmp0 (name, EAS_ELEMENT_ONLINEMEETINGCONFLINK) == 0) {
 				value = (gchar*) xmlNodeGetContent (n);
-				prop = icalproperty_new_location (value);
+				prop = icalproperty_new (ICAL_X_PROPERTY);
+				icalproperty_set_x_name (prop, "X-MICROSOFT-ONLINEMEETINGCONFLINK");
+				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
+				icalcomponent_add_property (vevent, prop);
+			}
+			else if (g_strcmp0 (name, EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK) == 0) {
+				value = (gchar*) xmlNodeGetContent (n);
+				prop = icalproperty_new (ICAL_X_PROPERTY);
+				icalproperty_set_x_name (prop, "X-MICROSOFT-ONLINEMEETINGEXTERNALLINK");
+				icalproperty_set_value (prop, icalvalue_new_from_string (ICAL_X_VALUE, value));
 				icalcomponent_add_property (vevent, prop);
 			}
 
@@ -2507,6 +2558,16 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 				// See [MS-ASAIRS] for format of the <Body> element:
 				// http://msdn.microsoft.com/en-us/library/dd299454(v=EXCHG.80).aspx
 				set_xml_body_text (appData, icalproperty_get_description(prop));
+			}
+			break;
+
+			case ICAL_X_PROPERTY: {
+				const char *x_name = icalproperty_get_x_name (prop);
+				const char *x_val = icalproperty_get_value_as_string (prop);
+				if (!g_strcmp0 (x_name, "X-MICROSOFT-ONLINEMEETINGCONFLINK"))
+					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGCONFLINK, (const xmlChar*) x_val);
+				else if (!g_strcmp0 (x_name, "X-MICROSOFT-ONLINEMEETINGEXTERNALLINK"))
+					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK, (const xmlChar*) x_val);
 			}
 			break;
 
