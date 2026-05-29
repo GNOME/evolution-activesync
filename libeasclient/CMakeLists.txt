@@ -1,4 +1,4 @@
-add_pkgconfig_file(../libeasclient.pc.in libeasclient.pc)
+add_pkgconfig_file(libeasclient.pc.in libeasclient.pc)
 
 set(SOURCES
 	eas-attachment.c

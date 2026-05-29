@@ -1,4 +1,4 @@
-add_pkgconfig_file(../../libeasaccount.pc.in libeasaccount.pc)
+add_pkgconfig_file(libeasaccount.pc.in libeasaccount.pc)
 
 set(SOURCES
 	eas-account.c

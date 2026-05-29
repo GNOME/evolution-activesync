@@ -22,21 +22,25 @@ and contacts synchronisation with Microsoft Exchange servers via the
 | Version | Status |
 |---------|--------|
 | 12.0 | Supported |
-| 12.1 | Supported (default) |
-| 14.0 | Supported (experimental, enable with `-DACTIVESYNC_14` at compile time) |
+| 12.1 | Supported |
+| 14.0 | Supported |
+| 14.1 | Supported |
+| 16.0 | Supported |
+| 16.1 | Supported (default) |
 
-The protocol version is negotiated automatically with the server via the HTTP `OPTIONS` command. The default is **12.1**. Version 14.0 support can be enabled at compile time by defining `ACTIVESYNC_14` in `eas-daemon/libeas/eas-connection.c`.
+The protocol version is negotiated automatically with the server via the HTTP `OPTIONS` command. The best mutually-supported version up to **16.1** is selected.
 
 ## Dependencies
 
 - GLib 2.68+
 - libsoup 3.0+
 - libedataserver 1.2
+- libebackend 1.2
+- libebook 1.2
 - libwbxml2 0.11+
 - libical
-- libebook 1.2
+- libxml2
 - libsecret
-- dbus-glib
 
 For the Camel back end (`-DENABLE_CAMEL_BACKEND=ON`):
 - camel 3.23.2+
@@ -59,7 +63,6 @@ make install
 | `ENABLE_CAMEL_BACKEND` | `ON` | Build the Camel e-mail back end |
 | `ENABLE_TESTS` | `ON` | Build the test suite |
 | `ENABLE_MAINTAINER_MODE` | `OFF` | Enable extra compiler warnings |
-| `ENABLE_SCHEMAS_COMPILE` | `ON` | Recompile GSettings schemas on install |
 | `LIB_SUFFIX` | *(empty)* | Library directory suffix (e.g. `64`) |
 
 ### Running tests
