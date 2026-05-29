@@ -1653,6 +1653,8 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 					}
 				}
 				if (has_element_children) {
+					gchar *geo_lat = NULL;
+					gchar *geo_lon = NULL;
 					for (loc_child = n->children; loc_child; loc_child = loc_child->next) {
 						gchar *loc_prop_name = NULL;
 						if (loc_child->type != XML_ELEMENT_NODE)
@@ -1661,6 +1663,12 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 							value = (gchar*) xmlNodeGetContent (loc_child);
 							prop = icalproperty_new_location (value);
 							icalcomponent_add_property (vevent, prop);
+						} else if (!g_strcmp0 ( (char *) loc_child->name, "Latitude")) {
+							g_free (geo_lat);
+							geo_lat = (gchar*) xmlNodeGetContent (loc_child);
+						} else if (!g_strcmp0 ( (char *) loc_child->name, "Longitude")) {
+							g_free (geo_lon);
+							geo_lon = (gchar*) xmlNodeGetContent (loc_child);
 						} else {
 							loc_prop_name = g_strconcat ("X-MEEGO-ACTIVESYNCD-LOCATION-",
 										     loc_child->name, NULL);
@@ -1674,6 +1682,15 @@ gchar* eas_cal_info_translator_parse_response (xmlNodePtr node, gchar* server_id
 						if (value) xmlFree (value);
 						value = NULL;
 					}
+					if (geo_lat && geo_lon) {
+						struct icalgeotype geo;
+						geo.lat = g_ascii_strtod (geo_lat, NULL);
+						geo.lon = g_ascii_strtod (geo_lon, NULL);
+						prop = icalproperty_new_geo (geo);
+						icalcomponent_add_property (vevent, prop);
+					}
+					g_free (geo_lat);
+					g_free (geo_lon);
 				} else {
 					value = (gchar*) xmlNodeGetContent (n);
 					prop = icalproperty_new_location (value);
@@ -2392,9 +2409,57 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 			}
 			break;
 
-			// LOCATION
-			case ICAL_LOCATION_PROPERTY:
-				xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_LOCATION, (const xmlChar*) icalproperty_get_value_as_string (prop));
+			// LOCATION — may be simple text or structured (16.1)
+			case ICAL_LOCATION_PROPERTY: {
+				const char *loc_text = icalproperty_get_value_as_string (prop);
+				icalproperty *geo_prop = icalcomponent_get_first_property (vevent, ICAL_GEO_PROPERTY);
+				icalproperty *x_iter = NULL;
+				gboolean has_loc_x = FALSE;
+				for (x_iter = icalcomponent_get_first_property (vevent, ICAL_X_PROPERTY);
+				     x_iter;
+				     x_iter = icalcomponent_get_next_property (vevent, ICAL_X_PROPERTY)) {
+					if (g_str_has_prefix (icalproperty_get_x_name (x_iter),
+							      "X-MEEGO-ACTIVESYNCD-LOCATION-")) {
+						has_loc_x = TRUE;
+						break;
+					}
+				}
+				if (geo_prop || has_loc_x) {
+					xmlNodePtr loc_node = xmlNewChild (appData, NULL,
+									   (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_LOCATION, NULL);
+					xmlNewTextChild (loc_node, NULL, (const xmlChar*) "DisplayName",
+							 (const xmlChar*) loc_text);
+					if (geo_prop) {
+						struct icalgeotype geo = icalproperty_get_geo (geo_prop);
+						gchar *lat_str = g_strdup_printf ("%.6f", geo.lat);
+						gchar *lon_str = g_strdup_printf ("%.6f", geo.lon);
+						xmlNewTextChild (loc_node, NULL, (const xmlChar*) "Latitude",
+								 (const xmlChar*) lat_str);
+						xmlNewTextChild (loc_node, NULL, (const xmlChar*) "Longitude",
+								 (const xmlChar*) lon_str);
+						g_free (lat_str);
+						g_free (lon_str);
+					}
+					for (x_iter = icalcomponent_get_first_property (vevent, ICAL_X_PROPERTY);
+					     x_iter;
+					     x_iter = icalcomponent_get_next_property (vevent, ICAL_X_PROPERTY)) {
+						const char *x_name = icalproperty_get_x_name (x_iter);
+						const char *prefix = "X-MEEGO-ACTIVESYNCD-LOCATION-";
+						if (g_str_has_prefix (x_name, prefix))
+							xmlNewTextChild (loc_node, NULL,
+									 (const xmlChar*) (x_name + strlen (prefix)),
+									 (const xmlChar*) icalproperty_get_value_as_string (x_iter));
+					}
+				} else {
+					xmlNewTextChild (appData, NULL,
+							 (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_LOCATION,
+							 (const xmlChar*) loc_text);
+				}
+			}
+			break;
+
+			// GEO — handled inside ICAL_LOCATION_PROPERTY for structured location write-back
+			case ICAL_GEO_PROPERTY:
 				break;
 
 				// UID
@@ -2568,6 +2633,7 @@ static void _ical2eas_process_vevent (icalcomponent* vevent, xmlNodePtr appData,
 					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGCONFLINK, (const xmlChar*) x_val);
 				else if (!g_strcmp0 (x_name, "X-MICROSOFT-ONLINEMEETINGEXTERNALLINK"))
 					xmlNewTextChild (appData, NULL, (const xmlChar*) EAS_NAMESPACE_CALENDAR EAS_ELEMENT_ONLINEMEETINGEXTERNALLINK, (const xmlChar*) x_val);
+				// X-MEEGO-ACTIVESYNCD-LOCATION-* properties are written inside ICAL_LOCATION_PROPERTY
 			}
 			break;
 
