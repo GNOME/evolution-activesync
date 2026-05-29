@@ -78,13 +78,12 @@ struct _EasEmailInfo {
 	time_t date_received;
 	int importance;
 	gchar* status;				// if non-NULL indicates a problem with this item during a sync
-	/*
-	conversation_id
-	conversation_index
-	...
-	TODO which, if any, of the other fields supplied by exchange should be included?
-	*/
-	// TODO size, date received (pref as time_t) fields
+	gchar* conversation_id;
+	gchar* conversation_index;
+	gchar* irm_template_id;
+	gchar* irm_content_expiry_date;
+	gchar* irm_content_owner;
+	gboolean irm_remove_rights;
 };
 
 GType eas_email_info_get_type (void) G_GNUC_CONST;

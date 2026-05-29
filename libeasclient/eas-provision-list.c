@@ -10,7 +10,7 @@
 const gchar *list_separator = "\n";
 const gchar *app_separator = ",";
 
-#define STRING_LIST_SIZE 43
+#define STRING_LIST_SIZE 44
 
 
 G_DEFINE_TYPE (EasProvisionList, eas_provision_list, G_TYPE_OBJECT);
@@ -33,6 +33,7 @@ eas_provision_list_init (EasProvisionList *object)
 	object->AllowStorageCard  = NULL;
 	object->AllowCamera  = NULL;
 	object->RequireDeviceEncryption  = NULL;
+	object->DeviceEncryptionEnabled  = NULL;
 	object->AllowUnsignedApplications  = NULL;
 	object->AllowUnsignedInstallationPackages  = NULL;
 	object->MinDevicePasswordComplexCharacters = NULL;
@@ -79,6 +80,7 @@ eas_provision_list_finalize (GObject *object)
 	g_free (self->AllowStorageCard);
 	g_free (self->AllowCamera);
 	g_free (self->RequireDeviceEncryption);
+	g_free (self->DeviceEncryptionEnabled);
 	g_free (self->AllowUnsignedApplications);
 	g_free (self->AllowUnsignedInstallationPackages);
 	g_free (self->MinDevicePasswordComplexCharacters);
@@ -149,6 +151,7 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 		list->AllowStorageCard ? : empty,
 		list->AllowCamera ? : empty,
 		list->RequireDeviceEncryption ? : empty,
+		list->DeviceEncryptionEnabled ? : empty,
 		list->AllowUnsignedApplications ? : empty,
 		list->AllowUnsignedInstallationPackages ? : empty,
 		list->MinDevicePasswordComplexCharacters ? : empty,
@@ -200,7 +203,7 @@ eas_provision_list_serialise (EasProvisionList* list, gchar **result)
 		iterator = g_slist_next (list->ApprovedApplicationList);
 	}
 	if (ApprovedList)
-		strings[STRING_LIST_SIZE - 3] = ApprovedList;
+		strings[STRING_LIST_SIZE - 2] = ApprovedList;
 
 	*result = g_strjoinv (list_separator, strings);
 
@@ -251,6 +254,7 @@ eas_provision_list_deserialise (EasProvisionList* list, const gchar *data)
 	list->AllowStorageCard = strv[i++];
 	list->AllowCamera = strv[i++];
 	list->RequireDeviceEncryption = strv[i++];
+	list->DeviceEncryptionEnabled = strv[i++];
 	list->AllowUnsignedApplications = strv[i++];
 	list->AllowUnsignedInstallationPackages = strv[i++];
 	list->MinDevicePasswordComplexCharacters = strv[i++];
@@ -291,8 +295,8 @@ eas_provision_list_deserialise (EasProvisionList* list, const gchar *data)
 
 	/* We don't use g_strfreev() because we actually stole most of the
 	   strings. So free the approved string and the unapproved but not the rest. */
-	g_free (strv[STRING_LIST_SIZE - 2]);
-	g_free (strv[STRING_LIST_SIZE - 1]);
+	g_free (strv[STRING_LIST_SIZE - 3]); // UnapprovedList
+	g_free (strv[STRING_LIST_SIZE - 2]); // ApprovedList
 	return TRUE;
 }
 

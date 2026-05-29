@@ -215,6 +215,39 @@ eas_email_info_translator_parse_add_response (const xmlNode *node, gchar *server
 				}
 			}
 
+			// ConversationId / ConversationIndex (Email2 namespace, 14.1)
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "ConversationId")) {
+				email_info->conversation_id = (gchar *) xmlNodeContent;
+				xmlNodeContent = NULL;
+			}
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "ConversationIndex")) {
+				email_info->conversation_index = (gchar *) xmlNodeContent;
+				xmlNodeContent = NULL;
+			}
+
+			// RightsManagementLicense (RightsManagement namespace, 14.1)
+			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "RightsManagementLicense")) {
+				xmlNode *rm;
+				for (rm = n->children; rm; rm = rm->next) {
+					xmlChar *val;
+					if (rm->type != XML_ELEMENT_NODE)
+						continue;
+					val = xmlNodeGetContent (rm);
+					if (!g_strcmp0 ( (char *) rm->name, "TemplateID"))
+						email_info->irm_template_id = (gchar *) val;
+					else if (!g_strcmp0 ( (char *) rm->name, "ContentExpiryDate"))
+						email_info->irm_content_expiry_date = (gchar *) val;
+					else if (!g_strcmp0 ( (char *) rm->name, "ContentOwner"))
+						email_info->irm_content_owner = (gchar *) val;
+					else if (!g_strcmp0 ( (char *) rm->name, "RemoveRights")) {
+						email_info->irm_remove_rights = g_strcmp0 ( (char *) val, "0") != 0;
+						xmlFree (val);
+					} else {
+						xmlFree (val);
+					}
+				}
+			}
+
 			// Body
 			else if (n->type == XML_ELEMENT_NODE && !g_strcmp0 ( (char *) n->name, "Body")) {
 				xmlNode *t;

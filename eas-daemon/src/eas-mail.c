@@ -59,6 +59,8 @@
 #include "eas-delete-req.h"
 #include "eas-get-email-body-req.h"
 #include "eas-send-email-req.h"
+#include "eas-smart-reply-req.h"
+#include "eas-smart-forward-req.h"
 #include "eas-update-email-req.h"
 #include "eas-connection-errors.h"
 #include "eas-get-email-attachment-req.h"
@@ -126,6 +128,28 @@ on_handle_send_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *in
 }
 
 static gboolean
+on_handle_smart_reply_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			     const gchar *account_uid, const gchar *clientid,
+			     const gchar *source_folder_id, const gchar *source_item_id,
+			     const gchar *mime_file, guint request_id, EasMail *self)
+{
+	return eas_mail_smart_reply_email (self, account_uid, clientid,
+					   source_folder_id, source_item_id,
+					   mime_file, request_id, invocation);
+}
+
+static gboolean
+on_handle_smart_forward_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
+			       const gchar *account_uid, const gchar *clientid,
+			       const gchar *source_folder_id, const gchar *source_item_id,
+			       const gchar *mime_file, guint request_id, EasMail *self)
+{
+	return eas_mail_smart_forward_email (self, account_uid, clientid,
+					     source_folder_id, source_item_id,
+					     mime_file, request_id, invocation);
+}
+
+static gboolean
 on_handle_delete_email (EasGDBusMail *obj G_GNUC_UNUSED, GDBusMethodInvocation *invocation,
 			const gchar *account_uid, const gchar *sync_key,
 			const gchar *folder_id, const gchar *const *server_ids_array, EasMail *self)
@@ -177,6 +201,10 @@ eas_mail_init (EasMail *object)
 			  G_CALLBACK (on_handle_fetch_attachment), object);
 	g_signal_connect (priv->skeleton, "handle-send-email",
 			  G_CALLBACK (on_handle_send_email), object);
+	g_signal_connect (priv->skeleton, "handle-smart-reply-email",
+			  G_CALLBACK (on_handle_smart_reply_email), object);
+	g_signal_connect (priv->skeleton, "handle-smart-forward-email",
+			  G_CALLBACK (on_handle_smart_forward_email), object);
 	g_signal_connect (priv->skeleton, "handle-delete-email",
 			  G_CALLBACK (on_handle_delete_email), object);
 	g_signal_connect (priv->skeleton, "handle-update-emails",
@@ -617,6 +645,88 @@ finish:
 		g_error_free (error);
 	}
 	g_debug ("eas_mail_send_email--");
+	return ret;
+}
+
+gboolean
+eas_mail_smart_reply_email (EasMail *easMailObj,
+			    const gchar *account_uid,
+			    const gchar *clientid,
+			    const gchar *source_folder_id,
+			    const gchar *source_item_id,
+			    const gchar *mime_file,
+			    guint request_id,
+			    GDBusMethodInvocation *context)
+{
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasSmartReplyReq *req = NULL;
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]", account_uid);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_smart_reply_req_new (account_uid, context, clientid,
+				       source_folder_id, source_item_id, mime_file);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
+	set_request_owner_id (&req->parent_instance, request_id, context);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);
+
+	ret = eas_smart_reply_req_Activate (req, &error);
+	if (!ret) {
+		g_assert (error != NULL);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+	}
+	return ret;
+}
+
+gboolean
+eas_mail_smart_forward_email (EasMail *easMailObj,
+			      const gchar *account_uid,
+			      const gchar *clientid,
+			      const gchar *source_folder_id,
+			      const gchar *source_item_id,
+			      const gchar *mime_file,
+			      guint request_id,
+			      GDBusMethodInvocation *context)
+{
+	EasConnection *connection;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EasSmartForwardReq *req = NULL;
+
+	connection = eas_connection_find (account_uid);
+	if (!connection) {
+		g_set_error (&error, EAS_CONNECTION_ERROR,
+			     EAS_CONNECTION_ERROR_ACCOUNTNOTFOUND,
+			     "Failed to find account [%s]", account_uid);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	req = eas_smart_forward_req_new (account_uid, context, clientid,
+					 source_folder_id, source_item_id, mime_file);
+	eas_request_base_SetConnection (&req->parent_instance, connection);
+	eas_request_base_SetInterfaceObject (&req->parent_instance, EAS_INTERFACE_BASE (easMailObj));
+	set_request_owner_id (&req->parent_instance, request_id, context);
+	eas_request_base_SetRequestProgressDirection (&req->parent_instance, TRUE);
+
+	ret = eas_smart_forward_req_Activate (req, &error);
+	if (!ret) {
+		g_assert (error != NULL);
+		g_dbus_method_invocation_return_gerror (context, error);
+		g_error_free (error);
+	}
 	return ret;
 }
 

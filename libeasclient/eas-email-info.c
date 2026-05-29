@@ -46,6 +46,12 @@ eas_email_info_init (EasEmailInfo *object)
 	object->categories = NULL;
 	object->status = NULL;
 	object->flags = 0;
+	object->conversation_id = NULL;
+	object->conversation_index = NULL;
+	object->irm_template_id = NULL;
+	object->irm_content_expiry_date = NULL;
+	object->irm_content_owner = NULL;
+	object->irm_remove_rights = FALSE;
 	g_debug ("eas_email_info_init--");
 }
 
@@ -66,6 +72,11 @@ eas_email_info_finalize (GObject *object)
 	/* deinitalization code */
 	g_free (self->server_id);
 	g_free (self->status);
+	g_free (self->conversation_id);
+	g_free (self->conversation_index);
+	g_free (self->irm_template_id);
+	g_free (self->irm_content_expiry_date);
+	g_free (self->irm_content_owner);
 
 	g_slist_foreach (self->headers, (GFunc) eas_email_free_header, NULL);
 	g_slist_free (self->headers);
@@ -167,7 +178,19 @@ eas_email_info_serialise (EasEmailInfo* self, gchar **result)
 
 	// status
 	g_debug ("serialising status %s", self->status);
-	g_string_append_printf (ser, "%s", (self->status ? : ""));
+	g_string_append_printf (ser, "%s\n", (self->status ? : ""));
+
+	// conversation threading (14.1)
+	g_string_append_printf (ser, "%s\n%s\n",
+				self->conversation_id ? : "",
+				self->conversation_index ? : "");
+
+	// IRM (14.1)
+	g_string_append_printf (ser, "%s\n%s\n%s\n%d",
+				self->irm_template_id ? : "",
+				self->irm_content_expiry_date ? : "",
+				self->irm_content_owner ? : "",
+				self->irm_remove_rights ? 1 : 0);
 
 	if (ret) {
 		*result = ser->str;
@@ -317,6 +340,39 @@ eas_email_info_deserialise (EasEmailInfo* self, const gchar *data)
 	}
 	self->status = strv[idx++];
 	g_debug ("status = %s", self->status);
+
+	// conversation threading (14.1) — optional, may be absent in old serialised data
+	if (strv[idx] && *strv[idx]) {
+		self->conversation_id = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+	if (strv[idx] && *strv[idx]) {
+		self->conversation_index = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+
+	// IRM (14.1) — optional, may be absent in old serialised data
+	if (strv[idx] && *strv[idx]) {
+		self->irm_template_id = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+	if (strv[idx] && *strv[idx]) {
+		self->irm_content_expiry_date = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+	if (strv[idx] && *strv[idx]) {
+		self->irm_content_owner = strv[idx++];
+	} else if (strv[idx]) {
+		g_free (strv[idx++]);
+	}
+	if (strv[idx]) {
+		self->irm_remove_rights = atoi (strv[idx]) != 0;
+		g_free (strv[idx++]);
+	}
 
 	ret = TRUE;
 out:

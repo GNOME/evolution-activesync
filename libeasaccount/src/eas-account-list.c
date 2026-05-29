@@ -176,7 +176,16 @@ eas_account_list_set_account_info(EasAccountInfo *acc_info, const gchar* uid)
 		} else if (strcmp(key, EAS_ACCOUNT_KEY_DEVICE_ID) == 0) {
 			acc_info->device_id = g_variant_dup_string (value, NULL);
 		} else if (strcmp(key, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS) == 0) {
-			// TODO copy the list to account info
+			gchar **strv = g_variant_dup_strv (value, NULL);
+			GSList *list = NULL;
+			for (gchar **s = strv; *s; s++) {
+				gchar *end;
+				gdouble v = g_strtod (*s, &end);
+				if (end != *s)
+					list = g_slist_append (list, GINT_TO_POINTER ((gint)(v * 10.0)));
+			}
+			acc_info->server_protocols = list;
+			g_strfreev (strv);
 		} else {
 			g_warning ("Unknown key: %s (value: [%s])\n", key, g_variant_get_string (value, NULL));
 		}
@@ -698,7 +707,20 @@ eas_account_list_save_item(EasAccountList *account_list,
 		break;
 	case EAS_ACCOUNT_SERVER_PROTOCOLS:
 		{
-		//TODO set server protocols in setting 
+		GSList *protos = eas_account_get_server_protocols (account);
+		guint len = g_slist_length (protos);
+		const gchar **strv = g_new0 (const gchar *, len + 1);
+		gchar **owned = g_new0 (gchar *, len + 1);
+		guint i = 0;
+		for (GSList *l = protos; l; l = l->next, i++) {
+			gint v = GPOINTER_TO_INT (l->data);
+			owned[i] = g_strdup_printf ("%d.%d", v / 10, v % 10);
+			strv[i] = owned[i];
+		}
+		g_settings_set_strv (setting, EAS_ACCOUNT_KEY_SERVER_PROTOCOLS, strv);
+		for (i = 0; owned[i]; i++) g_free (owned[i]);
+		g_free (owned);
+		g_free (strv);
 		}
 		break;
 	default:

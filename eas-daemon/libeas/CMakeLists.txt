@@ -47,6 +47,14 @@ set(SOURCES
 	eas-send-email-msg.h
 	eas-send-email-req.c
 	eas-send-email-req.h
+	eas-smart-reply-msg.c
+	eas-smart-reply-msg.h
+	eas-smart-reply-req.c
+	eas-smart-reply-req.h
+	eas-smart-forward-msg.c
+	eas-smart-forward-msg.h
+	eas-smart-forward-req.c
+	eas-smart-forward-req.h
 	eas-sync-folder-hierarchy-req.c
 	eas-sync-folder-hierarchy-req.h
 	eas-sync-folder-msg.c

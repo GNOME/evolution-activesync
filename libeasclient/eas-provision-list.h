@@ -44,6 +44,7 @@ struct _EasProvisionList {
 	gchar* AllowStorageCard;
 	gchar* AllowCamera;
 	gchar* RequireDeviceEncryption;
+	gchar* DeviceEncryptionEnabled;
 	gchar* AllowUnsignedApplications;
 	gchar* AllowUnsignedInstallationPackages;
 	gchar* MinDevicePasswordComplexCharacters;

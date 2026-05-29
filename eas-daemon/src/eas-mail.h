@@ -156,6 +156,24 @@ gboolean eas_mail_send_email (EasMail* self,
 			      guint request_id,
 			      GDBusMethodInvocation* context);
 
+gboolean eas_mail_smart_reply_email (EasMail *self,
+				     const gchar *account_uid,
+				     const gchar *clientid,
+				     const gchar *source_folder_id,
+				     const gchar *source_item_id,
+				     const gchar *mime_file,
+				     guint request_id,
+				     GDBusMethodInvocation *context);
+
+gboolean eas_mail_smart_forward_email (EasMail *self,
+				       const gchar *account_uid,
+				       const gchar *clientid,
+				       const gchar *source_folder_id,
+				       const gchar *source_item_id,
+				       const gchar *mime_file,
+				       guint request_id,
+				       GDBusMethodInvocation *context);
+
 /*
 	update an email
  */

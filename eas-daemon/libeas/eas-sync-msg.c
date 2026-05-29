@@ -178,6 +178,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 
 	xmlNewNs (node, (xmlChar *) "AirSync:", NULL);
 	xmlNewNs (node, (xmlChar *) "AirSyncBase:", (xmlChar *) "airsyncbase");
+	if (protover >= 141)
+		xmlNewNs (node, (xmlChar *) "RightsManagement:", (xmlChar *) "rightsmanagement");
 	child = xmlNewChild (node, NULL, (xmlChar *) "Collections", NULL);
 	collection = xmlNewChild (child, NULL, (xmlChar *) "Collection", NULL);
 
@@ -211,6 +213,8 @@ eas_sync_msg_build_message (EasSyncMsg* self, guint filter_type, gboolean getCha
 			xmlNewChild (options, NULL, (xmlChar *) "FilterType", (xmlChar*) filter);
 			xmlNewChild (options, NULL, (xmlChar *) "MIMESupport", (xmlChar*) "2");
 			xmlNewChild (options, NULL, (xmlChar *) "MIMETruncation", (xmlChar*) "4"); // Fetch first 10KiB to get all the mail headers
+			if (protover >= 141)
+				xmlNewChild (options, NULL, (xmlChar *) "ConversationMode", (xmlChar*) "1");
 
 			body_pref = xmlNewChild (options, NULL, (xmlChar *) "airsyncbase:BodyPreference", NULL);
 			xmlNewChild (body_pref, NULL, (xmlChar *) "airsyncbase:Type", (xmlChar*) "4"); // Plain text 1, HTML 2, MIME 4

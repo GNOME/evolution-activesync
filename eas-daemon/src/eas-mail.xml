@@ -64,6 +64,28 @@
 	  <arg type="u" name="request_id" direction="in"/><!-- request is passed back with progress signal-->
     </method>
 
+<!-- server-side reply to an existing email (SmartReply, 14.0+) -->
+    <method name="smart_reply_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="s" name="clientid" direction="in"/>
+      <arg type="s" name="source_folder_id" direction="in"/>
+      <arg type="s" name="source_item_id" direction="in"/>
+      <arg type="s" name="mime_file" direction="in"/>
+      <arg type="u" name="request_id" direction="in"/>
+    </method>
+
+<!-- server-side forward of an existing email (SmartForward, 14.0+) -->
+    <method name="smart_forward_email">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="account_uid" direction="in"/>
+      <arg type="s" name="clientid" direction="in"/>
+      <arg type="s" name="source_folder_id" direction="in"/>
+      <arg type="s" name="source_item_id" direction="in"/>
+      <arg type="s" name="mime_file" direction="in"/>
+      <arg type="u" name="request_id" direction="in"/>
+    </method>
+
 	<method name="delete_email">
       <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
       <arg type="s" name="account_uid" direction="in"/>

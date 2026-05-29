@@ -145,6 +145,8 @@ eas_send_email_msg_build_message (EasSendEmailMsg* self)
 
 	xmlNewChild (root, NULL, (xmlChar *) "ClientId", (xmlChar*) (priv->client_id));
 	xmlNewChild (root, NULL, (xmlChar *) "SaveInSentItems", NULL); // presence indicates true
+	if (priv->account_id && *priv->account_id)
+		xmlNewChild (root, NULL, (xmlChar *) "AccountId", (xmlChar*) priv->account_id);
 
 	if (priv->mime_string)
 	{

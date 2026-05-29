@@ -86,13 +86,7 @@
 #include <eas-folder.h>
 #include <errno.h>
 
-//#define ACTIVESYNC_14
-
-#ifdef ACTIVESYNC_14
-#define AS_DEFAULT_PROTOCOL 140
-#else
-#define AS_DEFAULT_PROTOCOL 121
-#endif
+#define AS_DEFAULT_PROTOCOL 141
 
 /* For the number of connections */
 #define EAS_CONNECTION_MAX_REQUESTS 1
@@ -1942,6 +1936,7 @@ eas_connection_new (EasAccount* account, GError** error)
 	EasConnectionPrivate *priv = NULL;
 	gchar *hashkey = NULL;
 	gchar *cachedir;
+	gboolean should_negotiate = FALSE;
 
 	g_debug ("eas_connection_new++");
 
@@ -2010,6 +2005,7 @@ eas_connection_new (EasAccount* account, GError** error)
 				   G_KEY_FILE_NONE, NULL);
 
 	priv->protocol_version = eas_account_get_protocol_version (account);
+	should_negotiate = !priv->protocol_version;
 	if (!priv->protocol_version)
 		priv->protocol_version = AS_DEFAULT_PROTOCOL;
 
@@ -2019,6 +2015,15 @@ eas_connection_new (EasAccount* account, GError** error)
 
 	// Just a reference to the global account list
 	priv->account = account;
+
+	if (should_negotiate) {
+		GError *fetch_err = NULL;
+		eas_connection_fetch_server_protocols (cnc, &fetch_err);
+		if (fetch_err) {
+			g_warning ("Version negotiation failed: %s", fetch_err->message);
+			g_clear_error (&fetch_err);
+		}
+	}
 
 	hashkey = g_strdup_printf ("%s@%s@%s", eas_account_get_username (account), eas_account_get_uri (account), eas_account_get_device_id (account));
 
@@ -2728,8 +2733,29 @@ eas_connection_fetch_server_protocols (EasConnection *cnc, GError **error)
 	// write the list to GSettings using new EasAccount API
 	eas_account_set_server_protocols(acc, proto_vers);
 
+	// Select the highest server-supported version up to our maximum (141)
+	{
+		gint best = 0;
+		GSList *l;
+		for (l = proto_vers; l; l = l->next) {
+			gint v = GPOINTER_TO_INT (l->data);
+			if (v <= AS_DEFAULT_PROTOCOL && v > best)
+				best = v;
+		}
+		if (best) {
+			eas_account_set_protocol_version (acc, best);
+			eas_account_list_save_item (g_account_list, priv->account,
+						    EAS_ACCOUNT_PROTOCOL_VERSION);
+			priv->protocol_version = best;
+			g_free (priv->proto_str);
+			priv->proto_str = g_strdup_printf ("%d.%d",
+							    best / 10, best % 10);
+			g_debug ("negotiated protocol version = %s", priv->proto_str);
+		}
+	}
+
 	g_slist_free(proto_vers);
-	
+
 	eas_account_list_save_item (g_account_list,
 				    priv->account,
 				    EAS_ACCOUNT_SERVER_PROTOCOLS);	
