@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@LIB_INSTALL_DIR@
+includedir=@INCLUDE_INSTALL_DIR@
+datarootdir=@SHARE_INSTALL_PREFIX@
+datadir=@SHARE_INSTALL_PREFIX@
+
+privincludedir=@privincludedir@
+
+Name: libeasclient
+Description: Client library for accessing ActiveSync dæmon via D-Bus
+Version: @PROJECT_VERSION@
+Requires.private: glib-2.0 libxml-2.0
+Libs: -L${libdir} -leasclient
+Cflags: -I${privincludedir}/eas-client
