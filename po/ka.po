@@ -1,134 +1,134 @@
 # Georgian translation for evolution-activesync.
-# Copyright (C) 2023 evolution-activesync's COPYRIGHT HOLDER
+# Copyright (C) 2023 evolution-activesync's authors
 # This file is distributed under the same license as the evolution-activesync package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
-"issues\n"
-"POT-Creation-Date: 2023-02-27 13:53+0000\n"
-"PO-Revision-Date: 2023-02-27 20:34+0100\n"
+"issues/\n"
+"POT-Creation-Date: 2026-05-31 16:11+0000\n"
+"PO-Revision-Date: 2026-06-01 05:57+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <ka@li.org>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
 #, c-format
 msgid "Unable to create cache path"
 msgstr "ქეშის ბილიკის შექმნის შეცდომა"
 
-#: ../camel/camel-eas-folder.c:213
+#: ../camel/camel-eas-folder.c:209
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "შეტყობინების ქეშის ფაილის გადატანის შეცდომა"
 
-#: ../camel/camel-eas-folder.c:529
+#: ../camel/camel-eas-folder.c:447
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "%s-სთვის შეჯამების ჩატვირთვის შეცდომა"
 
-#: ../camel/camel-eas-folder.c:751
+#: ../camel/camel-eas-folder.c:662
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "ActiveSync-ში შეტყობინების ელფოსტის საცავში ჩაწერა შეუძლებელია"
 
-#: ../camel/camel-eas-folder.c:766
+#: ../camel/camel-eas-folder.c:677
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "შეტყობინებების გადატანა ჯერჯერობით შეუძლებელია"
 
-#: ../camel/camel-eas-provider.c:48
+#: ../camel/camel-eas-provider.c:46
 msgid "Checking for new mail"
 msgstr "ახალი ელფოსტის შემოწმება"
 
-#: ../camel/camel-eas-provider.c:50
+#: ../camel/camel-eas-provider.c:48
 msgid "C_heck for new messages in all folders"
 msgstr "_ახალი შეტყობინებების შემოწმება ყველა საქაღალდეში"
 
-#: ../camel/camel-eas-provider.c:53
+#: ../camel/camel-eas-provider.c:51
 msgid "Options"
 msgstr "პარამეტრები"
 
-#: ../camel/camel-eas-provider.c:55
+#: ../camel/camel-eas-provider.c:53
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr "სერვერზე შემოსულ ფოსტაზე ფილტრების _გადატარება"
 
-#: ../camel/camel-eas-provider.c:57
+#: ../camel/camel-eas-provider.c:55
 msgid "Check new messages for J_unk contents"
 msgstr "ახალი შეტყობინებების _სპამზე შემოწმება"
 
-#: ../camel/camel-eas-provider.c:59
+#: ../camel/camel-eas-provider.c:57
 msgid "Only check for Junk messages in the IN_BOX folder"
 msgstr "შემოსული საქაღალდის მხოლოდ სპამზე შემოწმება"
 
-#: ../camel/camel-eas-provider.c:61
+#: ../camel/camel-eas-provider.c:59
 msgid "Automatically synchroni_ze account locally"
 msgstr "დაშორებული ელფოსტის ლოკალურ საქაღალდეებთან სინქრონიზაცია"
 
-#: ../camel/camel-eas-provider.c:69
+#: ../camel/camel-eas-provider.c:67
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
-#: ../camel/camel-eas-provider.c:71
+#: ../camel/camel-eas-provider.c:69
 msgid "For accessing servers using ActiveSync"
 msgstr "სერვერთან ActiveSync-ის საშუალებით წვდომა"
 
-#: ../camel/camel-eas-provider.c:87
+#: ../camel/camel-eas-provider.c:85
 msgid "Password"
 msgstr "პაროლი"
 
-#: ../camel/camel-eas-provider.c:89
+#: ../camel/camel-eas-provider.c:87
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext password."
 msgstr "ამ პარამეტრით ActiveSync სერვერს უბრალო პაროლით მიუერთდებით."
 
-#: ../camel/camel-eas-store.c:137
+#: ../camel/camel-eas-store.c:135
 #, c-format
 msgid "Session has no storage path"
 msgstr "სესიას საცავის ბილიკი არ გააჩნია"
 
-#: ../camel/camel-eas-store.c:177
+#: ../camel/camel-eas-store.c:175
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "EAS სერვისს ანგარიშის UID არ გააჩნია"
 
-#: ../camel/camel-eas-store.c:265
+#: ../camel/camel-eas-store.c:263
 #, c-format
 msgid "No such folder: %s"
 msgstr "საქაღალდე არ არსებობს: %s"
 
-#: ../camel/camel-eas-store.c:369
+#: ../camel/camel-eas-store.c:367
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "ActiveSync-ით საქაღალდის შექმნა შეუძლებელია"
 
-#: ../camel/camel-eas-store.c:380
+#: ../camel/camel-eas-store.c:378
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "ActiveSync-ით საქაღალდის წაშლა შეუძლებელია"
 
-#: ../camel/camel-eas-store.c:393
+#: ../camel/camel-eas-store.c:391
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "ActiveSync-ით საქაღალდის სახელის გადარქმევა შეუძლებელია"
 
-#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:407 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync -ის სერვერი %s"
 
-#: ../camel/camel-eas-store.c:412
+#: ../camel/camel-eas-store.c:410
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "ActiveSync -ის სერვისი %s-სთვის %s-ზე"
 
-#: ../camel/camel-eas-store.c:454
+#: ../camel/camel-eas-store.c:452
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "ამ ქმედების დასასრულებლად ინტერნეტთან წვდომა აუცილებელია"
@@ -143,160 +143,165 @@ msgstr "ActiveSync ელფოსტის მოტანა %s-ის გა�
 msgid "Failed to create temporary file for sending message"
 msgstr "შეტყობინების გასაგზავნად დროებითი ფაილის შექმნის შეცდომა"
 
-#: ../camel/camel-eas-utils.c:558
+#: ../camel/camel-eas-utils.c:547
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "CreateItem -ს ახალი შეტყობინებისთვის ID არ დაუბრუნება"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:169
+#: ../configuration/e-mail-config-eas-backend.c:167
 msgid "Configuration"
 msgstr "გამართვა"
 
-#: ../configuration/e-mail-config-eas-backend.c:188
+#: ../configuration/e-mail-config-eas-backend.c:186
 msgid "User_name:"
 msgstr "_მომხმარებლის სახელი:"
 
-#: ../configuration/e-mail-config-eas-backend.c:203
+#: ../configuration/e-mail-config-eas-backend.c:201
 msgid "_Server URL:"
 msgstr "_სერვერის URL:"
 
-#: ../configuration/e-mail-config-eas-backend.c:218
+#: ../configuration/e-mail-config-eas-backend.c:216
 msgid "Authentication"
 msgstr "ავთენტიკაცია"
 
-#: ../configuration/e-mail-config-eas-backend.c:235
+#: ../configuration/e-mail-config-eas-backend.c:233
 msgid "_Auto Detect"
 msgstr "_ავტომატური გამოცნობა"
 
-#: ../eas-daemon/libeas/eas-connection.c:480
+#: ../eas-daemon/libeas/eas-connection.c:495
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "შეიყვანეთ თქვენი ActiveSync -ის პაროლი %s-სთვის"
 
-#: ../eas-daemon/libeas/eas-connection.c:1055
+#: ../eas-daemon/libeas/eas-connection.c:1074
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "შეცდომა %d wbxml_conv_xml2wbxml_create-დან"
 
-#: ../eas-daemon/libeas/eas-connection.c:1087
+#: ../eas-daemon/libeas/eas-connection.c:1106
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new -მა NULL-ი დააბრუნა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1162
+#: ../eas-daemon/libeas/eas-connection.c:1178
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "შეცდომა %d wbxml_conv_xml2wbxml_run-დან"
 
-#: ../eas-daemon/libeas/eas-connection.c:1292
-#: ../eas-daemon/libeas/eas-connection.c:1303
-#: ../eas-daemon/libeas/eas-connection.c:2633
+#: ../eas-daemon/libeas/eas-connection.c:1282
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:2717
 #, c-format
 msgid "HTTP request failed: %d — %s"
 msgstr "HTTP მოთხოვნის შეცდომა: %d - %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1327
+#: ../eas-daemon/libeas/eas-connection.c:1315
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "HTTP პასუხის ტიპი WBXML-ს არ წარმოადგენს"
 
-#: ../eas-daemon/libeas/eas-connection.c:1335
+#: ../eas-daemon/libeas/eas-connection.c:1323
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "HTTP პასუხის ტიპი MULTIPART-ს არ წარმოადგენს"
 
-#: ../eas-daemon/libeas/eas-connection.c:1367
+#: ../eas-daemon/libeas/eas-connection.c:1355
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml-ი NULL-ს უდრის!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1376
+#: ../eas-daemon/libeas/eas-connection.c:1364
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len = 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1387
+#: ../eas-daemon/libeas/eas-connection.c:1375
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "WBXML -დან XML-ზე გარდამქმნელის შექმნის შეცდომა: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1406
+#: ../eas-daemon/libeas/eas-connection.c:1394
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "WBXML -ის XML-ად გარდაქმნის შეცდომა: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1522
+#: ../eas-daemon/libeas/eas-connection.c:1513
 #, c-format
 msgid "Status code: %d — Response from server"
 msgstr "სტატუსის კოდი: %d - სერვერის პასუხი"
 
-#: ../eas-daemon/libeas/eas-connection.c:1537
+#: ../eas-daemon/libeas/eas-connection.c:1522
+#, c-format
+msgid "Empty autodiscover response"
+msgstr "ავტომატური აღმომჩენის ცარიელი პასუხი"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "ავტომატური აღმომჩენის XML პასუხის დამუშავების შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1546
+#: ../eas-daemon/libeas/eas-connection.c:1547
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "<Autodiscover> ელემენტის პოვნის შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1557
+#: ../eas-daemon/libeas/eas-connection.c:1558
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "<Response> ელემენტის პოვნის შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1568
+#: ../eas-daemon/libeas/eas-connection.c:1569
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "<Action> ელემენტის პოვნის შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1579
+#: ../eas-daemon/libeas/eas-connection.c:1580
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "<Settings> ელემენტის პოვნის შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1719
+#: ../eas-daemon/libeas/eas-connection.c:1750
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "ელფოსტა აუცილებელია და უნდა მიუთითოთ"
 
-#: ../eas-daemon/libeas/eas-connection.c:1729
+#: ../eas-daemon/libeas/eas-connection.c:1760
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "ელფოსტის მისამართიდან დომენის სახელის გამოხსნა შეუძლებელია"
 
-#: ../eas-daemon/libeas/eas-connection.c:1740
+#: ../eas-daemon/libeas/eas-connection.c:1771
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "ავტომატური აღმოჩენისთვის დროებითი ანგარიშის შექმნის შეცდომა"
 
-#: ../eas-daemon/libeas/eas-connection.c:1907
+#: ../eas-daemon/libeas/eas-connection.c:1947
 #, c-format
 msgid "An account must be provided."
 msgstr "ანგარიშის ტიპის მითითება აუცილებელია."
 
-#: ../eas-daemon/libeas/eas-connection.c:1933
+#: ../eas-daemon/libeas/eas-connection.c:1973
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "სერვერის ბმულის და მომხმარებლის მითითება აუცილებელია."
 
-#: ../eas-daemon/libeas/eas-connection.c:1946
+#: ../eas-daemon/libeas/eas-connection.c:1986
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "საქაღალდის ქეშის დირექტორიის (%s) შექმნის შეცდომა: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2090
+#: ../eas-daemon/libeas/eas-connection.c:2144
 #, c-format
 msgid "request was cancelled by user"
 msgstr "შეწყდა მომხმარებლის მოთხოვნით"
 
-#: ../eas-daemon/libeas/eas-connection.c:2220
+#: ../eas-daemon/libeas/eas-connection.c:2283
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "XML-ის დამუშავების შეცდომა: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2505
+#: ../eas-daemon/libeas/eas-connection.c:2571
 #, c-format
 msgid "Request with id %d not in queue; can’t cancel"
 msgstr "მოთხოვნა ID-ით %d რიგში არაა და ვერ გავაუქმებ"
