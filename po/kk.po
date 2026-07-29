@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: evolution-activesync master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/evolution-activesync/"
 "issues/\n"
-"POT-Creation-Date: 2026-02-14 17:24+0000\n"
-"PO-Revision-Date: 2026-03-07 08:15+0500\n"
+"POT-Creation-Date: 2026-07-28 18:02+0000\n"
+"PO-Revision-Date: 2026-07-29 13:05+0500\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
 "Language: kk\n"
@@ -17,122 +17,122 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../camel/camel-eas-folder.c:177 ../camel/camel-eas-folder.c:203
+#: ../camel/camel-eas-folder.c:173 ../camel/camel-eas-folder.c:199
 #, c-format
 msgid "Unable to create cache path"
 msgstr "Кэш жолын жасау мүмкін емес"
 
-#: ../camel/camel-eas-folder.c:213
+#: ../camel/camel-eas-folder.c:209
 #, c-format
 msgid "Failed to move message cache file"
 msgstr "Хабарлама кэші файлын жылжыту сәтсіз аяқталды"
 
-#: ../camel/camel-eas-folder.c:529
+#: ../camel/camel-eas-folder.c:447
 #, c-format
 msgid "Could not load summary for %s"
 msgstr "%s үшін жиынтықты жүктеу мүмкін болмады"
 
-#: ../camel/camel-eas-folder.c:751
+#: ../camel/camel-eas-folder.c:662
 #, c-format
 msgid "Writing message to mail store not possible in ActiveSync"
 msgstr "ActiveSync-те хабарламаны пошта қоймасына жазу мүмкін емес"
 
-#: ../camel/camel-eas-folder.c:766
+#: ../camel/camel-eas-folder.c:677
 #, c-format
 msgid "Moving messages not yet implemented"
 msgstr "Хабарламаларды жылжыту әлі іске асырылмаған"
 
-#: ../camel/camel-eas-provider.c:48
+#: ../camel/camel-eas-provider.c:46
 msgid "Checking for new mail"
 msgstr "Жаңа поштаны тексеру"
 
-#: ../camel/camel-eas-provider.c:50
+#: ../camel/camel-eas-provider.c:48
 msgid "C_heck for new messages in all folders"
 msgstr "Барлық бумалардағы жаңа хабарламаларды те_ксеру"
 
-#: ../camel/camel-eas-provider.c:53
+#: ../camel/camel-eas-provider.c:51
 msgid "Options"
 msgstr "Опциялар"
 
-#: ../camel/camel-eas-provider.c:55
+#: ../camel/camel-eas-provider.c:53
 msgid "_Apply filters to new messages in Inbox on this server"
 msgstr ""
 "Осы сервердегі «Кіріс» бумасындағы жаңа хабарламаларға сүзгілерді іске "
 "_асыру"
 
-#: ../camel/camel-eas-provider.c:57
+#: ../camel/camel-eas-provider.c:55
 msgid "Check new messages for J_unk contents"
 msgstr "Жаңа хабарламаларды с_пам мазмұнына тексеру"
 
-#: ../camel/camel-eas-provider.c:59
+#: ../camel/camel-eas-provider.c:57
 msgid "Only check for Junk messages in the IN_BOX folder"
 msgstr "Тек IN_BOX бумасындағы спам хабарламаларды тексеру"
 
-#: ../camel/camel-eas-provider.c:61
+#: ../camel/camel-eas-provider.c:59
 msgid "Automatically synchroni_ze account locally"
 msgstr "Тіркелгіні жергілікті түрде автоматты синхрон_дау"
 
-#: ../camel/camel-eas-provider.c:69
+#: ../camel/camel-eas-provider.c:67
 msgid "ActiveSync"
 msgstr "ActiveSync"
 
-#: ../camel/camel-eas-provider.c:71
+#: ../camel/camel-eas-provider.c:69
 msgid "For accessing servers using ActiveSync"
 msgstr "ActiveSync көмегімен серверлерге қол жеткізу үшін"
 
-#: ../camel/camel-eas-provider.c:87
+#: ../camel/camel-eas-provider.c:85
 msgid "Password"
 msgstr "Пароль"
 
-#: ../camel/camel-eas-provider.c:89
+#: ../camel/camel-eas-provider.c:87
 msgid ""
 "This option will connect to the ActiveSync server using a plaintext "
 "password."
 msgstr "Бұл опция ActiveSync серверіне ашық мәтінді пароль арқылы қосылады."
 
-#: ../camel/camel-eas-store.c:137
+#: ../camel/camel-eas-store.c:135
 #, c-format
 msgid "Session has no storage path"
 msgstr "Сессияның сақтау жолы жоқ"
 
-#: ../camel/camel-eas-store.c:177
+#: ../camel/camel-eas-store.c:175
 #, c-format
 msgid "EAS service has no account UID"
 msgstr "EAS қызметінде тіркелгі UID-і жоқ"
 
-#: ../camel/camel-eas-store.c:265
+#: ../camel/camel-eas-store.c:263
 #, c-format
 msgid "No such folder: %s"
 msgstr "Мұндай бума жоқ: %s"
 
-#: ../camel/camel-eas-store.c:369
+#: ../camel/camel-eas-store.c:367
 #, c-format
 msgid "Create folder not possible with ActiveSync"
 msgstr "ActiveSync-пен бума жасау мүмкін емес"
 
-#: ../camel/camel-eas-store.c:380
+#: ../camel/camel-eas-store.c:378
 #, c-format
 msgid "Delete folder not possible with ActiveSync"
 msgstr "ActiveSync-пен буманы өшіру мүмкін емес"
 
-#: ../camel/camel-eas-store.c:393
+#: ../camel/camel-eas-store.c:391
 #, c-format
 msgid "Rename folder not possible with ActiveSync"
 msgstr "ActiveSync-пен бума атын өзгерту мүмкін емес"
 
-#: ../camel/camel-eas-store.c:409 ../camel/camel-eas-transport.c:148
+#: ../camel/camel-eas-store.c:407 ../camel/camel-eas-transport.c:148
 #, c-format
 msgid "ActiveSync server %s"
 msgstr "ActiveSync сервері %s"
 
-#: ../camel/camel-eas-store.c:412
+#: ../camel/camel-eas-store.c:410
 #, c-format
 msgid "ActiveSync service for %s on %s"
 msgstr "%s үшін %s серверіндегі ActiveSync қызметі"
 
-#: ../camel/camel-eas-store.c:454
+#: ../camel/camel-eas-store.c:452
 #, c-format
 msgid "You must be working online to complete this operation"
 msgstr "Бұл операцияны аяқтау үшін желіде жұмыс істеуіңіз керек"
@@ -147,160 +147,165 @@ msgstr "%s арқылы ActiveSync поштасын жеткізу"
 msgid "Failed to create temporary file for sending message"
 msgstr "Хабарламаны жіберу үшін уақытша файлды жасау сәтсіз аяқталды"
 
-#: ../camel/camel-eas-utils.c:558
+#: ../camel/camel-eas-utils.c:547
 #, c-format
 msgid "CreateItem call failed to return ID for new message"
 msgstr "CreateItem шақыруы жаңа хабарлама идентификаторын қайтара алмады"
 
 #. Add widget.
-#: ../configuration/e-mail-config-eas-backend.c:169
+#: ../configuration/e-mail-config-eas-backend.c:167
 msgid "Configuration"
 msgstr "Конфигурация"
 
-#: ../configuration/e-mail-config-eas-backend.c:188
+#: ../configuration/e-mail-config-eas-backend.c:186
 msgid "User_name:"
 msgstr "Пайдаланушы ат_ы:"
 
-#: ../configuration/e-mail-config-eas-backend.c:203
+#: ../configuration/e-mail-config-eas-backend.c:201
 msgid "_Server URL:"
 msgstr "_Сервер URL-і:"
 
-#: ../configuration/e-mail-config-eas-backend.c:218
+#: ../configuration/e-mail-config-eas-backend.c:216
 msgid "Authentication"
 msgstr "Аутентификация"
 
-#: ../configuration/e-mail-config-eas-backend.c:235
+#: ../configuration/e-mail-config-eas-backend.c:233
 msgid "_Auto Detect"
 msgstr "_Автоматты түрде анықтау"
 
-#: ../eas-daemon/libeas/eas-connection.c:506
+#: ../eas-daemon/libeas/eas-connection.c:495
 #, c-format
 msgid "Please enter your ActiveSync password for %s"
 msgstr "%s үшін ActiveSync паролін енгізіңіз"
 
-#: ../eas-daemon/libeas/eas-connection.c:1083
+#: ../eas-daemon/libeas/eas-connection.c:1074
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_create"
 msgstr "wbxml_conv_xml2wbxml_create функциясынан %d қатесі қайтарылды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1115
+#: ../eas-daemon/libeas/eas-connection.c:1106
 #, c-format
 msgid "soup_message_new returned NULL"
 msgstr "soup_message_new мәні NULL қайтарды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1190
+#: ../eas-daemon/libeas/eas-connection.c:1178
 #, c-format
 msgid "error %d returned from wbxml_conv_xml2wbxml_run"
 msgstr "wbxml_conv_xml2wbxml_run функциясынан %d қатесі қайтарылды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1320
-#: ../eas-daemon/libeas/eas-connection.c:1331
-#: ../eas-daemon/libeas/eas-connection.c:2661
+#: ../eas-daemon/libeas/eas-connection.c:1282
+#: ../eas-daemon/libeas/eas-connection.c:1293
+#: ../eas-daemon/libeas/eas-connection.c:2717
 #, c-format
 msgid "HTTP request failed: %d — %s"
 msgstr "HTTP сұранысы сәтсіз аяқталды: %d — %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1355
+#: ../eas-daemon/libeas/eas-connection.c:1315
 #, c-format
 msgid "HTTP response type was not WBXML"
 msgstr "HTTP жауап түрі WBXML емес болды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1363
+#: ../eas-daemon/libeas/eas-connection.c:1323
 #, c-format
 msgid "HTTP response type was not MULTIPART"
 msgstr "HTTP жауап түрі MULTIPART емес болды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1395
+#: ../eas-daemon/libeas/eas-connection.c:1355
 #, c-format
 msgid "wbxml is NULL!"
 msgstr "wbxml мәні NULL!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1404
+#: ../eas-daemon/libeas/eas-connection.c:1364
 #, c-format
 msgid "wbxml_len is 0!"
 msgstr "wbxml_len мәні 0!"
 
-#: ../eas-daemon/libeas/eas-connection.c:1415
+#: ../eas-daemon/libeas/eas-connection.c:1375
 #, c-format
 msgid "Failed to create WBXML to XML converter: %s"
 msgstr "WBXML-ді XML-ге түрлендіргішті жасау сәтсіз аяқталды: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1434
+#: ../eas-daemon/libeas/eas-connection.c:1394
 #, c-format
 msgid "Error converting WBXML to XML: %s"
 msgstr "WBXML-ді XML-ге түрлендіру қатесі: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:1550
+#: ../eas-daemon/libeas/eas-connection.c:1513
 #, c-format
 msgid "Status code: %d — Response from server"
 msgstr "Күй коды: %d — Серверден келген жауап"
 
-#: ../eas-daemon/libeas/eas-connection.c:1565
+#: ../eas-daemon/libeas/eas-connection.c:1522
+#, c-format
+msgid "Empty autodiscover response"
+msgstr "Автоматты анықтау жауабы бос"
+
+#: ../eas-daemon/libeas/eas-connection.c:1538
 #, c-format
 msgid "Failed to parse autodiscover response XML"
 msgstr "Автоматты анықтау жауабының XML-ін талдау сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1574
+#: ../eas-daemon/libeas/eas-connection.c:1547
 #, c-format
 msgid "Failed to find <Autodiscover> element"
 msgstr "<Autodiscover> элементін табу сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1585
+#: ../eas-daemon/libeas/eas-connection.c:1558
 #, c-format
 msgid "Failed to find <Response> element"
 msgstr "<Response> элементін табу сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1596
+#: ../eas-daemon/libeas/eas-connection.c:1569
 #, c-format
 msgid "Failed to find <Action> element"
 msgstr "<Action> элементін табу сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1607
+#: ../eas-daemon/libeas/eas-connection.c:1580
 #, c-format
 msgid "Failed to find <Settings> element"
 msgstr "<Settings> элементін табу сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1747
+#: ../eas-daemon/libeas/eas-connection.c:1750
 #, c-format
 msgid "Email is mandatory and must be provided"
 msgstr "Электрондық пошта міндетті және көрсетілуі тиіс"
 
-#: ../eas-daemon/libeas/eas-connection.c:1757
+#: ../eas-daemon/libeas/eas-connection.c:1760
 #, c-format
 msgid "Failed to extract domain from email address"
 msgstr "Электрондық пошта адресінен доменді алу сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1768
+#: ../eas-daemon/libeas/eas-connection.c:1771
 #, c-format
 msgid "Failed create temp account for autodiscover"
 msgstr "Автоматты анықтау үшін уақытша тіркелгі жасау сәтсіз аяқталды"
 
-#: ../eas-daemon/libeas/eas-connection.c:1935
+#: ../eas-daemon/libeas/eas-connection.c:1947
 #, c-format
 msgid "An account must be provided."
 msgstr "Тіркелгі көрсетілуі тиіс."
 
-#: ../eas-daemon/libeas/eas-connection.c:1961
+#: ../eas-daemon/libeas/eas-connection.c:1973
 #, c-format
 msgid "A server url and username must be provided."
 msgstr "Сервердің URL-і мен пайдаланушы аты көрсетілуі тиіс."
 
-#: ../eas-daemon/libeas/eas-connection.c:1974
+#: ../eas-daemon/libeas/eas-connection.c:1986
 #, c-format
 msgid "Failed to create folder cache directory %s: %s"
 msgstr "%s бумасының кэш бумасын жасау сәтсіз аяқталды: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2118
+#: ../eas-daemon/libeas/eas-connection.c:2144
 #, c-format
 msgid "request was cancelled by user"
 msgstr "сұранысты пайдаланушы тоқтатты"
 
-#: ../eas-daemon/libeas/eas-connection.c:2248
+#: ../eas-daemon/libeas/eas-connection.c:2283
 #, c-format
 msgid "Failed to parse XML: %s"
 msgstr "XML талдау сәтсіз аяқталды: %s"
 
-#: ../eas-daemon/libeas/eas-connection.c:2533
+#: ../eas-daemon/libeas/eas-connection.c:2571
 #, c-format
 msgid "Request with id %d not in queue; can’t cancel"
 msgstr "ID-і %d болатын сұраныс кезекте жоқ; одан бас тарту мүмкін емес"
